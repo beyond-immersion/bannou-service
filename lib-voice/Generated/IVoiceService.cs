@@ -41,8 +41,8 @@ public partial interface IVoiceService : IDaprService
     Task<(StatusCodes, object?)> PeerHeartbeatAsync(PeerHeartbeatRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// UpdatePeerEndpoint operation
+    /// AnswerPeer operation
     /// </summary>
-    Task<(StatusCodes, object?)> UpdatePeerEndpointAsync(UpdatePeerEndpointRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, object?)> AnswerPeerAsync(AnswerPeerRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
 }

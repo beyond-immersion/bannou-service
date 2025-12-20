@@ -329,6 +329,12 @@ public partial class GamePlayer
     [System.Text.Json.Serialization.JsonPropertyName("characterData")]
     public object CharacterData { get; set; } = default!;
 
+    /// <summary>
+    /// Voice participant session ID (if player has joined voice)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("voiceSessionId")]
+    public string? VoiceSessionId { get; set; } = default!;
+
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
@@ -518,26 +524,35 @@ public partial class VoiceSipEndpoint
 }
 
 /// <summary>
-/// Voice connection information returned when joining a session
+/// Minimal voice metadata returned when joining a session.
+/// <br/>
+/// <br/>**Event-Only Pattern**: Peer connection details are NOT included here.
+/// <br/>Clients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).
+/// <br/>This avoids race conditions between response processing and event handling.
+/// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class VoiceConnectionInfo
 {
 
     /// <summary>
-    /// Voice room ID
+    /// Whether voice is enabled for this game session
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid RoomId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("voiceEnabled")]
+    public bool VoiceEnabled { get; set; } = default!;
 
     /// <summary>
-    /// Voice tier (p2p for direct connections, scaled for RTP server)
+    /// Voice room ID (null until room is created when 2+ participants join with voice)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    public System.Guid? RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Expected voice tier (may change based on participant count)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tier")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoiceConnectionInfoTier Tier { get; set; } = default!;
+    public VoiceConnectionInfoTier? Tier { get; set; } = default!;
 
     /// <summary>
     /// Audio codec to use
@@ -547,66 +562,10 @@ public partial class VoiceConnectionInfo
     public VoiceConnectionInfoCodec Codec { get; set; } = default!;
 
     /// <summary>
-    /// List of peers to connect to (P2P mode only)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("peers")]
-    public System.Collections.Generic.ICollection<VoicePeerInfo> Peers { get; set; } = default!;
-
-    /// <summary>
-    /// RTP server URI (scaled mode only)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("rtpServerUri")]
-    public string? RtpServerUri { get; set; } = default!;
-
-    /// <summary>
-    /// STUN server URIs for NAT traversal
+    /// STUN server URIs for NAT traversal (clients should configure these early)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stunServers")]
     public System.Collections.Generic.ICollection<string> StunServers { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-/// <summary>
-/// Peer connection info for P2P voice
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoicePeerInfo
-{
-
-    /// <summary>
-    /// Peer's account ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid AccountId { get; set; } = default!;
-
-    /// <summary>
-    /// Peer's display name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string? DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// SDP offer for WebRTC negotiation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sdpOffer")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string SdpOffer { get; set; } = default!;
-
-    /// <summary>
-    /// ICE candidates for NAT traversal
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("iceCandidates")]
-    public System.Collections.Generic.ICollection<string>? IceCandidates { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

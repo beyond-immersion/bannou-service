@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Voice.Clients;
 using BeyondImmersion.BannouService.Voice.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,6 +54,34 @@ public class VoiceServicePlugin : BaseBannouPlugin
         services.AddScoped<ISipEndpointRegistry, SipEndpointRegistry>();
         services.AddScoped<IP2PCoordinator, P2PCoordinator>();
         Logger?.LogDebug("Registered Voice helper services (SipEndpointRegistry, P2PCoordinator)");
+
+        // Register scaled tier coordinator and clients for SFU-based conferencing
+        services.AddScoped<IScaledTierCoordinator, ScaledTierCoordinator>();
+
+        // Register Kamailio and RTPEngine clients with configuration-driven settings
+        // These are singleton because they manage long-lived connections
+        services.AddSingleton<IKamailioClient>(sp =>
+        {
+            var config = sp.GetRequiredService<VoiceServiceConfiguration>();
+            var logger = sp.GetRequiredService<ILogger<KamailioClient>>();
+            var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient("Kamailio");
+            return new KamailioClient(
+                httpClient,
+                config.KamailioHost ?? "localhost",
+                config.KamailioRpcPort > 0 ? config.KamailioRpcPort : 5080,
+                logger);
+        });
+
+        services.AddSingleton<IRtpEngineClient>(sp =>
+        {
+            var config = sp.GetRequiredService<VoiceServiceConfiguration>();
+            var logger = sp.GetRequiredService<ILogger<RtpEngineClient>>();
+            return new RtpEngineClient(
+                config.RtpEngineHost ?? "localhost",
+                config.RtpEnginePort > 0 ? config.RtpEnginePort : 22222,
+                logger);
+        });
+        Logger?.LogDebug("Registered Voice scaled tier services (ScaledTierCoordinator, KamailioClient, RtpEngineClient)");
 
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()

@@ -1,7 +1,7 @@
 # Bannou Service Development Tenets
 
-> **Version**: 1.6
-> **Last Updated**: 2025-12-19
+> **Version**: 1.7
+> **Last Updated**: 2025-12-20
 > **Scope**: All Bannou microservices and related infrastructure
 
 This document establishes the mandatory tenets for developing high-quality Bannou services. All service implementations, tests, and infrastructure MUST adhere to these tenets. Tenets must not be changed or added without EXPLICIT approval, without exception.
@@ -108,7 +108,7 @@ public class MyService : IMyService
 
 Generated clients automatically use `ServiceAppMappingResolver` for routing, supporting both monolith ("bannou") and distributed deployment topologies.
 
-### Exceptions: Orchestrator Service and Connect Service
+### Exceptions: Orchestrator, Connect, and Voice Services
 
 **Orchestrator** uses direct Redis/RabbitMQ connections to avoid Dapr chicken-and-egg startup dependency.
 
@@ -116,6 +116,15 @@ Generated clients automatically use `ServiceAppMappingResolver` for routing, sup
 - State management (`connect-statestore`)
 - Publishing events (`session.connected`, `session.disconnected`)
 - Service invocation via generated clients
+
+**Voice** uses direct infrastructure connections for real-time media control:
+- **RTPEngine** (UDP): The ng protocol requires stateless UDP communication with cookie-based request correlation for media stream control. Dapr has no UDP transport abstraction.
+- **Kamailio** (HTTP): JSONRPC 2.0 over HTTP for SIP user registration and call routing. While technically HTTP, these are infrastructure control commands to the SIP proxy, not service-to-service calls.
+
+Voice still uses Dapr for:
+- State management (`voice-statestore`)
+- Publishing events (`voice.room-closed`, `voice.tier-upgraded`, etc.)
+- Service invocation via generated clients (AuthClient, GameSessionClient)
 
 These are the **only** exceptions to the Dapr-first rule.
 
@@ -1494,6 +1503,80 @@ Follow the [Osherove naming standard](https://osherove.com/blog/2005/4/3/naming-
 | State keys | `{entity-prefix}{id}` | `account-{guid}` |
 | Config properties | PascalCase + units | `TimeoutSeconds` |
 | Test methods | Osherove standard | `Method_State_Result` |
+
+---
+
+## Tenet 16: Client Event Schema Pattern (RECOMMENDED)
+
+**Rule**: Services that push events to WebSocket clients MUST define those events in a dedicated `{service}-client-events.yaml` schema file.
+
+### Client Events vs Service Events
+
+| Type | File | Purpose | Consumers |
+|------|------|---------|-----------|
+| **Client Events** | `{service}-client-events.yaml` | Pushed TO clients via WebSocket | Game clients, SDK |
+| **Service Events** | `{service}-events.yaml` | Service-to-service pub/sub via RabbitMQ | Other Bannou services |
+
+Clients need models to deserialize incoming WebSocket events, but don't need service-to-service event models.
+
+### Required Pattern
+
+1. **Define client events** in `/schemas/{service}-client-events.yaml`:
+
+```yaml
+components:
+  schemas:
+    VoicePeerJoinedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      required: [sessionId]
+      properties:
+        sessionId:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+```
+
+2. **Generate models** via `make generate-services PLUGIN={service}`:
+   - Creates `lib-{service}/Generated/{Service}ClientEventsModels.cs`
+
+3. **Auto-included in SDKs**:
+   - `scripts/generate-client-sdk.sh` auto-discovers `*ClientEventsModels.cs` files
+   - Automatically adds to both `Bannou.SDK` and `Bannou.Client.SDK`
+
+### Auto-Discovery Mechanism
+
+The SDK generation script discovers client event models automatically:
+
+```bash
+# In scripts/generate-client-sdk.sh
+LIB_CLIENT_EVENT_FILES=($(find ./lib-*/Generated -name "*ClientEventsModels.cs" 2>/dev/null || true))
+EVENT_FILES=("${EVENT_FILES[@]}" "${LIB_CLIENT_EVENT_FILES[@]}")
+```
+
+### Benefits
+
+- **Zero Manual SDK Updates**: New client events automatically included in SDK packages
+- **Separation of Concerns**: Client vs service events clearly distinguished in schemas
+- **Type Safety**: Game clients get properly typed event models for deserialization
+- **Schema Validation**: Client events validated like all other schemas
+- **Consistent Pattern**: All services follow identical client event generation
+
+### When to Use
+
+Use `{service}-client-events.yaml` when your service sends events directly to WebSocket clients:
+- Voice: `VoicePeerJoinedEvent`, `VoiceRoomClosedEvent`, `VoiceTierUpgradeEvent`
+- Connect: `CapabilitiesRefreshEvent`, `DisconnectNotificationEvent`
+- GameSession: `PlayerJoinedEvent`, `GameStateChangedEvent`
+
+### When NOT to Use
+
+Do NOT create client events for service-to-service events that clients never see:
+- `account.deleted` - Only consumed by AuthService
+- `session.invalidated` - Only consumed by ConnectService
+- `service.registered` - Internal infrastructure events
 
 ---
 

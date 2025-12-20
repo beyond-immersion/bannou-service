@@ -2,12 +2,17 @@ using BeyondImmersion.Bannou.Voice.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Voice.Clients;
 using BeyondImmersion.BannouService.Voice.Services;
 using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
+
+// Alias to disambiguate from internal SipCredentials type in Services namespace
+using ClientSipCredentials = BeyondImmersion.Bannou.Voice.ClientEvents.SipCredentials;
 
 [assembly: InternalsVisibleTo("lib-voice.tests")]
 
@@ -15,7 +20,7 @@ namespace BeyondImmersion.BannouService.Voice;
 
 /// <summary>
 /// Implementation of the Voice service.
-/// Manages P2P voice room coordination for game sessions.
+/// Manages P2P and scaled tier voice room coordination for game sessions.
 /// </summary>
 [DaprService("voice", typeof(IVoiceService), lifetime: ServiceLifetime.Scoped)]
 public class VoiceService : IVoiceService
@@ -26,7 +31,9 @@ public class VoiceService : IVoiceService
     private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly ISipEndpointRegistry _endpointRegistry;
     private readonly IP2PCoordinator _p2pCoordinator;
+    private readonly IScaledTierCoordinator _scaledTierCoordinator;
     private readonly IClientEventPublisher? _clientEventPublisher;
+    private readonly IPermissionsClient? _permissionsClient;
 
     private const string STATE_STORE = "voice-statestore";
     private const string ROOM_KEY_PREFIX = "voice:room:";
@@ -41,7 +48,9 @@ public class VoiceService : IVoiceService
     /// <param name="errorEventEmitter">Error event emitter for unexpected failures.</param>
     /// <param name="endpointRegistry">SIP endpoint registry for participant tracking.</param>
     /// <param name="p2pCoordinator">P2P coordinator for mesh topology management.</param>
+    /// <param name="scaledTierCoordinator">Scaled tier coordinator for SFU-based conferencing.</param>
     /// <param name="clientEventPublisher">Optional client event publisher for WebSocket push events. May be null if Connect service is not loaded.</param>
+    /// <param name="permissionsClient">Optional permissions client for setting voice:ringing state. May be null if Permissions service is not loaded.</param>
     public VoiceService(
         DaprClient daprClient,
         ILogger<VoiceService> logger,
@@ -49,7 +58,9 @@ public class VoiceService : IVoiceService
         IErrorEventEmitter errorEventEmitter,
         ISipEndpointRegistry endpointRegistry,
         IP2PCoordinator p2pCoordinator,
-        IClientEventPublisher? clientEventPublisher = null)
+        IScaledTierCoordinator scaledTierCoordinator,
+        IClientEventPublisher? clientEventPublisher = null,
+        IPermissionsClient? permissionsClient = null)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -57,7 +68,9 @@ public class VoiceService : IVoiceService
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _endpointRegistry = endpointRegistry ?? throw new ArgumentNullException(nameof(endpointRegistry));
         _p2pCoordinator = p2pCoordinator ?? throw new ArgumentNullException(nameof(p2pCoordinator));
+        _scaledTierCoordinator = scaledTierCoordinator ?? throw new ArgumentNullException(nameof(scaledTierCoordinator));
         _clientEventPublisher = clientEventPublisher; // Optional - may be null if Connect service not loaded (Tenet 5)
+        _permissionsClient = permissionsClient; // Optional - may be null if Permissions service not loaded (Tenet 5)
     }
 
     /// <summary>
@@ -187,10 +200,11 @@ public class VoiceService : IVoiceService
 
     /// <summary>
     /// Joins a voice room and registers the participant's SIP endpoint.
+    /// Handles both P2P mode (returns peer list) and scaled mode (returns SIP credentials).
     /// </summary>
     public async Task<(StatusCodes, JoinVoiceRoomResponse?)> JoinVoiceRoomAsync(JoinVoiceRoomRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Account {AccountId} joining voice room {RoomId}", body.AccountId, body.RoomId);
+        _logger.LogInformation("Session {SessionId} joining voice room {RoomId}", body.SessionId, body.RoomId);
 
         try
         {
@@ -208,44 +222,63 @@ public class VoiceService : IVoiceService
 
             // Check participant count
             var currentCount = await _endpointRegistry.GetParticipantCountAsync(body.RoomId, cancellationToken);
+            var isScaledTier = roomData.Tier?.ToLowerInvariant() == "scaled";
 
-            // Check if room can accept new participant
-            var canAccept = await _p2pCoordinator.CanAcceptNewParticipantAsync(body.RoomId, currentCount, cancellationToken);
+            // Check if room can accept new participant based on current tier
+            bool canAccept;
+            if (isScaledTier)
+            {
+                canAccept = await _scaledTierCoordinator.CanAcceptNewParticipantAsync(body.RoomId, currentCount, cancellationToken);
+            }
+            else
+            {
+                canAccept = await _p2pCoordinator.CanAcceptNewParticipantAsync(body.RoomId, currentCount, cancellationToken);
+            }
+
             if (!canAccept)
             {
-                _logger.LogWarning("Voice room {RoomId} at capacity, cannot accept participant", body.RoomId);
-                return (StatusCodes.Conflict, null);
+                // If P2P is full and scaled tier is enabled, check if we can upgrade
+                if (!isScaledTier && _configuration.ScaledTierEnabled && _configuration.TierUpgradeEnabled)
+                {
+                    _logger.LogInformation("P2P room {RoomId} at capacity, attempting tier upgrade to scaled", body.RoomId);
+                    var upgradeResult = await TryUpgradeToScaledTierAsync(body.RoomId, roomData, cancellationToken);
+                    if (upgradeResult)
+                    {
+                        // Reload room data after upgrade
+                        roomData = await _daprClient.GetStateAsync<VoiceRoomData>(
+                            STATE_STORE,
+                            $"{ROOM_KEY_PREFIX}{body.RoomId}",
+                            cancellationToken: cancellationToken);
+                        isScaledTier = true;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Voice room {RoomId} at capacity and tier upgrade failed", body.RoomId);
+                        return (StatusCodes.Conflict, null);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("Voice room {RoomId} at capacity, cannot accept participant", body.RoomId);
+                    return (StatusCodes.Conflict, null);
+                }
             }
 
             // Register participant
             var registered = await _endpointRegistry.RegisterAsync(
                 body.RoomId,
-                body.AccountId,
-                body.SipEndpoint,
                 body.SessionId,
+                body.SipEndpoint,
                 body.DisplayName,
                 cancellationToken);
 
             if (!registered)
             {
-                _logger.LogWarning("Participant {AccountId} already in room {RoomId}", body.AccountId, body.RoomId);
+                _logger.LogWarning("Session {SessionId} already in room {RoomId}", body.SessionId, body.RoomId);
                 return (StatusCodes.Conflict, null);
             }
 
-            // Get peers for the new participant (excluding themselves)
-            var peers = await _p2pCoordinator.GetMeshPeersForNewJoinAsync(body.RoomId, body.AccountId, cancellationToken);
-
-            // Convert to VoicePeer list for response
-            var peerList = peers.Select(p => new VoicePeer
-            {
-                AccountId = p.AccountId,
-                DisplayName = p.DisplayName,
-                SipEndpoint = new SipEndpoint
-                {
-                    SdpOffer = p.SdpOffer,
-                    IceCandidates = p.IceCandidates ?? new List<string>()
-                }
-            }).ToList();
+            var newCount = currentCount + 1;
 
             // Parse STUN servers from config
             var stunServers = _configuration.StunServers?
@@ -253,23 +286,64 @@ public class VoiceService : IVoiceService
                 .Select(s => s.Trim())
                 .ToList() ?? new List<string> { "stun:stun.l.google.com:19302" };
 
-            // Check if tier upgrade is needed
-            var newCount = currentCount + 1;
-            var tierUpgradePending = await _p2pCoordinator.ShouldUpgradeToScaledAsync(body.RoomId, newCount, cancellationToken);
+            // Handle based on current tier
+            if (isScaledTier)
+            {
+                // Scaled tier: Return RTP server URI and SIP credentials
+                // Note: SIP credentials are generated per-session for security
+                _logger.LogInformation("Session {SessionId} joined scaled tier room {RoomId}", body.SessionId, body.RoomId);
 
-            // Notify existing peers about the new participant
-            await NotifyPeerJoinedAsync(body.RoomId, body.AccountId, body.DisplayName, body.SipEndpoint, newCount, cancellationToken);
+                return (StatusCodes.OK, new JoinVoiceRoomResponse
+                {
+                    Success = true,
+                    RoomId = body.RoomId,
+                    Tier = VoiceTier.Scaled,
+                    Codec = ParseVoiceCodec(roomData.Codec),
+                    Peers = new List<VoicePeer>(), // No peers in scaled mode
+                    RtpServerUri = roomData.RtpServerUri,
+                    StunServers = stunServers,
+                    TierUpgradePending = false
+                });
+            }
 
-            _logger.LogInformation("Account {AccountId} joined voice room {RoomId}, {PeerCount} peers", body.AccountId, body.RoomId, peers.Count);
+            // P2P tier: Return peer list (P2PCoordinator already returns VoicePeer objects)
+            var peers = await _p2pCoordinator.GetMeshPeersForNewJoinAsync(body.RoomId, body.SessionId, cancellationToken);
+
+            // Check if tier upgrade is needed for future joins
+            var tierUpgradePending = _configuration.TierUpgradeEnabled &&
+                                    _configuration.ScaledTierEnabled &&
+                                    await _p2pCoordinator.ShouldUpgradeToScaledAsync(body.RoomId, newCount, cancellationToken);
+
+            // Notify existing peers about the new participant (use sessionId for privacy - don't leak accountId)
+            await NotifyPeerJoinedAsync(body.RoomId, body.SessionId, body.DisplayName, body.SipEndpoint, newCount, cancellationToken);
+
+            // If tier upgrade is pending and enabled, trigger the upgrade now
+            if (tierUpgradePending)
+            {
+                _logger.LogInformation("Triggering tier upgrade for room {RoomId} at {Count} participants", body.RoomId, newCount);
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await TryUpgradeToScaledTierAsync(body.RoomId, roomData, cancellationToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Background tier upgrade failed for room {RoomId}", body.RoomId);
+                    }
+                });
+            }
+
+            _logger.LogInformation("Session {SessionId} joined P2P voice room {RoomId}, {PeerCount} peers", body.SessionId, body.RoomId, peers.Count);
 
             return (StatusCodes.OK, new JoinVoiceRoomResponse
             {
                 Success = true,
                 RoomId = body.RoomId,
-                Tier = ParseVoiceTier(roomData.Tier),
+                Tier = VoiceTier.P2p,
                 Codec = ParseVoiceCodec(roomData.Codec),
-                Peers = peerList,
-                RtpServerUri = roomData.RtpServerUri,
+                Peers = peers,
+                RtpServerUri = null,
                 StunServers = stunServers,
                 TierUpgradePending = tierUpgradePending
             });
@@ -295,16 +369,16 @@ public class VoiceService : IVoiceService
     /// </summary>
     public async Task<(StatusCodes, object?)> LeaveVoiceRoomAsync(LeaveVoiceRoomRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Account {AccountId} leaving voice room {RoomId}", body.AccountId, body.RoomId);
+        _logger.LogInformation("Session {SessionId} leaving voice room {RoomId}", body.SessionId, body.RoomId);
 
         try
         {
             // Unregister participant
-            var removed = await _endpointRegistry.UnregisterAsync(body.RoomId, body.AccountId, cancellationToken);
+            var removed = await _endpointRegistry.UnregisterAsync(body.RoomId, body.SessionId, cancellationToken);
 
             if (removed == null)
             {
-                _logger.LogDebug("Participant {AccountId} not found in room {RoomId}", body.AccountId, body.RoomId);
+                _logger.LogDebug("Session {SessionId} not found in room {RoomId}", body.SessionId, body.RoomId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -312,9 +386,9 @@ public class VoiceService : IVoiceService
             var remainingCount = await _endpointRegistry.GetParticipantCountAsync(body.RoomId, cancellationToken);
 
             // Notify remaining peers
-            await NotifyPeerLeftAsync(body.RoomId, body.AccountId, removed.DisplayName, remainingCount, cancellationToken);
+            await NotifyPeerLeftAsync(body.RoomId, removed.SessionId, removed.DisplayName, remainingCount, cancellationToken);
 
-            _logger.LogInformation("Account {AccountId} left voice room {RoomId}", body.AccountId, body.RoomId);
+            _logger.LogInformation("Session {SessionId} left voice room {RoomId}", body.SessionId, body.RoomId);
 
             return (StatusCodes.OK, null);
         }
@@ -336,6 +410,7 @@ public class VoiceService : IVoiceService
 
     /// <summary>
     /// Deletes a voice room and notifies all participants.
+    /// For scaled tier rooms, also releases RTP server resources.
     /// </summary>
     public async Task<(StatusCodes, object?)> DeleteVoiceRoomAsync(DeleteVoiceRoomRequest body, CancellationToken cancellationToken)
     {
@@ -360,6 +435,14 @@ public class VoiceService : IVoiceService
 
             // Clear all participants
             await _endpointRegistry.ClearRoomAsync(body.RoomId, cancellationToken);
+
+            // If this was a scaled tier room, release RTP server resources
+            // Fail-fast: RTP cleanup failures propagate to caller for proper error handling
+            if (roomData.Tier?.ToLowerInvariant() == "scaled" && !string.IsNullOrEmpty(roomData.RtpServerUri))
+            {
+                await _scaledTierCoordinator.ReleaseRtpServerAsync(body.RoomId, cancellationToken);
+                _logger.LogDebug("Released RTP server resources for room {RoomId}", body.RoomId);
+            }
 
             // Delete room data
             await _daprClient.DeleteStateAsync(STATE_STORE, $"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken: cancellationToken);
@@ -395,15 +478,15 @@ public class VoiceService : IVoiceService
     /// </summary>
     public async Task<(StatusCodes, object?)> PeerHeartbeatAsync(PeerHeartbeatRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Heartbeat from {AccountId} in room {RoomId}", body.AccountId, body.RoomId);
+        _logger.LogDebug("Heartbeat from {SessionId} in room {RoomId}", body.SessionId, body.RoomId);
 
         try
         {
-            var updated = await _endpointRegistry.UpdateHeartbeatAsync(body.RoomId, body.AccountId, cancellationToken);
+            var updated = await _endpointRegistry.UpdateHeartbeatAsync(body.RoomId, body.SessionId, cancellationToken);
 
             if (!updated)
             {
-                _logger.LogDebug("Peer {AccountId} not found in room {RoomId}", body.AccountId, body.RoomId);
+                _logger.LogDebug("Session {SessionId} not found in room {RoomId}", body.SessionId, body.RoomId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -411,7 +494,7 @@ public class VoiceService : IVoiceService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing heartbeat for {AccountId} in room {RoomId}", body.AccountId, body.RoomId);
+            _logger.LogError(ex, "Error processing heartbeat for {SessionId} in room {RoomId}", body.SessionId, body.RoomId);
             await _errorEventEmitter.TryPublishAsync(
                 "voice",
                 "PeerHeartbeat",
@@ -426,45 +509,71 @@ public class VoiceService : IVoiceService
     }
 
     /// <summary>
-    /// Updates a participant's SIP endpoint (e.g., ICE candidate change).
+    /// Processes an SDP answer from a client to complete a WebRTC handshake.
+    /// Called by clients after receiving VoicePeerJoinedEvent with an SDP offer.
     /// </summary>
-    public async Task<(StatusCodes, object?)> UpdatePeerEndpointAsync(UpdatePeerEndpointRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, object?)> AnswerPeerAsync(AnswerPeerRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Updating endpoint for {AccountId} in room {RoomId}", body.AccountId, body.RoomId);
+        _logger.LogDebug("Processing SDP answer for target {TargetSessionId} in room {RoomId}", body.TargetSessionId, body.RoomId);
 
         try
         {
-            var updated = await _endpointRegistry.UpdateEndpointAsync(body.RoomId, body.AccountId, body.SipEndpoint, cancellationToken);
+            // Find the target participant to send the answer to
+            var targetParticipant = await _endpointRegistry.GetParticipantAsync(body.RoomId, body.TargetSessionId, cancellationToken);
 
-            if (!updated)
+            if (targetParticipant == null)
             {
-                _logger.LogDebug("Peer {AccountId} not found in room {RoomId}", body.AccountId, body.RoomId);
+                _logger.LogDebug("Target session {TargetSessionId} not found in room {RoomId}", body.TargetSessionId, body.RoomId);
                 return (StatusCodes.NotFound, null);
             }
 
-            // Get participant info for the event
-            var participant = await _endpointRegistry.GetParticipantAsync(body.RoomId, body.AccountId, cancellationToken);
-
-            // Notify other peers about the endpoint update
-            if (participant != null)
+            if (_clientEventPublisher == null)
             {
-                await NotifyPeerUpdatedAsync(body.RoomId, body.AccountId, participant.DisplayName, body.SipEndpoint, cancellationToken);
+                _logger.LogDebug("Client event publisher not available, cannot send answer to target");
+                return (StatusCodes.OK, null);
             }
 
-            _logger.LogInformation("Updated endpoint for {AccountId} in room {RoomId}", body.AccountId, body.RoomId);
+            // Get the sender's display name for the event
+            var senderParticipant = await _endpointRegistry.GetParticipantAsync(body.RoomId, body.SenderSessionId, cancellationToken);
+            var senderDisplayName = senderParticipant?.DisplayName ?? "Unknown";
+
+            // Send VoicePeerUpdatedEvent directly to the TARGET session
+            // The Peer describes who sent the update (the answering peer)
+            var peerUpdatedEvent = new VoicePeerUpdatedEvent
+            {
+                Event_name = VoicePeerUpdatedEventEvent_name.Voice_peer_updated,
+                Event_id = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Room_id = body.RoomId,
+                Peer = new VoicePeerInfo
+                {
+                    Peer_session_id = body.SenderSessionId,
+                    Display_name = senderDisplayName,
+                    Sdp_offer = body.SdpAnswer, // Using Sdp_offer to carry the SDP answer
+                    Ice_candidates = body.IceCandidates?.ToList() ?? new List<string>()
+                }
+            };
+
+            // Send directly to the target session
+            await _clientEventPublisher.PublishToSessionsAsync(
+                new[] { body.TargetSessionId },
+                peerUpdatedEvent,
+                cancellationToken);
+
+            _logger.LogInformation("Sent SDP answer to target {TargetSessionId} in room {RoomId}", body.TargetSessionId, body.RoomId);
 
             return (StatusCodes.OK, null);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating endpoint for {AccountId} in room {RoomId}", body.AccountId, body.RoomId);
+            _logger.LogError(ex, "Error processing SDP answer for target {TargetSessionId} in room {RoomId}", body.TargetSessionId, body.RoomId);
             await _errorEventEmitter.TryPublishAsync(
                 "voice",
-                "UpdatePeerEndpoint",
+                "AnswerPeer",
                 "unexpected_exception",
                 ex.Message,
                 dependency: null,
-                endpoint: "post:/voice/peer/update-endpoint",
+                endpoint: "post:/voice/peer/answer",
                 details: null,
                 stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
@@ -475,10 +584,11 @@ public class VoiceService : IVoiceService
 
     /// <summary>
     /// Notifies existing peers that a new peer has joined.
+    /// Also sets the voice:ringing state for recipients so they can respond via /voice/peer/answer.
     /// </summary>
     private async Task NotifyPeerJoinedAsync(
         Guid roomId,
-        Guid newAccountId,
+        string newPeerSessionId,
         string? displayName,
         SipEndpoint sipEndpoint,
         int currentCount,
@@ -492,13 +602,41 @@ public class VoiceService : IVoiceService
 
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
         var sessionIds = participants
-            .Where(p => p.AccountId != newAccountId && !string.IsNullOrEmpty(p.SessionId))
+            .Where(p => p.SessionId != newPeerSessionId && !string.IsNullOrEmpty(p.SessionId))
             .Select(p => p.SessionId!)
             .ToList();
 
         if (sessionIds.Count == 0)
         {
             return;
+        }
+
+        // Set voice:ringing state for all recipient sessions before publishing the event
+        // This enables them to call /voice/peer/answer to send SDP answers (Tenet 10)
+        if (_permissionsClient != null)
+        {
+            foreach (var sessionId in sessionIds)
+            {
+                try
+                {
+                    await _permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
+                    {
+                        SessionId = sessionId,
+                        ServiceId = "voice",
+                        NewState = "ringing"
+                    }, cancellationToken);
+                    _logger.LogDebug("Set voice:ringing state for session {SessionId}", sessionId);
+                }
+                catch (Exception ex)
+                {
+                    // Log but don't fail - the event is more important
+                    _logger.LogWarning(ex, "Failed to set voice:ringing state for session {SessionId}", sessionId);
+                }
+            }
+        }
+        else
+        {
+            _logger.LogDebug("Permissions client not available, voice:ringing state not set");
         }
 
         var peerJoinedEvent = new VoicePeerJoinedEvent
@@ -509,7 +647,7 @@ public class VoiceService : IVoiceService
             Room_id = roomId,
             Peer = new VoicePeerInfo
             {
-                Account_id = newAccountId,
+                Peer_session_id = newPeerSessionId,
                 Display_name = displayName,
                 Sdp_offer = sipEndpoint.SdpOffer,
                 Ice_candidates = sipEndpoint.IceCandidates?.ToList(),
@@ -527,7 +665,7 @@ public class VoiceService : IVoiceService
     /// </summary>
     private async Task NotifyPeerLeftAsync(
         Guid roomId,
-        Guid leftAccountId,
+        string leftPeerSessionId,
         string? displayName,
         int remainingCount,
         CancellationToken cancellationToken)
@@ -555,7 +693,7 @@ public class VoiceService : IVoiceService
             Event_id = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             Room_id = roomId,
-            Account_id = leftAccountId,
+            Peer_session_id = leftPeerSessionId,
             Display_name = displayName,
             Remaining_participant_count = remainingCount
         };
@@ -569,7 +707,7 @@ public class VoiceService : IVoiceService
     /// </summary>
     private async Task NotifyPeerUpdatedAsync(
         Guid roomId,
-        Guid updatedAccountId,
+        string updatedPeerSessionId,
         string? displayName,
         SipEndpoint sipEndpoint,
         CancellationToken cancellationToken)
@@ -582,7 +720,7 @@ public class VoiceService : IVoiceService
 
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
         var sessionIds = participants
-            .Where(p => p.AccountId != updatedAccountId && !string.IsNullOrEmpty(p.SessionId))
+            .Where(p => p.SessionId != updatedPeerSessionId && !string.IsNullOrEmpty(p.SessionId))
             .Select(p => p.SessionId!)
             .ToList();
 
@@ -599,7 +737,7 @@ public class VoiceService : IVoiceService
             Room_id = roomId,
             Peer = new VoicePeerInfo
             {
-                Account_id = updatedAccountId,
+                Peer_session_id = updatedPeerSessionId,
                 Display_name = displayName,
                 Sdp_offer = sipEndpoint.SdpOffer,
                 Ice_candidates = sipEndpoint.IceCandidates?.ToList(),
@@ -654,6 +792,134 @@ public class VoiceService : IVoiceService
 
         var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIds, roomClosedEvent, cancellationToken);
         _logger.LogDebug("Published room_closed event to {Count} sessions", publishedCount);
+    }
+
+    /// <summary>
+    /// Notifies all participants about tier upgrade from P2P to scaled.
+    /// Each participant receives their unique SIP credentials for connecting to the RTP server.
+    /// </summary>
+    private async Task NotifyTierUpgradeAsync(
+        Guid roomId,
+        string rtpServerUri,
+        CancellationToken cancellationToken)
+    {
+        if (_clientEventPublisher == null)
+        {
+            _logger.LogDebug("Client event publisher not available, skipping tier_upgrade notification");
+            return;
+        }
+
+        var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
+        var participantsWithSessions = participants
+            .Where(p => !string.IsNullOrEmpty(p.SessionId))
+            .ToList();
+
+        if (participantsWithSessions.Count == 0)
+        {
+            return;
+        }
+
+        var publishedCount = 0;
+        foreach (var participant in participantsWithSessions)
+        {
+            // Generate unique SIP credentials for this participant
+            var internalCredentials = _scaledTierCoordinator.GenerateSipCredentials(participant.SessionId!, roomId);
+
+            // Map internal credentials to client event model
+            var clientCredentials = new ClientSipCredentials
+            {
+                Username = internalCredentials.Username,
+                Password = internalCredentials.Password,
+                Domain = internalCredentials.Registrar,
+                Expires_at = null // Credentials valid for session duration
+            };
+
+            var tierUpgradeEvent = new VoiceTierUpgradeEvent
+            {
+                Event_name = VoiceTierUpgradeEventEvent_name.Voice_tier_upgrade,
+                Event_id = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Room_id = roomId,
+                Previous_tier = VoiceTierUpgradeEventPrevious_tier.P2p,
+                New_tier = VoiceTierUpgradeEventNew_tier.Scaled,
+                Rtp_server_uri = rtpServerUri,
+                Sip_credentials = clientCredentials,
+                Migration_deadline_ms = _configuration.TierUpgradeMigrationDeadlineMs
+            };
+
+            var success = await _clientEventPublisher.PublishToSessionAsync(participant.SessionId!, tierUpgradeEvent, cancellationToken);
+            if (success)
+            {
+                publishedCount++;
+            }
+        }
+
+        _logger.LogInformation("Published tier_upgrade event to {Count} sessions for room {RoomId}", publishedCount, roomId);
+    }
+
+    #endregion
+
+    #region Tier Upgrade Methods
+
+    /// <summary>
+    /// Attempts to upgrade a room from P2P to scaled tier.
+    /// </summary>
+    /// <param name="roomId">The room ID to upgrade.</param>
+    /// <param name="roomData">Current room data.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if upgrade succeeded, false otherwise.</returns>
+    private async Task<bool> TryUpgradeToScaledTierAsync(
+        Guid roomId,
+        VoiceRoomData roomData,
+        CancellationToken cancellationToken)
+    {
+        if (!_configuration.ScaledTierEnabled)
+        {
+            _logger.LogWarning("Scaled tier not enabled, cannot upgrade room {RoomId}", roomId);
+            return false;
+        }
+
+        try
+        {
+            _logger.LogInformation("Starting tier upgrade for room {RoomId} from P2P to scaled", roomId);
+
+            // Allocate an RTP server for this room
+            var rtpServerUri = await _scaledTierCoordinator.AllocateRtpServerAsync(roomId, cancellationToken);
+
+            // Update room data to scaled tier
+            var updatedRoomData = new VoiceRoomData
+            {
+                RoomId = roomData.RoomId,
+                SessionId = roomData.SessionId,
+                Tier = "scaled",
+                Codec = roomData.Codec,
+                MaxParticipants = _scaledTierCoordinator.GetScaledMaxParticipants(),
+                CreatedAt = roomData.CreatedAt,
+                RtpServerUri = rtpServerUri
+            };
+
+            await _daprClient.SaveStateAsync(STATE_STORE, $"{ROOM_KEY_PREFIX}{roomId}", updatedRoomData, cancellationToken: cancellationToken);
+
+            // Notify all current participants about the tier upgrade
+            await NotifyTierUpgradeAsync(roomId, rtpServerUri, cancellationToken);
+
+            _logger.LogInformation("Successfully upgraded room {RoomId} to scaled tier with RTP server {RtpServer}", roomId, rtpServerUri);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to upgrade room {RoomId} to scaled tier", roomId);
+            await _errorEventEmitter.TryPublishAsync(
+                "voice",
+                "TryUpgradeToScaledTier",
+                "tier_upgrade_failed",
+                ex.Message,
+                dependency: "rtpengine",
+                endpoint: null,
+                details: $"RoomId: {roomId}",
+                stack: ex.StackTrace);
+            return false;
+        }
     }
 
     #endregion

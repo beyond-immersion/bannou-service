@@ -415,6 +415,10 @@ components:
         characterData:
           type: object
           additionalProperties: true
+        voiceSessionId:
+          type: string
+          nullable: true
+          description: Voice participant session ID (if player has joined voice)
 
     KickPlayerRequest:
       type: object
@@ -520,62 +524,37 @@ components:
 
     VoiceConnectionInfo:
       type: object
-      description: Voice connection information returned when joining a session
+      description: |
+        Minimal voice metadata returned when joining a session.
+
+        **Event-Only Pattern**: Peer connection details are NOT included here.
+        Clients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).
+        This avoids race conditions between response processing and event handling.
       required:
-        - roomId
-        - tier
+        - voiceEnabled
       properties:
+        voiceEnabled:
+          type: boolean
+          description: Whether voice is enabled for this game session
         roomId:
           type: string
           format: uuid
-          description: Voice room ID
+          nullable: true
+          description: Voice room ID (null until room is created when 2+ participants join with voice)
         tier:
           type: string
           enum: [p2p, scaled]
-          description: Voice tier (p2p for direct connections, scaled for RTP server)
+          nullable: true
+          description: Expected voice tier (may change based on participant count)
         codec:
           type: string
           enum: [opus, g711, g722]
           description: Audio codec to use
-        peers:
-          type: array
-          items:
-            $ref: '#/components/schemas/VoicePeerInfo'
-          description: List of peers to connect to (P2P mode only)
-        rtpServerUri:
-          type: string
-          nullable: true
-          description: RTP server URI (scaled mode only)
         stunServers:
           type: array
           items:
             type: string
-          description: STUN server URIs for NAT traversal
-
-    VoicePeerInfo:
-      type: object
-      description: Peer connection info for P2P voice
-      required:
-        - accountId
-        - sdpOffer
-      properties:
-        accountId:
-          type: string
-          format: uuid
-          description: Peer's account ID
-        displayName:
-          type: string
-          nullable: true
-          description: Peer's display name
-        sdpOffer:
-          type: string
-          description: SDP offer for WebRTC negotiation
-        iceCandidates:
-          type: array
-          items:
-            type: string
-          nullable: true
-          description: ICE candidates for NAT traversal
+          description: STUN server URIs for NAT traversal (clients should configure these early)
 
 # Service Registration Information (used by permission system)
 x-service-registration:

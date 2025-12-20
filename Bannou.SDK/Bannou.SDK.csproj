@@ -78,6 +78,8 @@
       <Compile Include="../bannou-service/Generated/Events/SpeciesLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/RealmLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/CommonEventsModels.cs" />
+      <Compile Include="../lib-game-session/Generated/GameSessionClientEventsModels.cs" />
+      <Compile Include="../lib-voice/Generated/VoiceClientEventsModels.cs" />
     </ItemGroup>
   </Target>
 

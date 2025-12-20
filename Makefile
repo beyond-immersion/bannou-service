@@ -687,6 +687,130 @@ test-pre-cleanup:
 	@scripts/cleanup-test-containers.sh --force 2>/dev/null || true
 
 # =============================================================================
+# VOICE INFRASTRUCTURE (Kamailio + RTPEngine)
+# =============================================================================
+# Scaled tier voice infrastructure for conferences with 6+ participants.
+# Uses network_mode: host for SIP/RTP traffic handling.
+# Kamailio: SIP proxy with JSONRPC control on :5080
+# RTPEngine: SFU media relay with ng protocol on UDP :22222
+# =============================================================================
+
+up-voice: ## Start voice infrastructure (Kamailio + RTPEngine)
+	@echo "🎙️ Starting voice infrastructure..."
+	if [ ! -f .env ]; then touch .env; fi
+	docker compose --env-file ./.env \
+		-f provisioning/docker-compose.voice.yml \
+		--project-name bannou-voice up -d
+	@echo "✅ Voice infrastructure running"
+	@echo "📋 Services:"
+	@echo "   Kamailio SIP:      UDP/TCP :5060"
+	@echo "   Kamailio JSONRPC:  HTTP :5080/RPC"
+	@echo "   RTPEngine ng:      UDP :22222"
+	@echo "   RTPEngine CLI:     TCP :9901"
+
+down-voice: ## Stop voice infrastructure
+	@echo "🛑 Stopping voice infrastructure..."
+	docker compose \
+		-f provisioning/docker-compose.voice.yml \
+		--project-name bannou-voice down --remove-orphans
+	@echo "✅ Voice infrastructure stopped"
+
+logs-voice: ## View voice infrastructure logs
+	docker compose \
+		-f provisioning/docker-compose.voice.yml \
+		--project-name bannou-voice logs -f
+
+logs-kamailio: ## View Kamailio logs only
+	docker logs -f bannou-kamailio
+
+logs-rtpengine: ## View RTPEngine logs only
+	docker logs -f bannou-rtpengine
+
+voice-status: ## Check voice infrastructure health
+	@echo "📋 Voice Infrastructure Status:"
+	@echo ""
+	@echo "Kamailio:"
+	@curl -s http://127.0.0.1:5080/health || echo "❌ Not responding"
+	@echo ""
+	@echo ""
+	@echo "RTPEngine:"
+	@echo "list totals" | nc -q1 127.0.0.1 9901 2>/dev/null || echo "❌ Not responding"
+
+# Start full stack with voice infrastructure
+up-compose-voice: ## Start services + voice infrastructure
+	@echo "🚀 Starting full stack with voice infrastructure..."
+	if [ ! -f .env ]; then touch .env; fi
+	docker compose --env-file ./.env \
+		-f provisioning/docker-compose.yml \
+		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.voice.yml \
+		--project-name bannou up -d
+	@echo "✅ Full stack with voice infrastructure running"
+
+down-compose-voice: ## Stop services + voice infrastructure
+	docker compose \
+		-f provisioning/docker-compose.yml \
+		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.voice.yml \
+		--project-name bannou down --remove-orphans
+
+# Voice Scaled Tier integration testing
+# Tests voice service with Kamailio + RTPEngine infrastructure
+# Stack: base + services + voice + test + test.http (voice plugin only)
+test-voice-scaled: ## Voice scaled tier tests with Kamailio + RTPEngine
+	@echo "🎙️ Running Voice Scaled Tier integration tests..."
+	@echo "📋 Starting voice infrastructure (Kamailio + RTPEngine)..."
+	@if [ ! -f .env ]; then touch .env; fi
+	@docker compose --env-file ./.env \
+		-f provisioning/docker-compose.voice.yml \
+		--project-name bannou-voice up -d
+	@echo "⏳ Waiting for voice infrastructure to be healthy..."
+	@sleep 5
+	@echo "📋 Building test containers..."
+	@SERVICE_DOMAIN=test-voice PLUGIN=voice docker compose -p bannou-test-voice \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.http.yml" \
+		build --no-cache
+	@SERVICE_DOMAIN=test-voice PLUGIN=voice docker compose -p bannou-test-voice \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.http.yml" \
+		up -d
+	@( SERVICE_DOMAIN=test-voice PLUGIN=voice docker compose -p bannou-test-voice \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.http.yml" \
+		logs -f bannou-http-tester & ); \
+	SERVICE_DOMAIN=test-voice PLUGIN=voice docker compose -p bannou-test-voice \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.http.yml" \
+		wait bannou-http-tester; \
+	TEST_EXIT_CODE=$$?; \
+	echo "🧹 Cleaning up test containers..."; \
+	docker compose -p bannou-test-voice \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.http.yml" \
+		down --remove-orphans -v; \
+	echo "🧹 Stopping voice infrastructure..."; \
+	docker compose \
+		-f provisioning/docker-compose.voice.yml \
+		--project-name bannou-voice down --remove-orphans; \
+	if [ $$TEST_EXIT_CODE -eq 0 ]; then \
+		echo "✅ Voice Scaled Tier tests completed successfully"; \
+	else \
+		echo "❌ Voice Scaled Tier tests failed with exit code $$TEST_EXIT_CODE"; \
+	fi; \
+	exit $$TEST_EXIT_CODE
+
+# =============================================================================
 # GIT TAGGING
 # =============================================================================
 

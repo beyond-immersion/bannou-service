@@ -4473,6 +4473,11 @@
             Voice connection info (if voice is enabled for this session)
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.GamePlayer.VoiceSessionId">
+            <summary>
+            Voice participant session ID (if player has joined voice)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.KickPlayerRequest.SessionId">
             <summary>
             ID of the game session
@@ -4540,17 +4545,27 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.VoiceConnectionInfo">
             <summary>
-            Voice connection information returned when joining a session
+            Minimal voice metadata returned when joining a session.
+            <br/>
+            <br/>**Event-Only Pattern**: Peer connection details are NOT included here.
+            <br/>Clients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).
+            <br/>This avoids race conditions between response processing and event handling.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.VoiceConnectionInfo.VoiceEnabled">
+            <summary>
+            Whether voice is enabled for this game session
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.VoiceConnectionInfo.RoomId">
             <summary>
-            Voice room ID
+            Voice room ID (null until room is created when 2+ participants join with voice)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.VoiceConnectionInfo.Tier">
             <summary>
-            Voice tier (p2p for direct connections, scaled for RTP server)
+            Expected voice tier (may change based on participant count)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.VoiceConnectionInfo.Codec">
@@ -4558,44 +4573,9 @@
             Audio codec to use
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.VoiceConnectionInfo.Peers">
-            <summary>
-            List of peers to connect to (P2P mode only)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.VoiceConnectionInfo.RtpServerUri">
-            <summary>
-            RTP server URI (scaled mode only)
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.VoiceConnectionInfo.StunServers">
             <summary>
-            STUN server URIs for NAT traversal
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.GameSession.VoicePeerInfo">
-            <summary>
-            Peer connection info for P2P voice
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.VoicePeerInfo.AccountId">
-            <summary>
-            Peer's account ID
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.VoicePeerInfo.DisplayName">
-            <summary>
-            Peer's display name
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.VoicePeerInfo.SdpOffer">
-            <summary>
-            SDP offer for WebRTC negotiation
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.VoicePeerInfo.IceCandidates">
-            <summary>
-            ICE candidates for NAT traversal
+            STUN server URIs for NAT traversal (clients should configure these early)
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Location.ILocationClient.GetLocationAsync(BeyondImmersion.BannouService.Location.GetLocationRequest,System.Threading.CancellationToken)">
@@ -10445,16 +10425,21 @@
             <returns>Heartbeat acknowledged</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Voice.IVoiceClient.UpdatePeerEndpointAsync(BeyondImmersion.BannouService.Voice.UpdatePeerEndpointRequest,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Voice.IVoiceClient.AnswerPeerAsync(BeyondImmersion.BannouService.Voice.AnswerPeerRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
             <summary>
-            Update SIP endpoint details
+            Send SDP answer to complete WebRTC handshake
             </summary>
             <remarks>
-            Updates a participant's SIP endpoint (e.g., ICE candidate change).
-            <br/>Notifies other peers of the endpoint change.
+            Called by clients after receiving a VoicePeerJoinedEvent containing an SDP offer.
+            <br/>The client generates an SDP answer and sends it via this endpoint.
+            <br/>The answering peer is notified via VoicePeerUpdatedEvent.
+            <br/>
+            <br/>**Access Control**: This endpoint requires the `voice:ringing` state, which is
+            <br/>automatically set by the Voice service when a VoicePeerJoinedEvent is sent to the client.
+            <br/>The state is cleared after the answer is processed or times out.
             </remarks>
-            <returns>Endpoint updated successfully</returns>
+            <returns>SDP answer processed, peer notified</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
@@ -10547,16 +10532,21 @@
             <returns>Heartbeat acknowledged</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.UpdatePeerEndpointAsync(BeyondImmersion.BannouService.Voice.UpdatePeerEndpointRequest,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.AnswerPeerAsync(BeyondImmersion.BannouService.Voice.AnswerPeerRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
             <summary>
-            Update SIP endpoint details
+            Send SDP answer to complete WebRTC handshake
             </summary>
             <remarks>
-            Updates a participant's SIP endpoint (e.g., ICE candidate change).
-            <br/>Notifies other peers of the endpoint change.
+            Called by clients after receiving a VoicePeerJoinedEvent containing an SDP offer.
+            <br/>The client generates an SDP answer and sends it via this endpoint.
+            <br/>The answering peer is notified via VoicePeerUpdatedEvent.
+            <br/>
+            <br/>**Access Control**: This endpoint requires the `voice:ringing` state, which is
+            <br/>automatically set by the Voice service when a VoicePeerJoinedEvent is sent to the client.
+            <br/>The state is cleared after the answer is processed or times out.
             </remarks>
-            <returns>Endpoint updated successfully</returns>
+            <returns>SDP answer processed, peer notified</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="T:BeyondImmersion.BannouService.Voice.VoiceTier">
@@ -10617,14 +10607,9 @@
             Voice room ID to join
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomRequest.AccountId">
-            <summary>
-            Account ID of the joining participant
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomRequest.SessionId">
             <summary>
-            WebSocket session ID for event delivery
+            WebSocket session ID (unique participant identifier)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomRequest.SipEndpoint">
@@ -10647,9 +10632,9 @@
             Voice room ID to leave
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Voice.LeaveVoiceRoomRequest.AccountId">
+        <member name="P:BeyondImmersion.BannouService.Voice.LeaveVoiceRoomRequest.SessionId">
             <summary>
-            Account ID of the leaving participant
+            WebSocket session ID of the leaving participant
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Voice.DeleteVoiceRoomRequest">
@@ -10677,29 +10662,41 @@
             Voice room ID
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Voice.PeerHeartbeatRequest.AccountId">
+        <member name="P:BeyondImmersion.BannouService.Voice.PeerHeartbeatRequest.SessionId">
             <summary>
-            Account ID of the peer
+            WebSocket session ID of the peer
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Voice.UpdatePeerEndpointRequest">
+        <member name="T:BeyondImmersion.BannouService.Voice.AnswerPeerRequest">
             <summary>
-            Request to update peer's SIP endpoint
+            Request to send an SDP answer to complete a WebRTC handshake.
+            <br/>Sent by clients after receiving a VoicePeerJoinedEvent with an SDP offer.
+            <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Voice.UpdatePeerEndpointRequest.RoomId">
+        <member name="P:BeyondImmersion.BannouService.Voice.AnswerPeerRequest.RoomId">
             <summary>
             Voice room ID
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Voice.UpdatePeerEndpointRequest.AccountId">
+        <member name="P:BeyondImmersion.BannouService.Voice.AnswerPeerRequest.SenderSessionId">
             <summary>
-            Account ID of the peer
+            Session ID of the answering peer (caller of this endpoint)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Voice.UpdatePeerEndpointRequest.SipEndpoint">
+        <member name="P:BeyondImmersion.BannouService.Voice.AnswerPeerRequest.TargetSessionId">
             <summary>
-            Updated SIP endpoint details
+            Session ID of the peer whose offer we're answering
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.AnswerPeerRequest.SdpAnswer">
+            <summary>
+            SDP answer generated by this client's WebRTC stack
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.AnswerPeerRequest.IceCandidates">
+            <summary>
+            ICE candidates for NAT traversal (can be trickled later)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Voice.VoiceRoomResponse">
@@ -10827,14 +10824,9 @@
             Participant in a voice room
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Voice.VoiceParticipant.AccountId">
-            <summary>
-            Participant's account ID
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Voice.VoiceParticipant.SessionId">
             <summary>
-            WebSocket session ID for event delivery
+            WebSocket session ID (unique participant identifier)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Voice.VoiceParticipant.DisplayName">
@@ -10857,9 +10849,9 @@
             Peer endpoint details for P2P connection
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Voice.VoicePeer.AccountId">
+        <member name="P:BeyondImmersion.BannouService.Voice.VoicePeer.SessionId">
             <summary>
-            Peer's account ID
+            WebSocket session ID for this peer (ephemeral identifier)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Voice.VoicePeer.DisplayName">

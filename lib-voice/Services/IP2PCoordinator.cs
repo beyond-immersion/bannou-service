@@ -1,5 +1,3 @@
-using BeyondImmersion.BannouService.GameSession;
-
 namespace BeyondImmersion.BannouService.Voice.Services;
 
 /// <summary>
@@ -13,12 +11,12 @@ public interface IP2PCoordinator
     /// Returns all existing participants' connection info for full mesh topology.
     /// </summary>
     /// <param name="roomId">The voice room ID.</param>
-    /// <param name="joiningAccountId">The account ID of the joining participant.</param>
+    /// <param name="joiningSessionId">The WebSocket session ID of the joining participant.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of peer connection info for the new participant.</returns>
-    Task<List<VoicePeerInfo>> GetMeshPeersForNewJoinAsync(
+    Task<List<VoicePeer>> GetMeshPeersForNewJoinAsync(
         Guid roomId,
-        Guid joiningAccountId,
+        string joiningSessionId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -52,18 +50,20 @@ public interface IP2PCoordinator
     int GetP2PMaxParticipants();
 
     /// <summary>
-    /// Builds the VoiceConnectionInfo response for a participant joining a P2P room.
+    /// Builds the JoinVoiceRoomResponse for a participant joining a P2P room.
     /// </summary>
     /// <param name="roomId">The voice room ID.</param>
     /// <param name="peers">List of peers to connect to.</param>
     /// <param name="defaultCodec">Default codec to use.</param>
     /// <param name="stunServers">List of STUN server URIs.</param>
+    /// <param name="tierUpgradePending">Whether a tier upgrade is pending.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Voice connection info for client.</returns>
-    Task<VoiceConnectionInfo> BuildP2PConnectionInfoAsync(
+    /// <returns>Join voice room response for service-to-service calls.</returns>
+    Task<JoinVoiceRoomResponse> BuildP2PConnectionInfoAsync(
         Guid roomId,
-        List<VoicePeerInfo> peers,
+        List<VoicePeer> peers,
         string defaultCodec,
         List<string> stunServers,
+        bool tierUpgradePending = false,
         CancellationToken cancellationToken = default);
 }

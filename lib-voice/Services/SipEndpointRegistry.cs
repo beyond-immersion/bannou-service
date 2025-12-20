@@ -8,6 +8,7 @@ namespace BeyondImmersion.BannouService.Voice.Services;
 /// Implementation of SIP endpoint registry using Dapr state store for distributed state.
 /// Uses ConcurrentDictionary for local caching while persisting to Redis via Dapr.
 /// Thread-safe for multi-instance deployments (Tenet 4).
+/// Participants are keyed by sessionId to support multiple connections from the same account.
 /// </summary>
 public class SipEndpointRegistry : ISipEndpointRegistry
 {
@@ -20,9 +21,9 @@ public class SipEndpointRegistry : ISipEndpointRegistry
 
     /// <summary>
     /// Local cache of room participants for fast lookups.
-    /// Key: roomId, Value: concurrent dictionary of accountId -> participant
+    /// Key: roomId, Value: concurrent dictionary of sessionId -> participant
     /// </summary>
-    private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<Guid, ParticipantRegistration>> _localCache = new();
+    private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<string, ParticipantRegistration>> _localCache = new();
 
     /// <summary>
     /// Initializes a new instance of the SipEndpointRegistry.
@@ -43,16 +44,19 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     /// <inheritdoc />
     public async Task<bool> RegisterAsync(
         Guid roomId,
-        Guid accountId,
+        string sessionId,
         SipEndpoint endpoint,
-        string? sessionId = null,
         string? displayName = null,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrEmpty(sessionId))
+        {
+            throw new ArgumentException("SessionId is required", nameof(sessionId));
+        }
+
         var now = DateTimeOffset.UtcNow;
         var participant = new ParticipantRegistration
         {
-            AccountId = accountId,
             SessionId = sessionId,
             DisplayName = displayName,
             Endpoint = endpoint,
@@ -62,28 +66,33 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         };
 
         // Get or create room participant dictionary
-        var roomParticipants = _localCache.GetOrAdd(roomId, _ => new ConcurrentDictionary<Guid, ParticipantRegistration>());
+        var roomParticipants = _localCache.GetOrAdd(roomId, _ => new ConcurrentDictionary<string, ParticipantRegistration>());
 
         // Try to add (fails if already exists)
-        if (!roomParticipants.TryAdd(accountId, participant))
+        if (!roomParticipants.TryAdd(sessionId, participant))
         {
-            _logger.LogWarning("Participant {AccountId} already registered in room {RoomId}", accountId, roomId);
+            _logger.LogWarning("Session {SessionId} already registered in room {RoomId}", sessionId, roomId);
             return false;
         }
 
         // Persist to Dapr state store
         await PersistRoomParticipantsAsync(roomId, roomParticipants, cancellationToken);
 
-        _logger.LogInformation("Registered participant {AccountId} in room {RoomId}", accountId, roomId);
+        _logger.LogInformation("Registered session {SessionId} in room {RoomId}", sessionId, roomId);
         return true;
     }
 
     /// <inheritdoc />
     public async Task<ParticipantRegistration?> UnregisterAsync(
         Guid roomId,
-        Guid accountId,
+        string sessionId,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrEmpty(sessionId))
+        {
+            return null;
+        }
+
         if (!_localCache.TryGetValue(roomId, out var roomParticipants))
         {
             // Try loading from state store
@@ -95,16 +104,16 @@ public class SipEndpointRegistry : ISipEndpointRegistry
             }
         }
 
-        if (!roomParticipants.TryRemove(accountId, out var removed))
+        if (!roomParticipants.TryRemove(sessionId, out var removed))
         {
-            _logger.LogDebug("Participant {AccountId} not found in room {RoomId}", accountId, roomId);
+            _logger.LogDebug("Session {SessionId} not found in room {RoomId}", sessionId, roomId);
             return null;
         }
 
         // Persist updated state
         await PersistRoomParticipantsAsync(roomId, roomParticipants, cancellationToken);
 
-        _logger.LogInformation("Unregistered participant {AccountId} from room {RoomId}", accountId, roomId);
+        _logger.LogInformation("Unregistered session {SessionId} from room {RoomId}", sessionId, roomId);
         return removed;
     }
 
@@ -129,9 +138,14 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     /// <inheritdoc />
     public async Task<ParticipantRegistration?> GetParticipantAsync(
         Guid roomId,
-        Guid accountId,
+        string sessionId,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrEmpty(sessionId))
+        {
+            return null;
+        }
+
         if (!_localCache.TryGetValue(roomId, out var roomParticipants))
         {
             roomParticipants = await LoadRoomParticipantsAsync(roomId, cancellationToken);
@@ -141,16 +155,21 @@ public class SipEndpointRegistry : ISipEndpointRegistry
             }
         }
 
-        roomParticipants.TryGetValue(accountId, out var participant);
+        roomParticipants.TryGetValue(sessionId, out var participant);
         return participant;
     }
 
     /// <inheritdoc />
     public async Task<bool> UpdateHeartbeatAsync(
         Guid roomId,
-        Guid accountId,
+        string sessionId,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrEmpty(sessionId))
+        {
+            return false;
+        }
+
         if (!_localCache.TryGetValue(roomId, out var roomParticipants))
         {
             roomParticipants = await LoadRoomParticipantsAsync(roomId, cancellationToken);
@@ -160,7 +179,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
             }
         }
 
-        if (!roomParticipants.TryGetValue(accountId, out var existing))
+        if (!roomParticipants.TryGetValue(sessionId, out var existing))
         {
             return false;
         }
@@ -168,7 +187,6 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         // Update heartbeat timestamp
         var updated = new ParticipantRegistration
         {
-            AccountId = existing.AccountId,
             SessionId = existing.SessionId,
             DisplayName = existing.DisplayName,
             Endpoint = existing.Endpoint,
@@ -177,7 +195,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
             IsMuted = existing.IsMuted
         };
 
-        roomParticipants[accountId] = updated;
+        roomParticipants[sessionId] = updated;
         await PersistRoomParticipantsAsync(roomId, roomParticipants, cancellationToken);
 
         return true;
@@ -186,10 +204,15 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     /// <inheritdoc />
     public async Task<bool> UpdateEndpointAsync(
         Guid roomId,
-        Guid accountId,
+        string sessionId,
         SipEndpoint newEndpoint,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrEmpty(sessionId))
+        {
+            return false;
+        }
+
         if (!_localCache.TryGetValue(roomId, out var roomParticipants))
         {
             roomParticipants = await LoadRoomParticipantsAsync(roomId, cancellationToken);
@@ -199,7 +222,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
             }
         }
 
-        if (!roomParticipants.TryGetValue(accountId, out var existing))
+        if (!roomParticipants.TryGetValue(sessionId, out var existing))
         {
             return false;
         }
@@ -207,7 +230,6 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         // Update endpoint
         var updated = new ParticipantRegistration
         {
-            AccountId = existing.AccountId,
             SessionId = existing.SessionId,
             DisplayName = existing.DisplayName,
             Endpoint = newEndpoint,
@@ -216,10 +238,10 @@ public class SipEndpointRegistry : ISipEndpointRegistry
             IsMuted = existing.IsMuted
         };
 
-        roomParticipants[accountId] = updated;
+        roomParticipants[sessionId] = updated;
         await PersistRoomParticipantsAsync(roomId, roomParticipants, cancellationToken);
 
-        _logger.LogInformation("Updated endpoint for participant {AccountId} in room {RoomId}", accountId, roomId);
+        _logger.LogInformation("Updated endpoint for session {SessionId} in room {RoomId}", sessionId, roomId);
         return true;
     }
 
@@ -265,7 +287,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     /// </summary>
     private async Task PersistRoomParticipantsAsync(
         Guid roomId,
-        ConcurrentDictionary<Guid, ParticipantRegistration> participants,
+        ConcurrentDictionary<string, ParticipantRegistration> participants,
         CancellationToken cancellationToken)
     {
         var stateKey = $"{ROOM_PARTICIPANTS_PREFIX}{roomId}";
@@ -277,7 +299,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     /// <summary>
     /// Loads room participants from Dapr state store into local cache.
     /// </summary>
-    private async Task<ConcurrentDictionary<Guid, ParticipantRegistration>?> LoadRoomParticipantsAsync(
+    private async Task<ConcurrentDictionary<string, ParticipantRegistration>?> LoadRoomParticipantsAsync(
         Guid roomId,
         CancellationToken cancellationToken)
     {
@@ -289,10 +311,10 @@ public class SipEndpointRegistry : ISipEndpointRegistry
             return null;
         }
 
-        var dict = new ConcurrentDictionary<Guid, ParticipantRegistration>();
+        var dict = new ConcurrentDictionary<string, ParticipantRegistration>();
         foreach (var p in participantList)
         {
-            dict[p.AccountId] = p;
+            dict[p.SessionId] = p;
         }
 
         // Cache locally

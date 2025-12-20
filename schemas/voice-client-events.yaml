@@ -122,7 +122,7 @@ components:
         - event_id
         - timestamp
         - room_id
-        - account_id
+        - peer_session_id
       properties:
         event_name:
           type: string
@@ -132,10 +132,9 @@ components:
           type: string
           format: uuid
           description: Voice room ID
-        account_id:
+        peer_session_id:
           type: string
-          format: uuid
-          description: Account ID of the peer who left
+          description: WebSocket session ID of the peer who left (ephemeral identifier)
         display_name:
           type: string
           nullable: true
@@ -183,6 +182,7 @@ components:
       description: |
         Sent to all room participants when the voice tier upgrades.
         Clients should disconnect P2P connections and connect to the RTP server.
+        SIP credentials are provided for authenticating with the Kamailio SIP proxy.
       required:
         - event_name
         - event_id
@@ -190,6 +190,7 @@ components:
         - room_id
         - new_tier
         - rtp_server_uri
+        - sip_credentials
       properties:
         event_name:
           type: string
@@ -210,6 +211,9 @@ components:
         rtp_server_uri:
           type: string
           description: RTP server URI to connect to
+        sip_credentials:
+          $ref: '#/components/schemas/SipCredentials'
+          description: Credentials for SIP registration with Kamailio
         migration_deadline_ms:
           type: integer
           default: 5000
@@ -255,13 +259,12 @@ components:
       type: object
       description: Peer connection information for P2P voice
       required:
-        - account_id
+        - peer_session_id
         - sdp_offer
       properties:
-        account_id:
+        peer_session_id:
           type: string
-          format: uuid
-          description: Peer's account ID
+          description: WebSocket session ID for this peer (ephemeral identifier)
         display_name:
           type: string
           nullable: true
@@ -279,3 +282,29 @@ components:
           type: boolean
           default: false
           description: Whether peer is currently muted
+
+    SipCredentials:
+      type: object
+      description: |
+        SIP credentials for authenticating with the Kamailio SIP proxy in scaled tier mode.
+        These credentials are dynamically generated per-user per-room and should be used
+        for SIP REGISTER and subsequent INVITE requests.
+      required:
+        - username
+        - password
+        - domain
+      properties:
+        username:
+          type: string
+          description: SIP username (typically sessionId or a hash-derived identifier)
+        password:
+          type: string
+          description: SIP password (dynamically generated, short-lived)
+        domain:
+          type: string
+          description: SIP domain/realm for authentication (e.g., "voice.bannou.local")
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When these credentials expire (clients should re-authenticate before this)

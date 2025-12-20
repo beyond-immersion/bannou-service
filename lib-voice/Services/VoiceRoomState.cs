@@ -45,18 +45,15 @@ public class VoiceRoomData
 /// <summary>
 /// Internal state model for a participant's registration in a voice room.
 /// This is used for state storage, not API responses.
+/// Keyed by SessionId to support multiple connections from the same account.
 /// </summary>
 public class ParticipantRegistration
 {
     /// <summary>
-    /// Participant's account ID.
+    /// WebSocket session ID (unique participant identifier).
+    /// This is the primary key for participant tracking.
     /// </summary>
-    public Guid AccountId { get; set; }
-
-    /// <summary>
-    /// WebSocket session ID for event delivery.
-    /// </summary>
-    public string? SessionId { get; set; }
+    public string SessionId { get; set; } = string.Empty;
 
     /// <summary>
     /// Display name.
@@ -90,8 +87,7 @@ public class ParticipantRegistration
     {
         return new VoiceParticipant
         {
-            AccountId = AccountId,
-            SessionId = SessionId ?? string.Empty,
+            SessionId = SessionId,
             DisplayName = DisplayName,
             JoinedAt = JoinedAt,
             IsMuted = IsMuted
@@ -105,7 +101,7 @@ public class ParticipantRegistration
     {
         return new VoicePeer
         {
-            AccountId = AccountId,
+            SessionId = SessionId,
             DisplayName = DisplayName,
             SipEndpoint = Endpoint ?? new SipEndpoint()
         };

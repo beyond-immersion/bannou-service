@@ -1,0 +1,1232 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Bannou.Voice.SDK</name>
+    </assembly>
+    <members>
+        <member name="T:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection">
+            <summary>
+            Interface for scaled voice connection management via SIP/RTP (Kamailio + RTPEngine).
+            <para>
+            <b>Architecture Overview:</b><br/>
+            In scaled mode (6+ participants), audio flows through a central RTP server instead
+            of peer-to-peer connections. The client:
+            <list type="number">
+              <item>Registers with Kamailio using SIP credentials from <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent"/></item>
+              <item>Sends audio to RTPEngine, which mixes all participants</item>
+              <item>Receives mixed audio from RTPEngine</item>
+            </list>
+            </para>
+            <para>
+            <b>Key Differences from P2P (<see cref="T:BeyondImmersion.Bannou.Voice.IVoicePeerConnection"/>):</b><br/>
+            - Single server connection instead of N peer connections<br/>
+            - SIP REGISTER/INVITE instead of WebRTC SDP exchange<br/>
+            - Server handles audio mixing; client receives pre-mixed stream<br/>
+            - No ICE candidates; RTP server address is known
+            </para>
+            <para>
+            <b>Default Implementation:</b><br/>
+            ScaledVoiceConnection uses SIPSorcery for both SIP signaling
+            and RTP media transport.
+            </para>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection.RoomId">
+            <summary>
+            The voice room ID this connection is for.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection.State">
+            <summary>
+            Current connection state.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection.IsAudioActive">
+            <summary>
+            Gets whether audio is currently flowing (registered and RTP active).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection.SipUsername">
+            <summary>
+            SIP registration username.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection.ConnectAsync(BeyondImmersion.Bannou.Voice.SipConnectionCredentials,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Connects to the voice conference using the provided credentials.
+            <para>
+            This method performs:
+            <list type="number">
+              <item>SIP REGISTER with Kamailio using the provided credentials</item>
+              <item>SIP INVITE to join the conference room</item>
+              <item>RTP session establishment for audio</item>
+            </list>
+            </para>
+            </summary>
+            <param name="sipCredentials">SIP credentials from <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent"/>.</param>
+            <param name="rtpServerUri">RTP server URI from <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent"/>.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if connection succeeded, false otherwise.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection.DisconnectAsync">
+            <summary>
+            Gracefully disconnects from the voice conference.
+            <para>
+            Sends SIP BYE to leave the conference and de-registers from Kamailio.
+            </para>
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection.RefreshRegistrationAsync(BeyondImmersion.Bannou.Voice.SipConnectionCredentials,System.Threading.CancellationToken)">
+            <summary>
+            Refreshes the SIP registration before credentials expire.
+            <para>
+            Call this before <see cref="P:BeyondImmersion.Bannou.Voice.SipConnectionCredentials.ExpiresAt"/> to maintain
+            the connection without interruption.
+            </para>
+            </summary>
+            <param name="newCredentials">New credentials if password changed, or null to re-use existing.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection.OnStateChanged">
+            <summary>
+            Fired when the connection state changes.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection.OnError">
+            <summary>
+            Fired when an error occurs during connection or streaming.
+            Parameters: (errorCode, errorMessage)
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection.OnConnected">
+            <summary>
+            Fired when a connection attempt succeeds.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection.OnDisconnected">
+            <summary>
+            Fired when the connection is lost (server disconnect, network failure, etc.).
+            Parameters: (reason)
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection.OnRegistrationExpiring">
+            <summary>
+            Fired when SIP registration is about to expire.
+            <para>
+            Subscribe to this event to call <see cref="M:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection.RefreshRegistrationAsync(BeyondImmersion.Bannou.Voice.SipConnectionCredentials,System.Threading.CancellationToken)"/> with new credentials.
+            Parameter is seconds until expiration.
+            </para>
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection.SendAudioFrame(System.ReadOnlySpan{System.Single},System.Int32,System.Int32)">
+            <summary>
+            Sends an audio frame to the RTP server.
+            <para>
+            The server mixes this with other participants and distributes the mixed audio.
+            Use the same format as <see cref="M:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.SendAudioFrame(System.ReadOnlySpan{System.Single},System.Int32,System.Int32)"/> for consistency.
+            </para>
+            </summary>
+            <param name="pcmSamples">PCM audio samples as normalized floats (-1.0 to 1.0).</param>
+            <param name="sampleRate">Sample rate in Hz (typically 48000 for Opus).</param>
+            <param name="channels">Number of audio channels (1 for mono, 2 for stereo).</param>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection.OnAudioFrameReceived">
+            <summary>
+            Fired when a mixed audio frame is received from the RTP server.
+            <para>
+            Unlike P2P mode, this is a SINGLE mixed stream containing all other participants.
+            The server has already combined everyone's audio.
+            </para>
+            </summary>
+            <remarks>
+            Parameters: (float[] samples, int sampleRate, int channels)
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection.IsMuted">
+            <summary>
+            Gets or sets whether local audio is muted (not sent to server).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.IScaledVoiceConnection.GetStatistics">
+            <summary>
+            Gets current RTP statistics for monitoring connection quality.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.SipConnectionCredentials">
+            <summary>
+            SIP connection credentials for scaled voice tier.
+            <para>
+            These credentials are provided by the server in the tier upgrade event
+            and are dynamically generated per-user per-room.
+            </para>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.SipConnectionCredentials.Username">
+            <summary>
+            SIP username for authentication.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.SipConnectionCredentials.Password">
+            <summary>
+            SIP password for authentication.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.SipConnectionCredentials.Domain">
+            <summary>
+            SIP domain/realm (e.g., "voice.bannou.local").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.SipConnectionCredentials.ConferenceUri">
+            <summary>
+            Conference URI to dial (e.g., "sip:room-{guid}@voice.bannou.local").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.SipConnectionCredentials.ExpiresAt">
+            <summary>
+            When these credentials expire. Null if no expiration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.SipConnectionCredentials.FromEvent(BeyondImmersion.Bannou.Voice.ClientEvents.SipCredentials,System.String)">
+            <summary>
+            Creates credentials from the generated SipCredentials event model.
+            </summary>
+            <param name="credentials">SipCredentials from <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent"/>.</param>
+            <param name="conferenceUri">Conference URI from room state.</param>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.ScaledVoiceConnectionState">
+            <summary>
+            Connection state for a scaled voice connection.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.ScaledVoiceConnectionState.Disconnected">
+            <summary>
+            Initial state, not connected.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.ScaledVoiceConnectionState.Registering">
+            <summary>
+            Registering with the SIP server.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.ScaledVoiceConnectionState.Dialing">
+            <summary>
+            Registered with SIP, dialing into conference.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.ScaledVoiceConnectionState.Connected">
+            <summary>
+            Connected to conference, audio active.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.ScaledVoiceConnectionState.Reconnecting">
+            <summary>
+            Connection lost, attempting to reconnect.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.ScaledVoiceConnectionState.Failed">
+            <summary>
+            Connection failed with an error.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.ScaledVoiceErrorCode">
+            <summary>
+            Error codes for scaled voice connection failures.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.ScaledVoiceErrorCode.Unknown">
+            <summary>
+            Unknown error.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.ScaledVoiceErrorCode.RegistrationFailed">
+            <summary>
+            SIP registration failed (invalid credentials).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.ScaledVoiceErrorCode.RegistrationTimeout">
+            <summary>
+            SIP registration timed out.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.ScaledVoiceErrorCode.DialFailed">
+            <summary>
+            Conference dial failed (room not found, full, etc.).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.ScaledVoiceErrorCode.RtpSetupFailed">
+            <summary>
+            RTP session setup failed.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.ScaledVoiceErrorCode.NetworkError">
+            <summary>
+            Network connectivity lost.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.ScaledVoiceErrorCode.ServerDisconnect">
+            <summary>
+            Server disconnected the call.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.ScaledVoiceErrorCode.CredentialsExpired">
+            <summary>
+            Credentials expired and refresh failed.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.RtpStreamStatistics">
+            <summary>
+            Statistics for an RTP stream.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.RtpStreamStatistics.PacketsSent">
+            <summary>
+            Total RTP packets sent.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.RtpStreamStatistics.PacketsReceived">
+            <summary>
+            Total RTP packets received.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.RtpStreamStatistics.PacketsLost">
+            <summary>
+            Packets lost (detected via sequence number gaps).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.RtpStreamStatistics.JitterMs">
+            <summary>
+            Current jitter in milliseconds.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.RtpStreamStatistics.RoundTripTimeMs">
+            <summary>
+            Round-trip time in milliseconds (if RTCP enabled).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.RtpStreamStatistics.AudioBitrateKbps">
+            <summary>
+            Audio bitrate in kbps.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.RtpStreamStatistics.Uptime">
+            <summary>
+            Connection uptime.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.RtpStreamStatistics.Empty">
+            <summary>
+            Empty statistics for when no connection exists.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.IVideoPeerConnection">
+            <summary>
+            Interface for single-peer WebRTC video connection.
+            <para>
+            <b>Important Limitations:</b><br/>
+            - Video is intentionally NOT supported in <see cref="T:BeyondImmersion.Bannou.Voice.VoiceRoomManager"/> multi-peer scenarios<br/>
+            - P2P video bandwidth scales quadratically with participants (N*(N-1)/2 connections)<br/>
+            - For 3+ participants, use server-side media mixing (Kamailio+RTPEngine)<br/>
+            - This interface is for 1:1 video calls only
+            </para>
+            <para>
+            <b>Stride Integration:</b><br/>
+            Video frames are provided as raw RGBA byte arrays. Use Stride's <c>Texture</c>
+            API to display received video and camera capture for sending.
+            </para>
+            </summary>
+            <remarks>
+            The default SIPSorcery implementation is a stub that throws <see cref="T:System.NotImplementedException"/>.
+            Full video support will be added when needed for 1:1 video scenarios.
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.IVideoPeerConnection.SendVideoFrame(System.ReadOnlySpan{System.Byte},System.Int32,System.Int32,System.Int64)">
+            <summary>
+            Sends a video frame to the remote peer.
+            </summary>
+            <param name="rgbaPixels">Raw RGBA pixel data (width * height * 4 bytes).</param>
+            <param name="width">Frame width in pixels.</param>
+            <param name="height">Frame height in pixels.</param>
+            <param name="timestampMs">Timestamp in milliseconds (for frame ordering).</param>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.IVideoPeerConnection.OnVideoFrameReceived">
+            <summary>
+            Fired when a video frame is received from the remote peer.
+            </summary>
+            <remarks>
+            Parameters: (byte[] rgbaPixels, int width, int height, long timestampMs)
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.IVideoPeerConnection.IsVideoEnabled">
+            <summary>
+            Gets or sets whether video sending is enabled.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.IVideoPeerConnection.VideoCodec">
+            <summary>
+            Gets the video codec being used.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.IVoicePeerConnection">
+            <summary>
+            Interface for WebRTC peer connection management for P2P voice chat.
+            <para>
+            The default implementation uses SIPSorcery (v8.0.14, BSD-3-Clause license).
+            This interface allows alternative implementations for engines with native WebRTC
+            support (e.g., Unity WebRTC package).
+            </para>
+            <para>
+            <b>Game Engine Integration (Stride, Unity):</b><br/>
+            - Subscribe to <see cref="E:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.OnAudioFrameReceived"/> to play received audio<br/>
+            - Call <see cref="M:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.SendAudioFrame(System.ReadOnlySpan{System.Single},System.Int32,System.Int32)"/> with microphone capture data<br/>
+            - The SDK handles all WebRTC negotiation (SDP/ICE) automatically
+            </para>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.PeerId">
+            <summary>
+            Unique identifier for this peer (their account ID).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.DisplayName">
+            <summary>
+            Display name of the peer (for UI purposes).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.State">
+            <summary>
+            Current connection state.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.CreateOfferAsync(System.Threading.CancellationToken)">
+            <summary>
+            Creates an SDP offer for initiating a connection.
+            Call this when you're the initiator (connecting to an existing peer).
+            </summary>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>SDP offer string to send to the remote peer.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.SetRemoteDescriptionAsync(System.String,System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Sets the remote peer's SDP description (offer or answer).
+            </summary>
+            <param name="sdp">The SDP string from the remote peer.</param>
+            <param name="isOffer">True if this is an offer (you need to create an answer), false if it's an answer.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.CreateAnswerAsync(System.Threading.CancellationToken)">
+            <summary>
+            Creates an SDP answer in response to an offer.
+            Call <see cref="M:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.SetRemoteDescriptionAsync(System.String,System.Boolean,System.Threading.CancellationToken)"/> with the offer first.
+            </summary>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>SDP answer string to send to the remote peer.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.AddIceCandidate(System.String)">
+            <summary>
+            Adds an ICE candidate received from the remote peer.
+            </summary>
+            <param name="candidate">ICE candidate string.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.CloseAsync">
+            <summary>
+            Closes the peer connection gracefully.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.OnIceCandidateGathered">
+            <summary>
+            Fired when a local ICE candidate is gathered.
+            Send this candidate to the remote peer via signaling (Bannou WebSocket).
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.OnConnected">
+            <summary>
+            Fired when the peer connection successfully connects.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.OnDisconnected">
+            <summary>
+            Fired when the peer connection disconnects or fails.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.OnStateChanged">
+            <summary>
+            Fired when the connection state changes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.SendAudioFrame(System.ReadOnlySpan{System.Single},System.Int32,System.Int32)">
+            <summary>
+            Sends an audio frame to the remote peer.
+            <para>
+            <b>Stride Integration:</b><br/>
+            Capture microphone audio using Stride's <c>Microphone</c> class,
+            convert to float[] PCM samples, and call this method.
+            </para>
+            </summary>
+            <param name="pcmSamples">PCM audio samples as normalized floats (-1.0 to 1.0).</param>
+            <param name="sampleRate">Sample rate in Hz (typically 48000 for Opus).</param>
+            <param name="channels">Number of audio channels (1 for mono, 2 for stereo).</param>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.OnAudioFrameReceived">
+            <summary>
+            Fired when an audio frame is received from the remote peer.
+            <para>
+            <b>Stride Integration:</b><br/>
+            Convert the float[] samples to Stride's audio format and play via
+            <c>DynamicSoundSource</c> or similar audio API.
+            </para>
+            </summary>
+            <remarks>
+            Parameters: (float[] samples, int sampleRate, int channels)
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.IVoicePeerConnection.IsMuted">
+            <summary>
+            Gets or sets whether the local audio is muted (not sending).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.VoicePeerConnectionState">
+            <summary>
+            Connection state for a voice peer connection.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.VoicePeerConnectionState.New">
+            <summary>
+            Initial state, not yet started.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.VoicePeerConnectionState.Connecting">
+            <summary>
+            Gathering ICE candidates and negotiating.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.VoicePeerConnectionState.Connected">
+            <summary>
+            Successfully connected, audio flowing.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.VoicePeerConnectionState.Reconnecting">
+            <summary>
+            Connection temporarily interrupted, attempting recovery.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.VoicePeerConnectionState.Disconnected">
+            <summary>
+            Connection closed or failed.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.VoicePeerConnectionState.Failed">
+            <summary>
+            Connection failed with an error.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection">
+             <summary>
+             Implementation of scaled voice connection using SIP/RTP (Kamailio + RTPEngine).
+             <para>
+             <b>Usage:</b><br/>
+             <code>
+             // When VoiceTierUpgradeEvent is received:
+             var connection = new ScaledVoiceConnection(roomId);
+             connection.OnAudioFrameReceived += (samples, rate, channels) => PlayAudio(samples, rate, channels);
+             connection.OnConnected += () => Console.WriteLine("Connected to voice conference!");
+            
+             var credentials = SipConnectionCredentials.FromEvent(event.SipCredentials, event.ConferenceUri);
+             await connection.ConnectAsync(credentials, event.RtpServerUri);
+            
+             // Send audio from microphone:
+             connection.SendAudioFrame(microphonePcm, 48000, 1);
+            
+             // When leaving the room:
+             await connection.DisconnectAsync();
+             </code>
+             </para>
+             </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.RoomId">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.State">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.IsAudioActive">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.SipUsername">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.IsMuted">
+            <inheritdoc/>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.OnStateChanged">
+            <inheritdoc/>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.OnError">
+            <inheritdoc/>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.OnConnected">
+            <inheritdoc/>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.OnDisconnected">
+            <inheritdoc/>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.OnRegistrationExpiring">
+            <inheritdoc/>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.OnAudioFrameReceived">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.#ctor(System.Guid)">
+            <summary>
+            Creates a new scaled voice connection for the specified room.
+            </summary>
+            <param name="roomId">The voice room ID.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.#ctor(System.Guid,BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper,BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper)">
+            <summary>
+            Creates a new scaled voice connection with custom helpers (for testing).
+            </summary>
+            <param name="roomId">The voice room ID.</param>
+            <param name="sipHelper">Custom SIP registration helper.</param>
+            <param name="rtpHelper">Custom RTP stream helper.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.ConnectAsync(BeyondImmersion.Bannou.Voice.SipConnectionCredentials,System.String,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.DisconnectAsync">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.RefreshRegistrationAsync(BeyondImmersion.Bannou.Voice.SipConnectionCredentials,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.SendAudioFrame(System.ReadOnlySpan{System.Single},System.Int32,System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.GetStatistics">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.ReconnectAsync(System.Threading.CancellationToken)">
+            <summary>
+            Attempts to reconnect using the last known credentials.
+            </summary>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if reconnection succeeded.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection.Dispose">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper">
+            <summary>
+            Helper class for managing RTP audio streaming to/from an RTP server (like RTPEngine).
+            <para>
+            <b>Purpose:</b><br/>
+            Handles RTP packet send/receive for scaled voice tier, including:
+            <list type="bullet">
+              <item>Audio encoding (PCM → Opus/G.711/G.722)</item>
+              <item>Audio decoding (Opus/G.711/G.722 → PCM)</item>
+              <item>SSRC de-duplication for mixed streams</item>
+              <item>Jitter buffer management (via SIPSorcery)</item>
+              <item>Statistics collection</item>
+            </list>
+            </para>
+            <para>
+            <b>SSRC De-duplication:</b><br/>
+            In scaled mode, the RTP server sends a single mixed stream. However, if participants
+            join/leave, the SSRC may change. This helper tracks SSRC changes and handles the
+            transition gracefully without audio glitches.
+            </para>
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.MaxTrackedSsrcs">
+            <summary>
+            Maximum number of SSRC sources to track for de-duplication.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.SsrcTimeoutSeconds">
+            <summary>
+            SSRC timeout in seconds - stop tracking an SSRC after this duration of inactivity.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.IsActive">
+            <summary>
+            Whether the RTP stream is currently active.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.IsMuted">
+            <summary>
+            Whether audio sending is muted.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.CurrentSsrc">
+            <summary>
+            The currently active SSRC for receiving audio.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.TrackedSsrcCount">
+            <summary>
+            Number of unique SSRCs seen during this session.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.LocalPort">
+            <summary>
+            Local RTP port being used.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.OnAudioFrameReceived">
+            <summary>
+            Fired when an audio frame is received and decoded.
+            Parameters: (float[] samples, int sampleRate, int channels)
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.OnSsrcChanged">
+            <summary>
+            Fired when a new SSRC is detected (participant joined or stream changed).
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.OnError">
+            <summary>
+            Fired when an RTP error occurs.
+            Parameters: (errorMessage)
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.#ctor">
+            <summary>
+            Creates a new RTP stream helper.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.StartAsync(System.String,System.String,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Starts the RTP session and connects to the specified RTP server.
+            </summary>
+            <param name="rtpServerUri">RTP server URI (e.g., "udp://host:port").</param>
+            <param name="preferredCodec">Preferred audio codec (opus, g711, g722).</param>
+            <param name="localPort">Local port to bind. 0 for auto-selection.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if started successfully, false otherwise.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.StopAsync">
+            <summary>
+            Stops the RTP session and releases resources.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.SendAudioFrame(System.ReadOnlySpan{System.Single},System.Int32,System.Int32)">
+            <summary>
+            Sends an audio frame to the RTP server.
+            </summary>
+            <param name="pcmSamples">PCM audio samples as normalized floats (-1.0 to 1.0).</param>
+            <param name="sampleRate">Sample rate in Hz (typically 48000 for Opus).</param>
+            <param name="channels">Number of audio channels (1 for mono, 2 for stereo).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.GetStatistics">
+            <summary>
+            Gets current RTP stream statistics.
+            </summary>
+            <returns>Statistics for the RTP stream.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.ClearSsrcHistory">
+            <summary>
+            Clears SSRC tracking history. Useful when participants change significantly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.Dispose">
+            <summary>
+            Disposes the helper and releases all resources.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.Services.RtpStreamHelper.SsrcInfo">
+            <summary>
+            Information about a tracked SSRC source.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper">
+            <summary>
+            Helper class for managing SIP registration with Kamailio in scaled voice tier.
+            <para>
+            <b>Purpose:</b><br/>
+            Handles the SIP REGISTER flow with Kamailio server using credentials
+            provided by the <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent"/>. Manages registration
+            lifecycle including initial registration, re-registration, and de-registration.
+            </para>
+            <para>
+            <b>Usage Pattern:</b><br/>
+            <code>
+            var helper = new SipRegistrationHelper();
+            helper.OnRegistered += () => Console.WriteLine("Registered!");
+            helper.OnRegistrationExpiring += (secs) => Console.WriteLine($"Expires in {secs}s");
+            await helper.RegisterAsync(credentials, cancellationToken);
+            // ... use voice connection ...
+            await helper.UnregisterAsync();
+            </code>
+            </para>
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.DefaultSipPort">
+            <summary>
+            Default SIP transport port.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.DefaultExpirySeconds">
+            <summary>
+            Default registration expiry in seconds.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.ExpirationWarningThresholdSeconds">
+            <summary>
+            Warning threshold before expiration (in seconds).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.State">
+            <summary>
+            Current registration state.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.Username">
+            <summary>
+            The SIP username used for registration.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.IsRegistered">
+            <summary>
+            Whether currently registered with the SIP server.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.LocalUri">
+            <summary>
+            Local SIP URI after registration.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.OnStateChanged">
+            <summary>
+            Fired when registration state changes.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.OnRegistered">
+            <summary>
+            Fired when registration succeeds.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.OnRegistrationFailed">
+            <summary>
+            Fired when registration fails.
+            Parameters: (errorCode, errorMessage)
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.OnRegistrationExpiring">
+            <summary>
+            Fired when registration is about to expire.
+            Parameter is seconds until expiration.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.OnUnregistered">
+            <summary>
+            Fired when unregistered (either voluntary or forced).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.RegisterAsync(BeyondImmersion.Bannou.Voice.SipConnectionCredentials,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Registers with the SIP server using the provided credentials.
+            </summary>
+            <param name="credentials">SIP credentials from VoiceTierUpgradeEvent.</param>
+            <param name="localPort">Local port for SIP transport. 0 for auto-selection.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if registration succeeded, false otherwise.</returns>
+            <exception cref="T:System.ObjectDisposedException">If the helper has been disposed.</exception>
+            <exception cref="T:System.InvalidOperationException">If already registered.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.RefreshAsync(BeyondImmersion.Bannou.Voice.SipConnectionCredentials,System.Threading.CancellationToken)">
+            <summary>
+            Refreshes the SIP registration with new credentials if provided.
+            </summary>
+            <param name="newCredentials">Optional new credentials. If null, re-registers with existing credentials.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if refresh succeeded, false otherwise.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.UnregisterAsync">
+            <summary>
+            Unregisters from the SIP server.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.GetTransport">
+            <summary>
+            Gets the SIP transport for use by other components (e.g., for INVITE calls).
+            </summary>
+            <returns>The SIP transport, or null if not registered.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.GetCredentials">
+            <summary>
+            Gets the credentials used for registration.
+            </summary>
+            <returns>The SIP credentials, or null if not registered.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.Services.SipRegistrationHelper.Dispose">
+            <summary>
+            Disposes the helper and releases all resources.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.Services.SipRegistrationState">
+            <summary>
+            States for SIP registration lifecycle.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.Services.SipRegistrationState.Unregistered">
+            <summary>
+            Not registered with SIP server.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.Services.SipRegistrationState.Registering">
+            <summary>
+            Registration in progress.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.Services.SipRegistrationState.Registered">
+            <summary>
+            Successfully registered with SIP server.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Voice.Services.SipRegistrationState.Failed">
+            <summary>
+            Registration failed.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.SIPSorceryVideoPeer">
+            <summary>
+            WebRTC video peer connection stub using SIPSorcery.
+            <para>
+            <b>IMPORTANT:</b> This is a stub implementation. Video support is NOT YET IMPLEMENTED.
+            All video methods throw <see cref="T:System.NotImplementedException"/>.
+            </para>
+            <para>
+            <b>Limitations:</b><br/>
+            - Video is for 1:1 peer connections ONLY<br/>
+            - P2P video does NOT scale to multiple participants (bandwidth = N*(N-1)/2)<br/>
+            - For 3+ participants, use server-side media mixing (not P2P)<br/>
+            - This class is NOT used by <see cref="T:BeyondImmersion.Bannou.Voice.VoiceRoomManager"/>
+            </para>
+            <para>
+            <b>Future Implementation Notes:</b><br/>
+            When implementing video support, consider:<br/>
+            - VP8/VP9/H.264 codec selection based on peer capabilities<br/>
+            - Resolution/framerate negotiation via SDP<br/>
+            - Bandwidth estimation and adaptive bitrate<br/>
+            - Frame rate limiting based on network conditions
+            </para>
+            </summary>
+            <remarks>
+            SIPSorcery v8.0.14 supports video via the <c>RTCPeerConnection</c> class.
+            Video tracks can be added similarly to audio tracks, but require:
+            <list type="bullet">
+            <item>Video encoder (VP8/H.264) - see SIPSorceryMedia.FFmpeg or platform-specific encoders</item>
+            <item>Video decoder for received frames</item>
+            <item>Frame format conversion (RGBA to/from encoder format)</item>
+            </list>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.SIPSorceryVideoPeer.#ctor(System.Guid,System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Creates a new SIPSorcery-based video peer connection stub.
+            <para>
+            <b>Note:</b> Video functionality is not yet implemented.
+            Use this class only if you plan to implement video support yourself
+            or are waiting for a future SDK update.
+            </para>
+            </summary>
+            <param name="peerId">The remote peer's account ID.</param>
+            <param name="displayName">The remote peer's display name (for UI).</param>
+            <param name="stunServers">Optional STUN server URIs for NAT traversal.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.SIPSorceryVideoPeer.SendVideoFrame(System.ReadOnlySpan{System.Byte},System.Int32,System.Int32,System.Int64)">
+            <inheritdoc/>
+            <exception cref="T:System.NotImplementedException">Always thrown - video not yet implemented.</exception>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.SIPSorceryVideoPeer.OnVideoFrameReceived">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.SIPSorceryVideoPeer.IsVideoEnabled">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.SIPSorceryVideoPeer.VideoCodec">
+            <inheritdoc/>
+            <remarks>
+            Returns "none" since video is not implemented.
+            When implemented, this would return the negotiated codec (e.g., "VP8", "H264").
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.SIPSorceryVideoPeer.RaiseVideoFrameReceived(System.Byte[],System.Int32,System.Int32,System.Int64)">
+            <summary>
+            Raises the <see cref="E:BeyondImmersion.Bannou.Voice.SIPSorceryVideoPeer.OnVideoFrameReceived"/> event.
+            <para>
+            This method is internal for potential future extensions.
+            </para>
+            </summary>
+            <param name="rgbaPixels">Decoded RGBA pixel data.</param>
+            <param name="width">Frame width in pixels.</param>
+            <param name="height">Frame height in pixels.</param>
+            <param name="timestampMs">Frame timestamp in milliseconds.</param>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer">
+            <summary>
+            WebRTC peer connection implementation using SIPSorcery.
+            <para>
+            <b>License:</b> SIPSorcery v8.0.14 is BSD-3-Clause (pre-May 2025 license change).<br/>
+            This version is pinned to maintain permissive licensing for all users.
+            </para>
+            <para>
+            <b>Stride/Unity Integration:</b><br/>
+            - Subscribe to <see cref="E:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.OnAudioFrameReceived"/> to play received audio<br/>
+            - Call <see cref="M:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.SendAudioFrame(System.ReadOnlySpan{System.Single},System.Int32,System.Int32)"/> with microphone PCM data<br/>
+            - The implementation handles Opus encoding/decoding automatically
+            </para>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.PeerId">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.DisplayName">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.State">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.IsMuted">
+            <inheritdoc/>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.OnIceCandidateGathered">
+            <inheritdoc/>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.OnConnected">
+            <inheritdoc/>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.OnDisconnected">
+            <inheritdoc/>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.OnStateChanged">
+            <inheritdoc/>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.OnAudioFrameReceived">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.#ctor(System.Guid,System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Creates a new SIPSorcery-based voice peer connection.
+            </summary>
+            <param name="peerId">The remote peer's account ID.</param>
+            <param name="displayName">The remote peer's display name (for UI).</param>
+            <param name="stunServers">Optional STUN server URIs for NAT traversal. Defaults to Google's public STUN server.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.CreateOfferAsync(System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.SetRemoteDescriptionAsync(System.String,System.Boolean,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.CreateAnswerAsync(System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.AddIceCandidate(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.SendAudioFrame(System.ReadOnlySpan{System.Single},System.Int32,System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.CloseAsync">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer.Dispose">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.VoiceRoomManager">
+             <summary>
+             High-level manager for voice chat in a Bannou voice room, supporting both P2P and scaled modes.
+             <para>
+             <b>Stride Integration Example:</b>
+             <code>
+             // In your NetworkManager or VoiceController script:
+             var voiceManager = new VoiceRoomManager(bannouClient);
+             voiceManager.OnAudioReceived += (peerSessionId, samples, rate, channels) =&gt;
+             {
+                 // Play audio via Stride's DynamicSoundSource
+                 PlayAudioFromPeer(peerSessionId, samples, rate, channels);
+             };
+            
+             // In your game loop, send microphone audio:
+             voiceManager.SendAudioToAllPeers(microphoneSamples, 48000, 1);
+             </code>
+             </para>
+             <para>
+             <b>Automatic Tier Transition:</b><br/>
+             When 6+ participants join, the server sends a <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent"/>.
+             This manager automatically:
+             <list type="bullet">
+               <item>Closes all P2P connections</item>
+               <item>Connects to the SIP/RTP infrastructure using provided credentials</item>
+               <item>Redirects audio through the RTP server</item>
+             </list>
+             The <c>SendAudioToAllPeers</c> method works transparently in both modes.
+             </para>
+             <para>
+             <b>Note:</b> Video is NOT supported in multi-peer scenarios. Use <see cref="T:BeyondImmersion.Bannou.Voice.IVideoPeerConnection"/>
+             for 1:1 video calls only.
+             </para>
+             </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.VoiceRoomManager.CurrentRoomId">
+            <summary>
+            Gets the current voice room ID, or null if not in a room.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.VoiceRoomManager.IsInRoom">
+            <summary>
+            Gets whether the client is currently in a voice room.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.VoiceRoomManager.CurrentTier">
+            <summary>
+            Gets the current voice tier (P2P or Scaled).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.VoiceRoomManager.Peers">
+            <summary>
+            Gets all active peer connections by peer session ID.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.VoiceRoomManager.ScaledConnection">
+            <summary>
+            Gets the scaled voice connection when in scaled mode.
+            Null when in P2P mode.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.VoiceRoomManager.IsScaledConnectionActive">
+            <summary>
+            Gets whether the scaled connection is active and audio is flowing.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.VoiceRoomManager.IsMuted">
+            <summary>
+            Gets or sets whether local audio is muted (not sent to peers or server).
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.VoiceRoomManager.OnAudioReceived">
+            <summary>
+            Fired when audio is received from any peer.
+            Parameters: (peerSessionId, samples[], sampleRate, channels)
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.VoiceRoomManager.OnPeerJoined">
+            <summary>
+            Fired when a new peer joins the room.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.VoiceRoomManager.OnPeerLeft">
+            <summary>
+            Fired when a peer leaves the room.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.VoiceRoomManager.OnRoomClosed">
+            <summary>
+            Fired when the room is closed (session ended, error, etc.).
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.VoiceRoomManager.OnTierUpgraded">
+            <summary>
+            Fired when the voice tier upgrades from P2P to Scaled.
+            <para>
+            When automatic tier transition is enabled (default), the manager will
+            handle the transition automatically. This event is informational.
+            </para>
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.VoiceRoomManager.OnScaledConnectionStateChanged">
+            <summary>
+            Fired when the scaled connection state changes.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.VoiceRoomManager.OnScaledConnectionError">
+            <summary>
+            Fired when a scaled connection error occurs.
+            Parameters: (errorCode, errorMessage)
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.VoiceRoomManager.OnPeerStateChanged">
+            <summary>
+            Fired when a peer connection changes state.
+            Parameters: (peerSessionId, newState)
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Voice.VoiceRoomManager.OnIceCandidateReady">
+            <summary>
+            Fired when an ICE candidate needs to be sent to the server.
+            <para>
+            The SDK cannot send this automatically because the voice service is internal-only.
+            You must call the game session service's UpdatePeerEndpoint API to relay this.
+            </para>
+            Parameters: (peerSessionId, iceCandidate)
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.VoiceRoomManager.#ctor(BeyondImmersion.Bannou.Client.SDK.BannouClient)">
+            <summary>
+            Creates a new VoiceRoomManager using the default SIPSorcery implementation.
+            </summary>
+            <param name="client">The connected BannouClient for receiving voice events.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.VoiceRoomManager.#ctor(BeyondImmersion.Bannou.Client.SDK.BannouClient,System.Func{System.String,System.String,System.Collections.Generic.IEnumerable{System.String},BeyondImmersion.Bannou.Voice.IVoicePeerConnection},System.Func{System.Guid,BeyondImmersion.Bannou.Voice.IScaledVoiceConnection})">
+            <summary>
+            Creates a new VoiceRoomManager with custom connection factories.
+            <para>
+            Use this overload if you want to provide your own WebRTC or scaled tier implementation
+            (e.g., Unity WebRTC package instead of SIPSorcery).
+            </para>
+            </summary>
+            <param name="client">The connected BannouClient for receiving voice events.</param>
+            <param name="peerFactory">Factory function to create P2P peer connections.
+            Parameters: (peerSessionId, displayName, stunServers).
+            If null, uses <see cref="T:BeyondImmersion.Bannou.Voice.SIPSorceryVoicePeer"/>.</param>
+            <param name="scaledConnectionFactory">Factory function to create scaled connections.
+            Parameters: (roomId).
+            If null, uses <see cref="T:BeyondImmersion.Bannou.Voice.ScaledVoiceConnection"/>.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.VoiceRoomManager.SendAudioToAllPeers(System.ReadOnlySpan{System.Single},System.Int32,System.Int32)">
+            <summary>
+            Sends an audio frame to all connected peers (P2P mode) or the RTP server (scaled mode).
+            <para>
+            This method works transparently in both P2P and scaled tier modes.
+            </para>
+            <para>
+            <b>Stride Integration:</b><br/>
+            Call this from your game loop with microphone capture data.
+            Stride's <c>Microphone</c> class provides audio samples.
+            </para>
+            </summary>
+            <param name="pcmSamples">PCM audio samples as normalized floats (-1.0 to 1.0).</param>
+            <param name="sampleRate">Sample rate in Hz (typically 48000 for Opus).</param>
+            <param name="channels">Number of audio channels (1 for mono, 2 for stereo).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.VoiceRoomManager.ProcessSdpAnswerAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Manually processes an SDP answer received from a peer.
+            <para>
+            Call this when you receive an SDP answer via signaling (e.g., game session callback).
+            </para>
+            </summary>
+            <param name="peerSessionId">The peer's session ID.</param>
+            <param name="sdpAnswer">The SDP answer string.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.VoiceRoomManager.AddIceCandidateForPeer(System.String,System.String)">
+            <summary>
+            Manually adds an ICE candidate received from a peer.
+            <para>
+            Call this when you receive ICE candidates via signaling.
+            </para>
+            </summary>
+            <param name="peerSessionId">The peer's session ID.</param>
+            <param name="iceCandidate">The ICE candidate string.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.VoiceRoomManager.LeaveRoomAsync">
+            <summary>
+            Leaves the current voice room and closes all connections (P2P and scaled).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Voice.VoiceRoomManager.Dispose">
+            <inheritdoc/>
+        </member>
+    </members>
+</doc>

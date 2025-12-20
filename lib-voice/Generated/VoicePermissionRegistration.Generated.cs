@@ -51,6 +51,21 @@ public static class VoicePermissionRegistration
     {
         var endpoints = new List<ServiceEndpoint>();
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/voice/peer/answer",
+            Method = ServiceEndpointMethod.POST,
+            Description = "answerPeer",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> { {"voice", "ringing"} }
+                },
+            }
+        });
+
         return endpoints;
     }
 

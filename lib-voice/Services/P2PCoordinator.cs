@@ -1,4 +1,3 @@
-using BeyondImmersion.BannouService.GameSession;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Voice.Services;
@@ -30,28 +29,27 @@ public class P2PCoordinator : IP2PCoordinator
     }
 
     /// <inheritdoc />
-    public async Task<List<VoicePeerInfo>> GetMeshPeersForNewJoinAsync(
+    public async Task<List<VoicePeer>> GetMeshPeersForNewJoinAsync(
         Guid roomId,
-        Guid joiningAccountId,
+        string joiningSessionId,
         CancellationToken cancellationToken = default)
     {
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
 
-        // Convert participants to VoicePeerInfo, excluding the joining participant
+        // Convert participants to VoicePeer, excluding the joining participant
         var peers = participants
-            .Where(p => p.AccountId != joiningAccountId)
-            .Select(p => new VoicePeerInfo
+            .Where(p => p.SessionId != joiningSessionId && !string.IsNullOrEmpty(p.SessionId))
+            .Select(p => new VoicePeer
             {
-                AccountId = p.AccountId,
+                SessionId = p.SessionId,
                 DisplayName = p.DisplayName,
-                SdpOffer = p.Endpoint?.SdpOffer ?? string.Empty,
-                IceCandidates = p.Endpoint?.IceCandidates?.ToList()
+                SipEndpoint = p.Endpoint ?? new SipEndpoint { SdpOffer = string.Empty, IceCandidates = new List<string>() }
             })
             .ToList();
 
         _logger.LogDebug(
-            "Built peer list for {JoiningAccountId} in room {RoomId}: {PeerCount} peers",
-            joiningAccountId, roomId, peers.Count);
+            "Built peer list for {JoiningSessionId} in room {RoomId}: {PeerCount} peers",
+            joiningSessionId, roomId, peers.Count);
 
         return peers;
     }
@@ -113,37 +111,40 @@ public class P2PCoordinator : IP2PCoordinator
     }
 
     /// <inheritdoc />
-    public Task<VoiceConnectionInfo> BuildP2PConnectionInfoAsync(
+    public Task<JoinVoiceRoomResponse> BuildP2PConnectionInfoAsync(
         Guid roomId,
-        List<VoicePeerInfo> peers,
+        List<VoicePeer> peers,
         string defaultCodec,
         List<string> stunServers,
+        bool tierUpgradePending = false,
         CancellationToken cancellationToken = default)
     {
-        var connectionInfo = new VoiceConnectionInfo
+        var response = new JoinVoiceRoomResponse
         {
+            Success = true,
             RoomId = roomId,
-            Tier = VoiceConnectionInfoTier.P2p,
-            Codec = ParseCodec(defaultCodec),
+            Tier = VoiceTier.P2p,
+            Codec = ParseVoiceCodec(defaultCodec),
             Peers = peers,
             RtpServerUri = null, // P2P mode, no RTP server
-            StunServers = stunServers
+            StunServers = stunServers,
+            TierUpgradePending = tierUpgradePending
         };
 
-        return Task.FromResult(connectionInfo);
+        return Task.FromResult(response);
     }
 
     /// <summary>
-    /// Parses codec string to enum value.
+    /// Parses codec string to VoiceCodec enum value.
     /// </summary>
-    private static VoiceConnectionInfoCodec ParseCodec(string codec)
+    private static VoiceCodec ParseVoiceCodec(string codec)
     {
         return codec?.ToLowerInvariant() switch
         {
-            "opus" => VoiceConnectionInfoCodec.Opus,
-            "g711" => VoiceConnectionInfoCodec.G711,
-            "g722" => VoiceConnectionInfoCodec.G722,
-            _ => VoiceConnectionInfoCodec.Opus // Default
+            "opus" => VoiceCodec.Opus,
+            "g711" => VoiceCodec.G711,
+            "g722" => VoiceCodec.G722,
+            _ => VoiceCodec.Opus // Default
         };
     }
 }

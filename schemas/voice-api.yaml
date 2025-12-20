@@ -4,19 +4,25 @@ info:
   description: |
     Voice communication coordination service for P2P and room-based audio.
 
-    **INTERNAL-ONLY SERVICE**: This API has NO x-permissions and is NOT exposed
-    to WebSocket clients. GameSession service coordinates voice on behalf of clients
-    via service-to-service calls. Clients receive voice connection info through
-    events on their personal WebSocket channel.
+    **Mostly Internal Service**: Most voice endpoints are internal-only (no x-permissions)
+    and accessed by GameSession service via service-to-service calls. However, the
+    `/voice/peer/answer` endpoint IS exposed to WebSocket clients when they have the
+    `voice:ringing` state set, allowing them to send SDP answers to complete WebRTC handshakes.
 
     **Two Communication Modes**:
     - **P2P Mode**: Registry-based coordination for peer-to-peer voice (up to 6 participants)
     - **Scaled Mode**: RTP server integration for larger conferences (stubbed in Phase 1)
 
+    **Event-Only Client Flow**:
+    1. Clients receive VoicePeerJoinedEvent when another peer joins (includes their SDP offer)
+    2. Client generates SDP answer and calls /voice/peer/answer (enabled via voice:ringing state)
+    3. Other peer receives VoicePeerUpdatedEvent with the SDP answer
+    4. WebRTC connection established
+
     **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
     See API-DESIGN.md for architectural rationale.
-  version: 1.0.0
+  version: 1.1.0
 servers:
   - url: http://localhost:3500/v1.0/invoke/bannou/method
     description: Dapr sidecar endpoint (internal only)
@@ -178,26 +184,37 @@ paths:
         '404':
           description: Peer not found in room
 
-  /voice/peer/update-endpoint:
+  /voice/peer/answer:
     post:
-      summary: Update SIP endpoint details
+      summary: Send SDP answer to complete WebRTC handshake
       description: |
-        Updates a participant's SIP endpoint (e.g., ICE candidate change).
-        Notifies other peers of the endpoint change.
-      operationId: updatePeerEndpoint
+        Called by clients after receiving a VoicePeerJoinedEvent containing an SDP offer.
+        The client generates an SDP answer and sends it via this endpoint.
+        The answering peer is notified via VoicePeerUpdatedEvent.
+
+        **Access Control**: This endpoint requires the `voice:ringing` state, which is
+        automatically set by the Voice service when a VoicePeerJoinedEvent is sent to the client.
+        The state is cleared after the answer is processed or times out.
+      operationId: answerPeer
       tags:
         - Voice Peers
+      x-permissions:
+        - role: user
+          states:
+            voice: ringing
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdatePeerEndpointRequest'
+              $ref: '#/components/schemas/AnswerPeerRequest'
       responses:
         '200':
-          description: Endpoint updated successfully
+          description: SDP answer processed, peer notified
         '404':
-          description: Peer not found in room
+          description: Peer or room not found
+        '403':
+          description: Not in voice:ringing state (no pending offers)
 
 components:
   schemas:
@@ -261,7 +278,6 @@ components:
       description: Request to join a voice room
       required:
         - roomId
-        - accountId
         - sessionId
         - sipEndpoint
       properties:
@@ -269,13 +285,9 @@ components:
           type: string
           format: uuid
           description: Voice room ID to join
-        accountId:
-          type: string
-          format: uuid
-          description: Account ID of the joining participant
         sessionId:
           type: string
-          description: WebSocket session ID for event delivery
+          description: WebSocket session ID (unique participant identifier)
         sipEndpoint:
           $ref: '#/components/schemas/SipEndpoint'
           description: Participant's SIP endpoint details
@@ -289,16 +301,15 @@ components:
       description: Request to leave a voice room
       required:
         - roomId
-        - accountId
+        - sessionId
       properties:
         roomId:
           type: string
           format: uuid
           description: Voice room ID to leave
-        accountId:
+        sessionId:
           type: string
-          format: uuid
-          description: Account ID of the leaving participant
+          description: WebSocket session ID of the leaving participant
 
     DeleteVoiceRoomRequest:
       type: object
@@ -319,36 +330,45 @@ components:
       description: Heartbeat to keep peer registration active
       required:
         - roomId
-        - accountId
+        - sessionId
       properties:
         roomId:
           type: string
           format: uuid
           description: Voice room ID
-        accountId:
+        sessionId:
           type: string
-          format: uuid
-          description: Account ID of the peer
+          description: WebSocket session ID of the peer
 
-    UpdatePeerEndpointRequest:
+    AnswerPeerRequest:
       type: object
-      description: Request to update peer's SIP endpoint
+      description: |
+        Request to send an SDP answer to complete a WebRTC handshake.
+        Sent by clients after receiving a VoicePeerJoinedEvent with an SDP offer.
       required:
         - roomId
-        - accountId
-        - sipEndpoint
+        - senderSessionId
+        - targetSessionId
+        - sdpAnswer
       properties:
         roomId:
           type: string
           format: uuid
           description: Voice room ID
-        accountId:
+        senderSessionId:
           type: string
-          format: uuid
-          description: Account ID of the peer
-        sipEndpoint:
-          $ref: '#/components/schemas/SipEndpoint'
-          description: Updated SIP endpoint details
+          description: Session ID of the answering peer (caller of this endpoint)
+        targetSessionId:
+          type: string
+          description: Session ID of the peer whose offer we're answering
+        sdpAnswer:
+          type: string
+          description: SDP answer generated by this client's WebRTC stack
+        iceCandidates:
+          type: array
+          items:
+            type: string
+          description: ICE candidates for NAT traversal (can be trickled later)
 
     # ============================================
     # Response Models
@@ -468,16 +488,12 @@ components:
       type: object
       description: Participant in a voice room
       required:
-        - accountId
+        - sessionId
         - joinedAt
       properties:
-        accountId:
-          type: string
-          format: uuid
-          description: Participant's account ID
         sessionId:
           type: string
-          description: WebSocket session ID for event delivery
+          description: WebSocket session ID (unique participant identifier)
         displayName:
           type: string
           nullable: true
@@ -495,13 +511,12 @@ components:
       type: object
       description: Peer endpoint details for P2P connection
       required:
-        - accountId
+        - sessionId
         - sipEndpoint
       properties:
-        accountId:
+        sessionId:
           type: string
-          format: uuid
-          description: Peer's account ID
+          description: WebSocket session ID for this peer (ephemeral identifier)
         displayName:
           type: string
           nullable: true
@@ -533,15 +548,53 @@ x-service-configuration:
       description: Maximum number of participants in P2P mode before upgrade to scaled tier
       default: 6
 
-    # Scaled Tier Configuration (stubbed in Phase 1)
+    # Scaled Tier Configuration
     ScaledTierEnabled:
       type: boolean
-      description: Whether scaled tier (RTP server) is available. Set to false in Phase 1
+      description: Whether scaled tier (Kamailio/RTPEngine) is available
       default: false
-    RtpServerUri:
+    ScaledMaxParticipants:
+      type: integer
+      description: Maximum number of participants in scaled tier mode
+      default: 100
+    TierUpgradeEnabled:
+      type: boolean
+      description: Whether automatic tier upgrade from P2P to Scaled is enabled
+      default: false
+    TierUpgradeMigrationDeadlineMs:
+      type: integer
+      description: Time in milliseconds to wait for clients to migrate during tier upgrade
+      default: 5000
+
+    # Kamailio SIP Proxy Configuration
+    KamailioHost:
       type: string
-      description: URI of the RTP server for scaled tier mode
-      default: ""
+      description: Kamailio SIP proxy hostname
+      default: "localhost"
+    KamailioRpcPort:
+      type: integer
+      description: Kamailio JSONRPC HTTP port
+      default: 5080
+
+    # RTPEngine Configuration
+    RtpEngineHost:
+      type: string
+      description: RTPEngine media relay hostname
+      default: "localhost"
+    RtpEnginePort:
+      type: integer
+      description: RTPEngine ng protocol UDP port
+      default: 22222
+
+    # SIP Configuration
+    SipDomain:
+      type: string
+      description: SIP domain for conference URIs
+      default: "voice.bannou"
+    SipPasswordSalt:
+      type: string
+      description: Salt for deterministic SIP password generation (change in production)
+      default: "bannou-voice-default-salt"
 
     # Endpoint Management
     EndpointTtlSeconds:

@@ -10,9 +10,6 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-// Alias to disambiguate from VoicePeerInfo in Voice.ClientEvents namespace
-using GameSessionPeerInfo = BeyondImmersion.BannouService.GameSession.VoicePeerInfo;
-
 namespace BeyondImmersion.BannouService.Voice.Tests;
 
 public class VoiceServiceTests
@@ -23,6 +20,7 @@ public class VoiceServiceTests
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<ISipEndpointRegistry> _mockEndpointRegistry;
     private readonly Mock<IP2PCoordinator> _mockP2PCoordinator;
+    private readonly Mock<IScaledTierCoordinator> _mockScaledTierCoordinator;
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
 
     public VoiceServiceTests()
@@ -33,10 +31,14 @@ public class VoiceServiceTests
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockEndpointRegistry = new Mock<ISipEndpointRegistry>();
         _mockP2PCoordinator = new Mock<IP2PCoordinator>();
+        _mockScaledTierCoordinator = new Mock<IScaledTierCoordinator>();
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
 
         // Default P2P max participants
         _mockP2PCoordinator.Setup(p => p.GetP2PMaxParticipants()).Returns(6);
+
+        // Default scaled tier settings
+        _mockScaledTierCoordinator.Setup(s => s.GetScaledMaxParticipants()).Returns(100);
     }
 
     private VoiceService CreateService()
@@ -48,6 +50,7 @@ public class VoiceServiceTests
             _mockErrorEventEmitter.Object,
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
+            _mockScaledTierCoordinator.Object,
             _mockClientEventPublisher.Object);
     }
 
@@ -74,6 +77,7 @@ public class VoiceServiceTests
             _mockErrorEventEmitter.Object,
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
+            _mockScaledTierCoordinator.Object,
             _mockClientEventPublisher.Object));
     }
 
@@ -88,6 +92,7 @@ public class VoiceServiceTests
             _mockErrorEventEmitter.Object,
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
+            _mockScaledTierCoordinator.Object,
             _mockClientEventPublisher.Object));
     }
 
@@ -102,6 +107,7 @@ public class VoiceServiceTests
             _mockErrorEventEmitter.Object,
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
+            _mockScaledTierCoordinator.Object,
             _mockClientEventPublisher.Object));
     }
 
@@ -116,6 +122,7 @@ public class VoiceServiceTests
             null!,
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
+            _mockScaledTierCoordinator.Object,
             _mockClientEventPublisher.Object));
     }
 
@@ -130,6 +137,7 @@ public class VoiceServiceTests
             _mockErrorEventEmitter.Object,
             null!,
             _mockP2PCoordinator.Object,
+            _mockScaledTierCoordinator.Object,
             _mockClientEventPublisher.Object));
     }
 
@@ -143,6 +151,22 @@ public class VoiceServiceTests
             _mockConfiguration.Object,
             _mockErrorEventEmitter.Object,
             _mockEndpointRegistry.Object,
+            null!,
+            _mockScaledTierCoordinator.Object,
+            _mockClientEventPublisher.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullScaledTierCoordinator_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new VoiceService(
+            _mockDaprClient.Object,
+            _mockLogger.Object,
+            _mockConfiguration.Object,
+            _mockErrorEventEmitter.Object,
+            _mockEndpointRegistry.Object,
+            _mockP2PCoordinator.Object,
             null!,
             _mockClientEventPublisher.Object));
     }
@@ -158,6 +182,7 @@ public class VoiceServiceTests
             _mockErrorEventEmitter.Object,
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
+            _mockScaledTierCoordinator.Object,
             null);
 
         // Assert - Service should be created successfully
@@ -368,8 +393,8 @@ public class VoiceServiceTests
 
         var participants = new List<ParticipantRegistration>
         {
-            new() { AccountId = Guid.NewGuid(), DisplayName = "Player1", JoinedAt = DateTimeOffset.UtcNow },
-            new() { AccountId = Guid.NewGuid(), DisplayName = "Player2", JoinedAt = DateTimeOffset.UtcNow }
+            new() { SessionId = "session-player1", DisplayName = "Player1", JoinedAt = DateTimeOffset.UtcNow },
+            new() { SessionId = "session-player2", DisplayName = "Player2", JoinedAt = DateTimeOffset.UtcNow }
         };
 
         _mockDaprClient.Setup(d => d.GetStateAsync<VoiceRoomData>(
@@ -403,11 +428,9 @@ public class VoiceServiceTests
         // Arrange
         var service = CreateService();
         var roomId = Guid.NewGuid();
-        var accountId = Guid.NewGuid();
         var request = new JoinVoiceRoomRequest
         {
             RoomId = roomId,
-            AccountId = accountId,
             SessionId = "session-123",
             DisplayName = "TestPlayer",
             SipEndpoint = new SipEndpoint { SdpOffer = "offer", IceCandidates = new List<string>() }
@@ -435,11 +458,9 @@ public class VoiceServiceTests
         // Arrange
         var service = CreateService();
         var roomId = Guid.NewGuid();
-        var accountId = Guid.NewGuid();
         var request = new JoinVoiceRoomRequest
         {
             RoomId = roomId,
-            AccountId = accountId,
             SessionId = "session-123",
             DisplayName = "TestPlayer",
             SipEndpoint = new SipEndpoint { SdpOffer = "offer", IceCandidates = new List<string>() }
@@ -483,12 +504,9 @@ public class VoiceServiceTests
         // Arrange
         var service = CreateService();
         var roomId = Guid.NewGuid();
-        var accountId = Guid.NewGuid();
-        var existingPeerId = Guid.NewGuid();
         var request = new JoinVoiceRoomRequest
         {
             RoomId = roomId,
-            AccountId = accountId,
             SessionId = "session-123",
             DisplayName = "TestPlayer",
             SipEndpoint = new SipEndpoint { SdpOffer = "offer", IceCandidates = new List<string> { "candidate1" } }
@@ -504,12 +522,15 @@ public class VoiceServiceTests
             CreatedAt = DateTimeOffset.UtcNow
         };
 
-        var existingPeer = new GameSessionPeerInfo
+        var existingPeer = new VoicePeer
         {
-            AccountId = existingPeerId,
+            SessionId = "existing-session-123",
             DisplayName = "ExistingPlayer",
-            SdpOffer = "peer-offer",
-            IceCandidates = new List<string> { "peer-candidate" }
+            SipEndpoint = new SipEndpoint
+            {
+                SdpOffer = "peer-offer",
+                IceCandidates = new List<string> { "peer-candidate" }
+            }
         };
 
         _mockDaprClient.Setup(d => d.GetStateAsync<VoiceRoomData>(
@@ -527,11 +548,11 @@ public class VoiceServiceTests
             .ReturnsAsync(true);
 
         _mockEndpointRegistry.Setup(r => r.RegisterAsync(
-            roomId, accountId, It.IsAny<SipEndpoint>(), "session-123", "TestPlayer", It.IsAny<CancellationToken>()))
+            roomId, "session-123", It.IsAny<SipEndpoint>(), "TestPlayer", It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        _mockP2PCoordinator.Setup(p => p.GetMeshPeersForNewJoinAsync(roomId, accountId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<GameSessionPeerInfo> { existingPeer });
+        _mockP2PCoordinator.Setup(p => p.GetMeshPeersForNewJoinAsync(roomId, "session-123", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<VoicePeer> { existingPeer });
 
         _mockP2PCoordinator.Setup(p => p.ShouldUpgradeToScaledAsync(roomId, 2, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
@@ -539,7 +560,7 @@ public class VoiceServiceTests
         _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<ParticipantRegistration>
             {
-                new() { AccountId = existingPeerId, SessionId = "existing-session", DisplayName = "ExistingPlayer" }
+                new() { SessionId = "existing-session", DisplayName = "ExistingPlayer" }
             });
 
         _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
@@ -555,7 +576,7 @@ public class VoiceServiceTests
         Assert.True(result.Success);
         Assert.Equal(roomId, result.RoomId);
         Assert.Single(result.Peers);
-        Assert.Equal(existingPeerId, result.Peers.First().AccountId);
+        Assert.Equal("existing-session-123", result.Peers.First().SessionId);
         Assert.False(result.TierUpgradePending);
     }
 
@@ -565,11 +586,9 @@ public class VoiceServiceTests
         // Arrange
         var service = CreateService();
         var roomId = Guid.NewGuid();
-        var accountId = Guid.NewGuid();
         var request = new JoinVoiceRoomRequest
         {
             RoomId = roomId,
-            AccountId = accountId,
             SessionId = "session-123",
             DisplayName = "TestPlayer",
             SipEndpoint = new SipEndpoint { SdpOffer = "offer", IceCandidates = new List<string>() }
@@ -600,7 +619,7 @@ public class VoiceServiceTests
             .ReturnsAsync(true);
 
         _mockEndpointRegistry.Setup(r => r.RegisterAsync(
-            roomId, accountId, It.IsAny<SipEndpoint>(), "session-123", "TestPlayer", It.IsAny<CancellationToken>()))
+            roomId, "session-123", It.IsAny<SipEndpoint>(), "TestPlayer", It.IsAny<CancellationToken>()))
             .ReturnsAsync(false); // Already registered
 
         // Act
@@ -621,17 +640,15 @@ public class VoiceServiceTests
         // Arrange
         var service = CreateService();
         var roomId = Guid.NewGuid();
-        var accountId = Guid.NewGuid();
-        var request = new LeaveVoiceRoomRequest { RoomId = roomId, AccountId = accountId };
+        var request = new LeaveVoiceRoomRequest { RoomId = roomId, SessionId = "session-123" };
 
         var removedParticipant = new ParticipantRegistration
         {
-            AccountId = accountId,
             DisplayName = "LeavingPlayer",
             SessionId = "session-123"
         };
 
-        _mockEndpointRegistry.Setup(r => r.UnregisterAsync(roomId, accountId, It.IsAny<CancellationToken>()))
+        _mockEndpointRegistry.Setup(r => r.UnregisterAsync(roomId, "session-123", It.IsAny<CancellationToken>()))
             .ReturnsAsync(removedParticipant);
 
         _mockEndpointRegistry.Setup(r => r.GetParticipantCountAsync(roomId, It.IsAny<CancellationToken>()))
@@ -640,7 +657,7 @@ public class VoiceServiceTests
         _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<ParticipantRegistration>
             {
-                new() { AccountId = Guid.NewGuid(), SessionId = "other-session" }
+                new() { SessionId = "other-session" }
             });
 
         _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
@@ -653,10 +670,10 @@ public class VoiceServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
 
-        // Verify peer left event was published
+        // Verify peer left event was published with sessionId (not accountId for privacy)
         _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
             It.IsAny<IEnumerable<string>>(),
-            It.Is<VoicePeerLeftEvent>(e => e.Account_id == accountId),
+            It.Is<VoicePeerLeftEvent>(e => e.Peer_session_id == "session-123"),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -666,10 +683,9 @@ public class VoiceServiceTests
         // Arrange
         var service = CreateService();
         var roomId = Guid.NewGuid();
-        var accountId = Guid.NewGuid();
-        var request = new LeaveVoiceRoomRequest { RoomId = roomId, AccountId = accountId };
+        var request = new LeaveVoiceRoomRequest { RoomId = roomId, SessionId = "session-123" };
 
-        _mockEndpointRegistry.Setup(r => r.UnregisterAsync(roomId, accountId, It.IsAny<CancellationToken>()))
+        _mockEndpointRegistry.Setup(r => r.UnregisterAsync(roomId, "session-123", It.IsAny<CancellationToken>()))
             .ReturnsAsync((ParticipantRegistration?)null);
 
         // Act
@@ -704,8 +720,8 @@ public class VoiceServiceTests
 
         var participants = new List<ParticipantRegistration>
         {
-            new() { AccountId = Guid.NewGuid(), SessionId = "session-1" },
-            new() { AccountId = Guid.NewGuid(), SessionId = "session-2" }
+            new() { SessionId = "session-1" },
+            new() { SessionId = "session-2" }
         };
 
         _mockDaprClient.Setup(d => d.GetStateAsync<VoiceRoomData>(
@@ -784,10 +800,9 @@ public class VoiceServiceTests
         // Arrange
         var service = CreateService();
         var roomId = Guid.NewGuid();
-        var accountId = Guid.NewGuid();
-        var request = new PeerHeartbeatRequest { RoomId = roomId, AccountId = accountId };
+        var request = new PeerHeartbeatRequest { RoomId = roomId, SessionId = "session-123" };
 
-        _mockEndpointRegistry.Setup(r => r.UpdateHeartbeatAsync(roomId, accountId, It.IsAny<CancellationToken>()))
+        _mockEndpointRegistry.Setup(r => r.UpdateHeartbeatAsync(roomId, "session-123", It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act
@@ -803,10 +818,9 @@ public class VoiceServiceTests
         // Arrange
         var service = CreateService();
         var roomId = Guid.NewGuid();
-        var accountId = Guid.NewGuid();
-        var request = new PeerHeartbeatRequest { RoomId = roomId, AccountId = accountId };
+        var request = new PeerHeartbeatRequest { RoomId = roomId, SessionId = "session-123" };
 
-        _mockEndpointRegistry.Setup(r => r.UpdateHeartbeatAsync(roomId, accountId, It.IsAny<CancellationToken>()))
+        _mockEndpointRegistry.Setup(r => r.UpdateHeartbeatAsync(roomId, "session-123", It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         // Act
@@ -818,87 +832,84 @@ public class VoiceServiceTests
 
     #endregion
 
-    #region UpdatePeerEndpointAsync Tests
+    #region AnswerPeerAsync Tests
 
     [Fact]
-    public async Task UpdatePeerEndpoint_WhenParticipantExists_ReturnsOkAndNotifiesPeers()
+    public async Task AnswerPeer_WhenTargetPeerExists_ReturnsOkAndNotifiesTarget()
     {
         // Arrange
         var service = CreateService();
         var roomId = Guid.NewGuid();
-        var accountId = Guid.NewGuid();
-        var request = new UpdatePeerEndpointRequest
+        var request = new AnswerPeerRequest
         {
             RoomId = roomId,
-            AccountId = accountId,
-            SipEndpoint = new SipEndpoint
-            {
-                SdpOffer = "new-offer",
-                IceCandidates = new List<string> { "new-candidate" }
-            }
+            SenderSessionId = "sender-session",
+            TargetSessionId = "target-session",
+            SdpAnswer = "sdp-answer-content",
+            IceCandidates = new List<string> { "ice-candidate-1" }
         };
 
-        var participant = new ParticipantRegistration
+        var targetParticipant = new ParticipantRegistration
         {
-            AccountId = accountId,
-            DisplayName = "UpdatedPlayer",
-            SessionId = "my-session"
+            DisplayName = "TargetPlayer",
+            SessionId = "target-session"
         };
 
-        var otherParticipant = new ParticipantRegistration
+        var senderParticipant = new ParticipantRegistration
         {
-            AccountId = Guid.NewGuid(),
-            DisplayName = "OtherPlayer",
-            SessionId = "other-session"
+            DisplayName = "SenderPlayer",
+            SessionId = "sender-session"
         };
 
-        _mockEndpointRegistry.Setup(r => r.UpdateEndpointAsync(
-            roomId, accountId, It.IsAny<SipEndpoint>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        _mockEndpointRegistry.Setup(r => r.GetParticipantAsync(roomId, "target-session", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(targetParticipant);
 
-        _mockEndpointRegistry.Setup(r => r.GetParticipantAsync(roomId, accountId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(participant);
+        _mockEndpointRegistry.Setup(r => r.GetParticipantAsync(roomId, "sender-session", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(senderParticipant);
 
         _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<ParticipantRegistration> { participant, otherParticipant });
+            .ReturnsAsync(new List<ParticipantRegistration> { targetParticipant, senderParticipant });
 
         _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
             It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerUpdatedEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         // Act
-        var (status, result) = await service.UpdatePeerEndpointAsync(request, CancellationToken.None);
+        var (status, result) = await service.AnswerPeerAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
 
-        // Verify peer updated event was published to OTHER peers only (not self)
+        // Verify peer updated event was published to the target session with sender info
         _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
-            It.Is<IEnumerable<string>>(list => list.Contains("other-session") && !list.Contains("my-session")),
-            It.IsAny<VoicePeerUpdatedEvent>(),
+            It.Is<IEnumerable<string>>(list => list.Contains("target-session")),
+            It.Is<VoicePeerUpdatedEvent>(e =>
+                e.Peer.Peer_session_id == "sender-session" &&
+                e.Peer.Display_name == "SenderPlayer" &&
+                e.Peer.Sdp_offer == "sdp-answer-content"),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task UpdatePeerEndpoint_WhenParticipantNotFound_ReturnsNotFound()
+    public async Task AnswerPeer_WhenTargetPeerNotFound_ReturnsNotFound()
     {
         // Arrange
         var service = CreateService();
         var roomId = Guid.NewGuid();
-        var accountId = Guid.NewGuid();
-        var request = new UpdatePeerEndpointRequest
+        var request = new AnswerPeerRequest
         {
             RoomId = roomId,
-            AccountId = accountId,
-            SipEndpoint = new SipEndpoint { SdpOffer = "offer", IceCandidates = new List<string>() }
+            SenderSessionId = "sender-session",
+            TargetSessionId = "unknown-session",
+            SdpAnswer = "sdp-answer-content",
+            IceCandidates = new List<string>()
         };
 
-        _mockEndpointRegistry.Setup(r => r.UpdateEndpointAsync(
-            roomId, accountId, It.IsAny<SipEndpoint>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
+        _mockEndpointRegistry.Setup(r => r.GetParticipantAsync(roomId, "unknown-session", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ParticipantRegistration?)null);
 
         // Act
-        var (status, result) = await service.UpdatePeerEndpointAsync(request, CancellationToken.None);
+        var (status, result) = await service.AnswerPeerAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);

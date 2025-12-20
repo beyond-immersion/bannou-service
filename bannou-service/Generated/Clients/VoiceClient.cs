@@ -111,15 +111,20 @@ public partial interface IVoiceClient : BeyondImmersion.BannouService.ServiceCli
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Update SIP endpoint details
+    /// Send SDP answer to complete WebRTC handshake
     /// </summary>
     /// <remarks>
-    /// Updates a participant's SIP endpoint (e.g., ICE candidate change).
-    /// <br/>Notifies other peers of the endpoint change.
+    /// Called by clients after receiving a VoicePeerJoinedEvent containing an SDP offer.
+    /// <br/>The client generates an SDP answer and sends it via this endpoint.
+    /// <br/>The answering peer is notified via VoicePeerUpdatedEvent.
+    /// <br/>
+    /// <br/>**Access Control**: This endpoint requires the `voice:ringing` state, which is
+    /// <br/>automatically set by the Voice service when a VoicePeerJoinedEvent is sent to the client.
+    /// <br/>The state is cleared after the answer is processed or times out.
     /// </remarks>
-    /// <returns>Endpoint updated successfully</returns>
+    /// <returns>SDP answer processed, peer notified</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task UpdatePeerEndpointAsync(UpdatePeerEndpointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task AnswerPeerAsync(AnswerPeerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -732,15 +737,20 @@ public partial class VoiceClient : BeyondImmersion.BannouService.ServiceClients.
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Update SIP endpoint details
+    /// Send SDP answer to complete WebRTC handshake
     /// </summary>
     /// <remarks>
-    /// Updates a participant's SIP endpoint (e.g., ICE candidate change).
-    /// <br/>Notifies other peers of the endpoint change.
+    /// Called by clients after receiving a VoicePeerJoinedEvent containing an SDP offer.
+    /// <br/>The client generates an SDP answer and sends it via this endpoint.
+    /// <br/>The answering peer is notified via VoicePeerUpdatedEvent.
+    /// <br/>
+    /// <br/>**Access Control**: This endpoint requires the `voice:ringing` state, which is
+    /// <br/>automatically set by the Voice service when a VoicePeerJoinedEvent is sent to the client.
+    /// <br/>The state is cleared after the answer is processed or times out.
     /// </remarks>
-    /// <returns>Endpoint updated successfully</returns>
+    /// <returns>SDP answer processed, peer notified</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task UpdatePeerEndpointAsync(UpdatePeerEndpointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task AnswerPeerAsync(AnswerPeerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
@@ -760,8 +770,8 @@ public partial class VoiceClient : BeyondImmersion.BannouService.ServiceClients.
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "voice/peer/update-endpoint"
-                urlBuilder_.Append("voice/peer/update-endpoint");
+                // Operation Path: "voice/peer/answer"
+                urlBuilder_.Append("voice/peer/answer");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -789,10 +799,16 @@ public partial class VoiceClient : BeyondImmersion.BannouService.ServiceClients.
                         return;
                     }
                     else
+                    if (status_ == 403)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Not in voice:ringing state (no pending offers)", status_, responseText_, headers_, null);
+                    }
+                    else
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Peer not found in room", status_, responseText_, headers_, null);
+                        throw new ApiException("Peer or room not found", status_, responseText_, headers_, null);
                     }
                     else
                     {

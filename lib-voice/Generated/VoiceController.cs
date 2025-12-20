@@ -112,17 +112,22 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.ID
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> PeerHeartbeatAsync(PeerHeartbeatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Update SIP endpoint details
+    /// Send SDP answer to complete WebRTC handshake
     /// </summary>
 
     /// <remarks>
-    /// Updates a participant's SIP endpoint (e.g., ICE candidate change).
-    /// <br/>Notifies other peers of the endpoint change.
+    /// Called by clients after receiving a VoicePeerJoinedEvent containing an SDP offer.
+    /// <br/>The client generates an SDP answer and sends it via this endpoint.
+    /// <br/>The answering peer is notified via VoicePeerUpdatedEvent.
+    /// <br/>
+    /// <br/>**Access Control**: This endpoint requires the `voice:ringing` state, which is
+    /// <br/>automatically set by the Voice service when a VoicePeerJoinedEvent is sent to the client.
+    /// <br/>The state is cleared after the answer is processed or times out.
     /// </remarks>
 
-    /// <returns>Endpoint updated successfully</returns>
+    /// <returns>SDP answer processed, peer notified</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdatePeerEndpointAsync(UpdatePeerEndpointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AnswerPeerAsync(AnswerPeerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -284,19 +289,24 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     }
 
     /// <summary>
-    /// Update SIP endpoint details
+    /// Send SDP answer to complete WebRTC handshake
     /// </summary>
     /// <remarks>
-    /// Updates a participant's SIP endpoint (e.g., ICE candidate change).
-    /// <br/>Notifies other peers of the endpoint change.
+    /// Called by clients after receiving a VoicePeerJoinedEvent containing an SDP offer.
+    /// <br/>The client generates an SDP answer and sends it via this endpoint.
+    /// <br/>The answering peer is notified via VoicePeerUpdatedEvent.
+    /// <br/>
+    /// <br/>**Access Control**: This endpoint requires the `voice:ringing` state, which is
+    /// <br/>automatically set by the Voice service when a VoicePeerJoinedEvent is sent to the client.
+    /// <br/>The state is cleared after the answer is processed or times out.
     /// </remarks>
-    /// <returns>Endpoint updated successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("voice/peer/update-endpoint")]
+    /// <returns>SDP answer processed, peer notified</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("voice/peer/answer")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdatePeerEndpoint([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdatePeerEndpointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AnswerPeer([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AnswerPeerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.UpdatePeerEndpointAsync(body, cancellationToken);
+        var (statusCode, result) = await _implementation.AnswerPeerAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

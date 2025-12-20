@@ -354,7 +354,16 @@ public class GameSessionService : IGameSessionService
             {
                 try
                 {
-                    _logger.LogDebug("Player {AccountId} joining voice room {VoiceRoomId}", accountId, model.VoiceRoomId);
+                    // Generate a unique voice session ID for this player.
+                    // TODO(SESSION_SHORTCUTS): This is a temporary workaround. The proper solution is the
+                    // SESSION_SHORTCUTS feature (see docs/UPCOMING_-_SESSION_SHORTCUTS.md) where Connect
+                    // creates pre-bound API shortcuts with the WebSocket sessionId already filled in.
+                    // This eliminates the need for clients to know/provide their sessionId and avoids
+                    // Connect having to parse payloads to inject sessionId in transit.
+                    var voiceSessionId = Guid.NewGuid().ToString();
+
+                    _logger.LogDebug("Player {AccountId} joining voice room {VoiceRoomId} with voice session {VoiceSessionId}",
+                        accountId, model.VoiceRoomId, voiceSessionId);
 
                     // Convert VoiceSipEndpoint to Voice service SipEndpoint
                     var sipEndpoint = new SipEndpoint
@@ -366,33 +375,29 @@ public class GameSessionService : IGameSessionService
                     var voiceResponse = await _voiceClient.JoinVoiceRoomAsync(new JoinVoiceRoomRequest
                     {
                         RoomId = model.VoiceRoomId.Value,
-                        AccountId = accountId,
-                        SessionId = sessionId,
+                        SessionId = voiceSessionId,
                         DisplayName = player.DisplayName,
                         SipEndpoint = sipEndpoint
                     }, cancellationToken);
 
                     if (voiceResponse.Success)
                     {
-                        // Map voice response to VoiceConnectionInfo
+                        // Event-only pattern: Only return minimal voice metadata
+                        // Peers are delivered via VoicePeerJoinedEvent to avoid race conditions
                         response.Voice = new VoiceConnectionInfo
                         {
+                            VoiceEnabled = true,
                             RoomId = voiceResponse.RoomId,
                             Tier = MapVoiceTierToConnectionInfoTier(voiceResponse.Tier),
                             Codec = MapVoiceCodecToConnectionInfoCodec(voiceResponse.Codec),
-                            Peers = voiceResponse.Peers?.Select(p => new VoicePeerInfo
-                            {
-                                AccountId = p.AccountId,
-                                DisplayName = p.DisplayName,
-                                SdpOffer = p.SipEndpoint?.SdpOffer ?? string.Empty,
-                                IceCandidates = p.SipEndpoint?.IceCandidates?.ToList()
-                            }).ToList() ?? new List<VoicePeerInfo>(),
-                            RtpServerUri = voiceResponse.RtpServerUri,
                             StunServers = voiceResponse.StunServers?.ToList() ?? new List<string>()
                         };
 
-                        _logger.LogInformation("Player {AccountId} joined voice room {VoiceRoomId} with {PeerCount} peers",
-                            accountId, model.VoiceRoomId, response.Voice.Peers.Count);
+                        // Store the voice session ID in the player for cleanup on leave
+                        player.VoiceSessionId = voiceSessionId;
+
+                        _logger.LogInformation("Player {AccountId} joined voice room {VoiceRoomId}",
+                            accountId, model.VoiceRoomId);
                     }
                     else
                     {
@@ -508,18 +513,19 @@ public class GameSessionService : IGameSessionService
                 model.Players.RemoveAt(0);
                 model.CurrentPlayers = model.Players.Count;
 
-                // Leave voice room if voice is enabled
-                if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null)
+                // Leave voice room if voice is enabled and player has a voice session
+                if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null
+                    && !string.IsNullOrEmpty(leavingPlayer.VoiceSessionId))
                 {
                     try
                     {
-                        _logger.LogDebug("Player {AccountId} leaving voice room {VoiceRoomId}",
-                            leavingPlayer.AccountId, model.VoiceRoomId);
+                        _logger.LogDebug("Player {AccountId} leaving voice room {VoiceRoomId} with voice session {VoiceSessionId}",
+                            leavingPlayer.AccountId, model.VoiceRoomId, leavingPlayer.VoiceSessionId);
 
                         await _voiceClient.LeaveVoiceRoomAsync(new LeaveVoiceRoomRequest
                         {
                             RoomId = model.VoiceRoomId.Value,
-                            AccountId = leavingPlayer.AccountId
+                            SessionId = leavingPlayer.VoiceSessionId
                         }, cancellationToken);
 
                         _logger.LogInformation("Player {AccountId} left voice room {VoiceRoomId}",

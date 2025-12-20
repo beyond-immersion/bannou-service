@@ -157,11 +157,11 @@ public partial class VoicePeerLeftEvent : BaseClientEvent
     public System.Guid Room_id { get; set; } = default!;
 
     /// <summary>
-    /// Account ID of the peer who left
+    /// WebSocket session ID of the peer who left (ephemeral identifier)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("account_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("peer_session_id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Account_id { get; set; } = default!;
+    public string Peer_session_id { get; set; } = default!;
 
     /// <summary>
     /// Display name for UI notification
@@ -213,6 +213,7 @@ public partial class VoicePeerUpdatedEvent : BaseClientEvent
 /// <summary>
 /// Sent to all room participants when the voice tier upgrades.
 /// <br/>Clients should disconnect P2P connections and connect to the RTP server.
+/// <br/>SIP credentials are provided for authenticating with the Kamailio SIP proxy.
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -255,6 +256,13 @@ public partial class VoiceTierUpgradeEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("rtp_server_uri")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string Rtp_server_uri { get; set; } = default!;
+
+    /// <summary>
+    /// Credentials for SIP registration with Kamailio
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sip_credentials")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public SipCredentials Sip_credentials { get; set; } = new SipCredentials();
 
     /// <summary>
     /// Milliseconds to complete migration before P2P disconnects
@@ -306,11 +314,11 @@ public partial class VoicePeerInfo
 {
 
     /// <summary>
-    /// Peer's account ID
+    /// WebSocket session ID for this peer (ephemeral identifier)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("account_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("peer_session_id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Account_id { get; set; } = default!;
+    public string Peer_session_id { get; set; } = default!;
 
     /// <summary>
     /// Peer's display name
@@ -336,6 +344,54 @@ public partial class VoicePeerInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("is_muted")]
     public bool Is_muted { get; set; } = false;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// SIP credentials for authenticating with the Kamailio SIP proxy in scaled tier mode.
+/// <br/>These credentials are dynamically generated per-user per-room and should be used
+/// <br/>for SIP REGISTER and subsequent INVITE requests.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SipCredentials
+{
+
+    /// <summary>
+    /// SIP username (typically sessionId or a hash-derived identifier)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("username")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Username { get; set; } = default!;
+
+    /// <summary>
+    /// SIP password (dynamically generated, short-lived)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("password")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Password { get; set; } = default!;
+
+    /// <summary>
+    /// SIP domain/realm for authentication (e.g., "voice.bannou.local")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("domain")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Domain { get; set; } = default!;
+
+    /// <summary>
+    /// When these credentials expire (clients should re-authenticate before this)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expires_at")]
+    public System.DateTimeOffset? Expires_at { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

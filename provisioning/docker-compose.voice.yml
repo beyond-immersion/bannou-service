@@ -1,0 +1,54 @@
+# Voice Infrastructure - Kamailio + RTPEngine for Scaled Tier
+# Part of Phase 2: Scaled Tier Implementation
+#
+# IMPORTANT: Both services use network_mode: host because:
+# - SIP (5060) requires proper NAT handling and direct host access
+# - RTP (10000-20000) requires kernel forwarding and direct UDP access
+#
+# Usage:
+#   docker compose -f provisioning/docker-compose.voice.yml up -d
+
+services:
+
+  # Kamailio SIP Proxy
+  # Handles SIP registration, routing, and RTPEngine integration
+  kamailio:
+    image: ghcr.io/kamailio/kamailio:latest
+    container_name: bannou-kamailio
+    network_mode: host
+    volumes:
+      - ./kamailio/kamailio.cfg:/etc/kamailio/kamailio.cfg:ro
+      - ./kamailio/dispatcher.list:/etc/kamailio/dispatcher.list:ro
+    environment:
+      - KAMAILIO_DEBUG_LEVEL=2
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:5080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      rtpengine:
+        condition: service_healthy
+
+  # RTPEngine Media Relay (SFU)
+  # Handles RTP media forwarding, NAT traversal, and kernel-mode performance
+  rtpengine:
+    image: drachtio/rtpengine:latest
+    container_name: bannou-rtpengine
+    network_mode: host
+    privileged: true  # Required for kernel forwarding table access
+    volumes:
+      - ./rtpengine/rtpengine.conf:/etc/rtpengine/rtpengine.conf:ro
+    environment:
+      # Kernel forwarding table (0 = enabled, -1 = disabled)
+      - TABLE=0
+    restart: unless-stopped
+    healthcheck:
+      # RTPEngine listens on CLI port 9901 for status
+      test: ["CMD", "bash", "-c", "echo 'list totals' | nc -q1 127.0.0.1 9901 | grep -q 'Current'"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

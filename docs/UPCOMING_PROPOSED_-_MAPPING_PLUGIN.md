@@ -1,561 +1,107 @@
-# Map Service Architecture - Spatial Data Management for Arcadia
-
-> **Status**: Draft
-> **Last Updated**: 2025-11-27
-> **Related Systems**: [[Microservices Architecture for Game Systems]], [[Dynamic World-Driven Systems]], [[Revolutionary Engagement Combat System]], [[Dungeon System]]
-> **Tags**: #technical-architecture #map-service #spatial-data #bannou #world-simulation
-
-## Overview
-
-The Map Service provides **abstract spatial data management** for Arcadia's world simulation. Rather than representing just "game world chunks," maps are flexible data structures that can represent any spatial or relational information - from regional terrain to dungeon interiors to star charts to logical entity relationships.
-
-Maps are the foundational layer through which services coordinate world state, territorial ownership, environmental effects, and resource distribution. The Map Service handles concurrency control, event-driven updates, multi-layer data persistence, and hierarchical nesting of spatial information.
-
-## Core Architecture Principles
-
-### Maps as Abstract Data Structures
-
-Maps are **not limited to geographic representations**. The Map Service supports multiple map types optimized for different use cases:
-
-#### Texture/Color Maps (Most Common)
-**Structure**: 2D 8-bit arrays with multiple channels
-- **Format**: RGBA channels (4 x 0-255 integer values per cell)
-- **Advantages**:
-  - Compatible with standard image processing tools and libraries
-  - Import/export in widely understood formats
-  - GPU acceleration possible for certain operations
-  - Texture/color functionality shortcuts for visualization and processing
-- **Channel Usage**:
-  - RGB channels: Arbitrary data (terrain type, ownership ID, resource density, etc.)
-  - Alpha channel: Optional modifier/opacity, or simply a fourth data channel
-- **Use Cases**: Regional terrain, ownership maps, mana density layers, resource distribution, weather patterns
-
-#### Dictionary/Relational Maps
-**Structure**: Key-value mappings (object ID → set of related object IDs)
-- **Format**: Sparse data structure for empty-space-dominant domains
-- **Advantages**:
-  - Efficient for sparsely populated spaces
-  - Natural representation for relational data
-  - Low memory overhead for mostly-empty regions
-- **Use Cases**: Star maps, sea charts, trade route networks, social relationship maps
-
-#### Tree-Based Maps
-**Structure**: Hierarchical node structures
-- **Format**: Parent-child relationships with arbitrary depth
-- **Advantages**:
-  - Efficient spatial queries (quadtrees, octrees)
-  - Natural representation for hierarchical ownership
-  - Good for variable-density data
-- **Use Cases**: Administrative hierarchies, nested territorial claims, organizational structures
-
-### Multi-Layer Architecture
-
-Each map resource can contain **multiple data layers** with independent characteristics:
-
-```yaml
-map_resource:
-  id: "region-omega-central"
-  type: "texture_map"
-  dimensions: [1024, 1024]
-
-  layers:
-    terrain:
-      persistence: "permanent"
-      storage: "durable"
-      update_frequency: "rare"
-
-    ownership:
-      persistence: "permanent"
-      storage: "durable"
-      update_frequency: "moderate"
-      authority: "region_ai_exclusive"
-
-    mana_density:
-      persistence: "ephemeral"
-      storage: "cache"
-      update_frequency: "high"
-      recalculation: "periodic"
-
-    weather_effects:
-      persistence: "ephemeral"
-      storage: "cache"
-      update_frequency: "continuous"
-      ttl: "4_hours"  # One in-game day
-
-    combat_hazards:
-      persistence: "ephemeral"
-      storage: "cache"
-      update_frequency: "event_driven"
-      ttl: "variable"
-```
-
-#### Persistence Categories
-
-**Permanent/Durable Layers**:
-- Stored in persistent storage (MySQL, Azure Blob, AWS S3, etc.)
-- Survives service restarts and deployments
-- Examples: terrain, ownership, permanent structures, geographic features
-
-**Ephemeral/Cache Layers**:
-- Stored in cache systems (Redis, in-memory)
-- Recalculated or regenerated as needed
-- Examples: current mana density, weather effects, temporary combat hazards, real-time environmental conditions
-
-**Configurable Per Layer**: Each layer's persistence strategy is determined at map creation and can vary based on deployment environment (Azure vs AWS vs local development).
-
-## Hierarchical Nesting and Bidirectional Linking
-
-### Nested Map Structure
-
-Maps can contain references to child maps and maintain awareness of their parent placement:
-
-```yaml
-# Parent map contains object references
-region_map:
-  id: "region-omega-central"
-  child_objects:
-    - object_id: "town-riverside"
-      map_reference: "town-riverside-interior"
-      placement: { x: 512, y: 384, bounds: [64, 64] }
-
-    - object_id: "dungeon-ancient-mines"
-      map_reference: "dungeon-ancient-mines-interior"
-      placement: { x: 128, y: 896, bounds: [32, 32] }
-
-# Child map knows its placement context
-dungeon_map:
-  id: "dungeon-ancient-mines-interior"
-  parent_map: "region-omega-central"
-  parent_placement: { x: 128, y: 896 }
-  world_coordinates: { realm: "omega", region: "central", local: [128, 896] }
-```
-
-### Map Existence vs Placement
-
-**Critical Distinction**: Maps can exist as pure data structures without being "placed" in the game world.
-
-- **Unplaced Maps**: Exist in storage, can be modified, but have no world coordinates
-- **Placed Maps**: Linked into the map hierarchy with defined placement in a parent map
-
-**Example - Dungeon Creation Flow**:
-1. Player/system creates dungeon interior map (exists but unplaced)
-2. Dungeon map is designed, populated with rooms and features
-3. Entrance placement requires negotiation with parent map owner
-4. Upon successful negotiation, child map is linked into parent map hierarchy
-5. Dungeon now "exists" in the game world with accessible entrance
-
-### Event Propagation
-
-Events flow bidirectionally through the map hierarchy:
-
-#### Upward Propagation (Child → Parent)
-- Resource changes in child maps aggregate into bulk events
-- Parent maps receive summarized change notifications
-- Parent can choose to track aggregated data or disregard
-- Enables region-level awareness of distributed changes
-
-```yaml
-# Child dungeon emits resource event
-child_event:
-  source: "dungeon-ancient-mines-interior"
-  type: "resource_change"
-  details:
-    mana_generated: +150
-    monsters_spawned: 3
-
-# Parent region receives aggregated event
-parent_event:
-  source: "dungeon-ancient-mines-interior"
-  type: "child_resource_summary"
-  aggregation_period: "1_hour"
-  details:
-    net_mana_change: +1200
-    population_change: +15
-```
-
-#### Downward Propagation (Parent → Child)
-- Environmental changes affecting child regions
-- Time progression and weather updates
-- Administrative changes (ownership transfers, policy updates)
-
-## Concurrency Control and Authority
-
-### The Checkout Model
-
-For large-scale modifications, the Map Service implements a **checkout system** to prevent race conditions:
-
-#### Standard Checkout Flow
-1. **Request Checkout**: Service requests exclusive write access to specific layer(s)
-2. **Checkout Granted**: Map Service grants checkout with timeout
-3. **Modifications Made**: Service applies changes to checked-out layers
-4. **Commit Changes**: Service commits modifications
-5. **Release Checkout**: Exclusive access released
-
-#### Authority-Based Access
-
-Different entities have **permanent or elevated authority** over specific layers:
-
-```yaml
-authority_model:
-  region_ai:
-    - layer: "ownership"
-      access: "exclusive_permanent"
-    - layer: "terrain"
-      access: "exclusive_permanent"
-    - layer: "build_restrictions"
-      access: "exclusive_permanent"
-
-  dungeon_cores:
-    - layer: "mana_density"
-      access: "write_within_domain"
-    - layer: "monster_population"
-      access: "write_within_domain"
-
-  combat_service:
-    - layer: "combat_hazards"
-      access: "write_temporary"
-      scope: "active_engagement_area"
-```
-
-### Region AI as Permanent Authority
-
-**Region AIs effectively always have their regional maps checked out** for ownership and structural layers. Other entities don't checkout these layers directly but instead:
-
-1. **Request changes through Region AI APIs** (not Map APIs directly)
-2. **Negotiate terms** (cost, permissions, restrictions)
-3. **Region AI applies approved changes** on their behalf
-
-This ensures:
-- Consistent enforcement of build restrictions (riverbeds, protected areas)
-- Relationship-based cost modifiers for expansion
-- Centralized conflict resolution for overlapping claims
-- Enforcement of regional policies and restrictions
-
-### Negotiation vs Direct Checkout
-
-| Operation | Method | Authority |
-|-----------|--------|-----------|
-| Read any layer | Direct Map API | Any authorized service |
-| Write cache layers | Direct Map API with checkout | Layer-specific permissions |
-| Modify ownership | Region AI negotiation | Region AI exclusive |
-| Place child maps | Region AI negotiation | Region AI exclusive |
-| Expand domains | Region AI negotiation | Region AI exclusive |
-
-## Event-Driven Updates via RabbitMQ
-
-### Per-Map Event Queues
-
-Each map resource has its own RabbitMQ queue for receiving updates:
-
-```yaml
-queue_configuration:
-  map_id: "region-omega-central"
-  queue_name: "map.region-omega-central.updates"
-
-  rate_limiting:
-    max_events_per_second: 100
-    burst_allowance: 500
-
-  consolidation:
-    enabled: true
-    window: "500ms"
-    strategy: "merge_compatible"
-```
-
-### Rate Limiting and Overload Prevention
-
-**Queue-Based Rate Limiting**:
-- Each map's queue inherently prevents update storms
-- High-frequency updates queue rather than overwhelm
-- Configurable rate limits per map based on expected activity
-
-**Event Consolidation**:
-- Multiple queued events can merge into equivalent larger changes
-- Similar to merging git diffs
-- Reduces processing overhead for rapidly-changing data
-
-```yaml
-# Before consolidation: 10 separate mana updates
-events:
-  - { type: "mana_update", cell: [10, 20], delta: +5 }
-  - { type: "mana_update", cell: [10, 20], delta: +3 }
-  - { type: "mana_update", cell: [10, 21], delta: +7 }
-  # ... more events
-
-# After consolidation: 2 aggregated updates
-consolidated:
-  - { type: "mana_update", cell: [10, 20], delta: +8 }
-  - { type: "mana_update", cell: [10, 21], delta: +7 }
-```
-
-### Fixed-Frequency Output Events
-
-**Guaranteed Non-Overload for Listeners**:
-- Map change events emitted at **configured fixed intervals**
-- Listeners cannot be overloaded regardless of internal update frequency
-- Frequency determined at map creation based on use case
-
-```yaml
-output_configuration:
-  map_id: "region-omega-central"
-
-  event_channels:
-    ownership_changes:
-      frequency: "on_change"  # Immediate for critical changes
-      max_rate: "1_per_second"
-
-    mana_density_updates:
-      frequency: "every_30_seconds"
-      aggregation: "delta_summary"
-
-    weather_updates:
-      frequency: "every_5_minutes"
-
-    resource_summaries:
-      frequency: "every_hour"
-      aggregation: "complete_snapshot"
-```
-
-## Integration with Game Services
-
-### Combat Session Integration
-
-The Combat Service uses Map APIs for environmental awareness during engagements:
-
-```yaml
-combat_map_integration:
-  reads:
-    - layer: "terrain"
-      purpose: "ground stability, elevation, structural integrity"
-    - layer: "mana_density"
-      purpose: "environmental magical energy affects available abilities"
-    - layer: "weather_effects"
-      purpose: "visibility, movement modifiers"
-    - layer: "hazards"
-      purpose: "existing environmental dangers"
-
-  writes:
-    - layer: "combat_hazards"
-      purpose: "temporary hazards from combat (fire, debris, magical effects)"
-      persistence: "ephemeral"
-      ttl: "combat_duration + cleanup_period"
-```
-
-### World State Service Integration
-
-The World State Service coordinates time progression and global effects through maps:
-
-```yaml
-world_state_integration:
-  broadcasts:
-    - time_progression: "all_region_maps"
-    - weather_changes: "affected_region_maps"
-    - seasonal_effects: "all_region_maps"
-
-  aggregates:
-    - population_summaries: "from_all_child_maps"
-    - resource_totals: "from_all_child_maps"
-    - economic_activity: "from_all_child_maps"
-```
-
-### NPC Agent Integration
-
-Character agents query map data for decision-making and pathfinding:
-
-```yaml
-npc_map_integration:
-  queries:
-    - "nearby_resources(location, radius)"
-    - "path_to_destination(start, end, constraints)"
-    - "local_mana_density(location)"
-    - "ownership_at(location)"
-    - "build_restrictions(location)"
-
-  subscriptions:
-    - "ownership_changes_in_area(area)"
-    - "resource_availability_changes(resource_type, area)"
-```
-
-### Guardian Spirit / Real Estate Integration
-
-Property ownership and territorial claims flow through the Map Service:
-
-```yaml
-real_estate_integration:
-  ownership_layer:
-    data_type: "entity_id_per_cell"
-    authority: "region_ai_exclusive"
-
-  operations:
-    claim_property:
-      method: "region_ai_negotiation"
-      requirements: ["available", "not_restricted", "payment"]
-
-    transfer_property:
-      method: "region_ai_negotiation"
-      requirements: ["owner_consent", "buyer_qualified"]
-
-    expand_property:
-      method: "region_ai_negotiation"
-      requirements: ["adjacent_available", "expansion_cost"]
-```
-
-## Map Generation and Lifecycle
-
-### Initial Generation
-
-**Regional Maps**: Generated on game server/region creation
-- Large-scale terrain and geographic features
-- Initial ownership (unclaimed, NPC settlements, etc.)
-- Build restriction zones (riverbeds, protected areas, etc.)
-
-**Sub-Maps**: Generated on-demand as needed
-- Town interiors created when towns are founded
-- Dungeon interiors created when dungeons form
-- Building interiors created when buildings are constructed
-
-### Lazy Generation Pattern
-
-```yaml
-generation_pattern:
-  region_creation:
-    immediate:
-      - terrain_layer: "complete"
-      - ownership_layer: "initial_claims_only"
-      - restriction_layer: "complete"
-    deferred:
-      - sub_maps: "generated_on_first_access"
-      - detailed_resources: "generated_on_first_query"
-
-  sub_map_creation:
-    trigger: "entity_establishment"  # Town founded, dungeon formed, building constructed
-    process:
-      1. "create_map_structure"
-      2. "generate_initial_content"
-      3. "negotiate_placement_in_parent"
-      4. "link_bidirectionally"
-      5. "emit_creation_event"
-```
-
-## Technical Implementation Details
-
-### Storage Strategy by Deployment
-
-**Development (Local)**:
-- Durable layers: SQLite or local file storage
-- Cache layers: In-memory dictionary
-- Event queues: Local RabbitMQ or in-process queue
-
-**Production (Azure)**:
-- Durable layers: Azure Blob Storage + Azure SQL
-- Cache layers: Azure Cache for Redis
-- Event queues: Azure Service Bus or RabbitMQ on AKS
-
-**Production (AWS)**:
-- Durable layers: S3 + RDS/Aurora
-- Cache layers: ElastiCache (Redis)
-- Event queues: Amazon MQ (RabbitMQ) or SQS
-
-### Texture Map Serialization
-
-For texture/color maps, standard image formats enable interoperability:
-
-```yaml
-serialization:
-  format: "PNG"  # Lossless, widely supported
-  channels:
-    R: "primary_data_channel"
-    G: "secondary_data_channel"
-    B: "tertiary_data_channel"
-    A: "modifier_or_fourth_channel"
-
-  import_export:
-    - "standard image libraries"
-    - "GPU texture processing"
-    - "external visualization tools"
-    - "procedural generation pipelines"
-```
-
-### API Schema Pattern
-
-```yaml
-# schemas/map-api.yaml (conceptual)
-paths:
-  /maps/{mapId}:
-    get:
-      summary: "Get map metadata and available layers"
-
-  /maps/{mapId}/layers/{layerId}:
-    get:
-      summary: "Read layer data (full or region)"
-      parameters:
-        - bounds: "optional region bounds"
-        - format: "raw|image|json"
-
-  /maps/{mapId}/layers/{layerId}/checkout:
-    post:
-      summary: "Request exclusive write access"
-      parameters:
-        - duration: "checkout timeout"
-        - scope: "full|region bounds"
-
-  /maps/{mapId}/layers/{layerId}/commit:
-    post:
-      summary: "Commit changes and release checkout"
-
-  /maps/{mapId}/query:
-    post:
-      summary: "Spatial query across layers"
-      parameters:
-        - query_type: "point|region|path"
-        - layers: "layers to query"
-
-  /maps/{mapId}/subscribe:
-    post:
-      summary: "Subscribe to map change events"
-      parameters:
-        - event_types: "ownership|resources|all"
-        - frequency: "immediate|batched"
-```
-
-## Performance Considerations
-
-### Scalability Patterns
-
-**Horizontal Scaling**:
-- Map Service instances can be sharded by region
-- Each instance manages a subset of map resources
-- Cross-region queries route through service mesh
-
-**Caching Strategy**:
-- Frequently-read layers cached at edge
-- Write-through caching for durable layers
-- TTL-based expiration for ephemeral layers
-
-**Query Optimization**:
-- Spatial indexes for region-based queries
-- Layer-specific query optimization
-- Aggregation caching for common summaries
-
-### Load Management
-
-**Expected Load Patterns**:
-- High read volume: NPC pathfinding, resource queries, ownership checks
-- Moderate write volume: Ownership changes, resource updates
-- Burst writes: Combat effects, weather changes, event-driven updates
-
-**Mitigation Strategies**:
-- Read replicas for query-heavy layers
-- Write batching for high-frequency updates
-- Event consolidation for burst scenarios
-
-## Related Documents
-
-- [[Microservices Architecture for Game Systems]] - Overall service architecture
-- [[Dynamic World-Driven Systems]] - World state and territorial mechanics
-- [[Revolutionary Engagement Combat System]] - Combat integration with Maps API
-- [[Dungeon System]] - Dungeon-specific map integration details
-- [[Distributed Agent Architecture]] - NPC agent map queries
+#
+# Map Service Architecture - Spatial Data Management for Arcadia (Updated to Tenets)
+
+> **Status**: Draft refresh aligned to Bannou TENETS  
+> **Last Updated**: 2025-12-XX (update date when finalized)  
+> **Goal**: Provide a schema-first, Dapr-first plugin blueprint that exposes map data (heightmaps, tilemaps, overlays, metadata objects) to clients and services with strong permissions, events, and multi-instance safety.
+
+## Tenet Alignment Snapshot
+- **Schema-first (Tenet 1)**: All APIs, events, and configuration live in OpenAPI (`schemas/map-api.yaml`, `schemas/map-events.yaml`, `x-service-configuration`). Generated files untouched. POST-only for WebSocket paths; GET only for browser endpoints if explicitly needed.
+- **Dapr-first (Tenet 2)**: State via Dapr state stores (`map-statestore`, `mysql-map-statestore`), pub/sub via `bannou-pubsub`. No direct RabbitMQ queues (prior per-map queues are replaced by Dapr topics + aggregation). Generated service clients for cross-service calls.
+- **Event-driven (Tenet 3)**: Map/layer lifecycle events emitted (`map.created`, `map.placed`, `map.layer.updated`, `map.metadata.updated`, etc.) with optional `x-lifecycle` for map entities. Child/parent propagation uses events, not ad-hoc calls.
+- **Multi-instance safety (Tenet 4)**: No required in-memory state; use `IDistributedLockProvider` for checkouts; caches are `ConcurrentDictionary` only. ETag concurrency on commits.
+- **Permissions (Tenet 10)**: `x-permissions` on every endpoint with roles/states (e.g., `admin`, `developer`, `user`, region ownership states). No anonymous WebSocket access unless explicitly documented.
+- **Naming (Tenet 15)**: Status codes use `BeyondImmersion.BannouService.StatusCodes`; models/events follow `{Action}Request`, `{Entity}Response`, `{Entity}{Action}Event`; topics `{entity}.{action}`.
+
+## Core Concepts
+
+- **Maps as abstract spatial assets**: Represents terrain, tilemaps, overlays (radiation, mana, vegetation), relational graphs, or logical maps (relationship graphs). Maps may be unplaced or placed in a hierarchy.
+- **Layers**: Each map can hold multiple typed layers with independent persistence and update cadence. Layer metadata defines format (`texture`, `sparse_dict`, `tree`, `metadata_objects`), dimensions, channel layout, persistence (`durable`, `cache`), TTLs, and authority model.
+- **Metadata objects**: Arbitrary objects attached to cells/regions (rocks, trees with harvest/destruction state, buildings, chests, POIs). Use the polymorphic ID+Type pattern (Tenet 13) plus optional location linkage.
+- **Hierarchy**: Parent/child links with placement metadata. Child maps know parent placement; parents maintain child placement records. Placement events emitted when linking/unlinking.
+- **Authority**: Region AI (or equivalent controller) owns structural/ownership layers; other services request changes through APIs with role/state checks. Layer-level authority settings drive checkout rules.
+
+## Data Model Sketch (for schema-first)
+- `MapDefinition` (entity) with `mapId`, `mapType`, `dimensions`, `parentMapId` (optional), `parentPlacement`, `layers`.
+- `LayerDefinition` with `layerId`, `format` (`texture`, `sparse_dict`, `tree`, `metadata_objects`), `persistence` (`durable|cache`), `ttlSeconds`, `authority`, `encoding` (for textures: channels RGBA meaning, tile size).
+- `MetadataObject` with `objectId`, `objectType`, `location` (cell or bounds), `state` blob, `links` (to location service IDs via ID+Type, optional realm/location IDs).
+- State stores: `map-statestore` for mutable layer data/metadata, `mysql-map-statestore` for durable/queryable data (per deployment).
+- Keys: `map-{id}`, `map:{id}:layer:{layerId}`, `map:{id}:metadata:{objectId}`, indexes like `map:{id}:metadata-index:{cellKey}` (Tenet 15 naming).
+
+## API Design (conceptual; must be codified in schemas)
+- **All WebSocket/Connect-facing endpoints are POST** with request bodies; GET allowed only for browser/website delivery (per Tenet 14) and kept out of WebSocket exposure.
+- Example POST endpoints (request/response models follow Tenet naming):
+  - `/maps/create` → `CreateMapRequest` → `MapResponse`
+  - `/maps/get` → `GetMapRequest` (mapId) → `MapResponse`
+  - `/maps/list` with filters (realm, type, parent)
+  - `/maps/place-child` (mapId, parentMapId, placement) → emits `map.placed`
+  - `/maps/remove-child`
+  - `/maps/layers/read` (mapId, layerId, bounds?, format `raw|image|json`, version?) → `LayerReadResponse`
+  - `/maps/layers/write` (mapId, layerId, payload) with checkout token
+  - `/maps/layers/checkout` / `/maps/layers/commit` (per-layer scope; includes ETag/version)
+  - `/maps/metadata/add|update|remove|list` (uses ID+Type, location references)
+  - `/maps/query` (point/region/path; layers to sample; optional aggregation)
+  - `/maps/subscribe` (event types, frequency, bounds filter) → Connect-managed event routing
+- **Permissions**: `x-permissions` aligned to ownership states. Examples:
+  - Ownership writes require `role: developer|admin` plus state `region:owns_area`.
+  - Cache-layer writes (e.g., combat hazards) allow `role: developer` with `game-session:in_game`.
+  - Reads can be `role: user` with optional state gating (e.g., must be in region).
+- **Return pattern**: `(StatusCodes, Response?)` everywhere; null payload for errors. Controllers generated; manual service adheres to Tenet 6.
+
+## Event Model (Dapr pub/sub)
+- Topics (`bannou-pubsub`):
+  - `map.created`, `map.updated`, `map.deleted`
+  - `map.placed`, `map.unplaced`, `map.child-linked`, `map.child-unlinked`
+  - `map.layer.created|updated|deleted`
+  - `map.metadata.created|updated|deleted`
+  - Aggregated child summaries: `map.child-summary` (full-state style; includes version)
+- Use `x-lifecycle` where applicable to auto-generate created/updated/deleted events for `MapDefinition` and `LayerDefinition`.
+- Fixed-frequency emitters implemented via service timers + Dapr pub/sub, not per-map RabbitMQ queues. If per-map queueing is needed, propose Dapr topic partitioning (e.g., `map.layer.updated.{mapId}`) with rate limiting in service code. Cadence should default to “wide” (seconds+ aggregation—**default 5s**) leaning to eventual consistency; high-frequency writes are fine because reads catch up via aggregation and are allowed to drop/reject individual events.
+- Add a **common, non-critical delta event** pattern (akin to service API mapping broadcasts) that any service can emit: “here are my map deltas.” Map service aggregates/merges and may silently drop if overloaded; critical updates must go through APIs with checkout/commit.
+- Upward/downward propagation uses events; consumers decide whether to aggregate or ignore. Avoid direct service-to-service HTTP (Tenet 2).
+
+## Concurrency and Checkout
+- **Distributed locks**: `IDistributedLockProvider` keyed by `map:{id}:layer:{layerId}` for checkout; optional region lock for multi-layer batch edits.
+- **ETag/versioned writes**: `GetStateEntryAsync` / `TrySaveStateAsync` per layer chunk or metadata blob. Reject stale commits with `StatusCodes.Conflict`.
+- **Scoping**: Checkout scopes can be full-layer or bounds. Responses include token + ETag + expiry seconds.
+- **Authority model**: Layers declare authority; Region AI exclusivity enforced by permissions + server-side checks (no implicit permanent checkout in-memory).
+
+## Layer Formats and Serialization
+- **Texture layers**: 2D arrays with channel descriptor (`channels: [R,G,B,A]` each 0-255). Support binary payloads and optional PNG encoding for import/export (documented in schema `format` enum). Chunked reads/writes by bounds.
+- **Sparse dictionary layers**: Key/value for sparse spaces (e.g., star maps, trade routes). Keys follow `{x}:{y}` or domain-specific keys; values typed per layer schema.
+- **Tree layers**: Quad/Oct/Custom trees for hierarchical ownership or density. Store serialized nodes with versioning; queries expose summaries.
+- **Metadata objects**: Attach to cells/regions; store object state JSON with `objectType` enum; link to Location service via `locationId`/`locationType` (ID+Type).
+- **Metadata object types/schemas**: Object type is not a closed enum; define a schema registry API to create/update object-type schemas (validation rules, required fields). Other plugins (e.g., vegetation) register their object schemas and assign them to maps for validation (both API and event ingestion). Object IDs may be provided or auto-generated GUIDs. Location references are optional and should not gate non-geographic map types.
+
+## Integration Points
+- **Location plugin**: Map placements reference `locationId`/`locationType`; events can emit `location.map.linked` if needed. Spatial queries can return nearest location references.
+- **Combat service**: Reads terrain/mana/weather/hazard layers; writes ephemeral hazard overlays with TTL. Subscribes to bounded updates (`map.layer.updated.{mapId}` with filter).
+- **World/Time services**: Broadcast time/weather/season events; Map service applies to relevant layers via subscriptions.
+- **NPC/Agent services**: Queries for pathfinding/resource availability; subscribes to ownership/resource change events in defined bounds.
+- **Real estate/Guardian**: Ownership changes mediated through Region AI endpoints; emits ownership change events for permissions updates.
+
+## Performance and Scaling
+- Shard maps by realm/region; each Map service instance can own a shard. Service-to-service routing via generated clients + `ServiceAppMappingResolver`.
+- Read-heavy layers cached (`ConcurrentDictionary`) with TTL; authoritative state in Dapr stores. Cache invalidated on layer update events.
+- Write batching and consolidation occur inside service before publishing events; output rate limits implemented in code (no direct queue tuning).
+- Large layers support chunked operations (bounds) to avoid oversized payloads.
+
+## Deployment and Configuration
+- Service configuration via generated `MapServiceConfiguration` (schema `x-service-configuration`): state store names, max checkout duration, chunk sizes, cache TTLs, event emission frequencies, rate limits.
+- Environment toggles follow existing patterns: `MAP_SERVICE_ENABLED=true` plus per-environment overrides.
+- Browser endpoints (if needed for visualization/debug) must be isolated under `/website/maps/*` with GET + path params and **not** exposed to WebSocket clients (Tenet 14). Preferred model: collaboration with Website plugin—Map plugin provides visualization-ready payloads on request; Website handles public delivery, caching (Redis/proxy), and permissions.
+
+## Known Deviations vs Old Draft
+- Replaced direct RabbitMQ per-map queues with Dapr pub/sub + service-side rate limiting to satisfy Tenet 2. If RabbitMQ-specific behavior is required, it must be justified as a Connect-style exception and documented explicitly.
+- All API shapes now POST-first and schema-driven; previous GET/path-param examples removed except for optional browser-only endpoints.
+- Authority/checkout no longer implies permanent implicit locks; now explicit with distributed locks/ETags to maintain multi-instance safety.
+
+## Open Decisions to Confirm
+- Partitioning strategy for high-volume layer events: topic naming (`map.layer.updated.{mapId}`) vs aggregation cadence defaults. **Decision: go with wide aggregation cadence; non-critical events may be dropped—critical paths must use APIs.**
+- Default layer formats per common use cases (terrain=texture, ownership=texture/dictionary, radiation=mixed?). **Decision: no defaults; callers must specify.**
+- Maximum layer dimensions/chunk size defaults for Connect payload limits. **Decision: set a sanity max (e.g., ≤ Japan-scale at 1m/px) but tolerate larger if Connect gains streaming/multi-message support.**
+- Metadata object schema: required fields and allowed `objectType` enum set; how tightly to couple to Location service IDs. **Decision: object types come from a schema registry API (not enum); IDs optional/autogenerated; Location references optional; validation per assigned schema.**
+- Whether any browser-facing visualization endpoints are required now vs later, and their caching strategy. **Decision: collaborate with Website plugin; Map provides visualization payloads on request, Website handles public delivery/caching (Redis/proxy).**
 
 ---
-*This document is part of the [[README|Arcadia Knowledge Base]]*
+*This document is part of the Arcadia knowledge base and should remain consistent with Bannou TENETS. Update the Last Updated date when finalized.*
