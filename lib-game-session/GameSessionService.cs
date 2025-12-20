@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Voice;
 using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -24,6 +25,7 @@ public class GameSessionService : IGameSessionService
     private readonly ILogger<GameSessionService> _logger;
     private readonly GameSessionServiceConfiguration _configuration;
     private readonly IErrorEventEmitter _errorEventEmitter;
+    private readonly IVoiceClient? _voiceClient;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
@@ -35,16 +37,26 @@ public class GameSessionService : IGameSessionService
     private const string PLAYER_JOINED_TOPIC = "game-session.player-joined";
     private const string PLAYER_LEFT_TOPIC = "game-session.player-left";
 
+    /// <summary>
+    /// Creates a new GameSessionService instance.
+    /// </summary>
+    /// <param name="daprClient">Dapr client for state and pub/sub operations.</param>
+    /// <param name="logger">Logger for this service.</param>
+    /// <param name="configuration">Service configuration.</param>
+    /// <param name="errorEventEmitter">Error event emitter for unexpected failures.</param>
+    /// <param name="voiceClient">Optional voice client for voice room coordination. May be null if voice service is disabled.</param>
     public GameSessionService(
         DaprClient daprClient,
         ILogger<GameSessionService> logger,
         GameSessionServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter)
+        IErrorEventEmitter errorEventEmitter,
+        IVoiceClient? voiceClient = null)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+        _voiceClient = voiceClient; // Nullable - voice service may be disabled (Tenet 5)
     }
 
     /// <summary>
@@ -108,7 +120,7 @@ public class GameSessionService : IGameSessionService
     {
         try
         {
-            var sessionId = Guid.NewGuid().ToString();
+            var sessionId = Guid.NewGuid();
 
             _logger.LogInformation("Creating game session {SessionId} - GameType: {GameType}, MaxPlayers: {MaxPlayers}",
                 sessionId, body.GameType, body.MaxPlayers);
@@ -116,7 +128,7 @@ public class GameSessionService : IGameSessionService
             // Create the session model
             var session = new GameSessionModel
             {
-                SessionId = sessionId,
+                SessionId = sessionId.ToString(),
                 GameType = MapRequestGameTypeToResponse(body.GameType),
                 SessionName = body.SessionName,
                 MaxPlayers = body.MaxPlayers,
@@ -126,13 +138,40 @@ public class GameSessionService : IGameSessionService
                 CurrentPlayers = 0,
                 Players = new List<GamePlayer>(),
                 CreatedAt = DateTimeOffset.UtcNow,
-                GameSettings = body.GameSettings
+                GameSettings = body.GameSettings,
+                VoiceEnabled = _voiceClient != null // Voice enabled if voice service is available
             };
+
+            // Create voice room if voice service is available
+            if (_voiceClient != null)
+            {
+                try
+                {
+                    _logger.LogDebug("Creating voice room for session {SessionId}", sessionId);
+                    var voiceResponse = await _voiceClient.CreateVoiceRoomAsync(new CreateVoiceRoomRequest
+                    {
+                        SessionId = sessionId,
+                        PreferredTier = VoiceTier.P2p,
+                        Codec = VoiceCodec.Opus,
+                        MaxParticipants = body.MaxPlayers
+                    }, cancellationToken);
+
+                    session.VoiceRoomId = voiceResponse.RoomId;
+                    _logger.LogInformation("Voice room {VoiceRoomId} created for session {SessionId}",
+                        voiceResponse.RoomId, sessionId);
+                }
+                catch (Exception ex)
+                {
+                    // Voice room creation failure is non-fatal - session can still work without voice
+                    _logger.LogWarning(ex, "Failed to create voice room for session {SessionId}, continuing without voice", sessionId);
+                    session.VoiceEnabled = false;
+                }
+            }
 
             // Save to state store
             await _daprClient.SaveStateAsync(
                 STATE_STORE,
-                SESSION_KEY_PREFIX + sessionId,
+                SESSION_KEY_PREFIX + session.SessionId,
                 session,
                 cancellationToken: cancellationToken);
 
@@ -142,7 +181,7 @@ public class GameSessionService : IGameSessionService
                 SESSION_LIST_KEY,
                 cancellationToken: cancellationToken) ?? new List<string>();
 
-            sessionIds.Add(sessionId);
+            sessionIds.Add(session.SessionId);
 
             await _daprClient.SaveStateAsync(
                 STATE_STORE,
@@ -154,12 +193,12 @@ public class GameSessionService : IGameSessionService
             await _daprClient.PublishEventAsync(
                 PUBSUB_NAME,
                 SESSION_CREATED_TOPIC,
-                new { SessionId = sessionId, GameType = body.GameType.ToString() },
+                new { SessionId = session.SessionId, GameType = body.GameType.ToString() },
                 cancellationToken);
 
             var response = MapModelToResponse(session);
 
-            _logger.LogInformation("Game session {SessionId} created successfully", sessionId);
+            _logger.LogInformation("Game session {SessionId} created successfully", session.SessionId);
             return (StatusCodes.Created, response);
         }
         catch (Exception ex)
@@ -296,6 +335,7 @@ public class GameSessionService : IGameSessionService
                 new { SessionId = sessionId, AccountId = accountId.ToString() },
                 cancellationToken);
 
+            // Build response
             var response = new JoinGameSessionResponse
             {
                 Success = true,
@@ -308,6 +348,65 @@ public class GameSessionService : IGameSessionService
                     $"game-session:{sessionId}:chat"
                 }
             };
+
+            // Join voice room if voice is enabled and voice endpoint provided
+            if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null)
+            {
+                try
+                {
+                    _logger.LogDebug("Player {AccountId} joining voice room {VoiceRoomId}", accountId, model.VoiceRoomId);
+
+                    // Convert VoiceSipEndpoint to Voice service SipEndpoint
+                    var sipEndpoint = new SipEndpoint
+                    {
+                        SdpOffer = body.VoiceEndpoint?.SdpOffer ?? string.Empty,
+                        IceCandidates = body.VoiceEndpoint?.IceCandidates?.ToList() ?? new List<string>()
+                    };
+
+                    var voiceResponse = await _voiceClient.JoinVoiceRoomAsync(new JoinVoiceRoomRequest
+                    {
+                        RoomId = model.VoiceRoomId.Value,
+                        AccountId = accountId,
+                        SessionId = sessionId,
+                        DisplayName = player.DisplayName,
+                        SipEndpoint = sipEndpoint
+                    }, cancellationToken);
+
+                    if (voiceResponse.Success)
+                    {
+                        // Map voice response to VoiceConnectionInfo
+                        response.Voice = new VoiceConnectionInfo
+                        {
+                            RoomId = voiceResponse.RoomId,
+                            Tier = MapVoiceTierToConnectionInfoTier(voiceResponse.Tier),
+                            Codec = MapVoiceCodecToConnectionInfoCodec(voiceResponse.Codec),
+                            Peers = voiceResponse.Peers?.Select(p => new VoicePeerInfo
+                            {
+                                AccountId = p.AccountId,
+                                DisplayName = p.DisplayName,
+                                SdpOffer = p.SipEndpoint?.SdpOffer ?? string.Empty,
+                                IceCandidates = p.SipEndpoint?.IceCandidates?.ToList()
+                            }).ToList() ?? new List<VoicePeerInfo>(),
+                            RtpServerUri = voiceResponse.RtpServerUri,
+                            StunServers = voiceResponse.StunServers?.ToList() ?? new List<string>()
+                        };
+
+                        _logger.LogInformation("Player {AccountId} joined voice room {VoiceRoomId} with {PeerCount} peers",
+                            accountId, model.VoiceRoomId, response.Voice.Peers.Count);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Failed to join voice room {VoiceRoomId} for player {AccountId}",
+                            model.VoiceRoomId, accountId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Voice join failure is non-fatal - player can still participate in session
+                    _logger.LogWarning(ex, "Failed to join voice room for player {AccountId} in session {SessionId}",
+                        accountId, sessionId);
+                }
+            }
 
             _logger.LogInformation("Player {AccountId} joined game session {SessionId}", accountId, sessionId);
             return (StatusCodes.OK, response);
@@ -409,10 +508,59 @@ public class GameSessionService : IGameSessionService
                 model.Players.RemoveAt(0);
                 model.CurrentPlayers = model.Players.Count;
 
+                // Leave voice room if voice is enabled
+                if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null)
+                {
+                    try
+                    {
+                        _logger.LogDebug("Player {AccountId} leaving voice room {VoiceRoomId}",
+                            leavingPlayer.AccountId, model.VoiceRoomId);
+
+                        await _voiceClient.LeaveVoiceRoomAsync(new LeaveVoiceRoomRequest
+                        {
+                            RoomId = model.VoiceRoomId.Value,
+                            AccountId = leavingPlayer.AccountId
+                        }, cancellationToken);
+
+                        _logger.LogInformation("Player {AccountId} left voice room {VoiceRoomId}",
+                            leavingPlayer.AccountId, model.VoiceRoomId);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Voice leave failure is non-fatal
+                        _logger.LogWarning(ex, "Failed to leave voice room for player {AccountId}",
+                            leavingPlayer.AccountId);
+                    }
+                }
+
                 // Update status
                 if (model.CurrentPlayers == 0)
                 {
                     model.Status = GameSessionResponseStatus.Finished;
+
+                    // Delete voice room when session ends
+                    if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null)
+                    {
+                        try
+                        {
+                            _logger.LogDebug("Deleting voice room {VoiceRoomId} as session {SessionId} has ended",
+                                model.VoiceRoomId, sessionId);
+
+                            await _voiceClient.DeleteVoiceRoomAsync(new DeleteVoiceRoomRequest
+                            {
+                                RoomId = model.VoiceRoomId.Value,
+                                Reason = "session_ended"
+                            }, cancellationToken);
+
+                            _logger.LogInformation("Voice room {VoiceRoomId} deleted for ended session {SessionId}",
+                                model.VoiceRoomId, sessionId);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to delete voice room {VoiceRoomId} for session {SessionId}",
+                                model.VoiceRoomId, sessionId);
+                        }
+                    }
                 }
                 else if (model.Status == GameSessionResponseStatus.Full)
                 {
@@ -602,6 +750,27 @@ public class GameSessionService : IGameSessionService
         };
     }
 
+    private static VoiceConnectionInfoTier MapVoiceTierToConnectionInfoTier(VoiceTier tier)
+    {
+        return tier switch
+        {
+            VoiceTier.P2p => VoiceConnectionInfoTier.P2p,
+            VoiceTier.Scaled => VoiceConnectionInfoTier.Scaled,
+            _ => VoiceConnectionInfoTier.P2p
+        };
+    }
+
+    private static VoiceConnectionInfoCodec MapVoiceCodecToConnectionInfoCodec(VoiceCodec codec)
+    {
+        return codec switch
+        {
+            VoiceCodec.Opus => VoiceConnectionInfoCodec.Opus,
+            VoiceCodec.G711 => VoiceConnectionInfoCodec.G711,
+            VoiceCodec.G722 => VoiceConnectionInfoCodec.G722,
+            _ => VoiceConnectionInfoCodec.Opus
+        };
+    }
+
     #endregion
 
     #region Permission Registration
@@ -660,4 +829,14 @@ internal class GameSessionModel
     public List<GamePlayer> Players { get; set; } = new();
     public DateTimeOffset CreatedAt { get; set; }
     public object? GameSettings { get; set; }
+
+    /// <summary>
+    /// Whether voice communication is enabled for this session.
+    /// </summary>
+    public bool VoiceEnabled { get; set; }
+
+    /// <summary>
+    /// The voice room ID if voice is enabled.
+    /// </summary>
+    public Guid? VoiceRoomId { get; set; }
 }

@@ -244,6 +244,12 @@ public partial class JoinGameSessionRequest
     [System.Text.Json.Serialization.JsonPropertyName("characterData")]
     public object CharacterData { get; set; } = default!;
 
+    /// <summary>
+    /// Client's SIP endpoint for voice communication (optional)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("voiceEndpoint")]
+    public VoiceSipEndpoint VoiceEndpoint { get; set; } = default!;
+
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
@@ -282,6 +288,12 @@ public partial class JoinGameSessionResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newPermissions")]
     public System.Collections.Generic.ICollection<string> NewPermissions { get; set; } = default!;
+
+    /// <summary>
+    /// Voice connection info (if voice is enabled for this session)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("voice")]
+    public VoiceConnectionInfo Voice { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -474,6 +486,139 @@ public partial class GameActionResponse
 
 }
 
+/// <summary>
+/// Client's SIP/WebRTC endpoint for voice communication
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class VoiceSipEndpoint
+{
+
+    /// <summary>
+    /// SDP offer for WebRTC negotiation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sdpOffer")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string SdpOffer { get; set; } = default!;
+
+    /// <summary>
+    /// ICE candidates for NAT traversal
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("iceCandidates")]
+    public System.Collections.Generic.ICollection<string> IceCandidates { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Voice connection information returned when joining a session
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class VoiceConnectionInfo
+{
+
+    /// <summary>
+    /// Voice room ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Voice tier (p2p for direct connections, scaled for RTP server)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tier")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public VoiceConnectionInfoTier Tier { get; set; } = default!;
+
+    /// <summary>
+    /// Audio codec to use
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("codec")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public VoiceConnectionInfoCodec Codec { get; set; } = default!;
+
+    /// <summary>
+    /// List of peers to connect to (P2P mode only)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("peers")]
+    public System.Collections.Generic.ICollection<VoicePeerInfo> Peers { get; set; } = default!;
+
+    /// <summary>
+    /// RTP server URI (scaled mode only)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("rtpServerUri")]
+    public string? RtpServerUri { get; set; } = default!;
+
+    /// <summary>
+    /// STUN server URIs for NAT traversal
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("stunServers")]
+    public System.Collections.Generic.ICollection<string> StunServers { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Peer connection info for P2P voice
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class VoicePeerInfo
+{
+
+    /// <summary>
+    /// Peer's account ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Peer's display name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    public string? DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// SDP offer for WebRTC negotiation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sdpOffer")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string SdpOffer { get; set; } = default!;
+
+    /// <summary>
+    /// ICE candidates for NAT traversal
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("iceCandidates")]
+    public System.Collections.Generic.ICollection<string>? IceCandidates { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ListGameSessionsRequestGameType
 {
@@ -606,6 +751,33 @@ public enum GameActionRequestActionType
 
     [System.Runtime.Serialization.EnumMember(Value = @"use_item")]
     Use_item = 4,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum VoiceConnectionInfoTier
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"p2p")]
+    P2p = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"scaled")]
+    Scaled = 1,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum VoiceConnectionInfoCodec
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"opus")]
+    Opus = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"g711")]
+    G711 = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"g722")]
+    G722 = 2,
 
 }
 

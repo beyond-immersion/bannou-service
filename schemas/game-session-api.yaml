@@ -363,6 +363,9 @@ components:
           type: object
           additionalProperties: true
           description: Game-specific character data
+        voiceEndpoint:
+          $ref: '#/components/schemas/VoiceSipEndpoint'
+          description: Client's SIP endpoint for voice communication (optional)
 
     JoinGameSessionResponse:
       type: object
@@ -387,6 +390,9 @@ components:
           items:
             type: string
           description: Additional permissions granted by joining
+        voice:
+          $ref: '#/components/schemas/VoiceConnectionInfo'
+          description: Voice connection info (if voice is enabled for this session)
 
     GamePlayer:
       type: object
@@ -492,6 +498,84 @@ components:
           type: object
           additionalProperties: true
           description: Updated game state (if applicable)
+
+    # ============================================
+    # Voice Integration Types
+    # ============================================
+
+    VoiceSipEndpoint:
+      type: object
+      description: Client's SIP/WebRTC endpoint for voice communication
+      required:
+        - sdpOffer
+      properties:
+        sdpOffer:
+          type: string
+          description: SDP offer for WebRTC negotiation
+        iceCandidates:
+          type: array
+          items:
+            type: string
+          description: ICE candidates for NAT traversal
+
+    VoiceConnectionInfo:
+      type: object
+      description: Voice connection information returned when joining a session
+      required:
+        - roomId
+        - tier
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Voice room ID
+        tier:
+          type: string
+          enum: [p2p, scaled]
+          description: Voice tier (p2p for direct connections, scaled for RTP server)
+        codec:
+          type: string
+          enum: [opus, g711, g722]
+          description: Audio codec to use
+        peers:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoicePeerInfo'
+          description: List of peers to connect to (P2P mode only)
+        rtpServerUri:
+          type: string
+          nullable: true
+          description: RTP server URI (scaled mode only)
+        stunServers:
+          type: array
+          items:
+            type: string
+          description: STUN server URIs for NAT traversal
+
+    VoicePeerInfo:
+      type: object
+      description: Peer connection info for P2P voice
+      required:
+        - accountId
+        - sdpOffer
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Peer's account ID
+        displayName:
+          type: string
+          nullable: true
+          description: Peer's display name
+        sdpOffer:
+          type: string
+          description: SDP offer for WebRTC negotiation
+        iceCandidates:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: ICE candidates for NAT traversal
 
 # Service Registration Information (used by permission system)
 x-service-registration:

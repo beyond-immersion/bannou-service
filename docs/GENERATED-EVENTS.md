@@ -1,6 +1,6 @@
 # Generated Events Reference
 
-> **Auto-generated**: 2025-12-19 22:04:40
+> **Auto-generated**: 2025-12-20 05:40:10
 > **Source**: `schemas/*-events.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -117,6 +117,28 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `SubscriptionUpdatedEvent` | Lifecycle (Updated) | `subscription.updated` | Published when a subscription changes state (creat... |
+
+### Voice
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `VoiceParticipantJoinedEvent` | Custom | `voice-participant-joined` | Published when a participant joins a voice room. |
+| `VoiceParticipantLeftEvent` | Custom | `voice-participant-left` | Published when a participant leaves a voice room. |
+| `VoiceRoomCreatedEvent` | Lifecycle (Created) | `voice-room.created` | Published when a new voice room is created. |
+| `VoiceRoomDeletedEvent` | Lifecycle (Deleted) | `voice-room.deleted` | Published when a voice room is deleted. |
+| `VoiceTierUpgradeCompletedEvent` | Custom | `voice-tier-upgrade-completed` | Published when a voice room tier upgrade is comple... |
+| `VoiceTierUpgradeRequestedEvent` | Custom | `voice-tier-upgrade-requested` | Published when a voice room needs to upgrade from ... |
+
+### Voice (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `VoicePeerJoinedEvent` | Custom | `voice-peer-joined` | Sent to existing room participants when a new peer... |
+| `VoicePeerLeftEvent` | Custom | `voice-peer-left` | Sent to remaining room participants when a peer le... |
+| `VoicePeerUpdatedEvent` | Lifecycle (Updated) | `voice-peer.updated` | Sent when a peer updates their SIP endpoint (e.g.,... |
+| `VoiceRoomClosedEvent` | Custom | `voice-room-closed` | Sent to all room participants when the voice room ... |
+| `VoiceRoomStateEvent` | Custom | `voice-room-state` | Sent to a client when they join a voice room. |
+| `VoiceTierUpgradeEvent` | Custom | `voice-tier-upgrade` | Sent to all room participants when the voice tier ... |
 
 ## Event Types
 

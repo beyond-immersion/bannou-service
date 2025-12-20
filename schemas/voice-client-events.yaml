@@ -1,0 +1,281 @@
+openapi: 3.0.3
+info:
+  title: Voice Client Events API
+  description: |
+    Server-to-client push events for the Voice service.
+    These events notify clients of voice room state changes, peer connections,
+    and tier upgrades delivered via WebSocket.
+
+    All events inherit from BaseClientEvent (common-client-events.yaml) and use
+    the "voice.{event_type}" naming convention.
+
+    **Event Delivery**: Events are published to the session-specific RabbitMQ
+    channel (CONNECT_SESSION_{sessionId}) and delivered to the client via WebSocket.
+  version: 1.0.0
+  contact:
+    name: Bannou Development Team
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    # ============================================
+    # Room State Events
+    # ============================================
+
+    VoiceRoomStateEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent to a client when they join a voice room.
+        Contains full room state including peer list and connection info.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - room_id
+        - tier
+        - peers
+      properties:
+        event_name:
+          type: string
+          enum: ["voice.room_state"]
+          description: Fixed event type identifier
+        room_id:
+          type: string
+          format: uuid
+          description: Voice room ID
+        session_id:
+          type: string
+          format: uuid
+          description: Associated game session ID
+        tier:
+          type: string
+          enum: [p2p, scaled]
+          description: Current voice tier
+        codec:
+          type: string
+          enum: [opus, g711, g722]
+          description: Audio codec to use
+        peers:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoicePeerInfo'
+          description: List of peers to connect to (P2P mode)
+        rtp_server_uri:
+          type: string
+          nullable: true
+          description: RTP server URI (scaled mode only)
+        stun_servers:
+          type: array
+          items:
+            type: string
+          description: STUN server URIs for NAT traversal
+
+    # ============================================
+    # Peer Events
+    # ============================================
+
+    VoicePeerJoinedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent to existing room participants when a new peer joins.
+        Contains the new peer's connection details for P2P mode.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - room_id
+        - peer
+      properties:
+        event_name:
+          type: string
+          enum: ["voice.peer_joined"]
+          description: Fixed event type identifier
+        room_id:
+          type: string
+          format: uuid
+          description: Voice room ID
+        peer:
+          $ref: '#/components/schemas/VoicePeerInfo'
+          description: New peer's connection details
+        current_participant_count:
+          type: integer
+          description: Total participants after join
+
+    VoicePeerLeftEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent to remaining room participants when a peer leaves.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - room_id
+        - account_id
+      properties:
+        event_name:
+          type: string
+          enum: ["voice.peer_left"]
+          description: Fixed event type identifier
+        room_id:
+          type: string
+          format: uuid
+          description: Voice room ID
+        account_id:
+          type: string
+          format: uuid
+          description: Account ID of the peer who left
+        display_name:
+          type: string
+          nullable: true
+          description: Display name for UI notification
+        remaining_participant_count:
+          type: integer
+          description: Participants remaining after departure
+
+    VoicePeerUpdatedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent when a peer updates their SIP endpoint (e.g., ICE candidate change).
+        Clients should update their connection to this peer.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - room_id
+        - peer
+      properties:
+        event_name:
+          type: string
+          enum: ["voice.peer_updated"]
+          description: Fixed event type identifier
+        room_id:
+          type: string
+          format: uuid
+          description: Voice room ID
+        peer:
+          $ref: '#/components/schemas/VoicePeerInfo'
+          description: Updated peer connection details
+
+    # ============================================
+    # Tier Events
+    # ============================================
+
+    VoiceTierUpgradeEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent to all room participants when the voice tier upgrades.
+        Clients should disconnect P2P connections and connect to the RTP server.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - room_id
+        - new_tier
+        - rtp_server_uri
+      properties:
+        event_name:
+          type: string
+          enum: ["voice.tier_upgrade"]
+          description: Fixed event type identifier
+        room_id:
+          type: string
+          format: uuid
+          description: Voice room ID
+        previous_tier:
+          type: string
+          enum: [p2p]
+          description: Previous tier
+        new_tier:
+          type: string
+          enum: [scaled]
+          description: New tier after upgrade
+        rtp_server_uri:
+          type: string
+          description: RTP server URI to connect to
+        migration_deadline_ms:
+          type: integer
+          default: 5000
+          description: Milliseconds to complete migration before P2P disconnects
+
+    # ============================================
+    # Room Lifecycle Events
+    # ============================================
+
+    VoiceRoomClosedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent to all room participants when the voice room is closed.
+        Clients should disconnect all voice connections.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - room_id
+        - reason
+      properties:
+        event_name:
+          type: string
+          enum: ["voice.room_closed"]
+          description: Fixed event type identifier
+        room_id:
+          type: string
+          format: uuid
+          description: Voice room ID that was closed
+        reason:
+          type: string
+          enum: [session_ended, admin_action, error]
+          description: Reason the room was closed
+
+    # ============================================
+    # Supporting Types
+    # ============================================
+
+    VoicePeerInfo:
+      type: object
+      description: Peer connection information for P2P voice
+      required:
+        - account_id
+        - sdp_offer
+      properties:
+        account_id:
+          type: string
+          format: uuid
+          description: Peer's account ID
+        display_name:
+          type: string
+          nullable: true
+          description: Peer's display name
+        sdp_offer:
+          type: string
+          description: SDP offer for WebRTC negotiation
+        ice_candidates:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: ICE candidates for NAT traversal
+        is_muted:
+          type: boolean
+          default: false
+          description: Whether peer is currently muted

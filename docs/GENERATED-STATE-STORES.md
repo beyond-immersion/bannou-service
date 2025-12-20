@@ -1,6 +1,6 @@
 # Generated State Store Reference
 
-> **Auto-generated**: 2025-12-19 22:04:40
+> **Auto-generated**: 2025-12-20 05:40:09
 > **Source**: `provisioning/dapr/components/*.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -24,6 +24,7 @@ This document lists all Dapr state store components used in Bannou.
 | `species-statestore` | MySQL | Species | Persistent queryable data |
 | `statestore` | Redis | Statestore | Service-specific state |
 | `subscriptions-statestore` | MySQL | Subscriptions | Persistent queryable data |
+| `voice-statestore` | Redis | Voice | Service-specific state |
 
 ## Naming Conventions
 
