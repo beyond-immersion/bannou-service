@@ -96,13 +96,34 @@ public class RtpEngineClientTests : IDisposable
     }
 
     [Fact]
-    public void Constructor_WithInvalidIPAddress_ShouldThrowFormatException()
+    public void Constructor_WithUnresolvableHostname_ShouldThrowArgumentException()
     {
         // Arrange, Act & Assert
-        Assert.Throws<FormatException>(() => new RtpEngineClient(
-            "not-an-ip",
+        // Unresolvable hostnames throw ArgumentException after DNS lookup fails
+        Assert.Throws<ArgumentException>(() => new RtpEngineClient(
+            "this-hostname-definitely-does-not-exist.invalid",
             22222,
             _mockLogger.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithLocalhostHostname_ShouldResolveSuccessfully()
+    {
+        // Arrange & Act - "localhost" should resolve to 127.0.0.1
+        using var client = new RtpEngineClient("localhost", 22222, _mockLogger.Object);
+
+        // Assert
+        Assert.NotNull(client);
+    }
+
+    [Fact]
+    public void Constructor_WithIPv6Localhost_ShouldNotThrow()
+    {
+        // Arrange & Act - IPv6 loopback address
+        using var client = new RtpEngineClient("::1", 22222, _mockLogger.Object);
+
+        // Assert
+        Assert.NotNull(client);
     }
 
     #endregion

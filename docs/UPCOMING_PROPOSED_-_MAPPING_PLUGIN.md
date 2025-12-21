@@ -2,7 +2,7 @@
 # Map Service Architecture - Spatial Data Management for Arcadia (Updated to Tenets)
 
 > **Status**: Draft refresh aligned to Bannou TENETS  
-> **Last Updated**: 2025-12-XX (update date when finalized)  
+> **Last Updated**: 2025-12-20  
 > **Goal**: Provide a schema-first, Dapr-first plugin blueprint that exposes map data (heightmaps, tilemaps, overlays, metadata objects) to clients and services with strong permissions, events, and multi-instance safety.
 
 ## Tenet Alignment Snapshot
@@ -47,6 +47,232 @@
   - Cache-layer writes (e.g., combat hazards) allow `role: developer` with `game-session:in_game`.
   - Reads can be `role: user` with optional state gating (e.g., must be in region).
 - **Return pattern**: `(StatusCodes, Response?)` everywhere; null payload for errors. Controllers generated; manual service adheres to Tenet 6.
+
+## Schema Draft (conceptual, for `/schemas/map-api.yaml` and `/schemas/map-events.yaml`)
+```yaml
+openapi: 3.0.1
+info:
+  title: Map Service API
+  version: 0.1.0
+paths:
+  /maps/create:
+    post:
+      x-permissions: [{ role: developer, states: {} }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateMapRequest' }
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/MapResponse' }}}}
+
+  /maps/get:
+    post:
+      x-permissions: [{ role: user, states: {} }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/GetMapRequest' }}}}
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/MapResponse' }}}}
+
+  /maps/place-child:
+    post:
+      x-permissions: [{ role: developer, states: { region: owns_area } }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PlaceChildMapRequest' }}}}
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/MapResponse' }}}}
+
+  /maps/layers/checkout:
+    post:
+      x-permissions: [{ role: developer, states: { region: owns_area } }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LayerCheckoutRequest' }}}}
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/LayerCheckoutResponse' }}}}
+
+  /maps/layers/commit:
+    post:
+      x-permissions: [{ role: developer, states: { region: owns_area } }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LayerCommitRequest' }}}}
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/LayerCommitResponse' }}}}
+
+  /maps/layers/read:
+    post:
+      x-permissions: [{ role: user, states: {} }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LayerReadRequest' }}}}
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/LayerReadResponse' }}}}
+
+  /maps/metadata/add:
+    post:
+      x-permissions: [{ role: developer, states: {} }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UpsertMetadataObjectRequest' }}}}
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/MetadataObjectResponse' }}}}
+
+  /maps/metadata/remove:
+    post:
+      x-permissions: [{ role: developer, states: {} }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RemoveMetadataObjectRequest' }}}}
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/MetadataObjectResponse' }}}}
+
+  /maps/query:
+    post:
+      x-permissions: [{ role: user, states: {} }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MapQueryRequest' }}}}
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/MapQueryResponse' }}}}
+
+  /maps/subscribe:
+    post:
+      x-permissions: [{ role: user, states: {} }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SubscribeRequest' }}}}
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/SubscribeResponse' }}}}
+
+  # Schema registry for metadata object types
+  /maps/object-types/register:
+    post:
+      x-permissions: [{ role: developer, states: {} }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RegisterObjectTypeRequest' }}}}
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/ObjectTypeResponse' }}}}
+
+  /maps/object-types/assign-to-map:
+    post:
+      x-permissions: [{ role: developer, states: {} }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AssignObjectTypeRequest' }}}}
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/MapResponse' }}}}
+
+components:
+  schemas:
+    CreateMapRequest:
+      type: object
+      required: [mapId, mapType, dimensions, layers]
+      properties:
+        mapId: { type: string, format: uuid }
+        mapType: { type: string, enum: [texture, sparse_dict, tree, logical] }
+        dimensions:
+          type: array
+          minItems: 2
+          maxItems: 3
+          items: { type: integer, minimum: 1 }
+        layers:
+          type: array
+          items: { $ref: '#/components/schemas/LayerDefinition' }
+        parentMapId: { type: string, format: uuid, nullable: true }
+        parentPlacement: { $ref: '#/components/schemas/Placement', nullable: true }
+
+    LayerDefinition:
+      type: object
+      required: [layerId, format, persistence]
+      properties:
+        layerId: { type: string }
+        format: { type: string, enum: [texture, sparse_dict, tree, metadata_objects] }
+        channelDescriptor: { type: array, items: { type: string }, nullable: true } # for texture
+        persistence: { type: string, enum: [durable, cache] }
+        ttlSeconds: { type: integer, format: int32, nullable: true }
+        authority: { type: string }
+        encoding: { type: string, nullable: true }
+
+    UpsertMetadataObjectRequest:
+      type: object
+      required: [mapId, layerId, objectType, state]
+      properties:
+        mapId: { type: string, format: uuid }
+        layerId: { type: string }
+        objectId: { type: string, format: uuid, nullable: true } # optional; auto-generate if null
+        objectType: { type: string } # validated against registered object type schema
+        state: { type: object, additionalProperties: true }
+        locationRef:
+          type: object
+          nullable: true
+          properties:
+            locationId: { type: string, format: uuid }
+            locationType: { type: string }
+        bounds: { $ref: '#/components/schemas/Bounds', nullable: true }
+
+    RegisterObjectTypeRequest:
+      type: object
+      required: [objectType, schema]
+      properties:
+        objectType: { type: string }
+        schema: { type: object, additionalProperties: true } # validation spec for state payload
+
+    AssignObjectTypeRequest:
+      type: object
+      required: [mapId, objectType]
+      properties:
+        mapId: { type: string, format: uuid }
+        objectType: { type: string }
+
+    # ...additional request/response models follow the same pattern
+```
+
+Events (`map-events.yaml`):
+```yaml
+MapCreatedEvent:
+  type: object
+  required: [eventId, timestamp, mapId, mapType]
+  properties:
+    eventId: { type: string, format: uuid }
+    timestamp: { type: string, format: date-time }
+    mapId: { type: string, format: uuid }
+    mapType: { type: string }
+
+MapPlacedEvent:
+  type: object
+  required: [eventId, timestamp, mapId, parentMapId, placement]
+  properties:
+    eventId: { type: string, format: uuid }
+    timestamp: { type: string, format: date-time }
+    mapId: { type: string, format: uuid }
+    parentMapId: { type: string, format: uuid }
+    placement: { $ref: '#/components/schemas/Placement' }
+
+MapLayerUpdatedEvent:
+  type: object
+  required: [eventId, timestamp, mapId, layerId, version]
+  properties:
+    eventId: { type: string, format: uuid }
+    timestamp: { type: string, format: date-time }
+    mapId: { type: string, format: uuid }
+    layerId: { type: string }
+    version: { type: integer, format: int64 }
+    bounds: { $ref: '#/components/schemas/Bounds', nullable: true }
+    deltaType: { type: string, enum: [delta, snapshot] }
+    payloadRef: { type: string, nullable: true } # e.g., blob reference if large
+
+MapDeltaBroadcastEvent:  # non-critical delta broadcasts from any service
+  type: object
+  required: [eventId, timestamp, mapId, deltas]
+  properties:
+    eventId: { type: string, format: uuid }
+    timestamp: { type: string, format: date-time }
+    mapId: { type: string, format: uuid }
+    deltas:
+      type: array
+      items:
+        type: object
+        properties:
+          layerId: { type: string }
+          bounds: { $ref: '#/components/schemas/Bounds', nullable: true }
+          deltaPayload: { type: object, additionalProperties: true }
+    aggregationWindowSeconds: { type: integer, format: int32, default: 5 } # default cadence
+    mayDrop: { type: boolean, default: true } # explicitly non-critical; may be ignored if overloaded
+
+MapMetadataUpdatedEvent:
+  type: object
+  required: [eventId, timestamp, mapId, layerId, objectId, objectType]
+  properties:
+    eventId: { type: string, format: uuid }
+    timestamp: { type: string, format: date-time }
+    mapId: { type: string, format: uuid }
+    layerId: { type: string }
+    objectId: { type: string, format: uuid }
+    objectType: { type: string }
+    state: { type: object, additionalProperties: true }
+```
 
 ## Event Model (Dapr pub/sub)
 - Topics (`bannou-pubsub`):

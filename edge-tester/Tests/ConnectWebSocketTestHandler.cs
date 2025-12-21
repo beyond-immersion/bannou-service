@@ -406,9 +406,9 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
                 // Parse and validate the capability manifest
                 var responseObj = JsonNode.Parse(responsePayload)?.AsObject();
-                var messageType = responseObj?["type"]?.GetValue<string>();
+                var messageType = responseObj?["event_name"]?.GetValue<string>();
 
-                if (messageType == "capability_manifest")
+                if (messageType == "connect.capability_manifest")
                 {
                     var availableApis = responseObj?["availableAPIs"]?.AsArray();
                     var apiCount = availableApis?.Count ?? 0;
@@ -1535,8 +1535,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 try { manifest = JsonNode.Parse(payloadJson)?.AsObject(); }
                 catch { continue; }
 
-                var type = manifest?["type"]?.GetValue<string>();
-                if (type != "capability_manifest") continue;
+                var type = manifest?["event_name"]?.GetValue<string>();
+                if (type != "connect.capability_manifest") continue;
 
                 var availableApis = manifest?["availableAPIs"]?.AsArray();
                 if (availableApis == null || availableApis.Count == 0)
@@ -1642,10 +1642,10 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 }
 
                 // Verify this is a capability manifest
-                var type = manifest?["type"]?.GetValue<string>();
-                if (type != "capability_manifest")
+                var type = manifest?["event_name"]?.GetValue<string>();
+                if (type != "connect.capability_manifest")
                 {
-                    Console.WriteLine($"⚠️ Received event type '{type}', waiting for capability_manifest...");
+                    Console.WriteLine($"⚠️ Received event type '{type}', waiting for connect.capability_manifest...");
                     continue;
                 }
 
@@ -1775,12 +1775,12 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                     {
                         var payloadJson = Encoding.UTF8.GetString(message.Payload.Span);
                         var eventObj = JsonNode.Parse(payloadJson)?.AsObject();
-                        var eventType = eventObj?["type"]?.GetValue<string>();
-                        Console.WriteLine($"   ⏭️ Skipping Event message (type: {eventType ?? "unknown"})");
+                        var eventType = eventObj?["event_name"]?.GetValue<string>();
+                        Console.WriteLine($"   ⏭️ Skipping Event message (event_name: {eventType ?? "unknown"})");
                     }
                     catch
                     {
-                        Console.WriteLine($"   ⏭️ Skipping Event message (could not parse type)");
+                        Console.WriteLine($"   ⏭️ Skipping Event message (could not parse event_name)");
                     }
                     continue;
                 }
@@ -2101,16 +2101,25 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         Console.WriteLine($"   Got GUID for /sessions/list: {firstGuid}");
 
         // Verify that OTHER APIs are also in the cache (without waiting for another manifest)
-        var cachedApis = new[]
+        // Note: State-gated endpoints (leave/chat/actions) require game-session:in_game state
+        // and won't appear until user joins a session (Tenet 10 dynamic permissions)
+        var nonStateGatedApis = new[]
         {
             ("POST", "/sessions/create"),
             ("POST", "/sessions/join"),
-            ("POST", "/sessions/leave"),
             ("POST", "/sessions/get")
         };
 
+        // These require game-session:in_game state and should NOT be in initial manifest
+        var stateGatedApis = new[]
+        {
+            ("POST", "/sessions/leave"),
+            ("POST", "/sessions/chat"),
+            ("POST", "/sessions/actions")
+        };
+
         var allCached = true;
-        foreach (var (method, path) in cachedApis)
+        foreach (var (method, path) in nonStateGatedApis)
         {
             var cacheKey = $"{method}:{path}";
             if (_manifestGuidCache.TryGetValue(cacheKey, out var cachedGuid))
@@ -2121,6 +2130,21 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             {
                 Console.WriteLine($"   {cacheKey} NOT in cache - this would cause timeout!");
                 allCached = false;
+            }
+        }
+
+        // Verify state-gated endpoints are correctly NOT in manifest (requires joining session)
+        foreach (var (method, path) in stateGatedApis)
+        {
+            var cacheKey = $"{method}:{path}";
+            if (_manifestGuidCache.TryGetValue(cacheKey, out var cachedGuid))
+            {
+                Console.WriteLine($"   {cacheKey} unexpectedly cached: {cachedGuid} (should require in_game state)");
+                // Don't fail - state-gated endpoints appearing is unexpected but not wrong
+            }
+            else
+            {
+                Console.WriteLine($"   {cacheKey} correctly absent (requires game-session:in_game state)");
             }
         }
 
@@ -2186,8 +2210,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 }
 
                 // Verify this is a capability manifest
-                var type = manifest?["type"]?.GetValue<string>();
-                if (type != "capability_manifest")
+                var type = manifest?["event_name"]?.GetValue<string>();
+                if (type != "connect.capability_manifest")
                 {
                     continue;
                 }

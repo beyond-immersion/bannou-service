@@ -662,17 +662,18 @@ public class BannouClient : IAsyncDisposable
             using var document = JsonDocument.Parse(payloadJson);
             var root = document.RootElement;
 
-            if (root.TryGetProperty("type", out var typeElement))
+            // All events use event_name property for consistency
+            if (root.TryGetProperty("event_name", out var eventNameElement))
             {
-                var eventType = typeElement.GetString();
+                var eventName = eventNameElement.GetString();
 
-                if (eventType == "capability_manifest")
+                if (eventName == "connect.capability_manifest")
                 {
                     HandleCapabilityManifest(root);
                 }
 
                 // Dispatch to registered event handlers
-                if (eventType != null && _eventHandlers.TryGetValue(eventType, out var handler))
+                if (eventName != null && _eventHandlers.TryGetValue(eventName, out var handler))
                 {
                     handler(payloadJson);
                 }

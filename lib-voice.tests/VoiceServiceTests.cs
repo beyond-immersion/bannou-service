@@ -630,6 +630,100 @@ public class VoiceServiceTests
         Assert.Null(result);
     }
 
+    [Fact]
+    public async Task JoinVoiceRoom_WhenExistingPeers_SetsVoiceRingingStateForJoiningSession()
+    {
+        // Arrange - joining session should get voice:ringing state when there are existing peers (Tenet 10)
+        var mockPermissionsClient = new Mock<BeyondImmersion.BannouService.Permissions.IPermissionsClient>();
+        var service = new VoiceService(
+            _mockDaprClient.Object,
+            _mockLogger.Object,
+            _mockConfiguration.Object,
+            _mockErrorEventEmitter.Object,
+            _mockEndpointRegistry.Object,
+            _mockP2PCoordinator.Object,
+            _mockScaledTierCoordinator.Object,
+            _mockClientEventPublisher.Object,
+            mockPermissionsClient.Object);
+
+        var roomId = Guid.NewGuid();
+        var joiningSessionId = "joining-session-123";
+        var request = new JoinVoiceRoomRequest
+        {
+            RoomId = roomId,
+            SessionId = joiningSessionId,
+            DisplayName = "NewPlayer",
+            SipEndpoint = new SipEndpoint { SdpOffer = "v=0\r\no=- 12345\r\n" }
+        };
+
+        // Room exists in P2P mode
+        _mockDaprClient.Setup(d => d.GetStateAsync<VoiceRoomData>(
+            "voice-statestore", $"voice:room:{roomId}",
+            It.IsAny<ConsistencyMode?>(),
+            It.IsAny<IReadOnlyDictionary<string, string>?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = Guid.NewGuid(),
+                Tier = "p2p",
+                Codec = "opus"
+            });
+
+        // Room has one existing participant
+        _mockEndpointRegistry.Setup(r => r.GetParticipantCountAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        // P2P can accept more participants
+        _mockP2PCoordinator.Setup(p => p.CanAcceptNewParticipantAsync(roomId, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Registration succeeds
+        _mockEndpointRegistry.Setup(r => r.RegisterAsync(
+            roomId, joiningSessionId, It.IsAny<SipEndpoint>(), "NewPlayer", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Return one existing peer (so joining session needs voice:ringing to answer them)
+        var existingPeers = new List<VoicePeer>
+        {
+            new VoicePeer
+            {
+                SessionId = "existing-session-456",
+                DisplayName = "ExistingPlayer",
+                SipEndpoint = new SipEndpoint { SdpOffer = "v=0\r\no=- 67890\r\n" }
+            }
+        };
+        _mockP2PCoordinator.Setup(p => p.GetMeshPeersForNewJoinAsync(roomId, joiningSessionId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingPeers);
+
+        _mockP2PCoordinator.Setup(p => p.ShouldUpgradeToScaledAsync(roomId, 2, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        // Existing participants for notification
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>
+            {
+                new ParticipantRegistration { SessionId = "existing-session-456", DisplayName = "ExistingPlayer" },
+                new ParticipantRegistration { SessionId = joiningSessionId, DisplayName = "NewPlayer" }
+            });
+
+        // Act
+        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Single(result.Peers);
+
+        // Verify voice:ringing state was set for the JOINING session (so they can call /voice/peer/answer)
+        mockPermissionsClient.Verify(p => p.UpdateSessionStateAsync(
+            It.Is<BeyondImmersion.BannouService.Permissions.SessionStateUpdate>(u =>
+                u.SessionId == joiningSessionId &&
+                u.ServiceId == "voice" &&
+                u.NewState == "ringing"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     #endregion
 
     #region LeaveVoiceRoomAsync Tests

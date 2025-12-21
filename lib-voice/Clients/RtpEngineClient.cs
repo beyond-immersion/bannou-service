@@ -47,9 +47,27 @@ public class RtpEngineClient : IRtpEngineClient
         }
 
         _client = new UdpClient();
-        _endpoint = new IPEndPoint(IPAddress.Parse(host), port);
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _timeout = TimeSpan.FromSeconds(timeoutSeconds);
+
+        // Resolve hostname to IP address (IPAddress.Parse only handles numeric IPs)
+        if (!IPAddress.TryParse(host, out var ipAddress))
+        {
+            try
+            {
+                var addresses = Dns.GetHostAddresses(host);
+                if (addresses.Length == 0)
+                {
+                    throw new ArgumentException($"Could not resolve hostname: {host}", nameof(host));
+                }
+                ipAddress = addresses[0];
+            }
+            catch (SocketException ex)
+            {
+                throw new ArgumentException($"Could not resolve hostname: {host}", nameof(host), ex);
+            }
+        }
+        _endpoint = new IPEndPoint(ipAddress, port);
     }
 
     /// <inheritdoc />

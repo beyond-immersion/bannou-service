@@ -20,8 +20,8 @@ paths:
       tags:
         - Game Sessions
       x-permissions:
-        - type: role
-          value: user
+        - role: user
+          states: {}
       x-rate-limit:
         requestsPerMinute: 30
         requestsPerHour: 500
@@ -46,10 +46,8 @@ paths:
       tags:
         - Game Sessions
       x-permissions:
-        - type: role
-          value: user
-        - type: session_state
-          value: authenticated
+        - role: user
+          states: {}
       x-rate-limit:
         requestsPerMinute: 5
         requestsPerHour: 20
@@ -74,8 +72,8 @@ paths:
       tags:
         - Game Sessions
       x-permissions:
-        - type: role
-          value: user
+        - role: user
+          states: {}
       requestBody:
         required: true
         content:
@@ -99,10 +97,8 @@ paths:
       tags:
         - Game Sessions
       x-permissions:
-        - type: role
-          value: user
-        - type: session_state
-          value: authenticated
+        - role: user
+          states: {}
       x-rate-limit:
         requestsPerMinute: 10
         requestsPerHour: 50
@@ -131,10 +127,9 @@ paths:
       tags:
         - Game Sessions
       x-permissions:
-        - type: context
-          contextKey: gameSessionId
-          value: "{sessionId}"
-          operator: equals
+        - role: user
+          states:
+            game-session: in_game
       requestBody:
         required: true
         content:
@@ -154,12 +149,8 @@ paths:
       tags:
         - Game Sessions
       x-permissions:
-        - type: role
-          value: admin
-        - type: context
-          contextKey: gameSessionOwner
-          value: "{accountId}"
-          operator: equals
+        - role: admin
+          states: {}
       requestBody:
         required: true
         content:
@@ -181,10 +172,9 @@ paths:
       tags:
         - Game Chat
       x-permissions:
-        - type: context
-          contextKey: gameSessionId
-          value: "{sessionId}"
-          operator: equals
+        - role: user
+          states:
+            game-session: in_game
       x-rate-limit:
         requestsPerMinute: 60
         burstLimit: 10
@@ -207,14 +197,9 @@ paths:
       tags:
         - Game Actions
       x-permissions:
-        - type: context
-          contextKey: gameSessionId
-          value: "{sessionId}"
-          operator: equals
-        - type: context
-          contextKey: gameSessionRole
-          value: player
-          operator: equals
+        - role: user
+          states:
+            game-session: in_game
       x-rate-limit:
         requestsPerMinute: 120
         burstLimit: 20
@@ -558,15 +543,11 @@ components:
 
 # Service Registration Information (used by permission system)
 x-service-registration:
-  serviceId: "game-session-service-guid"
+  serviceId: "game-session"
   serviceName: "Game Session Service"
   version: "2.0.0"
   categories:
     - gaming
     - social
-  basePermissions:
-    - user  # All endpoints require at least 'user' role
-  contextualPermissions:
-    gameSessionId: "Current game session ID"
-    gameSessionRole: "Role within the game session (player, spectator, moderator)"
-    gameSessionOwner: "Account ID of session owner"
+  # Session states this service can set on clients:
+  # - game-session: in_game (set when joining a session, cleared when leaving)

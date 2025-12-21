@@ -85,7 +85,7 @@ paths:
         - Session Management
       x-permissions:
         - role: admin
-          requiredStates: {}
+          states: {}
       requestBody:
         required: true
         content:
@@ -182,7 +182,7 @@ paths:
         - Service Management
       x-permissions:
         - role: admin
-          requiredStates: {}
+          states: {}
       requestBody:
         required: true
         content:

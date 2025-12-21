@@ -76,26 +76,10 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
-    /// Validate that this plugin should be loaded based on environment configuration.
-    /// </summary>
-    protected override bool OnValidatePlugin()
-    {
-        var enabled = Environment.GetEnvironmentVariable("${SERVICE_NAME^^}_SERVICE_ENABLED")?.ToLower();
-        Logger?.LogDebug("$SERVICE_PASCAL service enabled check: {EnabledValue}", enabled);
-        return enabled == "true";
-    }
-
-    /// <summary>
     /// Configure services for dependency injection - mimics existing [DaprService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("$SERVICE_PASCAL service disabled, skipping service registration");
-            return;
-        }
-
         Logger?.LogInformation("Configuring $SERVICE_PASCAL service dependencies");
 
         // Register the service implementation (existing pattern from [DaprService] attribute)
@@ -116,12 +100,6 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureApplication(WebApplication app)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("$SERVICE_PASCAL service disabled, skipping application configuration");
-            return;
-        }
-
         Logger?.LogInformation("Configuring $SERVICE_PASCAL service application pipeline");
 
         // The generated ${SERVICE_PASCAL}Controller should already be discovered via standard ASP.NET Core controller discovery
@@ -138,8 +116,6 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        if (!OnValidatePlugin()) return true;
-
         Logger?.LogInformation("Starting $SERVICE_PASCAL service");
 
         try
@@ -177,7 +153,7 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnRunningAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogDebug("$SERVICE_PASCAL service running");
 
@@ -201,7 +177,7 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnShutdownAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogInformation("Shutting down $SERVICE_PASCAL service");
 
@@ -229,7 +205,6 @@ if [ -f "$PLUGIN_FILE" ]; then
     FILE_SIZE=$(wc -l < "$PLUGIN_FILE" 2>/dev/null || echo "0")
     echo -e "${GREEN}✅ Generated service plugin wrapper ($FILE_SIZE lines)${NC}"
     echo -e "${YELLOW}💡 Plugin bridges existing service implementation with new Plugin system${NC}"
-    echo -e "${YELLOW}🔧 Enable via environment variable: ${SERVICE_NAME^^}_SERVICE_ENABLED=true${NC}"
     exit 0
 else
     echo -e "${RED}❌ Failed to generate service plugin${NC}"

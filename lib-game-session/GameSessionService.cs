@@ -1,9 +1,11 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Voice;
 using Dapr.Client;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -26,6 +28,8 @@ public class GameSessionService : IGameSessionService
     private readonly GameSessionServiceConfiguration _configuration;
     private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly IVoiceClient? _voiceClient;
+    private readonly IPermissionsClient? _permissionsClient;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
@@ -44,19 +48,25 @@ public class GameSessionService : IGameSessionService
     /// <param name="logger">Logger for this service.</param>
     /// <param name="configuration">Service configuration.</param>
     /// <param name="errorEventEmitter">Error event emitter for unexpected failures.</param>
+    /// <param name="httpContextAccessor">HTTP context accessor for reading request headers.</param>
     /// <param name="voiceClient">Optional voice client for voice room coordination. May be null if voice service is disabled.</param>
+    /// <param name="permissionsClient">Optional permissions client for setting game-session:in_game state. May be null if Permissions service is not loaded.</param>
     public GameSessionService(
         DaprClient daprClient,
         ILogger<GameSessionService> logger,
         GameSessionServiceConfiguration configuration,
         IErrorEventEmitter errorEventEmitter,
-        IVoiceClient? voiceClient = null)
+        IHttpContextAccessor httpContextAccessor,
+        IVoiceClient? voiceClient = null,
+        IPermissionsClient? permissionsClient = null)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+        _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
         _voiceClient = voiceClient; // Nullable - voice service may be disabled (Tenet 5)
+        _permissionsClient = permissionsClient; // Nullable - permissions service may not be loaded (Tenet 5)
     }
 
     /// <summary>
@@ -335,6 +345,31 @@ public class GameSessionService : IGameSessionService
                 new { SessionId = sessionId, AccountId = accountId.ToString() },
                 cancellationToken);
 
+            // Set game-session:in_game state to enable leave/chat/action endpoints (Tenet 10)
+            var clientSessionId = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Session-Id"].FirstOrDefault();
+            if (_permissionsClient != null && !string.IsNullOrEmpty(clientSessionId))
+            {
+                try
+                {
+                    await _permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
+                    {
+                        SessionId = clientSessionId,
+                        ServiceId = "game-session",
+                        NewState = "in_game"
+                    }, cancellationToken);
+                    _logger.LogDebug("Set game-session:in_game state for session {SessionId}", clientSessionId);
+                }
+                catch (Exception ex)
+                {
+                    // Log but don't fail - the join succeeded, state is secondary
+                    _logger.LogWarning(ex, "Failed to set game-session:in_game state for session {SessionId}", clientSessionId);
+                }
+            }
+            else if (_permissionsClient == null)
+            {
+                _logger.LogDebug("Permissions client not available, game-session:in_game state not set");
+            }
+
             // Build response
             var response = new JoinGameSessionResponse
             {
@@ -354,13 +389,17 @@ public class GameSessionService : IGameSessionService
             {
                 try
                 {
-                    // Generate a unique voice session ID for this player.
-                    // TODO(SESSION_SHORTCUTS): This is a temporary workaround. The proper solution is the
-                    // SESSION_SHORTCUTS feature (see docs/UPCOMING_-_SESSION_SHORTCUTS.md) where Connect
-                    // creates pre-bound API shortcuts with the WebSocket sessionId already filled in.
-                    // This eliminates the need for clients to know/provide their sessionId and avoids
-                    // Connect having to parse payloads to inject sessionId in transit.
-                    var voiceSessionId = Guid.NewGuid().ToString();
+                    // Get the client's WebSocket session ID from the X-Bannou-Session-Id header
+                    // This header is set by Connect service when routing WebSocket requests
+                    // Using the actual session ID allows VoiceService to set permissions that the client
+                    // will receive via capability updates (they must match activeConnections)
+                    var voiceSessionId = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Session-Id"].FirstOrDefault();
+                    if (string.IsNullOrEmpty(voiceSessionId))
+                    {
+                        _logger.LogWarning("X-Bannou-Session-Id header missing - voice join requires WebSocket session context");
+                        // Fall back to generating a session ID for HTTP-only requests (e.g., direct API calls for testing)
+                        voiceSessionId = Guid.NewGuid().ToString();
+                    }
 
                     _logger.LogDebug("Player {AccountId} joining voice room {VoiceRoomId} with voice session {VoiceSessionId}",
                         accountId, model.VoiceRoomId, voiceSessionId);
@@ -586,6 +625,26 @@ public class GameSessionService : IGameSessionService
                     PLAYER_LEFT_TOPIC,
                     new { SessionId = sessionId, AccountId = leavingPlayer.AccountId.ToString() },
                     cancellationToken);
+
+                // Clear game-session:in_game state to remove leave/chat/action endpoint access (Tenet 10)
+                var clientSessionId = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Session-Id"].FirstOrDefault();
+                if (_permissionsClient != null && !string.IsNullOrEmpty(clientSessionId))
+                {
+                    try
+                    {
+                        await _permissionsClient.ClearSessionStateAsync(new ClearSessionStateRequest
+                        {
+                            SessionId = clientSessionId,
+                            ServiceId = "game-session"
+                        }, cancellationToken);
+                        _logger.LogDebug("Cleared game-session:in_game state for session {SessionId}", clientSessionId);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log but don't fail - the leave succeeded, state cleanup is secondary
+                        _logger.LogWarning(ex, "Failed to clear game-session:in_game state for session {SessionId}", clientSessionId);
+                    }
+                }
 
                 _logger.LogInformation("Player left game session {SessionId}", sessionId);
             }

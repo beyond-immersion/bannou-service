@@ -2242,4 +2242,299 @@ public class PermissionsServiceTests
     }
 
     #endregion
+
+    #region State Key Matching Tests
+
+    /// <summary>
+    /// Critical regression test: Verifies that same-service state keys match between
+    /// registration and lookup. The BuildPermissionMatrix must use just the state value
+    /// (e.g., "ringing") for same-service states, not "service:state" (e.g., "voice:ringing").
+    ///
+    /// This test was added after discovering a bug where:
+    /// - Registration stored at: permissions:voice:voice:ringing:user (wrong)
+    /// - Lookup searched for: permissions:voice:ringing:user (correct)
+    ///
+    /// The fix ensures both use the same key format.
+    /// </summary>
+    [Fact]
+    public async Task RecompilePermissions_SameServiceStateKey_MatchesRegistration()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-state-key-matching";
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+
+        // Session has voice=ringing state (same-service state for voice service)
+        var sessionStates = new Dictionary<string, string>
+        {
+            ["role"] = "user",
+            ["voice"] = "ringing"  // voice service sets voice:ringing state
+        };
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE, statesKey, null, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionStates);
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE, REGISTERED_SERVICES_KEY, null, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "voice" });
+
+        // CRITICAL: The state key for same-service must be just "ringing", not "voice:ringing"
+        // This is the key that BuildPermissionMatrix should produce for voice service
+        // registering permissions for voice:ringing state
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                It.Is<string>(k => k == "permissions:voice:ringing:user"),  // Same-service: just state value
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "POST:/voice/peer/answer" });
+
+        // Default endpoints (no state required)
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                It.Is<string>(k => k == "permissions:voice:default:user"),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        Dictionary<string, object>? saved = null;
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync(
+                STATE_STORE,
+                permissionsKey,
+                It.IsAny<Dictionary<string, object>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, Dictionary<string, object>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
+                (store, key, val, opt, meta, ct) => saved = val)
+            .Returns(Task.CompletedTask);
+
+        _mockDaprClient
+            .Setup(d => d.PublishEventAsync(
+                "bannou-pubsub",
+                "permissions.capabilities-updated",
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (status, _) = await service.UpdateSessionRoleAsync(new SessionRoleUpdate
+        {
+            SessionId = sessionId,
+            NewRole = "user",
+            PreviousRole = null
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(saved);
+        Assert.True(saved!.TryGetValue("voice", out var endpointsObj),
+            "Session should have voice service permissions when voice:ringing state is set");
+        var endpoints = endpointsObj as IEnumerable<string>;
+        Assert.NotNull(endpoints);
+        Assert.Contains("POST:/voice/peer/answer", endpoints!);
+    }
+
+    /// <summary>
+    /// Verifies cross-service state key matching: when game-session service
+    /// registers permissions requiring voice:ringing state (cross-service),
+    /// the state key must be "voice:ringing" (not just "ringing").
+    /// </summary>
+    [Fact]
+    public async Task RecompilePermissions_CrossServiceStateKey_IncludesServicePrefix()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-cross-service-state";
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+
+        // Session has voice=ringing state
+        var sessionStates = new Dictionary<string, string>
+        {
+            ["role"] = "user",
+            ["voice"] = "ringing"
+        };
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE, statesKey, null, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionStates);
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE, REGISTERED_SERVICES_KEY, null, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "game-session" });
+
+        // Cross-service: game-session service checking voice state requires "voice:ringing" key
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                It.Is<string>(k => k == "permissions:game-session:voice:ringing:user"),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "POST:/sessions/voice-enabled-action" });
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                It.Is<string>(k => k == "permissions:game-session:default:user"),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        Dictionary<string, object>? saved = null;
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync(
+                STATE_STORE,
+                permissionsKey,
+                It.IsAny<Dictionary<string, object>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, Dictionary<string, object>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
+                (store, key, val, opt, meta, ct) => saved = val)
+            .Returns(Task.CompletedTask);
+
+        _mockDaprClient
+            .Setup(d => d.PublishEventAsync(
+                "bannou-pubsub",
+                "permissions.capabilities-updated",
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (status, _) = await service.UpdateSessionRoleAsync(new SessionRoleUpdate
+        {
+            SessionId = sessionId,
+            NewRole = "user",
+            PreviousRole = null
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(saved);
+        Assert.True(saved!.TryGetValue("game-session", out var endpointsObj));
+        var endpoints = endpointsObj as IEnumerable<string>;
+        Assert.NotNull(endpoints);
+        Assert.Contains("POST:/sessions/voice-enabled-action", endpoints!);
+    }
+
+    /// <summary>
+    /// Verifies game-session:in_game state works correctly for game-session service.
+    /// When a user joins a game session, the game-session service sets game-session:in_game,
+    /// and endpoints requiring that state should become accessible.
+    /// </summary>
+    [Fact]
+    public async Task RecompilePermissions_GameSessionInGameState_UnlocksGameEndpoints()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-game-in-game";
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+
+        // Session has game-session=in_game state (set when player joins)
+        var sessionStates = new Dictionary<string, string>
+        {
+            ["role"] = "user",
+            ["game-session"] = "in_game"
+        };
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE, statesKey, null, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionStates);
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE, REGISTERED_SERVICES_KEY, null, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "game-session" });
+
+        // Same-service state key: just "in_game" (not "game-session:in_game")
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                It.Is<string>(k => k == "permissions:game-session:in_game:user"),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>
+            {
+                "POST:/sessions/leave",
+                "POST:/sessions/chat",
+                "POST:/sessions/actions"
+            });
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                It.Is<string>(k => k == "permissions:game-session:default:user"),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>
+            {
+                "GET:/sessions/list",
+                "POST:/sessions/create",
+                "POST:/sessions/get",
+                "POST:/sessions/join"
+            });
+
+        Dictionary<string, object>? saved = null;
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync(
+                STATE_STORE,
+                permissionsKey,
+                It.IsAny<Dictionary<string, object>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, Dictionary<string, object>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
+                (store, key, val, opt, meta, ct) => saved = val)
+            .Returns(Task.CompletedTask);
+
+        _mockDaprClient
+            .Setup(d => d.PublishEventAsync(
+                "bannou-pubsub",
+                "permissions.capabilities-updated",
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (status, _) = await service.UpdateSessionRoleAsync(new SessionRoleUpdate
+        {
+            SessionId = sessionId,
+            NewRole = "user",
+            PreviousRole = null
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(saved);
+        Assert.True(saved!.TryGetValue("game-session", out var endpointsObj));
+        var endpoints = (endpointsObj as IEnumerable<string>)?.ToList();
+        Assert.NotNull(endpoints);
+
+        // Should have both default and in_game state endpoints
+        Assert.Contains("GET:/sessions/list", endpoints!);
+        Assert.Contains("POST:/sessions/join", endpoints!);
+        Assert.Contains("POST:/sessions/leave", endpoints!);  // Requires in_game state
+        Assert.Contains("POST:/sessions/chat", endpoints!);   // Requires in_game state
+        Assert.Contains("POST:/sessions/actions", endpoints!); // Requires in_game state
+    }
+
+    #endregion
 }

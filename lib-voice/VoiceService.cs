@@ -317,6 +317,27 @@ public class VoiceService : IVoiceService
             // Notify existing peers about the new participant (use sessionId for privacy - don't leak accountId)
             await NotifyPeerJoinedAsync(body.RoomId, body.SessionId, body.DisplayName, body.SipEndpoint, newCount, cancellationToken);
 
+            // Also set voice:ringing for the joining session if there are existing peers
+            // This enables them to call /voice/peer/answer to send SDP answers to those peers (Tenet 10)
+            if (peers.Count > 0 && _permissionsClient != null)
+            {
+                try
+                {
+                    await _permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
+                    {
+                        SessionId = body.SessionId,
+                        ServiceId = "voice",
+                        NewState = "ringing"
+                    }, cancellationToken);
+                    _logger.LogDebug("Set voice:ringing state for joining session {SessionId} with {PeerCount} existing peers",
+                        body.SessionId, peers.Count);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to set voice:ringing state for joining session {SessionId}", body.SessionId);
+                }
+            }
+
             // If tier upgrade is pending and enabled, trigger the upgrade now
             if (tierUpgradePending)
             {
@@ -949,6 +970,20 @@ public class VoiceService : IVoiceService
             "g722" => VoiceCodec.G722,
             _ => VoiceCodec.Opus
         };
+    }
+
+    #endregion
+
+    #region Permission Registration
+
+    /// <summary>
+    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
+    /// </summary>
+    public async Task RegisterServicePermissionsAsync()
+    {
+        _logger.LogInformation("Registering Voice service permissions...");
+        await VoicePermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
     }
 
     #endregion

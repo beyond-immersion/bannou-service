@@ -21,26 +21,10 @@ public class VoiceServicePlugin : BaseBannouPlugin
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
-    /// Validate that this plugin should be loaded based on environment configuration.
-    /// </summary>
-    protected override bool OnValidatePlugin()
-    {
-        var enabled = Environment.GetEnvironmentVariable("VOICE_SERVICE_ENABLED")?.ToLower();
-        Logger?.LogDebug("Voice service enabled check: {EnabledValue}", enabled);
-        return enabled == "true";
-    }
-
-    /// <summary>
     /// Configure services for dependency injection - mimics existing [DaprService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("Voice service disabled, skipping service registration");
-            return;
-        }
-
         Logger?.LogInformation("Configuring Voice service dependencies");
 
         // Register the service implementation (existing pattern from [DaprService] attribute)
@@ -58,28 +42,32 @@ public class VoiceServicePlugin : BaseBannouPlugin
         // Register scaled tier coordinator and clients for SFU-based conferencing
         services.AddScoped<IScaledTierCoordinator, ScaledTierCoordinator>();
 
-        // Register Kamailio and RTPEngine clients with configuration-driven settings
+        // Register Kamailio and RTPEngine clients with environment-driven settings
         // These are singleton because they manage long-lived connections
+        // Note: Read env vars directly to avoid Scoped/Singleton lifetime conflict
         services.AddSingleton<IKamailioClient>(sp =>
         {
-            var config = sp.GetRequiredService<VoiceServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<KamailioClient>>();
             var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient("Kamailio");
-            return new KamailioClient(
-                httpClient,
-                config.KamailioHost ?? "localhost",
-                config.KamailioRpcPort > 0 ? config.KamailioRpcPort : 5080,
-                logger);
+            var host = Environment.GetEnvironmentVariable("BANNOU_KAMAILIOHOST")
+                ?? Environment.GetEnvironmentVariable("KAMAILIOHOST")
+                ?? "localhost";
+            var portStr = Environment.GetEnvironmentVariable("BANNOU_KAMAILIORPCPORT")
+                ?? Environment.GetEnvironmentVariable("KAMAILIORPCPORT");
+            var port = int.TryParse(portStr, out var p) && p > 0 ? p : 5080;
+            return new KamailioClient(httpClient, host, port, logger);
         });
 
         services.AddSingleton<IRtpEngineClient>(sp =>
         {
-            var config = sp.GetRequiredService<VoiceServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<RtpEngineClient>>();
-            return new RtpEngineClient(
-                config.RtpEngineHost ?? "localhost",
-                config.RtpEnginePort > 0 ? config.RtpEnginePort : 22222,
-                logger);
+            var host = Environment.GetEnvironmentVariable("BANNOU_RTPENGINEHOST")
+                ?? Environment.GetEnvironmentVariable("RTPENGINEHOST")
+                ?? "localhost";
+            var portStr = Environment.GetEnvironmentVariable("BANNOU_RTPENGINEPORT")
+                ?? Environment.GetEnvironmentVariable("RTPENGINEPORT");
+            var port = int.TryParse(portStr, out var p) && p > 0 ? p : 22222;
+            return new RtpEngineClient(host, port, logger);
         });
         Logger?.LogDebug("Registered Voice scaled tier services (ScaledTierCoordinator, KamailioClient, RtpEngineClient)");
 
@@ -94,12 +82,6 @@ public class VoiceServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureApplication(WebApplication app)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("Voice service disabled, skipping application configuration");
-            return;
-        }
-
         Logger?.LogInformation("Configuring Voice service application pipeline");
 
         // The generated VoiceController should already be discovered via standard ASP.NET Core controller discovery
@@ -116,8 +98,6 @@ public class VoiceServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        if (!OnValidatePlugin()) return true;
-
         Logger?.LogInformation("Starting Voice service");
 
         try
@@ -155,7 +135,7 @@ public class VoiceServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnRunningAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogDebug("Voice service running");
 
@@ -179,7 +159,7 @@ public class VoiceServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnShutdownAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogInformation("Shutting down Voice service");
 

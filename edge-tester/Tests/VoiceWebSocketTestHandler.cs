@@ -178,6 +178,34 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
 
     #endregion
 
+    #region Voice Endpoint Helper
+
+    /// <summary>
+    /// Creates a mock VoiceSipEndpoint with a valid-format SDP offer for testing.
+    /// The SDP offer is not used for actual WebRTC negotiation - it just needs to be
+    /// structurally valid to trigger the voice join flow.
+    /// </summary>
+    private static VoiceSipEndpoint CreateMockVoiceEndpoint()
+    {
+        // A minimal SDP offer that has the correct structure
+        // This won't work for real WebRTC, but it's enough for the server-side flow
+        var mockSdpOffer = @"v=0
+o=- 0 0 IN IP4 127.0.0.1
+s=Mock Session
+c=IN IP4 127.0.0.1
+t=0 0
+m=audio 9 UDP/TLS/RTP/SAVPF 111
+a=rtpmap:111 opus/48000/2";
+
+        return new VoiceSipEndpoint
+        {
+            SdpOffer = mockSdpOffer,
+            IceCandidates = new List<string>()
+        };
+    }
+
+    #endregion
+
     private void TestVoiceRoomCreationViaGameSession(string[] args)
     {
         Console.WriteLine("=== Voice Room via GameSession Test ===");
@@ -214,7 +242,8 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
                 Console.WriteLine("   Joining session...");
                 var joinRequest = new JoinGameSessionRequest
                 {
-                    SessionId = sessionId
+                    SessionId = sessionId,
+                    VoiceEndpoint = CreateMockVoiceEndpoint()
                 };
 
                 var joinResponse = (await client.InvokeAsync<JoinGameSessionRequest, JsonElement>(
@@ -306,7 +335,8 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
                 // Join the session
                 var joinRequest = new JoinGameSessionRequest
                 {
-                    SessionId = sessionId
+                    SessionId = sessionId,
+                    VoiceEndpoint = CreateMockVoiceEndpoint()
                 };
 
                 var joinResponse = (await client.InvokeAsync<JoinGameSessionRequest, JsonElement>(
@@ -409,7 +439,7 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
                 Console.WriteLine($"   Client 1 created session {sessionId}");
 
                 // Client 1 joins
-                var joinRequest1 = new JoinGameSessionRequest { SessionId = sessionId };
+                var joinRequest1 = new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() };
                 var joinResponse1 = (await client1.InvokeAsync<JoinGameSessionRequest, JsonElement>(
                     "POST",
                     "/sessions/join",
@@ -428,9 +458,9 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
                 var peerJoinedReceived = new TaskCompletionSource<bool>();
                 string? receivedPeerSessionId = null;
 
-                client1.OnEvent("voice_peer_joined", (json) =>
+                client1.OnEvent("voice.peer_joined", (json) =>
                 {
-                    Console.WriteLine($"   Client 1 received voice_peer_joined event");
+                    Console.WriteLine($"   Client 1 received voice.peer_joined event");
                     try
                     {
                         var eventData = JsonDocument.Parse(json).RootElement;
@@ -450,7 +480,7 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
 
                 // Client 2 joins the same session
                 Console.WriteLine("   Client 2 joining session...");
-                var joinRequest2 = new JoinGameSessionRequest { SessionId = sessionId };
+                var joinRequest2 = new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() };
                 var joinResponse2 = (await client2.InvokeAsync<JoinGameSessionRequest, JsonElement>(
                     "POST",
                     "/sessions/join",
@@ -548,13 +578,14 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
                 Console.WriteLine($"   Created session {sessionId}");
 
                 // Both clients join
-                var joinRequest = new JoinGameSessionRequest { SessionId = sessionId };
+                var joinRequest1 = new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() };
+                var joinRequest2 = new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() };
 
                 var join1 = (await client1.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/join", joinRequest, timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                    "POST", "/sessions/join", joinRequest1, timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
                 var join2 = (await client2.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/join", joinRequest, timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                    "POST", "/sessions/join", joinRequest2, timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
                 var success1 = join1.TryGetProperty("success", out var s1) && s1.GetBoolean();
                 var success2 = join2.TryGetProperty("success", out var s2) && s2.GetBoolean();
@@ -589,9 +620,9 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
                 var peerUpdatedReceived = new TaskCompletionSource<bool>();
                 string? receivedSdpAnswer = null;
 
-                client1.OnEvent("voice_peer_updated", (json) =>
+                client1.OnEvent("voice.peer_updated", (json) =>
                 {
-                    Console.WriteLine($"   Client 1 received voice_peer_updated event");
+                    Console.WriteLine($"   Client 1 received voice.peer_updated event");
                     try
                     {
                         var eventData = JsonDocument.Parse(json).RootElement;
@@ -610,6 +641,9 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
                 });
 
                 // Client 2 sends SDP answer to Client 1
+                // Note: The capability manifest with /voice/peer/answer may arrive after the voice.peer_joined event
+                // due to race condition between Permissions service capability push and Voice service event publish.
+                // Retry up to 5 times (4 seconds total) for "Unknown endpoint" errors.
                 Console.WriteLine("   Client 2 sending SDP answer to Client 1...");
 
                 var answerRequest = new AnswerPeerRequest
@@ -621,19 +655,47 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
                     IceCandidates = new List<string> { "candidate:1 1 UDP 2130706431 192.168.1.1 12345 typ host" }
                 };
 
-                try
-                {
-                    await client2.InvokeAsync<AnswerPeerRequest, JsonElement>(
-                        "POST",
-                        "/voice/peer/answer",
-                        answerRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                const int maxAttempts = 5;
+                const int retryDelayMs = 1000;
+                bool answerSent = false;
 
-                    Console.WriteLine("   SDP answer sent successfully");
-                }
-                catch (Exception ex)
+                for (int attempt = 1; attempt <= maxAttempts; attempt++)
                 {
-                    Console.WriteLine($"   FAIL: Answer peer call failed: {ex.Message}");
+                    try
+                    {
+                        await client2.InvokeAsync<AnswerPeerRequest, JsonElement>(
+                            "POST",
+                            "/voice/peer/answer",
+                            answerRequest,
+                            timeout: TimeSpan.FromSeconds(15));
+
+                        Console.WriteLine("   SDP answer sent successfully");
+                        answerSent = true;
+                        break;
+                    }
+                    catch (ArgumentException ex) when (ex.Message.Contains("Unknown endpoint"))
+                    {
+                        if (attempt < maxAttempts)
+                        {
+                            Console.WriteLine($"   Endpoint not yet available (attempt {attempt}/{maxAttempts}), waiting for capability manifest...");
+                            await Task.Delay(retryDelayMs);
+                        }
+                        else
+                        {
+                            Console.WriteLine($"   FAIL: Answer peer endpoint still unavailable after {maxAttempts} attempts: {ex.Message}");
+                            return false;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"   FAIL: Answer peer call failed: {ex.Message}");
+                        return false;
+                    }
+                }
+
+                if (!answerSent)
+                {
+                    Console.WriteLine("   FAIL: Could not send SDP answer");
                     return false;
                 }
 
