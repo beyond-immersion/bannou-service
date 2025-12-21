@@ -213,9 +213,9 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     // Check if this is a capability manifest
                     var responseObj = JsonNode.Parse(responseText)?.AsObject();
 
-                    // Capability manifest should have type="capability_manifest" and availableAPIs
-                    var messageType = responseObj?["type"]?.GetValue<string>();
-                    if (messageType == "capability_manifest")
+                    // Capability manifest should have event_name="connect.capability_manifest" and availableAPIs
+                    var messageType = responseObj?["event_name"]?.GetValue<string>();
+                    if (messageType == "connect.capability_manifest")
                     {
                         var availableApis = responseObj?["availableAPIs"]?.AsArray();
                         var apiCount = availableApis?.Count ?? 0;
@@ -588,10 +588,10 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             var responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
             var initialManifest = JsonNode.Parse(responseText)?.AsObject();
 
-            var messageType = initialManifest?["type"]?.GetValue<string>();
-            if (messageType != "capability_manifest")
+            var messageType = initialManifest?["event_name"]?.GetValue<string>();
+            if (messageType != "connect.capability_manifest")
             {
-                Console.WriteLine($"❌ Expected capability_manifest but received '{messageType}'");
+                Console.WriteLine($"❌ Expected connect.capability_manifest but received '{messageType}'");
                 return false;
             }
 
@@ -650,8 +650,8 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
                 var updatedManifest = JsonNode.Parse(responseText)?.AsObject();
 
-                var updatedType = updatedManifest?["type"]?.GetValue<string>();
-                if (updatedType == "capability_manifest")
+                var updatedType = updatedManifest?["event_name"]?.GetValue<string>();
+                if (updatedType == "connect.capability_manifest")
                 {
                     var updatedApis = updatedManifest?["availableAPIs"]?.AsArray();
                     var updatedApiCount = updatedApis?.Count ?? 0;

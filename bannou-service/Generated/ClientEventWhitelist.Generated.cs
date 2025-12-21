@@ -36,6 +36,12 @@ public static class ClientEventWhitelist
         "permissions.session_capabilities",
         "system.error",
         "system.notification",
+        "voice.peer_joined",
+        "voice.peer_left",
+        "voice.peer_updated",
+        "voice.room_closed",
+        "voice.room_state",
+        "voice.tier_upgrade",
     };
 
     /// <summary>

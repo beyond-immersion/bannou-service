@@ -1,0 +1,66 @@
+# Voice/WebSocket Test Configuration
+# Extends edge testing with Kamailio + RTPEngine infrastructure for scaled tier tests
+# Uses bridge networking so all containers can communicate via container names
+
+services:
+
+  # Override bannou to use voice-specific env file
+  bannou:
+    env_file: ../.env.test.voice
+    environment:
+      # Pass the Dapr components host path for orchestrator dynamic deployments
+      - BANNOU_DaprComponentsHostPath=${DAPR_COMPONENTS_HOST_PATH:-./dapr/components-http-test}
+
+  # Kamailio SIP Proxy (bridge networking for testing)
+  # Handles SIP registration, routing, and RTPEngine integration
+  # Official CI image: https://github.com/kamailio/kamailio-ci (ready-to-use Alpine)
+  kamailio:
+    image: ghcr.io/kamailio/kamailio-ci:master-alpine
+    container_name: bannou-test-voice-kamailio
+    # Use bridge networking - containers communicate by name
+    volumes:
+      - ./kamailio/kamailio.cfg:/etc/kamailio/kamailio.cfg:ro
+      - ./kamailio/dispatcher.list:/etc/kamailio/dispatcher.list:ro
+    environment:
+      - KAMAILIO_DEBUG_LEVEL=2
+    healthcheck:
+      # Alpine doesn't have curl, use wget instead
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      rtpengine:
+        condition: service_healthy
+
+  # RTPEngine Media Relay (SFU)
+  # Handles RTP media forwarding for scaled tier voice
+  # Docker wrapper: MIT license | RTPEngine software: GPL v3
+  rtpengine:
+    image: drachtio/rtpengine:latest
+    container_name: bannou-test-voice-rtpengine
+    # Bridge networking - reachable via container name
+    privileged: true  # Required for kernel forwarding table access
+    volumes:
+      - ./rtpengine/rtpengine.conf:/etc/rtpengine/rtpengine.conf:ro
+    environment:
+      # Kernel forwarding table (0 = enabled, -1 = disabled)
+      - TABLE=0
+    healthcheck:
+      # Check if rtpengine is listening on ng protocol UDP port
+      # (nc not available in this image, use ss instead)
+      test: ["CMD", "bash", "-c", "ss -uln | grep -q ':22222'"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Edge tester - use voice-specific env file
+  bannou-edge-tester:
+    env_file: ../.env.test.voice
+    environment:
+      - DAEMON_MODE=true
+    depends_on:
+      kamailio:
+        condition: service_healthy

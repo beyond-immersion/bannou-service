@@ -2520,6 +2520,520 @@
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.IVoiceClient.CreateVoiceRoomAsync(BeyondImmersion.BannouService.Voice.CreateVoiceRoomRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create voice room for a game session
+            </summary>
+            <remarks>
+            Creates a new voice room associated with a game session.
+            <br/>Called by GameSession service when creating a session with voice enabled.
+            <br/>Returns room ID and initial configuration.
+            </remarks>
+            <returns>Voice room created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.IVoiceClient.GetVoiceRoomAsync(BeyondImmersion.BannouService.Voice.GetVoiceRoomRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get voice room details
+            </summary>
+            <remarks>
+            Retrieves current state of a voice room including participant list.
+            <br/>Called by GameSession service to check room status.
+            </remarks>
+            <returns>Voice room retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.IVoiceClient.JoinVoiceRoomAsync(BeyondImmersion.BannouService.Voice.JoinVoiceRoomRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Join voice room and register SIP endpoint
+            </summary>
+            <remarks>
+            Registers a participant's SIP endpoint with the voice room.
+            <br/>Called by GameSession service when a player joins a session.
+            <br/>Returns connection info and current peer list for P2P mode,
+            <br/>or RTP server details for scaled mode.
+            </remarks>
+            <returns>Successfully joined voice room</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.IVoiceClient.LeaveVoiceRoomAsync(BeyondImmersion.BannouService.Voice.LeaveVoiceRoomRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Leave voice room
+            </summary>
+            <remarks>
+            Removes a participant from the voice room and notifies other peers.
+            <br/>Called by GameSession service when a player leaves a session.
+            </remarks>
+            <returns>Successfully left voice room</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.IVoiceClient.DeleteVoiceRoomAsync(BeyondImmersion.BannouService.Voice.DeleteVoiceRoomRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete voice room
+            </summary>
+            <remarks>
+            Deletes a voice room and notifies all participants.
+            <br/>Called by GameSession service when a session is deleted.
+            </remarks>
+            <returns>Voice room deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.IVoiceClient.PeerHeartbeatAsync(BeyondImmersion.BannouService.Voice.PeerHeartbeatRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update peer endpoint TTL
+            </summary>
+            <remarks>
+            Refreshes the TTL for a participant's endpoint registration.
+            <br/>Should be called periodically to prevent endpoint expiration.
+            </remarks>
+            <returns>Heartbeat acknowledged</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.IVoiceClient.AnswerPeerAsync(BeyondImmersion.BannouService.Voice.AnswerPeerRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Send SDP answer to complete WebRTC handshake
+            </summary>
+            <remarks>
+            Called by clients after receiving a VoicePeerJoinedEvent containing an SDP offer.
+            <br/>The client generates an SDP answer and sends it via this endpoint.
+            <br/>The answering peer is notified via VoicePeerUpdatedEvent.
+            <br/>
+            <br/>**Access Control**: This endpoint requires the `voice:ringing` state, which is
+            <br/>automatically set by the Voice service when a VoicePeerJoinedEvent is sent to the client.
+            <br/>The state is cleared after the answer is processed or times out.
+            </remarks>
+            <returns>SDP answer processed, peer notified</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+            <summary>
+            Creates and configures an HttpClient instance for this service client.
+            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.CreateVoiceRoomAsync(BeyondImmersion.BannouService.Voice.CreateVoiceRoomRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create voice room for a game session
+            </summary>
+            <remarks>
+            Creates a new voice room associated with a game session.
+            <br/>Called by GameSession service when creating a session with voice enabled.
+            <br/>Returns room ID and initial configuration.
+            </remarks>
+            <returns>Voice room created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.GetVoiceRoomAsync(BeyondImmersion.BannouService.Voice.GetVoiceRoomRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get voice room details
+            </summary>
+            <remarks>
+            Retrieves current state of a voice room including participant list.
+            <br/>Called by GameSession service to check room status.
+            </remarks>
+            <returns>Voice room retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.JoinVoiceRoomAsync(BeyondImmersion.BannouService.Voice.JoinVoiceRoomRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Join voice room and register SIP endpoint
+            </summary>
+            <remarks>
+            Registers a participant's SIP endpoint with the voice room.
+            <br/>Called by GameSession service when a player joins a session.
+            <br/>Returns connection info and current peer list for P2P mode,
+            <br/>or RTP server details for scaled mode.
+            </remarks>
+            <returns>Successfully joined voice room</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.LeaveVoiceRoomAsync(BeyondImmersion.BannouService.Voice.LeaveVoiceRoomRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Leave voice room
+            </summary>
+            <remarks>
+            Removes a participant from the voice room and notifies other peers.
+            <br/>Called by GameSession service when a player leaves a session.
+            </remarks>
+            <returns>Successfully left voice room</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.DeleteVoiceRoomAsync(BeyondImmersion.BannouService.Voice.DeleteVoiceRoomRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete voice room
+            </summary>
+            <remarks>
+            Deletes a voice room and notifies all participants.
+            <br/>Called by GameSession service when a session is deleted.
+            </remarks>
+            <returns>Voice room deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.PeerHeartbeatAsync(BeyondImmersion.BannouService.Voice.PeerHeartbeatRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update peer endpoint TTL
+            </summary>
+            <remarks>
+            Refreshes the TTL for a participant's endpoint registration.
+            <br/>Should be called periodically to prevent endpoint expiration.
+            </remarks>
+            <returns>Heartbeat acknowledged</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.AnswerPeerAsync(BeyondImmersion.BannouService.Voice.AnswerPeerRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Send SDP answer to complete WebRTC handshake
+            </summary>
+            <remarks>
+            Called by clients after receiving a VoicePeerJoinedEvent containing an SDP offer.
+            <br/>The client generates an SDP answer and sends it via this endpoint.
+            <br/>The answering peer is notified via VoicePeerUpdatedEvent.
+            <br/>
+            <br/>**Access Control**: This endpoint requires the `voice:ringing` state, which is
+            <br/>automatically set by the Voice service when a VoicePeerJoinedEvent is sent to the client.
+            <br/>The state is cleared after the answer is processed or times out.
+            </remarks>
+            <returns>SDP answer processed, peer notified</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Voice.VoiceTier">
+            <summary>
+            Voice communication tier:
+            <br/>- p2p: Direct peer-to-peer connections (up to 6 participants)
+            <br/>- scaled: RTP server-mediated communication (unlimited participants)
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Voice.VoiceCodec">
+            <summary>
+            Audio codec for voice communication
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Voice.CreateVoiceRoomRequest">
+            <summary>
+            Request to create a voice room for a game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.CreateVoiceRoomRequest.SessionId">
+            <summary>
+            Game session ID this voice room is associated with
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.CreateVoiceRoomRequest.PreferredTier">
+            <summary>
+            Preferred voice tier (defaults to p2p)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.CreateVoiceRoomRequest.MaxParticipants">
+            <summary>
+            Maximum participants before tier upgrade
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.CreateVoiceRoomRequest.Codec">
+            <summary>
+            Preferred audio codec (defaults to opus)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Voice.GetVoiceRoomRequest">
+            <summary>
+            Request to get voice room details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.GetVoiceRoomRequest.RoomId">
+            <summary>
+            Voice room ID to retrieve
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Voice.JoinVoiceRoomRequest">
+            <summary>
+            Request to join a voice room
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomRequest.RoomId">
+            <summary>
+            Voice room ID to join
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomRequest.SessionId">
+            <summary>
+            WebSocket session ID (unique participant identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomRequest.SipEndpoint">
+            <summary>
+            Participant's SIP endpoint details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomRequest.DisplayName">
+            <summary>
+            Display name for UI
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Voice.LeaveVoiceRoomRequest">
+            <summary>
+            Request to leave a voice room
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.LeaveVoiceRoomRequest.RoomId">
+            <summary>
+            Voice room ID to leave
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.LeaveVoiceRoomRequest.SessionId">
+            <summary>
+            WebSocket session ID of the leaving participant
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Voice.DeleteVoiceRoomRequest">
+            <summary>
+            Request to delete a voice room
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.DeleteVoiceRoomRequest.RoomId">
+            <summary>
+            Voice room ID to delete
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.DeleteVoiceRoomRequest.Reason">
+            <summary>
+            Reason for deletion (e.g., "session_ended")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Voice.PeerHeartbeatRequest">
+            <summary>
+            Heartbeat to keep peer registration active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.PeerHeartbeatRequest.RoomId">
+            <summary>
+            Voice room ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.PeerHeartbeatRequest.SessionId">
+            <summary>
+            WebSocket session ID of the peer
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Voice.AnswerPeerRequest">
+            <summary>
+            Request to send an SDP answer to complete a WebRTC handshake.
+            <br/>Sent by clients after receiving a VoicePeerJoinedEvent with an SDP offer.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.AnswerPeerRequest.RoomId">
+            <summary>
+            Voice room ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.AnswerPeerRequest.SenderSessionId">
+            <summary>
+            Session ID of the answering peer (caller of this endpoint)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.AnswerPeerRequest.TargetSessionId">
+            <summary>
+            Session ID of the peer whose offer we're answering
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.AnswerPeerRequest.SdpAnswer">
+            <summary>
+            SDP answer generated by this client's WebRTC stack
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.AnswerPeerRequest.IceCandidates">
+            <summary>
+            ICE candidates for NAT traversal (can be trickled later)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Voice.VoiceRoomResponse">
+            <summary>
+            Voice room details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.VoiceRoomResponse.RoomId">
+            <summary>
+            Unique voice room identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.VoiceRoomResponse.SessionId">
+            <summary>
+            Associated game session ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.VoiceRoomResponse.Tier">
+            <summary>
+            Current voice tier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.VoiceRoomResponse.Codec">
+            <summary>
+            Active audio codec
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.VoiceRoomResponse.MaxParticipants">
+            <summary>
+            Maximum participants before tier upgrade
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.VoiceRoomResponse.CurrentParticipants">
+            <summary>
+            Current number of participants
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.VoiceRoomResponse.Participants">
+            <summary>
+            List of current participants
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.VoiceRoomResponse.CreatedAt">
+            <summary>
+            When the room was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.VoiceRoomResponse.RtpServerUri">
+            <summary>
+            RTP server URI (only present in scaled tier)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Voice.JoinVoiceRoomResponse">
+            <summary>
+            Response after joining a voice room
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomResponse.Success">
+            <summary>
+            Whether join was successful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomResponse.RoomId">
+            <summary>
+            Voice room ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomResponse.Tier">
+            <summary>
+            Current voice tier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomResponse.Codec">
+            <summary>
+            Codec to use
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomResponse.Peers">
+            <summary>
+            Current peers to connect to (P2P mode only)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomResponse.RtpServerUri">
+            <summary>
+            RTP server URI (scaled mode only)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomResponse.StunServers">
+            <summary>
+            STUN server URIs for NAT traversal
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomResponse.TierUpgradePending">
+            <summary>
+            True if room is about to upgrade to scaled tier
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Voice.SipEndpoint">
+            <summary>
+            SIP/WebRTC endpoint details for a participant
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.SipEndpoint.SdpOffer">
+            <summary>
+            SDP offer for WebRTC negotiation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.SipEndpoint.IceCandidates">
+            <summary>
+            ICE candidates for NAT traversal
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.SipEndpoint.PublicIp">
+            <summary>
+            Public IP address if known
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.SipEndpoint.Port">
+            <summary>
+            UDP port for RTP
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Voice.VoiceParticipant">
+            <summary>
+            Participant in a voice room
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.VoiceParticipant.SessionId">
+            <summary>
+            WebSocket session ID (unique participant identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.VoiceParticipant.DisplayName">
+            <summary>
+            Display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.VoiceParticipant.JoinedAt">
+            <summary>
+            When the participant joined
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.VoiceParticipant.IsMuted">
+            <summary>
+            Whether participant is muted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Voice.VoicePeer">
+            <summary>
+            Peer endpoint details for P2P connection
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.VoicePeer.SessionId">
+            <summary>
+            WebSocket session ID for this peer (ephemeral identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.VoicePeer.DisplayName">
+            <summary>
+            Display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.VoicePeer.SipEndpoint">
+            <summary>
+            Peer's SIP endpoint for direct connection
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient.GetAccountSubscriptionsAsync(BeyondImmersion.BannouService.Subscriptions.GetAccountSubscriptionsRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
             <summary>
@@ -3100,6 +3614,11 @@
             Game-specific character data
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest.VoiceEndpoint">
+            <summary>
+            Client's SIP endpoint for voice communication (optional)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionResponse.GameData">
             <summary>
             Initial game state data
@@ -3108,6 +3627,16 @@
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionResponse.NewPermissions">
             <summary>
             Additional permissions granted by joining
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionResponse.Voice">
+            <summary>
+            Voice connection info (if voice is enabled for this session)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.GamePlayer.VoiceSessionId">
+            <summary>
+            Voice participant session ID (if player has joined voice)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.KickPlayerRequest.SessionId">
@@ -3158,6 +3687,56 @@
         <member name="P:BeyondImmersion.BannouService.GameSession.GameActionResponse.NewGameState">
             <summary>
             Updated game state (if applicable)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.VoiceSipEndpoint">
+            <summary>
+            Client's SIP/WebRTC endpoint for voice communication
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.VoiceSipEndpoint.SdpOffer">
+            <summary>
+            SDP offer for WebRTC negotiation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.VoiceSipEndpoint.IceCandidates">
+            <summary>
+            ICE candidates for NAT traversal
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.VoiceConnectionInfo">
+            <summary>
+            Minimal voice metadata returned when joining a session.
+            <br/>
+            <br/>**Event-Only Pattern**: Peer connection details are NOT included here.
+            <br/>Clients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).
+            <br/>This avoids race conditions between response processing and event handling.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.VoiceConnectionInfo.VoiceEnabled">
+            <summary>
+            Whether voice is enabled for this game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.VoiceConnectionInfo.RoomId">
+            <summary>
+            Voice room ID (null until room is created when 2+ participants join with voice)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.VoiceConnectionInfo.Tier">
+            <summary>
+            Expected voice tier (may change based on participant count)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.VoiceConnectionInfo.Codec">
+            <summary>
+            Audio codec to use
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.VoiceConnectionInfo.StunServers">
+            <summary>
+            STUN server URIs for NAT traversal (clients should configure these early)
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Species.ISpeciesClient.GetSpeciesAsync(BeyondImmersion.BannouService.Species.GetSpeciesRequest,System.Threading.CancellationToken)">
@@ -10292,6 +10871,573 @@
             Useful for test code or scenarios where exceptions are preferred over explicit error handling.
             </summary>
             <exception cref="T:System.InvalidOperationException">Thrown when the response is an error.</exception>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent">
+            <summary>
+            Sent to all session participants when the session state changes.
+            <br/>Examples: session starts, pauses, resumes, or ends.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.Session_id">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.Previous_state">
+            <summary>
+            State before the change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.New_state">
+            <summary>
+            State after the change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.Reason">
+            <summary>
+            Reason for state change (e.g., "host_started", "timeout", "admin_action")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.Changed_by">
+            <summary>
+            Account ID of user who triggered the change (if applicable)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent">
+            <summary>
+            Sent to all session participants when a new player joins.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.Session_id">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.Current_player_count">
+            <summary>
+            Total players in session after join
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.Max_players">
+            <summary>
+            Maximum allowed players
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent">
+            <summary>
+            Sent to all session participants when a player leaves voluntarily.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.Session_id">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.Player_id">
+            <summary>
+            Account ID of player who left
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.Display_name">
+            <summary>
+            Display name for UI notification
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.Current_player_count">
+            <summary>
+            Total players remaining after departure
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.New_owner_id">
+            <summary>
+            New session owner if ownership transferred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent">
+            <summary>
+            Sent to all session participants when a player is kicked.
+            <br/>The kicked player receives this before being removed from the session.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.Session_id">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.Kicked_player_id">
+            <summary>
+            Account ID of player who was kicked
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.Kicked_player_name">
+            <summary>
+            Display name for UI notification
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.Kicked_by">
+            <summary>
+            Account ID of user who performed the kick
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.Reason">
+            <summary>
+            Reason provided for the kick
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent">
+            <summary>
+            Sent to recipients when a chat message is posted in the session.
+            <br/>Public messages go to all participants, whispers only to the target.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Session_id">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Message_id">
+            <summary>
+            Unique identifier for this chat message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Sender_id">
+            <summary>
+            Account ID of message sender
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Sender_name">
+            <summary>
+            Display name of sender
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Message">
+            <summary>
+            Chat message content
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Message_type">
+            <summary>
+            Type of chat message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Is_whisper_to_me">
+            <summary>
+            True if this is a whisper directed at the receiving client
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent">
+            <summary>
+            Sent when game state changes that all players should see.
+            <br/>Contains partial state updates rather than full state for efficiency.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.Session_id">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.Update_type">
+            <summary>
+            Type of update (game-specific, e.g., "turn_changed", "score_updated")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.State_delta">
+            <summary>
+            Partial game state changes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.Triggered_by">
+            <summary>
+            Account ID that triggered the state change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.Sequence_number">
+            <summary>
+            Monotonically increasing sequence for ordering state updates
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent">
+            <summary>
+            Sent to relevant players when a game action produces results.
+            <br/>May be sent to all players or just the acting player depending on visibility rules.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Session_id">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Action_id">
+            <summary>
+            ID of the action that produced this result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Action_type">
+            <summary>
+            Type of action performed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Actor_id">
+            <summary>
+            Account ID of player who performed the action
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Success">
+            <summary>
+            Whether the action succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Result_data">
+            <summary>
+            Action-specific result data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Visible_effects">
+            <summary>
+            Visual/audio effects other players should see
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerInfo">
+            <summary>
+            Information about a player in the session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerInfo.Account_id">
+            <summary>
+            Player's account ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerInfo.Display_name">
+            <summary>
+            Player's display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerInfo.Role">
+            <summary>
+            Player's role in the session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerInfo.Character_data">
+            <summary>
+            Game-specific character data
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect">
+            <summary>
+            A visual or audio effect that should be rendered
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect.Effect_type">
+            <summary>
+            Type of effect (e.g., "damage_number", "particle", "sound")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect.Target_id">
+            <summary>
+            Entity the effect targets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect.Position">
+            <summary>
+            World position for the effect
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect.Effect_data">
+            <summary>
+            Effect-specific parameters
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent">
+            <summary>
+            Sent to a client when they join a voice room.
+            <br/>Contains full room state including peer list and connection info.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.Room_id">
+            <summary>
+            Voice room ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.Session_id">
+            <summary>
+            Associated game session ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.Tier">
+            <summary>
+            Current voice tier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.Codec">
+            <summary>
+            Audio codec to use
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.Peers">
+            <summary>
+            List of peers to connect to (P2P mode)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.Rtp_server_uri">
+            <summary>
+            RTP server URI (scaled mode only)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.Stun_servers">
+            <summary>
+            STUN server URIs for NAT traversal
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerJoinedEvent">
+            <summary>
+            Sent to existing room participants when a new peer joins.
+            <br/>Contains the new peer's connection details for P2P mode.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerJoinedEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerJoinedEvent.Room_id">
+            <summary>
+            Voice room ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerJoinedEvent.Peer">
+            <summary>
+            New peer's connection details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerJoinedEvent.Current_participant_count">
+            <summary>
+            Total participants after join
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent">
+            <summary>
+            Sent to remaining room participants when a peer leaves.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent.Room_id">
+            <summary>
+            Voice room ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent.Peer_session_id">
+            <summary>
+            WebSocket session ID of the peer who left (ephemeral identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent.Display_name">
+            <summary>
+            Display name for UI notification
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent.Remaining_participant_count">
+            <summary>
+            Participants remaining after departure
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerUpdatedEvent">
+            <summary>
+            Sent when a peer updates their SIP endpoint (e.g., ICE candidate change).
+            <br/>Clients should update their connection to this peer.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerUpdatedEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerUpdatedEvent.Room_id">
+            <summary>
+            Voice room ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerUpdatedEvent.Peer">
+            <summary>
+            Updated peer connection details
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent">
+            <summary>
+            Sent to all room participants when the voice tier upgrades.
+            <br/>Clients should disconnect P2P connections and connect to the RTP server.
+            <br/>SIP credentials are provided for authenticating with the Kamailio SIP proxy.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.Room_id">
+            <summary>
+            Voice room ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.Previous_tier">
+            <summary>
+            Previous tier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.New_tier">
+            <summary>
+            New tier after upgrade
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.Rtp_server_uri">
+            <summary>
+            RTP server URI to connect to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.Sip_credentials">
+            <summary>
+            Credentials for SIP registration with Kamailio
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.Migration_deadline_ms">
+            <summary>
+            Milliseconds to complete migration before P2P disconnects
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomClosedEvent">
+            <summary>
+            Sent to all room participants when the voice room is closed.
+            <br/>Clients should disconnect all voice connections.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomClosedEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomClosedEvent.Room_id">
+            <summary>
+            Voice room ID that was closed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomClosedEvent.Reason">
+            <summary>
+            Reason the room was closed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerInfo">
+            <summary>
+            Peer connection information for P2P voice
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerInfo.Peer_session_id">
+            <summary>
+            WebSocket session ID for this peer (ephemeral identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerInfo.Display_name">
+            <summary>
+            Peer's display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerInfo.Sdp_offer">
+            <summary>
+            SDP offer for WebRTC negotiation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerInfo.Ice_candidates">
+            <summary>
+            ICE candidates for NAT traversal
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerInfo.Is_muted">
+            <summary>
+            Whether peer is currently muted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Voice.ClientEvents.SipCredentials">
+            <summary>
+            SIP credentials for authenticating with the Kamailio SIP proxy in scaled tier mode.
+            <br/>These credentials are dynamically generated per-user per-room and should be used
+            <br/>for SIP REGISTER and subsequent INVITE requests.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.SipCredentials.Username">
+            <summary>
+            SIP username (typically sessionId or a hash-derived identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.SipCredentials.Password">
+            <summary>
+            SIP password (dynamically generated, short-lived)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.SipCredentials.Domain">
+            <summary>
+            SIP domain/realm for authentication (e.g., "voice.bannou.local")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.SipCredentials.Expires_at">
+            <summary>
+            When these credentials expire (clients should re-authenticate before this)
+            </summary>
         </member>
     </members>
 </doc>

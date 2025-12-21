@@ -5,17 +5,22 @@ set -e
 echo "🔧 Generating Bannou SDK packages (Server + Client)..."
 
 # =============================================================================
-# DISCOVERY: Find all generated files (now centralized in bannou-service/Generated/)
+# DISCOVERY: Find all generated files
 # =============================================================================
 
-# All clients and models are now in bannou-service/Generated/
+# Clients and models are in bannou-service/Generated/
 CLIENT_FILES=($(find ./bannou-service/Generated/Clients -name "*Client.cs" 2>/dev/null || true))
 MODEL_FILES=($(find ./bannou-service/Generated/Models -name "*Models.cs" 2>/dev/null || true))
 EVENT_FILES=($(find ./bannou-service/Generated/Events -name "*Events*.cs" 2>/dev/null || true))
 
-# Also include common events from bannou-service/Generated/
+# Include common events from bannou-service/Generated/
 COMMON_EVENT_FILES=($(find ./bannou-service/Generated -maxdepth 1 -name "*Events*.cs" 2>/dev/null || true))
 EVENT_FILES=("${EVENT_FILES[@]}" "${COMMON_EVENT_FILES[@]}")
+
+# Include client events from lib-* service plugins (e.g., VoiceClientEventsModels.cs, GameSessionClientEventsModels.cs)
+# These are WebSocket push events that clients need to receive and handle
+LIB_CLIENT_EVENT_FILES=($(find ./lib-*/Generated -name "*ClientEventsModels.cs" 2>/dev/null || true))
+EVENT_FILES=("${EVENT_FILES[@]}" "${LIB_CLIENT_EVENT_FILES[@]}")
 
 echo "Found ${#CLIENT_FILES[@]} client files, ${#MODEL_FILES[@]} model files, ${#EVENT_FILES[@]} event files"
 

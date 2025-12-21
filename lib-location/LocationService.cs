@@ -1148,7 +1148,9 @@ public class LocationService : ILocationService
             {
                 var code = seedLocation.Code.ToUpperInvariant();
                 var compositeKey = $"{seedLocation.RealmCode}:{code}";
-                var parentCompositeKey = $"{seedLocation.RealmCode}:{seedLocation.ParentLocationCode!.ToUpperInvariant()}";
+                // ParentLocationCode is known non-null from the Where filter above
+                var parentCode = seedLocation.ParentLocationCode ?? throw new InvalidOperationException("ParentLocationCode was null after filtering");
+                var parentCompositeKey = $"{seedLocation.RealmCode}:{parentCode.ToUpperInvariant()}";
 
                 if (!codeToLocationId.TryGetValue(compositeKey, out var locationId))
                 {

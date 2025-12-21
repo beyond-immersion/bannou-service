@@ -78,11 +78,6 @@ public static class GameSessionPermissionRegistration
                     Role = "user",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
             }
         });
 
@@ -113,11 +108,6 @@ public static class GameSessionPermissionRegistration
                     Role = "user",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
             }
         });
 
@@ -131,7 +121,7 @@ public static class GameSessionPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
+                    RequiredStates = new Dictionary<string, string> { {"game-session", "in_game"} }
                 },
             }
         });
@@ -145,12 +135,7 @@ public static class GameSessionPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-                new PermissionRequirement
-                {
-                    Role = "user",
+                    Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -166,7 +151,7 @@ public static class GameSessionPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
+                    RequiredStates = new Dictionary<string, string> { {"game-session", "in_game"} }
                 },
             }
         });
@@ -181,12 +166,7 @@ public static class GameSessionPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
+                    RequiredStates = new Dictionary<string, string> { {"game-session", "in_game"} }
                 },
             }
         });
@@ -197,6 +177,9 @@ public static class GameSessionPermissionRegistration
     /// <summary>
     /// Builds the permission matrix for RegisterServicePermissionsAsync.
     /// Key structure: state -> role -> list of methods
+    /// State key construction must match PermissionsService.RecompileSessionPermissionsAsync:
+    /// - Same service (s.Key == ServiceId): use just s.Value (e.g., "ringing")
+    /// - Cross-service: use "{s.Key}:{s.Value}" (e.g., "game-session:in_game")
     /// </summary>
     public static Dictionary<string, IDictionary<string, ICollection<string>>> BuildPermissionMatrix()
     {
@@ -209,8 +192,10 @@ public static class GameSessionPermissionRegistration
             foreach (var permission in endpoint.Permissions)
             {
                 // Determine state key - use "default" if no specific states required
+                // For same-service states, use just the value to match lookup logic
                 var stateKey = permission.RequiredStates.Count > 0
-                    ? string.Join("|", permission.RequiredStates.Select(s => $"{s.Key}:{s.Value}"))
+                    ? string.Join("|", permission.RequiredStates.Select(s =>
+                        s.Key == ServiceId ? s.Value : $"{s.Key}:{s.Value}"))
                     : "default";
 
                 if (!matrix.TryGetValue(stateKey, out var roleMap))

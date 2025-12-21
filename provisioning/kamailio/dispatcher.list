@@ -1,0 +1,26 @@
+# Kamailio Dispatcher Configuration for Bannou Voice Service
+# Format: setid destination flags priority attributes
+#
+# Set IDs:
+#   1 - RTPEngine instances for media handling
+#   2 - SignalWire SIP trunk (future PSTN integration)
+#
+# Flags:
+#   0 - no flags (default)
+#   1 - inactive (skip in selection)
+#   2 - probing (send OPTIONS for health check)
+#
+# For local development, RTPEngine is on localhost
+# In production, add multiple RTPEngine instances for HA
+
+# Set 1: RTPEngine instances
+# Local RTPEngine for development
+1 sip:127.0.0.1:5040 0 0 socket=udp:127.0.0.1:5060
+
+# Production: Add additional RTPEngine instances
+# 1 sip:rtpengine-1.internal:5040 0 0 socket=udp:kamailio:5060
+# 1 sip:rtpengine-2.internal:5040 0 0 socket=udp:kamailio:5060
+
+# Set 2: SignalWire PSTN (future)
+# Uncomment when PSTN integration is needed
+# 2 sip:yourspace.signalwire.com:5060 0 0 socket=tls:kamailio:5061

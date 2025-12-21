@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Testing;
 using Dapr.Client;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -19,6 +20,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     private readonly Mock<DaprClient> _mockDaprClient;
     private readonly Mock<ILogger<GameSessionService>> _mockLogger;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
+    private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
@@ -29,6 +31,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         _mockDaprClient = new Mock<DaprClient>();
         _mockLogger = new Mock<ILogger<GameSessionService>>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
+        _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
     }
 
     private GameSessionService CreateService()
@@ -37,7 +40,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             _mockDaprClient.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockHttpContextAccessor.Object);
     }
 
     #region Constructor Tests
@@ -57,7 +61,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(null!, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object));
+            new GameSessionService(null!, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object));
     }
 
     [Fact]
@@ -65,7 +69,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(_mockDaprClient.Object, null!, Configuration, _mockErrorEventEmitter.Object));
+            new GameSessionService(_mockDaprClient.Object, null!, Configuration, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object));
     }
 
     [Fact]
@@ -73,7 +77,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(_mockDaprClient.Object, _mockLogger.Object, null!, _mockErrorEventEmitter.Object));
+            new GameSessionService(_mockDaprClient.Object, _mockLogger.Object, null!, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object));
     }
 
     #endregion
@@ -506,6 +510,139 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             "game-session.player-joined",
             It.IsAny<object>(),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task JoinGameSessionAsync_WhenSuccessful_ShouldSetGameSessionInGameState()
+    {
+        // Arrange
+        var mockPermissionsClient = new Mock<BeyondImmersion.BannouService.Permissions.IPermissionsClient>();
+        var service = new GameSessionService(
+            _mockDaprClient.Object,
+            _mockLogger.Object,
+            Configuration,
+            _mockErrorEventEmitter.Object,
+            _mockHttpContextAccessor.Object,
+            voiceClient: null,
+            permissionsClient: mockPermissionsClient.Object);
+
+        var sessionId = Guid.NewGuid();
+        var clientSessionId = "test-client-session-123";
+        var request = new JoinGameSessionRequest { SessionId = sessionId };
+
+        // Setup HTTP context with session ID header
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers["X-Bannou-Session-Id"] = clientSessionId;
+        _mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<GameSessionModel>(
+                STATE_STORE, SESSION_KEY_PREFIX + sessionId, null, null, default))
+            .ReturnsAsync(new GameSessionModel
+            {
+                SessionId = sessionId.ToString(),
+                MaxPlayers = 4,
+                CurrentPlayers = 1,
+                Status = GameSessionResponseStatus.Active,
+                Players = new List<GamePlayer>(),
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var (status, response) = await service.JoinGameSessionAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.True(response?.Success);
+
+        // Verify game-session:in_game state was set via Permissions client
+        mockPermissionsClient.Verify(p => p.UpdateSessionStateAsync(
+            It.Is<BeyondImmersion.BannouService.Permissions.SessionStateUpdate>(u =>
+                u.SessionId == clientSessionId &&
+                u.ServiceId == "game-session" &&
+                u.NewState == "in_game"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region LeaveGameSession Tests
+
+    [Fact]
+    public async Task LeaveGameSessionAsync_WhenSuccessful_ShouldClearGameSessionState()
+    {
+        // Arrange
+        var mockPermissionsClient = new Mock<BeyondImmersion.BannouService.Permissions.IPermissionsClient>();
+        var service = new GameSessionService(
+            _mockDaprClient.Object,
+            _mockLogger.Object,
+            Configuration,
+            _mockErrorEventEmitter.Object,
+            _mockHttpContextAccessor.Object,
+            voiceClient: null,
+            permissionsClient: mockPermissionsClient.Object);
+
+        var sessionId = Guid.NewGuid();
+        var clientSessionId = "test-client-session-456";
+        var accountId = Guid.NewGuid();
+        var request = new LeaveGameSessionRequest { SessionId = sessionId };
+
+        // Setup HTTP context with session ID header
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers["X-Bannou-Session-Id"] = clientSessionId;
+        _mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<GameSessionModel>(
+                STATE_STORE, SESSION_KEY_PREFIX + sessionId, null, null, default))
+            .ReturnsAsync(new GameSessionModel
+            {
+                SessionId = sessionId.ToString(),
+                MaxPlayers = 4,
+                CurrentPlayers = 2,
+                Status = GameSessionResponseStatus.Active,
+                Players = new List<GamePlayer>
+                {
+                    new() { AccountId = accountId, DisplayName = "TestPlayer" },
+                    new() { AccountId = Guid.NewGuid(), DisplayName = "OtherPlayer" }
+                },
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var (status, response) = await service.LeaveGameSessionAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        // Note: LeaveGameSession returns 200 with no body per schema
+
+        // Verify game-session:in_game state was cleared via Permissions client
+        mockPermissionsClient.Verify(p => p.ClearSessionStateAsync(
+            It.Is<BeyondImmersion.BannouService.Permissions.ClearSessionStateRequest>(u =>
+                u.SessionId == clientSessionId &&
+                u.ServiceId == "game-session"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task LeaveGameSessionAsync_WhenSessionNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new LeaveGameSessionRequest { SessionId = Guid.NewGuid() };
+
+#pragma warning disable CS8620 // Nullability mismatch in Moq setup - intentionally returning null to simulate not found
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<GameSessionModel>(
+                STATE_STORE, It.IsAny<string>(), null, null, default))
+            .Returns(Task.FromResult<GameSessionModel?>(null));
+#pragma warning restore CS8620
+
+        // Act
+        var (status, response) = await service.LeaveGameSessionAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
     }
 
     #endregion

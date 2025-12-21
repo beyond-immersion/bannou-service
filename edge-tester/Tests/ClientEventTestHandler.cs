@@ -181,10 +181,10 @@ public class ClientEventTestHandler : IServiceTestHandler
             var responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
             var manifest = JsonNode.Parse(responseText)?.AsObject();
 
-            var messageType = manifest?["type"]?.GetValue<string>();
-            if (messageType != "capability_manifest")
+            var messageType = manifest?["event_name"]?.GetValue<string>();
+            if (messageType != "connect.capability_manifest")
             {
-                Console.WriteLine($"FAILED Expected capability_manifest but received '{messageType}'");
+                Console.WriteLine($"FAILED Expected connect.capability_manifest but received '{messageType}'");
                 return false;
             }
 
@@ -456,10 +456,10 @@ public class ClientEventTestHandler : IServiceTestHandler
                     Console.WriteLine($"Received on reconnect: {responseText[..Math.Min(300, responseText.Length)]}");
 
                     var eventObj = JsonNode.Parse(responseText)?.AsObject();
-                    var msgType = eventObj?["type"]?.GetValue<string>() ?? eventObj?["event_name"]?.GetValue<string>();
-                    Console.WriteLine($"OK Received message type: {msgType}");
+                    var msgType = eventObj?["event_name"]?.GetValue<string>();
+                    Console.WriteLine($"OK Received message event_name: {msgType}");
 
-                    if (msgType == "capability_manifest")
+                    if (msgType == "connect.capability_manifest")
                     {
                         receivedCapabilityManifest = true;
 

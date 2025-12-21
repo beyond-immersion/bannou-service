@@ -708,7 +708,7 @@ public class ConnectService : IConnectService
                     {
                         var disconnectNotification = new
                         {
-                            type = "disconnect_notification",
+                            event_name = "connect.disconnect_notification",
                             reconnectionToken = connectionState.ReconnectionToken,
                             expiresAt = connectionState.ReconnectionExpiresAt?.ToString("O"),
                             reconnectable = true,
@@ -891,6 +891,10 @@ public class ConnectService : IConnectService
                 // Add dapr-app-id header for routing (like DaprServiceClientBase.PrepareRequest)
                 request.Headers.Add("dapr-app-id", appId);
                 request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+                // Pass client's WebSocket session ID to downstream services
+                // This enables services like Voice to set permissions for the correct client session
+                request.Headers.Add("X-Bannou-Session-Id", sessionId);
 
                 // Use Warning level to ensure visibility even when app logging is set to Warning
                 _logger.LogWarning("[ROUTING] WebSocket -> Dapr HTTP: {Method} {Uri} AppId={AppId}",
@@ -1207,13 +1211,17 @@ public class ConnectService : IConnectService
             {
                 if (eventData.EventType == AuthEventType.Login)
                 {
-                    // User logged in - regenerate capabilities with authenticated permissions
-                    await RefreshSessionCapabilitiesAsync(eventData.SessionId, "authenticated");
+                    // User logged in - Permissions service will automatically recompile capabilities
+                    // and push updated connect.capability_manifest to client
+                    _logger.LogDebug("Auth login event for session {SessionId} - capabilities will be updated by Permissions service",
+                        eventData.SessionId);
                 }
                 else if (eventData.EventType == AuthEventType.Logout)
                 {
-                    // User logged out - downgrade to anonymous permissions
-                    await RefreshSessionCapabilitiesAsync(eventData.SessionId, "anonymous");
+                    // User logged out - Permissions service will automatically recompile capabilities
+                    // and push updated connect.capability_manifest to client
+                    _logger.LogDebug("Auth logout event for session {SessionId} - capabilities will be updated by Permissions service",
+                        eventData.SessionId);
 
                     // Optionally close the WebSocket connection on logout
                     // await DisconnectAsync(eventData.SessionId, "User logged out");
@@ -1670,41 +1678,6 @@ public class ConnectService : IConnectService
     }
 
     /// <summary>
-    /// Sends auth state change notification to client.
-    /// Client should request fresh capabilities from Permissions service.
-    /// </summary>
-    private async Task RefreshSessionCapabilitiesAsync(string sessionId, string newState)
-    {
-        try
-        {
-            var updatePayload = new
-            {
-                type = "auth_state_change",
-                sessionId = sessionId,
-                newState = newState,
-                updatedAt = DateTimeOffset.UtcNow,
-                message = "Authentication state changed. Request fresh capabilities from Permissions service."
-            };
-
-            var messageId = MessageRouter.GenerateMessageId();
-            var updateMessage = BinaryMessage.FromJson(
-                channel: 1, // Auth channel
-                sequenceNumber: 0, // Event message
-                serviceGuid: Guid.Empty, // System message
-                messageId: messageId,
-                JsonSerializer.Serialize(updatePayload)
-            );
-
-            await _connectionManager.SendMessageAsync(sessionId, updateMessage, CancellationToken.None);
-            _logger.LogInformation("Sent auth state change update to session {SessionId}: {NewState}", sessionId, newState);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to send auth state change for session {SessionId}", sessionId);
-        }
-    }
-
-    /// <summary>
     /// Validates that a session still exists and is valid by checking the connection manager.
     /// </summary>
     private Task<bool> ValidateSessionAsync(string sessionId)
@@ -1815,7 +1788,7 @@ public class ConnectService : IConnectService
 
             var capabilityManifest = new
             {
-                type = "capability_manifest",
+                event_name = "connect.capability_manifest",
                 sessionId = sessionId,
                 availableAPIs = availableApis,
                 version = 1,
@@ -1937,7 +1910,7 @@ public class ConnectService : IConnectService
 
             var capabilityManifest = new
             {
-                type = "capability_manifest",
+                event_name = "connect.capability_manifest",
                 sessionId = sessionId,
                 availableAPIs = availableApis,
                 version = 1,

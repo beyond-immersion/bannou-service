@@ -365,7 +365,7 @@ public class PermissionsService : IPermissionsService
             // Lock contention is expected when multiple services register simultaneously (e.g., during tests or startup)
             const int maxRetries = 10;
             const int baseDelayMs = 100;
-            ILockResponse serviceLock = null!;
+            ILockResponse? serviceLock = null;
 
             for (int attempt = 0; attempt < maxRetries; attempt++)
             {
@@ -411,6 +411,19 @@ public class PermissionsService : IPermissionsService
                     // Brief delay before retry on exception
                     await Task.Delay(baseDelayMs, cancellationToken);
                 }
+            }
+
+            // Null check for safety - serviceLock should never be null after the loop
+            // but we handle it explicitly to satisfy null safety requirements
+            if (serviceLock == null)
+            {
+                _logger.LogError("Lock response was null for {ServiceId} - this should never happen", body.ServiceId);
+                return (StatusCodes.InternalServerError, new RegistrationResponse
+                {
+                    ServiceId = body.ServiceId,
+                    Success = false,
+                    Message = "Lock acquisition returned null response"
+                });
             }
 
             await using (serviceLock)

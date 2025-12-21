@@ -390,13 +390,3 @@ public class PingResponse
     /// </summary>
     public double ServerProcessingTimeMs { get; set; }
 }
-
-/// <summary>
-/// Status codes for testing service responses.
-/// </summary>
-public enum StatusCodes
-{
-    OK = 200,
-    BadRequest = 400,
-    InternalServerError = 500
-}

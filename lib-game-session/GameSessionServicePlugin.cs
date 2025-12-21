@@ -32,6 +32,10 @@ public class GameSessionServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register GameSessionServiceConfiguration here
 
+        // Add IHttpContextAccessor so GameSessionService can read the X-Bannou-Session-Id header
+        // This header is set by Connect service when routing WebSocket requests
+        services.AddHttpContextAccessor();
+
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
 

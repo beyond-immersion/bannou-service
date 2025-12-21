@@ -1,8 +1,11 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Voice;
 using Dapr.Client;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -24,6 +27,9 @@ public class GameSessionService : IGameSessionService
     private readonly ILogger<GameSessionService> _logger;
     private readonly GameSessionServiceConfiguration _configuration;
     private readonly IErrorEventEmitter _errorEventEmitter;
+    private readonly IVoiceClient? _voiceClient;
+    private readonly IPermissionsClient? _permissionsClient;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
@@ -35,16 +41,32 @@ public class GameSessionService : IGameSessionService
     private const string PLAYER_JOINED_TOPIC = "game-session.player-joined";
     private const string PLAYER_LEFT_TOPIC = "game-session.player-left";
 
+    /// <summary>
+    /// Creates a new GameSessionService instance.
+    /// </summary>
+    /// <param name="daprClient">Dapr client for state and pub/sub operations.</param>
+    /// <param name="logger">Logger for this service.</param>
+    /// <param name="configuration">Service configuration.</param>
+    /// <param name="errorEventEmitter">Error event emitter for unexpected failures.</param>
+    /// <param name="httpContextAccessor">HTTP context accessor for reading request headers.</param>
+    /// <param name="voiceClient">Optional voice client for voice room coordination. May be null if voice service is disabled.</param>
+    /// <param name="permissionsClient">Optional permissions client for setting game-session:in_game state. May be null if Permissions service is not loaded.</param>
     public GameSessionService(
         DaprClient daprClient,
         ILogger<GameSessionService> logger,
         GameSessionServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter)
+        IErrorEventEmitter errorEventEmitter,
+        IHttpContextAccessor httpContextAccessor,
+        IVoiceClient? voiceClient = null,
+        IPermissionsClient? permissionsClient = null)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+        _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+        _voiceClient = voiceClient; // Nullable - voice service may be disabled (Tenet 5)
+        _permissionsClient = permissionsClient; // Nullable - permissions service may not be loaded (Tenet 5)
     }
 
     /// <summary>
@@ -95,6 +117,15 @@ public class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to list game sessions");
+            await _errorEventEmitter.TryPublishAsync(
+                "game-session",
+                "ListGameSessions",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "dapr-state",
+                endpoint: "post:/game-session/list",
+                details: null,
+                stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -108,7 +139,7 @@ public class GameSessionService : IGameSessionService
     {
         try
         {
-            var sessionId = Guid.NewGuid().ToString();
+            var sessionId = Guid.NewGuid();
 
             _logger.LogInformation("Creating game session {SessionId} - GameType: {GameType}, MaxPlayers: {MaxPlayers}",
                 sessionId, body.GameType, body.MaxPlayers);
@@ -116,7 +147,7 @@ public class GameSessionService : IGameSessionService
             // Create the session model
             var session = new GameSessionModel
             {
-                SessionId = sessionId,
+                SessionId = sessionId.ToString(),
                 GameType = MapRequestGameTypeToResponse(body.GameType),
                 SessionName = body.SessionName,
                 MaxPlayers = body.MaxPlayers,
@@ -126,13 +157,40 @@ public class GameSessionService : IGameSessionService
                 CurrentPlayers = 0,
                 Players = new List<GamePlayer>(),
                 CreatedAt = DateTimeOffset.UtcNow,
-                GameSettings = body.GameSettings
+                GameSettings = body.GameSettings,
+                VoiceEnabled = _voiceClient != null // Voice enabled if voice service is available
             };
+
+            // Create voice room if voice service is available
+            if (_voiceClient != null)
+            {
+                try
+                {
+                    _logger.LogDebug("Creating voice room for session {SessionId}", sessionId);
+                    var voiceResponse = await _voiceClient.CreateVoiceRoomAsync(new CreateVoiceRoomRequest
+                    {
+                        SessionId = sessionId,
+                        PreferredTier = VoiceTier.P2p,
+                        Codec = VoiceCodec.Opus,
+                        MaxParticipants = body.MaxPlayers
+                    }, cancellationToken);
+
+                    session.VoiceRoomId = voiceResponse.RoomId;
+                    _logger.LogInformation("Voice room {VoiceRoomId} created for session {SessionId}",
+                        voiceResponse.RoomId, sessionId);
+                }
+                catch (Exception ex)
+                {
+                    // Voice room creation failure is non-fatal - session can still work without voice
+                    _logger.LogWarning(ex, "Failed to create voice room for session {SessionId}, continuing without voice", sessionId);
+                    session.VoiceEnabled = false;
+                }
+            }
 
             // Save to state store
             await _daprClient.SaveStateAsync(
                 STATE_STORE,
-                SESSION_KEY_PREFIX + sessionId,
+                SESSION_KEY_PREFIX + session.SessionId,
                 session,
                 cancellationToken: cancellationToken);
 
@@ -142,7 +200,7 @@ public class GameSessionService : IGameSessionService
                 SESSION_LIST_KEY,
                 cancellationToken: cancellationToken) ?? new List<string>();
 
-            sessionIds.Add(sessionId);
+            sessionIds.Add(session.SessionId);
 
             await _daprClient.SaveStateAsync(
                 STATE_STORE,
@@ -154,17 +212,26 @@ public class GameSessionService : IGameSessionService
             await _daprClient.PublishEventAsync(
                 PUBSUB_NAME,
                 SESSION_CREATED_TOPIC,
-                new { SessionId = sessionId, GameType = body.GameType.ToString() },
+                new { SessionId = session.SessionId, GameType = body.GameType.ToString() },
                 cancellationToken);
 
             var response = MapModelToResponse(session);
 
-            _logger.LogInformation("Game session {SessionId} created successfully", sessionId);
+            _logger.LogInformation("Game session {SessionId} created successfully", session.SessionId);
             return (StatusCodes.Created, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create game session");
+            await _errorEventEmitter.TryPublishAsync(
+                "game-session",
+                "CreateGameSession",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "dapr-state",
+                endpoint: "post:/game-session/create",
+                details: null,
+                stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -193,6 +260,15 @@ public class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get game session {SessionId}", body.SessionId);
+            await _errorEventEmitter.TryPublishAsync(
+                "game-session",
+                "GetGameSession",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "dapr-state",
+                endpoint: "post:/game-session/get",
+                details: new { SessionId = body.SessionId },
+                stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -296,6 +372,32 @@ public class GameSessionService : IGameSessionService
                 new { SessionId = sessionId, AccountId = accountId.ToString() },
                 cancellationToken);
 
+            // Set game-session:in_game state to enable leave/chat/action endpoints (Tenet 10)
+            var clientSessionId = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Session-Id"].FirstOrDefault();
+            if (_permissionsClient != null && !string.IsNullOrEmpty(clientSessionId))
+            {
+                try
+                {
+                    await _permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
+                    {
+                        SessionId = clientSessionId,
+                        ServiceId = "game-session",
+                        NewState = "in_game"
+                    }, cancellationToken);
+                    _logger.LogDebug("Set game-session:in_game state for session {SessionId}", clientSessionId);
+                }
+                catch (Exception ex)
+                {
+                    // Log but don't fail - the join succeeded, state is secondary
+                    _logger.LogWarning(ex, "Failed to set game-session:in_game state for session {SessionId}", clientSessionId);
+                }
+            }
+            else if (_permissionsClient == null)
+            {
+                _logger.LogDebug("Permissions client not available, game-session:in_game state not set");
+            }
+
+            // Build response
             var response = new JoinGameSessionResponse
             {
                 Success = true,
@@ -309,12 +411,96 @@ public class GameSessionService : IGameSessionService
                 }
             };
 
+            // Join voice room if voice is enabled and voice endpoint provided
+            if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null)
+            {
+                try
+                {
+                    // Get the client's WebSocket session ID from the X-Bannou-Session-Id header
+                    // This header is set by Connect service when routing WebSocket requests
+                    // Using the actual session ID allows VoiceService to set permissions that the client
+                    // will receive via capability updates (they must match activeConnections)
+                    var voiceSessionId = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Session-Id"].FirstOrDefault();
+                    if (string.IsNullOrEmpty(voiceSessionId))
+                    {
+                        _logger.LogWarning("X-Bannou-Session-Id header missing - voice join requires WebSocket session context");
+                        // Fall back to generating a session ID for HTTP-only requests (e.g., direct API calls for testing)
+                        voiceSessionId = Guid.NewGuid().ToString();
+                    }
+
+                    _logger.LogDebug("Player {AccountId} joining voice room {VoiceRoomId} with voice session {VoiceSessionId}",
+                        accountId, model.VoiceRoomId, voiceSessionId);
+
+                    // Convert VoiceSipEndpoint to Voice service SipEndpoint
+                    var sipEndpoint = new SipEndpoint
+                    {
+                        SdpOffer = body.VoiceEndpoint?.SdpOffer ?? string.Empty,
+                        IceCandidates = body.VoiceEndpoint?.IceCandidates?.ToList() ?? new List<string>()
+                    };
+
+                    var voiceResponse = await _voiceClient.JoinVoiceRoomAsync(new JoinVoiceRoomRequest
+                    {
+                        RoomId = model.VoiceRoomId.Value,
+                        SessionId = voiceSessionId,
+                        DisplayName = player.DisplayName,
+                        SipEndpoint = sipEndpoint
+                    }, cancellationToken);
+
+                    if (voiceResponse.Success)
+                    {
+                        // Event-only pattern: Only return minimal voice metadata
+                        // Peers are delivered via VoicePeerJoinedEvent to avoid race conditions
+                        response.Voice = new VoiceConnectionInfo
+                        {
+                            VoiceEnabled = true,
+                            RoomId = voiceResponse.RoomId,
+                            Tier = MapVoiceTierToConnectionInfoTier(voiceResponse.Tier),
+                            Codec = MapVoiceCodecToConnectionInfoCodec(voiceResponse.Codec),
+                            StunServers = voiceResponse.StunServers?.ToList() ?? new List<string>()
+                        };
+
+                        // Store the voice session ID in the player for cleanup on leave
+                        player.VoiceSessionId = voiceSessionId;
+
+                        // Save updated session with VoiceSessionId so leave can properly clean up
+                        await _daprClient.SaveStateAsync(
+                            STATE_STORE,
+                            SESSION_KEY_PREFIX + sessionId,
+                            model,
+                            cancellationToken: cancellationToken);
+
+                        _logger.LogInformation("Player {AccountId} joined voice room {VoiceRoomId}",
+                            accountId, model.VoiceRoomId);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Failed to join voice room {VoiceRoomId} for player {AccountId}",
+                            model.VoiceRoomId, accountId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Voice join failure is non-fatal - player can still participate in session
+                    _logger.LogWarning(ex, "Failed to join voice room for player {AccountId} in session {SessionId}",
+                        accountId, sessionId);
+                }
+            }
+
             _logger.LogInformation("Player {AccountId} joined game session {SessionId}", accountId, sessionId);
             return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to join game session {SessionId}", body.SessionId);
+            await _errorEventEmitter.TryPublishAsync(
+                "game-session",
+                "JoinGameSession",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "dapr-state",
+                endpoint: "post:/game-session/join",
+                details: new { SessionId = body.SessionId },
+                stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -374,6 +560,15 @@ public class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to perform game action in session {SessionId}", body.SessionId);
+            await _errorEventEmitter.TryPublishAsync(
+                "game-session",
+                "PerformGameAction",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "dapr-state",
+                endpoint: "post:/game-session/action",
+                details: new { SessionId = body.SessionId, ActionType = body.ActionType.ToString() },
+                stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -409,10 +604,60 @@ public class GameSessionService : IGameSessionService
                 model.Players.RemoveAt(0);
                 model.CurrentPlayers = model.Players.Count;
 
+                // Leave voice room if voice is enabled and player has a voice session
+                if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null
+                    && !string.IsNullOrEmpty(leavingPlayer.VoiceSessionId))
+                {
+                    try
+                    {
+                        _logger.LogDebug("Player {AccountId} leaving voice room {VoiceRoomId} with voice session {VoiceSessionId}",
+                            leavingPlayer.AccountId, model.VoiceRoomId, leavingPlayer.VoiceSessionId);
+
+                        await _voiceClient.LeaveVoiceRoomAsync(new LeaveVoiceRoomRequest
+                        {
+                            RoomId = model.VoiceRoomId.Value,
+                            SessionId = leavingPlayer.VoiceSessionId
+                        }, cancellationToken);
+
+                        _logger.LogInformation("Player {AccountId} left voice room {VoiceRoomId}",
+                            leavingPlayer.AccountId, model.VoiceRoomId);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Voice leave failure is non-fatal
+                        _logger.LogWarning(ex, "Failed to leave voice room for player {AccountId}",
+                            leavingPlayer.AccountId);
+                    }
+                }
+
                 // Update status
                 if (model.CurrentPlayers == 0)
                 {
                     model.Status = GameSessionResponseStatus.Finished;
+
+                    // Delete voice room when session ends
+                    if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null)
+                    {
+                        try
+                        {
+                            _logger.LogDebug("Deleting voice room {VoiceRoomId} as session {SessionId} has ended",
+                                model.VoiceRoomId, sessionId);
+
+                            await _voiceClient.DeleteVoiceRoomAsync(new DeleteVoiceRoomRequest
+                            {
+                                RoomId = model.VoiceRoomId.Value,
+                                Reason = "session_ended"
+                            }, cancellationToken);
+
+                            _logger.LogInformation("Voice room {VoiceRoomId} deleted for ended session {SessionId}",
+                                model.VoiceRoomId, sessionId);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to delete voice room {VoiceRoomId} for session {SessionId}",
+                                model.VoiceRoomId, sessionId);
+                        }
+                    }
                 }
                 else if (model.Status == GameSessionResponseStatus.Full)
                 {
@@ -433,6 +678,26 @@ public class GameSessionService : IGameSessionService
                     new { SessionId = sessionId, AccountId = leavingPlayer.AccountId.ToString() },
                     cancellationToken);
 
+                // Clear game-session:in_game state to remove leave/chat/action endpoint access (Tenet 10)
+                var clientSessionId = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Session-Id"].FirstOrDefault();
+                if (_permissionsClient != null && !string.IsNullOrEmpty(clientSessionId))
+                {
+                    try
+                    {
+                        await _permissionsClient.ClearSessionStateAsync(new ClearSessionStateRequest
+                        {
+                            SessionId = clientSessionId,
+                            ServiceId = "game-session"
+                        }, cancellationToken);
+                        _logger.LogDebug("Cleared game-session:in_game state for session {SessionId}", clientSessionId);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log but don't fail - the leave succeeded, state cleanup is secondary
+                        _logger.LogWarning(ex, "Failed to clear game-session:in_game state for session {SessionId}", clientSessionId);
+                    }
+                }
+
                 _logger.LogInformation("Player left game session {SessionId}", sessionId);
             }
 
@@ -441,6 +706,15 @@ public class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to leave game session {SessionId}", body.SessionId);
+            await _errorEventEmitter.TryPublishAsync(
+                "game-session",
+                "LeaveGameSession",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "dapr-state",
+                endpoint: "post:/game-session/leave",
+                details: new { SessionId = body.SessionId },
+                stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -509,6 +783,15 @@ public class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to kick player from session {SessionId}", body.SessionId);
+            await _errorEventEmitter.TryPublishAsync(
+                "game-session",
+                "KickPlayer",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "dapr-state",
+                endpoint: "post:/game-session/kick",
+                details: new { SessionId = body.SessionId, TargetAccountId = body.TargetAccountId },
+                stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -558,6 +841,15 @@ public class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send chat message in session {SessionId}", body.SessionId);
+            await _errorEventEmitter.TryPublishAsync(
+                "game-session",
+                "SendChatMessage",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "dapr-pubsub",
+                endpoint: "post:/game-session/chat",
+                details: new { SessionId = body.SessionId },
+                stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -602,6 +894,27 @@ public class GameSessionService : IGameSessionService
         };
     }
 
+    private static VoiceConnectionInfoTier MapVoiceTierToConnectionInfoTier(VoiceTier tier)
+    {
+        return tier switch
+        {
+            VoiceTier.P2p => VoiceConnectionInfoTier.P2p,
+            VoiceTier.Scaled => VoiceConnectionInfoTier.Scaled,
+            _ => VoiceConnectionInfoTier.P2p
+        };
+    }
+
+    private static VoiceConnectionInfoCodec MapVoiceCodecToConnectionInfoCodec(VoiceCodec codec)
+    {
+        return codec switch
+        {
+            VoiceCodec.Opus => VoiceConnectionInfoCodec.Opus,
+            VoiceCodec.G711 => VoiceConnectionInfoCodec.G711,
+            VoiceCodec.G722 => VoiceConnectionInfoCodec.G722,
+            _ => VoiceConnectionInfoCodec.Opus
+        };
+    }
+
     #endregion
 
     #region Permission Registration
@@ -614,30 +927,6 @@ public class GameSessionService : IGameSessionService
     {
         _logger.LogInformation("Registering GameSession service permissions...");
         await GameSessionPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
-    }
-
-    #endregion
-
-    #region Error Event Publishing
-
-    /// <summary>
-    /// Publishes an error event for unexpected/internal failures.
-    /// Does NOT publish for validation errors or expected failure cases.
-    /// </summary>
-    private Task PublishErrorEventAsync(
-        string operation,
-        string errorType,
-        string message,
-        string? dependency = null,
-        object? details = null)
-    {
-        return _errorEventEmitter.TryPublishAsync(
-            serviceId: "game-session",
-            operation: operation,
-            errorType: errorType,
-            message: message,
-            dependency: dependency,
-            details: details);
     }
 
     #endregion
@@ -660,4 +949,14 @@ internal class GameSessionModel
     public List<GamePlayer> Players { get; set; } = new();
     public DateTimeOffset CreatedAt { get; set; }
     public object? GameSettings { get; set; }
+
+    /// <summary>
+    /// Whether voice communication is enabled for this session.
+    /// </summary>
+    public bool VoiceEnabled { get; set; }
+
+    /// <summary>
+    /// The voice room ID if voice is enabled.
+    /// </summary>
+    public Guid? VoiceRoomId { get; set; }
 }

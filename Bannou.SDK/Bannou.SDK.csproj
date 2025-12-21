@@ -38,6 +38,7 @@
       <Compile Include="../bannou-service/Generated/CommonClientEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Clients/RealmClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/AccountsClient.cs" />
+      <Compile Include="../bannou-service/Generated/Clients/VoiceClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/SubscriptionsClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/GameSessionClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/ConnectClient.cs" />
@@ -67,6 +68,7 @@
       <Compile Include="../bannou-service/Generated/Models/RealmModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/ConnectModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/GameSessionModels.cs" />
+      <Compile Include="../bannou-service/Generated/Models/VoiceModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/SpeciesModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/RelationshipLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/CharacterLifecycleEvents.cs" />
@@ -76,6 +78,8 @@
       <Compile Include="../bannou-service/Generated/Events/SpeciesLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/RealmLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/CommonEventsModels.cs" />
+      <Compile Include="../lib-game-session/Generated/GameSessionClientEventsModels.cs" />
+      <Compile Include="../lib-voice/Generated/VoiceClientEventsModels.cs" />
     </ItemGroup>
   </Target>
 
