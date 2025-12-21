@@ -623,8 +623,8 @@ public class VoiceService : IVoiceService
 
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
         var sessionIds = participants
-            .Where(p => p.SessionId != newPeerSessionId && !string.IsNullOrEmpty(p.SessionId))
-            .Select(p => p.SessionId!)
+            .Where(p => !string.IsNullOrEmpty(p.SessionId) && p.SessionId != newPeerSessionId)
+            .Select(p => p.SessionId ?? string.Empty)
             .ToList();
 
         if (sessionIds.Count == 0)
@@ -700,7 +700,7 @@ public class VoiceService : IVoiceService
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
         var sessionIds = participants
             .Where(p => !string.IsNullOrEmpty(p.SessionId))
-            .Select(p => p.SessionId!)
+            .Select(p => p.SessionId ?? string.Empty)
             .ToList();
 
         if (sessionIds.Count == 0)
@@ -741,8 +741,8 @@ public class VoiceService : IVoiceService
 
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
         var sessionIds = participants
-            .Where(p => p.SessionId != updatedPeerSessionId && !string.IsNullOrEmpty(p.SessionId))
-            .Select(p => p.SessionId!)
+            .Where(p => !string.IsNullOrEmpty(p.SessionId) && p.SessionId != updatedPeerSessionId)
+            .Select(p => p.SessionId ?? string.Empty)
             .ToList();
 
         if (sessionIds.Count == 0)
@@ -787,7 +787,7 @@ public class VoiceService : IVoiceService
 
         var sessionIds = participants
             .Where(p => !string.IsNullOrEmpty(p.SessionId))
-            .Select(p => p.SessionId!)
+            .Select(p => p.SessionId ?? string.Empty)
             .ToList();
 
         if (sessionIds.Count == 0)
@@ -843,8 +843,11 @@ public class VoiceService : IVoiceService
         var publishedCount = 0;
         foreach (var participant in participantsWithSessions)
         {
+            // SessionId is known non-null from the Where filter above
+            var sessionId = participant.SessionId ?? throw new InvalidOperationException("SessionId was null after filtering");
+
             // Generate unique SIP credentials for this participant
-            var internalCredentials = _scaledTierCoordinator.GenerateSipCredentials(participant.SessionId!, roomId);
+            var internalCredentials = _scaledTierCoordinator.GenerateSipCredentials(sessionId, roomId);
 
             // Map internal credentials to client event model
             var clientCredentials = new ClientSipCredentials
@@ -868,7 +871,7 @@ public class VoiceService : IVoiceService
                 Migration_deadline_ms = _configuration.TierUpgradeMigrationDeadlineMs
             };
 
-            var success = await _clientEventPublisher.PublishToSessionAsync(participant.SessionId!, tierUpgradeEvent, cancellationToken);
+            var success = await _clientEventPublisher.PublishToSessionAsync(sessionId, tierUpgradeEvent, cancellationToken);
             if (success)
             {
                 publishedCount++;

@@ -117,6 +117,15 @@ public class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to list game sessions");
+            await _errorEventEmitter.TryPublishAsync(
+                "game-session",
+                "ListGameSessions",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "dapr-state",
+                endpoint: "post:/game-session/list",
+                details: null,
+                stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -214,6 +223,15 @@ public class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create game session");
+            await _errorEventEmitter.TryPublishAsync(
+                "game-session",
+                "CreateGameSession",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "dapr-state",
+                endpoint: "post:/game-session/create",
+                details: null,
+                stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -242,6 +260,15 @@ public class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get game session {SessionId}", body.SessionId);
+            await _errorEventEmitter.TryPublishAsync(
+                "game-session",
+                "GetGameSession",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "dapr-state",
+                endpoint: "post:/game-session/get",
+                details: new { SessionId = body.SessionId },
+                stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -465,6 +492,15 @@ public class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to join game session {SessionId}", body.SessionId);
+            await _errorEventEmitter.TryPublishAsync(
+                "game-session",
+                "JoinGameSession",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "dapr-state",
+                endpoint: "post:/game-session/join",
+                details: new { SessionId = body.SessionId },
+                stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -524,6 +560,15 @@ public class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to perform game action in session {SessionId}", body.SessionId);
+            await _errorEventEmitter.TryPublishAsync(
+                "game-session",
+                "PerformGameAction",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "dapr-state",
+                endpoint: "post:/game-session/action",
+                details: new { SessionId = body.SessionId, ActionType = body.ActionType.ToString() },
+                stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -661,6 +706,15 @@ public class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to leave game session {SessionId}", body.SessionId);
+            await _errorEventEmitter.TryPublishAsync(
+                "game-session",
+                "LeaveGameSession",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "dapr-state",
+                endpoint: "post:/game-session/leave",
+                details: new { SessionId = body.SessionId },
+                stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -729,6 +783,15 @@ public class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to kick player from session {SessionId}", body.SessionId);
+            await _errorEventEmitter.TryPublishAsync(
+                "game-session",
+                "KickPlayer",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "dapr-state",
+                endpoint: "post:/game-session/kick",
+                details: new { SessionId = body.SessionId, TargetAccountId = body.TargetAccountId },
+                stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -778,6 +841,15 @@ public class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send chat message in session {SessionId}", body.SessionId);
+            await _errorEventEmitter.TryPublishAsync(
+                "game-session",
+                "SendChatMessage",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "dapr-pubsub",
+                endpoint: "post:/game-session/chat",
+                details: new { SessionId = body.SessionId },
+                stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -855,30 +927,6 @@ public class GameSessionService : IGameSessionService
     {
         _logger.LogInformation("Registering GameSession service permissions...");
         await GameSessionPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
-    }
-
-    #endregion
-
-    #region Error Event Publishing
-
-    /// <summary>
-    /// Publishes an error event for unexpected/internal failures.
-    /// Does NOT publish for validation errors or expected failure cases.
-    /// </summary>
-    private Task PublishErrorEventAsync(
-        string operation,
-        string errorType,
-        string message,
-        string? dependency = null,
-        object? details = null)
-    {
-        return _errorEventEmitter.TryPublishAsync(
-            serviceId: "game-session",
-            operation: operation,
-            errorType: errorType,
-            message: message,
-            dependency: dependency,
-            details: details);
     }
 
     #endregion
