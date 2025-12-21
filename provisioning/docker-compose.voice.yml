@@ -12,8 +12,10 @@ services:
 
   # Kamailio SIP Proxy
   # Handles SIP registration, routing, and RTPEngine integration
+  # Official CI image from GitHub Container Registry: https://github.com/kamailio/kamailio-ci
+  # kamailio-ci is the ready-to-use image (kamailio-docker is just a base/template)
   kamailio:
-    image: ghcr.io/kamailio/kamailio:latest
+    image: ghcr.io/kamailio/kamailio-ci:master-alpine
     container_name: bannou-kamailio
     network_mode: host
     volumes:
@@ -23,7 +25,8 @@ services:
       - KAMAILIO_DEBUG_LEVEL=2
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://127.0.0.1:5080/health"]
+      # Alpine doesn't have curl, use wget instead
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5080/health"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -34,6 +37,8 @@ services:
 
   # RTPEngine Media Relay (SFU)
   # Handles RTP media forwarding, NAT traversal, and kernel-mode performance
+  # Docker wrapper: MIT license (https://github.com/drachtio/docker-rtpengine)
+  # RTPEngine software: GPL v3 (https://github.com/sipwise/rtpengine)
   rtpengine:
     image: drachtio/rtpengine:latest
     container_name: bannou-rtpengine
@@ -46,8 +51,9 @@ services:
       - TABLE=0
     restart: unless-stopped
     healthcheck:
-      # RTPEngine listens on CLI port 9901 for status
-      test: ["CMD", "bash", "-c", "echo 'list totals' | nc -q1 127.0.0.1 9901 | grep -q 'Current'"]
+      # Check if rtpengine is listening on ng protocol UDP port
+      # (nc not available in this image, use ss instead)
+      test: ["CMD", "bash", "-c", "ss -uln | grep -q ':22222'"]
       interval: 30s
       timeout: 5s
       retries: 3

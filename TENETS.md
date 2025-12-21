@@ -1,6 +1,6 @@
 # Bannou Service Development Tenets
 
-> **Version**: 1.7
+> **Version**: 1.8
 > **Last Updated**: 2025-12-20
 > **Scope**: All Bannou microservices and related infrastructure
 
@@ -1188,6 +1188,8 @@ When a test fails, report:
 | Missing x-permissions | 10 | Add to schema |
 | HTTP fallback in tests | 11 | Remove fallback, fix root cause |
 | Changing test to pass with buggy impl | 12 | Keep test, fix implementation |
+| GPL library in NuGet package | 17 | Use MIT/BSD alternative or infrastructure container |
+| Missing XML documentation on public API | 18 | Add `<summary>`, `<param>`, `<returns>` |
 | Composite string FK in API schema | 13 | Use separate ID + Type columns |
 | Direct FK constraints for polymorphic | 13 | Use application-level validation |
 | GET/path params on WebSocket API endpoint | 14 | Use POST-only pattern (GET endpoints go through NGINX, not WebSocket) |
@@ -1577,6 +1579,249 @@ Do NOT create client events for service-to-service events that clients never see
 - `account.deleted` - Only consumed by AuthService
 - `session.invalidated` - Only consumed by ConnectService
 - `service.registered` - Internal infrastructure events
+
+---
+
+## Tenet 17: Licensing Requirements (MANDATORY)
+
+**Rule**: All dependencies MUST use permissive licenses (MIT, BSD, Apache 2.0). Copyleft licenses (GPL, LGPL, AGPL) are forbidden for linked code but acceptable for infrastructure containers.
+
+### Core Principle
+
+We use only licenses that do not impose:
+- **Copyleft obligations** (requiring derivative works to use the same license)
+- **Forced attribution** beyond reasonable notices
+- **Share-alike requirements** (requiring source disclosure)
+
+### Acceptable Licenses
+
+| License | Status | Notes |
+|---------|--------|-------|
+| MIT | ✅ Preferred | No restrictions beyond copyright notice |
+| BSD-2-Clause, BSD-3-Clause | ✅ Approved | Minimal attribution requirements |
+| Apache 2.0 | ✅ Approved | Patent grant included |
+| ISC | ✅ Approved | Functionally equivalent to MIT |
+| Unlicense, CC0 | ✅ Approved | Public domain dedication |
+
+### Forbidden Licenses (for linked code)
+
+| License | Status | Reason |
+|---------|--------|--------|
+| GPL v2/v3 | ❌ Forbidden | Copyleft - forces open-sourcing derivative works |
+| LGPL | ❌ Forbidden | Weak copyleft - still has linking obligations |
+| AGPL | ❌ Forbidden | Network copyleft - triggers on network use |
+| Creative Commons BY-SA | ❌ Forbidden | Share-alike requirement |
+| Any "viral" license | ❌ Forbidden | Contaminates proprietary code |
+
+### Infrastructure Container Exception
+
+GPL/LGPL software is acceptable when run as **separate infrastructure containers** that we communicate with via network protocols, provided:
+
+1. **No Linking**: We never link GPL code into our binaries
+2. **No Distribution**: We never distribute the GPL software to customers
+3. **Network Separation**: Communication is via network protocols (HTTP, UDP, TCP) not function calls
+4. **No Modification**: We use unmodified upstream images
+
+**Legal Basis**: Network communication with GPL software does not create derivative works. This is established GPL interpretation - the software runs as a separate process, and network APIs (pipes, sockets, HTTP) do not trigger copyleft.
+
+**Current Infrastructure Containers**:
+- RTPEngine (GPLv3) - UDP ng protocol for media control
+- Kamailio (GPLv2+) - HTTP JSONRPC for SIP routing
+
+### Docker Compose References Are NOT Distribution
+
+Referencing a GPL-licensed image in docker-compose.yml is NOT distributing the software:
+
+```yaml
+# This is a REFERENCE, not distribution
+services:
+  kamailio:
+    image: ghcr.io/kamailio/kamailio-ci:latest  # Points to their registry
+```
+
+When someone clones our repo and runs `docker compose pull`:
+- The image downloads from **Kamailio's registry** (they distribute it)
+- We distributed a **YAML file containing a URL** (not the software)
+- GPL compliance is **their responsibility**, not ours
+
+This is legally equivalent to documentation saying "you also need to install Kamailio."
+
+### Version Pinning for License Stability
+
+When a package changes license in newer versions, pin to the last permissive version:
+
+```xml
+<!-- SIPSorcery v8.0.14: Last version under pure BSD-3-Clause (pre-May 2025 license change) -->
+<PackageReference Include="SIPSorcery" Version="8.0.14" />
+```
+
+**Requirements**:
+- Document the reason for pinning in XML comment
+- Include the version number and license in the comment
+- Review pinned packages periodically for security updates
+
+### Verification Process
+
+Before adding any dependency:
+
+1. **Check license** on NuGet, npm, or GitHub
+2. **Verify license file** in the repository (not just metadata)
+3. **Check for license changes** in recent versions
+4. **Document** the license in package reference comment if non-obvious
+5. **If uncertain**, ask before adding
+
+### Build Configuration Requirements
+
+Some libraries have license-conditional features:
+
+```bash
+# FFmpeg: LGPL by default, but GPL codecs must be disabled
+./configure --enable-gpl=no --disable-libx264 --disable-libx265
+
+# Use BSD-licensed alternatives:
+# - libvpx (VP8/VP9) instead of x264
+# - openh264 (Cisco BSD) for H.264
+```
+
+---
+
+## Tenet 18: XML Documentation Standards (REQUIRED)
+
+**Rule**: All public classes, interfaces, methods, and properties MUST have XML documentation comments.
+
+### Required Documentation
+
+**Minimum Requirements**:
+- `<summary>` on all public types and members
+- `<param>` for all method parameters
+- `<returns>` for methods with return values
+- `<exception>` for explicitly thrown exceptions
+
+### Class/Interface Documentation
+
+```csharp
+/// <summary>
+/// Coordinates RTMP streaming for voice rooms by managing FFmpeg processes.
+/// Each room with streaming enabled gets a dedicated FFmpeg subprocess.
+/// </summary>
+/// <remarks>
+/// This service implements the RTMP streaming extension described in
+/// docs/UPCOMING_PROPOSED_-_VOICE_STREAMING.md
+/// </remarks>
+public interface IStreamingCoordinator
+{
+    // ...
+}
+```
+
+### Method Documentation
+
+```csharp
+/// <summary>
+/// Validates a JWT token and returns the associated session information.
+/// </summary>
+/// <param name="token">The JWT token to validate. Must not be null or empty.</param>
+/// <param name="ct">Cancellation token for the operation.</param>
+/// <returns>
+/// A tuple containing the status code and session response.
+/// Returns (OK, session) if valid, (Unauthorized, null) if invalid.
+/// </returns>
+/// <exception cref="ArgumentNullException">Thrown when token is null.</exception>
+public async Task<(StatusCodes, SessionResponse?)> ValidateTokenAsync(
+    string token,
+    CancellationToken ct = default);
+```
+
+### Property Documentation
+
+```csharp
+/// <summary>
+/// Gets or sets the maximum concurrent RTMP streams per node.
+/// Environment variable: BANNOU_MAXCONCURRENTSTREAMS
+/// </summary>
+/// <value>Defaults to 10 streams.</value>
+public int MaxConcurrentStreams { get; set; } = 10;
+```
+
+### Configuration Properties
+
+Configuration properties MUST document their environment variable:
+
+```csharp
+/// <summary>
+/// JWT signing secret for token generation and validation.
+/// Environment variable: AUTH_JWT_SECRET
+/// </summary>
+/// <remarks>
+/// Must be at least 32 characters for HS256 algorithm.
+/// Change this value in production deployments.
+/// </remarks>
+public string JwtSecret { get; set; } = "default-dev-secret";
+```
+
+### When to Use `<remarks>`
+
+Use `<remarks>` for:
+- Implementation details not essential to understanding the API
+- References to related documentation or design documents
+- Performance considerations or caveats
+- Historical context or migration notes
+
+### When to Use `<inheritdoc/>`
+
+Use `<inheritdoc/>` when implementing an interface where the base documentation is sufficient:
+
+```csharp
+public class TokenService : ITokenService
+{
+    /// <inheritdoc/>
+    public async Task<string> GenerateTokenAsync(Guid accountId, CancellationToken ct)
+    {
+        // Implementation...
+    }
+}
+```
+
+**Do NOT use `<inheritdoc/>`** when the implementation has important differences from the interface contract.
+
+### Forbidden Patterns
+
+```csharp
+// BAD: Empty or trivial documentation
+/// <summary>
+/// Gets the account.
+/// </summary>
+public async Task<Account> GetAccountAsync(Guid id);  // NO! Doesn't explain behavior
+
+// BAD: Repeating the method name
+/// <summary>
+/// CreateAccountAsync
+/// </summary>
+public async Task CreateAccountAsync(...);  // NO! Not helpful
+
+// BAD: Missing parameter documentation
+/// <summary>
+/// Validates user credentials and creates a session.
+/// </summary>
+public async Task<Session> LoginAsync(string email, string password);  // NO! Params undocumented
+```
+
+### Documentation for Generated Code
+
+Generated files in `*/Generated/` directories do not require manual documentation - they inherit documentation from schemas via NSwag.
+
+### Build Enforcement
+
+XML documentation warnings are enabled project-wide:
+
+```xml
+<PropertyGroup>
+  <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  <NoWarn>$(NoWarn);CS1591</NoWarn>  <!-- Only suppress in test projects -->
+</PropertyGroup>
+```
+
+Production projects SHOULD treat missing documentation as warnings (enable CS1591).
 
 ---
 

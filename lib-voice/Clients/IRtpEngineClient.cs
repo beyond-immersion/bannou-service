@@ -95,17 +95,17 @@ public abstract class RtpEngineBaseResponse
     /// <summary>
     /// Result status: "ok" for success, "error" for failure.
     /// </summary>
-    public string Result { get; init; } = string.Empty;
+    public string Result { get; set; } = string.Empty;
 
     /// <summary>
     /// Error reason if Result is "error".
     /// </summary>
-    public string? ErrorReason { get; init; }
+    public string? ErrorReason { get; set; }
 
     /// <summary>
     /// Warning message if any.
     /// </summary>
-    public string? Warning { get; init; }
+    public string? Warning { get; set; }
 
     /// <summary>
     /// Returns true if the operation was successful.
@@ -121,7 +121,7 @@ public class RtpEngineOfferResponse : RtpEngineBaseResponse
     /// <summary>
     /// Modified SDP with RTPEngine media addresses.
     /// </summary>
-    public string Sdp { get; init; } = string.Empty;
+    public string Sdp { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -132,7 +132,7 @@ public class RtpEngineAnswerResponse : RtpEngineBaseResponse
     /// <summary>
     /// Modified SDP with RTPEngine media addresses.
     /// </summary>
-    public string Sdp { get; init; } = string.Empty;
+    public string Sdp { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -143,17 +143,17 @@ public class RtpEngineDeleteResponse : RtpEngineBaseResponse
     /// <summary>
     /// Unix timestamp when the session was created.
     /// </summary>
-    public long Created { get; init; }
+    public long Created { get; set; }
 
     /// <summary>
     /// Unix timestamp of the last signal.
     /// </summary>
-    public long LastSignal { get; init; }
+    public long LastSignal { get; set; }
 
     /// <summary>
     /// Statistics totals for the deleted session.
     /// </summary>
-    public Dictionary<string, object>? Totals { get; init; }
+    public Dictionary<string, object>? Totals { get; set; }
 }
 
 /// <summary>
@@ -164,7 +164,7 @@ public class RtpEnginePublishResponse : RtpEngineBaseResponse
     /// <summary>
     /// RTPEngine-generated recvonly SDP for the publisher.
     /// </summary>
-    public string Sdp { get; init; } = string.Empty;
+    public string Sdp { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -175,7 +175,7 @@ public class RtpEngineSubscribeResponse : RtpEngineBaseResponse
     /// <summary>
     /// Sendonly SDP for receiving published streams.
     /// </summary>
-    public string Sdp { get; init; } = string.Empty;
+    public string Sdp { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -186,7 +186,7 @@ public class RtpEngineQueryResponse : RtpEngineBaseResponse
     /// <summary>
     /// Stream information for the queried call.
     /// </summary>
-    public Dictionary<string, object>? Streams { get; init; }
+    public Dictionary<string, object>? Streams { get; set; }
 
     /// <summary>
     /// Total number of active streams.

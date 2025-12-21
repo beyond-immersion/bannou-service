@@ -80,19 +80,18 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        Logger?.LogInformation("Configuring $SERVICE_PASCAL service dependencies");
+        Logger?.LogDebug("Configuring service dependencies");
 
-        // Register the service implementation (existing pattern from [DaprService] attribute)
-        services.AddScoped<I${SERVICE_PASCAL}Service, ${SERVICE_PASCAL}Service>();
-        services.AddScoped<${SERVICE_PASCAL}Service>();
+        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // No need to register I${SERVICE_PASCAL}Service and ${SERVICE_PASCAL}Service here
 
-        // Register generated configuration class
-        services.AddScoped<${SERVICE_PASCAL}ServiceConfiguration>();
+        // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
+        // No need to register ${SERVICE_PASCAL}ServiceConfiguration here
 
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
-        Logger?.LogInformation("$SERVICE_PASCAL service dependencies configured");
+        Logger?.LogDebug("Service dependencies configured");
     }
 
     /// <summary>

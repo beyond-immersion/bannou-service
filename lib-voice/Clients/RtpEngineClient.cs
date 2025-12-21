@@ -2,15 +2,13 @@ using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace BeyondImmersion.BannouService.Voice.Clients;
 
 /// <summary>
 /// UDP client for RTPEngine ng control protocol.
 /// Thread-safe implementation suitable for multi-instance deployments (Tenet 4).
-/// Uses cookie-prefixed JSON messages as per ng protocol specification.
+/// Uses cookie-prefixed bencode messages as per ng protocol specification.
 /// </summary>
 public class RtpEngineClient : IRtpEngineClient
 {
@@ -21,12 +19,6 @@ public class RtpEngineClient : IRtpEngineClient
     private readonly object _sendLock = new();
     private long _cookieCounter;
     private bool _disposed;
-
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.KebabCaseLower,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-    };
 
     /// <summary>
     /// Initializes a new instance of the RtpEngineClient.
@@ -92,7 +84,7 @@ public class RtpEngineClient : IRtpEngineClient
         }
 
         var response = await SendCommandAsync(command, cancellationToken);
-        return ParseResponse<RtpEngineOfferResponse>(response);
+        return ParseBencodeResponse<RtpEngineOfferResponse>(response);
     }
 
     /// <inheritdoc />
@@ -113,7 +105,7 @@ public class RtpEngineClient : IRtpEngineClient
         };
 
         var response = await SendCommandAsync(command, cancellationToken);
-        return ParseResponse<RtpEngineAnswerResponse>(response);
+        return ParseBencodeResponse<RtpEngineAnswerResponse>(response);
     }
 
     /// <inheritdoc />
@@ -130,7 +122,7 @@ public class RtpEngineClient : IRtpEngineClient
         };
 
         var response = await SendCommandAsync(command, cancellationToken);
-        return ParseResponse<RtpEngineDeleteResponse>(response);
+        return ParseBencodeResponse<RtpEngineDeleteResponse>(response);
     }
 
     /// <inheritdoc />
@@ -149,7 +141,7 @@ public class RtpEngineClient : IRtpEngineClient
         };
 
         var response = await SendCommandAsync(command, cancellationToken);
-        return ParseResponse<RtpEnginePublishResponse>(response);
+        return ParseBencodeResponse<RtpEnginePublishResponse>(response);
     }
 
     /// <inheritdoc />
@@ -168,7 +160,7 @@ public class RtpEngineClient : IRtpEngineClient
         };
 
         var response = await SendCommandAsync(command, cancellationToken);
-        return ParseResponse<RtpEngineSubscribeResponse>(response);
+        return ParseBencodeResponse<RtpEngineSubscribeResponse>(response);
     }
 
     /// <inheritdoc />
@@ -183,7 +175,7 @@ public class RtpEngineClient : IRtpEngineClient
         };
 
         var response = await SendCommandAsync(command, cancellationToken);
-        return ParseResponse<RtpEngineQueryResponse>(response);
+        return ParseBencodeResponse<RtpEngineQueryResponse>(response);
     }
 
     /// <inheritdoc />
@@ -197,6 +189,9 @@ public class RtpEngineClient : IRtpEngineClient
             };
 
             var response = await SendCommandAsync(command, cancellationToken);
+
+            // Parse bencode response for "pong" result
+            // Response format: d6:result4:ponge
             return response.Contains("pong", StringComparison.OrdinalIgnoreCase);
         }
         catch (Exception ex)
@@ -215,14 +210,14 @@ public class RtpEngineClient : IRtpEngineClient
         // Generate unique cookie for this request
         var cookie = $"{Interlocked.Increment(ref _cookieCounter)}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
 
-        // Serialize command to JSON
-        var jsonCommand = JsonSerializer.Serialize(command, JsonOptions);
+        // Serialize command to bencode format
+        var bencodeCommand = EncodeBencode(command);
 
-        // Build message: "cookie json-data"
-        var message = $"{cookie} {jsonCommand}";
+        // Build message: "cookie bencode-data"
+        var message = $"{cookie} {bencodeCommand}";
         var data = Encoding.UTF8.GetBytes(message);
 
-        _logger.LogDebug("RTPEngine command: {Cookie} {Command}", cookie, jsonCommand);
+        _logger.LogDebug("RTPEngine command: {Cookie} {Command}", cookie, bencodeCommand);
 
         // UDP send is not thread-safe, use lock
         lock (_sendLock)
@@ -262,20 +257,237 @@ public class RtpEngineClient : IRtpEngineClient
         }
     }
 
-    private T ParseResponse<T>(string json) where T : RtpEngineBaseResponse, new()
+    /// <summary>
+    /// Encode a dictionary to bencode format.
+    /// Bencode format: d{key1}{value1}{key2}{value2}...e
+    /// Keys must be sorted alphabetically.
+    /// </summary>
+    private static string EncodeBencode(Dictionary<string, object> dict)
+    {
+        var sb = new StringBuilder();
+        sb.Append('d');
+
+        // Keys must be sorted in bencode dictionaries
+        foreach (var key in dict.Keys.OrderBy(k => k, StringComparer.Ordinal))
+        {
+            var value = dict[key];
+            sb.Append(EncodeString(key));
+            sb.Append(EncodeValue(value));
+        }
+
+        sb.Append('e');
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Encode a value to bencode format.
+    /// </summary>
+    private static string EncodeValue(object value)
+    {
+        return value switch
+        {
+            string s => EncodeString(s),
+            int i => $"i{i}e",
+            long l => $"i{l}e",
+            bool b => $"i{(b ? 1 : 0)}e",
+            string[] arr => EncodeList(arr),
+            IEnumerable<string> enumerable => EncodeList(enumerable.ToArray()),
+            Dictionary<string, object> dict => EncodeBencode(dict),
+            _ => EncodeString(value?.ToString() ?? string.Empty)
+        };
+    }
+
+    /// <summary>
+    /// Encode a string to bencode format: length:content
+    /// </summary>
+    private static string EncodeString(string s)
+    {
+        var bytes = Encoding.UTF8.GetBytes(s);
+        return $"{bytes.Length}:{s}";
+    }
+
+    /// <summary>
+    /// Encode a list to bencode format: l{item1}{item2}...e
+    /// </summary>
+    private static string EncodeList(string[] items)
+    {
+        var sb = new StringBuilder();
+        sb.Append('l');
+        foreach (var item in items)
+        {
+            sb.Append(EncodeString(item));
+        }
+        sb.Append('e');
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Parse bencode response to extract key-value pairs.
+    /// Simple parser for RTPEngine responses.
+    /// </summary>
+    private static Dictionary<string, string> DecodeBencode(string bencode)
+    {
+        var result = new Dictionary<string, string>();
+
+        if (string.IsNullOrEmpty(bencode) || bencode[0] != 'd')
+        {
+            return result;
+        }
+
+        var index = 1; // Skip 'd'
+        while (index < bencode.Length && bencode[index] != 'e')
+        {
+            // Parse key (always a string)
+            var (key, keyEndIndex) = ParseBencodeString(bencode, index);
+            if (key == null) break;
+            index = keyEndIndex;
+
+            // Parse value
+            var (value, valueEndIndex) = ParseBencodeValue(bencode, index);
+            if (value != null)
+            {
+                result[key] = value;
+            }
+            index = valueEndIndex;
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Parse a bencode string at the given index.
+    /// Returns (value, nextIndex) or (null, index) on failure.
+    /// </summary>
+    private static (string? Value, int NextIndex) ParseBencodeString(string bencode, int index)
+    {
+        if (index >= bencode.Length) return (null, index);
+
+        // Find the colon
+        var colonIndex = bencode.IndexOf(':', index);
+        if (colonIndex < 0) return (null, index);
+
+        // Parse length
+        if (!int.TryParse(bencode.AsSpan(index, colonIndex - index), out var length))
+        {
+            return (null, index);
+        }
+
+        // Extract string
+        var startIndex = colonIndex + 1;
+        if (startIndex + length > bencode.Length) return (null, index);
+
+        var value = bencode.Substring(startIndex, length);
+        return (value, startIndex + length);
+    }
+
+    /// <summary>
+    /// Parse a bencode value at the given index.
+    /// Returns (value, nextIndex) or (null, nextIndex) on skip/failure.
+    /// </summary>
+    private static (string? Value, int NextIndex) ParseBencodeValue(string bencode, int index)
+    {
+        if (index >= bencode.Length) return (null, index);
+
+        var c = bencode[index];
+
+        // Integer: i<number>e
+        if (c == 'i')
+        {
+            var endIndex = bencode.IndexOf('e', index + 1);
+            if (endIndex < 0) return (null, index);
+            var value = bencode.Substring(index + 1, endIndex - index - 1);
+            return (value, endIndex + 1);
+        }
+
+        // String: length:content
+        if (char.IsDigit(c))
+        {
+            return ParseBencodeString(bencode, index);
+        }
+
+        // List: l...e - skip for now (return null but advance past it)
+        if (c == 'l')
+        {
+            var depth = 1;
+            var i = index + 1;
+            while (i < bencode.Length && depth > 0)
+            {
+                if (bencode[i] == 'l' || bencode[i] == 'd') depth++;
+                else if (bencode[i] == 'e') depth--;
+                else if (char.IsDigit(bencode[i]))
+                {
+                    // Skip string in list
+                    var (_, nextIdx) = ParseBencodeString(bencode, i);
+                    i = nextIdx;
+                    continue;
+                }
+                i++;
+            }
+            return (null, i);
+        }
+
+        // Dictionary: d...e - skip for now
+        if (c == 'd')
+        {
+            var depth = 1;
+            var i = index + 1;
+            while (i < bencode.Length && depth > 0)
+            {
+                if (bencode[i] == 'l' || bencode[i] == 'd') depth++;
+                else if (bencode[i] == 'e') depth--;
+                else if (char.IsDigit(bencode[i]))
+                {
+                    // Skip string
+                    var (_, nextIdx) = ParseBencodeString(bencode, i);
+                    i = nextIdx;
+                    continue;
+                }
+                i++;
+            }
+            return (null, i);
+        }
+
+        return (null, index + 1);
+    }
+
+    private T ParseBencodeResponse<T>(string bencode) where T : RtpEngineBaseResponse, new()
     {
         try
         {
-            var response = JsonSerializer.Deserialize<T>(json, JsonOptions);
-            if (response == null)
+            var dict = DecodeBencode(bencode);
+            var response = new T();
+
+            if (dict.TryGetValue("result", out var result))
             {
-                return new T { Result = "error", ErrorReason = "Failed to parse response" };
+                response.Result = result;
             }
+
+            if (dict.TryGetValue("error-reason", out var errorReason))
+            {
+                response.ErrorReason = errorReason;
+            }
+
+            if (dict.TryGetValue("sdp", out var sdp))
+            {
+                if (response is RtpEngineOfferResponse offerResponse)
+                {
+                    offerResponse.Sdp = sdp;
+                }
+                else if (response is RtpEngineAnswerResponse answerResponse)
+                {
+                    answerResponse.Sdp = sdp;
+                }
+                else if (response is RtpEngineSubscribeResponse subscribeResponse)
+                {
+                    subscribeResponse.Sdp = sdp;
+                }
+            }
+
             return response;
         }
-        catch (JsonException ex)
+        catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to parse RTPEngine response: {Json}", json);
+            _logger.LogError(ex, "Failed to parse RTPEngine bencode response: {Bencode}", bencode);
             return new T { Result = "error", ErrorReason = ex.Message };
         }
     }

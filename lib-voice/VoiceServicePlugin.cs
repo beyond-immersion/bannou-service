@@ -27,20 +27,21 @@ public class VoiceServicePlugin : BaseBannouPlugin
     {
         Logger?.LogInformation("Configuring Voice service dependencies");
 
-        // Register the service implementation (existing pattern from [DaprService] attribute)
-        services.AddScoped<IVoiceService, VoiceService>();
-        services.AddScoped<VoiceService>();
+        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // No need to register IVoiceService and VoiceService here
 
-        // Register generated configuration class
-        services.AddScoped<VoiceServiceConfiguration>();
+        // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
+        // No need to register VoiceServiceConfiguration here
 
         // Register helper services for P2P voice coordination
-        services.AddScoped<ISipEndpointRegistry, SipEndpointRegistry>();
-        services.AddScoped<IP2PCoordinator, P2PCoordinator>();
+        // These are Singleton because they maintain local caches for multi-instance safety (Tenet 4)
+        services.AddSingleton<ISipEndpointRegistry, SipEndpointRegistry>();
+        services.AddSingleton<IP2PCoordinator, P2PCoordinator>();
         Logger?.LogDebug("Registered Voice helper services (SipEndpointRegistry, P2PCoordinator)");
 
         // Register scaled tier coordinator and clients for SFU-based conferencing
-        services.AddScoped<IScaledTierCoordinator, ScaledTierCoordinator>();
+        // Singleton for consistency with P2P services and to maintain state across requests
+        services.AddSingleton<IScaledTierCoordinator, ScaledTierCoordinator>();
 
         // Register Kamailio and RTPEngine clients with environment-driven settings
         // These are singleton because they manage long-lived connections

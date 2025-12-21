@@ -65,8 +65,19 @@ public class SipEndpointRegistry : ISipEndpointRegistry
             IsMuted = false
         };
 
-        // Get or create room participant dictionary
-        var roomParticipants = _localCache.GetOrAdd(roomId, _ => new ConcurrentDictionary<string, ParticipantRegistration>());
+        // Load existing participants from Dapr state store if not in local cache
+        // Required for multi-instance safety (Tenet 4) - another instance may have participants we don't have locally
+        if (!_localCache.TryGetValue(roomId, out var roomParticipants))
+        {
+            // Try to load from Dapr state store
+            roomParticipants = await LoadRoomParticipantsAsync(roomId, cancellationToken);
+            if (roomParticipants == null)
+            {
+                // Room doesn't exist yet, create new dictionary
+                roomParticipants = new ConcurrentDictionary<string, ParticipantRegistration>();
+                _localCache[roomId] = roomParticipants;
+            }
+        }
 
         // Try to add (fails if already exists)
         if (!roomParticipants.TryAdd(sessionId, participant))

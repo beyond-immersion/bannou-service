@@ -61,12 +61,14 @@ public class P2PCoordinator : IP2PCoordinator
         CancellationToken cancellationToken = default)
     {
         var maxP2P = GetP2PMaxParticipants();
-        var shouldUpgrade = currentParticipantCount >= maxP2P;
+        // Upgrade when EXCEEDING capacity (>), not when AT capacity (>=)
+        // P2P with max=2: 2 participants is fine, 3 participants needs upgrade
+        var shouldUpgrade = currentParticipantCount > maxP2P;
 
         if (shouldUpgrade)
         {
             _logger.LogInformation(
-                "Room {RoomId} reached P2P threshold ({Count}/{Max}), should upgrade to scaled tier",
+                "Room {RoomId} exceeded P2P threshold ({Count}/{Max}), should upgrade to scaled tier",
                 roomId, currentParticipantCount, maxP2P);
         }
 
@@ -79,23 +81,16 @@ public class P2PCoordinator : IP2PCoordinator
         int currentParticipantCount,
         CancellationToken cancellationToken = default)
     {
-        // In Phase 1, scaled tier is not enabled, so we reject if at capacity
+        // Check if room is at P2P capacity
         var maxP2P = GetP2PMaxParticipants();
-        var scaledEnabled = _configuration.ScaledTierEnabled;
-
-        if (scaledEnabled)
-        {
-            // When scaled tier is enabled, always accept (will upgrade)
-            return Task.FromResult(true);
-        }
-
-        // P2P only mode: reject if at capacity
         var canAccept = currentParticipantCount < maxP2P;
 
         if (!canAccept)
         {
-            _logger.LogWarning(
-                "Room {RoomId} at P2P capacity ({Count}/{Max}), scaled tier disabled - rejecting participant",
+            // Room is at P2P capacity - return false to trigger tier upgrade logic in VoiceService
+            // VoiceService will check if scaled tier is enabled and attempt upgrade
+            _logger.LogInformation(
+                "Room {RoomId} at P2P capacity ({Count}/{Max}), returning false to trigger upgrade check",
                 roomId, currentParticipantCount, maxP2P);
         }
 

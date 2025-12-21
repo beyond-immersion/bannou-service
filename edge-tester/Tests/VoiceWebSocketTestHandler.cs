@@ -15,11 +15,37 @@ namespace BeyondImmersion.EdgeTester.Tests;
 /// - Peer data is delivered ONLY via VoicePeerJoinedEvent (not in API responses)
 /// - Clients use /voice/peer/answer to send SDP answers after receiving peer offers
 /// - voice:ringing state is set before VoicePeerJoinedEvent is published
+///
+/// Voice Tests Requirements:
+/// - Set VOICE_TESTS_ENABLED=true to run voice tests (default: disabled)
+/// - Voice plugin must be enabled (VOICE_SERVICE_DISABLED must NOT be true)
+/// - For scaled tier tests, Kamailio + RTPEngine infrastructure is required
+/// - Use: make test-voice-scaled to run voice tests with full infrastructure
 /// </summary>
 public class VoiceWebSocketTestHandler : IServiceTestHandler
 {
+    /// <summary>
+    /// Check if voice tests are enabled via environment variable.
+    /// Voice tests are disabled by default in edge tests to avoid requiring voice infrastructure.
+    /// </summary>
+    private static bool IsVoiceTestingEnabled()
+    {
+        var voiceTestsEnabled = Environment.GetEnvironmentVariable("VOICE_TESTS_ENABLED");
+        return string.Equals(voiceTestsEnabled, "true", StringComparison.OrdinalIgnoreCase);
+    }
+
     public ServiceTest[] GetServiceTests()
     {
+        // Skip voice tests if not enabled via environment variable
+        if (!IsVoiceTestingEnabled())
+        {
+            Console.WriteLine("Voice tests SKIPPED (VOICE_TESTS_ENABLED not set to 'true')");
+            Console.WriteLine("   To run voice tests: make test-voice-scaled");
+            return Array.Empty<ServiceTest>();
+        }
+
+        Console.WriteLine("Voice tests ENABLED (VOICE_TESTS_ENABLED=true)");
+
         return new ServiceTest[]
         {
             new ServiceTest(TestVoiceRoomCreationViaGameSession, "Voice - Room via GameSession", "WebSocket",
@@ -28,6 +54,10 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
                 "Test VoicePeerJoinedEvent delivery when second client joins"),
             new ServiceTest(TestAnswerPeerEndpoint, "Voice - Answer Peer", "WebSocket",
                 "Test SDP answer flow via /voice/peer/answer endpoint"),
+            new ServiceTest(TestP2PToScaledTierUpgrade, "Voice - P2P to Scaled Upgrade", "WebSocket",
+                "Test tier upgrade when 3rd client exceeds P2PMAXPARTICIPANTS=2"),
+            new ServiceTest(TestScaledTierPersistence, "Voice - Scaled Tier Persistence", "WebSocket",
+                "Test that scaled tier persists after clients leave (never downgrades to P2P)"),
         };
     }
 
@@ -630,5 +660,507 @@ a=rtpmap:111 opus/48000/2";
                 Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
             }
         }
+    }
+
+    private void TestP2PToScaledTierUpgrade(string[] args)
+    {
+        Console.WriteLine("=== Voice P2P to Scaled Tier Upgrade Test ===");
+        Console.WriteLine("Testing tier upgrade when 3rd client exceeds P2PMAXPARTICIPANTS=2...");
+        Console.WriteLine("   NOTE: Requires BANNOU_P2PMAXPARTICIPANTS=2, BANNOU_SCALEDTIERENABLED=true, BANNOU_TIERUPGRADEENABLED=true");
+
+        try
+        {
+            var result = Task.Run(async () =>
+            {
+                // Create three test accounts
+                var auth1 = await CreateTestAccountAsync("voice_tier1");
+                var auth2 = await CreateTestAccountAsync("voice_tier2");
+                var auth3 = await CreateTestAccountAsync("voice_tier3");
+
+                if (auth1 == null || auth2 == null || auth3 == null)
+                {
+                    Console.WriteLine("   Failed to create test accounts");
+                    return false;
+                }
+
+                await using var client1 = await CreateConnectedClientAsync(auth1.Value.accessToken, auth1.Value.connectUrl);
+                await using var client2 = await CreateConnectedClientAsync(auth2.Value.accessToken, auth2.Value.connectUrl);
+                await using var client3 = await CreateConnectedClientAsync(auth3.Value.accessToken, auth3.Value.connectUrl);
+
+                if (client1 == null || client2 == null || client3 == null)
+                {
+                    Console.WriteLine("   Failed to create clients");
+                    return false;
+                }
+
+                // Client 1 creates a voice-enabled session
+                var createResult = await CreateVoiceEnabledSessionAsync(client1, $"TierUpgradeTest_{DateTime.Now.Ticks}");
+                if (createResult == null)
+                {
+                    Console.WriteLine("   Failed to create session");
+                    return false;
+                }
+
+                var sessionId = createResult.Value.sessionId;
+                Console.WriteLine($"   Created session {sessionId}");
+
+                // Set up tier upgrade event listeners on all clients
+                var tierUpgrade1Received = new TaskCompletionSource<bool>();
+                var tierUpgrade2Received = new TaskCompletionSource<bool>();
+                var tierUpgrade3Received = new TaskCompletionSource<bool>();
+                string? rtpServerUri = null;
+
+                void SetupTierUpgradeListener(BannouClient client, TaskCompletionSource<bool> tcs, string clientName)
+                {
+                    client.OnEvent("voice.tier_upgrade", (json) =>
+                    {
+                        Console.WriteLine($"   {clientName} received voice.tier_upgrade event");
+                        try
+                        {
+                            var eventData = JsonDocument.Parse(json).RootElement;
+                            if (eventData.TryGetProperty("previous_tier", out var prevTier) &&
+                                eventData.TryGetProperty("new_tier", out var newTier))
+                            {
+                                Console.WriteLine($"   {clientName} tier upgrade: {prevTier.GetString()} -> {newTier.GetString()}");
+
+                                if (eventData.TryGetProperty("rtp_server_uri", out var rtpUri))
+                                {
+                                    rtpServerUri = rtpUri.GetString();
+                                    Console.WriteLine($"   RTP server URI: {rtpServerUri}");
+                                }
+
+                                tcs.TrySetResult(true);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"   {clientName} failed to parse tier upgrade event: {ex.Message}");
+                        }
+                    });
+                }
+
+                SetupTierUpgradeListener(client1, tierUpgrade1Received, "Client 1");
+                SetupTierUpgradeListener(client2, tierUpgrade2Received, "Client 2");
+                SetupTierUpgradeListener(client3, tierUpgrade3Received, "Client 3");
+
+                // Client 1 joins (1 participant - under P2P limit)
+                Console.WriteLine("   Client 1 joining session...");
+                var join1 = (await client1.InvokeAsync<JoinGameSessionRequest, JsonElement>(
+                    "POST", "/sessions/join",
+                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+
+                if (!(join1.TryGetProperty("success", out var s1) && s1.GetBoolean()))
+                {
+                    Console.WriteLine("   Client 1 failed to join");
+                    return false;
+                }
+                Console.WriteLine($"   Client 1 joined (1/2 P2P capacity)");
+
+                // Client 2 joins (2 participants - at P2P limit)
+                Console.WriteLine("   Client 2 joining session...");
+                var join2 = (await client2.InvokeAsync<JoinGameSessionRequest, JsonElement>(
+                    "POST", "/sessions/join",
+                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+
+                if (!(join2.TryGetProperty("success", out var s2) && s2.GetBoolean()))
+                {
+                    Console.WriteLine("   Client 2 failed to join");
+                    return false;
+                }
+                Console.WriteLine($"   Client 2 joined (2/2 P2P capacity - FULL)");
+
+                // Verify no tier upgrade yet (still within P2P capacity)
+                await Task.Delay(1000);
+                if (tierUpgrade1Received.Task.IsCompleted || tierUpgrade2Received.Task.IsCompleted)
+                {
+                    Console.WriteLine("   UNEXPECTED: Tier upgrade received with only 2 clients");
+                    // This might be acceptable if P2PMAXPARTICIPANTS is set differently
+                }
+
+                // Client 3 joins (3 participants - EXCEEDS P2P limit, triggers upgrade)
+                // Client 3's join triggers the upgrade, but they join DIRECTLY into scaled mode
+                // so they don't receive a tier_upgrade event - their join response already says tier=scaled
+                Console.WriteLine("   Client 3 joining session (should trigger tier upgrade)...");
+                var join3 = (await client3.InvokeAsync<JoinGameSessionRequest, JsonElement>(
+                    "POST", "/sessions/join",
+                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+
+                if (!(join3.TryGetProperty("success", out var s3) && s3.GetBoolean()))
+                {
+                    Console.WriteLine("   Client 3 failed to join");
+                    return false;
+                }
+                Console.WriteLine($"   Client 3 joined (3 participants - EXCEEDS P2P limit)");
+
+                // Verify Client 3's join response indicates scaled tier (they joined after upgrade)
+                if (join3.TryGetProperty("voice", out var voice3) && voice3.TryGetProperty("tier", out var tier3))
+                {
+                    var tierValue = tier3.GetString();
+                    Console.WriteLine($"   Client 3 join response tier: {tierValue}");
+                    if (tierValue?.ToLowerInvariant() != "scaled")
+                    {
+                        Console.WriteLine($"   FAIL: Client 3 should have joined directly into scaled tier, got: {tierValue}");
+                        return false;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("   WARNING: Could not verify Client 3's tier from join response");
+                }
+
+                // Wait for tier upgrade events on Clients 1 & 2 only
+                // Client 3 triggered the upgrade but joins directly into scaled mode (no upgrade event needed)
+                Console.WriteLine("   Waiting for tier upgrade events on existing P2P clients (1 & 2)...");
+                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(15));
+                var existingClientUpgrades = Task.WhenAll(
+                    tierUpgrade1Received.Task,
+                    tierUpgrade2Received.Task);
+
+                var completedTask = await Task.WhenAny(existingClientUpgrades, timeoutTask);
+
+                if (completedTask == timeoutTask)
+                {
+                    var received = new List<string>();
+                    if (tierUpgrade1Received.Task.IsCompleted) received.Add("Client 1");
+                    if (tierUpgrade2Received.Task.IsCompleted) received.Add("Client 2");
+
+                    Console.WriteLine($"   Timeout waiting for tier upgrade events");
+                    Console.WriteLine($"   Received by: {(received.Count > 0 ? string.Join(", ", received) : "none")}");
+
+                    if (received.Count == 0)
+                    {
+                        Console.WriteLine("   FAIL: No tier upgrade events received by existing clients");
+                        Console.WriteLine("   This may indicate:");
+                        Console.WriteLine("     - BANNOU_SCALEDTIERENABLED=false");
+                        Console.WriteLine("     - BANNOU_TIERUPGRADEENABLED=false");
+                        Console.WriteLine("     - Kamailio/RTPEngine not available");
+                        return false;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"   PARTIAL: {received.Count}/2 existing P2P clients received tier upgrade");
+                        return false;
+                    }
+                }
+
+                // Verify Clients 1 & 2 received the upgrade event (Client 3 doesn't need it)
+                Console.WriteLine("   Clients 1 & 2 received voice.tier_upgrade event!");
+                Console.WriteLine("   Client 3 joined directly into scaled tier (no upgrade event needed)");
+                Console.WriteLine($"   Tier upgraded from P2P to Scaled");
+
+                if (!string.IsNullOrEmpty(rtpServerUri))
+                {
+                    Console.WriteLine($"   RTP Server: {rtpServerUri}");
+                }
+
+                return true;
+            }).Result;
+
+            if (result)
+            {
+                Console.WriteLine("PASSED Voice P2P to Scaled tier upgrade test");
+            }
+            else
+            {
+                Console.WriteLine("FAILED Voice P2P to Scaled tier upgrade test");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"FAILED Voice tier upgrade test with exception: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Tests that once a room is upgraded to scaled tier, it NEVER downgrades back to P2P,
+    /// even if participants leave and the count drops below the P2P threshold.
+    /// New clients joining an already-scaled room should join in scaled mode directly.
+    /// </summary>
+    private void TestScaledTierPersistence(string[] args)
+    {
+        Console.WriteLine("=== Voice Scaled Tier Persistence Test ===");
+        Console.WriteLine("Testing that scaled tier persists after clients leave (never downgrades to P2P)...");
+        Console.WriteLine("   NOTE: Requires BANNOU_P2PMAXPARTICIPANTS=2, BANNOU_SCALEDTIERENABLED=true, BANNOU_TIERUPGRADEENABLED=true");
+        Console.WriteLine();
+
+        try
+        {
+            var result = Task.Run(async () =>
+            {
+                // Create 5 test accounts (we'll use them progressively)
+                var account1 = await CreateTestAccountAsync("scaledpersist1");
+                var account2 = await CreateTestAccountAsync("scaledpersist2");
+                var account3 = await CreateTestAccountAsync("scaledpersist3");
+                var account4 = await CreateTestAccountAsync("scaledpersist4");
+                var account5 = await CreateTestAccountAsync("scaledpersist5");
+
+                if (account1 == null || account2 == null || account3 == null || account4 == null || account5 == null)
+                {
+                    Console.WriteLine("   Failed to create test accounts");
+                    return false;
+                }
+
+                await using var client1 = await CreateConnectedClientAsync(account1.Value.accessToken, account1.Value.connectUrl);
+                await using var client2 = await CreateConnectedClientAsync(account2.Value.accessToken, account2.Value.connectUrl);
+                await using var client3 = await CreateConnectedClientAsync(account3.Value.accessToken, account3.Value.connectUrl);
+                await using var client4 = await CreateConnectedClientAsync(account4.Value.accessToken, account4.Value.connectUrl);
+                await using var client5 = await CreateConnectedClientAsync(account5.Value.accessToken, account5.Value.connectUrl);
+
+                if (client1 == null || client2 == null || client3 == null || client4 == null || client5 == null)
+                {
+                    Console.WriteLine("   Failed to create connected clients");
+                    return false;
+                }
+
+                Console.WriteLine("   All 5 clients connected");
+
+                // Phase 1: Create session and trigger upgrade with 3 clients
+                Console.WriteLine();
+                Console.WriteLine("   === Phase 1: Trigger upgrade with 3 clients ===");
+
+                var createResult = await CreateVoiceEnabledSessionAsync(client1, $"ScaledPersistTest_{DateTime.Now.Ticks}");
+                if (createResult == null)
+                {
+                    Console.WriteLine("   Failed to create voice-enabled session");
+                    return false;
+                }
+                var sessionId = createResult.Value.sessionId;
+                Console.WriteLine($"   Created session: {sessionId}");
+
+                // Client 1 joins the session with voice (1/2 P2P capacity)
+                var join1 = (await client1.InvokeAsync<JoinGameSessionRequest, JsonElement>(
+                    "POST", "/sessions/join",
+                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+
+                if (!(join1.TryGetProperty("success", out var s1) && s1.GetBoolean()))
+                {
+                    Console.WriteLine("   Client 1 failed to join");
+                    return false;
+                }
+                Console.WriteLine($"   Client 1 joined (1/{GetP2PMaxParticipants()} P2P capacity)");
+
+                // Client 2 joins (2/2 - at capacity)
+                var join2 = (await client2.InvokeAsync<JoinGameSessionRequest, JsonElement>(
+                    "POST", "/sessions/join",
+                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+
+                if (!(join2.TryGetProperty("success", out var s2) && s2.GetBoolean()))
+                {
+                    Console.WriteLine("   Client 2 failed to join");
+                    return false;
+                }
+                Console.WriteLine($"   Client 2 joined (2/{GetP2PMaxParticipants()} P2P capacity - FULL)");
+
+                // Set up tier upgrade listeners
+                var tierUpgrade1 = new TaskCompletionSource<bool>();
+                var tierUpgrade2 = new TaskCompletionSource<bool>();
+                client1.OnEvent("voice.tier_upgrade", (_) => tierUpgrade1.TrySetResult(true));
+                client2.OnEvent("voice.tier_upgrade", (_) => tierUpgrade2.TrySetResult(true));
+
+                // Client 3 joins (triggers upgrade)
+                var join3 = (await client3.InvokeAsync<JoinGameSessionRequest, JsonElement>(
+                    "POST", "/sessions/join",
+                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+
+                if (!(join3.TryGetProperty("success", out var s3) && s3.GetBoolean()))
+                {
+                    Console.WriteLine("   Client 3 failed to join");
+                    return false;
+                }
+
+                // Verify Client 3 joined directly into scaled tier
+                var client3Tier = "unknown";
+                if (join3.TryGetProperty("voice", out var voice3) && voice3.TryGetProperty("tier", out var tier3))
+                {
+                    client3Tier = tier3.GetString() ?? "unknown";
+                }
+                Console.WriteLine($"   Client 3 joined with tier: {client3Tier}");
+
+                if (client3Tier.ToLowerInvariant() != "scaled")
+                {
+                    Console.WriteLine($"   FAIL: Client 3 should have joined scaled tier, got: {client3Tier}");
+                    return false;
+                }
+
+                // Wait for upgrade events on clients 1 & 2
+                var upgradeTimeout = Task.Delay(TimeSpan.FromSeconds(10));
+                var upgradeComplete = Task.WhenAll(tierUpgrade1.Task, tierUpgrade2.Task);
+                if (await Task.WhenAny(upgradeComplete, upgradeTimeout) == upgradeTimeout)
+                {
+                    Console.WriteLine("   FAIL: Timeout waiting for tier upgrade events");
+                    return false;
+                }
+                Console.WriteLine("   Clients 1 & 2 received tier upgrade events");
+                Console.WriteLine("   Room is now SCALED with 3 participants");
+
+                // Phase 2: Client 3 leaves (2 remaining - at P2P threshold, but room stays scaled)
+                Console.WriteLine();
+                Console.WriteLine("   === Phase 2: Client 3 leaves (2 remaining, should stay scaled) ===");
+
+                var leave3 = await client3.InvokeAsync<LeaveGameSessionRequest, JsonElement>(
+                    "POST", "/sessions/leave",
+                    new LeaveGameSessionRequest { SessionId = sessionId },
+                    timeout: TimeSpan.FromSeconds(10));
+
+                Console.WriteLine("   Client 3 left the session");
+                Console.WriteLine($"   Room now has 2 participants (at P2P threshold, but MUST stay scaled)");
+
+                // Phase 3: Client 4 joins - should join directly into SCALED tier
+                Console.WriteLine();
+                Console.WriteLine("   === Phase 3: Client 4 joins (should join SCALED, not P2P) ===");
+
+                var join4 = (await client4.InvokeAsync<JoinGameSessionRequest, JsonElement>(
+                    "POST", "/sessions/join",
+                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+
+                if (!(join4.TryGetProperty("success", out var s4) && s4.GetBoolean()))
+                {
+                    Console.WriteLine("   Client 4 failed to join");
+                    return false;
+                }
+
+                var client4Tier = "unknown";
+                if (join4.TryGetProperty("voice", out var voice4) && voice4.TryGetProperty("tier", out var tier4))
+                {
+                    client4Tier = tier4.GetString() ?? "unknown";
+                }
+                Console.WriteLine($"   Client 4 joined with tier: {client4Tier}");
+
+                if (client4Tier.ToLowerInvariant() != "scaled")
+                {
+                    Console.WriteLine($"   FAIL: Client 4 should have joined SCALED tier (room already upgraded), got: {client4Tier}");
+                    Console.WriteLine("   This indicates the room incorrectly downgraded to P2P when participants left!");
+                    return false;
+                }
+                Console.WriteLine("   PASS: Client 4 correctly joined scaled tier");
+
+                // Phase 4: Client 1 leaves (2 remaining), then Client 5 joins
+                Console.WriteLine();
+                Console.WriteLine("   === Phase 4: Client 1 leaves, Client 5 joins (should still be scaled) ===");
+
+                var leave1 = await client1.InvokeAsync<LeaveGameSessionRequest, JsonElement>(
+                    "POST", "/sessions/leave",
+                    new LeaveGameSessionRequest { SessionId = sessionId },
+                    timeout: TimeSpan.FromSeconds(10));
+                Console.WriteLine("   Client 1 left the session");
+
+                var join5 = (await client5.InvokeAsync<JoinGameSessionRequest, JsonElement>(
+                    "POST", "/sessions/join",
+                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+
+                if (!(join5.TryGetProperty("success", out var s5) && s5.GetBoolean()))
+                {
+                    Console.WriteLine("   Client 5 failed to join");
+                    return false;
+                }
+
+                var client5Tier = "unknown";
+                if (join5.TryGetProperty("voice", out var voice5) && voice5.TryGetProperty("tier", out var tier5))
+                {
+                    client5Tier = tier5.GetString() ?? "unknown";
+                }
+                Console.WriteLine($"   Client 5 joined with tier: {client5Tier}");
+
+                if (client5Tier.ToLowerInvariant() != "scaled")
+                {
+                    Console.WriteLine($"   FAIL: Client 5 should have joined SCALED tier, got: {client5Tier}");
+                    return false;
+                }
+                Console.WriteLine("   PASS: Client 5 correctly joined scaled tier");
+
+                // Phase 5: Reduce to 1 participant, verify new join is still scaled
+                Console.WriteLine();
+                Console.WriteLine("   === Phase 5: Reduce to 1 participant, verify new join is still scaled ===");
+
+                // Leave clients 4 and 5, leaving only client 2
+                await client4.InvokeAsync<LeaveGameSessionRequest, JsonElement>(
+                    "POST", "/sessions/leave",
+                    new LeaveGameSessionRequest { SessionId = sessionId },
+                    timeout: TimeSpan.FromSeconds(10));
+                Console.WriteLine("   Client 4 left");
+
+                await client5.InvokeAsync<LeaveGameSessionRequest, JsonElement>(
+                    "POST", "/sessions/leave",
+                    new LeaveGameSessionRequest { SessionId = sessionId },
+                    timeout: TimeSpan.FromSeconds(10));
+                Console.WriteLine("   Client 5 left");
+                Console.WriteLine("   Only Client 2 remains (1 participant - well below P2P threshold)");
+
+                // Client 3 rejoins (reusing the account)
+                var rejoin3 = (await client3.InvokeAsync<JoinGameSessionRequest, JsonElement>(
+                    "POST", "/sessions/join",
+                    new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
+                    timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+
+                if (!(rejoin3.TryGetProperty("success", out var rs3) && rs3.GetBoolean()))
+                {
+                    Console.WriteLine("   Client 3 failed to rejoin");
+                    return false;
+                }
+
+                var client3RejoinTier = "unknown";
+                if (rejoin3.TryGetProperty("voice", out var rvoice3) && rvoice3.TryGetProperty("tier", out var rtier3))
+                {
+                    client3RejoinTier = rtier3.GetString() ?? "unknown";
+                }
+                Console.WriteLine($"   Client 3 rejoined with tier: {client3RejoinTier}");
+
+                if (client3RejoinTier.ToLowerInvariant() != "scaled")
+                {
+                    Console.WriteLine($"   FAIL: Client 3 rejoin should be SCALED tier, got: {client3RejoinTier}");
+                    Console.WriteLine("   The room incorrectly downgraded when only 1 participant remained!");
+                    return false;
+                }
+                Console.WriteLine("   PASS: Client 3 correctly rejoined scaled tier (room never downgraded)");
+
+                Console.WriteLine();
+                Console.WriteLine("   === All phases passed! ===");
+                Console.WriteLine("   Verified: Once upgraded, room tier persists regardless of participant count");
+                return true;
+            }).Result;
+
+            if (result)
+            {
+                Console.WriteLine("PASSED Voice scaled tier persistence test");
+            }
+            else
+            {
+                Console.WriteLine("FAILED Voice scaled tier persistence test");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"FAILED Voice scaled tier persistence test with exception: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the P2P max participants from configuration or default.
+    /// </summary>
+    private static int GetP2PMaxParticipants()
+    {
+        // Try to get from environment, default to 2 for test expectations
+        var envValue = Environment.GetEnvironmentVariable("BANNOU_P2PMAXPARTICIPANTS");
+        if (int.TryParse(envValue, out var value))
+        {
+            return value;
+        }
+        return 2; // Default for tests
     }
 }

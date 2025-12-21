@@ -754,61 +754,111 @@ down-compose-voice: ## Stop services + voice infrastructure
 		-f provisioning/docker-compose.voice.yml \
 		--project-name bannou down --remove-orphans
 
-# Voice Scaled Tier integration testing
+# Voice Scaled Tier integration testing (via Edge/WebSocket tester)
 # Tests voice service with Kamailio + RTPEngine infrastructure
-# Stack: base + services + voice + test + test.http (voice plugin only)
-test-voice-scaled: ## Voice scaled tier tests with Kamailio + RTPEngine
+# Stack: base + services + ingress + test + edge + voice (integrated)
+# Uses VOICE_TESTS_ENABLED=true so edge-tester runs voice test suite
+test-voice-scaled: test-pre-cleanup ## Voice scaled tier tests with Kamailio + RTPEngine
 	@echo "🎙️ Running Voice Scaled Tier integration tests..."
-	@echo "📋 Starting voice infrastructure (Kamailio + RTPEngine)..."
-	@if [ ! -f .env ]; then touch .env; fi
-	@docker compose --env-file ./.env \
-		-f provisioning/docker-compose.voice.yml \
-		--project-name bannou-voice up -d
-	@echo "⏳ Waiting for voice infrastructure to be healthy..."
-	@sleep 5
-	@echo "📋 Building test containers..."
-	@SERVICE_DOMAIN=test-voice PLUGIN=voice docker compose -p bannou-test-voice \
+	@echo "📋 Building test containers with voice infrastructure..."
+	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-voice \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.ingress.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
-		-f "./provisioning/docker-compose.test.http.yml" \
+		-f "./provisioning/docker-compose.test.edge.yml" \
+		-f "./provisioning/docker-compose.test.voice.yml" \
 		build --no-cache
-	@SERVICE_DOMAIN=test-voice PLUGIN=voice docker compose -p bannou-test-voice \
+	@echo "📋 Starting voice test environment..."
+	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-voice \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.ingress.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
-		-f "./provisioning/docker-compose.test.http.yml" \
+		-f "./provisioning/docker-compose.test.edge.yml" \
+		-f "./provisioning/docker-compose.test.voice.yml" \
 		up -d
-	@( SERVICE_DOMAIN=test-voice PLUGIN=voice docker compose -p bannou-test-voice \
+	@( DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-voice \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.ingress.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
-		-f "./provisioning/docker-compose.test.http.yml" \
-		logs -f bannou-http-tester & ); \
-	SERVICE_DOMAIN=test-voice PLUGIN=voice docker compose -p bannou-test-voice \
+		-f "./provisioning/docker-compose.test.edge.yml" \
+		-f "./provisioning/docker-compose.test.voice.yml" \
+		logs -f bannou-edge-tester & ); \
+	DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-voice \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.ingress.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
-		-f "./provisioning/docker-compose.test.http.yml" \
-		wait bannou-http-tester; \
+		-f "./provisioning/docker-compose.test.edge.yml" \
+		-f "./provisioning/docker-compose.test.voice.yml" \
+		wait bannou-edge-tester; \
 	TEST_EXIT_CODE=$$?; \
 	echo "🧹 Cleaning up test containers..."; \
 	docker compose -p bannou-test-voice \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.ingress.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
-		-f "./provisioning/docker-compose.test.http.yml" \
+		-f "./provisioning/docker-compose.test.edge.yml" \
+		-f "./provisioning/docker-compose.test.voice.yml" \
 		down --remove-orphans -v; \
-	echo "🧹 Stopping voice infrastructure..."; \
-	docker compose \
-		-f provisioning/docker-compose.voice.yml \
-		--project-name bannou-voice down --remove-orphans; \
 	if [ $$TEST_EXIT_CODE -eq 0 ]; then \
 		echo "✅ Voice Scaled Tier tests completed successfully"; \
 	else \
 		echo "❌ Voice Scaled Tier tests failed with exit code $$TEST_EXIT_CODE"; \
 	fi; \
 	exit $$TEST_EXIT_CODE
+
+# Voice testing with container persistence (dev mode)
+test-voice-dev: test-logs-dir ## Voice tests: keep containers running, save logs
+	@echo "🎙️ Starting Voice tests (dev mode - containers stay running)..."
+	@echo "📁 Logs will be saved to $(TEST_LOG_DIR)/"
+	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-voice \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.ingress.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.edge.yml" \
+		-f "./provisioning/docker-compose.test.voice.yml" \
+		build --no-cache
+	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-voice \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.ingress.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.edge.yml" \
+		-f "./provisioning/docker-compose.test.voice.yml" \
+		up -d
+	@echo "⏳ Waiting for test to start..."
+	@sleep 5
+	@$(MAKE) test-voice-logs
+	@echo "✅ Dev test containers running. Use 'make test-voice-down' to clean up."
+
+# Collect Voice tester logs
+test-voice-logs: test-logs-dir ## Collect Voice test logs
+	@echo "📋 Collecting Voice tester logs..."
+	@docker logs bannou-test-voice-bannou-edge-tester-1 2>&1 | tee $(TEST_LOG_DIR)/voice-tester.log
+	@echo "📋 Collecting bannou service logs..."
+	@docker logs bannou-test-voice-bannou-1 2>&1 | tee $(TEST_LOG_DIR)/voice-bannou.log
+	@echo ""
+	@echo "✅ Logs saved to:"
+	@echo "   $(TEST_LOG_DIR)/voice-tester.log"
+	@echo "   $(TEST_LOG_DIR)/voice-bannou.log"
+
+# Cleanup Voice dev containers
+test-voice-down: ## Stop Voice test containers
+	@echo "🛑 Stopping Voice test containers..."
+	docker compose -p bannou-test-voice \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.ingress.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.edge.yml" \
+		-f "./provisioning/docker-compose.test.voice.yml" \
+		down --remove-orphans -v
+	@echo "✅ Voice test containers stopped"
 
 # =============================================================================
 # GIT TAGGING

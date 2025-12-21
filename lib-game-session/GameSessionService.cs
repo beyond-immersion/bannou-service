@@ -435,6 +435,13 @@ public class GameSessionService : IGameSessionService
                         // Store the voice session ID in the player for cleanup on leave
                         player.VoiceSessionId = voiceSessionId;
 
+                        // Save updated session with VoiceSessionId so leave can properly clean up
+                        await _daprClient.SaveStateAsync(
+                            STATE_STORE,
+                            SESSION_KEY_PREFIX + sessionId,
+                            model,
+                            cancellationToken: cancellationToken);
+
                         _logger.LogInformation("Player {AccountId} joined voice room {VoiceRoomId}",
                             accountId, model.VoiceRoomId);
                     }
