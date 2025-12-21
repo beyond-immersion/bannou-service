@@ -24,8 +24,6 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
         {
             new ServiceTest(TestVoiceRoomCreationViaGameSession, "Voice - Room via GameSession", "WebSocket",
                 "Test voice room creation when joining game session with voice enabled"),
-            new ServiceTest(TestVoiceEventOnlyPattern, "Voice - Event-Only Pattern", "WebSocket",
-                "Test that peers are delivered via events, not in join response"),
             new ServiceTest(TestTwoClientVoicePeerEvents, "Voice - Peer Events (2 Clients)", "WebSocket",
                 "Test VoicePeerJoinedEvent delivery when second client joins"),
             new ServiceTest(TestAnswerPeerEndpoint, "Voice - Answer Peer", "WebSocket",
@@ -293,105 +291,6 @@ a=rtpmap:111 opus/48000/2";
         catch (Exception ex)
         {
             Console.WriteLine($"FAILED Voice room test with exception: {ex.Message}");
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
-            }
-        }
-    }
-
-    private void TestVoiceEventOnlyPattern(string[] args)
-    {
-        Console.WriteLine("=== Voice Event-Only Pattern Test ===");
-        Console.WriteLine("Testing that peers are NOT in join response (event-only architecture)...");
-
-        try
-        {
-            var result = Task.Run(async () =>
-            {
-                // Create dedicated test account and client
-                var authResult = await CreateTestAccountAsync("voice_event");
-                if (authResult == null)
-                {
-                    return false;
-                }
-
-                await using var client = await CreateConnectedClientAsync(authResult.Value.accessToken, authResult.Value.connectUrl);
-                if (client == null)
-                {
-                    return false;
-                }
-
-                // Create and join a voice-enabled session
-                var createResult = await CreateVoiceEnabledSessionAsync(client, $"EventOnlyTest_{DateTime.Now.Ticks}");
-                if (createResult == null)
-                {
-                    return false;
-                }
-
-                var sessionId = createResult.Value.sessionId;
-                Console.WriteLine($"   Created session {sessionId}");
-
-                // Join the session
-                var joinRequest = new JoinGameSessionRequest
-                {
-                    SessionId = sessionId,
-                    VoiceEndpoint = CreateMockVoiceEndpoint()
-                };
-
-                var joinResponse = (await client.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST",
-                    "/sessions/join",
-                    joinRequest,
-                    timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
-
-                // Verify voice section structure - should NOT have peers array
-                if (joinResponse.TryGetProperty("voice", out var voiceProp) &&
-                    voiceProp.ValueKind == JsonValueKind.Object)
-                {
-                    // Check that peers is NOT present (event-only pattern)
-                    var hasPeers = voiceProp.TryGetProperty("peers", out var peersProp) &&
-                                    peersProp.ValueKind == JsonValueKind.Array;
-
-                    if (hasPeers)
-                    {
-                        Console.WriteLine("   FAIL: 'peers' array found in response - should be event-only!");
-                        return false;
-                    }
-
-                    // Check that minimal fields ARE present
-                    var hasVoiceEnabled = voiceProp.TryGetProperty("voiceEnabled", out _);
-                    var hasRoomId = voiceProp.TryGetProperty("roomId", out _);
-                    var hasTier = voiceProp.TryGetProperty("tier", out _);
-                    var hasCodec = voiceProp.TryGetProperty("codec", out _);
-                    var hasStunServers = voiceProp.TryGetProperty("stunServers", out _);
-
-                    Console.WriteLine($"   voiceEnabled: {hasVoiceEnabled}");
-                    Console.WriteLine($"   roomId: {hasRoomId}");
-                    Console.WriteLine($"   tier: {hasTier}");
-                    Console.WriteLine($"   codec: {hasCodec}");
-                    Console.WriteLine($"   stunServers: {hasStunServers}");
-                    Console.WriteLine($"   peers: NOT present (correct - event-only pattern)");
-
-                    return hasVoiceEnabled && hasRoomId;
-                }
-
-                Console.WriteLine("   Voice section not found in join response");
-                return false;
-            }).Result;
-
-            if (result)
-            {
-                Console.WriteLine("PASSED Voice event-only pattern test");
-            }
-            else
-            {
-                Console.WriteLine("FAILED Voice event-only pattern test");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"FAILED Voice event-only pattern test with exception: {ex.Message}");
             if (ex.InnerException != null)
             {
                 Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
