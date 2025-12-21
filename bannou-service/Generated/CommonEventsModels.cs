@@ -691,6 +691,84 @@ public partial class SessionDisconnectedEvent
 
 }
 
+/// <summary>
+/// Published by Connect service when a WebSocket session is restored after reconnection.
+/// <br/>Services should subscribe to this event to re-publish any session shortcuts they
+/// <br/>previously granted, as shortcuts are cleared on disconnect and do not persist.
+/// <br/>
+/// <br/>**Session Shortcuts Re-publication:**
+/// <br/>Services that publish session shortcuts should listen for this event and re-evaluate
+/// <br/>whether the session should receive shortcuts again (e.g., check subscription status,
+/// <br/>game state, etc.) and publish new ShortcutPublishedEvents as appropriate.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SessionReconnectedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this reconnection event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the WebSocket reconnection completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Session ID that reconnected
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Account ID owning the reconnected session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// User roles preserved from previous session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roles")]
+    public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
+
+    /// <summary>
+    /// Authorization states preserved from previous session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorizations")]
+    public System.Collections.Generic.ICollection<string>? Authorizations { get; set; } = default!;
+
+    /// <summary>
+    /// When the previous connection was lost
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("previousDisconnectAt")]
+    public System.DateTimeOffset? PreviousDisconnectAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional context from the reconnection (client info, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reconnectionContext")]
+    public object? ReconnectionContext { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ServiceEndpointMethod
 {

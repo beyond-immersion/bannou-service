@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BeyondImmersion.BannouService.Connect.Protocol;
 
@@ -52,6 +54,23 @@ public class ConnectionState
     /// </summary>
     public ConnectionFlags Flags { get; set; }
 
+    #region Session Shortcuts
+
+    /// <summary>
+    /// Session shortcuts indexed by route GUID.
+    /// Uses ConcurrentDictionary for thread-safe access without explicit locks.
+    /// Shortcuts are session-scoped and not persisted to Redis.
+    /// </summary>
+    public ConcurrentDictionary<Guid, SessionShortcutData> SessionShortcuts { get; }
+
+    /// <summary>
+    /// Index for bulk revocation by source service.
+    /// Maps source service name to set of route GUIDs from that service.
+    /// </summary>
+    public ConcurrentDictionary<string, HashSet<Guid>> ShortcutsByService { get; }
+
+    #endregion
+
     #region Reconnection Support
 
     /// <summary>
@@ -96,6 +115,8 @@ public class ConnectionState
         GuidMappings = new Dictionary<Guid, string>();
         ChannelSequences = new Dictionary<ushort, uint>();
         PendingMessages = new Dictionary<ulong, PendingMessageInfo>();
+        SessionShortcuts = new ConcurrentDictionary<Guid, SessionShortcutData>();
+        ShortcutsByService = new ConcurrentDictionary<string, HashSet<Guid>>();
         Flags = ConnectionFlags.None;
     }
 
@@ -265,6 +286,120 @@ public class ConnectionState
     }
 
     #endregion
+
+    #region Session Shortcut Management
+
+    /// <summary>
+    /// Adds or updates a session shortcut.
+    /// Thread-safe via ConcurrentDictionary.
+    /// </summary>
+    /// <param name="shortcut">Shortcut data to add or update</param>
+    public void AddOrUpdateShortcut(SessionShortcutData shortcut)
+    {
+        if (shortcut == null)
+            throw new ArgumentNullException(nameof(shortcut));
+
+        // Add to main shortcuts dictionary
+        SessionShortcuts[shortcut.RouteGuid] = shortcut;
+
+        // Add to service index for bulk revocation
+        var guids = ShortcutsByService.GetOrAdd(shortcut.SourceService, _ => new HashSet<Guid>());
+        lock (guids)
+        {
+            guids.Add(shortcut.RouteGuid);
+        }
+    }
+
+    /// <summary>
+    /// Removes a specific shortcut by route GUID.
+    /// </summary>
+    /// <param name="routeGuid">Route GUID of the shortcut to remove</param>
+    /// <returns>True if the shortcut was found and removed</returns>
+    public bool RemoveShortcut(Guid routeGuid)
+    {
+        if (!SessionShortcuts.TryRemove(routeGuid, out var shortcut))
+            return false;
+
+        // Remove from service index
+        if (ShortcutsByService.TryGetValue(shortcut.SourceService, out var guids))
+        {
+            lock (guids)
+            {
+                guids.Remove(routeGuid);
+            }
+
+            // Clean up empty service entries
+            if (guids.Count == 0)
+            {
+                ShortcutsByService.TryRemove(shortcut.SourceService, out _);
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Removes all shortcuts from a specific service.
+    /// </summary>
+    /// <param name="sourceService">Source service to revoke shortcuts from</param>
+    /// <returns>Number of shortcuts removed</returns>
+    public int RemoveShortcutsByService(string sourceService)
+    {
+        if (string.IsNullOrEmpty(sourceService))
+            return 0;
+
+        if (!ShortcutsByService.TryRemove(sourceService, out var guids))
+            return 0;
+
+        var count = 0;
+        lock (guids)
+        {
+            foreach (var guid in guids)
+            {
+                if (SessionShortcuts.TryRemove(guid, out _))
+                    count++;
+            }
+        }
+
+        return count;
+    }
+
+    /// <summary>
+    /// Tries to get a shortcut by route GUID.
+    /// </summary>
+    /// <param name="routeGuid">Route GUID to look up</param>
+    /// <param name="shortcut">The shortcut data if found</param>
+    /// <returns>True if the shortcut was found</returns>
+    public bool TryGetShortcut(Guid routeGuid, out SessionShortcutData? shortcut)
+    {
+        return SessionShortcuts.TryGetValue(routeGuid, out shortcut);
+    }
+
+    /// <summary>
+    /// Clears all shortcuts. Called on disconnect.
+    /// Shortcuts are not persisted and must be re-published on reconnection.
+    /// </summary>
+    public void ClearAllShortcuts()
+    {
+        SessionShortcuts.Clear();
+        ShortcutsByService.Clear();
+    }
+
+    /// <summary>
+    /// Gets all shortcuts as a list (snapshot for capability manifest).
+    /// </summary>
+    /// <returns>List of all current shortcuts</returns>
+    public List<SessionShortcutData> GetAllShortcuts()
+    {
+        return SessionShortcuts.Values.ToList();
+    }
+
+    /// <summary>
+    /// Gets the count of active shortcuts.
+    /// </summary>
+    public int ShortcutCount => SessionShortcuts.Count;
+
+    #endregion
 }
 
 /// <summary>
@@ -311,4 +446,81 @@ public enum ConnectionFlags : byte
 
     /// <summary>End-to-end encryption is enabled.</summary>
     EncryptionEnabled = 0x10
+}
+
+/// <summary>
+/// Internal representation of a session shortcut.
+/// Contains the pre-bound payload and metadata for a shortcut capability.
+/// </summary>
+public class SessionShortcutData
+{
+    /// <summary>
+    /// Client-salted GUID for invoking this shortcut.
+    /// Generated using GuidGenerator.GenerateSessionShortcutGuid() with version 7 bits.
+    /// </summary>
+    public Guid RouteGuid { get; set; }
+
+    /// <summary>
+    /// The actual service capability GUID this shortcut invokes.
+    /// Must be a valid capability in the client's current capability manifest.
+    /// </summary>
+    public Guid TargetGuid { get; set; }
+
+    /// <summary>
+    /// Pre-serialized JSON payload passed unchanged to the target service.
+    /// Connect treats this as opaque bytes - no deserialization or modification.
+    /// </summary>
+    public byte[] BoundPayload { get; set; } = Array.Empty<byte>();
+
+    /// <summary>
+    /// The service that created this shortcut.
+    /// Used for bulk revocation and audit logging.
+    /// </summary>
+    public string SourceService { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Machine-readable shortcut identifier.
+    /// </summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Human-readable description of what this shortcut does.
+    /// </summary>
+    public string? Description { get; set; }
+
+    /// <summary>
+    /// The service this shortcut invokes (for client display).
+    /// </summary>
+    public string? TargetService { get; set; }
+
+    /// <summary>
+    /// The endpoint this shortcut invokes (for client display).
+    /// </summary>
+    public string? TargetEndpoint { get; set; }
+
+    /// <summary>
+    /// User-friendly name for display in client UIs.
+    /// </summary>
+    public string? DisplayName { get; set; }
+
+    /// <summary>
+    /// Categorization tags for client-side organization.
+    /// </summary>
+    public string[]? Tags { get; set; }
+
+    /// <summary>
+    /// When this shortcut was created.
+    /// </summary>
+    public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>
+    /// Optional TTL for this shortcut.
+    /// If set, the shortcut is automatically removed after this time.
+    /// </summary>
+    public DateTimeOffset? ExpiresAt { get; set; }
+
+    /// <summary>
+    /// Checks if this shortcut has expired.
+    /// </summary>
+    public bool IsExpired => ExpiresAt.HasValue && ExpiresAt.Value < DateTimeOffset.UtcNow;
 }

@@ -317,6 +317,15 @@ components:
           items:
             $ref: '#/components/schemas/ClientCapability'
           description: Available API capabilities for this client
+        shortcuts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientShortcut'
+          description: |
+            Pre-bound API calls available for this session.
+            Shortcuts are invoked like normal capabilities but Connect injects
+            a pre-bound payload instead of using the client's payload.
+          nullable: true
         version:
           type: integer
           description: Capability manifest version (increments on changes)
@@ -361,6 +370,57 @@ components:
           format: uint16
           description: Preferred WebSocket channel for this capability
           default: 0
+
+    ClientShortcut:
+      type: object
+      description: |
+        Session shortcut information sent to clients in the capability manifest.
+        Shortcuts appear as invocable capabilities but Connect injects a pre-bound
+        payload when the shortcut GUID is used, replacing any client-provided payload.
+      required:
+        - guid
+        - targetService
+        - targetEndpoint
+        - name
+      properties:
+        guid:
+          type: string
+          format: uuid
+          description: |
+            GUID to use in WebSocket message header when invoking this shortcut.
+            Uses UUID version 7 bits to distinguish from regular service GUIDs (version 5).
+        targetService:
+          type: string
+          description: The service this shortcut invokes (for client display purposes).
+        targetEndpoint:
+          type: string
+          description: The endpoint this shortcut invokes (for client display purposes).
+        name:
+          type: string
+          description: Machine-readable shortcut identifier (e.g., "get_my_stats", "join_game").
+        description:
+          type: string
+          description: Human-readable description of what this shortcut does.
+          nullable: true
+        displayName:
+          type: string
+          description: User-friendly name for display in client UIs.
+          nullable: true
+        sourceService:
+          type: string
+          description: The service that created this shortcut.
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+          description: Categorization tags for client-side organization.
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          description: When this shortcut expires (if time-limited).
+          nullable: true
 
     InternalProxyRequest:
       type: object
@@ -513,6 +573,9 @@ components:
         - 52  # Service_Unauthorized
         - 53  # Service_Conflict
         - 60  # Service_InternalServerError
+        - 70  # ShortcutExpired
+        - 71  # ShortcutTargetNotFound
+        - 72  # ShortcutRevoked
       x-enumNames:
         - "OK"
         - "RequestError"
@@ -528,9 +591,17 @@ components:
         - "Service_Unauthorized"
         - "Service_Conflict"
         - "Service_InternalServerError"
+        - "ShortcutExpired"
+        - "ShortcutTargetNotFound"
+        - "ShortcutRevoked"
       description: |
         Response codes used in the binary protocol for success/error indication.
         Provides fine-grained error reporting for different failure scenarios.
+
+        **Shortcut-specific error codes (70-79):**
+        - 70 (ShortcutExpired): Session shortcut has expired (TTL exceeded)
+        - 71 (ShortcutTargetNotFound): Shortcut's target capability no longer available
+        - 72 (ShortcutRevoked): Session shortcut was explicitly revoked
       example: 0
 
     ServiceRequestMessage:

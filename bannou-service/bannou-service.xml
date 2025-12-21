@@ -1841,6 +1841,59 @@
             How long the session was connected (for metrics)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SessionReconnectedEvent">
+            <summary>
+            Published by Connect service when a WebSocket session is restored after reconnection.
+            <br/>Services should subscribe to this event to re-publish any session shortcuts they
+            <br/>previously granted, as shortcuts are cleared on disconnect and do not persist.
+            <br/>
+            <br/>**Session Shortcuts Re-publication:**
+            <br/>Services that publish session shortcuts should listen for this event and re-evaluate
+            <br/>whether the session should receive shortcuts again (e.g., check subscription status,
+            <br/>game state, etc.) and publish new ShortcutPublishedEvents as appropriate.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionReconnectedEvent.EventId">
+            <summary>
+            Unique identifier for this reconnection event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionReconnectedEvent.Timestamp">
+            <summary>
+            When the WebSocket reconnection completed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionReconnectedEvent.SessionId">
+            <summary>
+            Session ID that reconnected
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionReconnectedEvent.AccountId">
+            <summary>
+            Account ID owning the reconnected session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionReconnectedEvent.Roles">
+            <summary>
+            User roles preserved from previous session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionReconnectedEvent.Authorizations">
+            <summary>
+            Authorization states preserved from previous session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionReconnectedEvent.PreviousDisconnectAt">
+            <summary>
+            When the previous connection was lost
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionReconnectedEvent.ReconnectionContext">
+            <summary>
+            Optional context from the reconnection (client info, etc.)
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.ExtensionMethods">
             <summary>
             Extension methods for various types used throughout the Bannou service platform.
@@ -3802,6 +3855,14 @@
             Available API capabilities for this client
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientCapabilitiesResponse.Shortcuts">
+            <summary>
+            Pre-bound API calls available for this session.
+            <br/>Shortcuts are invoked like normal capabilities but Connect injects
+            <br/>a pre-bound payload instead of using the client's payload.
+            <br/>
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Connect.ClientCapabilitiesResponse.Version">
             <summary>
             Capability manifest version (increments on changes)
@@ -3845,6 +3906,61 @@
         <member name="P:BeyondImmersion.BannouService.Connect.ClientCapability.Channel">
             <summary>
             Preferred WebSocket channel for this capability
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Connect.ClientShortcut">
+            <summary>
+            Session shortcut information sent to clients in the capability manifest.
+            <br/>Shortcuts appear as invocable capabilities but Connect injects a pre-bound
+            <br/>payload when the shortcut GUID is used, replacing any client-provided payload.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientShortcut.Guid">
+            <summary>
+            GUID to use in WebSocket message header when invoking this shortcut.
+            <br/>Uses UUID version 7 bits to distinguish from regular service GUIDs (version 5).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientShortcut.TargetService">
+            <summary>
+            The service this shortcut invokes (for client display purposes).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientShortcut.TargetEndpoint">
+            <summary>
+            The endpoint this shortcut invokes (for client display purposes).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientShortcut.Name">
+            <summary>
+            Machine-readable shortcut identifier (e.g., "get_my_stats", "join_game").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientShortcut.Description">
+            <summary>
+            Human-readable description of what this shortcut does.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientShortcut.DisplayName">
+            <summary>
+            User-friendly name for display in client UIs.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientShortcut.SourceService">
+            <summary>
+            The service that created this shortcut.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientShortcut.Tags">
+            <summary>
+            Categorization tags for client-side organization.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientShortcut.ExpiresAt">
+            <summary>
+            When this shortcut expires (if time-limited).
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.InternalProxyRequest.SessionId">
@@ -3950,6 +4066,11 @@
             <summary>
             Response codes used in the binary protocol for success/error indication.
             <br/>Provides fine-grained error reporting for different failure scenarios.
+            <br/>
+            <br/>**Shortcut-specific error codes (70-79):**
+            <br/>- 70 (ShortcutExpired): Session shortcut has expired (TTL exceeded)
+            <br/>- 71 (ShortcutTargetNotFound): Shortcut's target capability no longer available
+            <br/>- 72 (ShortcutRevoked): Session shortcut was explicitly revoked
             <br/>
             </summary>
         </member>

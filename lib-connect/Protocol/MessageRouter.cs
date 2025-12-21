@@ -12,6 +12,7 @@ public static class MessageRouter
 {
     /// <summary>
     /// Analyzes a message and determines routing information.
+    /// Checks session shortcuts FIRST, then falls back to service/client routing.
     /// </summary>
     public static MessageRouteInfo AnalyzeMessage(BinaryMessage message, ConnectionState connectionState)
     {
@@ -21,8 +22,11 @@ public static class MessageRouter
             IsValid = true
         };
 
-        // Validate message structure
-        if (message.Payload.IsEmpty && !message.Flags.HasFlag(MessageFlags.Event))
+        // Validate message structure (shortcuts are allowed to have empty payloads - we inject the bound payload)
+        // Non-shortcut, non-event messages require a payload
+        var isShortcut = connectionState.TryGetShortcut(message.ServiceGuid, out var shortcut);
+
+        if (!isShortcut && message.Payload.IsEmpty && !message.Flags.HasFlag(MessageFlags.Event))
         {
             routeInfo.IsValid = false;
             routeInfo.ErrorCode = ResponseCodes.RequestError;
@@ -30,7 +34,48 @@ public static class MessageRouter
             return routeInfo;
         }
 
-        // Determine routing target
+        // Check for session shortcut FIRST (before service GUID lookup)
+        if (isShortcut && shortcut != null)
+        {
+            // Validate shortcut hasn't expired
+            if (shortcut.IsExpired)
+            {
+                connectionState.RemoveShortcut(message.ServiceGuid);
+                routeInfo.IsValid = false;
+                routeInfo.ErrorCode = ResponseCodes.ShortcutExpired;
+                routeInfo.ErrorMessage = $"Session shortcut '{shortcut.Name}' has expired";
+                return routeInfo;
+            }
+
+            routeInfo.RouteType = RouteType.SessionShortcut;
+            routeInfo.TargetGuid = shortcut.TargetGuid;
+            routeInfo.InjectedPayload = shortcut.BoundPayload;
+            routeInfo.ShortcutName = shortcut.Name;
+
+            // Look up actual service from target GUID
+            if (connectionState.TryGetServiceName(shortcut.TargetGuid, out var targetServiceName) && targetServiceName != null)
+            {
+                routeInfo.TargetType = "service";
+                routeInfo.TargetId = targetServiceName;
+                routeInfo.ServiceName = targetServiceName;
+            }
+            else
+            {
+                // Target capability no longer valid
+                routeInfo.IsValid = false;
+                routeInfo.ErrorCode = ResponseCodes.ShortcutTargetNotFound;
+                routeInfo.ErrorMessage = $"Shortcut '{shortcut.Name}' target capability no longer available";
+                return routeInfo;
+            }
+
+            routeInfo.Priority = message.IsHighPriority ? MessagePriority.High : MessagePriority.Normal;
+            routeInfo.Channel = message.Channel;
+            routeInfo.RequiresResponse = message.ExpectsResponse;
+
+            return routeInfo;
+        }
+
+        // Determine routing target (non-shortcut path)
         if (message.IsClientRouted)
         {
             routeInfo.RouteType = RouteType.Client;
@@ -152,6 +197,25 @@ public class MessageRouteInfo
     public ushort Channel { get; set; }
     public MessagePriority Priority { get; set; }
     public bool RequiresResponse { get; set; }
+
+    #region Session Shortcut Properties
+
+    /// <summary>
+    /// For SessionShortcut routes: the actual target GUID to forward to.
+    /// </summary>
+    public Guid? TargetGuid { get; set; }
+
+    /// <summary>
+    /// For SessionShortcut routes: the pre-bound payload to inject.
+    /// </summary>
+    public byte[]? InjectedPayload { get; set; }
+
+    /// <summary>
+    /// For SessionShortcut routes: the shortcut name (for logging).
+    /// </summary>
+    public string? ShortcutName { get; set; }
+
+    #endregion
 }
 
 /// <summary>
@@ -159,8 +223,14 @@ public class MessageRouteInfo
 /// </summary>
 public enum RouteType
 {
+    /// <summary>Route to a Dapr service.</summary>
     Service,
-    Client
+
+    /// <summary>Route to another WebSocket client.</summary>
+    Client,
+
+    /// <summary>Route via session shortcut (pre-bound payload injection).</summary>
+    SessionShortcut
 }
 
 /// <summary>

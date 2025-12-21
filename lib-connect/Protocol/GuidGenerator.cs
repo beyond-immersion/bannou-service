@@ -91,6 +91,85 @@ public static class GuidGenerator
     }
 
     /// <summary>
+    /// Generates a client-salted GUID for a session shortcut.
+    /// Uses UUID version 7 bits to distinguish from service GUIDs (version 5)
+    /// and client-to-client GUIDs (version 6).
+    /// </summary>
+    /// <param name="sessionId">Unique session identifier</param>
+    /// <param name="shortcutName">Machine-readable name for this shortcut</param>
+    /// <param name="sourceService">Service that created this shortcut</param>
+    /// <param name="serverSalt">Server-generated salt for additional security</param>
+    /// <returns>Deterministic but unique GUID for this session-shortcut combination</returns>
+    public static Guid GenerateSessionShortcutGuid(
+        string sessionId,
+        string shortcutName,
+        string sourceService,
+        string serverSalt)
+    {
+        if (string.IsNullOrEmpty(sessionId))
+            throw new ArgumentException("Session ID cannot be null or empty", nameof(sessionId));
+        if (string.IsNullOrEmpty(shortcutName))
+            throw new ArgumentException("Shortcut name cannot be null or empty", nameof(shortcutName));
+        if (string.IsNullOrEmpty(sourceService))
+            throw new ArgumentException("Source service cannot be null or empty", nameof(sourceService));
+        if (string.IsNullOrEmpty(serverSalt))
+            throw new ArgumentException("Server salt cannot be null or empty", nameof(serverSalt));
+
+        // Combine inputs with separators to prevent collision attacks
+        var input = $"shortcut:{shortcutName}|session:{sessionId}|source:{sourceService}|salt:{serverSalt}";
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(input));
+
+        var guidBytes = new byte[16];
+        Array.Copy(hash, guidBytes, 16);
+
+        // Set version bits for session shortcut GUID (custom version 7)
+        guidBytes[6] = (byte)((guidBytes[6] & 0x0F) | 0x70); // Version 7
+        guidBytes[8] = (byte)((guidBytes[8] & 0x3F) | 0x80); // Variant bits
+
+        return new Guid(guidBytes);
+    }
+
+    /// <summary>
+    /// Validates that a GUID is a session shortcut GUID (version 7).
+    /// Useful for detecting shortcut GUIDs vs service GUIDs (v5) or client GUIDs (v6).
+    /// </summary>
+    /// <param name="guid">GUID to validate</param>
+    /// <returns>True if the GUID has version 7 bits set (session shortcut)</returns>
+    public static bool IsSessionShortcutGuid(Guid guid)
+    {
+        var bytes = guid.ToByteArray();
+        // Version is stored in byte 6 (high nibble) - matches where we set it during generation
+        var version = (bytes[6] >> 4) & 0x0F;
+        return version == 7;
+    }
+
+    /// <summary>
+    /// Validates that a GUID is a service GUID (version 5).
+    /// </summary>
+    /// <param name="guid">GUID to validate</param>
+    /// <returns>True if the GUID has version 5 bits set (service capability)</returns>
+    public static bool IsServiceGuid(Guid guid)
+    {
+        var bytes = guid.ToByteArray();
+        // Version is stored in byte 6 (high nibble) - matches where we set it during generation
+        var version = (bytes[6] >> 4) & 0x0F;
+        return version == 5;
+    }
+
+    /// <summary>
+    /// Validates that a GUID is a client-to-client GUID (version 6).
+    /// </summary>
+    /// <param name="guid">GUID to validate</param>
+    /// <returns>True if the GUID has version 6 bits set (client-to-client routing)</returns>
+    public static bool IsClientGuid(Guid guid)
+    {
+        var bytes = guid.ToByteArray();
+        // Version is stored in byte 6 (high nibble) - matches where we set it during generation
+        var version = (bytes[6] >> 4) & 0x0F;
+        return version == 6;
+    }
+
+    /// <summary>
     /// Generates a unique message ID for request/response correlation.
     /// Uses timestamp and entropy for uniqueness.
     /// </summary>
