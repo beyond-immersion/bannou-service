@@ -383,7 +383,8 @@ public class SessionShortcutTests
             SourceService = "game-session",
             Name = "join_game",
             TargetService = "game-session",
-            TargetEndpoint = "JoinGame",
+            TargetMethod = "POST",
+            TargetEndpoint = "/sessions/join",
             CreatedAt = DateTimeOffset.UtcNow
         };
         connectionState.AddOrUpdateShortcut(shortcut);
@@ -405,7 +406,7 @@ public class SessionShortcutTests
         Assert.True(routeInfo.IsValid);
         Assert.Equal(RouteType.SessionShortcut, routeInfo.RouteType);
         Assert.Equal(targetServiceGuid, routeInfo.TargetGuid);
-        Assert.Equal("game-session", routeInfo.ServiceName);
+        Assert.Equal("game-session:POST:/sessions/join", routeInfo.ServiceName);
         Assert.Equal("join_game", routeInfo.ShortcutName);
         Assert.NotNull(routeInfo.InjectedPayload);
         Assert.Equal(3, routeInfo.InjectedPayload!.Length);
@@ -458,28 +459,30 @@ public class SessionShortcutTests
     }
 
     /// <summary>
-    /// Tests that shortcuts with invalid target capabilities return appropriate error.
+    /// Tests that shortcuts without TargetService return ShortcutTargetNotFound error.
+    /// Shortcuts MUST have TargetService set by the publisher - no fallback guessing.
     /// </summary>
     [Fact]
-    public void AnalyzeMessage_WithInvalidTargetCapability_ShouldReturnShortcutTargetNotFoundError()
+    public void AnalyzeMessage_WithMissingTargetService_ShouldReturnShortcutTargetNotFoundError()
     {
         // Arrange
         var sessionId = "test-session";
         var connectionState = new ConnectionState(sessionId);
 
-        // Create shortcut pointing to a target that's NOT in service mappings
+        // Create shortcut WITHOUT TargetService - this should be rejected
         var orphanTargetGuid = Guid.NewGuid();
-        var shortcutRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionId, "orphan_shortcut", "missing-service", _testServerSalt);
-        var orphanShortcut = new SessionShortcutData
+        var shortcutRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(sessionId, "incomplete_shortcut", "some-service", _testServerSalt);
+        var incompleteShortcut = new SessionShortcutData
         {
             RouteGuid = shortcutRouteGuid,
-            TargetGuid = orphanTargetGuid, // This GUID is not in service mappings
+            TargetGuid = orphanTargetGuid,
             BoundPayload = new byte[] { 0x01 },
-            SourceService = "missing-service",
-            Name = "orphan_shortcut",
+            SourceService = "some-service",
+            // TargetService intentionally NOT set - this is an invalid shortcut
+            Name = "incomplete_shortcut",
             CreatedAt = DateTimeOffset.UtcNow
         };
-        connectionState.AddOrUpdateShortcut(orphanShortcut);
+        connectionState.AddOrUpdateShortcut(incompleteShortcut);
 
         var message = new BinaryMessage(
             MessageFlags.Binary,
@@ -492,10 +495,10 @@ public class SessionShortcutTests
         // Act
         var routeInfo = MessageRouter.AnalyzeMessage(message, connectionState);
 
-        // Assert
+        // Assert - shortcuts without TargetService are rejected
         Assert.False(routeInfo.IsValid);
         Assert.Equal(ResponseCodes.ShortcutTargetNotFound, routeInfo.ErrorCode);
-        Assert.Contains("target capability no longer available", routeInfo.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("missing required target_service", routeInfo.ErrorMessage, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -522,6 +525,9 @@ public class SessionShortcutTests
             TargetGuid = targetGuid,
             BoundPayload = new byte[] { 0xAB, 0xCD },
             SourceService = "test-service",
+            TargetService = "target-service", // Required for routing
+            TargetMethod = "POST", // Required for routing
+            TargetEndpoint = "/test/endpoint", // Required for routing
             Name = "priority_test",
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -564,6 +570,9 @@ public class SessionShortcutTests
             TargetGuid = targetServiceGuid,
             BoundPayload = new byte[] { 0x01 },
             SourceService = "game-session",
+            TargetService = "game-session", // Required for routing
+            TargetMethod = "POST", // Required for routing
+            TargetEndpoint = "/sessions/join", // Required for routing
             Name = "test_shortcut",
             CreatedAt = DateTimeOffset.UtcNow
         };

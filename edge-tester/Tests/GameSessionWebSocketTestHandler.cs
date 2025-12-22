@@ -17,14 +17,11 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
 {
     public ServiceTest[] GetServiceTests()
     {
+        // Note: Direct game session endpoints (create/list/join) are now shortcut-only.
+        // Users access these through session shortcuts pushed by the game-session service
+        // when they have an active subscription. Only the subscription-based test is valid.
         return new ServiceTest[]
         {
-            new ServiceTest(TestCreateGameSessionViaWebSocket, "GameSession - Create (WebSocket)", "WebSocket",
-                "Test game session creation via WebSocket binary protocol"),
-            new ServiceTest(TestListGameSessionsViaWebSocket, "GameSession - List (WebSocket)", "WebSocket",
-                "Test game session listing via WebSocket binary protocol"),
-            new ServiceTest(TestCompleteSessionLifecycleViaWebSocket, "GameSession - Full Lifecycle (WebSocket)", "WebSocket",
-                "Test complete session lifecycle via WebSocket: create -> join -> action -> leave"),
             new ServiceTest(TestSubscriptionBasedJoinViaShortcut, "GameSession - Subscription Shortcut Join (WebSocket)", "WebSocket",
                 "Test subscription-based join flow: create subscription -> connect -> receive shortcut -> invoke shortcut"),
         };
@@ -36,7 +33,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
     /// Creates a dedicated test account and returns the access token and connect URL.
     /// Each test should create its own account to ensure isolation.
     /// </summary>
-    private async Task<(string accessToken, string connectUrl)?> CreateTestAccountAsync(string testPrefix)
+    private async Task<(string accessToken, string connectUrl, string email)?> CreateTestAccountAsync(string testPrefix)
     {
         if (Program.Configuration == null)
         {
@@ -87,7 +84,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
             }
 
             Console.WriteLine($"   Created test account: {testEmail}");
-            return (accessToken, connectUrl);
+            return (accessToken, connectUrl, testEmail);
         }
         catch (Exception ex)
         {
@@ -127,340 +124,10 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
 
     #endregion
 
-    private void TestCreateGameSessionViaWebSocket(string[] args)
-    {
-        Console.WriteLine("=== GameSession Create Test (WebSocket) ===");
-        Console.WriteLine("Testing /sessions/create via dedicated BannouClient...");
-
-        try
-        {
-            var result = Task.Run(async () =>
-            {
-                // Create dedicated test account and client
-                var authResult = await CreateTestAccountAsync("gs_create");
-                if (authResult == null)
-                {
-                    return false;
-                }
-
-                await using var client = await CreateConnectedClientAsync(authResult.Value.accessToken, authResult.Value.connectUrl);
-                if (client == null)
-                {
-                    return false;
-                }
-
-                // Use generated request type to ensure proper JSON serialization
-                var createRequest = new CreateGameSessionRequest
-                {
-                    SessionName = $"WebSocketTest_{DateTime.Now.Ticks}",
-                    GameType = CreateGameSessionRequestGameType.Arcadia,
-                    MaxPlayers = 4,
-                    IsPrivate = false
-                };
-
-                try
-                {
-                    Console.WriteLine("   Invoking /sessions/create...");
-                    var response = (await client.InvokeAsync<CreateGameSessionRequest, JsonElement>(
-                        "POST",
-                        "/sessions/create",
-                        createRequest,
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
-
-                    var sessionId = response.TryGetProperty("sessionId", out var idProp) ? idProp.GetString() : null;
-                    var sessionName = response.TryGetProperty("sessionName", out var nameProp) ? nameProp.GetString() : null;
-                    var maxPlayers = response.TryGetProperty("maxPlayers", out var maxProp) ? maxProp.GetInt32() : 0;
-
-                    Console.WriteLine($"   Session ID: {sessionId}");
-                    Console.WriteLine($"   Session Name: {sessionName}");
-                    Console.WriteLine($"   Max Players: {maxPlayers}");
-
-                    return !string.IsNullOrEmpty(sessionId);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"   Invoke failed: {ex.Message}");
-                    return false;
-                }
-            }).Result;
-
-            if (result)
-            {
-                Console.WriteLine("PASSED GameSession create test via WebSocket");
-            }
-            else
-            {
-                Console.WriteLine("FAILED GameSession create test via WebSocket");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"FAILED GameSession create test with exception: {ex.Message}");
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
-            }
-        }
-    }
-
-    private void TestListGameSessionsViaWebSocket(string[] args)
-    {
-        Console.WriteLine("=== GameSession List Test (WebSocket) ===");
-        Console.WriteLine("Testing /sessions/list via dedicated BannouClient...");
-
-        try
-        {
-            var result = Task.Run(async () =>
-            {
-                // Create dedicated test account and client
-                var authResult = await CreateTestAccountAsync("gs_list");
-                if (authResult == null)
-                {
-                    return false;
-                }
-
-                await using var client = await CreateConnectedClientAsync(authResult.Value.accessToken, authResult.Value.connectUrl);
-                if (client == null)
-                {
-                    return false;
-                }
-
-                // Use generated request type
-                var listRequest = new ListGameSessionsRequest();
-
-                try
-                {
-                    Console.WriteLine("   Invoking /sessions/list...");
-                    var response = (await client.InvokeAsync<ListGameSessionsRequest, JsonElement>(
-                        "POST",
-                        "/sessions/list",
-                        listRequest,
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
-
-                    var hasSessionsArray = response.TryGetProperty("sessions", out var sessionsProp) &&
-                                            sessionsProp.ValueKind == JsonValueKind.Array;
-                    var totalCount = response.TryGetProperty("totalCount", out var countProp) ? countProp.GetInt32() : 0;
-
-                    Console.WriteLine($"   Sessions array present: {hasSessionsArray}");
-                    Console.WriteLine($"   Total Count: {totalCount}");
-
-                    return hasSessionsArray;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"   Invoke failed: {ex.Message}");
-                    return false;
-                }
-            }).Result;
-
-            if (result)
-            {
-                Console.WriteLine("PASSED GameSession list test via WebSocket");
-            }
-            else
-            {
-                Console.WriteLine("FAILED GameSession list test via WebSocket");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"FAILED GameSession list test with exception: {ex.Message}");
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
-            }
-        }
-    }
-
-    private void TestCompleteSessionLifecycleViaWebSocket(string[] args)
-    {
-        Console.WriteLine("=== GameSession Complete Lifecycle Test (WebSocket) ===");
-        Console.WriteLine("Testing complete session lifecycle via dedicated BannouClient...");
-
-        try
-        {
-            var result = Task.Run(async () =>
-            {
-                // Create dedicated test account and client
-                var authResult = await CreateTestAccountAsync("gs_lifecycle");
-                if (authResult == null)
-                {
-                    return false;
-                }
-
-                await using var client = await CreateConnectedClientAsync(authResult.Value.accessToken, authResult.Value.connectUrl);
-                if (client == null)
-                {
-                    return false;
-                }
-
-                try
-                {
-                    // Step 1: Create session
-                    Console.WriteLine("   Step 1: Creating session...");
-                    var createRequest = new CreateGameSessionRequest
-                    {
-                        SessionName = $"LifecycleTest_{DateTime.Now.Ticks}",
-                        GameType = CreateGameSessionRequestGameType.Arcadia,
-                        MaxPlayers = 4,
-                        IsPrivate = false
-                    };
-
-                    var createResponse = (await client.InvokeAsync<CreateGameSessionRequest, JsonElement>(
-                        "POST",
-                        "/sessions/create",
-                        createRequest,
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
-
-                    var sessionIdStr = createResponse.TryGetProperty("sessionId", out var idProp) ? idProp.GetString() : null;
-                    if (string.IsNullOrEmpty(sessionIdStr))
-                    {
-                        Console.WriteLine("   Failed to create session - no sessionId in response");
-                        return false;
-                    }
-                    var sessionId = Guid.Parse(sessionIdStr);
-                    Console.WriteLine($"   Created session {sessionId}");
-
-                    // Step 2: Join session as a player
-                    Console.WriteLine("   Step 2: Joining session...");
-                    var joinRequest = new JoinGameSessionRequest
-                    {
-                        SessionId = sessionId
-                    };
-
-                    var joinResponse = (await client.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                        "POST",
-                        "/sessions/join",
-                        joinRequest,
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
-
-                    var joinSuccess = joinResponse.TryGetProperty("success", out var successProp) && successProp.GetBoolean();
-                    if (!joinSuccess)
-                    {
-                        // Check for error message
-                        var error = joinResponse.TryGetProperty("error", out var errProp) ? errProp.GetString() : "unknown";
-                        Console.WriteLine($"   Failed to join session: {error}");
-                        return false;
-                    }
-                    Console.WriteLine($"   Joined session successfully");
-
-                    // Step 3: Perform game action
-                    Console.WriteLine("   Step 3: Performing game action...");
-                    var actionRequest = new GameActionRequest
-                    {
-                        SessionId = sessionId,
-                        ActionType = GameActionRequestActionType.Move,
-                        ActionData = new { testData = "lifecycle_test" }
-                    };
-
-                    var actionResponse = (await client.InvokeAsync<GameActionRequest, JsonElement>(
-                        "POST",
-                        "/sessions/actions",
-                        actionRequest,
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
-
-                    var actionId = actionResponse.TryGetProperty("actionId", out var actionIdProp) ? actionIdProp.GetString() : null;
-                    if (string.IsNullOrEmpty(actionId))
-                    {
-                        Console.WriteLine("   Failed to perform game action - no actionId in response");
-                        return false;
-                    }
-                    Console.WriteLine($"   Performed action {actionId}");
-
-                    // Step 4: Send chat message
-                    Console.WriteLine("   Step 4: Sending chat message...");
-                    var chatRequest = new ChatMessageRequest
-                    {
-                        SessionId = sessionId,
-                        Message = "WebSocket lifecycle test message",
-                        MessageType = ChatMessageRequestMessageType.Public
-                    };
-
-                    try
-                    {
-                        (await client.InvokeAsync<ChatMessageRequest, JsonElement>(
-                            "POST",
-                            "/sessions/chat",
-                            chatRequest,
-                            timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
-                        Console.WriteLine($"   Sent chat message");
-                    }
-                    catch (InvalidOperationException ex) when (ex.Message.Contains("Failed to deserialize"))
-                    {
-                        // Chat may return empty response - that's OK
-                        Console.WriteLine($"   Sent chat message (empty response OK)");
-                    }
-
-                    // Step 5: Leave session
-                    Console.WriteLine("   Step 5: Leaving session...");
-                    var leaveRequest = new LeaveGameSessionRequest
-                    {
-                        SessionId = sessionId
-                    };
-
-                    try
-                    {
-                        (await client.InvokeAsync<LeaveGameSessionRequest, JsonElement>(
-                            "POST",
-                            "/sessions/leave",
-                            leaveRequest,
-                            timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
-                        Console.WriteLine($"   Left session");
-                    }
-                    catch (InvalidOperationException ex) when (ex.Message.Contains("Failed to deserialize"))
-                    {
-                        // Leave may return empty response - that's OK
-                        Console.WriteLine($"   Left session (empty response OK)");
-                    }
-
-                    // Step 6: Verify session still exists
-                    Console.WriteLine("   Step 6: Verifying session exists...");
-                    var getRequest = new GetGameSessionRequest
-                    {
-                        SessionId = sessionId
-                    };
-
-                    var getResponse = (await client.InvokeAsync<GetGameSessionRequest, JsonElement>(
-                        "POST",
-                        "/sessions/get",
-                        getRequest,
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
-
-                    var returnedSessionId = getResponse.TryGetProperty("sessionId", out var returnedIdProp) ? returnedIdProp.GetString() : null;
-                    if (returnedSessionId != sessionIdStr)
-                    {
-                        Console.WriteLine($"   Failed to verify session - expected {sessionIdStr}, got {returnedSessionId}");
-                        return false;
-                    }
-                    Console.WriteLine($"   Session verified");
-
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"   Lifecycle test failed: {ex.Message}");
-                    return false;
-                }
-            }).Result;
-
-            if (result)
-            {
-                Console.WriteLine("PASSED GameSession complete lifecycle test via WebSocket");
-            }
-            else
-            {
-                Console.WriteLine("FAILED GameSession complete lifecycle test via WebSocket");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"FAILED GameSession lifecycle test with exception: {ex.Message}");
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
-            }
-        }
-    }
+    // Note: TestCreateGameSessionViaWebSocket, TestListGameSessionsViaWebSocket, and
+    // TestCompleteSessionLifecycleViaWebSocket were removed because game session endpoints
+    // (create/list/join) are now shortcut-only. Users access these through session shortcuts
+    // pushed by the game-session service when they have an active subscription.
 
     private void TestSubscriptionBasedJoinViaShortcut(string[] args)
     {
@@ -539,29 +206,40 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                         return false;
                     }
 
-                    // Step 2: Create a test account via admin
-                    Console.WriteLine("   Step 2: Creating test account...");
-                    var accountResponse = (await adminClient.InvokeAsync<object, JsonElement>(
-                        "POST",
-                        "/accounts/create",
-                        new
-                        {
-                            email = $"shortcut-test-{uniqueCode}@test.local",
-                            displayName = $"ShortcutTest{uniqueCode}"
-                        },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                    // Step 2: Create user credentials (this creates an account with auth)
+                    Console.WriteLine("   Step 2: Registering user account...");
+                    var authResult = await CreateTestAccountAsync($"shortcut_{uniqueCode}");
+                    if (authResult == null)
+                    {
+                        Console.WriteLine("   Failed to create WebSocket test user");
+                        return false;
+                    }
 
-                    var accountJson = System.Text.Json.Nodes.JsonNode.Parse(accountResponse.GetRawText())?.AsObject();
+                    // Step 3: Look up the account ID by email (using admin client)
+                    Console.WriteLine($"   Step 3: Looking up account ID for {authResult.Value.email}...");
+                    var accountLookupResponse = await adminClient.InvokeAsync<object, JsonElement>(
+                        "POST",
+                        "/accounts/by-email",
+                        new { email = authResult.Value.email },
+                        timeout: TimeSpan.FromSeconds(15));
+
+                    if (!accountLookupResponse.IsSuccess)
+                    {
+                        Console.WriteLine($"   Failed to look up account: {accountLookupResponse.Error?.Message}");
+                        return false;
+                    }
+
+                    var accountJson = System.Text.Json.Nodes.JsonNode.Parse(accountLookupResponse.Result.GetRawText())?.AsObject();
                     var accountId = accountJson?["accountId"]?.GetValue<string>();
                     if (string.IsNullOrEmpty(accountId))
                     {
-                        Console.WriteLine("   Failed to create test account");
+                        Console.WriteLine($"   Could not extract accountId from response: {accountLookupResponse.Result.GetRawText()}");
                         return false;
                     }
-                    Console.WriteLine($"   Created account: {accountId}");
+                    Console.WriteLine($"   Account ID: {accountId}");
 
-                    // Step 3: Create subscription for this account to the arcadia service
-                    Console.WriteLine("   Step 3: Creating subscription...");
+                    // Step 4: Create subscription for this account to the arcadia service
+                    Console.WriteLine("   Step 4: Creating subscription...");
                     var subResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/subscriptions/create",
@@ -577,15 +255,8 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                     var subscriptionId = subJson?["subscriptionId"]?.GetValue<string>();
                     Console.WriteLine($"   Created subscription: {subscriptionId}");
 
-                    // Step 4: Create user credentials and connect via WebSocket
-                    Console.WriteLine("   Step 4: Registering user and connecting via WebSocket...");
-                    var authResult = await CreateTestAccountAsync($"shortcut_{uniqueCode}");
-                    if (authResult == null)
-                    {
-                        Console.WriteLine("   Failed to create WebSocket test user");
-                        return false;
-                    }
-
+                    // Step 5: Connect via WebSocket (subscription now exists for this account)
+                    Console.WriteLine("   Step 5: Connecting via WebSocket...");
                     await using var client = await CreateConnectedClientAsync(authResult.Value.accessToken, authResult.Value.connectUrl);
                     if (client == null)
                     {
@@ -628,6 +299,8 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                     if (!joinResponse.IsSuccess)
                     {
                         Console.WriteLine($"   Shortcut invocation failed: {joinResponse.Error?.Message}");
+                        Console.WriteLine($"   Error code: {joinResponse.Error?.ResponseCode} ({joinResponse.Error?.ErrorName})");
+                        Console.WriteLine($"   Method/Path: {joinResponse.Error?.Method} {joinResponse.Error?.Path}");
                         return false;
                     }
 

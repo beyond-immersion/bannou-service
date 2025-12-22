@@ -17,12 +17,12 @@ paths:
   /sessions/list:
     post:
       summary: List available game sessions
+      description: |
+        List available game sessions. This endpoint is not directly accessible via WebSocket API.
+        Access is granted through session shortcuts or internal service calls.
       operationId: listGameSessions
       tags:
         - Game Sessions
-      x-permissions:
-        - role: user
-          states: {}
       x-rate-limit:
         requestsPerMinute: 30
         requestsPerHour: 500
@@ -43,12 +43,12 @@ paths:
   /sessions/create:
     post:
       summary: Create new game session
+      description: |
+        Create a new game session. This endpoint is not directly accessible via WebSocket API.
+        Access is granted through session shortcuts or internal service calls.
       operationId: createGameSession
       tags:
         - Game Sessions
-      x-permissions:
-        - role: user
-          states: {}
       x-rate-limit:
         requestsPerMinute: 5
         requestsPerHour: 20
@@ -69,12 +69,14 @@ paths:
   /sessions/get:
     post:
       summary: Get game session details
+      description: Get details of the current game session the user has joined.
       operationId: getGameSession
       tags:
         - Game Sessions
       x-permissions:
         - role: user
-          states: {}
+          states:
+            game-session: in_game
       requestBody:
         required: true
         content:

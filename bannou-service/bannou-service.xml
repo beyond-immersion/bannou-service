@@ -5346,6 +5346,10 @@
             <summary>
             List available game sessions
             </summary>
+            <remarks>
+            List available game sessions. This endpoint is not directly accessible via WebSocket API.
+            <br/>Access is granted through session shortcuts or internal service calls.
+            </remarks>
             <returns>Game sessions retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
@@ -5354,6 +5358,10 @@
             <summary>
             Create new game session
             </summary>
+            <remarks>
+            Create a new game session. This endpoint is not directly accessible via WebSocket API.
+            <br/>Access is granted through session shortcuts or internal service calls.
+            </remarks>
             <returns>Game session created successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
@@ -5362,6 +5370,9 @@
             <summary>
             Get game session details
             </summary>
+            <remarks>
+            Get details of the current game session the user has joined.
+            </remarks>
             <returns>Game session retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
@@ -5431,6 +5442,10 @@
             <summary>
             List available game sessions
             </summary>
+            <remarks>
+            List available game sessions. This endpoint is not directly accessible via WebSocket API.
+            <br/>Access is granted through session shortcuts or internal service calls.
+            </remarks>
             <returns>Game sessions retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
@@ -5439,6 +5454,10 @@
             <summary>
             Create new game session
             </summary>
+            <remarks>
+            Create a new game session. This endpoint is not directly accessible via WebSocket API.
+            <br/>Access is granted through session shortcuts or internal service calls.
+            </remarks>
             <returns>Game session created successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
@@ -5447,6 +5466,9 @@
             <summary>
             Get game session details
             </summary>
+            <remarks>
+            Get details of the current game session the user has joined.
+            </remarks>
             <returns>Game session retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>

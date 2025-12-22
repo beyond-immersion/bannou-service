@@ -52,21 +52,35 @@ public static class MessageRouter
             routeInfo.InjectedPayload = shortcut.BoundPayload;
             routeInfo.ShortcutName = shortcut.Name;
 
-            // Look up actual service from target GUID
-            if (connectionState.TryGetServiceName(shortcut.TargetGuid, out var targetServiceName) && targetServiceName != null)
+            // Shortcuts MUST have all routing fields set by the publisher - no guessing
+            if (string.IsNullOrEmpty(shortcut.TargetService))
             {
-                routeInfo.TargetType = "service";
-                routeInfo.TargetId = targetServiceName;
-                routeInfo.ServiceName = targetServiceName;
-            }
-            else
-            {
-                // Target capability no longer valid
                 routeInfo.IsValid = false;
                 routeInfo.ErrorCode = ResponseCodes.ShortcutTargetNotFound;
-                routeInfo.ErrorMessage = $"Shortcut '{shortcut.Name}' target capability no longer available";
+                routeInfo.ErrorMessage = $"Shortcut '{shortcut.Name}' missing required target_service";
                 return routeInfo;
             }
+
+            if (string.IsNullOrEmpty(shortcut.TargetMethod))
+            {
+                routeInfo.IsValid = false;
+                routeInfo.ErrorCode = ResponseCodes.ShortcutTargetNotFound;
+                routeInfo.ErrorMessage = $"Shortcut '{shortcut.Name}' missing required target_method";
+                return routeInfo;
+            }
+
+            if (string.IsNullOrEmpty(shortcut.TargetEndpoint))
+            {
+                routeInfo.IsValid = false;
+                routeInfo.ErrorCode = ResponseCodes.ShortcutTargetNotFound;
+                routeInfo.ErrorMessage = $"Shortcut '{shortcut.Name}' missing required target_endpoint";
+                return routeInfo;
+            }
+
+            routeInfo.TargetType = "service";
+            routeInfo.TargetId = shortcut.TargetService;
+            // ServiceName format: "servicename:METHOD:/path" for RouteToServiceAsync
+            routeInfo.ServiceName = $"{shortcut.TargetService}:{shortcut.TargetMethod}:{shortcut.TargetEndpoint}";
 
             routeInfo.Priority = message.IsHighPriority ? MessagePriority.High : MessagePriority.Normal;
             routeInfo.Channel = message.Channel;

@@ -1126,6 +1126,9 @@ public partial class GameSessionService : IGameSessionService
                         name = shortcutName,
                         description = $"Join the {stubName} game lobby",
                         source_service = "game-session",
+                        target_service = "game-session", // Required for routing
+                        target_method = "POST", // Required for routing
+                        target_endpoint = "/sessions/join", // Required for routing
                         created_at = DateTimeOffset.UtcNow
                     }
                 },

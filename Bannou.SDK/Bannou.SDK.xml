@@ -901,12 +901,17 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.Protocol.SessionShortcutData.TargetService">
             <summary>
-            The service this shortcut invokes (for client display).
+            The service this shortcut invokes (required for routing).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.Protocol.SessionShortcutData.TargetMethod">
+            <summary>
+            The HTTP method for this shortcut (required for routing, e.g., "POST").
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.Protocol.SessionShortcutData.TargetEndpoint">
             <summary>
-            The endpoint this shortcut invokes (for client display).
+            The endpoint path this shortcut invokes (required for routing, e.g., "/sessions/join").
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.Protocol.SessionShortcutData.DisplayName">
@@ -3560,6 +3565,10 @@
             <summary>
             List available game sessions
             </summary>
+            <remarks>
+            List available game sessions. This endpoint is not directly accessible via WebSocket API.
+            <br/>Access is granted through session shortcuts or internal service calls.
+            </remarks>
             <returns>Game sessions retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
@@ -3568,6 +3577,10 @@
             <summary>
             Create new game session
             </summary>
+            <remarks>
+            Create a new game session. This endpoint is not directly accessible via WebSocket API.
+            <br/>Access is granted through session shortcuts or internal service calls.
+            </remarks>
             <returns>Game session created successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
@@ -3576,6 +3589,9 @@
             <summary>
             Get game session details
             </summary>
+            <remarks>
+            Get details of the current game session the user has joined.
+            </remarks>
             <returns>Game session retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
@@ -3645,6 +3661,10 @@
             <summary>
             List available game sessions
             </summary>
+            <remarks>
+            List available game sessions. This endpoint is not directly accessible via WebSocket API.
+            <br/>Access is granted through session shortcuts or internal service calls.
+            </remarks>
             <returns>Game sessions retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
@@ -3653,6 +3673,10 @@
             <summary>
             Create new game session
             </summary>
+            <remarks>
+            Create a new game session. This endpoint is not directly accessible via WebSocket API.
+            <br/>Access is granted through session shortcuts or internal service calls.
+            </remarks>
             <returns>Game session created successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
@@ -3661,6 +3685,9 @@
             <summary>
             Get game session details
             </summary>
+            <remarks>
+            Get details of the current game session the user has joined.
+            </remarks>
             <returns>Game session retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>

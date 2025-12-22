@@ -38,6 +38,10 @@ public partial interface IGameSessionClient : BeyondImmersion.BannouService.Serv
     /// <summary>
     /// List available game sessions
     /// </summary>
+    /// <remarks>
+    /// List available game sessions. This endpoint is not directly accessible via WebSocket API.
+    /// <br/>Access is granted through session shortcuts or internal service calls.
+    /// </remarks>
     /// <returns>Game sessions retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<GameSessionListResponse> ListGameSessionsAsync(ListGameSessionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
@@ -46,6 +50,10 @@ public partial interface IGameSessionClient : BeyondImmersion.BannouService.Serv
     /// <summary>
     /// Create new game session
     /// </summary>
+    /// <remarks>
+    /// Create a new game session. This endpoint is not directly accessible via WebSocket API.
+    /// <br/>Access is granted through session shortcuts or internal service calls.
+    /// </remarks>
     /// <returns>Game session created successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<GameSessionResponse> CreateGameSessionAsync(CreateGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
@@ -54,6 +62,9 @@ public partial interface IGameSessionClient : BeyondImmersion.BannouService.Serv
     /// <summary>
     /// Get game session details
     /// </summary>
+    /// <remarks>
+    /// Get details of the current game session the user has joined.
+    /// </remarks>
     /// <returns>Game session retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<GameSessionResponse> GetGameSessionAsync(GetGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
@@ -174,6 +185,10 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
     /// <summary>
     /// List available game sessions
     /// </summary>
+    /// <remarks>
+    /// List available game sessions. This endpoint is not directly accessible via WebSocket API.
+    /// <br/>Access is granted through session shortcuts or internal service calls.
+    /// </remarks>
     /// <returns>Game sessions retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<GameSessionListResponse> ListGameSessionsAsync(ListGameSessionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
@@ -254,6 +269,10 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
     /// <summary>
     /// Create new game session
     /// </summary>
+    /// <remarks>
+    /// Create a new game session. This endpoint is not directly accessible via WebSocket API.
+    /// <br/>Access is granted through session shortcuts or internal service calls.
+    /// </remarks>
     /// <returns>Game session created successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<GameSessionResponse> CreateGameSessionAsync(CreateGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
@@ -334,6 +353,9 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
     /// <summary>
     /// Get game session details
     /// </summary>
+    /// <remarks>
+    /// Get details of the current game session the user has joined.
+    /// </remarks>
     /// <returns>Game session retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<GameSessionResponse> GetGameSessionAsync(GetGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))

@@ -489,12 +489,17 @@ public class SessionShortcutData
     public string? Description { get; set; }
 
     /// <summary>
-    /// The service this shortcut invokes (for client display).
+    /// The service this shortcut invokes (required for routing).
     /// </summary>
     public string? TargetService { get; set; }
 
     /// <summary>
-    /// The endpoint this shortcut invokes (for client display).
+    /// The HTTP method for this shortcut (required for routing, e.g., "POST").
+    /// </summary>
+    public string? TargetMethod { get; set; }
+
+    /// <summary>
+    /// The endpoint path this shortcut invokes (required for routing, e.g., "/sessions/join").
     /// </summary>
     public string? TargetEndpoint { get; set; }
 

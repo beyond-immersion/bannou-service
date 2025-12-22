@@ -2248,6 +2248,27 @@ public partial class ConnectService : IConnectService
                     shortcutData.SourceService = sourceElement.GetString() ?? string.Empty;
                 }
 
+                // Parse target_service (required for shortcut-only endpoints)
+                if (metadataElement.TryGetProperty("target_service", out var targetServiceElement) ||
+                    metadataElement.TryGetProperty("Target_service", out targetServiceElement))
+                {
+                    shortcutData.TargetService = targetServiceElement.GetString() ?? string.Empty;
+                }
+
+                // Parse target_method (required for routing, e.g., "POST")
+                if (metadataElement.TryGetProperty("target_method", out var targetMethodElement) ||
+                    metadataElement.TryGetProperty("Target_method", out targetMethodElement))
+                {
+                    shortcutData.TargetMethod = targetMethodElement.GetString() ?? string.Empty;
+                }
+
+                // Parse target_endpoint (required for routing, e.g., "/sessions/join")
+                if (metadataElement.TryGetProperty("target_endpoint", out var targetEndpointElement) ||
+                    metadataElement.TryGetProperty("Target_endpoint", out targetEndpointElement))
+                {
+                    shortcutData.TargetEndpoint = targetEndpointElement.GetString() ?? string.Empty;
+                }
+
                 // Parse optional fields
                 if (metadataElement.TryGetProperty("description", out var descElement) ||
                     metadataElement.TryGetProperty("Description", out descElement))
@@ -2286,26 +2307,29 @@ public partial class ConnectService : IConnectService
                 }
             }
 
-            // Resolve target service name from target GUID for client display
-            if (connectionState.TryGetServiceName(targetGuid, out var targetServiceName) && targetServiceName != null)
+            // Shortcuts MUST have all routing fields in metadata - no fallback guessing
+            if (string.IsNullOrEmpty(shortcutData.TargetService))
             {
-                // Parse service name and endpoint from the mapping key format: "serviceName:METHOD:/path"
-                var firstColon = targetServiceName.IndexOf(':');
-                if (firstColon > 0)
-                {
-                    shortcutData.TargetService = targetServiceName[..firstColon];
-                    shortcutData.TargetEndpoint = targetServiceName[(firstColon + 1)..];
-                }
-                else
-                {
-                    shortcutData.TargetService = targetServiceName;
-                }
+                _logger.LogError("Shortcut '{ShortcutName}' missing required target_service in metadata for session {SessionId}. " +
+                    "The shortcut publisher must provide target_service.",
+                    shortcutData.Name, sessionId);
+                return; // Reject invalid shortcut
             }
-            else
+
+            if (string.IsNullOrEmpty(shortcutData.TargetMethod))
             {
-                _logger.LogWarning("Shortcut target_guid {TargetGuid} not found in session capabilities for {SessionId}",
-                    targetGuid, sessionId);
-                // Still add the shortcut - it might be valid after a capability refresh
+                _logger.LogError("Shortcut '{ShortcutName}' missing required target_method in metadata for session {SessionId}. " +
+                    "The shortcut publisher must provide target_method (e.g., 'POST').",
+                    shortcutData.Name, sessionId);
+                return; // Reject invalid shortcut
+            }
+
+            if (string.IsNullOrEmpty(shortcutData.TargetEndpoint))
+            {
+                _logger.LogError("Shortcut '{ShortcutName}' missing required target_endpoint in metadata for session {SessionId}. " +
+                    "The shortcut publisher must provide target_endpoint (e.g., '/sessions/join').",
+                    shortcutData.Name, sessionId);
+                return; // Reject invalid shortcut
             }
 
             // Add or update the shortcut in connection state
