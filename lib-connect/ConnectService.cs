@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
@@ -32,6 +33,10 @@ namespace BeyondImmersion.BannouService.Connect;
 [DaprService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton)]
 public partial class ConnectService : IConnectService
 {
+    // Static cached header values to avoid per-request allocations
+    private static readonly MediaTypeWithQualityHeaderValue s_jsonAcceptHeader = new("application/json");
+    private static readonly MediaTypeHeaderValue s_jsonContentType = new("application/json") { CharSet = "utf-8" };
+
     private readonly IAuthClient _authClient;
     private readonly DaprClient _daprClient;
     private readonly HttpClient _httpClient;
@@ -926,9 +931,9 @@ public partial class ConnectService : IConnectService
             _logger.LogInformation("Routing WebSocket message to service {Service} ({Method} {Path}) via app-id {AppId}",
                 serviceName, httpMethod, path, appId);
 
-            // Get JSON payload from message - passed directly to service without parsing
+            // Get raw payload bytes - true zero-copy forwarding without UTF-16 string conversion
             // Connect service should NEVER parse the payload - zero-copy routing based on GUID only
-            var jsonPayload = message.GetJsonPayload();
+            var payloadBytes = message.Payload;
 
             // Make the actual Dapr service invocation via direct HTTP
             // This preserves the full path including /v1.0/invoke/{appId}/method/ prefix
@@ -948,7 +953,8 @@ public partial class ConnectService : IConnectService
 
                 // Add dapr-app-id header for routing (like DaprServiceClientBase.PrepareRequest)
                 request.Headers.Add("dapr-app-id", appId);
-                request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                // Use static cached Accept header to avoid per-request allocation
+                request.Headers.Accept.Add(s_jsonAcceptHeader);
 
                 // Pass client's WebSocket session ID to downstream services
                 // This enables services like Voice to set permissions for the correct client session
@@ -958,12 +964,15 @@ public partial class ConnectService : IConnectService
                 _logger.LogWarning("WebSocket -> Dapr HTTP: {Method} {Uri} AppId={AppId}",
                     request.Method, daprUrl, appId);
 
-                // Pass JSON payload directly to service - zero-copy forwarding
+                // Pass raw payload bytes directly to service - true zero-copy forwarding
+                // Uses ByteArrayContent instead of StringContent to avoid UTF-8 → UTF-16 → UTF-8 conversion
                 // All WebSocket binary protocol endpoints should be POST with JSON body
-                if (!string.IsNullOrWhiteSpace(jsonPayload) && httpMethod == "POST")
+                if (payloadBytes.Length > 0 && httpMethod == "POST")
                 {
-                    request.Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-                    _logger.LogDebug("Request body: {Body}", jsonPayload.Length > 500 ? jsonPayload[..500] + "..." : jsonPayload);
+                    var content = new ByteArrayContent(payloadBytes.ToArray());
+                    content.Headers.ContentType = s_jsonContentType;
+                    request.Content = content;
+                    _logger.LogDebug("Request body: {Length} bytes", payloadBytes.Length);
                 }
 
                 // Track timing for long-running requests
