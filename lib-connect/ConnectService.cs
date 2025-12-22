@@ -955,7 +955,7 @@ public partial class ConnectService : IConnectService
                 request.Headers.Add("X-Bannou-Session-Id", sessionId);
 
                 // Use Warning level to ensure visibility even when app logging is set to Warning
-                _logger.LogWarning("[ROUTING] WebSocket -> Dapr HTTP: {Method} {Uri} AppId={AppId}",
+                _logger.LogWarning("WebSocket -> Dapr HTTP: {Method} {Uri} AppId={AppId}",
                     request.Method, daprUrl, appId);
 
                 // Pass JSON payload directly to service - zero-copy forwarding
@@ -975,7 +975,7 @@ public partial class ConnectService : IConnectService
 
                 var requestDuration = DateTimeOffset.UtcNow - requestStartTime;
                 // Use Warning level for response timing to ensure visibility in CI
-                _logger.LogWarning("[ROUTING] Dapr HTTP response in {DurationMs}ms: {StatusCode}",
+                _logger.LogWarning("Dapr HTTP response in {DurationMs}ms: {StatusCode}",
                     requestDuration.TotalMilliseconds, (int)httpResponse.StatusCode);
 
                 // Read response content

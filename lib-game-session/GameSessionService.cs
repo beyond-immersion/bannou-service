@@ -106,6 +106,7 @@ public partial class GameSessionService : IGameSessionService
         _subscriptionsClient = subscriptionsClient; // Nullable - subscriptions service may not be loaded (Tenet 5)
 
         // Register event handlers via partial class (GameSessionServiceEvents.cs)
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
         RegisterEventConsumers(eventConsumer);
     }
 
@@ -907,19 +908,19 @@ public partial class GameSessionService : IGameSessionService
     {
         if (string.IsNullOrEmpty(sessionId) || string.IsNullOrEmpty(accountId))
         {
-            _logger.LogWarning("[GS-EVENT] Invalid session.connected event - sessionId or accountId missing");
+            _logger.LogWarning("Invalid session.connected event - sessionId or accountId missing");
             return;
         }
 
         if (!Guid.TryParse(accountId, out var accountGuid))
         {
-            _logger.LogWarning("[GS-EVENT] Invalid accountId format: {AccountId}", accountId);
+            _logger.LogWarning("Invalid accountId format: {AccountId}", accountId);
             return;
         }
 
         // Track this session
         _connectedSessions[sessionId] = accountGuid;
-        _logger.LogDebug("[GS-EVENT] Tracking session {SessionId} for account {AccountId}", sessionId, accountId);
+        _logger.LogDebug("Tracking session {SessionId} for account {AccountId}", sessionId, accountId);
 
         // Fetch subscriptions if not cached
         if (!_accountSubscriptions.ContainsKey(accountGuid))
@@ -931,7 +932,7 @@ public partial class GameSessionService : IGameSessionService
         if (_accountSubscriptions.TryGetValue(accountGuid, out var stubNames))
         {
             var ourServices = stubNames.Where(IsOurService).ToList();
-            _logger.LogDebug("[GS-EVENT] Account {AccountId} has {Count} subscriptions matching our services: {Services}",
+            _logger.LogDebug("Account {AccountId} has {Count} subscriptions matching our services: {Services}",
                 accountId, ourServices.Count, string.Join(", ", ourServices));
 
             foreach (var stubName in ourServices)
@@ -941,7 +942,7 @@ public partial class GameSessionService : IGameSessionService
         }
         else
         {
-            _logger.LogDebug("[GS-EVENT] No subscriptions found for account {AccountId}", accountId);
+            _logger.LogDebug("No subscriptions found for account {AccountId}", accountId);
         }
     }
 
@@ -960,7 +961,7 @@ public partial class GameSessionService : IGameSessionService
 
         if (_connectedSessions.TryRemove(sessionId, out var accountId))
         {
-            _logger.LogDebug("[GS-EVENT] Removed session {SessionId} (account {AccountId}) from tracking", sessionId, accountId);
+            _logger.LogDebug("Removed session {SessionId} (account {AccountId}) from tracking", sessionId, accountId);
         }
 
         return Task.CompletedTask;
@@ -977,7 +978,7 @@ public partial class GameSessionService : IGameSessionService
     /// <param name="isActive">Whether the subscription is currently active.</param>
     internal async Task HandleSubscriptionUpdatedInternalAsync(Guid accountId, string stubName, string action, bool isActive)
     {
-        _logger.LogInformation("[GS-EVENT] Subscription update for account {AccountId}: stubName={StubName}, action={Action}, isActive={IsActive}",
+        _logger.LogInformation("Subscription update for account {AccountId}: stubName={StubName}, action={Action}, isActive={IsActive}",
             accountId, stubName, action, isActive);
 
         // Update the cache
@@ -994,7 +995,7 @@ public partial class GameSessionService : IGameSessionService
                     }
                     return existingSet;
                 });
-            _logger.LogDebug("[GS-EVENT] Added {StubName} to subscription cache for account {AccountId}", stubName, accountId);
+            _logger.LogDebug("Added {StubName} to subscription cache for account {AccountId}", stubName, accountId);
         }
         else if (!isActive || action == "cancelled" || action == "expired")
         {
@@ -1004,14 +1005,14 @@ public partial class GameSessionService : IGameSessionService
                 {
                     existingSet.Remove(stubName);
                 }
-                _logger.LogDebug("[GS-EVENT] Removed {StubName} from subscription cache for account {AccountId}", stubName, accountId);
+                _logger.LogDebug("Removed {StubName} from subscription cache for account {AccountId}", stubName, accountId);
             }
         }
 
         // Find connected sessions for this account and update their shortcuts
         if (!IsOurService(stubName))
         {
-            _logger.LogDebug("[GS-EVENT] Service {StubName} is not handled by game-session, skipping shortcut update", stubName);
+            _logger.LogDebug("Service {StubName} is not handled by game-session, skipping shortcut update", stubName);
             return;
         }
 
@@ -1020,7 +1021,7 @@ public partial class GameSessionService : IGameSessionService
             .Select(kv => kv.Key)
             .ToList();
 
-        _logger.LogDebug("[GS-EVENT] Found {Count} connected sessions for account {AccountId}", connectedSessionsForAccount.Count, accountId);
+        _logger.LogDebug("Found {Count} connected sessions for account {AccountId}", connectedSessionsForAccount.Count, accountId);
 
         foreach (var sessionId in connectedSessionsForAccount)
         {
@@ -1042,7 +1043,7 @@ public partial class GameSessionService : IGameSessionService
     {
         if (_subscriptionsClient == null)
         {
-            _logger.LogDebug("[GS-EVENT] Subscriptions client not available, cannot fetch subscriptions for account {AccountId}", accountId);
+            _logger.LogDebug("Subscriptions client not available, cannot fetch subscriptions for account {AccountId}", accountId);
             return;
         }
 
@@ -1058,18 +1059,18 @@ public partial class GameSessionService : IGameSessionService
                     StringComparer.OrdinalIgnoreCase);
 
                 _accountSubscriptions[accountId] = stubs;
-                _logger.LogDebug("[GS-EVENT] Cached {Count} subscriptions for account {AccountId}: {Stubs}",
+                _logger.LogDebug("Cached {Count} subscriptions for account {AccountId}: {Stubs}",
                     stubs.Count, accountId, string.Join(", ", stubs));
             }
             else
             {
-                _logger.LogDebug("[GS-EVENT] No subscriptions found for account {AccountId}", accountId);
+                _logger.LogDebug("No subscriptions found for account {AccountId}", accountId);
                 _accountSubscriptions[accountId] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "[GS-EVENT] Failed to fetch subscriptions for account {AccountId}", accountId);
+            _logger.LogWarning(ex, "Failed to fetch subscriptions for account {AccountId}", accountId);
             // Don't cache empty set on error - allow retry on next request
         }
     }
@@ -1085,7 +1086,7 @@ public partial class GameSessionService : IGameSessionService
             var lobbySessionId = await GetOrCreateLobbySessionAsync(stubName);
             if (lobbySessionId == Guid.Empty)
             {
-                _logger.LogWarning("[GS-EVENT] Failed to get/create lobby for {StubName}, cannot publish shortcut", stubName);
+                _logger.LogWarning("Failed to get/create lobby for {StubName}, cannot publish shortcut", stubName);
                 return;
             }
 
@@ -1139,12 +1140,12 @@ public partial class GameSessionService : IGameSessionService
             var topic = $"CONNECT_SESSION_{sessionId}";
             await _daprClient.PublishEventAsync(PUBSUB_NAME, topic, shortcutEvent);
 
-            _logger.LogInformation("[GS-EVENT] Published join shortcut {RouteGuid} for session {SessionId} -> lobby {LobbyId} ({StubName})",
+            _logger.LogInformation("Published join shortcut {RouteGuid} for session {SessionId} -> lobby {LobbyId} ({StubName})",
                 routeGuid, sessionId, lobbySessionId, stubName);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[GS-EVENT] Failed to publish join shortcut for session {SessionId}, stub {StubName}", sessionId, stubName);
+            _logger.LogError(ex, "Failed to publish join shortcut for session {SessionId}, stub {StubName}", sessionId, stubName);
         }
     }
 
@@ -1167,12 +1168,12 @@ public partial class GameSessionService : IGameSessionService
             var topic = $"CONNECT_SESSION_{sessionId}";
             await _daprClient.PublishEventAsync(PUBSUB_NAME, topic, revokeEvent);
 
-            _logger.LogInformation("[GS-EVENT] Revoked game-session shortcuts for session {SessionId} (reason: {StubName} subscription ended)",
+            _logger.LogInformation("Revoked game-session shortcuts for session {SessionId} (reason: {StubName} subscription ended)",
                 sessionId, stubName);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[GS-EVENT] Failed to revoke shortcuts for session {SessionId}", sessionId);
+            _logger.LogError(ex, "Failed to revoke shortcuts for session {SessionId}", sessionId);
         }
     }
 
@@ -1191,7 +1192,7 @@ public partial class GameSessionService : IGameSessionService
 
             if (existingLobby != null && existingLobby.Status != GameSessionResponseStatus.Finished)
             {
-                _logger.LogDebug("[GS-EVENT] Found existing lobby {LobbyId} for {StubName}", existingLobby.SessionId, stubName);
+                _logger.LogDebug("Found existing lobby {LobbyId} for {StubName}", existingLobby.SessionId, stubName);
                 return Guid.Parse(existingLobby.SessionId);
             }
 
@@ -1223,12 +1224,12 @@ public partial class GameSessionService : IGameSessionService
             sessionIds.Add(lobbyId.ToString());
             await _daprClient.SaveStateAsync(STATE_STORE, SESSION_LIST_KEY, sessionIds);
 
-            _logger.LogInformation("[GS-EVENT] Created lobby {LobbyId} for {StubName}", lobbyId, stubName);
+            _logger.LogInformation("Created lobby {LobbyId} for {StubName}", lobbyId, stubName);
             return lobbyId;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[GS-EVENT] Failed to get/create lobby for {StubName}", stubName);
+            _logger.LogError(ex, "Failed to get/create lobby for {StubName}", stubName);
             return Guid.Empty;
         }
     }

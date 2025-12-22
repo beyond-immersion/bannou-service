@@ -49,11 +49,11 @@ public class AuthEventsController : ControllerBase
 
             if (evt == null)
             {
-                _logger.LogWarning("[AUTH-EVENT] Failed to parse AccountDeletedEvent from request body");
+                _logger.LogWarning("Failed to parse AccountDeletedEvent from request body");
                 return BadRequest("Invalid event data");
             }
 
-            _logger.LogDebug("[AUTH-EVENT] Dispatching account.deleted event");
+            _logger.LogDebug("Dispatching account.deleted event");
 
             await _eventConsumer.DispatchAsync("account.deleted", evt, HttpContext.RequestServices);
 
@@ -61,7 +61,7 @@ public class AuthEventsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[AUTH-EVENT] Failed to dispatch account.deleted event");
+            _logger.LogError(ex, "Failed to dispatch account.deleted event");
             return StatusCode(500, "Internal server error processing event");
         }
     }
@@ -80,11 +80,11 @@ public class AuthEventsController : ControllerBase
 
             if (evt == null)
             {
-                _logger.LogWarning("[AUTH-EVENT] Failed to parse AccountUpdatedEvent from request body");
+                _logger.LogWarning("Failed to parse AccountUpdatedEvent from request body");
                 return BadRequest("Invalid event data");
             }
 
-            _logger.LogDebug("[AUTH-EVENT] Dispatching account.updated event");
+            _logger.LogDebug("Dispatching account.updated event");
 
             await _eventConsumer.DispatchAsync("account.updated", evt, HttpContext.RequestServices);
 
@@ -92,7 +92,7 @@ public class AuthEventsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[AUTH-EVENT] Failed to dispatch account.updated event");
+            _logger.LogError(ex, "Failed to dispatch account.updated event");
             return StatusCode(500, "Internal server error processing event");
         }
     }
@@ -111,11 +111,11 @@ public class AuthEventsController : ControllerBase
 
             if (evt == null)
             {
-                _logger.LogWarning("[AUTH-EVENT] Failed to parse SubscriptionUpdatedEvent from request body");
+                _logger.LogWarning("Failed to parse SubscriptionUpdatedEvent from request body");
                 return BadRequest("Invalid event data");
             }
 
-            _logger.LogDebug("[AUTH-EVENT] Dispatching subscription.updated event");
+            _logger.LogDebug("Dispatching subscription.updated event");
 
             await _eventConsumer.DispatchAsync("subscription.updated", evt, HttpContext.RequestServices);
 
@@ -123,7 +123,7 @@ public class AuthEventsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[AUTH-EVENT] Failed to dispatch subscription.updated event");
+            _logger.LogError(ex, "Failed to dispatch subscription.updated event");
             return StatusCode(500, "Internal server error processing event");
         }
     }

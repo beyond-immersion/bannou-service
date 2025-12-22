@@ -209,7 +209,7 @@ public partial class PermissionsService
     {
         try
         {
-            _logger.LogInformation("[PERM-EVENT] Processing session.updated event for SessionId: {SessionId}, Reason: {Reason}, Roles: [{Roles}], Authorizations: [{Authorizations}]",
+            _logger.LogInformation("Processing session.updated event for SessionId: {SessionId}, Reason: {Reason}, Roles: [{Roles}], Authorizations: [{Authorizations}]",
                 evt.SessionId,
                 evt.Reason,
                 string.Join(", ", evt.Roles ?? new List<string>()),
@@ -229,12 +229,12 @@ public partial class PermissionsService
             var roleResult = await UpdateSessionRoleAsync(roleUpdate);
             if (roleResult.Item1 != StatusCodes.OK)
             {
-                _logger.LogWarning("[PERM-EVENT] Failed to update session role for {SessionId}: {StatusCode}",
+                _logger.LogWarning("Failed to update session role for {SessionId}: {StatusCode}",
                     evt.SessionId, roleResult.Item1);
             }
             else
             {
-                _logger.LogDebug("[PERM-EVENT] Updated session role to '{Role}' for {SessionId}",
+                _logger.LogDebug("Updated session role to '{Role}' for {SessionId}",
                     role, evt.SessionId);
             }
 
@@ -258,28 +258,28 @@ public partial class PermissionsService
                     var stateResult = await UpdateSessionStateAsync(stateUpdate);
                     if (stateResult.Item1 != StatusCodes.OK)
                     {
-                        _logger.LogWarning("[PERM-EVENT] Failed to update session state for {SessionId}, service {ServiceId}: {StatusCode}",
+                        _logger.LogWarning("Failed to update session state for {SessionId}, service {ServiceId}: {StatusCode}",
                             evt.SessionId, serviceId, stateResult.Item1);
                     }
                     else
                     {
-                        _logger.LogDebug("[PERM-EVENT] Updated session state to '{State}' for service '{ServiceId}' on session {SessionId}",
+                        _logger.LogDebug("Updated session state to '{State}' for service '{ServiceId}' on session {SessionId}",
                             state, serviceId, evt.SessionId);
                     }
                 }
                 else
                 {
-                    _logger.LogWarning("[PERM-EVENT] Invalid authorization format: '{Authorization}', expected 'stubName:state'",
+                    _logger.LogWarning("Invalid authorization format: '{Authorization}', expected 'stubName:state'",
                         auth);
                 }
             }
 
-            _logger.LogInformation("[PERM-EVENT] Successfully processed session.updated for SessionId: {SessionId}",
+            _logger.LogInformation("Successfully processed session.updated for SessionId: {SessionId}",
                 evt.SessionId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[PERM-EVENT] Failed to process session.updated event for {SessionId}", evt.SessionId);
+            _logger.LogError(ex, "Failed to process session.updated event for {SessionId}", evt.SessionId);
         }
     }
 
@@ -327,7 +327,7 @@ public partial class PermissionsService
     {
         try
         {
-            _logger.LogInformation("[PERM-EVENT] Processing session.connected for SessionId: {SessionId}, AccountId: {AccountId}, Roles: {RoleCount}, Authorizations: {AuthCount}",
+            _logger.LogInformation("Processing session.connected for SessionId: {SessionId}, AccountId: {AccountId}, Roles: {RoleCount}, Authorizations: {AuthCount}",
                 evt.SessionId,
                 evt.AccountId,
                 evt.Roles?.Count ?? 0,
@@ -342,18 +342,18 @@ public partial class PermissionsService
 
             if (result.Item1 != StatusCodes.OK)
             {
-                _logger.LogWarning("[PERM-EVENT] Failed to handle session connected for {SessionId}: {StatusCode}",
+                _logger.LogWarning("Failed to handle session connected for {SessionId}: {StatusCode}",
                     evt.SessionId, result.Item1);
             }
             else
             {
-                _logger.LogInformation("[PERM-EVENT] Successfully processed session.connected for SessionId: {SessionId}",
+                _logger.LogInformation("Successfully processed session.connected for SessionId: {SessionId}",
                     evt.SessionId);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[PERM-EVENT] Failed to process session.connected event for {SessionId}", evt.SessionId);
+            _logger.LogError(ex, "Failed to process session.connected event for {SessionId}", evt.SessionId);
         }
     }
 
@@ -366,7 +366,7 @@ public partial class PermissionsService
     {
         try
         {
-            _logger.LogInformation("[PERM-EVENT] Processing session.disconnected for SessionId: {SessionId}, Reason: {Reason}, Reconnectable: {Reconnectable}",
+            _logger.LogInformation("Processing session.disconnected for SessionId: {SessionId}, Reason: {Reason}, Reconnectable: {Reconnectable}",
                 evt.SessionId,
                 evt.Reason,
                 evt.Reconnectable);
@@ -378,18 +378,18 @@ public partial class PermissionsService
 
             if (result.Item1 != StatusCodes.OK)
             {
-                _logger.LogWarning("[PERM-EVENT] Failed to handle session disconnected for {SessionId}: {StatusCode}",
+                _logger.LogWarning("Failed to handle session disconnected for {SessionId}: {StatusCode}",
                     evt.SessionId, result.Item1);
             }
             else
             {
-                _logger.LogInformation("[PERM-EVENT] Successfully processed session.disconnected for SessionId: {SessionId}",
+                _logger.LogInformation("Successfully processed session.disconnected for SessionId: {SessionId}",
                     evt.SessionId);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[PERM-EVENT] Failed to process session.disconnected event for {SessionId}", evt.SessionId);
+            _logger.LogError(ex, "Failed to process session.disconnected event for {SessionId}", evt.SessionId);
         }
     }
 

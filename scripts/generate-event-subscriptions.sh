@@ -265,11 +265,11 @@ for sub in data:
 
             if (evt == null)
             {{
-                _logger.LogWarning(\"[{service_pascal.upper()}-EVENT] Failed to parse {event_type} from request body\");
+                _logger.LogWarning(\"Failed to parse {event_type} from request body\");
                 return BadRequest(\"Invalid event data\");
             }}
 
-            _logger.LogDebug(\"[{service_pascal.upper()}-EVENT] Dispatching {topic} event\");
+            _logger.LogDebug(\"Dispatching {topic} event\");
 
             await _eventConsumer.DispatchAsync(\"{topic}\", evt, HttpContext.RequestServices);
 
@@ -277,7 +277,7 @@ for sub in data:
         }}
         catch (Exception ex)
         {{
-            _logger.LogError(ex, \"[{service_pascal.upper()}-EVENT] Failed to dispatch {topic} event\");
+            _logger.LogError(ex, \"Failed to dispatch {topic} event\");
             return StatusCode(500, \"Internal server error processing event\");
         }}
     }}''')

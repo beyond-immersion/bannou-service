@@ -36,12 +36,12 @@ public partial class AuthService
     /// <param name="evt">The event data.</param>
     public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
     {
-        _logger.LogInformation("[AUTH-EVENT] Processing account.deleted event for AccountId: {AccountId}, Email: {Email}",
+        _logger.LogInformation("Processing account.deleted event for AccountId: {AccountId}, Email: {Email}",
             evt.AccountId, evt.Email);
 
         await InvalidateAccountSessionsAsync(evt.AccountId);
 
-        _logger.LogInformation("[AUTH-EVENT] Successfully invalidated sessions for deleted account: {AccountId}",
+        _logger.LogInformation("Successfully invalidated sessions for deleted account: {AccountId}",
             evt.AccountId);
     }
 
@@ -52,13 +52,13 @@ public partial class AuthService
     /// <param name="evt">The event data.</param>
     public async Task HandleAccountUpdatedAsync(AccountUpdatedEvent evt)
     {
-        _logger.LogInformation("[AUTH-EVENT] Processing account.updated event for AccountId: {AccountId}, ChangedFields: {ChangedFields}",
+        _logger.LogInformation("Processing account.updated event for AccountId: {AccountId}, ChangedFields: {ChangedFields}",
             evt.AccountId, string.Join(", ", evt.ChangedFields ?? new List<string>()));
 
         // Only propagate if roles changed
         if (evt.ChangedFields?.Contains("roles") != true)
         {
-            _logger.LogDebug("[AUTH-EVENT] Account update did not include role changes, skipping propagation");
+            _logger.LogDebug("Account update did not include role changes, skipping propagation");
             return;
         }
 
@@ -67,7 +67,7 @@ public partial class AuthService
 
         await PropagateRoleChangesAsync(evt.AccountId, newRoles, CancellationToken.None);
 
-        _logger.LogInformation("[AUTH-EVENT] Successfully propagated role changes for account: {AccountId}",
+        _logger.LogInformation("Successfully propagated role changes for account: {AccountId}",
             evt.AccountId);
     }
 
@@ -78,12 +78,12 @@ public partial class AuthService
     /// <param name="evt">The event data.</param>
     public async Task HandleSubscriptionUpdatedAsync(SubscriptionUpdatedEvent evt)
     {
-        _logger.LogInformation("[AUTH-EVENT] Processing subscription.updated event for AccountId: {AccountId}, StubName: {StubName}, Action: {Action}",
+        _logger.LogInformation("Processing subscription.updated event for AccountId: {AccountId}, StubName: {StubName}, Action: {Action}",
             evt.AccountId, evt.StubName, evt.Action);
 
         await PropagateSubscriptionChangesAsync(evt.AccountId, CancellationToken.None);
 
-        _logger.LogInformation("[AUTH-EVENT] Successfully propagated subscription changes for account: {AccountId}",
+        _logger.LogInformation("Successfully propagated subscription changes for account: {AccountId}",
             evt.AccountId);
     }
 }

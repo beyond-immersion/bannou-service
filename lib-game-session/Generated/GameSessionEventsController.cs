@@ -49,11 +49,11 @@ public class GameSessionEventsController : ControllerBase
 
             if (evt == null)
             {
-                _logger.LogWarning("[GAMESESSION-EVENT] Failed to parse SessionConnectedEvent from request body");
+                _logger.LogWarning("Failed to parse SessionConnectedEvent from request body");
                 return BadRequest("Invalid event data");
             }
 
-            _logger.LogDebug("[GAMESESSION-EVENT] Dispatching session.connected event");
+            _logger.LogDebug("Dispatching session.connected event");
 
             await _eventConsumer.DispatchAsync("session.connected", evt, HttpContext.RequestServices);
 
@@ -61,7 +61,7 @@ public class GameSessionEventsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[GAMESESSION-EVENT] Failed to dispatch session.connected event");
+            _logger.LogError(ex, "Failed to dispatch session.connected event");
             return StatusCode(500, "Internal server error processing event");
         }
     }
@@ -80,11 +80,11 @@ public class GameSessionEventsController : ControllerBase
 
             if (evt == null)
             {
-                _logger.LogWarning("[GAMESESSION-EVENT] Failed to parse SessionDisconnectedEvent from request body");
+                _logger.LogWarning("Failed to parse SessionDisconnectedEvent from request body");
                 return BadRequest("Invalid event data");
             }
 
-            _logger.LogDebug("[GAMESESSION-EVENT] Dispatching session.disconnected event");
+            _logger.LogDebug("Dispatching session.disconnected event");
 
             await _eventConsumer.DispatchAsync("session.disconnected", evt, HttpContext.RequestServices);
 
@@ -92,7 +92,7 @@ public class GameSessionEventsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[GAMESESSION-EVENT] Failed to dispatch session.disconnected event");
+            _logger.LogError(ex, "Failed to dispatch session.disconnected event");
             return StatusCode(500, "Internal server error processing event");
         }
     }
@@ -111,11 +111,11 @@ public class GameSessionEventsController : ControllerBase
 
             if (evt == null)
             {
-                _logger.LogWarning("[GAMESESSION-EVENT] Failed to parse SessionReconnectedEvent from request body");
+                _logger.LogWarning("Failed to parse SessionReconnectedEvent from request body");
                 return BadRequest("Invalid event data");
             }
 
-            _logger.LogDebug("[GAMESESSION-EVENT] Dispatching session.reconnected event");
+            _logger.LogDebug("Dispatching session.reconnected event");
 
             await _eventConsumer.DispatchAsync("session.reconnected", evt, HttpContext.RequestServices);
 
@@ -123,7 +123,7 @@ public class GameSessionEventsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[GAMESESSION-EVENT] Failed to dispatch session.reconnected event");
+            _logger.LogError(ex, "Failed to dispatch session.reconnected event");
             return StatusCode(500, "Internal server error processing event");
         }
     }
@@ -142,11 +142,11 @@ public class GameSessionEventsController : ControllerBase
 
             if (evt == null)
             {
-                _logger.LogWarning("[GAMESESSION-EVENT] Failed to parse SubscriptionUpdatedEvent from request body");
+                _logger.LogWarning("Failed to parse SubscriptionUpdatedEvent from request body");
                 return BadRequest("Invalid event data");
             }
 
-            _logger.LogDebug("[GAMESESSION-EVENT] Dispatching subscription.updated event");
+            _logger.LogDebug("Dispatching subscription.updated event");
 
             await _eventConsumer.DispatchAsync("subscription.updated", evt, HttpContext.RequestServices);
 
@@ -154,7 +154,7 @@ public class GameSessionEventsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[GAMESESSION-EVENT] Failed to dispatch subscription.updated event");
+            _logger.LogError(ex, "Failed to dispatch subscription.updated event");
             return StatusCode(500, "Internal server error processing event");
         }
     }

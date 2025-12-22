@@ -48,7 +48,7 @@ public class ConnectEventsController : ControllerBase
 
             if (evt == null)
             {
-                _logger.LogWarning("[CONNECT-EVENT] Failed to parse SessionInvalidatedEvent from request body");
+                _logger.LogWarning("Failed to parse SessionInvalidatedEvent from request body");
                 return Ok(); // Don't fail - just ignore empty/invalid events
             }
 
@@ -86,7 +86,7 @@ public class ConnectEventsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[CONNECT-EVENT] Error handling session-invalidated event");
+            _logger.LogError(ex, "Error handling session-invalidated event");
             return Ok(); // Don't fail Dapr retries - log and continue
         }
     }

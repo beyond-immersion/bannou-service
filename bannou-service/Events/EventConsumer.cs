@@ -52,7 +52,7 @@ public class EventConsumer : IEventConsumer
         // Wrap the typed handler in an object-based delegate
         topicHandlers[handlerKey] = async (sp, evt) => await handlerFactory(sp, (TEvent)evt);
 
-        _logger.LogDebug("[EVENT] Registered handler '{HandlerKey}' for topic '{TopicName}'", handlerKey, topicName);
+        _logger.LogDebug("Registered handler '{HandlerKey}' for topic '{TopicName}'", handlerKey, topicName);
     }
 
     /// <inheritdoc/>
@@ -67,7 +67,7 @@ public class EventConsumer : IEventConsumer
 
         if (!_handlers.TryGetValue(topicName, out var topicHandlers) || topicHandlers.IsEmpty)
         {
-            _logger.LogDebug("[EVENT] No handlers registered for topic '{TopicName}'", topicName);
+            _logger.LogDebug("No handlers registered for topic '{TopicName}'", topicName);
             return;
         }
 
@@ -75,7 +75,7 @@ public class EventConsumer : IEventConsumer
         var successCount = 0;
         var failureCount = 0;
 
-        _logger.LogDebug("[EVENT] Dispatching '{TopicName}' to {HandlerCount} handler(s)", topicName, handlerCount);
+        _logger.LogDebug("Dispatching '{TopicName}' to {HandlerCount} handler(s)", topicName, handlerCount);
 
         foreach (var (handlerKey, handler) in topicHandlers)
         {
@@ -83,24 +83,24 @@ public class EventConsumer : IEventConsumer
             {
                 await handler(requestScope, evt);
                 successCount++;
-                _logger.LogDebug("[EVENT] Handler '{HandlerKey}' completed successfully", handlerKey);
+                _logger.LogDebug("Handler '{HandlerKey}' completed successfully", handlerKey);
             }
             catch (Exception ex)
             {
                 failureCount++;
-                _logger.LogError(ex, "[EVENT] Handler '{HandlerKey}' failed for topic '{TopicName}'", handlerKey, topicName);
+                _logger.LogError(ex, "Handler '{HandlerKey}' failed for topic '{TopicName}'", handlerKey, topicName);
                 // Continue to next handler - don't let one failure prevent others
             }
         }
 
         if (failureCount > 0)
         {
-            _logger.LogWarning("[EVENT] Topic '{TopicName}' dispatch completed: {SuccessCount}/{HandlerCount} succeeded, {FailureCount} failed",
+            _logger.LogWarning("Topic '{TopicName}' dispatch completed: {SuccessCount}/{HandlerCount} succeeded, {FailureCount} failed",
                 topicName, successCount, handlerCount, failureCount);
         }
         else
         {
-            _logger.LogDebug("[EVENT] Topic '{TopicName}' dispatch completed: all {HandlerCount} handlers succeeded", topicName, handlerCount);
+            _logger.LogDebug("Topic '{TopicName}' dispatch completed: all {HandlerCount} handlers succeeded", topicName, handlerCount);
         }
     }
 

@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,23 +13,32 @@ namespace BeyondImmersion.BannouService.Testing;
 /// Implements IDaprService to test centralized service resolution.
 /// </summary>
 [DaprService("testing", interfaceType: typeof(ITestingService), priority: false, lifetime: ServiceLifetime.Scoped)]
-public class TestingService : ITestingService
+public partial class TestingService : ITestingService
 {
     private readonly ILogger<TestingService> _logger;
     private readonly TestingServiceConfiguration _configuration;
     private readonly DaprClient _daprClient;
     private readonly IClientEventPublisher _clientEventPublisher;
+    private readonly IErrorEventEmitter _errorEventEmitter;
 
     public TestingService(
         ILogger<TestingService> logger,
         TestingServiceConfiguration configuration,
         DaprClient daprClient,
-        IClientEventPublisher clientEventPublisher)
+        IClientEventPublisher clientEventPublisher,
+        IErrorEventEmitter errorEventEmitter,
+        IEventConsumer eventConsumer)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
+        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+
+        // Required by Tenet 6 - calls default IDaprService.RegisterEventConsumers() no-op
+        // Must cast to interface to access default interface implementation
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>

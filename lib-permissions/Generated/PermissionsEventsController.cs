@@ -49,11 +49,11 @@ public class PermissionsEventsController : ControllerBase
 
             if (evt == null)
             {
-                _logger.LogWarning("[PERMISSIONS-EVENT] Failed to parse ServiceRegistrationEvent from request body");
+                _logger.LogWarning("Failed to parse ServiceRegistrationEvent from request body");
                 return BadRequest("Invalid event data");
             }
 
-            _logger.LogDebug("[PERMISSIONS-EVENT] Dispatching permissions.service-registered event");
+            _logger.LogDebug("Dispatching permissions.service-registered event");
 
             await _eventConsumer.DispatchAsync("permissions.service-registered", evt, HttpContext.RequestServices);
 
@@ -61,7 +61,7 @@ public class PermissionsEventsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[PERMISSIONS-EVENT] Failed to dispatch permissions.service-registered event");
+            _logger.LogError(ex, "Failed to dispatch permissions.service-registered event");
             return StatusCode(500, "Internal server error processing event");
         }
     }
@@ -80,11 +80,11 @@ public class PermissionsEventsController : ControllerBase
 
             if (evt == null)
             {
-                _logger.LogWarning("[PERMISSIONS-EVENT] Failed to parse SessionStateChangeEvent from request body");
+                _logger.LogWarning("Failed to parse SessionStateChangeEvent from request body");
                 return BadRequest("Invalid event data");
             }
 
-            _logger.LogDebug("[PERMISSIONS-EVENT] Dispatching permissions.session-state-changed event");
+            _logger.LogDebug("Dispatching permissions.session-state-changed event");
 
             await _eventConsumer.DispatchAsync("permissions.session-state-changed", evt, HttpContext.RequestServices);
 
@@ -92,7 +92,7 @@ public class PermissionsEventsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[PERMISSIONS-EVENT] Failed to dispatch permissions.session-state-changed event");
+            _logger.LogError(ex, "Failed to dispatch permissions.session-state-changed event");
             return StatusCode(500, "Internal server error processing event");
         }
     }
@@ -111,11 +111,11 @@ public class PermissionsEventsController : ControllerBase
 
             if (evt == null)
             {
-                _logger.LogWarning("[PERMISSIONS-EVENT] Failed to parse SessionUpdatedEvent from request body");
+                _logger.LogWarning("Failed to parse SessionUpdatedEvent from request body");
                 return BadRequest("Invalid event data");
             }
 
-            _logger.LogDebug("[PERMISSIONS-EVENT] Dispatching session.updated event");
+            _logger.LogDebug("Dispatching session.updated event");
 
             await _eventConsumer.DispatchAsync("session.updated", evt, HttpContext.RequestServices);
 
@@ -123,7 +123,7 @@ public class PermissionsEventsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[PERMISSIONS-EVENT] Failed to dispatch session.updated event");
+            _logger.LogError(ex, "Failed to dispatch session.updated event");
             return StatusCode(500, "Internal server error processing event");
         }
     }
@@ -142,11 +142,11 @@ public class PermissionsEventsController : ControllerBase
 
             if (evt == null)
             {
-                _logger.LogWarning("[PERMISSIONS-EVENT] Failed to parse SessionConnectedEvent from request body");
+                _logger.LogWarning("Failed to parse SessionConnectedEvent from request body");
                 return BadRequest("Invalid event data");
             }
 
-            _logger.LogDebug("[PERMISSIONS-EVENT] Dispatching session.connected event");
+            _logger.LogDebug("Dispatching session.connected event");
 
             await _eventConsumer.DispatchAsync("session.connected", evt, HttpContext.RequestServices);
 
@@ -154,7 +154,7 @@ public class PermissionsEventsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[PERMISSIONS-EVENT] Failed to dispatch session.connected event");
+            _logger.LogError(ex, "Failed to dispatch session.connected event");
             return StatusCode(500, "Internal server error processing event");
         }
     }
@@ -173,11 +173,11 @@ public class PermissionsEventsController : ControllerBase
 
             if (evt == null)
             {
-                _logger.LogWarning("[PERMISSIONS-EVENT] Failed to parse SessionDisconnectedEvent from request body");
+                _logger.LogWarning("Failed to parse SessionDisconnectedEvent from request body");
                 return BadRequest("Invalid event data");
             }
 
-            _logger.LogDebug("[PERMISSIONS-EVENT] Dispatching session.disconnected event");
+            _logger.LogDebug("Dispatching session.disconnected event");
 
             await _eventConsumer.DispatchAsync("session.disconnected", evt, HttpContext.RequestServices);
 
@@ -185,7 +185,7 @@ public class PermissionsEventsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[PERMISSIONS-EVENT] Failed to dispatch session.disconnected event");
+            _logger.LogError(ex, "Failed to dispatch session.disconnected event");
             return StatusCode(500, "Internal server error processing event");
         }
     }
