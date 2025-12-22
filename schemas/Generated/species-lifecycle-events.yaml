@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: Bannou Species Service API Lifecycle Events
+  title: Species Service Events Lifecycle Events
   description: "Auto-generated lifecycle event schemas for species service.\nDO NOT EDIT - This file is completely overwritten
-    by generate-lifecycle-events.py.\nSource of truth: species-api.yaml x-lifecycle section."
+    by generate-lifecycle-events.py.\nSource of truth: species-events.yaml x-lifecycle section."
   version: 1.0.0
 paths: {}
 components:

@@ -78,6 +78,15 @@ public partial class ClientCapabilitiesResponse
     public System.Collections.Generic.ICollection<ClientCapability> Capabilities { get; set; } = new System.Collections.ObjectModel.Collection<ClientCapability>();
 
     /// <summary>
+    /// Pre-bound API calls available for this session.
+    /// <br/>Shortcuts are invoked like normal capabilities but Connect injects
+    /// <br/>a pre-bound payload instead of using the client's payload.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("shortcuts")]
+    public System.Collections.Generic.ICollection<ClientShortcut>? Shortcuts { get; set; } = default!;
+
+    /// <summary>
     /// Capability manifest version (increments on changes)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
@@ -151,6 +160,87 @@ public partial class ClientCapability
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("channel")]
     public int Channel { get; set; } = 0;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Session shortcut information sent to clients in the capability manifest.
+/// <br/>Shortcuts appear as invocable capabilities but Connect injects a pre-bound
+/// <br/>payload when the shortcut GUID is used, replacing any client-provided payload.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ClientShortcut
+{
+
+    /// <summary>
+    /// GUID to use in WebSocket message header when invoking this shortcut.
+    /// <br/>Uses UUID version 7 bits to distinguish from regular service GUIDs (version 5).
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("guid")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid Guid { get; set; } = default!;
+
+    /// <summary>
+    /// The service this shortcut invokes (for client display purposes).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetService")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string TargetService { get; set; } = default!;
+
+    /// <summary>
+    /// The endpoint this shortcut invokes (for client display purposes).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetEndpoint")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string TargetEndpoint { get; set; } = default!;
+
+    /// <summary>
+    /// Machine-readable shortcut identifier (e.g., "get_my_stats", "join_game").
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable description of what this shortcut does.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// User-friendly name for display in client UIs.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    public string? DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// The service that created this shortcut.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceService")]
+    public string? SourceService { get; set; } = default!;
+
+    /// <summary>
+    /// Categorization tags for client-side organization.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+
+    /// <summary>
+    /// When this shortcut expires (if time-limited).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -335,6 +425,11 @@ public partial class ConnectErrorResponse
 /// Response codes used in the binary protocol for success/error indication.
 /// <br/>Provides fine-grained error reporting for different failure scenarios.
 /// <br/>
+/// <br/>**Shortcut-specific error codes (70-79):**
+/// <br/>- 70 (ShortcutExpired): Session shortcut has expired (TTL exceeded)
+/// <br/>- 71 (ShortcutTargetNotFound): Shortcut's target capability no longer available
+/// <br/>- 72 (ShortcutRevoked): Session shortcut was explicitly revoked
+/// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ResponseCodes
@@ -367,6 +462,12 @@ public enum ResponseCodes
     Service_Conflict = 53,
 
     Service_InternalServerError = 60,
+
+    ShortcutExpired = 70,
+
+    ShortcutTargetNotFound = 71,
+
+    ShortcutRevoked = 72,
 
 }
 

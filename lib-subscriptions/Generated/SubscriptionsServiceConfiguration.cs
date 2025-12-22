@@ -16,14 +16,14 @@ public class SubscriptionsServiceConfiguration : IServiceConfiguration
     public string? Force_Service_ID { get; set; }
 
     /// <summary>
-    /// Name of the Dapr state store for subscription data
-    /// Environment variable: STATESTORENAME or BANNOU_STATESTORENAME
+    /// Dapr state store name for subscriptions
+    /// Environment variable: SUBSCRIPTIONS_STATE_STORE_NAME or BANNOU_SUBSCRIPTIONS_STATE_STORE_NAME
     /// </summary>
     public string StateStoreName { get; set; } = "subscriptions-statestore";
 
     /// <summary>
-    /// Suffix appended to stub name for authorization strings
-    /// Environment variable: AUTHORIZATIONSUFFIX or BANNOU_AUTHORIZATIONSUFFIX
+    /// Suffix for authorization keys in state store
+    /// Environment variable: SUBSCRIPTIONS_AUTHORIZATION_SUFFIX or BANNOU_SUBSCRIPTIONS_AUTHORIZATION_SUFFIX
     /// </summary>
     public string AuthorizationSuffix { get; set; } = "authorized";
 

@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Subscriptions;
 using Dapr.Client;
@@ -26,6 +27,7 @@ public class AuthServiceTests
     private readonly Mock<ISessionService> _mockSessionService;
     private readonly Mock<IOAuthProviderService> _mockOAuthService;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public AuthServiceTests()
     {
@@ -59,6 +61,7 @@ public class AuthServiceTests
         _mockSessionService = new Mock<ISessionService>();
         _mockOAuthService = new Mock<IOAuthProviderService>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup default HttpClient for mock factory
         var mockHttpClient = new HttpClient();
@@ -80,7 +83,8 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
     }
 
     [Fact]
@@ -512,7 +516,8 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -529,7 +534,8 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -546,7 +552,8 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -563,7 +570,8 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -580,7 +588,8 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -597,7 +606,8 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -614,7 +624,8 @@ public class AuthServiceTests
             null!,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -631,7 +642,8 @@ public class AuthServiceTests
             _mockTokenService.Object,
             null!,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -648,7 +660,26 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             null!,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullEventConsumer_ShouldThrow()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new AuthService(
+            _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object,
+            _mockTokenService.Object,
+            _mockSessionService.Object,
+            _mockOAuthService.Object,
+            _mockErrorEventEmitter.Object,
+            null!));
     }
 
     [Fact]
@@ -797,7 +828,7 @@ public class AuthServiceTests
 
         var service = CreateAuthService();
 
-        var accountDeletedEvent = new BeyondImmersion.BannouService.Accounts.AccountDeletedEvent
+        var accountDeletedEvent = new AccountDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -838,7 +869,7 @@ public class AuthServiceTests
 
         var service = CreateAuthService();
 
-        var accountDeletedEvent = new BeyondImmersion.BannouService.Accounts.AccountDeletedEvent
+        var accountDeletedEvent = new AccountDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,

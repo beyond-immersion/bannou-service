@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Servicedata;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Subscriptions;
@@ -22,6 +23,7 @@ public class SubscriptionsServiceTests
     private readonly SubscriptionsServiceConfiguration _configuration;
     private readonly Mock<IServicedataClient> _mockServicedataClient;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
     private const string STATE_STORE = "subscriptions-statestore";
 
     public SubscriptionsServiceTests()
@@ -31,6 +33,7 @@ public class SubscriptionsServiceTests
         _configuration = new SubscriptionsServiceConfiguration();
         _mockServicedataClient = new Mock<IServicedataClient>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
     }
 
     private SubscriptionsService CreateService()
@@ -40,7 +43,8 @@ public class SubscriptionsServiceTests
             _mockLogger.Object,
             _configuration,
             _mockServicedataClient.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
     }
 
     #region Constructor Tests
@@ -64,7 +68,8 @@ public class SubscriptionsServiceTests
             _mockLogger.Object,
             _configuration,
             _mockServicedataClient.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -76,7 +81,8 @@ public class SubscriptionsServiceTests
             null!,
             _configuration,
             _mockServicedataClient.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -88,7 +94,8 @@ public class SubscriptionsServiceTests
             _mockLogger.Object,
             null!,
             _mockServicedataClient.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -100,7 +107,21 @@ public class SubscriptionsServiceTests
             _mockLogger.Object,
             _configuration,
             null!,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new SubscriptionsService(
+            _mockDaprClient.Object,
+            _mockLogger.Object,
+            _configuration,
+            _mockServicedataClient.Object,
+            _mockErrorEventEmitter.Object,
+            null!));
     }
 
     #endregion

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Generate service configuration class from OpenAPI schema
+# Generate service configuration class from configuration schema
 # Usage: ./generate-config.sh <service-name> [schema-file]
 
 set -e  # Exit on any error
@@ -15,12 +15,12 @@ NC='\033[0m' # No Color
 if [ $# -lt 1 ]; then
     echo -e "${RED}Usage: $0 <service-name> [schema-file]${NC}"
     echo "Example: $0 accounts"
-    echo "Example: $0 accounts ../schemas/accounts-api.yaml"
+    echo "Example: $0 accounts ../schemas/accounts-configuration.yaml"
     exit 1
 fi
 
 SERVICE_NAME="$1"
-SCHEMA_FILE="${2:-../schemas/${SERVICE_NAME}-api.yaml}"
+SCHEMA_FILE="${2:-../schemas/${SERVICE_NAME}-configuration.yaml}"
 
 # Helper function to convert hyphenated names to PascalCase
 to_pascal_case() {

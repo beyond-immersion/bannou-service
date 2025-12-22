@@ -30,7 +30,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// Uses Permissions service for dynamic API discovery and capability management.
 /// </summary>
 [DaprService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton)]
-public class ConnectService : IConnectService
+public partial class ConnectService : IConnectService
 {
     private readonly IAuthClient _authClient;
     private readonly DaprClient _daprClient;
@@ -59,6 +59,7 @@ public class ConnectService : IConnectService
         ILogger<ConnectService> logger,
         ILoggerFactory loggerFactory,
         IErrorEventEmitter errorEventEmitter,
+        IEventConsumer eventConsumer,
         ISessionManager? sessionManager = null,
         ClientEventQueueManager? clientEventQueueManager = null)
     {
@@ -81,11 +82,15 @@ public class ConnectService : IConnectService
         _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
         _connectionManager = new WebSocketConnectionManager();
 
-        // Generate server salt for GUID generation (use cryptographic salt)
-        _serverSalt = GuidGenerator.GenerateServerSalt();
+        // Use shared server salt for GUID generation (ensures shortcuts work across services)
+        _serverSalt = GuidGenerator.GetSharedServerSalt();
 
         // Generate unique instance ID for distributed deployment
         _instanceId = Environment.MachineName + "-" + Guid.NewGuid().ToString("N")[..8];
+
+        // Register event handlers via partial class (ConnectServiceEvents.cs)
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
 
         _logger.LogInformation("Connect service initialized with instance ID: {InstanceId}, SessionManager: {SessionManagerEnabled}",
             _instanceId, sessionManager != null ? "Enabled" : "Disabled");
@@ -288,9 +293,9 @@ public class ConnectService : IConnectService
 
     /// <summary>
     /// Validates JWT token and extracts session ID and user roles.
-    /// Returns a tuple with session ID and roles for capability initialization.
+    /// Returns a tuple with session ID, roles, and whether this is a reconnection for capability initialization.
     /// </summary>
-    public async Task<(string? SessionId, Guid? AccountId, ICollection<string>? Roles, ICollection<string>? Authorizations)> ValidateJWTAndExtractSessionAsync(
+    public async Task<(string? SessionId, Guid? AccountId, ICollection<string>? Roles, ICollection<string>? Authorizations, bool IsReconnection)> ValidateJWTAndExtractSessionAsync(
         string authorization,
         CancellationToken cancellationToken)
     {
@@ -302,7 +307,7 @@ public class ConnectService : IConnectService
             if (string.IsNullOrEmpty(authorization))
             {
                 _logger.LogWarning("Authorization header missing or empty");
-                return (null, null, null, null);
+                return (null, null, null, null, false);
             }
 
             // Handle "Bearer <token>" format
@@ -320,7 +325,7 @@ public class ConnectService : IConnectService
                 if (validationResponse == null)
                 {
                     _logger.LogError("Auth service returned null validation response");
-                    return (null, null, null, null);
+                    return (null, null, null, null, false);
                 }
 
                 _logger.LogDebug("Token validation result - Valid: {Valid}, SessionId: {SessionId}, AccountId: {AccountId}, RolesCount: {RolesCount}, AuthorizationsCount: {AuthorizationsCount}",
@@ -334,7 +339,8 @@ public class ConnectService : IConnectService
                 {
                     _logger.LogDebug("JWT validated successfully, SessionId: {SessionId}", validationResponse.SessionId);
                     // Return session ID, account ID, roles, and authorizations for capability initialization
-                    return (validationResponse.SessionId, validationResponse.AccountId, validationResponse.Roles, validationResponse.Authorizations);
+                    // This is a new connection (Bearer token), not a reconnection
+                    return (validationResponse.SessionId, validationResponse.AccountId, validationResponse.Roles, validationResponse.Authorizations, false);
                 }
                 else
                 {
@@ -350,7 +356,7 @@ public class ConnectService : IConnectService
                 if (string.IsNullOrEmpty(reconnectionToken))
                 {
                     _logger.LogWarning("Empty reconnection token provided");
-                    return (null, null, null, null);
+                    return (null, null, null, null, false);
                 }
 
                 // Use Redis session manager to validate reconnection token
@@ -368,8 +374,9 @@ public class ConnectService : IConnectService
                             _logger.LogInformation("Session {SessionId} reconnected successfully", sessionId);
                             // Return stored roles and authorizations from reconnection state
                             // Parse AccountId from string back to Guid (stored as string for Redis serialization)
+                            // Mark as reconnection so services can re-publish shortcuts
                             Guid? restoredAccountId = Guid.TryParse(restoredState.AccountId, out var parsedGuid) ? parsedGuid : null;
-                            return (sessionId, restoredAccountId, restoredState.UserRoles, restoredState.Authorizations);
+                            return (sessionId, restoredAccountId, restoredState.UserRoles, restoredState.Authorizations, true);
                         }
                     }
 
@@ -380,16 +387,16 @@ public class ConnectService : IConnectService
                     _logger.LogWarning("Reconnection requires Redis session manager - not configured");
                 }
 
-                return (null, null, null, null);
+                return (null, null, null, null, false);
             }
 
             _logger.LogWarning("Authorization format not recognized (expected 'Bearer' or 'Reconnect' prefix)");
-            return (null, null, null, null);
+            return (null, null, null, null, false);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "JWT validation failed with exception");
-            return (null, null, null, null);
+            return (null, null, null, null, false);
         }
     }
 
@@ -430,6 +437,7 @@ public class ConnectService : IConnectService
         Guid? accountId,
         ICollection<string>? userRoles,
         ICollection<string>? authorizations,
+        bool isReconnection,
         CancellationToken cancellationToken)
     {
         // Create connection state with service mappings from discovery
@@ -523,6 +531,28 @@ public class ConnectService : IConnectService
                     };
                     await _daprClient.PublishEventAsync("bannou-pubsub", "session.connected", sessionConnectedEvent, cancellationToken);
                     _logger.LogInformation("Published session.connected event for session {SessionId}", sessionId);
+
+                    // If this is a reconnection, publish session.reconnected event so services can re-publish shortcuts
+                    // Shortcuts don't survive reconnection - services must re-evaluate and re-publish them
+                    if (isReconnection)
+                    {
+                        var sessionReconnectedEvent = new SessionReconnectedEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            Timestamp = DateTimeOffset.UtcNow,
+                            SessionId = sessionId,
+                            AccountId = accountId?.ToString() ?? string.Empty,
+                            Roles = userRoles?.ToList(),
+                            Authorizations = authorizations?.ToList(),
+                            PreviousDisconnectAt = connectionState.DisconnectedAt,
+                            ReconnectionContext = new Dictionary<string, object>
+                            {
+                                ["connect_instance_id"] = _instanceId
+                            }
+                        };
+                        await _daprClient.PublishEventAsync("bannou-pubsub", "session.reconnected", sessionReconnectedEvent, cancellationToken);
+                        _logger.LogInformation("Published session.reconnected event for session {SessionId} - services should re-publish shortcuts", sessionId);
+                    }
                 }
                 else
                 {
@@ -801,6 +831,34 @@ public class ConnectService : IConnectService
             {
                 await RouteToServiceAsync(message, routeInfo, sessionId, connectionState, cancellationToken);
             }
+            else if (routeInfo.RouteType == RouteType.SessionShortcut)
+            {
+                // Session shortcut: rewrite message with target GUID and inject pre-bound payload
+                if (routeInfo.TargetGuid == null || routeInfo.InjectedPayload == null)
+                {
+                    _logger.LogError("SessionShortcut route missing TargetGuid or InjectedPayload for session {SessionId}", sessionId);
+                    var errorResponse = MessageRouter.CreateErrorResponse(
+                        message, ResponseCodes.ShortcutTargetNotFound, "Shortcut configuration error");
+                    await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
+                    return;
+                }
+
+                _logger.LogInformation("Routing shortcut '{ShortcutName}' for session {SessionId}: {RouteGuid} -> {TargetGuid}",
+                    routeInfo.ShortcutName ?? "unnamed", sessionId, message.ServiceGuid, routeInfo.TargetGuid.Value);
+
+                // Create rewritten message with target GUID and injected payload
+                var rewrittenMessage = new BinaryMessage(
+                    flags: message.Flags,
+                    channel: message.Channel,
+                    sequenceNumber: message.SequenceNumber,
+                    serviceGuid: routeInfo.TargetGuid.Value,
+                    messageId: message.MessageId,
+                    payload: routeInfo.InjectedPayload
+                );
+
+                // Route the rewritten message to the target service
+                await RouteToServiceAsync(rewrittenMessage, routeInfo, sessionId, connectionState, cancellationToken);
+            }
             else if (routeInfo.RouteType == RouteType.Client)
             {
                 await RouteToClientAsync(message, routeInfo, sessionId, cancellationToken);
@@ -897,7 +955,7 @@ public class ConnectService : IConnectService
                 request.Headers.Add("X-Bannou-Session-Id", sessionId);
 
                 // Use Warning level to ensure visibility even when app logging is set to Warning
-                _logger.LogWarning("[ROUTING] WebSocket -> Dapr HTTP: {Method} {Uri} AppId={AppId}",
+                _logger.LogWarning("WebSocket -> Dapr HTTP: {Method} {Uri} AppId={AppId}",
                     request.Method, daprUrl, appId);
 
                 // Pass JSON payload directly to service - zero-copy forwarding
@@ -917,7 +975,7 @@ public class ConnectService : IConnectService
 
                 var requestDuration = DateTimeOffset.UtcNow - requestStartTime;
                 // Use Warning level for response timing to ensure visibility in CI
-                _logger.LogWarning("[ROUTING] Dapr HTTP response in {DurationMs}ms: {StatusCode}",
+                _logger.LogWarning("Dapr HTTP response in {DurationMs}ms: {StatusCode}",
                     requestDuration.TotalMilliseconds, (int)httpResponse.StatusCode);
 
                 // Read response content
@@ -1591,7 +1649,21 @@ public class ConnectService : IConnectService
                 return true; // Event handled internally
             }
 
-            // Add more internal event handlers here as needed
+            // Handle ShortcutPublishedEvent - add shortcut to session and update manifest
+            if (eventName == "session.shortcut_published" || eventName == "Session_shortcut_published")
+            {
+                _logger.LogDebug("Handling ShortcutPublishedEvent for session {SessionId}", sessionId);
+                await HandleShortcutPublishedAsync(sessionId, root);
+                return true; // Event handled internally
+            }
+
+            // Handle ShortcutRevokedEvent - remove shortcut(s) and update manifest
+            if (eventName == "session.shortcut_revoked" || eventName == "Session_shortcut_revoked")
+            {
+                _logger.LogDebug("Handling ShortcutRevokedEvent for session {SessionId}", sessionId);
+                await HandleShortcutRevokedAsync(sessionId, root);
+                return true; // Event handled internally
+            }
 
             return false; // Not an internal event, forward to client
         }
@@ -1786,6 +1858,27 @@ public class ConnectService : IConnectService
                 });
             }
 
+            // Add shortcuts to availableAPIs - they look identical to regular endpoints from client perspective
+            foreach (var shortcut in connectionState.GetAllShortcuts())
+            {
+                // Skip expired shortcuts
+                if (shortcut.IsExpired)
+                {
+                    connectionState.RemoveShortcut(shortcut.RouteGuid);
+                    continue;
+                }
+
+                // Shortcuts appear as regular APIs with "SHORTCUT:" prefix in endpointKey
+                availableApis.Add(new
+                {
+                    serviceGuid = shortcut.RouteGuid.ToString(),
+                    method = "SHORTCUT",
+                    path = shortcut.Name ?? shortcut.RouteGuid.ToString(),
+                    endpointKey = $"SHORTCUT:{shortcut.Name ?? shortcut.RouteGuid.ToString()}",
+                    description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
+                });
+            }
+
             var capabilityManifest = new
             {
                 event_name = "connect.capability_manifest",
@@ -1811,7 +1904,7 @@ public class ConnectService : IConnectService
             var messageBytes = capabilityMessage.ToByteArray();
 
             _logger.LogInformation(
-                "Sending capability manifest to session {SessionId} with {ApiCount} available APIs",
+                "Sending capability manifest to session {SessionId} with {ApiCount} available APIs (including shortcuts)",
                 sessionId, availableApis.Count);
 
             await webSocket.SendAsync(
@@ -1908,6 +2001,27 @@ public class ConnectService : IConnectService
                 });
             }
 
+            // Add shortcuts to availableAPIs - they look identical to regular endpoints from client perspective
+            foreach (var shortcut in connectionState.GetAllShortcuts())
+            {
+                // Skip expired shortcuts
+                if (shortcut.IsExpired)
+                {
+                    connectionState.RemoveShortcut(shortcut.RouteGuid);
+                    continue;
+                }
+
+                // Shortcuts appear as regular APIs with "SHORTCUT:" prefix in endpointKey
+                availableApis.Add(new
+                {
+                    serviceGuid = shortcut.RouteGuid.ToString(),
+                    method = "SHORTCUT",
+                    path = shortcut.Name ?? shortcut.RouteGuid.ToString(),
+                    endpointKey = $"SHORTCUT:{shortcut.Name ?? shortcut.RouteGuid.ToString()}",
+                    description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
+                });
+            }
+
             var capabilityManifest = new
             {
                 event_name = "connect.capability_manifest",
@@ -1933,7 +2047,7 @@ public class ConnectService : IConnectService
             await _connectionManager.SendMessageAsync(sessionId, capabilityMessage, cancellationToken);
 
             _logger.LogInformation(
-                "Processed capabilities for session {SessionId}: {ApiCount} APIs (reason: {Reason})",
+                "Processed capabilities for session {SessionId}: {ApiCount} APIs (including shortcuts) (reason: {Reason})",
                 sessionId, availableApis.Count, reason);
         }
         catch (Exception ex)
@@ -2025,6 +2139,392 @@ public class ConnectService : IConnectService
         {
             _logger.LogError(ex, "Failed to register Connect service permissions");
             throw;
+        }
+    }
+
+    #endregion
+
+    #region Session Shortcuts
+
+    /// <summary>
+    /// Handles ShortcutPublishedEvent - adds or updates a shortcut in the session.
+    /// The shortcut is stored in ConnectionState and included in capability manifests.
+    /// </summary>
+    private async Task HandleShortcutPublishedAsync(string sessionId, JsonElement root)
+    {
+        try
+        {
+            var connection = _connectionManager.GetConnection(sessionId);
+            if (connection == null)
+            {
+                _logger.LogDebug("No active connection for session {SessionId}, ignoring shortcut publish", sessionId);
+                return;
+            }
+
+            var connectionState = connection.ConnectionState;
+
+            // Parse the shortcut from the event payload
+            if (!root.TryGetProperty("shortcut", out var shortcutElement) &&
+                !root.TryGetProperty("Shortcut", out shortcutElement))
+            {
+                _logger.LogWarning("ShortcutPublishedEvent missing shortcut for session {SessionId}", sessionId);
+                return;
+            }
+
+            // Extract route_guid
+            if (!shortcutElement.TryGetProperty("route_guid", out var routeGuidElement) &&
+                !shortcutElement.TryGetProperty("Route_guid", out routeGuidElement))
+            {
+                _logger.LogWarning("Shortcut missing route_guid for session {SessionId}", sessionId);
+                return;
+            }
+
+            if (!Guid.TryParse(routeGuidElement.GetString(), out var routeGuid))
+            {
+                _logger.LogWarning("Invalid route_guid format for session {SessionId}", sessionId);
+                return;
+            }
+
+            // Extract target_guid
+            if (!shortcutElement.TryGetProperty("target_guid", out var targetGuidElement) &&
+                !shortcutElement.TryGetProperty("Target_guid", out targetGuidElement))
+            {
+                _logger.LogWarning("Shortcut missing target_guid for session {SessionId}", sessionId);
+                return;
+            }
+
+            if (!Guid.TryParse(targetGuidElement.GetString(), out var targetGuid))
+            {
+                _logger.LogWarning("Invalid target_guid format for session {SessionId}", sessionId);
+                return;
+            }
+
+            // Extract bound_payload (can be base64 encoded or raw JSON string)
+            byte[] boundPayload = Array.Empty<byte>();
+            if (shortcutElement.TryGetProperty("bound_payload", out var payloadElement) ||
+                shortcutElement.TryGetProperty("Bound_payload", out payloadElement))
+            {
+                var payloadStr = payloadElement.GetString();
+                if (!string.IsNullOrEmpty(payloadStr))
+                {
+                    // Try to decode as base64, fall back to UTF8 encoding of raw string
+                    try
+                    {
+                        boundPayload = Convert.FromBase64String(payloadStr);
+                    }
+                    catch (FormatException)
+                    {
+                        // Not base64, treat as raw JSON string
+                        boundPayload = Encoding.UTF8.GetBytes(payloadStr);
+                    }
+                }
+            }
+
+            // Extract metadata
+            var hasMetadata = shortcutElement.TryGetProperty("metadata", out JsonElement metadataElement) ||
+                            shortcutElement.TryGetProperty("Metadata", out metadataElement);
+
+            var shortcutData = new SessionShortcutData
+            {
+                RouteGuid = routeGuid,
+                TargetGuid = targetGuid,
+                BoundPayload = boundPayload,
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+
+            if (hasMetadata)
+            {
+                // Parse name
+                if (metadataElement.TryGetProperty("name", out var nameElement) ||
+                    metadataElement.TryGetProperty("Name", out nameElement))
+                {
+                    shortcutData.Name = nameElement.GetString() ?? string.Empty;
+                }
+
+                // Parse source_service
+                if (metadataElement.TryGetProperty("source_service", out var sourceElement) ||
+                    metadataElement.TryGetProperty("Source_service", out sourceElement))
+                {
+                    shortcutData.SourceService = sourceElement.GetString() ?? string.Empty;
+                }
+
+                // Parse target_service (required for shortcut-only endpoints)
+                if (metadataElement.TryGetProperty("target_service", out var targetServiceElement) ||
+                    metadataElement.TryGetProperty("Target_service", out targetServiceElement))
+                {
+                    shortcutData.TargetService = targetServiceElement.GetString() ?? string.Empty;
+                }
+
+                // Parse target_method (required for routing, e.g., "POST")
+                if (metadataElement.TryGetProperty("target_method", out var targetMethodElement) ||
+                    metadataElement.TryGetProperty("Target_method", out targetMethodElement))
+                {
+                    shortcutData.TargetMethod = targetMethodElement.GetString() ?? string.Empty;
+                }
+
+                // Parse target_endpoint (required for routing, e.g., "/sessions/join")
+                if (metadataElement.TryGetProperty("target_endpoint", out var targetEndpointElement) ||
+                    metadataElement.TryGetProperty("Target_endpoint", out targetEndpointElement))
+                {
+                    shortcutData.TargetEndpoint = targetEndpointElement.GetString() ?? string.Empty;
+                }
+
+                // Parse optional fields
+                if (metadataElement.TryGetProperty("description", out var descElement) ||
+                    metadataElement.TryGetProperty("Description", out descElement))
+                {
+                    shortcutData.Description = descElement.GetString();
+                }
+
+                if (metadataElement.TryGetProperty("display_name", out var displayElement) ||
+                    metadataElement.TryGetProperty("Display_name", out displayElement))
+                {
+                    shortcutData.DisplayName = displayElement.GetString();
+                }
+
+                if (metadataElement.TryGetProperty("expires_at", out var expiresElement) ||
+                    metadataElement.TryGetProperty("Expires_at", out expiresElement))
+                {
+                    if (DateTimeOffset.TryParse(expiresElement.GetString(), out var expiresAt))
+                    {
+                        shortcutData.ExpiresAt = expiresAt;
+                    }
+                }
+
+                if (metadataElement.TryGetProperty("tags", out var tagsElement) ||
+                    metadataElement.TryGetProperty("Tags", out tagsElement))
+                {
+                    var tags = new List<string>();
+                    foreach (var tag in tagsElement.EnumerateArray())
+                    {
+                        var tagStr = tag.GetString();
+                        if (!string.IsNullOrEmpty(tagStr))
+                        {
+                            tags.Add(tagStr);
+                        }
+                    }
+                    shortcutData.Tags = tags.ToArray();
+                }
+            }
+
+            // Shortcuts MUST have all routing fields in metadata - no fallback guessing
+            if (string.IsNullOrEmpty(shortcutData.TargetService))
+            {
+                _logger.LogError("Shortcut '{ShortcutName}' missing required target_service in metadata for session {SessionId}. " +
+                    "The shortcut publisher must provide target_service.",
+                    shortcutData.Name, sessionId);
+                return; // Reject invalid shortcut
+            }
+
+            if (string.IsNullOrEmpty(shortcutData.TargetMethod))
+            {
+                _logger.LogError("Shortcut '{ShortcutName}' missing required target_method in metadata for session {SessionId}. " +
+                    "The shortcut publisher must provide target_method (e.g., 'POST').",
+                    shortcutData.Name, sessionId);
+                return; // Reject invalid shortcut
+            }
+
+            if (string.IsNullOrEmpty(shortcutData.TargetEndpoint))
+            {
+                _logger.LogError("Shortcut '{ShortcutName}' missing required target_endpoint in metadata for session {SessionId}. " +
+                    "The shortcut publisher must provide target_endpoint (e.g., '/sessions/join').",
+                    shortcutData.Name, sessionId);
+                return; // Reject invalid shortcut
+            }
+
+            // Add or update the shortcut in connection state
+            connectionState.AddOrUpdateShortcut(shortcutData);
+
+            _logger.LogInformation("Added shortcut '{ShortcutName}' ({RouteGuid}) for session {SessionId}",
+                shortcutData.Name, routeGuid, sessionId);
+
+            // Send updated capability manifest with shortcuts to client
+            await SendCapabilityManifestWithShortcutsAsync(connection.WebSocket, sessionId, connectionState, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling ShortcutPublishedEvent for session {SessionId}", sessionId);
+        }
+    }
+
+    /// <summary>
+    /// Handles ShortcutRevokedEvent - removes shortcut(s) from the session.
+    /// Supports both single-shortcut revocation and bulk revocation by source service.
+    /// </summary>
+    private async Task HandleShortcutRevokedAsync(string sessionId, JsonElement root)
+    {
+        try
+        {
+            var connection = _connectionManager.GetConnection(sessionId);
+            if (connection == null)
+            {
+                _logger.LogDebug("No active connection for session {SessionId}, ignoring shortcut revocation", sessionId);
+                return;
+            }
+
+            var connectionState = connection.ConnectionState;
+            var removedCount = 0;
+
+            // Extract reason for logging
+            string? reason = null;
+            if (root.TryGetProperty("reason", out var reasonElement) ||
+                root.TryGetProperty("Reason", out reasonElement))
+            {
+                reason = reasonElement.GetString();
+            }
+
+            // Check for single shortcut revocation by route_guid
+            if (root.TryGetProperty("route_guid", out var routeGuidElement) ||
+                root.TryGetProperty("Route_guid", out routeGuidElement))
+            {
+                var routeGuidStr = routeGuidElement.GetString();
+                if (!string.IsNullOrEmpty(routeGuidStr) && Guid.TryParse(routeGuidStr, out var routeGuid))
+                {
+                    if (connectionState.RemoveShortcut(routeGuid))
+                    {
+                        removedCount = 1;
+                        _logger.LogInformation("Revoked shortcut {RouteGuid} for session {SessionId}: {Reason}",
+                            routeGuid, sessionId, reason ?? "no reason");
+                    }
+                    else
+                    {
+                        _logger.LogDebug("Shortcut {RouteGuid} not found for session {SessionId}", routeGuid, sessionId);
+                    }
+                }
+            }
+            // Check for bulk revocation by source service
+            else if (root.TryGetProperty("revoke_by_service", out var serviceElement) ||
+                    root.TryGetProperty("Revoke_by_service", out serviceElement))
+            {
+                var sourceService = serviceElement.GetString();
+                if (!string.IsNullOrEmpty(sourceService))
+                {
+                    removedCount = connectionState.RemoveShortcutsByService(sourceService);
+                    _logger.LogInformation("Revoked {Count} shortcuts from service '{SourceService}' for session {SessionId}: {Reason}",
+                        removedCount, sourceService, sessionId, reason ?? "no reason");
+                }
+            }
+            else
+            {
+                _logger.LogWarning("ShortcutRevokedEvent missing both route_guid and revoke_by_service for session {SessionId}", sessionId);
+                return;
+            }
+
+            // Send updated capability manifest if shortcuts were removed
+            if (removedCount > 0)
+            {
+                await SendCapabilityManifestWithShortcutsAsync(connection.WebSocket, sessionId, connectionState, CancellationToken.None);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling ShortcutRevokedEvent for session {SessionId}", sessionId);
+        }
+    }
+
+    /// <summary>
+    /// Sends capability manifest including session shortcuts to the client.
+    /// This is the unified method for sending manifests that include both APIs and shortcuts.
+    /// </summary>
+    private async Task SendCapabilityManifestWithShortcutsAsync(
+        WebSocket webSocket,
+        string sessionId,
+        ConnectionState connectionState,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Build the capability manifest with available APIs
+            var availableApis = new List<object>();
+
+            foreach (var mapping in connectionState.ServiceMappings)
+            {
+                var endpointKey = mapping.Key;
+                var guid = mapping.Value;
+
+                var firstColon = endpointKey.IndexOf(':');
+                if (firstColon <= 0) continue;
+
+                var serviceName = endpointKey[..firstColon];
+                var methodAndPath = endpointKey[(firstColon + 1)..];
+
+                var methodPathColon = methodAndPath.IndexOf(':');
+                var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
+                var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
+
+                // Skip template endpoints (zero-copy routing requirement)
+                if (path.Contains('{')) continue;
+
+                // Only expose POST endpoints to WebSocket clients
+                if (method != "POST") continue;
+
+                availableApis.Add(new
+                {
+                    serviceGuid = guid.ToString(),
+                    method = method,
+                    path = path,
+                    endpointKey = $"{method}:{path}",
+                    serviceName = serviceName
+                });
+            }
+
+            // Add shortcuts to availableAPIs - they look identical to regular endpoints from client perspective
+            foreach (var shortcut in connectionState.GetAllShortcuts())
+            {
+                // Skip expired shortcuts
+                if (shortcut.IsExpired)
+                {
+                    connectionState.RemoveShortcut(shortcut.RouteGuid);
+                    continue;
+                }
+
+                // Shortcuts appear as regular APIs with "SHORTCUT:" prefix in endpointKey
+                availableApis.Add(new
+                {
+                    serviceGuid = shortcut.RouteGuid.ToString(),
+                    method = "SHORTCUT",
+                    path = shortcut.Name ?? shortcut.RouteGuid.ToString(),
+                    endpointKey = $"SHORTCUT:{shortcut.Name ?? shortcut.RouteGuid.ToString()}",
+                    description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
+                });
+            }
+
+            var capabilityManifest = new
+            {
+                event_name = "connect.capability_manifest",
+                sessionId = sessionId,
+                availableAPIs = availableApis,
+                version = 1,
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            };
+
+            var manifestJson = JsonSerializer.Serialize(capabilityManifest);
+            var manifestBytes = Encoding.UTF8.GetBytes(manifestJson);
+
+            var capabilityMessage = new BinaryMessage(
+                flags: MessageFlags.Event,
+                channel: 0,
+                sequenceNumber: 0,
+                serviceGuid: Guid.Empty,
+                messageId: GuidGenerator.GenerateMessageId(),
+                payload: manifestBytes
+            );
+
+            var messageBytes = capabilityMessage.ToByteArray();
+
+            _logger.LogInformation(
+                "Sending capability manifest to session {SessionId} with {ApiCount} APIs (including shortcuts)",
+                sessionId, availableApis.Count);
+
+            await webSocket.SendAsync(
+                new ArraySegment<byte>(messageBytes),
+                WebSocketMessageType.Binary,
+                endOfMessage: true,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send capability manifest with shortcuts to session {SessionId}", sessionId);
         }
     }
 

@@ -2,13 +2,13 @@
 """
 Generate lifecycle events (Created, Updated, Deleted) from x-lifecycle definitions.
 
-This script reads x-lifecycle definitions from OpenAPI API schemas and generates
-separate lifecycle event schema files. The API schemas are NEVER modified.
+This script reads x-lifecycle definitions from OpenAPI event schemas and generates
+separate lifecycle event schema files. Event schemas are NEVER modified.
 
 Architecture:
-- {service}-api.yaml: API definitions + x-lifecycle (SOURCE OF TRUTH, read-only)
-- {service}-events.yaml: Custom service events (manually maintained, never touched)
-- {service}-lifecycle-events.yaml: Auto-generated lifecycle events (completely overwritten)
+- {service}-api.yaml: API definitions (no x-lifecycle, no events)
+- {service}-events.yaml: Event definitions + x-lifecycle (SOURCE OF TRUTH, read-only)
+- schemas/Generated/{service}-lifecycle-events.yaml: Auto-generated lifecycle events (completely overwritten)
 
 Event Pattern:
 - All events have: eventId (uuid), timestamp (datetime)
@@ -24,7 +24,7 @@ Topic Pattern:
 Usage:
     python3 scripts/generate-lifecycle-events.py
 
-The script processes all *-api.yaml files in the schemas/ directory.
+The script processes all *-events.yaml files in the schemas/ directory.
 """
 
 import sys
@@ -50,27 +50,27 @@ def to_kebab_case(name: str) -> str:
     return re.sub('([a-z0-9])([A-Z])', r'\1-\2', s1).lower()
 
 
-def extract_service_name(api_file: Path) -> str:
-    """Extract service name from API file path (e.g., 'accounts' from 'accounts-api.yaml')."""
-    return api_file.stem.replace('-api', '')
+def extract_service_name(events_file: Path) -> str:
+    """Extract service name from events file path (e.g., 'accounts' from 'accounts-events.yaml')."""
+    return events_file.stem.replace('-events', '')
 
 
-def read_lifecycle_definitions(api_file: Path) -> Tuple[Dict[str, Any], str]:
+def read_lifecycle_definitions(events_file: Path) -> Tuple[Dict[str, Any], str]:
     """
-    Read x-lifecycle definitions from an API schema file.
+    Read x-lifecycle definitions from an events schema file.
 
     Returns:
         Tuple of (lifecycle_defs dict, service title from info section)
         Returns (None, None) if no x-lifecycle found
     """
-    with open(api_file) as f:
+    with open(events_file) as f:
         content = f.read()
 
     # Quick check before parsing
     if 'x-lifecycle:' not in content:
         return None, None
 
-    with open(api_file) as f:
+    with open(events_file) as f:
         schema = yaml.load(f)
 
     if schema is None or 'x-lifecycle' not in schema:
@@ -230,7 +230,7 @@ def generate_lifecycle_events_file(
             'description': (
                 f'Auto-generated lifecycle event schemas for {service_name} service.\n'
                 f'DO NOT EDIT - This file is completely overwritten by generate-lifecycle-events.py.\n'
-                f'Source of truth: {service_name}-api.yaml x-lifecycle section.'
+                f'Source of truth: {service_name}-events.yaml x-lifecycle section.'
             ),
             'version': '1.0.0'
         },
@@ -248,33 +248,46 @@ def generate_lifecycle_events_file(
 
 
 def main():
-    """Process all API schema files and generate lifecycle event files."""
+    """Process all event schema files and generate lifecycle event files."""
     # Find schemas directory relative to script location
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
     schema_dir = repo_root / 'schemas'
+    generated_dir = schema_dir / 'Generated'
 
     if not schema_dir.exists():
         print(f"ERROR: Schema directory not found: {schema_dir}")
         sys.exit(1)
 
+    # Create Generated directory if it doesn't exist
+    generated_dir.mkdir(exist_ok=True)
+
+    # Clean up old lifecycle event files
+    for old_file in generated_dir.glob('*-lifecycle-events.yaml'):
+        old_file.unlink()
+        print(f"  Cleaned up: {old_file.name}")
+
     print("Generating lifecycle events from x-lifecycle definitions...")
-    print("  Reading from: *-api.yaml (source of truth)")
-    print("  Writing to: *-lifecycle-events.yaml (completely overwritten)")
+    print("  Reading from: *-events.yaml (source of truth)")
+    print("  Writing to: Generated/*-lifecycle-events.yaml (completely overwritten)")
     print()
 
     generated_files = []
     errors = []
 
-    for api_file in sorted(schema_dir.glob('*-api.yaml')):
+    for events_file in sorted(schema_dir.glob('*-events.yaml')):
+        # Skip lifecycle events files (already in Generated/) and client events
+        if '-lifecycle-events' in events_file.name or '-client-events' in events_file.name:
+            continue
+
         try:
-            lifecycle_defs, service_title = read_lifecycle_definitions(api_file)
+            lifecycle_defs, service_title = read_lifecycle_definitions(events_file)
 
             if lifecycle_defs is None:
                 continue
 
-            service_name = extract_service_name(api_file)
-            output_file = schema_dir / f'{service_name}-lifecycle-events.yaml'
+            service_name = extract_service_name(events_file)
+            output_file = generated_dir / f'{service_name}-lifecycle-events.yaml'
 
             entities = generate_lifecycle_events_file(
                 service_name,
@@ -284,10 +297,10 @@ def main():
             )
 
             generated_files.append((output_file.name, entities))
-            print(f"  {output_file.name}: Generated events for {', '.join(entities)}")
+            print(f"  Generated/{output_file.name}: Generated events for {', '.join(entities)}")
 
         except Exception as e:
-            errors.append(f"{api_file.name}: {e}")
+            errors.append(f"{events_file.name}: {e}")
 
     # Report results
     print()
@@ -298,10 +311,10 @@ def main():
         sys.exit(1)
 
     if generated_files:
-        print(f"Generated {len(generated_files)} lifecycle event file(s)")
-        print("Note: API schemas were NOT modified (read-only)")
+        print(f"Generated {len(generated_files)} lifecycle event file(s) in schemas/Generated/")
+        print("Note: Event schemas were NOT modified (read-only)")
     else:
-        print("No x-lifecycle definitions found in any API schemas")
+        print("No x-lifecycle definitions found in any event schemas")
 
 
 if __name__ == '__main__':

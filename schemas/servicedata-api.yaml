@@ -10,8 +10,8 @@ info:
     See API-DESIGN.md for architectural rationale.
   version: 1.0.0
 servers:
-  - url: http://localhost:3500/v1.0/invoke/bannou/method
-    description: Dapr sidecar endpoint (internal only)
+- url: http://localhost:3500/v1.0/invoke/bannou/method
+  description: Dapr sidecar endpoint (internal only)
 
 paths:
   /servicedata/services/list:
@@ -20,10 +20,10 @@ paths:
       description: Returns all game services, optionally filtered by active status.
       operationId: listServices
       tags:
-        - Service Registry
+      - Service Registry
       x-permissions:
-        - role: user
-          states: {}
+      - role: user
+        states: {}
       requestBody:
         required: true
         content:
@@ -44,10 +44,10 @@ paths:
       description: Retrieves a single service by either serviceId (GUID) or stubName.
       operationId: getService
       tags:
-        - Service Registry
+      - Service Registry
       x-permissions:
-        - role: user
-          states: {}
+      - role: user
+        states: {}
       requestBody:
         required: true
         content:
@@ -70,10 +70,10 @@ paths:
       description: Admin-only endpoint to register a new game service in the registry.
       operationId: createService
       tags:
-        - Service Registry
+      - Service Registry
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -98,10 +98,10 @@ paths:
       description: Admin-only endpoint to update an existing game service.
       operationId: updateService
       tags:
-        - Service Registry
+      - Service Registry
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -126,10 +126,10 @@ paths:
       description: Admin-only endpoint to remove a game service from the registry.
       operationId: deleteService
       tags:
-        - Service Registry
+      - Service Registry
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -172,8 +172,8 @@ components:
       type: object
       description: Request to create a new game service
       required:
-        - stubName
-        - displayName
+      - stubName
+      - displayName
       properties:
         stubName:
           type: string
@@ -200,7 +200,7 @@ components:
       type: object
       description: Request to update an existing game service
       required:
-        - serviceId
+      - serviceId
       properties:
         serviceId:
           type: string
@@ -225,7 +225,7 @@ components:
       type: object
       description: Request to delete a game service
       required:
-        - serviceId
+      - serviceId
       properties:
         serviceId:
           type: string
@@ -237,11 +237,11 @@ components:
       type: object
       description: Information about a game service
       required:
-        - serviceId
-        - stubName
-        - displayName
-        - isActive
-        - createdAt
+      - serviceId
+      - stubName
+      - displayName
+      - isActive
+      - createdAt
       properties:
         serviceId:
           type: string
@@ -274,8 +274,8 @@ components:
       type: object
       description: Response containing list of game services
       required:
-        - services
-        - totalCount
+      - services
+      - totalCount
       properties:
         services:
           type: array
@@ -285,9 +285,3 @@ components:
           type: integer
           description: Total number of services matching the filter
 
-x-service-configuration:
-  properties:
-    StateStoreName:
-      type: string
-      description: Name of the Dapr state store for service data
-      default: "servicedata-statestore"

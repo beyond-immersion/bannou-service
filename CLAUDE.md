@@ -2,7 +2,7 @@
 
 ## ⛔ TENETS ARE LAW ⛔
 
-**ALWAYS REFER TO AND FOLLOW THE TENETS.MD FILE TENETS, WITHOUT EXCEPTION. IF YOU DO NOT UNDERSTAND THE TENETS PERFECTLY, YOU MUST RE-READ THE FILE. ANY SITUATION WHICH CALLS INTO QUESTION ONE OF THE TENETS MUST BE EXPLICITLY PRESENTED TO THE USER, CONTEXT PROVIDED, AND THEN APPROVED TO CONTINUE.**
+**ALWAYS REFER TO AND FOLLOW THE TENETS.MD FILE (`docs/reference/TENETS.md`) WITHOUT EXCEPTION. IF YOU DO NOT UNDERSTAND THE TENETS PERFECTLY, YOU MUST RE-READ THE FILE. ANY SITUATION WHICH CALLS INTO QUESTION ONE OF THE TENETS MUST BE EXPLICITLY PRESENTED TO THE USER, CONTEXT PROVIDED, AND THEN APPROVED TO CONTINUE.**
 
 ---
 
@@ -28,33 +28,24 @@
 - Never mark todos as complete when issues persist
 - Always demonstrate working functionality before claiming success
 
-## ⚠️ MANDATORY REFERENCE - API-DESIGN.md
+## ⚠️ MANDATORY REFERENCE - Architecture & Development Docs
 
-**CRITICAL**: For ALL Bannou service design and development tasks, you MUST ALWAYS reference the authoritative API-DESIGN.md documentation FIRST before proceeding with any work. For any task involving implementation, you MUST refer to the CURRENT_TASKS.md document in the bannou repository. If you're recently had context compacted, this is especially important.
+**CRITICAL**: For ALL Bannou service design and development tasks, reference the following documentation before proceeding:
 
-**Location**: Technical Architecture knowledge base section (API-DESIGN.md)
+**Primary Documentation**:
+- **Architecture & Philosophy**: `docs/BANNOU_DESIGN.md` - Why the system works the way it does
+- **Plugin Development**: `docs/guides/PLUGIN_DEVELOPMENT.md` - How to add and extend services
+- **Current Tasks**: `CURRENT_TASKS.md` - Active implementation work
 
-This document defines the single source of truth for schema-driven development approach, consolidated service architecture patterns, WebSocket-first integration, and complete implementation workflows that must be followed for all Bannou services.
+**⚠️ MANDATORY REFERENCE TRIGGERS**:
+- Service API design or modification → `BANNOU_DESIGN.md` + `PLUGIN_DEVELOPMENT.md`
+- Creating new services → `PLUGIN_DEVELOPMENT.md`
+- WebSocket protocol questions → `docs/WEBSOCKET-PROTOCOL.md`
+- Debugging service issues → `PLUGIN_DEVELOPMENT.md` + `docs/reference/TENETS.md`
+- Configuration questions → `docs/reference/CONFIGURATION.md`
+- Deployment patterns → `docs/guides/DEPLOYMENT.md`
 
-**⚠️ MANDATORY REFERENCE TRIGGERS** - You MUST reference API-DESIGN.md for:
-- ANY service API design or modification tasks
-- Creating new services or modifying existing service architecture
-- Service integration with Dapr, WebSocket protocols, or client generation
-- Debugging service implementation issues or schema generation problems
-- Questions about schema-first development patterns or validation
-- Understanding event types, datastore requirements, or testing strategies
-- API versioning, breaking changes, or backwards compatibility
-- Service testing strategies and deployment patterns
-
-**⚠️ MANDATORY UPDATE REQUIREMENT**:
-When making changes to service APIs or architectural patterns, you MUST update API-DESIGN.md to reflect:
-- New architectural decisions or patterns
-- Changes to schema-first development workflow
-- Service integration pattern modifications
-- Testing strategy updates
-- Any deviations from established patterns
-
-**IMPLEMENTATION GUIDES**: For specific service implementation details beyond API-DESIGN.md, consult dedicated implementation guides in the knowledge base:
+**IMPLEMENTATION GUIDES**: For specific service implementation details:
 - **Behavior Service APIs**: Reference NPC-Behavior-Service-APIs-and-Testing.md for ABML and character behavior implementation
 - **Service-Specific Guides**: Reference implementation guides when working on complex service-specific patterns
 
@@ -83,15 +74,15 @@ When making changes to service APIs or architectural patterns, you MUST update A
 - **Principle**: We use containerization workflows - configuration belongs in containers, not host environments
 
 ### ⚠️ MANDATORY REFERENCE - TESTING.md for ALL Testing Tasks
-**CRITICAL**: For ANY task involving tests, testing architecture, or test placement, you MUST ALWAYS reference the TESTING.md documentation FIRST and IN FULL before proceeding with any work.
+**CRITICAL**: For ANY task involving tests, testing architecture, or test placement, you MUST ALWAYS reference the testing documentation (`docs/guides/TESTING.md`) FIRST and IN FULL before proceeding with any work.
 
 **MANDATORY TESTING WORKFLOW**:
-1. Read TESTING.md completely to understand plugin isolation boundaries
+1. Read `docs/guides/TESTING.md` completely to understand plugin isolation boundaries
 2. Use the decision guide to determine correct test placement
 3. Follow architectural constraints (unit-tests cannot reference plugins, lib-testing cannot reference other plugins, etc.)
 4. ALWAYS respond with "I have referred to the service testing document" to confirm you read it
 
-**⚠️ MANDATORY REFERENCE TRIGGERS** - You MUST reference TESTING.md for:
+**⚠️ MANDATORY REFERENCE TRIGGERS** - You MUST reference `docs/guides/TESTING.md` for:
 - ANY task involving writing, modifying, or debugging tests
 - Questions about where to place tests (unit tests vs infrastructure tests vs integration tests)
 - Testing configuration classes, service functionality, or cross-service communication
@@ -146,7 +137,7 @@ Reference the Makefile in the repository root for all available commands and est
   servers:
     - url: http://localhost:3500/v1.0/invoke/bannou/method  # ✅ CORRECT - always use "bannou"
   ```
-  NSwag generates controller route prefixes from this URL. Dapr preserves the full path (does NOT strip the prefix), so if a schema uses a different app-id (e.g., `game-session`), the generated controller route won't match what clients send → 404 errors. See API-DESIGN.md for full explanation.
+  NSwag generates controller route prefixes from this URL. Dapr preserves the full path (does NOT strip the prefix), so if a schema uses a different app-id (e.g., `game-session`), the generated controller route won't match what clients send → 404 errors. See `docs/BANNOU_DESIGN.md` for full explanation.
 
 **Required Workflow**:
 1. **Schema First**: Edit OpenAPI YAML in `/schemas/` directory

@@ -1,0 +1,38 @@
+openapi: 3.0.3
+info:
+  title: Game Session Service Events
+  description: |
+    Event subscription and publication declarations for Game Session service.
+
+    This service does not define any unique event types - it subscribes to events from
+    other services and publishes events defined elsewhere (SessionStateChangeEvent from
+    permissions-events.yaml). All event types are accessed via BeyondImmersion.BannouService.Events.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Session lifecycle events from Connect service
+    - topic: session.connected
+      event: SessionConnectedEvent
+      handler: HandleSessionConnected
+    - topic: session.disconnected
+      event: SessionDisconnectedEvent
+      handler: HandleSessionDisconnected
+    - topic: session.reconnected
+      event: SessionReconnectedEvent
+      handler: HandleSessionReconnected
+    # Subscription changes from Subscriptions service
+    - topic: subscription.updated
+      event: SubscriptionUpdatedEvent
+      handler: HandleSubscriptionUpdated
+  x-event-publications:
+    # Game session state changes (for permission recompilation)
+    - topic: permissions.session-state-changed
+      event: SessionStateChangeEvent
+      description: Published when player enters/exits game session affecting permissions
+
+paths: {}  # Events don't have HTTP paths
+
+# NOTE: No components/schemas section - this service does not define unique event types.
+# All subscribed/published events are defined in their canonical locations:
+# - SessionConnectedEvent, SessionDisconnectedEvent, SessionReconnectedEvent: common-events.yaml
+# - SubscriptionUpdatedEvent: subscriptions-events.yaml
+# - SessionStateChangeEvent: permissions-events.yaml

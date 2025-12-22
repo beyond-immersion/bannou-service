@@ -1,0 +1,12 @@
+openapi: 3.0.3
+info:
+  title: Website Service Configuration
+  description: "Configuration schema for Website service.\nProperties are bound to environment variables with BANNOU_ prefix."
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    Enabled:
+      type: boolean
+      description: Enable/disable Website service
+      default: true

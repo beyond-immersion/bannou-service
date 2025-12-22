@@ -1,0 +1,120 @@
+openapi: 3.0.3
+info:
+  title: Auth Service Events
+  description: |
+    Event models for Auth service RabbitMQ pub/sub via Dapr.
+    Contains auth-specific events and subscription/publication declarations.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Account lifecycle events from Accounts service
+    - topic: account.deleted
+      event: AccountDeletedEvent
+      handler: HandleAccountDeleted
+    - topic: account.updated
+      event: AccountUpdatedEvent
+      handler: HandleAccountUpdated
+    # Subscription changes from Subscriptions service
+    - topic: subscription.updated
+      event: SubscriptionUpdatedEvent
+      handler: HandleSubscriptionUpdated
+  x-event-publications:
+    # Session lifecycle events published by Auth service
+    - topic: session.invalidated
+      event: SessionInvalidatedEvent
+      description: Published when sessions are invalidated (logout, deletion, security)
+    - topic: session.updated
+      event: SessionUpdatedEvent
+      description: Published when session roles/authorizations change
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    # Auth-specific events (published by Auth service)
+    # NOTE: Events Auth subscribes to (AccountDeletedEvent, etc.) are defined in their
+    # canonical locations and accessed via BeyondImmersion.BannouService.Events namespace
+    SessionInvalidatedEvent:
+      type: object
+      description: Event published when sessions are invalidated (logout, account deletion, etc.)
+      required:
+        - eventId
+        - timestamp
+        - sessionIds
+        - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        accountId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the account whose sessions were invalidated
+        sessionIds:
+          type: array
+          items:
+            type: string
+          description: List of session IDs that were invalidated
+        reason:
+          $ref: '#/components/schemas/SessionInvalidatedEventReason'
+        disconnectClients:
+          type: boolean
+          default: true
+          description: Whether Connect service should disconnect WebSocket clients
+
+    SessionInvalidatedEventReason:
+      type: string
+      enum: [logout, account_deleted, security_revocation, admin_action, session_expired]
+      description: Reason for session invalidation
+
+    SessionUpdatedEvent:
+      type: object
+      description: |
+        Published when a session's roles or authorizations change.
+        Permissions service subscribes to update capability compilation.
+      required:
+        - eventId
+        - timestamp
+        - accountId
+        - sessionId
+        - roles
+        - authorizations
+        - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account whose session changed
+        sessionId:
+          type: string
+          description: ID of the session that changed
+        roles:
+          type: array
+          items:
+            type: string
+          description: Current roles for the session
+        authorizations:
+          type: array
+          items:
+            type: string
+          description: Current authorization strings (e.g., ["arcadia:authorized"])
+        reason:
+          $ref: '#/components/schemas/SessionUpdatedEventReason'
+
+    SessionUpdatedEventReason:
+      type: string
+      enum: [role_changed, authorization_changed, subscription_changed]
+      description: Reason for session update

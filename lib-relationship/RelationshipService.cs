@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +18,7 @@ namespace BeyondImmersion.BannouService.Relationship;
 /// bidirectional support, and soft-delete capability.
 /// </summary>
 [DaprService("relationship", typeof(IRelationshipService), lifetime: ServiceLifetime.Scoped)]
-public class RelationshipService : IRelationshipService
+public partial class RelationshipService : IRelationshipService
 {
     private readonly DaprClient _daprClient;
     private readonly ILogger<RelationshipService> _logger;
@@ -43,12 +44,17 @@ public class RelationshipService : IRelationshipService
         DaprClient daprClient,
         ILogger<RelationshipService> logger,
         RelationshipServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter)
+        IErrorEventEmitter errorEventEmitter,
+        IEventConsumer eventConsumer)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+
+        // Register event handlers via partial class (RelationshipServiceEvents.cs)
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
     }
 
     #region Read Operations

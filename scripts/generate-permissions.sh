@@ -30,7 +30,7 @@ to_pascal_case() {
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
 PROJECT_DIR="../lib-${SERVICE_NAME}"
 OUTPUT_DIR="${PROJECT_DIR}/Generated"
-OUTPUT_FILE="${OUTPUT_DIR}/${SERVICE_PASCAL}PermissionRegistration.Generated.cs"
+OUTPUT_FILE="${OUTPUT_DIR}/${SERVICE_PASCAL}PermissionRegistration.cs"
 
 echo -e "${BLUE}🔐 Generating permission registration for: $SERVICE_NAME${NC}"
 
@@ -48,6 +48,13 @@ fi
 
 # Ensure Generated directory exists
 mkdir -p "$OUTPUT_DIR"
+
+# Clean up old .Generated.cs file if it exists (legacy naming)
+OLD_FILE="${OUTPUT_DIR}/${SERVICE_PASCAL}PermissionRegistration.Generated.cs"
+if [ -f "$OLD_FILE" ]; then
+    rm "$OLD_FILE"
+    echo -e "  🧹 Cleaned up legacy file: $(basename "$OLD_FILE")"
+fi
 
 # Extract service version from schema info.version
 SERVICE_VERSION=$(grep -A1 '^info:' "$SCHEMA_FILE" | grep 'version:' | head -1 | sed "s/.*version:[[:space:]]*['\"]*//" | sed "s/['\"].*//")

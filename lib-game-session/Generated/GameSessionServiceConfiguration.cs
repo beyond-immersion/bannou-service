@@ -16,8 +16,8 @@ public class GameSessionServiceConfiguration : IServiceConfiguration
     public string? Force_Service_ID { get; set; }
 
     /// <summary>
-    /// Default configuration property - can be removed if not needed.
-    /// Environment variable: GAME-SESSION_ENABLED or BANNOU_GAME-SESSION_ENABLED
+    /// Enable/disable Game Session service
+    /// Environment variable: ENABLED or BANNOU_ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

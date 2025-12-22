@@ -1,0 +1,34 @@
+openapi: 3.0.3
+info:
+  title: Relationship Type Service Events
+  description: |
+    Event models for Relationship Type service RabbitMQ pub/sub via Dapr.
+    Lifecycle events are auto-generated from x-lifecycle definition.
+  version: 1.0.0
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/relationship-type-lifecycle-events.yaml
+x-lifecycle:
+  RelationshipType:
+    model:
+      relationshipTypeId: { type: string, format: uuid, primary: true, required: true }
+      code: { type: string, required: true }
+      name: { type: string, required: true }
+      description: { type: string }
+      category: { type: string }
+      parentTypeId: { type: string, format: uuid }
+      parentTypeCode: { type: string }
+      inverseTypeId: { type: string, format: uuid }
+      inverseTypeCode: { type: string }
+      isBidirectional: { type: boolean, required: true }
+      isDeprecated: { type: boolean, required: true }
+      deprecatedAt: { type: string, format: date-time }
+      deprecationReason: { type: string }
+      depth: { type: integer, required: true }
+      metadata: { type: object, additionalProperties: true }
+      createdAt: { type: string, format: date-time, required: true }
+      updatedAt: { type: string, format: date-time, required: true }
+
+paths: {}  # Events don't have HTTP paths
+
+# NOTE: No components/schemas - lifecycle events are auto-generated to schemas/Generated/

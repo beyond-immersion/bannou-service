@@ -76,7 +76,16 @@ run_component() {
     echo -e "${YELLOW}🔄 Generating $component...${NC}"
 
     if [ -f "$script_path" ]; then
-        if "$script_path" "$SERVICE_NAME" "$SCHEMA_FILE"; then
+        # Config component uses -configuration.yaml, everything else uses -api.yaml
+        local component_schema="$SCHEMA_FILE"
+        if [ "$component" = "config" ]; then
+            local config_schema="../schemas/${SERVICE_NAME}-configuration.yaml"
+            if [ -f "$config_schema" ]; then
+                component_schema="$config_schema"
+            fi
+        fi
+
+        if "$script_path" "$SERVICE_NAME" "$component_schema"; then
             echo -e "${GREEN}✅ $component generation completed${NC}"
             RESULTS+=("$component: ✅ SUCCESS")
             return 0
@@ -114,6 +123,7 @@ declare -a GENERATION_ORDER=(
     "project"
     "models"
     "controller"
+    "event-subscriptions"
     "client"
     "interface"
     "config"

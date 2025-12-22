@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,7 @@ public class AccountsServiceTests
     private readonly AccountsServiceConfiguration _configuration;
     private readonly Mock<DaprClient> _mockDaprClient;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public AccountsServiceTests()
     {
@@ -24,6 +26,7 @@ public class AccountsServiceTests
         _configuration = new AccountsServiceConfiguration();
         _mockDaprClient = new Mock<DaprClient>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
     }
 
     [Fact]
@@ -34,7 +37,8 @@ public class AccountsServiceTests
             _mockLogger.Object,
             _configuration,
             _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
 
         Assert.NotNull(service);
     }
@@ -124,7 +128,8 @@ public class AccountsServiceTests
             _mockLogger.Object,
             configuration,
             _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
     }
 
     [Fact]
@@ -551,7 +556,8 @@ public class AccountsServiceTests
             null!,
             _configuration,
             _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -562,7 +568,8 @@ public class AccountsServiceTests
             _mockLogger.Object,
             null!,
             _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -573,7 +580,8 @@ public class AccountsServiceTests
             _mockLogger.Object,
             _configuration,
             null!,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
     }
 
     #endregion
@@ -588,7 +596,8 @@ public class AccountsServiceTests
             _mockLogger.Object,
             _configuration,
             _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest());
@@ -607,7 +616,8 @@ public class AccountsServiceTests
             _mockLogger.Object,
             _configuration,
             _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { Page = -5 });
@@ -626,7 +636,8 @@ public class AccountsServiceTests
             _mockLogger.Object,
             _configuration,
             _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { PageSize = -10 });
@@ -645,7 +656,8 @@ public class AccountsServiceTests
             _mockLogger.Object,
             _configuration,
             _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { Page = 0 });
@@ -668,7 +680,8 @@ public class AccountsServiceTests
             _mockLogger.Object,
             _configuration,
             _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
 
         var request = new CreateAccountRequest
         {
@@ -696,7 +709,8 @@ public class AccountsServiceTests
             _mockLogger.Object,
             _configuration,
             _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
 
         var request = new CreateAccountRequest
         {
@@ -723,7 +737,8 @@ public class AccountsServiceTests
             _mockLogger.Object,
             _configuration,
             _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
 
         var request = new CreateAccountRequest
         {
@@ -750,7 +765,8 @@ public class AccountsServiceTests
             _mockLogger.Object,
             _configuration,
             _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
 
         var accountIds = new List<Guid>();
 
@@ -782,7 +798,8 @@ public class AccountsServiceTests
             _mockLogger.Object,
             _configuration,
             _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
 
         // Truncate to second precision to match Unix timestamp storage
         var beforeCreation = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
@@ -817,7 +834,8 @@ public class AccountsServiceTests
             _mockLogger.Object,
             _configuration,
             _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
 
         var request = new CreateAccountRequest
         {

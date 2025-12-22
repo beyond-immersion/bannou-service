@@ -1,0 +1,31 @@
+openapi: 3.0.3
+info:
+  title: Location Service Events
+  description: |
+    Event models for Location service RabbitMQ pub/sub via Dapr.
+    Lifecycle events are auto-generated from x-lifecycle definition.
+  version: 1.0.0
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/location-lifecycle-events.yaml
+x-lifecycle:
+  Location:
+    model:
+      locationId: { type: string, format: uuid, primary: true, required: true }
+      realmId: { type: string, format: uuid, required: true }
+      code: { type: string, required: true }
+      name: { type: string, required: true }
+      description: { type: string }
+      locationType: { type: string, required: true }
+      parentLocationId: { type: string, format: uuid }
+      depth: { type: integer, required: true }
+      isDeprecated: { type: boolean, required: true }
+      deprecatedAt: { type: string, format: date-time }
+      deprecationReason: { type: string }
+      metadata: { type: object, additionalProperties: true }
+      createdAt: { type: string, format: date-time, required: true }
+      updatedAt: { type: string, format: date-time, required: true }
+
+paths: {}  # Events don't have HTTP paths
+
+# NOTE: No components/schemas - lifecycle events are auto-generated to schemas/Generated/

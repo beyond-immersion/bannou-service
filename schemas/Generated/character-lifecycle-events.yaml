@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: Bannou Character Service API Lifecycle Events
+  title: Character Service Events Lifecycle Events
   description: "Auto-generated lifecycle event schemas for character service.\nDO NOT EDIT - This file is completely overwritten
-    by generate-lifecycle-events.py.\nSource of truth: character-api.yaml x-lifecycle section."
+    by generate-lifecycle-events.py.\nSource of truth: character-events.yaml x-lifecycle section."
   version: 1.0.0
 paths: {}
 components:

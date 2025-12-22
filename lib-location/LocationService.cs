@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
@@ -18,7 +19,7 @@ namespace BeyondImmersion.BannouService.Location;
 /// Locations are partitioned by realm for scalability.
 /// </summary>
 [DaprService("location", typeof(ILocationService), lifetime: ServiceLifetime.Scoped)]
-public class LocationService : ILocationService
+public partial class LocationService : ILocationService
 {
     private readonly DaprClient _daprClient;
     private readonly ILogger<LocationService> _logger;
@@ -39,13 +40,18 @@ public class LocationService : ILocationService
         ILogger<LocationService> logger,
         LocationServiceConfiguration configuration,
         IErrorEventEmitter errorEventEmitter,
-        IRealmClient realmClient)
+        IRealmClient realmClient,
+        IEventConsumer eventConsumer)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _realmClient = realmClient ?? throw new ArgumentNullException(nameof(realmClient));
+
+        // Register event handlers via partial class (LocationServiceEvents.cs)
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
     }
 
     #region Key Building Helpers

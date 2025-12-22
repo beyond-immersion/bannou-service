@@ -16,7 +16,7 @@ namespace BeyondImmersion.BannouService.Website;
 /// Methods return placeholder responses until implementation is complete.
 /// </summary>
 [DaprService("website", typeof(IWebsiteService), lifetime: ServiceLifetime.Scoped)]
-public class WebsiteService : IWebsiteService
+public partial class WebsiteService : IWebsiteService
 {
     private readonly ILogger<WebsiteService> _logger;
     private readonly WebsiteServiceConfiguration _configuration;
@@ -25,11 +25,16 @@ public class WebsiteService : IWebsiteService
     public WebsiteService(
         ILogger<WebsiteService> logger,
         WebsiteServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter)
+        IErrorEventEmitter errorEventEmitter,
+        IEventConsumer eventConsumer)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+
+        // Register event handlers via partial class (WebsiteServiceEvents.cs)
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>

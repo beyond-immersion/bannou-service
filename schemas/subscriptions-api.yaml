@@ -10,8 +10,8 @@ info:
     See API-DESIGN.md for architectural rationale.
   version: 1.0.0
 servers:
-  - url: http://localhost:3500/v1.0/invoke/bannou/method
-    description: Dapr sidecar endpoint (internal only)
+- url: http://localhost:3500/v1.0/invoke/bannou/method
+  description: Dapr sidecar endpoint (internal only)
 
 paths:
   /subscriptions/account/list:
@@ -20,10 +20,10 @@ paths:
       description: Returns all subscriptions for a given account, with optional filtering.
       operationId: getAccountSubscriptions
       tags:
-        - Subscription Management
+      - Subscription Management
       x-permissions:
-        - role: user
-          states: {}
+      - role: user
+        states: {}
       requestBody:
         required: true
         content:
@@ -46,10 +46,10 @@ paths:
         Used by Auth service during session creation to populate session authorizations.
       operationId: getCurrentSubscriptions
       tags:
-        - Subscription Management
+      - Subscription Management
       x-permissions:
-        - role: user
-          states: {}
+      - role: user
+        states: {}
       requestBody:
         required: true
         content:
@@ -69,10 +69,10 @@ paths:
       summary: Get a specific subscription by ID
       operationId: getSubscription
       tags:
-        - Subscription Management
+      - Subscription Management
       x-permissions:
-        - role: user
-          states: {}
+      - role: user
+        states: {}
       requestBody:
         required: true
         content:
@@ -95,10 +95,10 @@ paths:
       description: Admin-only endpoint to create a new subscription for an account.
       operationId: createSubscription
       tags:
-        - Subscription Management
+      - Subscription Management
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -125,10 +125,10 @@ paths:
       description: Admin-only endpoint to update an existing subscription.
       operationId: updateSubscription
       tags:
-        - Subscription Management
+      - Subscription Management
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -153,10 +153,10 @@ paths:
         admins can cancel any subscription.
       operationId: cancelSubscription
       tags:
-        - Subscription Management
+      - Subscription Management
       x-permissions:
-        - role: user
-          states: {}
+      - role: user
+        states: {}
       requestBody:
         required: true
         content:
@@ -181,10 +181,10 @@ paths:
       description: Admin-only endpoint to renew or extend an existing subscription.
       operationId: renewSubscription
       tags:
-        - Subscription Management
+      - Subscription Management
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -208,7 +208,7 @@ components:
       type: object
       description: Request to get subscriptions for an account
       required:
-        - accountId
+      - accountId
       properties:
         accountId:
           type: string
@@ -227,7 +227,7 @@ components:
       type: object
       description: Request to get current active subscriptions
       required:
-        - accountId
+      - accountId
       properties:
         accountId:
           type: string
@@ -238,7 +238,7 @@ components:
       type: object
       description: Request to get a specific subscription
       required:
-        - subscriptionId
+      - subscriptionId
       properties:
         subscriptionId:
           type: string
@@ -249,8 +249,8 @@ components:
       type: object
       description: Request to create a new subscription
       required:
-        - accountId
-        - serviceId
+      - accountId
+      - serviceId
       properties:
         accountId:
           type: string
@@ -279,7 +279,7 @@ components:
       type: object
       description: Request to update an existing subscription
       required:
-        - subscriptionId
+      - subscriptionId
       properties:
         subscriptionId:
           type: string
@@ -299,7 +299,7 @@ components:
       type: object
       description: Request to cancel a subscription
       required:
-        - subscriptionId
+      - subscriptionId
       properties:
         subscriptionId:
           type: string
@@ -315,7 +315,7 @@ components:
       type: object
       description: Request to renew or extend a subscription
       required:
-        - subscriptionId
+      - subscriptionId
       properties:
         subscriptionId:
           type: string
@@ -335,13 +335,13 @@ components:
       type: object
       description: Information about a subscription
       required:
-        - subscriptionId
-        - accountId
-        - serviceId
-        - stubName
-        - startDate
-        - isActive
-        - createdAt
+      - subscriptionId
+      - accountId
+      - serviceId
+      - stubName
+      - startDate
+      - isActive
+      - createdAt
       properties:
         subscriptionId:
           type: string
@@ -396,8 +396,8 @@ components:
       type: object
       description: Response containing current active subscriptions and authorization strings
       required:
-        - accountId
-        - authorizations
+      - accountId
+      - authorizations
       properties:
         accountId:
           type: string
@@ -418,8 +418,8 @@ components:
       type: object
       description: Response containing list of subscriptions
       required:
-        - subscriptions
-        - totalCount
+      - subscriptions
+      - totalCount
       properties:
         subscriptions:
           type: array
@@ -429,13 +429,3 @@ components:
           type: integer
           description: Total number of subscriptions matching the filter
 
-x-service-configuration:
-  properties:
-    StateStoreName:
-      type: string
-      description: Name of the Dapr state store for subscription data
-      default: "subscriptions-statestore"
-    AuthorizationSuffix:
-      type: string
-      description: Suffix appended to stub name for authorization strings
-      default: "authorized"

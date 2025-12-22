@@ -25,6 +25,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     private readonly Mock<ILogger<LocationService>> _mockLogger;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IRealmClient> _mockRealmClient;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     private const string STATE_STORE = "location-statestore";
     private const string PUBSUB_NAME = "bannou-pubsub";
@@ -40,6 +41,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         _mockLogger = new Mock<ILogger<LocationService>>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockRealmClient = new Mock<IRealmClient>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Default realm validation to pass
         _mockRealmClient
@@ -54,7 +56,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             _mockLogger.Object,
             Configuration,
             _mockErrorEventEmitter.Object,
-            _mockRealmClient.Object);
+            _mockRealmClient.Object,
+            _mockEventConsumer.Object);
     }
 
     /// <summary>
@@ -107,7 +110,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             _mockLogger.Object,
             Configuration,
             _mockErrorEventEmitter.Object,
-            _mockRealmClient.Object));
+            _mockRealmClient.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -118,7 +122,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             null!,
             Configuration,
             _mockErrorEventEmitter.Object,
-            _mockRealmClient.Object));
+            _mockRealmClient.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -129,7 +134,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             _mockLogger.Object,
             null!,
             _mockErrorEventEmitter.Object,
-            _mockRealmClient.Object));
+            _mockRealmClient.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -140,7 +146,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             _mockLogger.Object,
             Configuration,
             null!,
-            _mockRealmClient.Object));
+            _mockRealmClient.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -151,7 +158,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             _mockLogger.Object,
             Configuration,
             _mockErrorEventEmitter.Object,
-            null!));
+            null!,
+            _mockEventConsumer.Object));
     }
 
     #endregion

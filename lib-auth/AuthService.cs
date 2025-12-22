@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Subscriptions;
@@ -28,7 +29,7 @@ namespace BeyondImmersion.BannouService.Auth;
 /// Follows schema-first architecture - implements generated IAuthService interface.
 /// </summary>
 [DaprService("auth", typeof(IAuthService), lifetime: ServiceLifetime.Scoped)]
-public class AuthService : IAuthService
+public partial class AuthService : IAuthService
 {
     private readonly IAccountsClient _accountsClient;
     private readonly ISubscriptionsClient _subscriptionsClient;
@@ -67,7 +68,8 @@ public class AuthService : IAuthService
         ITokenService tokenService,
         ISessionService sessionService,
         IOAuthProviderService oauthService,
-        IErrorEventEmitter errorEventEmitter)
+        IErrorEventEmitter errorEventEmitter,
+        IEventConsumer eventConsumer)
     {
         _accountsClient = accountsClient ?? throw new ArgumentNullException(nameof(accountsClient));
         _subscriptionsClient = subscriptionsClient ?? throw new ArgumentNullException(nameof(subscriptionsClient));
@@ -79,6 +81,10 @@ public class AuthService : IAuthService
         _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
         _oauthService = oauthService ?? throw new ArgumentNullException(nameof(oauthService));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+
+        // Register event handlers via partial class (AuthServiceEvents.cs)
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        RegisterEventConsumers(eventConsumer);
 
         _logger.LogInformation("AuthService initialized with JwtSecret length: {Length}, Issuer: {Issuer}, Audience: {Audience}, MockProviders: {MockProviders}",
             _configuration.JwtSecret?.Length ?? 0, _configuration.JwtIssuer, _configuration.JwtAudience, _configuration.MockProviders);

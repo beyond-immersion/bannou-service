@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: Character Service Events
+  description: |
+    Event models for Character service RabbitMQ pub/sub via Dapr.
+    Lifecycle events are auto-generated from x-lifecycle definition.
+  version: 1.0.0
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/character-lifecycle-events.yaml
+x-lifecycle:
+  Character:
+    model:
+      characterId: { type: string, format: uuid, primary: true, required: true }
+      name: { type: string, required: true }
+      realmId: { type: string, format: uuid, required: true }
+      speciesId: { type: string, format: uuid, required: true }
+      birthDate: { type: string, format: date-time }
+      status: { type: string }
+      createdAt: { type: string, format: date-time, required: true }
+      updatedAt: { type: string, format: date-time }
+
+paths: {}  # Events don't have HTTP paths
+
+# NOTE: No components/schemas section - lifecycle events are auto-generated.
+# CharacterCreatedEvent, CharacterUpdatedEvent, CharacterDeletedEvent
+# are generated to schemas/Generated/character-lifecycle-events.yaml

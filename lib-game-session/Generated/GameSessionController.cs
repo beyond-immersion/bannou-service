@@ -34,6 +34,10 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
     /// List available game sessions
     /// </summary>
 
+    /// <remarks>
+    /// List available game sessions. This endpoint is not directly accessible via WebSocket API.
+    /// <br/>Access is granted through session shortcuts or internal service calls.
+    /// </remarks>
 
     /// <returns>Game sessions retrieved successfully</returns>
 
@@ -43,6 +47,10 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
     /// Create new game session
     /// </summary>
 
+    /// <remarks>
+    /// Create a new game session. This endpoint is not directly accessible via WebSocket API.
+    /// <br/>Access is granted through session shortcuts or internal service calls.
+    /// </remarks>
 
     /// <returns>Game session created successfully</returns>
 
@@ -52,6 +60,9 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
     /// Get game session details
     /// </summary>
 
+    /// <remarks>
+    /// Get details of the current game session the user has joined.
+    /// </remarks>
 
     /// <returns>Game session retrieved successfully</returns>
 
@@ -61,6 +72,12 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
     /// Join a game session
     /// </summary>
 
+    /// <remarks>
+    /// Join an existing game session. This endpoint is not directly accessible via WebSocket API.
+    /// <br/>Access is granted through session shortcuts published by the game-session service when
+    /// <br/>a subscribed user connects. The shortcut contains a pre-bound JoinGameSessionRequest
+    /// <br/>with the target session ID already filled in.
+    /// </remarks>
 
     /// <returns>Successfully joined game session</returns>
 
@@ -159,6 +176,10 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// <summary>
     /// List available game sessions
     /// </summary>
+    /// <remarks>
+    /// List available game sessions. This endpoint is not directly accessible via WebSocket API.
+    /// <br/>Access is granted through session shortcuts or internal service calls.
+    /// </remarks>
     /// <returns>Game sessions retrieved successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/list")]
 
@@ -172,6 +193,10 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// <summary>
     /// Create new game session
     /// </summary>
+    /// <remarks>
+    /// Create a new game session. This endpoint is not directly accessible via WebSocket API.
+    /// <br/>Access is granted through session shortcuts or internal service calls.
+    /// </remarks>
     /// <returns>Game session created successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/create")]
 
@@ -185,6 +210,9 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// <summary>
     /// Get game session details
     /// </summary>
+    /// <remarks>
+    /// Get details of the current game session the user has joined.
+    /// </remarks>
     /// <returns>Game session retrieved successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/get")]
 
@@ -198,6 +226,12 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// <summary>
     /// Join a game session
     /// </summary>
+    /// <remarks>
+    /// Join an existing game session. This endpoint is not directly accessible via WebSocket API.
+    /// <br/>Access is granted through session shortcuts published by the game-session service when
+    /// <br/>a subscribed user connects. The shortcut contains a pre-bound JoinGameSessionRequest
+    /// <br/>with the target session ID already filled in.
+    /// </remarks>
     /// <returns>Successfully joined game session</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/join")]
 

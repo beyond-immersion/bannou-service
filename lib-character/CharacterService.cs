@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
@@ -20,7 +21,7 @@ namespace BeyondImmersion.BannouService.Character;
 /// Note: Character relationships are managed by the separate Relationship service.
 /// </summary>
 [DaprService("character", typeof(ICharacterService), lifetime: ServiceLifetime.Scoped)]
-public class CharacterService : ICharacterService
+public partial class CharacterService : ICharacterService
 {
     private readonly DaprClient _daprClient;
     private readonly ILogger<CharacterService> _logger;
@@ -50,7 +51,8 @@ public class CharacterService : ICharacterService
         CharacterServiceConfiguration configuration,
         IErrorEventEmitter errorEventEmitter,
         IRealmClient realmClient,
-        ISpeciesClient speciesClient)
+        ISpeciesClient speciesClient,
+        IEventConsumer eventConsumer)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -58,6 +60,10 @@ public class CharacterService : ICharacterService
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _realmClient = realmClient ?? throw new ArgumentNullException(nameof(realmClient));
         _speciesClient = speciesClient ?? throw new ArgumentNullException(nameof(speciesClient));
+
+        // Register event handlers via partial class (CharacterServiceEvents.cs)
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
     }
 
     #region Character CRUD Operations

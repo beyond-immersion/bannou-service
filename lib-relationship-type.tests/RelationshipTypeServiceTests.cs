@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.RelationshipType;
 using BeyondImmersion.BannouService.Services;
@@ -21,6 +22,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
     private readonly Mock<ILogger<RelationshipTypeService>> _mockLogger;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IRelationshipClient> _mockRelationshipClient;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public RelationshipTypeServiceTests()
     {
@@ -28,6 +30,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         _mockLogger = new Mock<ILogger<RelationshipTypeService>>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockRelationshipClient = new Mock<IRelationshipClient>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
     }
 
     private RelationshipTypeService CreateService()
@@ -37,7 +40,8 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             _mockLogger.Object,
             Configuration,
             _mockErrorEventEmitter.Object,
-            _mockRelationshipClient.Object);
+            _mockRelationshipClient.Object,
+            _mockEventConsumer.Object);
     }
 
     #region Constructor Tests
@@ -61,7 +65,8 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             _mockLogger.Object,
             Configuration,
             _mockErrorEventEmitter.Object,
-            _mockRelationshipClient.Object));
+            _mockRelationshipClient.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -73,7 +78,8 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             null!,
             Configuration,
             _mockErrorEventEmitter.Object,
-            _mockRelationshipClient.Object));
+            _mockRelationshipClient.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -85,7 +91,8 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             _mockLogger.Object,
             null!,
             _mockErrorEventEmitter.Object,
-            _mockRelationshipClient.Object));
+            _mockRelationshipClient.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -97,7 +104,21 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             _mockLogger.Object,
             Configuration,
             null!,
-            _mockRelationshipClient.Object));
+            _mockRelationshipClient.Object,
+            _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new RelationshipTypeService(
+            _mockDaprClient.Object,
+            _mockLogger.Object,
+            Configuration,
+            _mockErrorEventEmitter.Object,
+            _mockRelationshipClient.Object,
+            null!));
     }
 
     #endregion

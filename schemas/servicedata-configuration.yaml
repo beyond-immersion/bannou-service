@@ -1,0 +1,14 @@
+openapi: 3.0.3
+info:
+  title: ServiceData Service Configuration
+  description: "Configuration schema for ServiceData service.\nProperties are bound to environment variables with BANNOU_ prefix."
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # State Store Configuration
+    StateStoreName:
+      type: string
+      description: Dapr state store name for service data
+      env: SERVICEDATA_STATE_STORE_NAME
+      default: "servicedata-statestore"

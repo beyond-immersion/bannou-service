@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -17,6 +18,9 @@ public static class ServiceClientsDependencyInjection
     {
         // Core service mapping infrastructure
         services.AddServiceAppMappingResolver();
+
+        // Event consumer for cross-plugin event dispatch
+        services.AddEventConsumer();
 
         return services;
     }

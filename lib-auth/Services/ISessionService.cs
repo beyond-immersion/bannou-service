@@ -1,3 +1,5 @@
+using BeyondImmersion.BannouService.Events;
+
 namespace BeyondImmersion.BannouService.Auth.Services;
 
 /// <summary>

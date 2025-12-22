@@ -22,6 +22,7 @@ public class VoiceServiceTests
     private readonly Mock<IP2PCoordinator> _mockP2PCoordinator;
     private readonly Mock<IScaledTierCoordinator> _mockScaledTierCoordinator;
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public VoiceServiceTests()
     {
@@ -33,6 +34,7 @@ public class VoiceServiceTests
         _mockP2PCoordinator = new Mock<IP2PCoordinator>();
         _mockScaledTierCoordinator = new Mock<IScaledTierCoordinator>();
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Default P2P max participants
         _mockP2PCoordinator.Setup(p => p.GetP2PMaxParticipants()).Returns(6);
@@ -51,6 +53,7 @@ public class VoiceServiceTests
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
+            _mockEventConsumer.Object,
             _mockClientEventPublisher.Object);
     }
 
@@ -78,6 +81,7 @@ public class VoiceServiceTests
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
+            _mockEventConsumer.Object,
             _mockClientEventPublisher.Object));
     }
 
@@ -93,6 +97,7 @@ public class VoiceServiceTests
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
+            _mockEventConsumer.Object,
             _mockClientEventPublisher.Object));
     }
 
@@ -108,6 +113,7 @@ public class VoiceServiceTests
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
+            _mockEventConsumer.Object,
             _mockClientEventPublisher.Object));
     }
 
@@ -123,6 +129,7 @@ public class VoiceServiceTests
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
+            _mockEventConsumer.Object,
             _mockClientEventPublisher.Object));
     }
 
@@ -138,6 +145,7 @@ public class VoiceServiceTests
             null!,
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
+            _mockEventConsumer.Object,
             _mockClientEventPublisher.Object));
     }
 
@@ -153,6 +161,7 @@ public class VoiceServiceTests
             _mockEndpointRegistry.Object,
             null!,
             _mockScaledTierCoordinator.Object,
+            _mockEventConsumer.Object,
             _mockClientEventPublisher.Object));
     }
 
@@ -167,6 +176,23 @@ public class VoiceServiceTests
             _mockErrorEventEmitter.Object,
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
+            null!,
+            _mockEventConsumer.Object,
+            _mockClientEventPublisher.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new VoiceService(
+            _mockDaprClient.Object,
+            _mockLogger.Object,
+            _mockConfiguration.Object,
+            _mockErrorEventEmitter.Object,
+            _mockEndpointRegistry.Object,
+            _mockP2PCoordinator.Object,
+            _mockScaledTierCoordinator.Object,
             null!,
             _mockClientEventPublisher.Object));
     }
@@ -183,6 +209,7 @@ public class VoiceServiceTests
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
+            _mockEventConsumer.Object,
             null);
 
         // Assert - Service should be created successfully
@@ -643,6 +670,7 @@ public class VoiceServiceTests
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
+            _mockEventConsumer.Object,
             _mockClientEventPublisher.Object,
             mockPermissionsClient.Object);
 

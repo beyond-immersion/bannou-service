@@ -40,7 +40,7 @@ public class SubscriptionExpirationService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("[SUB-EXPIRY] Subscription expiration service starting, check interval: {Interval}", CheckInterval);
+        _logger.LogInformation("Subscription expiration service starting, check interval: {Interval}", CheckInterval);
 
         // Wait a bit before first check to allow other services to start
         await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
@@ -58,7 +58,7 @@ public class SubscriptionExpirationService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[SUB-EXPIRY] Error during subscription expiration check");
+                _logger.LogError(ex, "Error during subscription expiration check");
             }
 
             try
@@ -71,7 +71,7 @@ public class SubscriptionExpirationService : BackgroundService
             }
         }
 
-        _logger.LogInformation("[SUB-EXPIRY] Subscription expiration service stopped");
+        _logger.LogInformation("Subscription expiration service stopped");
     }
 
     /// <summary>
@@ -79,14 +79,14 @@ public class SubscriptionExpirationService : BackgroundService
     /// </summary>
     private async Task CheckAndExpireSubscriptionsAsync(CancellationToken cancellationToken)
     {
-        _logger.LogDebug("[SUB-EXPIRY] Checking for expired subscriptions");
+        _logger.LogDebug("Checking for expired subscriptions");
 
         using var scope = _serviceProvider.CreateScope();
         var daprClient = scope.ServiceProvider.GetService<DaprClient>();
 
         if (daprClient == null)
         {
-            _logger.LogWarning("[SUB-EXPIRY] DaprClient not available, skipping expiration check");
+            _logger.LogWarning("DaprClient not available, skipping expiration check");
             return;
         }
 
@@ -98,7 +98,7 @@ public class SubscriptionExpirationService : BackgroundService
 
         if (subscriptionIndex == null || subscriptionIndex.Count == 0)
         {
-            _logger.LogDebug("[SUB-EXPIRY] No subscriptions to check");
+            _logger.LogDebug("No subscriptions to check");
             return;
         }
 
@@ -124,7 +124,7 @@ public class SubscriptionExpirationService : BackgroundService
                     subscription.ExpirationDateUnix.HasValue &&
                     subscription.ExpirationDateUnix.Value <= nowUnix - (long)ExpirationGracePeriod.TotalSeconds)
                 {
-                    _logger.LogInformation("[SUB-EXPIRY] Subscription {SubscriptionId} for account {AccountId} has expired",
+                    _logger.LogInformation("Subscription {SubscriptionId} for account {AccountId} has expired",
                         subscription.SubscriptionId, subscription.AccountId);
 
                     // Mark as inactive
@@ -154,7 +154,7 @@ public class SubscriptionExpirationService : BackgroundService
                         expirationEvent,
                         cancellationToken);
 
-                    _logger.LogInformation("[SUB-EXPIRY] Published expiration event for subscription {SubscriptionId}",
+                    _logger.LogInformation("Published expiration event for subscription {SubscriptionId}",
                         subscription.SubscriptionId);
 
                     expiredCount++;
@@ -162,17 +162,17 @@ public class SubscriptionExpirationService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "[SUB-EXPIRY] Failed to process subscription {SubscriptionId}", subscriptionId);
+                _logger.LogWarning(ex, "Failed to process subscription {SubscriptionId}", subscriptionId);
             }
         }
 
         if (expiredCount > 0)
         {
-            _logger.LogInformation("[SUB-EXPIRY] Expired {Count} subscriptions", expiredCount);
+            _logger.LogInformation("Expired {Count} subscriptions", expiredCount);
         }
         else
         {
-            _logger.LogDebug("[SUB-EXPIRY] No subscriptions expired this cycle");
+            _logger.LogDebug("No subscriptions expired this cycle");
         }
     }
 

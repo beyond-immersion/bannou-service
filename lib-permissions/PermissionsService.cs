@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Dapr;
 using Dapr.Client;
@@ -24,7 +25,7 @@ namespace BeyondImmersion.BannouService.Permissions;
 /// Uses Dapr state store for atomic operations and Redis-backed data structures.
 /// </summary>
 [DaprService("permissions", typeof(IPermissionsService), lifetime: ServiceLifetime.Singleton)]
-public class PermissionsService : IPermissionsService
+public partial class PermissionsService : IPermissionsService
 {
     private readonly ILogger<PermissionsService> _logger;
     private readonly PermissionsServiceConfiguration _configuration;
@@ -58,7 +59,8 @@ public class PermissionsService : IPermissionsService
         DaprClient daprClient,
         IDistributedLockProvider lockProvider,
         IErrorEventEmitter errorEventEmitter,
-        IClientEventPublisher clientEventPublisher)
+        IClientEventPublisher clientEventPublisher,
+        IEventConsumer eventConsumer)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -68,7 +70,10 @@ public class PermissionsService : IPermissionsService
         _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
         _sessionCapabilityCache = new ConcurrentDictionary<string, CapabilityResponse>();
 
-        _logger.LogInformation("Permissions service initialized with Dapr state store and session-specific client event publishing");
+        // Register event handlers via partial class (PermissionsServiceEvents.cs)
+        RegisterEventConsumers(eventConsumer);
+
+        _logger.LogInformation("Permissions service initialized with Dapr state store, session-specific client event publishing, and event handlers registered");
     }
 
     /// <summary>

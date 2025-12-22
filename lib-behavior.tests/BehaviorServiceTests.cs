@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -15,12 +16,14 @@ public class BehaviorServiceTests
     private readonly Mock<ILogger<BehaviorService>> _mockLogger;
     private readonly Mock<BehaviorServiceConfiguration> _mockConfiguration;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public BehaviorServiceTests()
     {
         _mockLogger = new Mock<ILogger<BehaviorService>>();
         _mockConfiguration = new Mock<BehaviorServiceConfiguration>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
     }
 
     [Fact]
@@ -30,7 +33,8 @@ public class BehaviorServiceTests
         var service = new BehaviorService(
             _mockLogger.Object,
             _mockConfiguration.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
 
         Assert.NotNull(service);
     }

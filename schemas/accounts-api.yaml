@@ -12,19 +12,7 @@ servers:
 - url: http://localhost:3500/v1.0/invoke/bannou/method
   description: Dapr sidecar endpoint (internal only)
 
-# Lifecycle events auto-generated from this definition
-x-lifecycle:
-  Account:
-    model:
-      accountId: { type: string, format: uuid, primary: true, required: true }
-      email: { type: string, format: email, required: true }
-      displayName: { type: string }
-      emailVerified: { type: boolean, required: true }
-      roles: { type: array, items: { type: string } }
-      createdAt: { type: string, format: date-time, required: true }
-      updatedAt: { type: string, format: date-time }
-      metadata: { type: object, additionalProperties: true }
-    sensitive: [passwordHash]
+# NOTE: x-lifecycle moved to accounts-events.yaml
 
 paths:
   /accounts/list:
@@ -694,25 +682,3 @@ components:
         hasPreviousPage:
           type: boolean
 
-x-service-configuration:
-  properties:
-    DefaultPageSize:
-      type: integer
-      description: Default page size for account listings
-      default: 20
-    MaxPageSize:
-      type: integer
-      description: Maximum allowed page size for account listings
-      default: 100
-    AccountRetentionDays:
-      type: integer
-      description: Number of days to retain deleted account data
-      default: 30
-    AdminEmails:
-      type: string
-      description: Comma-separated list of emails that automatically get admin role assigned
-      default: ""
-    AdminEmailDomain:
-      type: string
-      description: Email domain that automatically gets admin role (e.g., "@admin.test.local")
-      default: ""

@@ -16,129 +16,63 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     public string? Force_Service_ID { get; set; }
 
     /// <summary>
-    /// Direct Redis connection (not Dapr component)
-    /// Environment variable: REDISCONNECTIONSTRING or BANNOU_REDISCONNECTIONSTRING
+    /// Cache TTL in minutes for orchestrator data
+    /// Environment variable: ORCHESTRATOR_CACHE_TTL_MINUTES or BANNOU_ORCHESTRATOR_CACHE_TTL_MINUTES
     /// </summary>
-    public string RedisConnectionString { get; set; } = "redis:6379";
+    public int OrchestratorCacheTtlMinutes { get; set; } = 5;
 
     /// <summary>
-    /// Direct RabbitMQ connection (not Dapr component)
-    /// Environment variable: RABBITMQCONNECTIONSTRING or BANNOU_RABBITMQCONNECTIONSTRING
-    /// </summary>
-    public string RabbitMqConnectionString { get; set; } = "amqp://guest:guest@rabbitmq:5672";
-
-    /// <summary>
-    /// Docker API endpoint (socket for dev, TLS for prod)
-    /// Environment variable: DOCKERHOST or BANNOU_DOCKERHOST
-    /// </summary>
-    public string DockerHost { get; set; } = "unix:///var/run/docker.sock";
-
-    /// <summary>
-    /// Path to TLS certificates for Docker API (production)
-    /// Environment variable: DOCKERTLSCERTPATH or BANNOU_DOCKERTLSCERTPATH
-    /// </summary>
-    public string DockerTlsCertPath { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Path to kubeconfig file for Kubernetes backend. If empty, uses in-cluster config or KUBECONFIG env var.
-    /// Environment variable: KUBERNETESCONFIG or BANNOU_KUBERNETESCONFIG
-    /// </summary>
-    public string KubernetesConfig { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Kubernetes namespace for deployments
-    /// Environment variable: KUBERNETESNAMESPACE or BANNOU_KUBERNETESNAMESPACE
-    /// </summary>
-    public string KubernetesNamespace { get; set; } = "bannou";
-
-    /// <summary>
-    /// Portainer API URL (e.g., "https://portainer.local:9443")
-    /// Environment variable: PORTAINERURL or BANNOU_PORTAINERURL
-    /// </summary>
-    public string PortainerUrl { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Portainer API key for authentication
-    /// Environment variable: PORTAINERAPIKEY or BANNOU_PORTAINERAPIKEY
-    /// </summary>
-    public string PortainerApiKey { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Portainer environment/endpoint ID
-    /// Environment variable: PORTAINERENDPOINTID or BANNOU_PORTAINERENDPOINTID
-    /// </summary>
-    public int PortainerEndpointId { get; set; } = 1;
-
-    /// <summary>
-    /// Preferred backend. auto uses priority detection. If specified backend unavailable, deployment fails (no fallback).
-    /// Environment variable: PREFERREDBACKEND or BANNOU_PREFERREDBACKEND
-    /// </summary>
-    public string PreferredBackend { get; set; } = "auto";
-
-    /// <summary>
-    /// Directory containing deployment preset YAML files
-    /// Environment variable: PRESETSDIRECTORY or BANNOU_PRESETSDIRECTORY
-    /// </summary>
-    public string PresetsDirectory { get; set; } = "provisioning/orchestrator/presets";
-
-    /// <summary>
-    /// Directory containing reference compose files
-    /// Environment variable: COMPOSEFILESDIRECTORY or BANNOU_COMPOSEFILESDIRECTORY
-    /// </summary>
-    public string ComposeFilesDirectory { get; set; } = "provisioning";
-
-    /// <summary>
-    /// Interval for service health checks (seconds)
-    /// Environment variable: SERVICEHEALTHCHECKINTERVAL or BANNOU_SERVICEHEALTHCHECKINTERVAL
-    /// </summary>
-    public int ServiceHealthCheckInterval { get; set; } = 30;
-
-    /// <summary>
-    /// Interval for infrastructure health checks (seconds)
-    /// Environment variable: INFRASTRUCTUREHEALTHCHECKINTERVAL or BANNOU_INFRASTRUCTUREHEALTHCHECKINTERVAL
-    /// </summary>
-    public int InfrastructureHealthCheckInterval { get; set; } = 10;
-
-    /// <summary>
-    /// Minutes of degradation before restart recommended
-    /// Environment variable: DEGRADATIONTHRESHOLDMINUTES or BANNOU_DEGRADATIONTHRESHOLDMINUTES
-    /// </summary>
-    public int DegradationThresholdMinutes { get; set; } = 5;
-
-    /// <summary>
-    /// Seconds before heartbeat considered expired
-    /// Environment variable: HEARTBEATTIMEOUTSECONDS or BANNOU_HEARTBEATTIMEOUTSECONDS
+    /// Service heartbeat timeout in seconds
+    /// Environment variable: ORCHESTRATOR_HEARTBEAT_TIMEOUT_SECONDS or BANNOU_ORCHESTRATOR_HEARTBEAT_TIMEOUT_SECONDS
     /// </summary>
     public int HeartbeatTimeoutSeconds { get; set; } = 90;
 
     /// <summary>
-    /// TTL for cached orchestrator connections in minutes. Set to 0 to disable caching.
-    /// Environment variable: ORCHESTRATORCACHETTLMINUTES or BANNOU_ORCHESTRATORCACHETTLMINUTES
+    /// Time in minutes before a service is marked as degraded
+    /// Environment variable: ORCHESTRATOR_DEGRADATION_THRESHOLD_MINUTES or BANNOU_ORCHESTRATOR_DEGRADATION_THRESHOLD_MINUTES
     /// </summary>
-    public int OrchestratorCacheTtlMinutes { get; set; } = 60;
+    public int DegradationThresholdMinutes { get; set; } = 5;
 
     /// <summary>
-    /// Default timeout for deployments (seconds)
-    /// Environment variable: DEFAULTDEPLOYMENTTIMEOUT or BANNOU_DEFAULTDEPLOYMENTTIMEOUT
+    /// Portainer API URL
+    /// Environment variable: ORCHESTRATOR_PORTAINER_URL or BANNOU_ORCHESTRATOR_PORTAINER_URL
     /// </summary>
-    public int DefaultDeploymentTimeout { get; set; } = 300;
+    public string PortainerUrl { get; set; } = string.Empty;
 
     /// <summary>
-    /// Default graceful shutdown wait time (seconds)
-    /// Environment variable: GRACEFULSHUTDOWNTIMEOUT or BANNOU_GRACEFULSHUTDOWNTIMEOUT
+    /// Portainer API key
+    /// Environment variable: ORCHESTRATOR_PORTAINER_API_KEY or BANNOU_ORCHESTRATOR_PORTAINER_API_KEY
     /// </summary>
-    public int GracefulShutdownTimeout { get; set; } = 30;
+    public string PortainerApiKey { get; set; } = string.Empty;
 
     /// <summary>
-    /// Number of health check retries before marking unhealthy
-    /// Environment variable: HEALTHCHECKRETRIES or BANNOU_HEALTHCHECKRETRIES
+    /// Portainer endpoint ID
+    /// Environment variable: ORCHESTRATOR_PORTAINER_ENDPOINT_ID or BANNOU_ORCHESTRATOR_PORTAINER_ENDPOINT_ID
     /// </summary>
-    public int HealthCheckRetries { get; set; } = 10;
+    public int PortainerEndpointId { get; set; } = 1;
 
     /// <summary>
-    /// Interval between health check retries (seconds)
-    /// Environment variable: HEALTHCHECKINTERVAL or BANNOU_HEALTHCHECKINTERVAL
+    /// Docker host for direct Docker API access
+    /// Environment variable: ORCHESTRATOR_DOCKER_HOST or BANNOU_ORCHESTRATOR_DOCKER_HOST
     /// </summary>
-    public int HealthCheckInterval { get; set; } = 5;
+    public string DockerHost { get; set; } = "unix:///var/run/docker.sock";
+
+    /// <summary>
+    /// Kubernetes namespace for deployments
+    /// Environment variable: ORCHESTRATOR_KUBERNETES_NAMESPACE or BANNOU_ORCHESTRATOR_KUBERNETES_NAMESPACE
+    /// </summary>
+    public string KubernetesNamespace { get; set; } = "default";
+
+    /// <summary>
+    /// Redis connection string for orchestrator state
+    /// Environment variable: ORCHESTRATOR_REDIS_CONNECTION_STRING or BANNOU_ORCHESTRATOR_REDIS_CONNECTION_STRING
+    /// </summary>
+    public string RedisConnectionString { get; set; } = "localhost:6379";
+
+    /// <summary>
+    /// RabbitMQ connection string for orchestrator messaging
+    /// Environment variable: ORCHESTRATOR_RABBITMQ_CONNECTION_STRING or BANNOU_ORCHESTRATOR_RABBITMQ_CONNECTION_STRING
+    /// </summary>
+    public string RabbitMqConnectionString { get; set; } = "amqp://guest:guest@localhost:5672/";
 
 }

@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Website;
 using Microsoft.Extensions.Logging;
@@ -15,12 +16,14 @@ public class WebsiteServiceTests
     private readonly Mock<ILogger<WebsiteService>> _mockLogger;
     private readonly Mock<WebsiteServiceConfiguration> _mockConfiguration;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public WebsiteServiceTests()
     {
         _mockLogger = new Mock<ILogger<WebsiteService>>();
         _mockConfiguration = new Mock<WebsiteServiceConfiguration>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
     }
 
     [Fact]
@@ -30,7 +33,8 @@ public class WebsiteServiceTests
         var service = new WebsiteService(
             _mockLogger.Object,
             _mockConfiguration.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
 
         Assert.NotNull(service);
     }

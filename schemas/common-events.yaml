@@ -409,3 +409,94 @@ components:
           type: integer
           nullable: true
           description: How long the session was connected (for metrics)
+
+    SessionReconnectedEvent:
+      type: object
+      description: |
+        Published by Connect service when a WebSocket session is restored after reconnection.
+        Services should subscribe to this event to re-publish any session shortcuts they
+        previously granted, as shortcuts are cleared on disconnect and do not persist.
+
+        **Session Shortcuts Re-publication:**
+        Services that publish session shortcuts should listen for this event and re-evaluate
+        whether the session should receive shortcuts again (e.g., check subscription status,
+        game state, etc.) and publish new ShortcutPublishedEvents as appropriate.
+      required:
+        - eventId
+        - timestamp
+        - sessionId
+        - accountId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this reconnection event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the WebSocket reconnection completed
+        sessionId:
+          type: string
+          description: Session ID that reconnected
+        accountId:
+          type: string
+          description: Account ID owning the reconnected session
+        roles:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: User roles preserved from previous session
+        authorizations:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Authorization states preserved from previous session
+        previousDisconnectAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the previous connection was lost
+        reconnectionContext:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Optional context from the reconnection (client info, etc.)
+
+    ServiceMappingEvent:
+      type: object
+      description: |
+        Legacy event for individual service-to-app-id mapping updates.
+        NOTE: The system now uses FullServiceMappingsEvent for atomic full-state updates.
+        This event is retained for backwards compatibility with older consumers.
+      required:
+        - eventId
+        - timestamp
+        - serviceName
+        - appId
+        - action
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this mapping event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the mapping change occurred
+        serviceName:
+          type: string
+          description: Name of the service (e.g., "accounts", "character-agent")
+        appId:
+          type: string
+          description: Dapr app-id where the service is running
+        action:
+          type: string
+          enum: [register, update, unregister]
+          description: Type of mapping change
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional service metadata

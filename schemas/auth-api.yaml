@@ -13,9 +13,10 @@ info:
 
     See API-DESIGN.md for architectural rationale.
   version: 4.0.0
+  # NOTE: Event subscriptions and publications are in auth-events.yaml
 servers:
-  - url: http://localhost:3500/v1.0/invoke/bannou/method
-    description: Dapr sidecar endpoint
+- url: http://localhost:3500/v1.0/invoke/bannou/method
+  description: Dapr sidecar endpoint
 
 paths:
   /auth/login:
@@ -23,10 +24,10 @@ paths:
       summary: Login with email/password
       operationId: login
       tags:
-        - Authentication
+      - Authentication
       x-permissions:
-        - role: anonymous
-          states: {}  # Allow re-login when already authenticated
+      - role: anonymous
+        states: {}    # Allow re-login when already authenticated
       requestBody:
         required: true
         content:
@@ -50,10 +51,10 @@ paths:
       summary: Register new user account
       operationId: register
       tags:
-        - Authentication
+      - Authentication
       x-permissions:
-        - role: anonymous
-          states: {}
+      - role: anonymous
+        states: {}
       requestBody:
         required: true
         content:
@@ -85,26 +86,26 @@ paths:
         redirect flow, not a WebSocket-routed API call.
       operationId: initOAuth
       tags:
-        - OAuth
+      - OAuth
       x-permissions:
-        - role: anonymous
-          states: {}
+      - role: anonymous
+        states: {}
       parameters:
-        - name: provider
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Provider'
-        - name: redirectUri
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uri
-        - name: state
-          in: query
-          schema:
-            type: string
+      - name: provider
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Provider'
+      - name: redirectUri
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uri
+      - name: state
+        in: query
+        schema:
+          type: string
       responses:
         '302':
           description: Redirect to OAuth provider
@@ -120,16 +121,16 @@ paths:
         with OAuth providers and cannot be changed without updating provider configurations.
       operationId: completeOAuth
       tags:
-        - OAuth
+      - OAuth
       x-permissions:
-        - role: anonymous
-          states: {}
+      - role: anonymous
+        states: {}
       parameters:
-        - name: provider
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Provider'
+      - name: provider
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Provider'
       requestBody:
         required: true
         content:
@@ -153,10 +154,10 @@ paths:
         NEVER trust client-provided SteamID - it must come from Steam's authenticated response.
       operationId: verifySteamAuth
       tags:
-        - Steam
+      - Steam
       x-permissions:
-        - role: anonymous
-          states: {}
+      - role: anonymous
+        states: {}
       requestBody:
         required: true
         content:
@@ -180,18 +181,18 @@ paths:
       summary: Refresh access token
       operationId: refreshToken
       tags:
-        - Tokens
+      - Tokens
       x-permissions:
-        - role: user
-          states: {}
+      - role: user
+        states: {}
       parameters:
-        - name: jwt
-          in: header
-          required: true
-          schema:
-            type: string
-          description: Current JWT access token for refresh
-          x-from-authorization: bearer
+      - name: jwt
+        in: header
+        required: true
+        schema:
+          type: string
+        description: Current JWT access token for refresh
+        x-from-authorization: bearer
       requestBody:
         required: true
         content:
@@ -211,18 +212,18 @@ paths:
       summary: Validate access token
       operationId: validateToken
       tags:
-        - Tokens
+      - Tokens
       x-permissions:
-        - role: user
-          states: {}
+      - role: user
+        states: {}
       parameters:
-        - name: jwt
-          in: header
-          required: true
-          schema:
-            type: string
-          description: JWT access token for validation
-          x-from-authorization: bearer
+      - name: jwt
+        in: header
+        required: true
+        schema:
+          type: string
+        description: JWT access token for validation
+        x-from-authorization: bearer
       responses:
         '200':
           description: Token is valid
@@ -240,18 +241,18 @@ paths:
       summary: Logout and invalidate tokens
       operationId: logout
       tags:
-        - Authentication
+      - Authentication
       x-permissions:
-        - role: user
-          states: {}
+      - role: user
+        states: {}
       parameters:
-        - name: jwt
-          in: header
-          required: true
-          schema:
-            type: string
-          description: JWT access token for session identification
-          x-from-authorization: bearer
+      - name: jwt
+        in: header
+        required: true
+        schema:
+          type: string
+        description: JWT access token for session identification
+        x-from-authorization: bearer
       requestBody:
         content:
           application/json:
@@ -266,18 +267,18 @@ paths:
       summary: Get active sessions for account
       operationId: getSessions
       tags:
-        - Sessions
+      - Sessions
       x-permissions:
-        - role: user
-          states: {}
+      - role: user
+        states: {}
       parameters:
-        - name: jwt
-          in: header
-          required: true
-          schema:
-            type: string
-          description: JWT access token for session identification
-          x-from-authorization: bearer
+      - name: jwt
+        in: header
+        required: true
+        schema:
+          type: string
+        description: JWT access token for session identification
+        x-from-authorization: bearer
       responses:
         '200':
           description: Active sessions retrieved
@@ -291,18 +292,18 @@ paths:
       summary: Terminate specific session
       operationId: terminateSession
       tags:
-        - Sessions
+      - Sessions
       x-permissions:
-        - role: user
-          states: {}
+      - role: user
+        states: {}
       parameters:
-        - name: jwt
-          in: header
-          required: true
-          schema:
-            type: string
-          description: JWT access token for session identification
-          x-from-authorization: bearer
+      - name: jwt
+        in: header
+        required: true
+        schema:
+          type: string
+        description: JWT access token for session identification
+        x-from-authorization: bearer
       requestBody:
         required: true
         content:
@@ -320,10 +321,10 @@ paths:
       summary: Request password reset
       operationId: requestPasswordReset
       tags:
-        - Password
+      - Password
       x-permissions:
-        - role: anonymous
-          states: {}
+      - role: anonymous
+        states: {}
       requestBody:
         required: true
         content:
@@ -339,10 +340,10 @@ paths:
       summary: Confirm password reset with token
       operationId: confirmPasswordReset
       tags:
-        - Password
+      - Password
       x-permissions:
-        - role: anonymous
-          states: {}
+      - role: anonymous
+        states: {}
       requestBody:
         required: true
         content:
@@ -371,7 +372,7 @@ components:
       type: object
       description: Request to terminate a specific session
       required:
-        - sessionId
+      - sessionId
       properties:
         sessionId:
           type: string
@@ -381,8 +382,8 @@ components:
     LoginRequest:
       type: object
       required:
-        - email
-        - password
+      - email
+      - password
       properties:
         email:
           type: string
@@ -400,8 +401,8 @@ components:
       type: object
       description: Request to register a new user account
       required:
-        - username
-        - password
+      - username
+      - password
       properties:
         username:
           type: string
@@ -426,8 +427,8 @@ components:
       type: object
       description: Response from successful user registration
       required:
-        - accessToken
-        - connectUrl
+      - accessToken
+      - connectUrl
       properties:
         accessToken:
           type: string
@@ -447,7 +448,7 @@ components:
       type: object
       description: Response from successful user login
       required:
-        - accessToken
+      - accessToken
       properties:
         accessToken:
           type: string
@@ -462,11 +463,11 @@ components:
     AuthResponse:
       type: object
       required:
-        - accountId
-        - accessToken
-        - refreshToken
-        - expiresIn
-        - connectUrl
+      - accountId
+      - accessToken
+      - refreshToken
+      - expiresIn
+      - connectUrl
       properties:
         accountId:
           type: string
@@ -493,7 +494,7 @@ components:
     OAuthCallbackRequest:
       type: object
       required:
-        - code
+      - code
       properties:
         code:
           type: string
@@ -510,7 +511,7 @@ components:
         ISteamUser::GetAuthTicketForWebApi("bannou"). SteamID is NOT included because
         it must be obtained from Steam's Web API response (never trust client-provided SteamID).
       required:
-        - ticket
+      - ticket
       properties:
         ticket:
           type: string
@@ -524,7 +525,7 @@ components:
     RefreshRequest:
       type: object
       required:
-        - refreshToken
+      - refreshToken
       properties:
         refreshToken:
           type: string
@@ -532,9 +533,9 @@ components:
     ValidateTokenResponse:
       type: object
       required:
-        - valid
-        - accountId
-        - sessionId
+      - valid
+      - accountId
+      - sessionId
       properties:
         valid:
           type: boolean
@@ -570,7 +571,7 @@ components:
     SessionsResponse:
       type: object
       required:
-        - sessions
+      - sessions
       properties:
         sessions:
           type: array
@@ -580,9 +581,9 @@ components:
     SessionInfo:
       type: object
       required:
-        - sessionId
-        - createdAt
-        - lastActive
+      - sessionId
+      - createdAt
+      - lastActive
       properties:
         sessionId:
           type: string
@@ -618,7 +619,7 @@ components:
     PasswordResetRequest:
       type: object
       required:
-        - email
+      - email
       properties:
         email:
           type: string
@@ -627,8 +628,8 @@ components:
     PasswordResetConfirmRequest:
       type: object
       required:
-        - token
-        - newPassword
+      - token
+      - newPassword
       properties:
         token:
           type: string
@@ -641,7 +642,7 @@ components:
       type: object
       description: List of available OAuth providers
       required:
-        - providers
+      - providers
       properties:
         providers:
           type: array
@@ -672,221 +673,6 @@ components:
           description: The preferred Connect service instance ID
           example: "connect-omega-01"
 
-    # Event Models for Auth Lifecycle
-    SessionInvalidatedEvent:
-      type: object
-      description: Event published when sessions are invalidated (logout, account deletion, etc.)
-      required:
-        - eventId
-        - timestamp
-        - sessionIds
-        - reason
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
-        accountId:
-          type: string
-          format: uuid
-          description: ID of the account whose sessions were invalidated
-        sessionIds:
-          type: array
-          items:
-            type: string
-          description: List of session IDs that were invalidated
-        reason:
-          $ref: '#/components/schemas/SessionInvalidatedEventReason'
-        disconnectClients:
-          type: boolean
-          default: true
-          description: Whether Connect service should disconnect WebSocket clients
+    # NOTE: Event models (SessionInvalidatedEvent, SessionUpdatedEvent) are defined in auth-events.yaml
+    # and generated separately. They are NOT part of the HTTP API.
 
-    SessionInvalidatedEventReason:
-      type: string
-      enum: [logout, account_deleted, security_revocation, admin_action, session_expired]
-      description: Reason for session invalidation
-
-    SessionUpdatedEvent:
-      type: object
-      description: |
-        Published when a session's roles or authorizations change.
-        Permissions service subscribes to update capability compilation.
-      required:
-        - eventId
-        - timestamp
-        - accountId
-        - sessionId
-        - roles
-        - authorizations
-        - reason
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
-        accountId:
-          type: string
-          format: uuid
-          description: ID of the account whose session changed
-        sessionId:
-          type: string
-          description: ID of the session that changed
-        roles:
-          type: array
-          items:
-            type: string
-          description: Current roles for the session
-        authorizations:
-          type: array
-          items:
-            type: string
-          description: Current authorization strings (e.g., ["arcadia:authorized"])
-        reason:
-          $ref: '#/components/schemas/SessionUpdatedEventReason'
-
-    SessionUpdatedEventReason:
-      type: string
-      enum: [role_changed, authorization_changed, subscription_changed]
-      description: Reason for session update
-
-x-service-configuration:
-  properties:
-    # JWT Configuration
-    BcryptWorkFactor:
-      type: integer
-      description: Bcrypt work factor for password hashing (higher = more secure but slower)
-      default: 12
-    JwtSecret:
-      type: string
-      required: true
-      description: JWT secret key for token signing
-    JwtIssuer:
-      type: string
-      description: JWT issuer identifier
-      default: "bannou-auth"
-    JwtAudience:
-      type: string
-      description: JWT audience identifier
-      default: "bannou-services"
-    JwtExpirationMinutes:
-      type: integer
-      description: JWT expiration time in minutes
-      default: 1440
-    AccessTokenExpirationMinutes:
-      type: integer
-      description: Access token expiration time in minutes (alias for JwtExpirationMinutes)
-      default: 1440
-
-    # Connect Service Configuration
-    ConnectUrl:
-      type: string
-      description: WebSocket URL for Connect service (returned in login responses for client connection)
-      default: "ws://localhost:8080/connect"
-
-    # Password Reset Configuration
-    PasswordResetTokenTtlMinutes:
-      type: integer
-      description: Password reset token expiration time in minutes
-      default: 60
-    PasswordResetBaseUrl:
-      type: string
-      description: Base URL for password reset links (e.g., https://example.com/reset-password)
-      default: "https://example.com/reset-password"
-
-    # Mock Provider Configuration (for CI/staging testing)
-    MockProviders:
-      type: boolean
-      description: When true, use mock providers instead of real OAuth/Steam APIs
-      default: false
-    MockSteamId:
-      type: string
-      description: Mock SteamID returned when MockProviders=true (64-bit Steam ID)
-      default: "76561198000000001"
-    MockDiscordId:
-      type: string
-      description: Mock Discord user ID returned when MockProviders=true
-      default: "123456789012345678"
-    MockGoogleId:
-      type: string
-      description: Mock Google user ID returned when MockProviders=true
-      default: "mock-google-user-id-12345"
-
-    # Steam Configuration (Session Tickets)
-    SteamApiKey:
-      type: string
-      description: Steam Web API Publisher Key for ticket validation (from partner.steamgames.com)
-    SteamAppId:
-      type: string
-      description: Steam Application ID for the game
-
-    # Discord OAuth2 Configuration
-    DiscordClientId:
-      type: string
-      description: Discord application client ID (from discord.com/developers)
-    DiscordClientSecret:
-      type: string
-      description: Discord application client secret
-    DiscordRedirectUri:
-      type: string
-      description: Discord OAuth2 redirect URI
-      default: "http://localhost:5012/auth/oauth/discord/callback"
-
-    # Google OAuth2 Configuration
-    GoogleClientId:
-      type: string
-      description: Google OAuth2 client ID (from console.cloud.google.com)
-    GoogleClientSecret:
-      type: string
-      description: Google OAuth2 client secret
-    GoogleRedirectUri:
-      type: string
-      description: Google OAuth2 redirect URI
-      default: "http://localhost:5012/auth/oauth/google/callback"
-
-    # Twitch OAuth2 Configuration
-    TwitchClientId:
-      type: string
-      description: Twitch application client ID (from dev.twitch.tv)
-    TwitchClientSecret:
-      type: string
-      description: Twitch application client secret
-    TwitchRedirectUri:
-      type: string
-      description: Twitch OAuth2 redirect URI
-      default: "http://localhost:5012/auth/oauth/twitch/callback"
-
-x-event-subscriptions:
-  - topic: account.deleted
-    pubsub: bannou-pubsub
-    path: handle-account-deleted
-    schema:
-      $ref: 'accounts-events.yaml#/components/schemas/AccountDeletedEvent'
-    description: Subscribe to account deletion events to invalidate sessions
-  - topic: account.updated
-    pubsub: bannou-pubsub
-    path: handle-account-updated
-    schema:
-      $ref: 'accounts-events.yaml#/components/schemas/AccountUpdatedEvent'
-    description: Subscribe to account update events to propagate role changes to sessions
-  - topic: subscription.updated
-    pubsub: bannou-pubsub
-    path: handle-subscription-updated
-    schema:
-      $ref: 'subscriptions-events.yaml#/components/schemas/SubscriptionUpdatedEvent'
-    description: Subscribe to subscription update events to propagate authorization changes to sessions
-
-x-event-publications:
-  - topic: session.updated
-    pubsub: bannou-pubsub
-    schema:
-      $ref: '#/components/schemas/SessionUpdatedEvent'
-    description: Published when a session's roles or authorizations change

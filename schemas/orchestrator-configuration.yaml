@@ -1,0 +1,67 @@
+openapi: 3.0.3
+info:
+  title: Orchestrator Service Configuration
+  description: "Configuration schema for Orchestrator service.\nProperties are bound to environment variables with BANNOU_ prefix."
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Cache Configuration
+    OrchestratorCacheTtlMinutes:
+      type: integer
+      description: Cache TTL in minutes for orchestrator data
+      env: ORCHESTRATOR_CACHE_TTL_MINUTES
+      default: 5
+
+    # Heartbeat Configuration
+    HeartbeatTimeoutSeconds:
+      type: integer
+      description: Service heartbeat timeout in seconds
+      env: ORCHESTRATOR_HEARTBEAT_TIMEOUT_SECONDS
+      default: 90
+    DegradationThresholdMinutes:
+      type: integer
+      description: Time in minutes before a service is marked as degraded
+      env: ORCHESTRATOR_DEGRADATION_THRESHOLD_MINUTES
+      default: 5
+
+    # Portainer Configuration (Docker Swarm/Compose backend)
+    PortainerUrl:
+      type: string
+      description: Portainer API URL
+      env: ORCHESTRATOR_PORTAINER_URL
+    PortainerApiKey:
+      type: string
+      description: Portainer API key
+      env: ORCHESTRATOR_PORTAINER_API_KEY
+    PortainerEndpointId:
+      type: integer
+      description: Portainer endpoint ID
+      env: ORCHESTRATOR_PORTAINER_ENDPOINT_ID
+      default: 1
+
+    # Docker Configuration (Docker Compose backend)
+    DockerHost:
+      type: string
+      description: Docker host for direct Docker API access
+      env: ORCHESTRATOR_DOCKER_HOST
+      default: "unix:///var/run/docker.sock"
+
+    # Kubernetes Configuration
+    KubernetesNamespace:
+      type: string
+      description: Kubernetes namespace for deployments
+      env: ORCHESTRATOR_KUBERNETES_NAMESPACE
+      default: "default"
+
+    # Infrastructure Connection Strings
+    RedisConnectionString:
+      type: string
+      description: Redis connection string for orchestrator state
+      env: ORCHESTRATOR_REDIS_CONNECTION_STRING
+      default: "localhost:6379"
+    RabbitMqConnectionString:
+      type: string
+      description: RabbitMQ connection string for orchestrator messaging
+      env: ORCHESTRATOR_RABBITMQ_CONNECTION_STRING
+      default: "amqp://guest:guest@localhost:5672/"

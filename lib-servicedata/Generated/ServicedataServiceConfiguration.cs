@@ -16,8 +16,8 @@ public class ServicedataServiceConfiguration : IServiceConfiguration
     public string? Force_Service_ID { get; set; }
 
     /// <summary>
-    /// Name of the Dapr state store for service data
-    /// Environment variable: STATESTORENAME or BANNOU_STATESTORENAME
+    /// Dapr state store name for service data
+    /// Environment variable: SERVICEDATA_STATE_STORE_NAME or BANNOU_SERVICEDATA_STATE_STORE_NAME
     /// </summary>
     public string StateStoreName { get; set; } = "servicedata-statestore";
 

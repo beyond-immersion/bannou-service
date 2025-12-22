@@ -3,103 +3,40 @@ info:
   title: Permissions Service Events
   description: Event models for permissions service RabbitMQ pub/sub via Dapr
   version: 1.0.0
+  x-event-subscriptions:
+    # Service registration - services publish their API permissions on startup
+    - topic: permissions.service-registered
+      event: ServiceRegistrationEvent
+      handler: HandleServiceRegistration
+    # Session state changes from services (e.g., game-session state transitions)
+    - topic: permissions.session-state-changed
+      event: SessionStateChangeEvent
+      handler: HandleSessionStateChange
+    # Session updates from Auth service (role/authorization changes)
+    - topic: session.updated
+      event: SessionUpdatedEvent
+      handler: HandleSessionUpdated
+    # Session connected - triggers initial capability delivery
+    - topic: session.connected
+      event: SessionConnectedEvent
+      handler: HandleSessionConnected
+    # Session disconnected - removes from activeConnections
+    - topic: session.disconnected
+      event: SessionDisconnectedEvent
+      handler: HandleSessionDisconnected
+  x-event-publications:
+    # Permission capability updates sent to Connect service
+    - topic: permissions.capability-update
+      event: PermissionCapabilityUpdate
+      description: Published when session capabilities are compiled or updated
 
 paths: {}  # Events don't have HTTP paths
 
 components:
   schemas:
-    ServiceRegistrationEvent:
-      type: object
-      description: |
-        Published by services on startup to register their API endpoints with the permissions system.
-        Contains permission requirements extracted from OpenAPI x-permissions sections.
-      required:
-        - eventId
-        - timestamp
-        - serviceId
-        - version
-        - endpoints
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this registration event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the service registration occurred
-        serviceId:
-          type: string
-          description: Service ID that registered (e.g., "behavior", "accounts", "auth")
-        version:
-          type: string
-          description: Service version that was registered
-        appId:
-          type: string
-          description: Dapr app-id where this service is running
-          default: "bannou"
-        endpoints:
-          type: array
-          items:
-            $ref: '#/components/schemas/ServiceEndpoint'
-          description: API endpoints registered by the service with permission requirements
-        metadata:
-          type: object
-          additionalProperties: true
-          description: Additional service registration metadata
-
-    ServiceEndpoint:
-      type: object
-      description: |
-        Individual API endpoint with permission requirements.
-        Extracted from OpenAPI schema x-permissions sections.
-      required:
-        - path
-        - method
-        - permissions
-      properties:
-        path:
-          type: string
-          description: API endpoint path (e.g., "/accounts/{id}")
-        method:
-          type: string
-          enum: [GET, POST, PUT, DELETE, PATCH]
-          description: HTTP method for this endpoint
-        permissions:
-          type: array
-          items:
-            $ref: '#/components/schemas/PermissionRequirement'
-          description: Permission requirements for this endpoint
-        description:
-          type: string
-          description: Human-readable endpoint description
-        category:
-          type: string
-          description: API category (auth, accounts, game, social, etc.)
-
-    PermissionRequirement:
-      type: object
-      description: |
-        Permission requirement mapping role and state to endpoint access.
-        Defines which roles can access an endpoint in which states.
-      required:
-        - role
-        - requiredStates
-      properties:
-        role:
-          type: string
-          description: Role that can access this endpoint (e.g., "user", "admin", "npc")
-        requiredStates:
-          type: object
-          additionalProperties:
-            type: string
-          description: |
-            Map of service states required for access.
-            Key: service_id, Value: required_state
-            Example: {"game-session": "in_game", "character": "selected"}
-        description:
-          type: string
-          description: Human-readable permission description
+    # Permissions-specific events (published by Permissions service)
+    # NOTE: Events Permissions subscribes to (ServiceRegistrationEvent, SessionConnectedEvent, etc.)
+    # are defined in their canonical locations and accessed via BeyondImmersion.BannouService.Events namespace
 
     PermissionCapabilityUpdate:
       type: object

@@ -1,0 +1,64 @@
+openapi: 3.0.3
+info:
+  title: Connect Service Configuration
+  description: "Configuration schema for Connect service.\nProperties are bound to environment variables with BANNOU_ prefix."
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    MaxConcurrentConnections:
+      type: integer
+      description: Maximum number of concurrent WebSocket connections
+      default: 10000
+    ConnectionTimeoutSeconds:
+      type: integer
+      description: WebSocket connection timeout in seconds
+      default: 300
+    HeartbeatIntervalSeconds:
+      type: integer
+      description: Interval between heartbeat messages
+      default: 30
+    MessageQueueSize:
+      type: integer
+      description: Maximum number of queued messages per connection
+      default: 1000
+    BinaryProtocolVersion:
+      type: string
+      description: Binary protocol version identifier
+      default: "2.0"
+    BufferSize:
+      type: integer
+      description: Size of message buffers in bytes
+      default: 65536
+    DefaultServices:
+      type: array
+      items:
+        type: string
+      description: Services available to unauthenticated connections
+      default: ["auth", "website"]
+    AuthenticatedServices:
+      type: array
+      items:
+        type: string
+      description: Additional services available to authenticated connections
+      default: ["accounts", "behavior", "permissions", "gamesession"]
+    EnableClientToClientRouting:
+      type: boolean
+      description: Enable routing messages between WebSocket clients
+      default: true
+    MaxMessagesPerMinute:
+      type: integer
+      description: Rate limit for messages per minute per client
+      default: 1000
+    RateLimitWindowMinutes:
+      type: integer
+      description: Rate limit window in minutes
+      default: 1
+    JwtPublicKey:
+      type: string
+      description: RSA public key for JWT validation (PEM format)
+
+# Note: Event subscriptions are handled manually in ConnectEventsController.cs
+# because they require specialized CloudEvents parsing and custom service method calls.
+# Topics subscribed: session.invalidated, permissions.capabilities-updated
+

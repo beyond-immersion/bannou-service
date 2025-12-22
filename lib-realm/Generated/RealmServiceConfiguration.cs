@@ -16,9 +16,9 @@ public class RealmServiceConfiguration : IServiceConfiguration
     public string? Force_Service_ID { get; set; }
 
     /// <summary>
-    /// Default realm code for new entities when not specified
-    /// Environment variable: DEFAULTREALMCODE or BANNOU_DEFAULTREALMCODE
+    /// Enable/disable Realm service
+    /// Environment variable: ENABLED or BANNOU_ENABLED
     /// </summary>
-    public string DefaultRealmCode { get; set; } = "OMEGA";
+    public bool Enabled { get; set; } = true;
 
 }
