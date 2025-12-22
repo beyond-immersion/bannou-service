@@ -20,7 +20,7 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 /// CRITICAL: Uses direct Redis/RabbitMQ connections (NOT Dapr) to avoid chicken-and-egg dependency.
 /// </summary>
 [DaprService("orchestrator", typeof(IOrchestratorService), lifetime: ServiceLifetime.Scoped)]
-public class OrchestratorService : IOrchestratorService
+public partial class OrchestratorService : IOrchestratorService
 {
     private readonly DaprClient _daprClient;
     private readonly ILogger<OrchestratorService> _logger;
@@ -63,7 +63,8 @@ public class OrchestratorService : IOrchestratorService
         IServiceHealthMonitor healthMonitor,
         ISmartRestartManager restartManager,
         IBackendDetector backendDetector,
-        IErrorEventEmitter errorEventEmitter)
+        IErrorEventEmitter errorEventEmitter,
+        IEventConsumer eventConsumer)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -78,6 +79,10 @@ public class OrchestratorService : IOrchestratorService
 
         // Create preset loader
         _presetLoader = new PresetLoader(_loggerFactory.CreateLogger<PresetLoader>());
+
+        // Register event handlers via partial class (OrchestratorServiceEvents.cs)
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>

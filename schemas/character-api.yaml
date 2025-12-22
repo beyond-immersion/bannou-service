@@ -24,18 +24,7 @@ servers:
 - url: http://localhost:3500/v1.0/invoke/bannou/method
   description: Dapr sidecar endpoint (internal only)
 
-# Lifecycle events auto-generated from this definition
-x-lifecycle:
-  Character:
-    model:
-      characterId: { type: string, format: uuid, primary: true, required: true }
-      name: { type: string, required: true }
-      realmId: { type: string, format: uuid, required: true }
-      speciesId: { type: string, format: uuid, required: true }
-      birthDate: { type: string, format: date-time }
-      status: { type: string }
-      createdAt: { type: string, format: date-time, required: true }
-      updatedAt: { type: string, format: date-time }
+# NOTE: x-lifecycle moved to character-events.yaml
 
 paths:
   /character/create:
@@ -454,17 +443,3 @@ components:
           type: string
           description: Reason for leaving (death, transfer, deletion)
 
-x-service-configuration:
-  properties:
-    DefaultPageSize:
-      type: integer
-      description: Default page size for character listings
-      default: 20
-    MaxPageSize:
-      type: integer
-      description: Maximum allowed page size for character listings
-      default: 100
-    CharacterRetentionDays:
-      type: integer
-      description: Number of days to retain deleted character data
-      default: 90

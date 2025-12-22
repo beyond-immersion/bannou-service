@@ -1,0 +1,78 @@
+openapi: 3.0.3
+info:
+  title: Voice Service Configuration
+  description: "Configuration schema for Voice service.\nProperties are bound to environment variables with BANNOU_ prefix."
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Tier Configuration
+    ScaledTierEnabled:
+      type: boolean
+      description: Enable scaled tier voice communication (SIP-based)
+      env: VOICE_SCALED_TIER_ENABLED
+      default: false
+    TierUpgradeEnabled:
+      type: boolean
+      description: Enable automatic tier upgrade from P2P to scaled
+      env: VOICE_TIER_UPGRADE_ENABLED
+      default: false
+    TierUpgradeMigrationDeadlineMs:
+      type: integer
+      description: Migration deadline in milliseconds when upgrading tiers
+      env: VOICE_TIER_UPGRADE_MIGRATION_DEADLINE_MS
+      default: 30000
+
+    # Participant Limits
+    P2PMaxParticipants:
+      type: integer
+      description: Maximum participants in P2P voice sessions
+      env: VOICE_P2P_MAX_PARTICIPANTS
+      default: 8
+    ScaledMaxParticipants:
+      type: integer
+      description: Maximum participants in scaled tier voice sessions
+      env: VOICE_SCALED_MAX_PARTICIPANTS
+      default: 100
+
+    # STUN/TURN Servers (comma-separated)
+    StunServers:
+      type: string
+      description: Comma-separated list of STUN server URLs for WebRTC
+      env: VOICE_STUN_SERVERS
+      default: "stun:stun.l.google.com:19302"
+
+    # SIP Configuration
+    SipPasswordSalt:
+      type: string
+      description: Salt for SIP password generation
+      env: VOICE_SIP_PASSWORD_SALT
+    SipDomain:
+      type: string
+      description: SIP domain for voice communication
+      env: VOICE_SIP_DOMAIN
+      default: "voice.bannou.local"
+
+    # Kamailio Configuration
+    KamailioHost:
+      type: string
+      description: Kamailio SIP server host
+      env: VOICE_KAMAILIO_HOST
+      default: "localhost"
+    KamailioRpcPort:
+      type: integer
+      description: Kamailio JSON-RPC port
+      env: VOICE_KAMAILIO_RPC_PORT
+      default: 5060
+
+    # RTPEngine Configuration
+    RtpEngineHost:
+      type: string
+      description: RTPEngine media relay host
+      env: VOICE_RTPENGINE_HOST
+      default: "localhost"
+    RtpEnginePort:
+      type: integer
+      description: RTPEngine control port
+      env: VOICE_RTPENGINE_PORT
+      default: 22222

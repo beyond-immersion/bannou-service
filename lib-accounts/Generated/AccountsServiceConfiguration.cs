@@ -16,33 +16,15 @@ public class AccountsServiceConfiguration : IServiceConfiguration
     public string? Force_Service_ID { get; set; }
 
     /// <summary>
-    /// Default page size for account listings
-    /// Environment variable: DEFAULTPAGESIZE or BANNOU_DEFAULTPAGESIZE
+    /// Comma-separated list of admin email addresses
+    /// Environment variable: ACCOUNTS_ADMIN_EMAILS or BANNOU_ACCOUNTS_ADMIN_EMAILS
     /// </summary>
-    public int DefaultPageSize { get; set; } = 20;
+    public string AdminEmails { get; set; } = string.Empty;
 
     /// <summary>
-    /// Maximum allowed page size for account listings
-    /// Environment variable: MAXPAGESIZE or BANNOU_MAXPAGESIZE
+    /// Email domain that grants admin access (e.g., "@company.com")
+    /// Environment variable: ACCOUNTS_ADMIN_EMAIL_DOMAIN or BANNOU_ACCOUNTS_ADMIN_EMAIL_DOMAIN
     /// </summary>
-    public int MaxPageSize { get; set; } = 100;
-
-    /// <summary>
-    /// Number of days to retain deleted account data
-    /// Environment variable: ACCOUNTRETENTIONDAYS or BANNOU_ACCOUNTRETENTIONDAYS
-    /// </summary>
-    public int AccountRetentionDays { get; set; } = 30;
-
-    /// <summary>
-    /// Comma-separated list of emails that automatically get admin role assigned
-    /// Environment variable: ADMINEMAILS or BANNOU_ADMINEMAILS
-    /// </summary>
-    public string AdminEmails { get; set; } = "";
-
-    /// <summary>
-    /// Email domain that automatically gets admin role (e.g., "@admin.test.local")
-    /// Environment variable: ADMINEMAILDOMAIN or BANNOU_ADMINEMAILDOMAIN
-    /// </summary>
-    public string AdminEmailDomain { get; set; } = "";
+    public string AdminEmailDomain { get; set; } = string.Empty;
 
 }

@@ -463,3 +463,40 @@ components:
           additionalProperties: true
           nullable: true
           description: Optional context from the reconnection (client info, etc.)
+
+    ServiceMappingEvent:
+      type: object
+      description: |
+        Legacy event for individual service-to-app-id mapping updates.
+        NOTE: The system now uses FullServiceMappingsEvent for atomic full-state updates.
+        This event is retained for backwards compatibility with older consumers.
+      required:
+        - eventId
+        - timestamp
+        - serviceName
+        - appId
+        - action
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this mapping event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the mapping change occurred
+        serviceName:
+          type: string
+          description: Name of the service (e.g., "accounts", "character-agent")
+        appId:
+          type: string
+          description: Dapr app-id where the service is running
+        action:
+          type: string
+          enum: [register, update, unregister]
+          description: Type of mapping change
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional service metadata

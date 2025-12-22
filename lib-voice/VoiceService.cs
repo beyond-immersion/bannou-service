@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Voice.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Voice.Clients;
@@ -23,7 +24,7 @@ namespace BeyondImmersion.BannouService.Voice;
 /// Manages P2P and scaled tier voice room coordination for game sessions.
 /// </summary>
 [DaprService("voice", typeof(IVoiceService), lifetime: ServiceLifetime.Scoped)]
-public class VoiceService : IVoiceService
+public partial class VoiceService : IVoiceService
 {
     private readonly DaprClient _daprClient;
     private readonly ILogger<VoiceService> _logger;
@@ -59,6 +60,7 @@ public class VoiceService : IVoiceService
         ISipEndpointRegistry endpointRegistry,
         IP2PCoordinator p2pCoordinator,
         IScaledTierCoordinator scaledTierCoordinator,
+        IEventConsumer eventConsumer,
         IClientEventPublisher? clientEventPublisher = null,
         IPermissionsClient? permissionsClient = null)
     {
@@ -71,6 +73,10 @@ public class VoiceService : IVoiceService
         _scaledTierCoordinator = scaledTierCoordinator ?? throw new ArgumentNullException(nameof(scaledTierCoordinator));
         _clientEventPublisher = clientEventPublisher; // Optional - may be null if Connect service not loaded (Tenet 5)
         _permissionsClient = permissionsClient; // Optional - may be null if Permissions service not loaded (Tenet 5)
+
+        // Register event handlers via partial class (VoiceServiceEvents.cs)
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>

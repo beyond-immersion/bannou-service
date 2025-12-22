@@ -1,0 +1,26 @@
+openapi: 3.0.3
+info:
+  title: Character Service Configuration
+  description: "Configuration schema for Character service.\nProperties are bound to environment variables with BANNOU_ prefix."
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Pagination Configuration
+    MaxPageSize:
+      type: integer
+      description: Maximum page size for list queries
+      env: CHARACTER_MAX_PAGE_SIZE
+      default: 100
+    DefaultPageSize:
+      type: integer
+      description: Default page size when not specified
+      env: CHARACTER_DEFAULT_PAGE_SIZE
+      default: 20
+
+    # Character Lifecycle
+    CharacterRetentionDays:
+      type: integer
+      description: Number of days to retain deleted characters before permanent removal
+      env: CHARACTER_RETENTION_DAYS
+      default: 90

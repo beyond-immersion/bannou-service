@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: Relationship Service API Lifecycle Events
+  title: Relationship Service Events Lifecycle Events
   description: "Auto-generated lifecycle event schemas for relationship service.\nDO NOT EDIT - This file is completely overwritten
-    by generate-lifecycle-events.py.\nSource of truth: relationship-api.yaml x-lifecycle section."
+    by generate-lifecycle-events.py.\nSource of truth: relationship-events.yaml x-lifecycle section."
   version: 1.0.0
 paths: {}
 components:

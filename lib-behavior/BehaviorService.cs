@@ -16,7 +16,7 @@ namespace BeyondImmersion.BannouService.Behavior;
 /// Methods return placeholder responses until implementation is complete.
 /// </summary>
 [DaprService("behavior", typeof(IBehaviorService), lifetime: ServiceLifetime.Scoped)]
-public class BehaviorService : IBehaviorService
+public partial class BehaviorService : IBehaviorService
 {
     private readonly ILogger<BehaviorService> _logger;
     private readonly BehaviorServiceConfiguration _configuration;
@@ -25,11 +25,16 @@ public class BehaviorService : IBehaviorService
     public BehaviorService(
         ILogger<BehaviorService> logger,
         BehaviorServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter)
+        IErrorEventEmitter errorEventEmitter,
+        IEventConsumer eventConsumer)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+
+        // Register event handlers via partial class (BehaviorServiceEvents.cs)
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>

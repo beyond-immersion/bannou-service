@@ -35,23 +35,7 @@ servers:
 - url: http://localhost:3500/v1.0/invoke/bannou/method
   description: Dapr sidecar endpoint (internal only)
 
-x-lifecycle:
-  Location:
-    model:
-      locationId: { type: string, format: uuid, primary: true, required: true }
-      realmId: { type: string, format: uuid, required: true }
-      code: { type: string, required: true }
-      name: { type: string, required: true }
-      description: { type: string }
-      locationType: { type: string, required: true }
-      parentLocationId: { type: string, format: uuid }
-      depth: { type: integer, required: true }
-      isDeprecated: { type: boolean, required: true }
-      deprecatedAt: { type: string, format: date-time }
-      deprecationReason: { type: string }
-      metadata: { type: object, additionalProperties: true }
-      createdAt: { type: string, format: date-time, required: true }
-      updatedAt: { type: string, format: date-time, required: true }
+# NOTE: x-lifecycle moved to location-events.yaml
 
 paths:
   /location/get:
@@ -1044,17 +1028,3 @@ components:
             type: string
           description: List of error messages for locations that failed to seed
 
-x-service-configuration:
-  properties:
-    DefaultPageSize:
-      type: integer
-      description: Default page size for location listings
-      default: 20
-    MaxPageSize:
-      type: integer
-      description: Maximum allowed page size for location listings
-      default: 100
-    MaxHierarchyDepth:
-      type: integer
-      description: Maximum allowed depth for location hierarchy
-      default: 10

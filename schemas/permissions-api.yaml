@@ -8,6 +8,7 @@ info:
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
     See API-DESIGN.md for architectural rationale.
   version: 3.0.0
+  # NOTE: Event subscriptions moved to permissions-events.yaml (x-event-subscriptions)
 servers:
   - url: http://localhost:3500/v1.0/invoke/bannou/method
     description: Dapr sidecar endpoint (internal only)
@@ -515,11 +516,5 @@ components:
           type: integer
           description: Number of API endpoints registered by this service
 
-# Event subscriptions - topics this service listens to
-x-event-subscriptions:
-  - topic: session.updated
-    pubsub: bannou-pubsub
-    path: handle-session-updated
-    description: Handle session updates from Auth service to update role and authorization states.
-    schema:
-      $ref: 'auth-api.yaml#/components/schemas/SessionUpdatedEvent'
+# NOTE: Event subscriptions are defined in permissions-events.yaml
+# They are processed by generate-event-subscriptions.sh to generate PermissionsEventsController.cs

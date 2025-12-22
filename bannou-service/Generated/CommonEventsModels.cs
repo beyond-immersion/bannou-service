@@ -769,6 +769,69 @@ public partial class SessionReconnectedEvent
 
 }
 
+/// <summary>
+/// Legacy event for individual service-to-app-id mapping updates.
+/// <br/>NOTE: The system now uses FullServiceMappingsEvent for atomic full-state updates.
+/// <br/>This event is retained for backwards compatibility with older consumers.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ServiceMappingEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this mapping event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the mapping change occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Name of the service (e.g., "accounts", "character-agent")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// Dapr app-id where the service is running
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("appId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string AppId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of mapping change
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("action")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ServiceMappingEventAction Action { get; set; } = default!;
+
+    /// <summary>
+    /// Additional service metadata
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ServiceEndpointMethod
 {
@@ -841,6 +904,21 @@ public enum ServiceErrorEventSeverity
 
     [System.Runtime.Serialization.EnumMember(Value = @"critical")]
     Critical = 3,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ServiceMappingEventAction
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"register")]
+    Register = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"update")]
+    Update = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"unregister")]
+    Unregister = 2,
 
 }
 

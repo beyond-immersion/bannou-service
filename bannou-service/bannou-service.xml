@@ -1339,6 +1339,55 @@
             Internal server error (500).
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EventConsumer">
+            <summary>
+            Implementation of <see cref="T:BeyondImmersion.BannouService.Events.IEventConsumer"/> that provides application-level event fan-out.
+            </summary>
+            <remarks>
+            This service is registered as a singleton. Handler registration is thread-safe and idempotent.
+            When dispatching, handlers are resolved from the request scope to ensure proper DI lifetime management.
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Events.EventConsumer.#ctor(Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Events.EventConsumer})">
+            <summary>
+            Creates a new EventConsumer instance.
+            </summary>
+            <param name="logger">Logger for this service.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Events.EventConsumer.Register``1(System.String,System.String,System.Func{System.IServiceProvider,``0,System.Threading.Tasks.Task})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Events.EventConsumer.DispatchAsync``1(System.String,``0,System.IServiceProvider)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Events.EventConsumer.GetRegisteredTopics">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Events.EventConsumer.GetHandlerCount(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EventConsumerExtensions">
+            <summary>
+            Extension methods for registering <see cref="T:BeyondImmersion.BannouService.Events.IEventConsumer"/> with DI.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Events.EventConsumerExtensions.AddEventConsumer(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Adds the <see cref="T:BeyondImmersion.BannouService.Events.IEventConsumer"/> singleton service to the DI container.
+            </summary>
+            <param name="services">The service collection.</param>
+            <returns>The service collection for chaining.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Events.EventConsumerExtensions.RegisterHandler``2(BeyondImmersion.BannouService.Events.IEventConsumer,System.String,System.Func{``0,``1,System.Threading.Tasks.Task})">
+            <summary>
+            Helper method to register an event handler with less boilerplate.
+            </summary>
+            <typeparam name="TService">The service type that handles the event.</typeparam>
+            <typeparam name="TEvent">The event type.</typeparam>
+            <param name="eventConsumer">The event consumer.</param>
+            <param name="topicName">The Dapr topic name.</param>
+            <param name="handler">The handler method on the service.</param>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.EventPublisherBase">
             <summary>
             Base class for type-safe event publishers.
@@ -1403,6 +1452,63 @@
         <member name="P:BeyondImmersion.BannouService.Events.IDaprEvent.Timestamp">
             <summary>
             Timestamp when the event occurred.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.IEventConsumer">
+            <summary>
+            Service for registering and dispatching Dapr pub/sub events across all plugins.
+            This provides an application-level fan-out layer on top of Dapr's single-subscription-per-topic limitation.
+            </summary>
+            <remarks>
+            <para>
+            Dapr only allows ONE endpoint to subscribe to a topic per app-id. When multiple plugins
+            want to handle the same event, only one receives it. This service solves that by:
+            </para>
+            <list type="number">
+            <item>Having generated controllers push events into this singleton service</item>
+            <item>Dispatching to ALL registered handlers across all plugins</item>
+            <item>Isolating handler failures so one throwing doesn't prevent others from running</item>
+            </list>
+            <para>
+            Registration uses a factory pattern to avoid capturing stale service instances.
+            When dispatching, fresh service instances are resolved from the request scope.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Events.IEventConsumer.Register``1(System.String,System.String,System.Func{System.IServiceProvider,``0,System.Threading.Tasks.Task})">
+            <summary>
+            Registers an event handler for a specific topic.
+            </summary>
+            <typeparam name="TEvent">The event type to handle.</typeparam>
+            <param name="topicName">The Dapr topic name (e.g., "session.connected").</param>
+            <param name="handlerKey">Unique key to prevent duplicate registrations (e.g., "permissions:session.connected").</param>
+            <param name="handlerFactory">
+            Factory that takes IServiceProvider and event, resolves the service, and calls the handler.
+            The factory should resolve services from the provided scope, not capture constructor instances.
+            </param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Events.IEventConsumer.DispatchAsync``1(System.String,``0,System.IServiceProvider)">
+            <summary>
+            Dispatches an event to all registered handlers for the topic.
+            </summary>
+            <typeparam name="TEvent">The event type.</typeparam>
+            <param name="topicName">The Dapr topic name.</param>
+            <param name="evt">The event data.</param>
+            <param name="requestScope">The DI scope for the current request (used to resolve services).</param>
+            <returns>Task that completes when all handlers have been invoked.</returns>
+            <remarks>
+            Handler failures are logged but do not prevent other handlers from running.
+            All handlers are invoked even if some throw exceptions.
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Events.IEventConsumer.GetRegisteredTopics">
+            <summary>
+            Gets all registered topic names for diagnostic purposes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Events.IEventConsumer.GetHandlerCount(System.String)">
+            <summary>
+            Gets the number of handlers registered for a topic.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.ServiceErrorPublisher">
@@ -1894,6 +2000,1047 @@
             Optional context from the reconnection (client info, etc.)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ServiceMappingEvent">
+            <summary>
+            Legacy event for individual service-to-app-id mapping updates.
+            <br/>NOTE: The system now uses FullServiceMappingsEvent for atomic full-state updates.
+            <br/>This event is retained for backwards compatibility with older consumers.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.EventId">
+            <summary>
+            Unique identifier for this mapping event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Timestamp">
+            <summary>
+            When the mapping change occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.ServiceName">
+            <summary>
+            Name of the service (e.g., "accounts", "character-agent")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.AppId">
+            <summary>
+            Dapr app-id where the service is running
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Action">
+            <summary>
+            Type of mapping change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Metadata">
+            <summary>
+            Additional service metadata
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AccountCreatedEvent">
+            <summary>
+            Published to account.created when a account is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AccountCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AccountCreatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AccountUpdatedEvent">
+            <summary>
+            Published to account.updated when a account is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AccountDeletedEvent">
+            <summary>
+            Published to account.deleted when a account is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SessionInvalidatedEvent">
+            <summary>
+            Event published when sessions are invalidated (logout, account deletion, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionInvalidatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionInvalidatedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionInvalidatedEvent.AccountId">
+            <summary>
+            ID of the account whose sessions were invalidated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionInvalidatedEvent.SessionIds">
+            <summary>
+            List of session IDs that were invalidated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionInvalidatedEvent.DisconnectClients">
+            <summary>
+            Whether Connect service should disconnect WebSocket clients
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SessionInvalidatedEventReason">
+            <summary>
+            Reason for session invalidation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SessionUpdatedEvent">
+            <summary>
+            Published when a session's roles or authorizations change.
+            <br/>Permissions service subscribes to update capability compilation.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionUpdatedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionUpdatedEvent.AccountId">
+            <summary>
+            ID of the account whose session changed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionUpdatedEvent.SessionId">
+            <summary>
+            ID of the session that changed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionUpdatedEvent.Roles">
+            <summary>
+            Current roles for the session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionUpdatedEvent.Authorizations">
+            <summary>
+            Current authorization strings (e.g., ["arcadia:authorized"])
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SessionUpdatedEventReason">
+            <summary>
+            Reason for session update
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterCreatedEvent">
+            <summary>
+            Published to character.created when a character is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterCreatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterUpdatedEvent">
+            <summary>
+            Published to character.updated when a character is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterUpdatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterDeletedEvent">
+            <summary>
+            Published to character.deleted when a character is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterDeletedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.LocationCreatedEvent">
+            <summary>
+            Published to location.created when a location is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LocationCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LocationCreatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.LocationUpdatedEvent">
+            <summary>
+            Published to location.updated when a location is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LocationUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LocationUpdatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LocationUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.LocationDeletedEvent">
+            <summary>
+            Published to location.deleted when a location is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LocationDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LocationDeletedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.LocationDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.PermissionCapabilityUpdate">
+            <summary>
+            Event published to specific Connect service instances (CONNECT_{session_id} channel).
+            <br/>Contains compiled permission capabilities for a session with optional delta updates.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PermissionCapabilityUpdate.SessionId">
+            <summary>
+            Session ID that had capability changes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PermissionCapabilityUpdate.Version">
+            <summary>
+            New capability version number (increments on each update)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PermissionCapabilityUpdate.UpdateType">
+            <summary>
+            Type of update - full capabilities or delta changes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PermissionCapabilityUpdate.FullCapabilities">
+            <summary>
+            Complete capability map (for full updates or initial connection).
+            <br/>Key: service_id, Value: array of allowed endpoints.
+            <br/>Example: {"accounts": ["GET:/accounts", "PUT:/accounts/{id}"]}
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PermissionCapabilityUpdate.AddedCapabilities">
+            <summary>
+            New capabilities added to the session (for delta updates).
+            <br/>Same format as fullCapabilities.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PermissionCapabilityUpdate.RemovedCapabilities">
+            <summary>
+            Capabilities removed from the session (for delta updates).
+            <br/>Same format as fullCapabilities.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PermissionCapabilityUpdate.GeneratedAt">
+            <summary>
+            When these capabilities were compiled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PermissionCapabilityUpdate.ExpiresAt">
+            <summary>
+            When these capabilities expire and need refresh
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PermissionCapabilityUpdate.Reason">
+            <summary>
+            Reason for the capability update
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SessionStateChangeEvent">
+            <summary>
+            Published by services when a session's state changes within that service.
+            <br/>Triggers permission recompilation in the Permissions service.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionStateChangeEvent.EventId">
+            <summary>
+            Unique identifier for this state change event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionStateChangeEvent.Timestamp">
+            <summary>
+            When the state change occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionStateChangeEvent.SessionId">
+            <summary>
+            Session ID that had state change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionStateChangeEvent.ServiceId">
+            <summary>
+            Service where the state changed (e.g., "auth", "game-session")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionStateChangeEvent.PreviousState">
+            <summary>
+            Previous state (null for initial state)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionStateChangeEvent.NewState">
+            <summary>
+            New state (e.g., "authenticated", "in_game", "character_selected")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SessionStateChangeEvent.Metadata">
+            <summary>
+            Additional context about the state change
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AuthSessionEvent">
+            <summary>
+            Authentication-related session events (login, logout, role changes).
+            <br/>Extends SessionStateChangeEvent with auth-specific information.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSessionEvent.EventId">
+            <summary>
+            Unique identifier for this auth event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSessionEvent.Timestamp">
+            <summary>
+            When the auth event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSessionEvent.SessionId">
+            <summary>
+            Session ID affected by the auth event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSessionEvent.EventType">
+            <summary>
+            Type of authentication event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSessionEvent.UserId">
+            <summary>
+            User ID associated with the session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSessionEvent.Roles">
+            <summary>
+            Current roles for the session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSessionEvent.PreviousRoles">
+            <summary>
+            Previous roles (for role_changed events)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSessionEvent.Metadata">
+            <summary>
+            Additional auth event metadata
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.PermissionRecompileRequest">
+            <summary>
+            Request to trigger bulk permission recompilation.
+            <br/>Used when service registrations change or global permission rules update.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PermissionRecompileRequest.EventId">
+            <summary>
+            Unique identifier for this recompilation request
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PermissionRecompileRequest.Timestamp">
+            <summary>
+            When the recompilation was requested
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PermissionRecompileRequest.Reason">
+            <summary>
+            Reason for triggering permission recompilation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PermissionRecompileRequest.ServiceIds">
+            <summary>
+            Specific services that changed (optional).
+            <br/>If not provided, recompiles all sessions.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PermissionRecompileRequest.SessionIds">
+            <summary>
+            Specific sessions to recompile (optional).
+            <br/>If not provided, recompiles all active sessions.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PermissionRecompileRequest.Metadata">
+            <summary>
+            Additional context for the recompilation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RedisOperationEvent">
+            <summary>
+            Internal event for Redis operation tracking and monitoring.
+            <br/>Used for debugging and performance monitoring.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RedisOperationEvent.EventId">
+            <summary>
+            Unique identifier for this operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RedisOperationEvent.Timestamp">
+            <summary>
+            When the Redis operation occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RedisOperationEvent.Operation">
+            <summary>
+            Type of Redis operation performed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RedisOperationEvent.SessionId">
+            <summary>
+            Session ID affected (if applicable)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RedisOperationEvent.ServiceId">
+            <summary>
+            Service ID affected (if applicable)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RedisOperationEvent.Success">
+            <summary>
+            Whether the operation succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RedisOperationEvent.ExecutionTime">
+            <summary>
+            Operation execution time in milliseconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RedisOperationEvent.Error">
+            <summary>
+            Error message if operation failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RedisOperationEvent.Metadata">
+            <summary>
+            Additional operation context
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RealmCreatedEvent">
+            <summary>
+            Published to realm.created when a realm is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmCreatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RealmUpdatedEvent">
+            <summary>
+            Published to realm.updated when a realm is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmUpdatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RealmDeletedEvent">
+            <summary>
+            Published to realm.deleted when a realm is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmDeletedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RelationshipCreatedEvent">
+            <summary>
+            Published to relationship.created when a relationship is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipCreatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent">
+            <summary>
+            Published to relationship.updated when a relationship is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent">
+            <summary>
+            Published to relationship.deleted when a relationship is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RelationshipTypeCreatedEvent">
+            <summary>
+            Published to relationship-type.created when a relationshiptype is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeCreatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RelationshipTypeUpdatedEvent">
+            <summary>
+            Published to relationship-type.updated when a relationshiptype is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeUpdatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RelationshipTypeDeletedEvent">
+            <summary>
+            Published to relationship-type.deleted when a relationshiptype is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeDeletedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SpeciesCreatedEvent">
+            <summary>
+            Published to species.created when a species is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesCreatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SpeciesUpdatedEvent">
+            <summary>
+            Published to species.updated when a species is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesUpdatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SpeciesDeletedEvent">
+            <summary>
+            Published to species.deleted when a species is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesDeletedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent">
+            <summary>
+            Published when a subscription changes state (created, updated, cancelled, expired).
+            <br/>Auth service subscribes to this event to update session authorizations.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.SubscriptionId">
+            <summary>
+            ID of the subscription that changed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.AccountId">
+            <summary>
+            ID of the account that owns the subscription
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.ServiceId">
+            <summary>
+            ID of the service (game) the subscription is for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.StubName">
+            <summary>
+            Stub name of the service (e.g., "arcadia")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.DisplayName">
+            <summary>
+            Display name of the service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.Action">
+            <summary>
+            What action triggered this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.IsActive">
+            <summary>
+            Whether the subscription is currently active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.ExpirationDate">
+            <summary>
+            When the subscription expires (if applicable)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.PreviousValues">
+            <summary>
+            Previous values for updated fields (for update action)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.NewValues">
+            <summary>
+            New values for updated fields (for update action)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.VoiceRoomCreatedEvent">
+            <summary>
+            Published when a new voice room is created.
+            <br/>Consumed by Orchestrator for resource tracking.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomCreatedEvent.Timestamp">
+            <summary>
+            When the room was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomCreatedEvent.RoomId">
+            <summary>
+            Created voice room ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomCreatedEvent.SessionId">
+            <summary>
+            Associated game session ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomCreatedEvent.Tier">
+            <summary>
+            Initial voice tier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomCreatedEvent.MaxParticipants">
+            <summary>
+            Maximum participants before tier upgrade
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomCreatedEvent.Codec">
+            <summary>
+            Audio codec
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.VoiceRoomDeletedEvent">
+            <summary>
+            Published when a voice room is deleted.
+            <br/>Consumed by Orchestrator to release resources.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomDeletedEvent.Timestamp">
+            <summary>
+            When the room was deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomDeletedEvent.RoomId">
+            <summary>
+            Deleted voice room ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomDeletedEvent.SessionId">
+            <summary>
+            Associated game session ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomDeletedEvent.Reason">
+            <summary>
+            Reason for deletion
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomDeletedEvent.FinalParticipantCount">
+            <summary>
+            Number of participants when deleted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.VoiceTierUpgradeRequestedEvent">
+            <summary>
+            Published when a voice room needs to upgrade from P2P to scaled tier.
+            <br/>Consumed by Orchestrator to provision RTP server resources.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeRequestedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeRequestedEvent.Timestamp">
+            <summary>
+            When the upgrade was requested
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeRequestedEvent.RoomId">
+            <summary>
+            Voice room requesting upgrade
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeRequestedEvent.SessionId">
+            <summary>
+            Associated game session ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeRequestedEvent.CurrentParticipants">
+            <summary>
+            Current number of participants
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeRequestedEvent.RequestedTier">
+            <summary>
+            Tier to upgrade to
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.VoiceTierUpgradeCompletedEvent">
+            <summary>
+            Published when a voice room tier upgrade is complete.
+            <br/>Voice service publishes this after receiving RTP server assignment
+            <br/>from Orchestrator.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeCompletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeCompletedEvent.Timestamp">
+            <summary>
+            When the upgrade completed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeCompletedEvent.RoomId">
+            <summary>
+            Upgraded voice room ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeCompletedEvent.SessionId">
+            <summary>
+            Associated game session ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeCompletedEvent.PreviousTier">
+            <summary>
+            Previous tier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeCompletedEvent.NewTier">
+            <summary>
+            New tier after upgrade
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeCompletedEvent.RtpServerUri">
+            <summary>
+            Assigned RTP server URI
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.VoiceParticipantJoinedEvent">
+            <summary>
+            Published when a participant joins a voice room.
+            <br/>Used for metrics and capacity tracking.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantJoinedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantJoinedEvent.Timestamp">
+            <summary>
+            When the participant joined
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantJoinedEvent.RoomId">
+            <summary>
+            Voice room ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantJoinedEvent.AccountId">
+            <summary>
+            Joining participant's account ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantJoinedEvent.CurrentParticipantCount">
+            <summary>
+            Total participants after join
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantJoinedEvent.Tier">
+            <summary>
+            Current tier
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.VoiceParticipantLeftEvent">
+            <summary>
+            Published when a participant leaves a voice room.
+            <br/>Used for metrics and capacity tracking.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantLeftEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantLeftEvent.Timestamp">
+            <summary>
+            When the participant left
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantLeftEvent.RoomId">
+            <summary>
+            Voice room ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantLeftEvent.AccountId">
+            <summary>
+            Leaving participant's account ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantLeftEvent.RemainingParticipantCount">
+            <summary>
+            Participants remaining after departure
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantLeftEvent.Reason">
+            <summary>
+            Reason for leaving
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.ExtensionMethods">
             <summary>
             Extension methods for various types used throughout the Bannou service platform.
@@ -2239,61 +3386,6 @@
             </summary>
             <returns>Verification status updated successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Accounts.AccountCreatedEvent">
-            <summary>
-            Published to account.created when a account is created
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Accounts.AccountCreatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Accounts.AccountCreatedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Accounts.AccountUpdatedEvent">
-            <summary>
-            Published to account.updated when a account is updated
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Accounts.AccountUpdatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Accounts.AccountUpdatedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Accounts.AccountUpdatedEvent.ChangedFields">
-            <summary>
-            List of field names that were modified
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Accounts.AccountDeletedEvent">
-            <summary>
-            Published to account.deleted when a account is deleted
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Accounts.AccountDeletedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Accounts.AccountDeletedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Accounts.AccountDeletedEvent.DeletedReason">
-            <summary>
-            Optional reason for deletion (e.g., "Merged into {targetId}")
-            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Accounts.AuthProvider">
             <summary>
@@ -2798,83 +3890,6 @@
         <member name="P:BeyondImmersion.BannouService.Auth.RoutingPreferenceResponse.PreferredInstance">
             <summary>
             The preferred Connect service instance ID
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.SessionInvalidatedEvent">
-            <summary>
-            Event published when sessions are invalidated (logout, account deletion, etc.)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.SessionInvalidatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.SessionInvalidatedEvent.Timestamp">
-            <summary>
-            When the event occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.SessionInvalidatedEvent.AccountId">
-            <summary>
-            ID of the account whose sessions were invalidated
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.SessionInvalidatedEvent.SessionIds">
-            <summary>
-            List of session IDs that were invalidated
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.SessionInvalidatedEvent.DisconnectClients">
-            <summary>
-            Whether Connect service should disconnect WebSocket clients
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.SessionInvalidatedEventReason">
-            <summary>
-            Reason for session invalidation
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.SessionUpdatedEvent">
-            <summary>
-            Published when a session's roles or authorizations change.
-            <br/>Permissions service subscribes to update capability compilation.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.SessionUpdatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.SessionUpdatedEvent.Timestamp">
-            <summary>
-            When the event occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.SessionUpdatedEvent.AccountId">
-            <summary>
-            ID of the account whose session changed
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.SessionUpdatedEvent.SessionId">
-            <summary>
-            ID of the session that changed
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.SessionUpdatedEvent.Roles">
-            <summary>
-            Current roles for the session
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.SessionUpdatedEvent.Authorizations">
-            <summary>
-            Current authorization strings (e.g., ["arcadia:authorized"])
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.SessionUpdatedEventReason">
-            <summary>
-            Reason for session update
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.CompileAbmlBehaviorAsync(System.String,System.Threading.CancellationToken)">
@@ -3466,61 +4481,6 @@
             </summary>
             <returns>Characters retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Character.CharacterCreatedEvent">
-            <summary>
-            Published to character.created when a character is created
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Character.CharacterCreatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Character.CharacterCreatedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Character.CharacterUpdatedEvent">
-            <summary>
-            Published to character.updated when a character is updated
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Character.CharacterUpdatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Character.CharacterUpdatedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Character.CharacterUpdatedEvent.ChangedFields">
-            <summary>
-            List of field names that were modified
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Character.CharacterDeletedEvent">
-            <summary>
-            Published to character.deleted when a character is deleted
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Character.CharacterDeletedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Character.CharacterDeletedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Character.CharacterDeletedEvent.DeletedReason">
-            <summary>
-            Optional reason for deletion (e.g., "Merged into {targetId}")
-            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Character.CharacterStatus">
             <summary>
@@ -4410,6 +5370,12 @@
             <summary>
             Join a game session
             </summary>
+            <remarks>
+            Join an existing game session. This endpoint is not directly accessible via WebSocket API.
+            <br/>Access is granted through session shortcuts published by the game-session service when
+            <br/>a subscribed user connects. The shortcut contains a pre-bound JoinGameSessionRequest
+            <br/>with the target session ID already filled in.
+            </remarks>
             <returns>Successfully joined game session</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
@@ -4489,6 +5455,12 @@
             <summary>
             Join a game session
             </summary>
+            <remarks>
+            Join an existing game session. This endpoint is not directly accessible via WebSocket API.
+            <br/>Access is granted through session shortcuts published by the game-session service when
+            <br/>a subscribed user connects. The shortcut contains a pre-bound JoinGameSessionRequest
+            <br/>with the target session ID already filled in.
+            </remarks>
             <returns>Successfully joined game session</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
@@ -5121,61 +6093,6 @@
             </remarks>
             <returns>Seed operation completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Location.LocationCreatedEvent">
-            <summary>
-            Published to location.created when a location is created
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Location.LocationCreatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Location.LocationCreatedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Location.LocationUpdatedEvent">
-            <summary>
-            Published to location.updated when a location is updated
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Location.LocationUpdatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Location.LocationUpdatedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Location.LocationUpdatedEvent.ChangedFields">
-            <summary>
-            List of field names that were modified
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Location.LocationDeletedEvent">
-            <summary>
-            Published to location.deleted when a location is deleted
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Location.LocationDeletedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Location.LocationDeletedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Location.LocationDeletedEvent.DeletedReason">
-            <summary>
-            Optional reason for deletion (e.g., "Merged into {targetId}")
-            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Location.LocationType">
             <summary>
@@ -7881,61 +8798,6 @@
             <returns>Seed operation completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Realm.RealmCreatedEvent">
-            <summary>
-            Published to realm.created when a realm is created
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Realm.RealmCreatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Realm.RealmCreatedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Realm.RealmUpdatedEvent">
-            <summary>
-            Published to realm.updated when a realm is updated
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Realm.RealmUpdatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Realm.RealmUpdatedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Realm.RealmUpdatedEvent.ChangedFields">
-            <summary>
-            List of field names that were modified
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Realm.RealmDeletedEvent">
-            <summary>
-            Published to realm.deleted when a realm is deleted
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Realm.RealmDeletedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Realm.RealmDeletedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Realm.RealmDeletedEvent.DeletedReason">
-            <summary>
-            Optional reason for deletion (e.g., "Merged into {targetId}")
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Realm.GetRealmRequest.RealmId">
             <summary>
             Unique identifier of the realm
@@ -8306,61 +9168,6 @@
             </remarks>
             <returns>Relationship ended successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Relationship.RelationshipCreatedEvent">
-            <summary>
-            Published to relationship.created when a relationship is created
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Relationship.RelationshipCreatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Relationship.RelationshipCreatedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Relationship.RelationshipUpdatedEvent">
-            <summary>
-            Published to relationship.updated when a relationship is updated
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Relationship.RelationshipUpdatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Relationship.RelationshipUpdatedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Relationship.RelationshipUpdatedEvent.ChangedFields">
-            <summary>
-            List of field names that were modified
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Relationship.RelationshipDeletedEvent">
-            <summary>
-            Published to relationship.deleted when a relationship is deleted
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Relationship.RelationshipDeletedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Relationship.RelationshipDeletedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Relationship.RelationshipDeletedEvent.DeletedReason">
-            <summary>
-            Optional reason for deletion (e.g., "Merged into {targetId}")
-            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Relationship.EntityType">
             <summary>
@@ -8815,61 +9622,6 @@
             </remarks>
             <returns>Seed operation completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeCreatedEvent">
-            <summary>
-            Published to relationship-type.created when a relationshiptype is created
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeCreatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeCreatedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeUpdatedEvent">
-            <summary>
-            Published to relationship-type.updated when a relationshiptype is updated
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeUpdatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeUpdatedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeUpdatedEvent.ChangedFields">
-            <summary>
-            List of field names that were modified
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeDeletedEvent">
-            <summary>
-            Published to relationship-type.deleted when a relationshiptype is deleted
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeDeletedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeDeletedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeDeletedEvent.DeletedReason">
-            <summary>
-            Optional reason for deletion (e.g., "Merged into {targetId}")
-            </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.GetRelationshipTypeRequest.RelationshipTypeId">
             <summary>
@@ -9738,61 +10490,6 @@
             </remarks>
             <returns>Seed operation completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Species.SpeciesCreatedEvent">
-            <summary>
-            Published to species.created when a species is created
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Species.SpeciesCreatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Species.SpeciesCreatedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Species.SpeciesUpdatedEvent">
-            <summary>
-            Published to species.updated when a species is updated
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Species.SpeciesUpdatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Species.SpeciesUpdatedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Species.SpeciesUpdatedEvent.ChangedFields">
-            <summary>
-            List of field names that were modified
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Species.SpeciesDeletedEvent">
-            <summary>
-            Published to species.deleted when a species is deleted
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Species.SpeciesDeletedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Species.SpeciesDeletedEvent.Timestamp">
-            <summary>
-            When this event occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Species.SpeciesDeletedEvent.DeletedReason">
-            <summary>
-            Optional reason for deletion (e.g., "Merged into {targetId}")
-            </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Species.GetSpeciesRequest.SpeciesId">
             <summary>
@@ -11916,6 +12613,60 @@
             Response model for service mappings query.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Protocol.GuidGenerator">
+            <summary>
+            Shared GUID generation utilities for client-server security.
+            Provides client-salted GUIDs to prevent cross-session exploitation.
+            This is the shared version - all services should use this for consistency.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Protocol.GuidGenerator.GetSharedServerSalt">
+            <summary>
+            Gets the shared server salt for GUID generation.
+            Uses BANNOU_SERVER_SALT environment variable if set, otherwise generates once per process.
+            All services must use the same salt for shortcuts to work correctly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Protocol.GuidGenerator.GenerateServiceGuid(System.String,System.String,System.String,System.String)">
+            <summary>
+            Generates a client-salted GUID for a service endpoint.
+            Each client gets unique GUIDs for identical services, preventing security exploits.
+            </summary>
+            <param name="sessionId">Unique session identifier</param>
+            <param name="serviceName">Name of the target service</param>
+            <param name="serverSalt">Server-generated salt for additional security</param>
+            <param name="additionalEntropy">Optional additional entropy for specialized use cases</param>
+            <returns>Deterministic but unique GUID for this session-service combination</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Protocol.GuidGenerator.GenerateSessionShortcutGuid(System.String,System.String,System.String,System.String)">
+            <summary>
+            Generates a client-salted GUID for a session shortcut.
+            Uses UUID version 7 bits to distinguish from service GUIDs (version 5)
+            and client-to-client GUIDs (version 6).
+            </summary>
+            <param name="sessionId">Unique session identifier</param>
+            <param name="shortcutName">Machine-readable name for this shortcut</param>
+            <param name="sourceService">Service that created this shortcut</param>
+            <param name="serverSalt">Server-generated salt for additional security</param>
+            <returns>Deterministic but unique GUID for this session-shortcut combination</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Protocol.GuidGenerator.IsSessionShortcutGuid(System.Guid)">
+            <summary>
+            Validates that a GUID is a session shortcut GUID (version 7).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Protocol.GuidGenerator.IsServiceGuid(System.Guid)">
+            <summary>
+            Validates that a GUID is a service GUID (version 5).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Protocol.GuidGenerator.GenerateServerSalt">
+            <summary>
+            Creates a server salt with cryptographic randomness.
+            Should be generated once per server instance and reused.
+            </summary>
+            <returns>Cryptographically secure server salt</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase">
             <summary>
             Base class for all Dapr-aware service clients.
@@ -12272,6 +13023,20 @@
             Override this method if the service has custom permission registration logic.
             </summary>
             <returns>Task representing the registration operation</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.RegisterEventConsumers(BeyondImmersion.BannouService.Events.IEventConsumer)">
+            <summary>
+            Registers event consumers for Dapr pub/sub events this service wants to handle.
+            This method should be called from the service constructor with the injected IEventConsumer.
+            Override in {Service}ServiceEvents.cs partial class to register event handlers.
+            Generated by generate-event-subscriptions.sh based on x-subscribes-to in OpenAPI schema.
+            </summary>
+            <param name="eventConsumer">The event consumer for registering handlers.</param>
+            <remarks>
+            Handler registration is idempotent - calling multiple times with the same handler key
+            will only register once. Handlers are invoked when any plugin's EventsController
+            receives the corresponding Dapr topic event.
+            </remarks>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IDaprService.IsDisabled">
             <summary>

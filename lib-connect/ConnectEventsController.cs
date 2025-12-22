@@ -1,9 +1,8 @@
 using BeyondImmersion.BannouService.Auth;
+using BeyondImmersion.BannouService.Events;
 using Dapr;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System.IO;
-using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Connect;
 
@@ -44,76 +43,18 @@ public class ConnectEventsController : ControllerBase
     {
         try
         {
-            // Read and parse event using shared helper (handles both CloudEvents and raw formats)
-            var actualEventData = await DaprEventHelper.ReadEventJsonAsync(Request);
+            // Read and parse event using typed model (handles both CloudEvents and raw formats)
+            var evt = await DaprEventHelper.ReadEventAsync<SessionInvalidatedEvent>(Request);
 
-            if (actualEventData == null)
+            if (evt == null)
             {
-                _logger.LogWarning("Received empty or invalid session-invalidated event");
+                _logger.LogWarning("[CONNECT-EVENT] Failed to parse SessionInvalidatedEvent from request body");
                 return Ok(); // Don't fail - just ignore empty/invalid events
             }
 
-            _logger.LogDebug("Session invalidation event raw JSON: {EventJson}", actualEventData.Value.GetRawText());
-
-            // Extract session IDs and reason
-            var sessionIds = new List<string>();
-            string? reason = null;
-            bool disconnectClients = true;
-
-            if (actualEventData.Value.TryGetProperty("sessionIds", out var sessionsElement) &&
-                sessionsElement.ValueKind == JsonValueKind.Array)
-            {
-                _logger.LogDebug("Session invalidation has {Count} session IDs", sessionsElement.GetArrayLength());
-
-                foreach (var sessionElement in sessionsElement.EnumerateArray())
-                {
-                    _logger.LogDebug("Session element - ValueKind: {ValueKind}, Value: {RawText}",
-                        sessionElement.ValueKind, sessionElement.GetRawText());
-
-                    // Handle both string and number types (defensive parsing for CloudEvents compatibility)
-                    string? sessionId = null;
-
-                    if (sessionElement.ValueKind == JsonValueKind.String)
-                    {
-                        sessionId = sessionElement.GetString();
-                    }
-                    else if (sessionElement.ValueKind == JsonValueKind.Number)
-                    {
-                        // Convert number to string (handles edge cases where GUIDs might be serialized as numbers)
-                        sessionId = sessionElement.GetRawText();
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Unexpected session element ValueKind: {ValueKind}, using raw text", sessionElement.ValueKind);
-                        sessionId = sessionElement.GetRawText();
-                    }
-
-                    if (!string.IsNullOrEmpty(sessionId))
-                    {
-                        sessionIds.Add(sessionId);
-                    }
-                }
-            }
-
-            if (actualEventData.Value.TryGetProperty("reason", out var reasonElement))
-            {
-                // Handle both string and number types (System.Text.Json serializes enums as numbers by default)
-                if (reasonElement.ValueKind == JsonValueKind.String)
-                {
-                    reason = reasonElement.GetString();
-                }
-                else if (reasonElement.ValueKind == JsonValueKind.Number)
-                {
-                    // Enum serialized as number - convert to string representation
-                    var reasonValue = reasonElement.GetInt32();
-                    reason = ((SessionInvalidatedEventReason)reasonValue).ToString();
-                }
-            }
-
-            if (actualEventData.Value.TryGetProperty("disconnectClients", out var disconnectElement))
-            {
-                disconnectClients = disconnectElement.GetBoolean();
-            }
+            var sessionIds = evt.SessionIds?.ToList() ?? new List<string>();
+            var reason = evt.Reason.ToString();
+            var disconnectClients = evt.DisconnectClients;
 
             _logger.LogInformation(
                 "Processing session invalidation: {SessionCount} sessions, reason: {Reason}, disconnect: {Disconnect}",
@@ -145,7 +86,7 @@ public class ConnectEventsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error handling session-invalidated event");
+            _logger.LogError(ex, "[CONNECT-EVENT] Error handling session-invalidated event");
             return Ok(); // Don't fail Dapr retries - log and continue
         }
     }

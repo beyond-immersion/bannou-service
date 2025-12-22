@@ -59,6 +59,16 @@ else
 fi
 echo ""
 
+# Generate service-specific events ({service}-events.yaml files)
+echo -e "${BLUE}📡 Generating service-specific events...${NC}"
+if ./generate-service-events.sh; then
+    echo -e "${GREEN}✅ Service-specific events generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate service-specific events${NC}"
+    exit 1
+fi
+echo ""
+
 # Generate client events (server-to-client push events via WebSocket)
 echo -e "${BLUE}🌟 Generating client events...${NC}"
 if ./generate-client-events.sh; then

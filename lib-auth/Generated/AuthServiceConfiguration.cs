@@ -16,147 +16,135 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public string? Force_Service_ID { get; set; }
 
     /// <summary>
-    /// Bcrypt work factor for password hashing (higher = more secure but slower)
-    /// Environment variable: BCRYPTWORKFACTOR or BANNOU_BCRYPTWORKFACTOR
-    /// </summary>
-    public int BcryptWorkFactor { get; set; } = 12;
-
-    /// <summary>
-    /// JWT secret key for token signing
-    /// Environment variable: JWTSECRET or BANNOU_JWTSECRET
+    /// Secret key for JWT token signing
+    /// Environment variable: AUTH_JWT_SECRET or BANNOU_AUTH_JWT_SECRET
     /// </summary>
     public string JwtSecret { get; set; } = string.Empty;
 
     /// <summary>
-    /// JWT issuer identifier
-    /// Environment variable: JWTISSUER or BANNOU_JWTISSUER
+    /// JWT token issuer
+    /// Environment variable: AUTH_JWT_ISSUER or BANNOU_AUTH_JWT_ISSUER
     /// </summary>
     public string JwtIssuer { get; set; } = "bannou-auth";
 
     /// <summary>
-    /// JWT audience identifier
-    /// Environment variable: JWTAUDIENCE or BANNOU_JWTAUDIENCE
+    /// JWT token audience
+    /// Environment variable: AUTH_JWT_AUDIENCE or BANNOU_AUTH_JWT_AUDIENCE
     /// </summary>
-    public string JwtAudience { get; set; } = "bannou-services";
+    public string JwtAudience { get; set; } = "bannou-api";
 
     /// <summary>
-    /// JWT expiration time in minutes
-    /// Environment variable: JWTEXPIRATIONMINUTES or BANNOU_JWTEXPIRATIONMINUTES
+    /// JWT token expiration time in minutes
+    /// Environment variable: AUTH_JWT_EXPIRATION_MINUTES or BANNOU_AUTH_JWT_EXPIRATION_MINUTES
     /// </summary>
-    public int JwtExpirationMinutes { get; set; } = 1440;
+    public int JwtExpirationMinutes { get; set; } = 60;
 
     /// <summary>
-    /// Access token expiration time in minutes (alias for JwtExpirationMinutes)
-    /// Environment variable: ACCESSTOKENEXPIRATIONMINUTES or BANNOU_ACCESSTOKENEXPIRATIONMINUTES
+    /// URL to the Connect service for WebSocket connections
+    /// Environment variable: AUTH_CONNECT_URL or BANNOU_AUTH_CONNECT_URL
     /// </summary>
-    public int AccessTokenExpirationMinutes { get; set; } = 1440;
+    public string ConnectUrl { get; set; } = "ws://localhost:5014/connect";
 
     /// <summary>
-    /// WebSocket URL for Connect service (returned in login responses for client connection)
-    /// Environment variable: CONNECTURL or BANNOU_CONNECTURL
-    /// </summary>
-    public string ConnectUrl { get; set; } = "ws://localhost:8080/connect";
-
-    /// <summary>
-    /// Password reset token expiration time in minutes
-    /// Environment variable: PASSWORDRESETTOKENTTLMINUTES or BANNOU_PASSWORDRESETTOKENTTLMINUTES
-    /// </summary>
-    public int PasswordResetTokenTtlMinutes { get; set; } = 60;
-
-    /// <summary>
-    /// Base URL for password reset links (e.g., https://example.com/reset-password)
-    /// Environment variable: PASSWORDRESETBASEURL or BANNOU_PASSWORDRESETBASEURL
-    /// </summary>
-    public string PasswordResetBaseUrl { get; set; } = "https://example.com/reset-password";
-
-    /// <summary>
-    /// When true, use mock providers instead of real OAuth/Steam APIs
-    /// Environment variable: MOCKPROVIDERS or BANNOU_MOCKPROVIDERS
+    /// Enable mock OAuth providers for testing
+    /// Environment variable: AUTH_MOCK_PROVIDERS or BANNOU_AUTH_MOCK_PROVIDERS
     /// </summary>
     public bool MockProviders { get; set; } = false;
 
     /// <summary>
-    /// Mock SteamID returned when MockProviders=true (64-bit Steam ID)
-    /// Environment variable: MOCKSTEAMID or BANNOU_MOCKSTEAMID
+    /// Mock Discord user ID for testing
+    /// Environment variable: AUTH_MOCK_DISCORD_ID or BANNOU_AUTH_MOCK_DISCORD_ID
     /// </summary>
-    public string MockSteamId { get; set; } = "76561198000000001";
+    public string MockDiscordId { get; set; } = "mock-discord-123456";
 
     /// <summary>
-    /// Mock Discord user ID returned when MockProviders=true
-    /// Environment variable: MOCKDISCORDID or BANNOU_MOCKDISCORDID
+    /// Mock Google user ID for testing
+    /// Environment variable: AUTH_MOCK_GOOGLE_ID or BANNOU_AUTH_MOCK_GOOGLE_ID
     /// </summary>
-    public string MockDiscordId { get; set; } = "123456789012345678";
+    public string MockGoogleId { get; set; } = "mock-google-123456";
 
     /// <summary>
-    /// Mock Google user ID returned when MockProviders=true
-    /// Environment variable: MOCKGOOGLEID or BANNOU_MOCKGOOGLEID
+    /// Mock Steam user ID for testing
+    /// Environment variable: AUTH_MOCK_STEAM_ID or BANNOU_AUTH_MOCK_STEAM_ID
     /// </summary>
-    public string MockGoogleId { get; set; } = "mock-google-user-id-12345";
+    public string MockSteamId { get; set; } = "76561198000000000";
 
     /// <summary>
-    /// Steam Web API Publisher Key for ticket validation (from partner.steamgames.com)
-    /// Environment variable: STEAMAPIKEY or BANNOU_STEAMAPIKEY
-    /// </summary>
-    public string SteamApiKey { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Steam Application ID for the game
-    /// Environment variable: STEAMAPPID or BANNOU_STEAMAPPID
-    /// </summary>
-    public string SteamAppId { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Discord application client ID (from discord.com/developers)
-    /// Environment variable: DISCORDCLIENTID or BANNOU_DISCORDCLIENTID
+    /// Discord OAuth client ID
+    /// Environment variable: AUTH_DISCORD_CLIENT_ID or BANNOU_AUTH_DISCORD_CLIENT_ID
     /// </summary>
     public string DiscordClientId { get; set; } = string.Empty;
 
     /// <summary>
-    /// Discord application client secret
-    /// Environment variable: DISCORDCLIENTSECRET or BANNOU_DISCORDCLIENTSECRET
+    /// Discord OAuth client secret
+    /// Environment variable: AUTH_DISCORD_CLIENT_SECRET or BANNOU_AUTH_DISCORD_CLIENT_SECRET
     /// </summary>
     public string DiscordClientSecret { get; set; } = string.Empty;
 
     /// <summary>
-    /// Discord OAuth2 redirect URI
-    /// Environment variable: DISCORDREDIRECTURI or BANNOU_DISCORDREDIRECTURI
+    /// Discord OAuth redirect URI
+    /// Environment variable: AUTH_DISCORD_REDIRECT_URI or BANNOU_AUTH_DISCORD_REDIRECT_URI
     /// </summary>
-    public string DiscordRedirectUri { get; set; } = "http://localhost:5012/auth/oauth/discord/callback";
+    public string DiscordRedirectUri { get; set; } = string.Empty;
 
     /// <summary>
-    /// Google OAuth2 client ID (from console.cloud.google.com)
-    /// Environment variable: GOOGLECLIENTID or BANNOU_GOOGLECLIENTID
+    /// Google OAuth client ID
+    /// Environment variable: AUTH_GOOGLE_CLIENT_ID or BANNOU_AUTH_GOOGLE_CLIENT_ID
     /// </summary>
     public string GoogleClientId { get; set; } = string.Empty;
 
     /// <summary>
-    /// Google OAuth2 client secret
-    /// Environment variable: GOOGLECLIENTSECRET or BANNOU_GOOGLECLIENTSECRET
+    /// Google OAuth client secret
+    /// Environment variable: AUTH_GOOGLE_CLIENT_SECRET or BANNOU_AUTH_GOOGLE_CLIENT_SECRET
     /// </summary>
     public string GoogleClientSecret { get; set; } = string.Empty;
 
     /// <summary>
-    /// Google OAuth2 redirect URI
-    /// Environment variable: GOOGLEREDIRECTURI or BANNOU_GOOGLEREDIRECTURI
+    /// Google OAuth redirect URI
+    /// Environment variable: AUTH_GOOGLE_REDIRECT_URI or BANNOU_AUTH_GOOGLE_REDIRECT_URI
     /// </summary>
-    public string GoogleRedirectUri { get; set; } = "http://localhost:5012/auth/oauth/google/callback";
+    public string GoogleRedirectUri { get; set; } = string.Empty;
 
     /// <summary>
-    /// Twitch application client ID (from dev.twitch.tv)
-    /// Environment variable: TWITCHCLIENTID or BANNOU_TWITCHCLIENTID
+    /// Twitch OAuth client ID
+    /// Environment variable: AUTH_TWITCH_CLIENT_ID or BANNOU_AUTH_TWITCH_CLIENT_ID
     /// </summary>
     public string TwitchClientId { get; set; } = string.Empty;
 
     /// <summary>
-    /// Twitch application client secret
-    /// Environment variable: TWITCHCLIENTSECRET or BANNOU_TWITCHCLIENTSECRET
+    /// Twitch OAuth client secret
+    /// Environment variable: AUTH_TWITCH_CLIENT_SECRET or BANNOU_AUTH_TWITCH_CLIENT_SECRET
     /// </summary>
     public string TwitchClientSecret { get; set; } = string.Empty;
 
     /// <summary>
-    /// Twitch OAuth2 redirect URI
-    /// Environment variable: TWITCHREDIRECTURI or BANNOU_TWITCHREDIRECTURI
+    /// Twitch OAuth redirect URI
+    /// Environment variable: AUTH_TWITCH_REDIRECT_URI or BANNOU_AUTH_TWITCH_REDIRECT_URI
     /// </summary>
-    public string TwitchRedirectUri { get; set; } = "http://localhost:5012/auth/oauth/twitch/callback";
+    public string TwitchRedirectUri { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Steam Web API key for session ticket validation
+    /// Environment variable: AUTH_STEAM_API_KEY or BANNOU_AUTH_STEAM_API_KEY
+    /// </summary>
+    public string SteamApiKey { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Steam application ID
+    /// Environment variable: AUTH_STEAM_APP_ID or BANNOU_AUTH_STEAM_APP_ID
+    /// </summary>
+    public string SteamAppId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Password reset token expiration time in minutes
+    /// Environment variable: AUTH_PASSWORD_RESET_TOKEN_TTL_MINUTES or BANNOU_AUTH_PASSWORD_RESET_TOKEN_TTL_MINUTES
+    /// </summary>
+    public int PasswordResetTokenTtlMinutes { get; set; } = 30;
+
+    /// <summary>
+    /// Base URL for password reset page
+    /// Environment variable: AUTH_PASSWORD_RESET_BASE_URL or BANNOU_AUTH_PASSWORD_RESET_BASE_URL
+    /// </summary>
+    public string PasswordResetBaseUrl { get; set; } = string.Empty;
 
 }

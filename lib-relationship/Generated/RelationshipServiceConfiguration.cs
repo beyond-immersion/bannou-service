@@ -16,8 +16,8 @@ public class RelationshipServiceConfiguration : IServiceConfiguration
     public string? Force_Service_ID { get; set; }
 
     /// <summary>
-    /// Default configuration property - can be removed if not needed.
-    /// Environment variable: RELATIONSHIP_ENABLED or BANNOU_RELATIONSHIP_ENABLED
+    /// Enable/disable Relationship service
+    /// Environment variable: ENABLED or BANNOU_ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

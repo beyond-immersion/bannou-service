@@ -31,8 +31,8 @@ info:
     - **Reconnection Support**: Clients can reconnect to existing sessions within a configurable time window
 
 servers:
-  - url: http://localhost:3500/v1.0/invoke/bannou/method
-    description: Dapr sidecar endpoint (internal only)
+- url: http://localhost:3500/v1.0/invoke/bannou/method
+  description: Dapr sidecar endpoint (internal only)
 
 paths:
   /internal/proxy:
@@ -40,7 +40,7 @@ paths:
       summary: Internal API proxy for stateless requests
       operationId: proxyInternalRequest
       tags:
-        - Internal Proxy
+      - Internal Proxy
       description: |
         Stateless HTTP proxy for internal requests that don't require persistent sessions.
         Applies permission validation and rate limiting based on agent role and context.
@@ -73,10 +73,10 @@ paths:
       summary: Get client capability manifest (GUID → API mappings)
       operationId: getClientCapabilities
       tags:
-        - Client Capabilities
+      - Client Capabilities
       x-permissions:
-        - role: user
-          states: {}
+      - role: user
+        states: {}
       description: |
         Returns the capability manifest for the authenticated client's session.
         Maps client-salted GUIDs to available API endpoints based on the client's
@@ -115,50 +115,50 @@ paths:
       description: |
         Initiates a WebSocket connection for real-time communication.
         Requires JWT authentication via Authorization header.
-        
+
         **Connection Flow:**
         1. Send HTTP GET request with `Connection: Upgrade` and `Upgrade: websocket` headers
         2. Include `Authorization: Bearer <jwt_token>` header for authentication
         3. Server validates JWT and extracts user claims (roles, scopes, services)
         4. Connection upgrades to WebSocket protocol
         5. Client can send binary messages using the custom protocol
-        
+
         **Reconnection:**
         For existing sessions, use `Authorization: Reconnect <reconnect_token>` instead.
       operationId: ConnectWebSocket
       tags:
-        - WebSocket Connection
+      - WebSocket Connection
       x-controller-only: true
       parameters:
-        - name: Connection
-          in: header
-          required: true
-          schema:
-            type: string
-            enum: ["Upgrade"]
-          description: Must be "Upgrade" to initiate WebSocket connection
-        - name: Upgrade
-          in: header
-          required: true
-          schema:
-            type: string
-            enum: ["websocket"]
-          description: Must be "websocket" to specify protocol upgrade
-        - name: Authorization
-          in: header
-          required: true
-          schema:
-            type: string
-          description: |
-            JWT Bearer token for new connections: "Bearer <jwt_token>"
-            Reconnect token for existing sessions: "Reconnect <reconnect_token>"
-          examples:
-            new-connection:
-              summary: New connection with JWT
-              value: "Bearer eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9..."
-            reconnection:
-              summary: Reconnect to existing session
-              value: "Reconnect abc123def456..."
+      - name: Connection
+        in: header
+        required: true
+        schema:
+          type: string
+          enum: ["Upgrade"]
+        description: Must be "Upgrade" to initiate WebSocket connection
+      - name: Upgrade
+        in: header
+        required: true
+        schema:
+          type: string
+          enum: ["websocket"]
+        description: Must be "websocket" to specify protocol upgrade
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+        description: |
+          JWT Bearer token for new connections: "Bearer <jwt_token>"
+          Reconnect token for existing sessions: "Reconnect <reconnect_token>"
+        examples:
+          new-connection:
+            summary: New connection with JWT
+            value: "Bearer eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9..."
+          reconnection:
+            summary: Reconnect to existing session
+            value: "Reconnect abc123def456..."
       responses:
         '101':
           description: WebSocket connection established successfully
@@ -232,26 +232,26 @@ paths:
         require POST for WebSocket upgrades.
       operationId: ConnectWebSocketPost
       tags:
-        - WebSocket Connection
+      - WebSocket Connection
       x-controller-only: true
       parameters:
-        - name: Connection
-          in: header
-          required: true
-          schema:
-            type: string
-            enum: ["Upgrade"]
-        - name: Upgrade
-          in: header
-          required: true
-          schema:
-            type: string
-            enum: ["websocket"]
-        - name: Authorization
-          in: header
-          required: true
-          schema:
-            type: string
+      - name: Connection
+        in: header
+        required: true
+        schema:
+          type: string
+          enum: ["Upgrade"]
+      - name: Upgrade
+        in: header
+        required: true
+        schema:
+          type: string
+          enum: ["websocket"]
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
       requestBody:
         description: Optional connection parameters
         required: false
@@ -304,10 +304,10 @@ components:
     ClientCapabilitiesResponse:
       type: object
       required:
-        - sessionId
-        - capabilities
-        - version
-        - generatedAt
+      - sessionId
+      - capabilities
+      - version
+      - generatedAt
       properties:
         sessionId:
           type: string
@@ -342,10 +342,10 @@ components:
     ClientCapability:
       type: object
       required:
-        - guid
-        - service
-        - endpoint
-        - method
+      - guid
+      - service
+      - endpoint
+      - method
       properties:
         guid:
           type: string
@@ -378,10 +378,10 @@ components:
         Shortcuts appear as invocable capabilities but Connect injects a pre-bound
         payload when the shortcut GUID is used, replacing any client-provided payload.
       required:
-        - guid
-        - targetService
-        - targetEndpoint
-        - name
+      - guid
+      - targetService
+      - targetEndpoint
+      - name
       properties:
         guid:
           type: string
@@ -425,10 +425,10 @@ components:
     InternalProxyRequest:
       type: object
       required:
-        - sessionId
-        - targetService
-        - targetEndpoint
-        - method
+      - sessionId
+      - targetService
+      - targetEndpoint
+      - method
       properties:
         sessionId:
           type: string
@@ -466,8 +466,8 @@ components:
     InternalProxyResponse:
       type: object
       required:
-        - success
-        - statusCode
+      - success
+      - statusCode
       properties:
         success:
           type: boolean
@@ -512,17 +512,17 @@ components:
     ConnectErrorResponse:
       type: object
       required:
-        - error
-        - message
-        - status_code
+      - error
+      - message
+      - status_code
       properties:
         error:
           type: string
           description: Error type identifier
           enum:
-            - "BadRequest"
-            - "Forbidden"
-            - "InternalServerError"
+          - "BadRequest"
+          - "Forbidden"
+          - "InternalServerError"
         message:
           type: string
           description: Human-readable error description
@@ -559,41 +559,41 @@ components:
       type: integer
       format: byte
       enum:
-        - 0   # OK
-        - 10  # RequestError
-        - 11  # RequestTooLarge
-        - 12  # TooManyRequests
-        - 13  # InvalidRequestChannel
-        - 20  # Unauthorized
-        - 30  # ServiceNotFound
-        - 31  # ClientNotFound
-        - 32  # MessageNotFound
-        - 50  # Service_BadRequest
-        - 51  # Service_NotFound
-        - 52  # Service_Unauthorized
-        - 53  # Service_Conflict
-        - 60  # Service_InternalServerError
-        - 70  # ShortcutExpired
-        - 71  # ShortcutTargetNotFound
-        - 72  # ShortcutRevoked
+      - 0     # OK
+      - 10    # RequestError
+      - 11    # RequestTooLarge
+      - 12    # TooManyRequests
+      - 13    # InvalidRequestChannel
+      - 20    # Unauthorized
+      - 30    # ServiceNotFound
+      - 31    # ClientNotFound
+      - 32    # MessageNotFound
+      - 50    # Service_BadRequest
+      - 51    # Service_NotFound
+      - 52    # Service_Unauthorized
+      - 53    # Service_Conflict
+      - 60    # Service_InternalServerError
+      - 70    # ShortcutExpired
+      - 71    # ShortcutTargetNotFound
+      - 72    # ShortcutRevoked
       x-enumNames:
-        - "OK"
-        - "RequestError"
-        - "RequestTooLarge"
-        - "TooManyRequests"
-        - "InvalidRequestChannel"
-        - "Unauthorized"
-        - "ServiceNotFound"
-        - "ClientNotFound"
-        - "MessageNotFound"
-        - "Service_BadRequest"
-        - "Service_NotFound"
-        - "Service_Unauthorized"
-        - "Service_Conflict"
-        - "Service_InternalServerError"
-        - "ShortcutExpired"
-        - "ShortcutTargetNotFound"
-        - "ShortcutRevoked"
+      - "OK"
+      - "RequestError"
+      - "RequestTooLarge"
+      - "TooManyRequests"
+      - "InvalidRequestChannel"
+      - "Unauthorized"
+      - "ServiceNotFound"
+      - "ClientNotFound"
+      - "MessageNotFound"
+      - "Service_BadRequest"
+      - "Service_NotFound"
+      - "Service_Unauthorized"
+      - "Service_Conflict"
+      - "Service_InternalServerError"
+      - "ShortcutExpired"
+      - "ShortcutTargetNotFound"
+      - "ShortcutRevoked"
       description: |
         Response codes used in the binary protocol for success/error indication.
         Provides fine-grained error reporting for different failure scenarios.
@@ -618,12 +618,12 @@ components:
         - Bytes 23-30: Message ID (8 bytes)
         - Bytes 31+: Payload (variable length)
       required:
-        - flags
-        - channel
-        - sequenceNumber
-        - serviceGuid
-        - messageId
-        - payload
+      - flags
+      - channel
+      - sequenceNumber
+      - serviceGuid
+      - messageId
+      - payload
       properties:
         flags:
           $ref: '#/components/schemas/MessageFlags'
@@ -657,12 +657,12 @@ components:
         **Binary Header Layout (31 bytes):**
         - Same as ServiceRequestMessage but with Response flag (0x40) set
       required:
-        - flags
-        - channel
-        - sequenceNumber
-        - serviceGuid
-        - messageId
-        - responseCode
+      - flags
+      - channel
+      - sequenceNumber
+      - serviceGuid
+      - messageId
+      - responseCode
       properties:
         flags:
           $ref: '#/components/schemas/MessageFlags'
@@ -727,8 +727,8 @@ components:
         Event published when a session's capabilities change (permissions, role changes, etc.).
         Triggers real-time WebSocket updates to connected clients.
       required:
-        - sessionId
-        - version
+      - sessionId
+      - version
       properties:
         sessionId:
           type: string
@@ -762,9 +762,9 @@ components:
         Authentication state change events (login, logout, token refresh).
         Triggers session capability updates for connected clients.
       required:
-        - sessionId
-        - eventType
-        - timestamp
+      - sessionId
+      - eventType
+      - timestamp
       properties:
         sessionId:
           type: string
@@ -786,10 +786,10 @@ components:
     AuthEventType:
       type: string
       enum:
-        - Login
-        - Logout
-        - TokenRefresh
-        - PermissionChange
+      - Login
+      - Logout
+      - TokenRefresh
+      - PermissionChange
       description: Type of authentication event that occurred
 
     # Note: ServiceRegistrationEvent is defined in common-events.yaml
@@ -801,10 +801,10 @@ components:
         Event for server-to-client push messaging.
         Allows services to send messages directly to connected WebSocket clients.
       required:
-        - clientId
-        - serviceGuid
-        - messageId
-        - payload
+      - clientId
+      - serviceGuid
+      - messageId
+      - payload
       properties:
         clientId:
           type: string
@@ -842,11 +842,11 @@ components:
         Event for bidirectional RPC where services call clients and expect responses.
         Extends ClientMessageEvent with response handling.
       required:
-        - clientId
-        - serviceGuid
-        - messageId
-        - payload
-        - responseChannel
+      - clientId
+      - serviceGuid
+      - messageId
+      - payload
+      - responseChannel
       properties:
         clientId:
           type: string
@@ -885,24 +885,7 @@ components:
           format: date-time
           description: When the RPC was initiated
 
-    MessageFlags:
-      type: integer
-      format: byte
-      description: |
-        Bit flags for binary protocol message control.
-
-        Bit meanings:
-        - 0x01: Binary payload (vs JSON)
-        - 0x02: Encrypted payload
-        - 0x04: Compressed payload
-        - 0x08: Priority message
-        - 0x10: Requires acknowledgment
-        - 0x20: Broadcast message
-        - 0x40: Response message
-        - 0x80: Control message
-      minimum: 0
-      maximum: 255
-      default: 0
+    # NOTE: MessageFlags already defined above in Binary Protocol Schemas section
 
     PermissionRecompileEvent:
       type: object
@@ -910,9 +893,9 @@ components:
         Event to trigger permission recompilation for all sessions.
         Published when services register new APIs or permission rules change.
       required:
-        - eventId
-        - timestamp
-        - reason
+      - eventId
+      - timestamp
+      - reason
       properties:
         eventId:
           type: string
@@ -924,10 +907,10 @@ components:
         reason:
           type: string
           enum:
-            - service_registered
-            - permission_rules_changed
-            - role_definitions_updated
-            - manual_trigger
+          - service_registered
+          - permission_rules_changed
+          - role_definitions_updated
+          - manual_trigger
           description: Reason for triggering permission recompilation
         serviceId:
           type: string
@@ -958,77 +941,19 @@ components:
         Used to reconnect to existing WebSocket sessions.
 
 tags:
-  - name: WebSocket Connection
-    description: |
-      WebSocket connection establishment and management.
-      
-      **Protocol Flow:**
-      1. HTTP upgrade request with JWT authentication
-      2. WebSocket connection established
-      3. Binary protocol messages exchanged
-      4. Automatic reconnection support during connection drops
+- name: WebSocket Connection
+  description: |
+    WebSocket connection establishment and management.
+
+    **Protocol Flow:**
+    1. HTTP upgrade request with JWT authentication
+    2. WebSocket connection established
+    3. Binary protocol messages exchanged
+    4. Automatic reconnection support during connection drops
 
 security:
-  - BearerAuth: []
-  - ReconnectAuth: []
-
-x-service-configuration:
-  properties:
-    MaxConcurrentConnections:
-      type: integer
-      description: Maximum number of concurrent WebSocket connections
-      default: 10000
-    ConnectionTimeoutSeconds:
-      type: integer
-      description: WebSocket connection timeout in seconds
-      default: 300
-    HeartbeatIntervalSeconds:
-      type: integer
-      description: Interval between heartbeat messages
-      default: 30
-    MessageQueueSize:
-      type: integer
-      description: Maximum number of queued messages per connection
-      default: 1000
-    BinaryProtocolVersion:
-      type: string
-      description: Binary protocol version identifier
-      default: "2.0"
-    BufferSize:
-      type: integer
-      description: Size of message buffers in bytes
-      default: 65536
-    DefaultServices:
-      type: array
-      items:
-        type: string
-      description: Services available to unauthenticated connections
-      default: ["auth", "website"]
-    AuthenticatedServices:
-      type: array
-      items:
-        type: string
-      description: Additional services available to authenticated connections
-      default: ["accounts", "behavior", "permissions", "gamesession"]
-    EnableClientToClientRouting:
-      type: boolean
-      description: Enable routing messages between WebSocket clients
-      default: true
-    MaxMessagesPerMinute:
-      type: integer
-      description: Rate limit for messages per minute per client
-      default: 1000
-    RateLimitWindowMinutes:
-      type: integer
-      description: Rate limit window in minutes
-      default: 1
-    JwtPublicKey:
-      type: string
-      description: RSA public key for JWT validation (PEM format)
-
-# Note: Event subscriptions are handled manually in ConnectEventsController.cs
-# because they require specialized CloudEvents parsing and custom service method calls.
-# Topics subscribed: session.invalidated, permissions.capabilities-updated
+- BearerAuth: []
+- ReconnectAuth: []
 
 externalDocs:
   description: Binary Protocol Documentation

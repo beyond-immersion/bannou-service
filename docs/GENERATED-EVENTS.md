@@ -1,6 +1,6 @@
 # Generated Events Reference
 
-> **Auto-generated**: 2025-12-21 07:52:22
+> **Auto-generated**: 2025-12-22 01:04:02
 > **Source**: `schemas/*-events.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -15,29 +15,20 @@ This document lists all events defined in Bannou's event schemas.
 | `FullServiceMappingsEvent` | Custom | `full-service-mappings` | Published periodically by Orchestrator as the auth... |
 | `ServiceErrorEvent` | Error | `service.error` | Structured error event for unexpected service fail... |
 | `ServiceHeartbeatEvent` | Health | `service.heartbeat` | Published periodically by each bannou instance to ... |
+| `ServiceMappingEvent` | Custom | `service-mapping` | Legacy event for individual service-to-app-id mapp... |
 | `ServiceRegistrationEvent` | Custom | `service-registration` | Published by any service during startup to registe... |
 | `SessionConnectedEvent` | Session | `session.connected` | Published by Connect service when a WebSocket conn... |
 | `SessionDisconnectedEvent` | Session | `session.disconnected` | Published by Connect service when a WebSocket conn... |
+| `SessionReconnectedEvent` | Session | `session-reconnected` | Published by Connect service when a WebSocket sess... |
 
-### Accounts
-
-| Event | Type | Likely Topic | Description |
-|-------|------|--------------|-------------|
-| `AccountCreatedEvent` | Lifecycle (Created) | `account.created` | Event published when a new account is created |
-| `AccountCreatedEvent` | Lifecycle (Created) | `account.created` | Published to account.created when a account is cre... |
-| `AccountDeletedEvent` | Lifecycle (Deleted) | `account.deleted` | Event published when an account is deleted |
-| `AccountDeletedEvent` | Lifecycle (Deleted) | `account.deleted` | Published to account.deleted when a account is del... |
-| `AccountUpdatedEvent` | Lifecycle (Updated) | `account.updated` | Event published when account properties change |
-| `AccountUpdatedEvent` | Lifecycle (Updated) | `account.updated` | Published to account.updated when a account is upd... |
-| `ServiceMappingEvent` | Custom | `service-mapping` |  |
-
-### Character
+### Auth
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `CharacterCreatedEvent` | Lifecycle (Created) | `character.created` | Published to character.created when a character is... |
-| `CharacterDeletedEvent` | Lifecycle (Deleted) | `character.deleted` | Published to character.deleted when a character is... |
-| `CharacterUpdatedEvent` | Lifecycle (Updated) | `character.updated` | Published to character.updated when a character is... |
+| `SessionInvalidatedEvent` | Custom | `session.invalidated` | Event published when sessions are invalidated (log... |
+| `SessionInvalidatedEventReason` | Custom | `session.invalidated-event-reason` | Reason for session invalidation |
+| `SessionUpdatedEvent` | Lifecycle (Updated) | `session.updated` | Published when a session's roles or authorizations... |
+| `SessionUpdatedEventReason` | Lifecycle (Updated) | `session.updated-event-reason` | Reason for session update |
 
 ### Common (client)
 
@@ -62,14 +53,6 @@ This document lists all events defined in Bannou's event schemas.
 | `PlayerLeftEvent` | Custom | `player-left` | Sent to all session participants when a player lea... |
 | `SessionStateChangedEvent` | Custom | `session-state-changed` | Sent to all session participants when the session ... |
 
-### Location
-
-| Event | Type | Likely Topic | Description |
-|-------|------|--------------|-------------|
-| `LocationCreatedEvent` | Lifecycle (Created) | `location.created` | Published to location.created when a location is c... |
-| `LocationDeletedEvent` | Lifecycle (Deleted) | `location.deleted` | Published to location.deleted when a location is d... |
-| `LocationUpdatedEvent` | Lifecycle (Updated) | `location.updated` | Published to location.updated when a location is u... |
-
 ### Permissions
 
 | Event | Type | Likely Topic | Description |
@@ -77,40 +60,7 @@ This document lists all events defined in Bannou's event schemas.
 | `AuthSessionEvent` | Custom | `auth-session` | Authentication-related session events (login, logo... |
 | `PermissionRecompileRequest` | Custom | `permission-recompile-request` | Request to trigger bulk permission recompilation. |
 | `RedisOperationEvent` | Custom | `redis-operation` | Internal event for Redis operation tracking and mo... |
-| `ServiceRegistrationEvent` | Custom | `service-registration` | Published by services on startup to register their... |
 | `SessionStateChangeEvent` | Custom | `session-state-change` | Published by services when a session's state chang... |
-
-### Realm
-
-| Event | Type | Likely Topic | Description |
-|-------|------|--------------|-------------|
-| `RealmCreatedEvent` | Lifecycle (Created) | `realm.created` | Published to realm.created when a realm is created |
-| `RealmDeletedEvent` | Lifecycle (Deleted) | `realm.deleted` | Published to realm.deleted when a realm is deleted |
-| `RealmUpdatedEvent` | Lifecycle (Updated) | `realm.updated` | Published to realm.updated when a realm is updated |
-
-### Relationship
-
-| Event | Type | Likely Topic | Description |
-|-------|------|--------------|-------------|
-| `RelationshipCreatedEvent` | Lifecycle (Created) | `relationship.created` | Published to relationship.created when a relations... |
-| `RelationshipDeletedEvent` | Lifecycle (Deleted) | `relationship.deleted` | Published to relationship.deleted when a relations... |
-| `RelationshipUpdatedEvent` | Lifecycle (Updated) | `relationship.updated` | Published to relationship.updated when a relations... |
-
-### Relationship Type
-
-| Event | Type | Likely Topic | Description |
-|-------|------|--------------|-------------|
-| `RelationshipTypeCreatedEvent` | Lifecycle (Created) | `relationship-type.created` | Published to relationship-type.created when a rela... |
-| `RelationshipTypeDeletedEvent` | Lifecycle (Deleted) | `relationship-type.deleted` | Published to relationship-type.deleted when a rela... |
-| `RelationshipTypeUpdatedEvent` | Lifecycle (Updated) | `relationship-type.updated` | Published to relationship-type.updated when a rela... |
-
-### Species
-
-| Event | Type | Likely Topic | Description |
-|-------|------|--------------|-------------|
-| `SpeciesCreatedEvent` | Lifecycle (Created) | `species.created` | Published to species.created when a species is cre... |
-| `SpeciesDeletedEvent` | Lifecycle (Deleted) | `species.deleted` | Published to species.deleted when a species is del... |
-| `SpeciesUpdatedEvent` | Lifecycle (Updated) | `species.updated` | Published to species.updated when a species is upd... |
 
 ### Subscriptions
 

@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
@@ -23,6 +24,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<ICharacterClient> _mockCharacterClient;
     private readonly Mock<IRealmClient> _mockRealmClient;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public SpeciesServiceTests()
     {
@@ -31,6 +33,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockCharacterClient = new Mock<ICharacterClient>();
         _mockRealmClient = new Mock<IRealmClient>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Default realm validation to pass (realm exists and is active)
         _mockRealmClient
@@ -46,7 +49,8 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             Configuration,
             _mockErrorEventEmitter.Object,
             _mockCharacterClient.Object,
-            _mockRealmClient.Object);
+            _mockRealmClient.Object,
+            _mockEventConsumer.Object);
     }
 
     #region Constructor Tests
@@ -71,7 +75,8 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             Configuration,
             _mockErrorEventEmitter.Object,
             _mockCharacterClient.Object,
-            _mockRealmClient.Object));
+            _mockRealmClient.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -84,7 +89,8 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             Configuration,
             _mockErrorEventEmitter.Object,
             _mockCharacterClient.Object,
-            _mockRealmClient.Object));
+            _mockRealmClient.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -97,7 +103,8 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             null!,
             _mockErrorEventEmitter.Object,
             _mockCharacterClient.Object,
-            _mockRealmClient.Object));
+            _mockRealmClient.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -110,7 +117,8 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             Configuration,
             null!,
             _mockCharacterClient.Object,
-            _mockRealmClient.Object));
+            _mockRealmClient.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -123,7 +131,8 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             Configuration,
             _mockErrorEventEmitter.Object,
             null!,
-            _mockRealmClient.Object));
+            _mockRealmClient.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -136,7 +145,8 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             Configuration,
             _mockErrorEventEmitter.Object,
             _mockCharacterClient.Object,
-            null!));
+            null!,
+            _mockEventConsumer.Object));
     }
 
     #endregion

@@ -98,21 +98,6 @@ public static class GameSessionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/sessions/join",
-            Method = ServiceEndpointMethod.POST,
-            Description = "joinGameSession",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/sessions/leave",
             Method = ServiceEndpointMethod.POST,
             Description = "leaveGameSession",

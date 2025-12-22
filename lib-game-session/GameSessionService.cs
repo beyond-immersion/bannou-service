@@ -2,15 +2,19 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Permissions;
+using BeyondImmersion.BannouService.Protocol;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Subscriptions;
 using BeyondImmersion.BannouService.Voice;
 using Dapr.Client;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,9 +23,10 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// <summary>
 /// GameSession service implementation.
 /// Manages game sessions for Arcadia and other multiplayer games.
+/// Handles session shortcuts for subscribed accounts via Dapr pubsub events.
 /// </summary>
 [DaprService("game-session", typeof(IGameSessionService), lifetime: ServiceLifetime.Scoped)]
-public class GameSessionService : IGameSessionService
+public partial class GameSessionService : IGameSessionService
 {
     private readonly DaprClient _daprClient;
     private readonly ILogger<GameSessionService> _logger;
@@ -29,17 +34,45 @@ public class GameSessionService : IGameSessionService
     private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly IVoiceClient? _voiceClient;
     private readonly IPermissionsClient? _permissionsClient;
+    private readonly ISubscriptionsClient? _subscriptionsClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
     private const string SESSION_LIST_KEY = "session-list";
+    private const string LOBBY_KEY_PREFIX = "lobby:";
     private const string PUBSUB_NAME = "bannou-pubsub";
     private const string SESSION_CREATED_TOPIC = "game-session.created";
     private const string SESSION_UPDATED_TOPIC = "game-session.updated";
     private const string SESSION_DELETED_TOPIC = "game-session.deleted";
     private const string PLAYER_JOINED_TOPIC = "game-session.player-joined";
     private const string PLAYER_LEFT_TOPIC = "game-session.player-left";
+
+    /// <summary>
+    /// Game service stub names that this service handles. Matches gameType enum.
+    /// </summary>
+    private static readonly HashSet<string> _supportedGameServices = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "arcadia",
+        "generic"
+    };
+
+    /// <summary>
+    /// Tracks connected WebSocket sessions: WebSocket SessionId -> AccountId.
+    /// Static for multi-instance safety (Tenet 4).
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, Guid> _connectedSessions = new();
+
+    /// <summary>
+    /// Caches subscription info: AccountId -> Set of subscribed stubNames.
+    /// Static for multi-instance safety (Tenet 4).
+    /// </summary>
+    private static readonly ConcurrentDictionary<Guid, HashSet<string>> _accountSubscriptions = new();
+
+    /// <summary>
+    /// Server salt for GUID generation. Uses shared salt from environment or generates once per process.
+    /// </summary>
+    private static readonly string _serverSalt = GuidGenerator.GetSharedServerSalt();
 
     /// <summary>
     /// Creates a new GameSessionService instance.
@@ -51,14 +84,17 @@ public class GameSessionService : IGameSessionService
     /// <param name="httpContextAccessor">HTTP context accessor for reading request headers.</param>
     /// <param name="voiceClient">Optional voice client for voice room coordination. May be null if voice service is disabled.</param>
     /// <param name="permissionsClient">Optional permissions client for setting game-session:in_game state. May be null if Permissions service is not loaded.</param>
+    /// <param name="subscriptionsClient">Optional subscriptions client for fetching account subscriptions. May be null if Subscriptions service is not loaded.</param>
     public GameSessionService(
         DaprClient daprClient,
         ILogger<GameSessionService> logger,
         GameSessionServiceConfiguration configuration,
         IErrorEventEmitter errorEventEmitter,
         IHttpContextAccessor httpContextAccessor,
+        IEventConsumer eventConsumer,
         IVoiceClient? voiceClient = null,
-        IPermissionsClient? permissionsClient = null)
+        IPermissionsClient? permissionsClient = null,
+        ISubscriptionsClient? subscriptionsClient = null)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -67,6 +103,10 @@ public class GameSessionService : IGameSessionService
         _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
         _voiceClient = voiceClient; // Nullable - voice service may be disabled (Tenet 5)
         _permissionsClient = permissionsClient; // Nullable - permissions service may not be loaded (Tenet 5)
+        _subscriptionsClient = subscriptionsClient; // Nullable - subscriptions service may not be loaded (Tenet 5)
+
+        // Register event handlers via partial class (GameSessionServiceEvents.cs)
+        RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>
@@ -853,6 +893,364 @@ public class GameSessionService : IGameSessionService
             return (StatusCodes.InternalServerError, null);
         }
     }
+
+    #region Internal Event Handlers
+
+    /// <summary>
+    /// Handles session.connected event from Connect service.
+    /// Tracks the session and publishes join shortcuts for subscribed accounts.
+    /// Called internally by GameSessionEventsController.
+    /// </summary>
+    /// <param name="sessionId">WebSocket session ID that connected.</param>
+    /// <param name="accountId">Account ID owning the session.</param>
+    internal async Task HandleSessionConnectedInternalAsync(string sessionId, string accountId)
+    {
+        if (string.IsNullOrEmpty(sessionId) || string.IsNullOrEmpty(accountId))
+        {
+            _logger.LogWarning("[GS-EVENT] Invalid session.connected event - sessionId or accountId missing");
+            return;
+        }
+
+        if (!Guid.TryParse(accountId, out var accountGuid))
+        {
+            _logger.LogWarning("[GS-EVENT] Invalid accountId format: {AccountId}", accountId);
+            return;
+        }
+
+        // Track this session
+        _connectedSessions[sessionId] = accountGuid;
+        _logger.LogDebug("[GS-EVENT] Tracking session {SessionId} for account {AccountId}", sessionId, accountId);
+
+        // Fetch subscriptions if not cached
+        if (!_accountSubscriptions.ContainsKey(accountGuid))
+        {
+            await FetchAndCacheSubscriptionsAsync(accountGuid);
+        }
+
+        // Publish shortcuts for subscribed game services
+        if (_accountSubscriptions.TryGetValue(accountGuid, out var stubNames))
+        {
+            var ourServices = stubNames.Where(IsOurService).ToList();
+            _logger.LogDebug("[GS-EVENT] Account {AccountId} has {Count} subscriptions matching our services: {Services}",
+                accountId, ourServices.Count, string.Join(", ", ourServices));
+
+            foreach (var stubName in ourServices)
+            {
+                await PublishJoinShortcutAsync(sessionId, accountGuid, stubName);
+            }
+        }
+        else
+        {
+            _logger.LogDebug("[GS-EVENT] No subscriptions found for account {AccountId}", accountId);
+        }
+    }
+
+    /// <summary>
+    /// Handles session.disconnected event from Connect service.
+    /// Removes session from tracking.
+    /// Called internally by GameSessionEventsController.
+    /// </summary>
+    /// <param name="sessionId">WebSocket session ID that disconnected.</param>
+    internal Task HandleSessionDisconnectedInternalAsync(string sessionId)
+    {
+        if (string.IsNullOrEmpty(sessionId))
+        {
+            return Task.CompletedTask;
+        }
+
+        if (_connectedSessions.TryRemove(sessionId, out var accountId))
+        {
+            _logger.LogDebug("[GS-EVENT] Removed session {SessionId} (account {AccountId}) from tracking", sessionId, accountId);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Handles subscription.updated event from Subscriptions service.
+    /// Updates subscription cache and publishes/revokes shortcuts for affected connected sessions.
+    /// Called internally by GameSessionEventsController.
+    /// </summary>
+    /// <param name="accountId">Account whose subscription changed.</param>
+    /// <param name="stubName">Stub name of the service (e.g., "arcadia").</param>
+    /// <param name="action">Action that triggered the event (created, updated, cancelled, expired, renewed).</param>
+    /// <param name="isActive">Whether the subscription is currently active.</param>
+    internal async Task HandleSubscriptionUpdatedInternalAsync(Guid accountId, string stubName, string action, bool isActive)
+    {
+        _logger.LogInformation("[GS-EVENT] Subscription update for account {AccountId}: stubName={StubName}, action={Action}, isActive={IsActive}",
+            accountId, stubName, action, isActive);
+
+        // Update the cache
+        if (isActive && (action == "created" || action == "renewed" || action == "updated"))
+        {
+            _accountSubscriptions.AddOrUpdate(
+                accountId,
+                _ => new HashSet<string>(StringComparer.OrdinalIgnoreCase) { stubName },
+                (_, existingSet) =>
+                {
+                    lock (existingSet)
+                    {
+                        existingSet.Add(stubName);
+                    }
+                    return existingSet;
+                });
+            _logger.LogDebug("[GS-EVENT] Added {StubName} to subscription cache for account {AccountId}", stubName, accountId);
+        }
+        else if (!isActive || action == "cancelled" || action == "expired")
+        {
+            if (_accountSubscriptions.TryGetValue(accountId, out var existingSet))
+            {
+                lock (existingSet)
+                {
+                    existingSet.Remove(stubName);
+                }
+                _logger.LogDebug("[GS-EVENT] Removed {StubName} from subscription cache for account {AccountId}", stubName, accountId);
+            }
+        }
+
+        // Find connected sessions for this account and update their shortcuts
+        if (!IsOurService(stubName))
+        {
+            _logger.LogDebug("[GS-EVENT] Service {StubName} is not handled by game-session, skipping shortcut update", stubName);
+            return;
+        }
+
+        var connectedSessionsForAccount = _connectedSessions
+            .Where(kv => kv.Value == accountId)
+            .Select(kv => kv.Key)
+            .ToList();
+
+        _logger.LogDebug("[GS-EVENT] Found {Count} connected sessions for account {AccountId}", connectedSessionsForAccount.Count, accountId);
+
+        foreach (var sessionId in connectedSessionsForAccount)
+        {
+            if (isActive)
+            {
+                await PublishJoinShortcutAsync(sessionId, accountId, stubName);
+            }
+            else
+            {
+                await RevokeShortcutsForSessionAsync(sessionId, stubName);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Fetches and caches subscriptions for an account from the Subscriptions service.
+    /// </summary>
+    private async Task FetchAndCacheSubscriptionsAsync(Guid accountId)
+    {
+        if (_subscriptionsClient == null)
+        {
+            _logger.LogDebug("[GS-EVENT] Subscriptions client not available, cannot fetch subscriptions for account {AccountId}", accountId);
+            return;
+        }
+
+        try
+        {
+            var response = await _subscriptionsClient.GetCurrentSubscriptionsAsync(
+                new GetCurrentSubscriptionsRequest { AccountId = accountId });
+
+            if (response?.Subscriptions != null && response.Subscriptions.Count > 0)
+            {
+                var stubs = new HashSet<string>(
+                    response.Subscriptions.Select(s => s.StubName ?? string.Empty).Where(s => !string.IsNullOrEmpty(s)),
+                    StringComparer.OrdinalIgnoreCase);
+
+                _accountSubscriptions[accountId] = stubs;
+                _logger.LogDebug("[GS-EVENT] Cached {Count} subscriptions for account {AccountId}: {Stubs}",
+                    stubs.Count, accountId, string.Join(", ", stubs));
+            }
+            else
+            {
+                _logger.LogDebug("[GS-EVENT] No subscriptions found for account {AccountId}", accountId);
+                _accountSubscriptions[accountId] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[GS-EVENT] Failed to fetch subscriptions for account {AccountId}", accountId);
+            // Don't cache empty set on error - allow retry on next request
+        }
+    }
+
+    /// <summary>
+    /// Publishes a join shortcut for a session to access a game lobby.
+    /// </summary>
+    private async Task PublishJoinShortcutAsync(string sessionId, Guid accountId, string stubName)
+    {
+        try
+        {
+            // Get or create the lobby session for this game service
+            var lobbySessionId = await GetOrCreateLobbySessionAsync(stubName);
+            if (lobbySessionId == Guid.Empty)
+            {
+                _logger.LogWarning("[GS-EVENT] Failed to get/create lobby for {StubName}, cannot publish shortcut", stubName);
+                return;
+            }
+
+            var shortcutName = $"join_game_{stubName.ToLowerInvariant()}";
+
+            // Generate shortcut GUID (v7 for shortcuts - session-unique)
+            var routeGuid = GuidGenerator.GenerateSessionShortcutGuid(
+                sessionId,
+                shortcutName,
+                "game-session",
+                _serverSalt);
+
+            // Generate target GUID (v5 for service capability)
+            var targetGuid = GuidGenerator.GenerateServiceGuid(
+                sessionId,
+                "game-session/sessions/join",
+                _serverSalt);
+
+            // Create the pre-bound payload
+            var boundPayload = new JoinGameSessionRequest
+            {
+                SessionId = lobbySessionId
+                // Note: accountId comes from the session context, not the payload
+            };
+
+            var shortcutEvent = new
+            {
+                event_id = Guid.NewGuid(),
+                event_name = "session.shortcut_published",
+                session_id = sessionId,
+                shortcut = new
+                {
+                    route_guid = routeGuid.ToString(),
+                    target_guid = targetGuid.ToString(),
+                    bound_payload = JsonSerializer.Serialize(boundPayload),
+                    metadata = new
+                    {
+                        name = shortcutName,
+                        description = $"Join the {stubName} game lobby",
+                        source_service = "game-session",
+                        created_at = DateTimeOffset.UtcNow
+                    }
+                },
+                replace_existing = true
+            };
+
+            // Publish to session-specific topic
+            var topic = $"CONNECT_SESSION_{sessionId}";
+            await _daprClient.PublishEventAsync(PUBSUB_NAME, topic, shortcutEvent);
+
+            _logger.LogInformation("[GS-EVENT] Published join shortcut {RouteGuid} for session {SessionId} -> lobby {LobbyId} ({StubName})",
+                routeGuid, sessionId, lobbySessionId, stubName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[GS-EVENT] Failed to publish join shortcut for session {SessionId}, stub {StubName}", sessionId, stubName);
+        }
+    }
+
+    /// <summary>
+    /// Revokes all shortcuts from game-session service for a session.
+    /// </summary>
+    private async Task RevokeShortcutsForSessionAsync(string sessionId, string stubName)
+    {
+        try
+        {
+            var revokeEvent = new
+            {
+                event_id = Guid.NewGuid(),
+                event_name = "session.shortcut_revoked",
+                session_id = sessionId,
+                revoke_by_service = "game-session",
+                reason = $"Subscription to {stubName} ended"
+            };
+
+            var topic = $"CONNECT_SESSION_{sessionId}";
+            await _daprClient.PublishEventAsync(PUBSUB_NAME, topic, revokeEvent);
+
+            _logger.LogInformation("[GS-EVENT] Revoked game-session shortcuts for session {SessionId} (reason: {StubName} subscription ended)",
+                sessionId, stubName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[GS-EVENT] Failed to revoke shortcuts for session {SessionId}", sessionId);
+        }
+    }
+
+    /// <summary>
+    /// Gets or creates a lobby session for a game service.
+    /// Lobbies are persistent game sessions that serve as entry points for subscribed users.
+    /// </summary>
+    private async Task<Guid> GetOrCreateLobbySessionAsync(string stubName)
+    {
+        var lobbyKey = LOBBY_KEY_PREFIX + stubName.ToLowerInvariant();
+
+        try
+        {
+            // Check for existing lobby
+            var existingLobby = await _daprClient.GetStateAsync<GameSessionModel>(STATE_STORE, lobbyKey);
+
+            if (existingLobby != null && existingLobby.Status != GameSessionResponseStatus.Finished)
+            {
+                _logger.LogDebug("[GS-EVENT] Found existing lobby {LobbyId} for {StubName}", existingLobby.SessionId, stubName);
+                return Guid.Parse(existingLobby.SessionId);
+            }
+
+            // Create new lobby
+            var lobbyId = Guid.NewGuid();
+            var gameType = MapStubNameToGameType(stubName);
+
+            var lobby = new GameSessionModel
+            {
+                SessionId = lobbyId.ToString(),
+                SessionName = $"{stubName} Lobby",
+                GameType = gameType,
+                MaxPlayers = 100, // Lobbies can hold many players
+                IsPrivate = false,
+                Status = GameSessionResponseStatus.Active,
+                CurrentPlayers = 0,
+                Players = new List<GamePlayer>(),
+                CreatedAt = DateTimeOffset.UtcNow,
+                Owner = Guid.Empty, // System-owned lobby
+                VoiceEnabled = false // Lobbies don't need voice by default
+            };
+
+            // Save the lobby
+            await _daprClient.SaveStateAsync(STATE_STORE, SESSION_KEY_PREFIX + lobbyId, lobby);
+            await _daprClient.SaveStateAsync(STATE_STORE, lobbyKey, lobby);
+
+            // Add to session list
+            var sessionIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, SESSION_LIST_KEY) ?? new List<string>();
+            sessionIds.Add(lobbyId.ToString());
+            await _daprClient.SaveStateAsync(STATE_STORE, SESSION_LIST_KEY, sessionIds);
+
+            _logger.LogInformation("[GS-EVENT] Created lobby {LobbyId} for {StubName}", lobbyId, stubName);
+            return lobbyId;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[GS-EVENT] Failed to get/create lobby for {StubName}", stubName);
+            return Guid.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Checks if a service stub name is handled by this service.
+    /// </summary>
+    private static bool IsOurService(string stubName)
+    {
+        return _supportedGameServices.Contains(stubName);
+    }
+
+    /// <summary>
+    /// Maps a stub name to a game type enum.
+    /// </summary>
+    private static GameSessionResponseGameType MapStubNameToGameType(string stubName)
+    {
+        return stubName.ToLowerInvariant() switch
+        {
+            "arcadia" => GameSessionResponseGameType.Arcadia,
+            _ => GameSessionResponseGameType.Generic
+        };
+    }
+
+    #endregion
 
     #region Helper Methods
 

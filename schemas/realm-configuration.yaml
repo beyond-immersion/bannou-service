@@ -1,0 +1,12 @@
+openapi: 3.0.3
+info:
+  title: Realm Service Configuration
+  description: "Configuration schema for Realm service.\nProperties are bound to environment variables with BANNOU_ prefix."
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    Enabled:
+      type: boolean
+      description: Enable/disable Realm service
+      default: true

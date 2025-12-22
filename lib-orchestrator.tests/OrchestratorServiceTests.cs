@@ -25,6 +25,7 @@ public class OrchestratorServiceTests
     private readonly Mock<ISmartRestartManager> _mockRestartManager;
     private readonly Mock<IBackendDetector> _mockBackendDetector;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public OrchestratorServiceTests()
     {
@@ -47,6 +48,7 @@ public class OrchestratorServiceTests
         _mockRestartManager = new Mock<ISmartRestartManager>();
         _mockBackendDetector = new Mock<IBackendDetector>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
     }
 
     private OrchestratorService CreateService()
@@ -61,7 +63,8 @@ public class OrchestratorServiceTests
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
     }
 
     #region Constructor Tests
@@ -88,7 +91,8 @@ public class OrchestratorServiceTests
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
 
         Assert.Equal("daprClient", exception.ParamName);
     }
@@ -107,7 +111,8 @@ public class OrchestratorServiceTests
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
 
         Assert.Equal("logger", exception.ParamName);
     }
@@ -126,7 +131,8 @@ public class OrchestratorServiceTests
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
 
         Assert.Equal("loggerFactory", exception.ParamName);
     }
@@ -145,7 +151,8 @@ public class OrchestratorServiceTests
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
 
         Assert.Equal("configuration", exception.ParamName);
     }
@@ -164,7 +171,8 @@ public class OrchestratorServiceTests
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
 
         Assert.Equal("redisManager", exception.ParamName);
     }
@@ -183,7 +191,8 @@ public class OrchestratorServiceTests
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
 
         Assert.Equal("eventManager", exception.ParamName);
     }
@@ -202,7 +211,8 @@ public class OrchestratorServiceTests
             null!,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
 
         Assert.Equal("healthMonitor", exception.ParamName);
     }
@@ -221,7 +231,8 @@ public class OrchestratorServiceTests
             _mockHealthMonitor.Object,
             null!,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
 
         Assert.Equal("restartManager", exception.ParamName);
     }
@@ -240,9 +251,30 @@ public class OrchestratorServiceTests
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             null!,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
 
         Assert.Equal("backendDetector", exception.ParamName);
+    }
+
+    [Fact]
+    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
+            _mockDaprClient.Object,
+            _mockLogger.Object,
+            _mockLoggerFactory.Object,
+            _configuration,
+            _mockRedisManager.Object,
+            _mockEventManager.Object,
+            _mockHealthMonitor.Object,
+            _mockRestartManager.Object,
+            _mockBackendDetector.Object,
+            _mockErrorEventEmitter.Object,
+            null!));
+
+        Assert.Equal("eventConsumer", exception.ParamName);
     }
 
     #endregion
@@ -1349,6 +1381,7 @@ public class OrchestratorResetToDefaultTests
     private readonly Mock<ISmartRestartManager> _mockRestartManager;
     private readonly Mock<IBackendDetector> _mockBackendDetector;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly OrchestratorServiceConfiguration _configuration;
 
     public OrchestratorResetToDefaultTests()
@@ -1362,6 +1395,7 @@ public class OrchestratorResetToDefaultTests
         _mockRestartManager = new Mock<ISmartRestartManager>();
         _mockBackendDetector = new Mock<IBackendDetector>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
         _configuration = new OrchestratorServiceConfiguration
         {
             HeartbeatTimeoutSeconds = 90,
@@ -1386,7 +1420,8 @@ public class OrchestratorResetToDefaultTests
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
     }
 
     [Theory]

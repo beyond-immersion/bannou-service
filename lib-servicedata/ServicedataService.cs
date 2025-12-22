@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +16,7 @@ namespace BeyondImmersion.BannouService.Servicedata;
 /// Provides a minimal registry of game services (games/applications) that users can subscribe to.
 /// </summary>
 [DaprService("servicedata", typeof(IServicedataService), lifetime: ServiceLifetime.Singleton)]
-public class ServicedataService : IServicedataService
+public partial class ServicedataService : IServicedataService
 {
     private readonly DaprClient _daprClient;
     private readonly ILogger<ServicedataService> _logger;
@@ -31,12 +32,17 @@ public class ServicedataService : IServicedataService
         DaprClient daprClient,
         ILogger<ServicedataService> logger,
         ServicedataServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter)
+        IErrorEventEmitter errorEventEmitter,
+        IEventConsumer eventConsumer)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+
+        // Register event handlers via partial class (ServicedataServiceEvents.cs)
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
     }
 
     private string StateStoreName => _configuration.StateStoreName ?? "servicedata-statestore";

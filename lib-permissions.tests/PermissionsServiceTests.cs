@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
@@ -36,6 +37,7 @@ public class PermissionsServiceTests
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IErrorEventEmitter> _mockErrorEmitter;
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     // State store constants (must match PermissionsService)
     private const string STATE_STORE = "permissions-store";
@@ -54,6 +56,7 @@ public class PermissionsServiceTests
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockErrorEmitter = new Mock<IErrorEventEmitter>();
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup default behavior for client event publisher
         _mockClientEventPublisher.Setup(x => x.PublishToSessionAsync(
@@ -71,7 +74,8 @@ public class PermissionsServiceTests
             _mockDaprClient.Object,
             _mockLockProvider.Object,
             _mockErrorEmitter.Object,
-            _mockClientEventPublisher.Object);
+            _mockClientEventPublisher.Object,
+            _mockEventConsumer.Object);
     }
 
     [Fact]

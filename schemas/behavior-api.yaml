@@ -18,8 +18,8 @@ info:
     - Integration with Dapr service mesh for distributed character agents
 
 servers:
-  - url: http://localhost:3500/v1.0/invoke/bannou/method
-    description: Dapr sidecar endpoint (internal only)
+- url: http://localhost:3500/v1.0/invoke/bannou/method
+  description: Dapr sidecar endpoint (internal only)
 
 paths:
   /compile:
@@ -30,10 +30,10 @@ paths:
         Handles stackable behavior sets, cultural adaptations, and context variable resolution.
       operationId: CompileAbmlBehavior
       tags:
-        - ABML
+      - ABML
       x-permissions:
-        - role: developer
-          states: {}
+      - role: developer
+        states: {}
       requestBody:
         required: true
         content:
@@ -48,7 +48,7 @@ paths:
                 category: "profession"
                 priority: 60
                 description: "Daily routine for a master blacksmith NPC"
-              
+
               context:
                 variables:
                   energy_level: "${npc.stats.energy}"
@@ -60,7 +60,7 @@ paths:
                     required: true
                   - name: "economy_service"
                     required: true
-              
+
               behaviors:
                 morning_startup:
                   triggers:
@@ -108,10 +108,10 @@ paths:
         Handles cultural adaptations, profession specializations, and context resolution.
       operationId: CompileBehaviorStack
       tags:
-        - BehaviorStacks
+      - BehaviorStacks
       x-permissions:
-        - role: developer
-          states: {}
+      - role: developer
+        states: {}
       requestBody:
         required: true
         content:
@@ -140,10 +140,10 @@ paths:
         Includes context variable validation and service dependency checking.
       operationId: ValidateAbml
       tags:
-        - Validation
+      - Validation
       x-permissions:
-        - role: developer
-          states: {}
+      - role: developer
+        states: {}
       requestBody:
         required: true
         content:
@@ -170,10 +170,10 @@ paths:
         Used for performance optimization in high-frequency behavior execution.
       operationId: GetCachedBehavior
       tags:
-        - Cache
+      - Cache
       x-permissions:
-        - role: developer
-          states: {}
+      - role: developer
+        states: {}
       requestBody:
         required: true
         content:
@@ -202,10 +202,10 @@ paths:
         Used when behavior definitions are updated.
       operationId: InvalidateCachedBehavior
       tags:
-        - Cache
+      - Cache
       x-permissions:
-        - role: developer
-          states: {}
+      - role: developer
+        states: {}
       requestBody:
         required: true
         content:
@@ -226,10 +226,10 @@ paths:
         Used for dynamic behavior adaptation based on current game state.
       operationId: ResolveContextVariables
       tags:
-        - Context
+      - Context
       x-permissions:
-        - role: developer
-          states: {}
+      - role: developer
+        states: {}
       requestBody:
         required: true
         content:
@@ -251,7 +251,7 @@ components:
       type: object
       description: Request to get a cached compiled behavior
       required:
-        - behaviorId
+      - behaviorId
       properties:
         behaviorId:
           type: string
@@ -261,7 +261,7 @@ components:
       type: object
       description: Request to invalidate a cached behavior
       required:
-        - behaviorId
+      - behaviorId
       properties:
         behaviorId:
           type: string
@@ -270,7 +270,7 @@ components:
     CompileBehaviorRequest:
       type: object
       required:
-        - abml_content
+      - abml_content
       properties:
         abml_content:
           type: string
@@ -295,7 +295,7 @@ components:
     BehaviorStackRequest:
       type: object
       required:
-        - behavior_sets
+      - behavior_sets
       properties:
         behavior_sets:
           type: array
@@ -310,7 +310,7 @@ components:
     ValidateAbmlRequest:
       type: object
       required:
-        - abml_content
+      - abml_content
       properties:
         abml_content:
           type: string
@@ -323,8 +323,8 @@ components:
     ResolveContextRequest:
       type: object
       required:
-        - context_expression
-        - character_context
+      - context_expression
+      - character_context
       properties:
         context_expression:
           type: string
@@ -337,8 +337,8 @@ components:
     CompileBehaviorResponse:
       type: object
       required:
-        - success
-        - behavior_id
+      - success
+      - behavior_id
       properties:
         success:
           type: boolean
@@ -364,7 +364,7 @@ components:
     ValidateAbmlResponse:
       type: object
       required:
-        - is_valid
+      - is_valid
       properties:
         is_valid:
           type: boolean
@@ -386,8 +386,8 @@ components:
     CachedBehaviorResponse:
       type: object
       required:
-        - behavior_id
-        - compiled_behavior
+      - behavior_id
+      - compiled_behavior
       properties:
         behavior_id:
           type: string
@@ -405,7 +405,7 @@ components:
     ResolveContextResponse:
       type: object
       required:
-        - resolved_value
+      - resolved_value
       properties:
         resolved_value:
           description: The resolved value of the context expression
@@ -423,9 +423,9 @@ components:
     BehaviorSetDefinition:
       type: object
       required:
-        - id
-        - priority
-        - abml_content
+      - id
+      - priority
+      - abml_content
       properties:
         id:
           type: string
@@ -491,9 +491,9 @@ components:
             coordinates:
               type: object
               properties:
-                x: { type: number }
-                y: { type: number }
-                z: { type: number }
+                x: {type: number}
+                y: {type: number}
+                z: {type: number}
         relationships:
           type: object
           additionalProperties:
@@ -507,8 +507,8 @@ components:
     CompiledBehavior:
       type: object
       required:
-        - behavior_tree
-        - context_schema
+      - behavior_tree
+      - context_schema
       properties:
         behavior_tree:
           type: object
@@ -544,9 +544,9 @@ components:
     GoapGoal:
       type: object
       required:
-        - name
-        - conditions
-        - priority
+      - name
+      - conditions
+      - priority
       properties:
         name:
           type: string
@@ -600,8 +600,8 @@ components:
     ValidationError:
       type: object
       required:
-        - type
-        - message
+      - type
+      - message
       properties:
         type:
           type: string
@@ -625,7 +625,7 @@ components:
     AbmlErrorResponse:
       type: object
       required:
-        - error
+      - error
       properties:
         error:
           type: string
@@ -661,37 +661,14 @@ components:
           description: Unique identifier for the failed request
 
 tags:
-  - name: ABML
-    description: Core ABML compilation and management operations
-  - name: BehaviorStacks
-    description: Stackable behavior set compilation and merging
-  - name: Validation
-    description: ABML validation and semantic checking
-  - name: Cache
-    description: Behavior compilation caching operations
-  - name: Context
-    description: Context variable resolution and management
+- name: ABML
+  description: Core ABML compilation and management operations
+- name: BehaviorStacks
+  description: Stackable behavior set compilation and merging
+- name: Validation
+  description: ABML validation and semantic checking
+- name: Cache
+  description: Behavior compilation caching operations
+- name: Context
+  description: Context variable resolution and management
 
-x-service-configuration:
-  properties:
-    MaxBehaviorStackDepth:
-      type: integer
-      description: Maximum number of stackable behaviors per NPC
-      default: 10
-    CompilationCacheSize:
-      type: integer
-      description: Maximum number of compiled behaviors to cache
-      default: 1000
-    CompilationTimeoutSeconds:
-      type: integer
-      description: Maximum time allowed for behavior compilation
-      default: 30
-    ABMLValidationLevel:
-      type: string
-      description: ABML validation strictness level
-      enum: [strict, standard, permissive]
-      default: "standard"
-    ContextVariableExpansionDepth:
-      type: integer
-      description: Maximum depth for recursive context variable expansion
-      default: 5

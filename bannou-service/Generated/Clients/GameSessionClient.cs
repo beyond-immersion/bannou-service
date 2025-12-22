@@ -62,6 +62,12 @@ public partial interface IGameSessionClient : BeyondImmersion.BannouService.Serv
     /// <summary>
     /// Join a game session
     /// </summary>
+    /// <remarks>
+    /// Join an existing game session. This endpoint is not directly accessible via WebSocket API.
+    /// <br/>Access is granted through session shortcuts published by the game-session service when
+    /// <br/>a subscribed user connects. The shortcut contains a pre-bound JoinGameSessionRequest
+    /// <br/>with the target session ID already filled in.
+    /// </remarks>
     /// <returns>Successfully joined game session</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<JoinGameSessionResponse> JoinGameSessionAsync(JoinGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
@@ -414,6 +420,12 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
     /// <summary>
     /// Join a game session
     /// </summary>
+    /// <remarks>
+    /// Join an existing game session. This endpoint is not directly accessible via WebSocket API.
+    /// <br/>Access is granted through session shortcuts published by the game-session service when
+    /// <br/>a subscribed user connects. The shortcut contains a pre-bound JoinGameSessionRequest
+    /// <br/>with the target session ID already filled in.
+    /// </remarks>
     /// <returns>Successfully joined game session</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<JoinGameSessionResponse> JoinGameSessionAsync(JoinGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))

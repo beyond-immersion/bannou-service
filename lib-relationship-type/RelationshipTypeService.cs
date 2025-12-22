@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
@@ -17,7 +18,7 @@ namespace BeyondImmersion.BannouService.RelationshipType;
 /// Manages hierarchical relationship types for character relationships.
 /// </summary>
 [DaprService("relationship-type", typeof(IRelationshipTypeService), lifetime: ServiceLifetime.Scoped)]
-public class RelationshipTypeService : IRelationshipTypeService
+public partial class RelationshipTypeService : IRelationshipTypeService
 {
     private readonly DaprClient _daprClient;
     private readonly ILogger<RelationshipTypeService> _logger;
@@ -37,13 +38,18 @@ public class RelationshipTypeService : IRelationshipTypeService
         ILogger<RelationshipTypeService> logger,
         RelationshipTypeServiceConfiguration configuration,
         IErrorEventEmitter errorEventEmitter,
-        IRelationshipClient relationshipClient)
+        IRelationshipClient relationshipClient,
+        IEventConsumer eventConsumer)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _relationshipClient = relationshipClient ?? throw new ArgumentNullException(nameof(relationshipClient));
+
+        // Register event handlers via partial class (RelationshipTypeServiceEvents.cs)
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
     }
 
     #region Read Operations

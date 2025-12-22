@@ -24,8 +24,8 @@ info:
     See API-DESIGN.md for architectural rationale.
   version: 1.1.0
 servers:
-  - url: http://localhost:3500/v1.0/invoke/bannou/method
-    description: Dapr sidecar endpoint (internal only)
+- url: http://localhost:3500/v1.0/invoke/bannou/method
+  description: Dapr sidecar endpoint (internal only)
 
 paths:
   # ============================================
@@ -41,7 +41,7 @@ paths:
         Returns room ID and initial configuration.
       operationId: createVoiceRoom
       tags:
-        - Voice Rooms
+      - Voice Rooms
       # NO x-permissions = internal-only (Tenet 10)
       requestBody:
         required: true
@@ -69,7 +69,7 @@ paths:
         Called by GameSession service to check room status.
       operationId: getVoiceRoom
       tags:
-        - Voice Rooms
+      - Voice Rooms
       requestBody:
         required: true
         content:
@@ -96,7 +96,7 @@ paths:
         or RTP server details for scaled mode.
       operationId: joinVoiceRoom
       tags:
-        - Voice Rooms
+      - Voice Rooms
       requestBody:
         required: true
         content:
@@ -125,7 +125,7 @@ paths:
         Called by GameSession service when a player leaves a session.
       operationId: leaveVoiceRoom
       tags:
-        - Voice Rooms
+      - Voice Rooms
       requestBody:
         required: true
         content:
@@ -146,7 +146,7 @@ paths:
         Called by GameSession service when a session is deleted.
       operationId: deleteVoiceRoom
       tags:
-        - Voice Rooms
+      - Voice Rooms
       requestBody:
         required: true
         content:
@@ -171,7 +171,7 @@ paths:
         Should be called periodically to prevent endpoint expiration.
       operationId: peerHeartbeat
       tags:
-        - Voice Peers
+      - Voice Peers
       requestBody:
         required: true
         content:
@@ -197,11 +197,11 @@ paths:
         The state is cleared after the answer is processed or times out.
       operationId: answerPeer
       tags:
-        - Voice Peers
+      - Voice Peers
       x-permissions:
-        - role: user
-          states:
-            voice: ringing
+      - role: user
+        states:
+          voice: ringing
       requestBody:
         required: true
         content:
@@ -243,7 +243,7 @@ components:
       type: object
       description: Request to create a voice room for a game session
       required:
-        - sessionId
+      - sessionId
       properties:
         sessionId:
           type: string
@@ -266,7 +266,7 @@ components:
       type: object
       description: Request to get voice room details
       required:
-        - roomId
+      - roomId
       properties:
         roomId:
           type: string
@@ -277,9 +277,9 @@ components:
       type: object
       description: Request to join a voice room
       required:
-        - roomId
-        - sessionId
-        - sipEndpoint
+      - roomId
+      - sessionId
+      - sipEndpoint
       properties:
         roomId:
           type: string
@@ -300,8 +300,8 @@ components:
       type: object
       description: Request to leave a voice room
       required:
-        - roomId
-        - sessionId
+      - roomId
+      - sessionId
       properties:
         roomId:
           type: string
@@ -315,7 +315,7 @@ components:
       type: object
       description: Request to delete a voice room
       required:
-        - roomId
+      - roomId
       properties:
         roomId:
           type: string
@@ -329,8 +329,8 @@ components:
       type: object
       description: Heartbeat to keep peer registration active
       required:
-        - roomId
-        - sessionId
+      - roomId
+      - sessionId
       properties:
         roomId:
           type: string
@@ -346,10 +346,10 @@ components:
         Request to send an SDP answer to complete a WebRTC handshake.
         Sent by clients after receiving a VoicePeerJoinedEvent with an SDP offer.
       required:
-        - roomId
-        - senderSessionId
-        - targetSessionId
-        - sdpAnswer
+      - roomId
+      - senderSessionId
+      - targetSessionId
+      - sdpAnswer
       properties:
         roomId:
           type: string
@@ -378,10 +378,10 @@ components:
       type: object
       description: Voice room details
       required:
-        - roomId
-        - sessionId
-        - tier
-        - createdAt
+      - roomId
+      - sessionId
+      - tier
+      - createdAt
       properties:
         roomId:
           type: string
@@ -421,9 +421,9 @@ components:
       type: object
       description: Response after joining a voice room
       required:
-        - success
-        - roomId
-        - tier
+      - success
+      - roomId
+      - tier
       properties:
         success:
           type: boolean
@@ -465,7 +465,7 @@ components:
       type: object
       description: SIP/WebRTC endpoint details for a participant
       required:
-        - sdpOffer
+      - sdpOffer
       properties:
         sdpOffer:
           type: string
@@ -488,8 +488,8 @@ components:
       type: object
       description: Participant in a voice room
       required:
-        - sessionId
-        - joinedAt
+      - sessionId
+      - joinedAt
       properties:
         sessionId:
           type: string
@@ -511,8 +511,8 @@ components:
       type: object
       description: Peer endpoint details for P2P connection
       required:
-        - sessionId
-        - sipEndpoint
+      - sessionId
+      - sipEndpoint
       properties:
         sessionId:
           type: string
@@ -531,85 +531,8 @@ x-service-registration:
   serviceName: "Voice Service"
   version: "1.0.0"
   categories:
-    - communication
-    - voice
+  - communication
+  - voice
   # No basePermissions - this is an internal-only service
 
 # Service Configuration (generates VoiceServiceConfiguration class)
-x-service-configuration:
-  properties:
-    # P2P Mode Configuration
-    P2PEnabled:
-      type: boolean
-      description: Whether P2P mode is enabled for voice rooms
-      default: true
-    P2PMaxParticipants:
-      type: integer
-      description: Maximum number of participants in P2P mode before upgrade to scaled tier
-      default: 6
-
-    # Scaled Tier Configuration
-    ScaledTierEnabled:
-      type: boolean
-      description: Whether scaled tier (Kamailio/RTPEngine) is available
-      default: false
-    ScaledMaxParticipants:
-      type: integer
-      description: Maximum number of participants in scaled tier mode
-      default: 100
-    TierUpgradeEnabled:
-      type: boolean
-      description: Whether automatic tier upgrade from P2P to Scaled is enabled
-      default: false
-    TierUpgradeMigrationDeadlineMs:
-      type: integer
-      description: Time in milliseconds to wait for clients to migrate during tier upgrade
-      default: 5000
-
-    # Kamailio SIP Proxy Configuration
-    KamailioHost:
-      type: string
-      description: Kamailio SIP proxy hostname
-      default: "localhost"
-    KamailioRpcPort:
-      type: integer
-      description: Kamailio JSONRPC HTTP port
-      default: 5080
-
-    # RTPEngine Configuration
-    RtpEngineHost:
-      type: string
-      description: RTPEngine media relay hostname
-      default: "localhost"
-    RtpEnginePort:
-      type: integer
-      description: RTPEngine ng protocol UDP port
-      default: 22222
-
-    # SIP Configuration
-    SipDomain:
-      type: string
-      description: SIP domain for conference URIs
-      default: "voice.bannou"
-    SipPasswordSalt:
-      type: string
-      description: Salt for deterministic SIP password generation (change in production)
-      default: "bannou-voice-default-salt"
-
-    # Endpoint Management
-    EndpointTtlSeconds:
-      type: integer
-      description: TTL for endpoint registrations before they expire
-      default: 30
-
-    # Audio Configuration
-    DefaultCodec:
-      type: string
-      description: Default audio codec for voice communication
-      default: "opus"
-
-    # NAT Traversal
-    StunServers:
-      type: string
-      description: Comma-separated list of STUN server URIs for NAT traversal
-      default: "stun:stun.l.google.com:19302"

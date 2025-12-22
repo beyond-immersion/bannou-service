@@ -28,21 +28,7 @@ servers:
 - url: http://localhost:3500/v1.0/invoke/bannou/method
   description: Dapr sidecar endpoint (internal only)
 
-x-lifecycle:
-  Realm:
-    model:
-      realmId: { type: string, format: uuid, primary: true, required: true }
-      code: { type: string, required: true }
-      name: { type: string, required: true }
-      description: { type: string }
-      category: { type: string }
-      isActive: { type: boolean, required: true }
-      isDeprecated: { type: boolean, required: true }
-      deprecatedAt: { type: string, format: date-time }
-      deprecationReason: { type: string }
-      metadata: { type: object, additionalProperties: true }
-      createdAt: { type: string, format: date-time, required: true }
-      updatedAt: { type: string, format: date-time, required: true }
+# NOTE: x-lifecycle moved to realm-events.yaml
 
 paths:
   /realm/get:
@@ -642,9 +628,3 @@ components:
             type: string
           description: List of error messages for realms that failed to seed
 
-x-service-configuration:
-  properties:
-    DefaultRealmCode:
-      type: string
-      description: Default realm code for new entities when not specified
-      default: "OMEGA"

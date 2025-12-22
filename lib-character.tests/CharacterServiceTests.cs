@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
@@ -28,6 +29,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IRealmClient> _mockRealmClient;
     private readonly Mock<ISpeciesClient> _mockSpeciesClient;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     private const string STATE_STORE = "character-statestore";
     private const string CHARACTER_KEY_PREFIX = "character:";
@@ -41,6 +43,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockRealmClient = new Mock<IRealmClient>();
         _mockSpeciesClient = new Mock<ISpeciesClient>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Default realm validation to pass (realm exists and is active)
         _mockRealmClient
@@ -68,7 +71,8 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             Configuration,
             _mockErrorEventEmitter.Object,
             _mockRealmClient.Object,
-            _mockSpeciesClient.Object);
+            _mockSpeciesClient.Object,
+            _mockEventConsumer.Object);
     }
 
     /// <summary>
@@ -103,42 +107,42 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     public void Constructor_WithNullDaprClient_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(null!, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockRealmClient.Object, _mockSpeciesClient.Object));
+            new CharacterService(null!, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
     public void Constructor_WithNullLogger_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockDaprClient.Object, null!, Configuration, _mockErrorEventEmitter.Object, _mockRealmClient.Object, _mockSpeciesClient.Object));
+            new CharacterService(_mockDaprClient.Object, null!, Configuration, _mockErrorEventEmitter.Object, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
     public void Constructor_WithNullConfiguration_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockDaprClient.Object, _mockLogger.Object, null!, _mockErrorEventEmitter.Object, _mockRealmClient.Object, _mockSpeciesClient.Object));
+            new CharacterService(_mockDaprClient.Object, _mockLogger.Object, null!, _mockErrorEventEmitter.Object, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
     public void Constructor_WithNullErrorEventEmitter_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockDaprClient.Object, _mockLogger.Object, Configuration, null!, _mockRealmClient.Object, _mockSpeciesClient.Object));
+            new CharacterService(_mockDaprClient.Object, _mockLogger.Object, Configuration, null!, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
     public void Constructor_WithNullRealmClient_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockDaprClient.Object, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, null!, _mockSpeciesClient.Object));
+            new CharacterService(_mockDaprClient.Object, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, null!, _mockSpeciesClient.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
     public void Constructor_WithNullSpeciesClient_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockDaprClient.Object, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockRealmClient.Object, null!));
+            new CharacterService(_mockDaprClient.Object, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockRealmClient.Object, null!, _mockEventConsumer.Object));
     }
 
     #endregion

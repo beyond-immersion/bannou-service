@@ -19,21 +19,7 @@ info:
 servers:
 - url: http://localhost:3500/v1.0/invoke/bannou/method
 
-# Lifecycle events auto-generated from this definition
-x-lifecycle:
-  Relationship:
-    model:
-      relationshipId: { type: string, format: uuid, primary: true, required: true }
-      entity1Id: { type: string, format: uuid, required: true }
-      entity1Type: { type: string, required: true }
-      entity2Id: { type: string, format: uuid, required: true }
-      entity2Type: { type: string, required: true }
-      relationshipTypeId: { type: string, format: uuid, required: true }
-      startedAt: { type: string, format: date-time, required: true }
-      endedAt: { type: string, format: date-time }
-      metadata: { type: object, additionalProperties: true }
-      createdAt: { type: string, format: date-time, required: true }
-      updatedAt: { type: string, format: date-time }
+# NOTE: x-lifecycle moved to relationship-events.yaml
 
 paths:
   /relationship/create:

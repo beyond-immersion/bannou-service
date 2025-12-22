@@ -30,7 +30,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// Uses Permissions service for dynamic API discovery and capability management.
 /// </summary>
 [DaprService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton)]
-public class ConnectService : IConnectService
+public partial class ConnectService : IConnectService
 {
     private readonly IAuthClient _authClient;
     private readonly DaprClient _daprClient;
@@ -59,6 +59,7 @@ public class ConnectService : IConnectService
         ILogger<ConnectService> logger,
         ILoggerFactory loggerFactory,
         IErrorEventEmitter errorEventEmitter,
+        IEventConsumer eventConsumer,
         ISessionManager? sessionManager = null,
         ClientEventQueueManager? clientEventQueueManager = null)
     {
@@ -81,11 +82,15 @@ public class ConnectService : IConnectService
         _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
         _connectionManager = new WebSocketConnectionManager();
 
-        // Generate server salt for GUID generation (use cryptographic salt)
-        _serverSalt = GuidGenerator.GenerateServerSalt();
+        // Use shared server salt for GUID generation (ensures shortcuts work across services)
+        _serverSalt = GuidGenerator.GetSharedServerSalt();
 
         // Generate unique instance ID for distributed deployment
         _instanceId = Environment.MachineName + "-" + Guid.NewGuid().ToString("N")[..8];
+
+        // Register event handlers via partial class (ConnectServiceEvents.cs)
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
 
         _logger.LogInformation("Connect service initialized with instance ID: {InstanceId}, SessionManager: {SessionManagerEnabled}",
             _instanceId, sessionManager != null ? "Enabled" : "Disabled");
@@ -1853,8 +1858,7 @@ public class ConnectService : IConnectService
                 });
             }
 
-            // Build shortcuts array for capability manifest
-            var shortcuts = new List<object>();
+            // Add shortcuts to availableAPIs - they look identical to regular endpoints from client perspective
             foreach (var shortcut in connectionState.GetAllShortcuts())
             {
                 // Skip expired shortcuts
@@ -1864,21 +1868,14 @@ public class ConnectService : IConnectService
                     continue;
                 }
 
-                shortcuts.Add(new
+                // Shortcuts appear as regular APIs with "SHORTCUT:" prefix in endpointKey
+                availableApis.Add(new
                 {
-                    guid = shortcut.RouteGuid.ToString(),
-                    target_service = shortcut.TargetService ?? "unknown",
-                    target_endpoint = shortcut.TargetEndpoint ?? "unknown",
-                    metadata = new
-                    {
-                        name = shortcut.Name,
-                        description = shortcut.Description,
-                        display_name = shortcut.DisplayName,
-                        source_service = shortcut.SourceService,
-                        tags = shortcut.Tags,
-                        created_at = shortcut.CreatedAt.ToString("o"),
-                        expires_at = shortcut.ExpiresAt?.ToString("o")
-                    }
+                    serviceGuid = shortcut.RouteGuid.ToString(),
+                    method = "SHORTCUT",
+                    path = shortcut.Name ?? shortcut.RouteGuid.ToString(),
+                    endpointKey = $"SHORTCUT:{shortcut.Name ?? shortcut.RouteGuid.ToString()}",
+                    description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
                 });
             }
 
@@ -1887,7 +1884,6 @@ public class ConnectService : IConnectService
                 event_name = "connect.capability_manifest",
                 sessionId = sessionId,
                 availableAPIs = availableApis,
-                shortcuts = shortcuts,
                 version = 1,
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
             };
@@ -1908,8 +1904,8 @@ public class ConnectService : IConnectService
             var messageBytes = capabilityMessage.ToByteArray();
 
             _logger.LogInformation(
-                "Sending capability manifest to session {SessionId} with {ApiCount} available APIs and {ShortcutCount} shortcuts",
-                sessionId, availableApis.Count, shortcuts.Count);
+                "Sending capability manifest to session {SessionId} with {ApiCount} available APIs (including shortcuts)",
+                sessionId, availableApis.Count);
 
             await webSocket.SendAsync(
                 new ArraySegment<byte>(messageBytes),
@@ -2005,8 +2001,7 @@ public class ConnectService : IConnectService
                 });
             }
 
-            // Build shortcuts array for capability manifest
-            var shortcuts = new List<object>();
+            // Add shortcuts to availableAPIs - they look identical to regular endpoints from client perspective
             foreach (var shortcut in connectionState.GetAllShortcuts())
             {
                 // Skip expired shortcuts
@@ -2016,21 +2011,14 @@ public class ConnectService : IConnectService
                     continue;
                 }
 
-                shortcuts.Add(new
+                // Shortcuts appear as regular APIs with "SHORTCUT:" prefix in endpointKey
+                availableApis.Add(new
                 {
-                    guid = shortcut.RouteGuid.ToString(),
-                    target_service = shortcut.TargetService ?? "unknown",
-                    target_endpoint = shortcut.TargetEndpoint ?? "unknown",
-                    metadata = new
-                    {
-                        name = shortcut.Name,
-                        description = shortcut.Description,
-                        display_name = shortcut.DisplayName,
-                        source_service = shortcut.SourceService,
-                        tags = shortcut.Tags,
-                        created_at = shortcut.CreatedAt.ToString("o"),
-                        expires_at = shortcut.ExpiresAt?.ToString("o")
-                    }
+                    serviceGuid = shortcut.RouteGuid.ToString(),
+                    method = "SHORTCUT",
+                    path = shortcut.Name ?? shortcut.RouteGuid.ToString(),
+                    endpointKey = $"SHORTCUT:{shortcut.Name ?? shortcut.RouteGuid.ToString()}",
+                    description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
                 });
             }
 
@@ -2039,7 +2027,6 @@ public class ConnectService : IConnectService
                 event_name = "connect.capability_manifest",
                 sessionId = sessionId,
                 availableAPIs = availableApis,
-                shortcuts = shortcuts,
                 version = 1,
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 reason = reason
@@ -2060,8 +2047,8 @@ public class ConnectService : IConnectService
             await _connectionManager.SendMessageAsync(sessionId, capabilityMessage, cancellationToken);
 
             _logger.LogInformation(
-                "Processed capabilities for session {SessionId}: {ApiCount} APIs, {ShortcutCount} shortcuts (reason: {Reason})",
-                sessionId, availableApis.Count, shortcuts.Count, reason);
+                "Processed capabilities for session {SessionId}: {ApiCount} APIs (including shortcuts) (reason: {Reason})",
+                sessionId, availableApis.Count, reason);
         }
         catch (Exception ex)
         {
@@ -2457,8 +2444,7 @@ public class ConnectService : IConnectService
                 });
             }
 
-            // Build shortcuts array for capability manifest
-            var shortcuts = new List<object>();
+            // Add shortcuts to availableAPIs - they look identical to regular endpoints from client perspective
             foreach (var shortcut in connectionState.GetAllShortcuts())
             {
                 // Skip expired shortcuts
@@ -2468,21 +2454,14 @@ public class ConnectService : IConnectService
                     continue;
                 }
 
-                shortcuts.Add(new
+                // Shortcuts appear as regular APIs with "SHORTCUT:" prefix in endpointKey
+                availableApis.Add(new
                 {
-                    guid = shortcut.RouteGuid.ToString(),
-                    target_service = shortcut.TargetService ?? "unknown",
-                    target_endpoint = shortcut.TargetEndpoint ?? "unknown",
-                    metadata = new
-                    {
-                        name = shortcut.Name,
-                        description = shortcut.Description,
-                        display_name = shortcut.DisplayName,
-                        source_service = shortcut.SourceService,
-                        tags = shortcut.Tags,
-                        created_at = shortcut.CreatedAt.ToString("o"),
-                        expires_at = shortcut.ExpiresAt?.ToString("o")
-                    }
+                    serviceGuid = shortcut.RouteGuid.ToString(),
+                    method = "SHORTCUT",
+                    path = shortcut.Name ?? shortcut.RouteGuid.ToString(),
+                    endpointKey = $"SHORTCUT:{shortcut.Name ?? shortcut.RouteGuid.ToString()}",
+                    description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
                 });
             }
 
@@ -2491,7 +2470,6 @@ public class ConnectService : IConnectService
                 event_name = "connect.capability_manifest",
                 sessionId = sessionId,
                 availableAPIs = availableApis,
-                shortcuts = shortcuts,
                 version = 1,
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
             };
@@ -2511,8 +2489,8 @@ public class ConnectService : IConnectService
             var messageBytes = capabilityMessage.ToByteArray();
 
             _logger.LogInformation(
-                "Sending capability manifest to session {SessionId} with {ApiCount} APIs and {ShortcutCount} shortcuts",
-                sessionId, availableApis.Count, shortcuts.Count);
+                "Sending capability manifest to session {SessionId} with {ApiCount} APIs (including shortcuts)",
+                sessionId, availableApis.Count);
 
             await webSocket.SendAsync(
                 new ArraySegment<byte>(messageBytes),

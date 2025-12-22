@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +18,7 @@ namespace BeyondImmersion.BannouService.Realm;
 /// Each realm operates as an independent peer with distinct characteristics.
 /// </summary>
 [DaprService("realm", typeof(IRealmService), lifetime: ServiceLifetime.Scoped)]
-public class RealmService : IRealmService
+public partial class RealmService : IRealmService
 {
     private readonly DaprClient _daprClient;
     private readonly ILogger<RealmService> _logger;
@@ -34,12 +35,17 @@ public class RealmService : IRealmService
         DaprClient daprClient,
         ILogger<RealmService> logger,
         RealmServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter)
+        IErrorEventEmitter errorEventEmitter,
+        IEventConsumer eventConsumer)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+
+        // Register event handlers via partial class (RealmServiceEvents.cs)
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
     }
 
     #region Key Building Helpers

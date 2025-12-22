@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,7 +17,7 @@ namespace BeyondImmersion.BannouService.Accounts;
 /// Uses Dapr state management for persistence instead of Entity Framework
 /// </summary>
 [DaprService("accounts", typeof(IAccountsService), lifetime: ServiceLifetime.Scoped)]
-public class AccountsService : IAccountsService
+public partial class AccountsService : IAccountsService
 {
     private readonly ILogger<AccountsService> _logger;
     private readonly AccountsServiceConfiguration _configuration;
@@ -38,12 +39,17 @@ public class AccountsService : IAccountsService
         ILogger<AccountsService> logger,
         AccountsServiceConfiguration configuration,
         DaprClient daprClient,
-        IErrorEventEmitter errorEventEmitter)
+        IErrorEventEmitter errorEventEmitter,
+        IEventConsumer eventConsumer)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+
+        // Register event handlers via partial class (AccountsServiceEvents.cs)
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
     }
 
     public async Task<(StatusCodes, AccountListResponse?)> ListAccountsAsync(

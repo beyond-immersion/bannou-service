@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Events;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
 

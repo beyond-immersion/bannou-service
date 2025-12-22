@@ -23,6 +23,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
     private readonly Mock<DaprClient> _mockDaprClient;
     private readonly Mock<ILogger<RealmService>> _mockLogger;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     private const string STATE_STORE = "realm-statestore";
     private const string PUBSUB_NAME = "bannou-pubsub";
@@ -35,6 +36,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockDaprClient = new Mock<DaprClient>();
         _mockLogger = new Mock<ILogger<RealmService>>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
     }
 
     private RealmService CreateService()
@@ -43,7 +45,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             _mockDaprClient.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object);
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object);
     }
 
     /// <summary>
@@ -89,7 +92,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             null!,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -99,7 +103,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             _mockDaprClient.Object,
             null!,
             Configuration,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -109,7 +114,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             _mockDaprClient.Object,
             _mockLogger.Object,
             null!,
-            _mockErrorEventEmitter.Object));
+            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -119,7 +125,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             _mockDaprClient.Object,
             _mockLogger.Object,
             Configuration,
-            null!));
+            null!,
+            _mockEventConsumer.Object));
     }
 
     #endregion

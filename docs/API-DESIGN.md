@@ -1,5 +1,12 @@
 # Bannou API Design & Documentation Strategy
 
+> **DEPRECATED**: This document is being phased out. Content has been reorganized into:
+> - [Bannou Design](BANNOU_DESIGN.md) - Architecture and philosophy
+> - [Plugin Development Guide](guides/PLUGIN_DEVELOPMENT.md) - Creating and extending services
+> - [Development Rules](reference/TENETS.md) - Mandatory development constraints
+>
+> This file is retained for historical reference and will be removed in a future update.
+
 This document describes Bannou's contract-first API development approach using OpenAPI/Swagger specifications to drive the entire development lifecycle.
 
 ## Overview

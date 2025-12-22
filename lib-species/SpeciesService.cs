@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
@@ -19,7 +20,7 @@ namespace BeyondImmersion.BannouService.Species;
 /// Species are realm-specific, allowing different realms to have distinct populations.
 /// </summary>
 [DaprService("species", typeof(ISpeciesService), lifetime: ServiceLifetime.Scoped)]
-public class SpeciesService : ISpeciesService
+public partial class SpeciesService : ISpeciesService
 {
     private readonly DaprClient _daprClient;
     private readonly ILogger<SpeciesService> _logger;
@@ -41,7 +42,8 @@ public class SpeciesService : ISpeciesService
         SpeciesServiceConfiguration configuration,
         IErrorEventEmitter errorEventEmitter,
         ICharacterClient characterClient,
-        IRealmClient realmClient)
+        IRealmClient realmClient,
+        IEventConsumer eventConsumer)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -49,6 +51,10 @@ public class SpeciesService : ISpeciesService
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _characterClient = characterClient ?? throw new ArgumentNullException(nameof(characterClient));
         _realmClient = realmClient ?? throw new ArgumentNullException(nameof(realmClient));
+
+        // Register event handlers via partial class (SpeciesServiceEvents.cs)
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
     }
 
     #region Key Building Helpers

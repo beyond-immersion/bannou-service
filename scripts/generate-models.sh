@@ -130,7 +130,8 @@ else
 fi
 
 # Check for lifecycle events file and generate lifecycle event models if present
-LIFECYCLE_EVENTS_FILE="../schemas/${SERVICE_NAME}-lifecycle-events.yaml"
+# Lifecycle events are now generated to schemas/Generated/ by generate-lifecycle-events.py
+LIFECYCLE_EVENTS_FILE="../schemas/Generated/${SERVICE_NAME}-lifecycle-events.yaml"
 LIFECYCLE_OUTPUT_DIR="../bannou-service/Generated/Events"
 LIFECYCLE_OUTPUT_FILE="$LIFECYCLE_OUTPUT_DIR/${SERVICE_PASCAL}LifecycleEvents.cs"
 
@@ -145,7 +146,7 @@ if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
     "$NSWAG_EXE" openapi2csclient \
         "/input:$LIFECYCLE_EVENTS_FILE" \
         "/output:$LIFECYCLE_OUTPUT_FILE" \
-        "/namespace:BeyondImmersion.BannouService.$SERVICE_PASCAL" \
+        "/namespace:BeyondImmersion.BannouService.Events" \
         "/generateClientClasses:false" \
         "/generateClientInterfaces:false" \
         "/generateDtoTypes:true" \
@@ -153,8 +154,7 @@ if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
         "/jsonLibrary:SystemTextJson" \
         "/generateNullableReferenceTypes:true" \
         "/newLineBehavior:LF" \
-        "/templateDirectory:../templates/nswag" \
-        "/additionalNamespaceUsages:BeyondImmersion.BannouService,BeyondImmersion.BannouService.$SERVICE_PASCAL"
+        "/templateDirectory:../templates/nswag"
 
     if [ $? -eq 0 ] && [ -f "$LIFECYCLE_OUTPUT_FILE" ]; then
         LIFECYCLE_FILE_SIZE=$(wc -l < "$LIFECYCLE_OUTPUT_FILE" 2>/dev/null || echo "0")

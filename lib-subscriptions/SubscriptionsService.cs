@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Servicedata;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
@@ -17,7 +18,7 @@ namespace BeyondImmersion.BannouService.Subscriptions;
 /// Publishes subscription.updated events for real-time session authorization updates.
 /// </summary>
 [DaprService("subscriptions", typeof(ISubscriptionsService), lifetime: ServiceLifetime.Singleton)]
-public class SubscriptionsService : ISubscriptionsService
+public partial class SubscriptionsService : ISubscriptionsService
 {
     private readonly DaprClient _daprClient;
     private readonly ILogger<SubscriptionsService> _logger;
@@ -39,13 +40,18 @@ public class SubscriptionsService : ISubscriptionsService
         ILogger<SubscriptionsService> logger,
         SubscriptionsServiceConfiguration configuration,
         IServicedataClient servicedataClient,
-        IErrorEventEmitter errorEventEmitter)
+        IErrorEventEmitter errorEventEmitter,
+        IEventConsumer eventConsumer)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _servicedataClient = servicedataClient ?? throw new ArgumentNullException(nameof(servicedataClient));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+
+        // Register event handlers via partial class (SubscriptionsServiceEvents.cs)
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
     }
 
     private string StateStoreName => _configuration.StateStoreName ?? "subscriptions-statestore";

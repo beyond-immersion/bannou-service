@@ -25,6 +25,8 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                 "Test game session listing via WebSocket binary protocol"),
             new ServiceTest(TestCompleteSessionLifecycleViaWebSocket, "GameSession - Full Lifecycle (WebSocket)", "WebSocket",
                 "Test complete session lifecycle via WebSocket: create -> join -> action -> leave"),
+            new ServiceTest(TestSubscriptionBasedJoinViaShortcut, "GameSession - Subscription Shortcut Join (WebSocket)", "WebSocket",
+                "Test subscription-based join flow: create subscription -> connect -> receive shortcut -> invoke shortcut"),
         };
     }
 
@@ -453,6 +455,209 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
         catch (Exception ex)
         {
             Console.WriteLine($"FAILED GameSession lifecycle test with exception: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
+            }
+        }
+    }
+
+    private void TestSubscriptionBasedJoinViaShortcut(string[] args)
+    {
+        Console.WriteLine("=== GameSession Subscription-Based Shortcut Join Test (WebSocket) ===");
+        Console.WriteLine("Testing subscription -> connect -> receive shortcut -> invoke shortcut flow...");
+
+        try
+        {
+            var result = Task.Run(async () =>
+            {
+                var adminClient = Program.AdminClient;
+                if (adminClient == null || !adminClient.IsConnected)
+                {
+                    Console.WriteLine("   Admin client not connected");
+                    return false;
+                }
+
+                var uniqueCode = $"{DateTime.Now.Ticks % 100000}";
+
+                try
+                {
+                    // Step 1: Create a test service (arcadia type for game-session to recognize)
+                    Console.WriteLine("   Step 1: Creating test service 'arcadia'...");
+                    var serviceResponse = await adminClient.InvokeAsync<object, JsonElement>(
+                        "POST",
+                        "/servicedata/services/create",
+                        new
+                        {
+                            stubName = "arcadia",
+                            displayName = "Arcadia Game Service",
+                            description = "Test game service for shortcut flow",
+                            serviceType = "game"
+                        },
+                        timeout: TimeSpan.FromSeconds(15));
+
+                    string? serviceId = null;
+                    if (serviceResponse.IsSuccess)
+                    {
+                        var json = System.Text.Json.Nodes.JsonNode.Parse(serviceResponse.Result.GetRawText())?.AsObject();
+                        serviceId = json?["serviceId"]?.GetValue<string>();
+                        Console.WriteLine($"   Created service: {serviceId}");
+                    }
+                    else if (serviceResponse.Error?.ResponseCode == 409)
+                    {
+                        // Service already exists - get it
+                        Console.WriteLine("   Service 'arcadia' already exists, fetching...");
+                        var listResponse = (await adminClient.InvokeAsync<object, JsonElement>(
+                            "POST",
+                            "/servicedata/services/list",
+                            new { },
+                            timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        var listJson = System.Text.Json.Nodes.JsonNode.Parse(listResponse.GetRawText())?.AsObject();
+                        var services = listJson?["services"]?.AsArray();
+                        if (services != null)
+                        {
+                            foreach (var svc in services)
+                            {
+                                if (svc?["stubName"]?.GetValue<string>() == "arcadia")
+                                {
+                                    serviceId = svc?["serviceId"]?.GetValue<string>();
+                                    break;
+                                }
+                            }
+                        }
+                        Console.WriteLine($"   Found existing service: {serviceId}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"   Failed to create service: {serviceResponse.Error?.Message}");
+                        return false;
+                    }
+
+                    if (string.IsNullOrEmpty(serviceId))
+                    {
+                        Console.WriteLine("   Could not obtain service ID");
+                        return false;
+                    }
+
+                    // Step 2: Create a test account via admin
+                    Console.WriteLine("   Step 2: Creating test account...");
+                    var accountResponse = (await adminClient.InvokeAsync<object, JsonElement>(
+                        "POST",
+                        "/accounts/create",
+                        new
+                        {
+                            email = $"shortcut-test-{uniqueCode}@test.local",
+                            displayName = $"ShortcutTest{uniqueCode}"
+                        },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+
+                    var accountJson = System.Text.Json.Nodes.JsonNode.Parse(accountResponse.GetRawText())?.AsObject();
+                    var accountId = accountJson?["accountId"]?.GetValue<string>();
+                    if (string.IsNullOrEmpty(accountId))
+                    {
+                        Console.WriteLine("   Failed to create test account");
+                        return false;
+                    }
+                    Console.WriteLine($"   Created account: {accountId}");
+
+                    // Step 3: Create subscription for this account to the arcadia service
+                    Console.WriteLine("   Step 3: Creating subscription...");
+                    var subResponse = (await adminClient.InvokeAsync<object, JsonElement>(
+                        "POST",
+                        "/subscriptions/create",
+                        new
+                        {
+                            accountId = accountId,
+                            serviceId = serviceId,
+                            durationDays = 30
+                        },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+
+                    var subJson = System.Text.Json.Nodes.JsonNode.Parse(subResponse.GetRawText())?.AsObject();
+                    var subscriptionId = subJson?["subscriptionId"]?.GetValue<string>();
+                    Console.WriteLine($"   Created subscription: {subscriptionId}");
+
+                    // Step 4: Create user credentials and connect via WebSocket
+                    Console.WriteLine("   Step 4: Registering user and connecting via WebSocket...");
+                    var authResult = await CreateTestAccountAsync($"shortcut_{uniqueCode}");
+                    if (authResult == null)
+                    {
+                        Console.WriteLine("   Failed to create WebSocket test user");
+                        return false;
+                    }
+
+                    await using var client = await CreateConnectedClientAsync(authResult.Value.accessToken, authResult.Value.connectUrl);
+                    if (client == null)
+                    {
+                        Console.WriteLine("   Failed to connect WebSocket client");
+                        return false;
+                    }
+
+                    // Step 5: Wait for shortcut to appear in available APIs
+                    Console.WriteLine("   Step 5: Waiting for shortcut in available APIs...");
+                    var deadline = DateTime.UtcNow.AddSeconds(10);
+                    Guid? shortcutGuid = null;
+
+                    while (DateTime.UtcNow < deadline)
+                    {
+                        // Check if we have a shortcut for join_game_arcadia
+                        shortcutGuid = client.GetServiceGuid("SHORTCUT", "join_game_arcadia");
+                        if (shortcutGuid.HasValue)
+                        {
+                            Console.WriteLine($"   Found shortcut: SHORTCUT:join_game_arcadia -> {shortcutGuid}");
+                            break;
+                        }
+                        await Task.Delay(500);
+                    }
+
+                    if (!shortcutGuid.HasValue)
+                    {
+                        Console.WriteLine("   Shortcut not received within timeout");
+                        Console.WriteLine($"   Available APIs: {string.Join(", ", client.AvailableApis.Keys.Take(10))}...");
+                        return false;
+                    }
+
+                    // Step 6: Invoke the shortcut with empty payload
+                    Console.WriteLine("   Step 6: Invoking shortcut with empty payload...");
+                    var joinResponse = await client.InvokeAsync<object, JsonElement>(
+                        "SHORTCUT",
+                        "join_game_arcadia",
+                        new { }, // Empty payload - server injects the bound data
+                        timeout: TimeSpan.FromSeconds(15));
+
+                    if (!joinResponse.IsSuccess)
+                    {
+                        Console.WriteLine($"   Shortcut invocation failed: {joinResponse.Error?.Message}");
+                        return false;
+                    }
+
+                    var joinJson = System.Text.Json.Nodes.JsonNode.Parse(joinResponse.Result.GetRawText())?.AsObject();
+                    var success = joinJson?["success"]?.GetValue<bool>() ?? false;
+                    var sessionId = joinJson?["sessionId"]?.GetValue<string>();
+
+                    Console.WriteLine($"   Join result: success={success}, sessionId={sessionId}");
+
+                    return success && !string.IsNullOrEmpty(sessionId);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"   Test failed: {ex.Message}");
+                    return false;
+                }
+            }).Result;
+
+            if (result)
+            {
+                Console.WriteLine("PASSED GameSession subscription-based shortcut join test via WebSocket");
+            }
+            else
+            {
+                Console.WriteLine("FAILED GameSession subscription-based shortcut join test via WebSocket");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"FAILED GameSession subscription shortcut test with exception: {ex.Message}");
             if (ex.InnerException != null)
             {
                 Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");

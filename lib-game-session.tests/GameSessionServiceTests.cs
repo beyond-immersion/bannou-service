@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Testing;
@@ -21,6 +22,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     private readonly Mock<ILogger<GameSessionService>> _mockLogger;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
@@ -32,6 +34,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         _mockLogger = new Mock<ILogger<GameSessionService>>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
     }
 
     private GameSessionService CreateService()
@@ -41,7 +44,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             _mockLogger.Object,
             Configuration,
             _mockErrorEventEmitter.Object,
-            _mockHttpContextAccessor.Object);
+            _mockHttpContextAccessor.Object,
+            _mockEventConsumer.Object);
     }
 
     #region Constructor Tests
@@ -61,7 +65,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(null!, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object));
+            new GameSessionService(null!, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -69,7 +73,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(_mockDaprClient.Object, null!, Configuration, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object));
+            new GameSessionService(_mockDaprClient.Object, null!, Configuration, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -77,7 +81,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(_mockDaprClient.Object, _mockLogger.Object, null!, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object));
+            new GameSessionService(_mockDaprClient.Object, _mockLogger.Object, null!, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
     }
 
     #endregion
@@ -523,6 +527,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             Configuration,
             _mockErrorEventEmitter.Object,
             _mockHttpContextAccessor.Object,
+            _mockEventConsumer.Object,
             voiceClient: null,
             permissionsClient: mockPermissionsClient.Object);
 
@@ -579,6 +584,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             Configuration,
             _mockErrorEventEmitter.Object,
             _mockHttpContextAccessor.Object,
+            _mockEventConsumer.Object,
             voiceClient: null,
             permissionsClient: mockPermissionsClient.Object);
 

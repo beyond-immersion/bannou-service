@@ -1,0 +1,13 @@
+openapi: 3.0.3
+info:
+  title: Permissions Service Configuration
+  description: "Configuration schema for Permissions service.\nProperties are bound to environment variables with BANNOU_
+    prefix."
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    Enabled:
+      type: boolean
+      description: Enable/disable Permissions service
+      default: true

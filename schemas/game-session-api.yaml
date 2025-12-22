@@ -8,6 +8,7 @@ info:
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
     See API-DESIGN.md for architectural rationale.
   version: 2.0.0
+  # NOTE: Event subscriptions moved to game-session-events.yaml (x-event-subscriptions)
 servers:
   - url: http://localhost:3500/v1.0/invoke/bannou/method
     description: Dapr sidecar endpoint (internal only)
@@ -93,12 +94,14 @@ paths:
   /sessions/join:
     post:
       summary: Join a game session
+      description: |
+        Join an existing game session. This endpoint is not directly accessible via WebSocket API.
+        Access is granted through session shortcuts published by the game-session service when
+        a subscribed user connects. The shortcut contains a pre-bound JoinGameSessionRequest
+        with the target session ID already filled in.
       operationId: joinGameSession
       tags:
         - Game Sessions
-      x-permissions:
-        - role: user
-          states: {}
       x-rate-limit:
         requestsPerMinute: 10
         requestsPerHour: 50

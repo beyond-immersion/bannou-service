@@ -40,7 +40,7 @@ lib-{service}/
 │   ├── {Service}Models.cs          # Request/response models
 │   ├── {Service}Controller.cs      # HTTP controller
 │   ├── {Service}ServiceConfiguration.cs  # Configuration class
-│   └── {Service}PermissionRegistration.Generated.cs
+│   └── {Service}PermissionRegistration.cs
 ├── {Service}Service.cs             # MANUAL - business logic only
 └── Services/                       # MANUAL - optional helper services
 ```
@@ -1822,6 +1822,202 @@ XML documentation warnings are enabled project-wide:
 ```
 
 Production projects SHOULD treat missing documentation as warnings (enable CS1591).
+
+---
+
+## Tenet 19: Schema File Organization (STANDARDIZED)
+
+**Rule**: OpenAPI schemas are organized into separate files by purpose. Each service may have multiple schema files, and code generation follows a defined sequence.
+
+### Schema File Types
+
+| File Pattern | Purpose | Generated Output |
+|--------------|---------|------------------|
+| `{service}-api.yaml` | API endpoints with `x-permissions` | Controllers, models, clients, interfaces |
+| `{service}-events.yaml` | Service events with `x-lifecycle`, `x-event-subscriptions`, `x-event-publications` | Event models, event controllers |
+| `{service}-configuration.yaml` | Service configuration with `x-service-configuration` | Configuration classes |
+| `{service}-client-events.yaml` | Server→client WebSocket push events | Client SDK event models |
+| `Generated/{service}-lifecycle-events.yaml` | AUTO-GENERATED from `x-lifecycle` in events.yaml | Lifecycle event models |
+| `common-events.yaml` | Shared infrastructure events | Common event models |
+
+### Schema Directory Structure
+
+```
+schemas/
+├── {service}-api.yaml              # API endpoints + x-permissions
+├── {service}-events.yaml           # Service-specific events + x-lifecycle + x-event-subscriptions
+├── {service}-configuration.yaml    # Service configuration
+├── {service}-client-events.yaml    # Server→client push events
+├── common-events.yaml              # Shared infrastructure events
+└── Generated/                      # AUTO-GENERATED - never edit
+    └── {service}-lifecycle-events.yaml  # From x-lifecycle in events.yaml
+```
+
+### Event File Organization
+
+**Where to define events**:
+
+| Criteria | Location |
+|----------|----------|
+| Published by multiple services | `common-events.yaml` |
+| Consumed by 3+ services | `common-events.yaml` |
+| Session lifecycle events | `common-events.yaml` |
+| Infrastructure events (heartbeats, mappings) | `common-events.yaml` |
+| Service-specific domain events | `{service}-events.yaml` |
+
+**Example**: Session lifecycle events (`SessionConnectedEvent`, `SessionDisconnectedEvent`, `SessionReconnectedEvent`) go in `common-events.yaml` because they're consumed by many game services.
+
+### Event Subscription/Publication Declarations
+
+Define subscriptions and publications in the `info` section of `{service}-events.yaml`:
+
+```yaml
+# In {service}-events.yaml
+info:
+  title: MyService Events
+  version: 1.0.0
+  x-event-subscriptions:
+    - topic: session.connected
+      event: SessionConnectedEvent
+      handler: HandleSessionConnected
+    - topic: entity.deleted
+      event: EntityDeletedEvent
+      handler: HandleEntityDeleted
+  x-event-publications:
+    - topic: myservice.action-completed
+      event: ActionCompletedEvent
+      description: Published when an action completes
+```
+
+**Field Definitions**:
+- `topic`: The Dapr pub/sub topic name
+- `event`: The event model class name (must exist in events schema)
+- `handler`: The handler method name (without `Async` suffix) - used for code generation
+- `description`: (publications only) Human-readable description
+
+### Canonical Event Definitions (CRITICAL)
+
+**Rule**: Each `{service}-events.yaml` file MUST contain ONLY canonical definitions for events that service PUBLISHES. No `$ref` references to other service event files are allowed.
+
+**Why**: NSwag follows `$ref` and generates ALL types it encounters, causing duplicate type definitions that break compilation.
+
+```yaml
+# CORRECT: Canonical definitions only
+# In auth-events.yaml - Auth service publishes these events
+components:
+  schemas:
+    SessionInvalidatedEvent:
+      type: object
+      required: [sessionIds, reason]
+      properties:
+        sessionIds:
+          type: array
+          items: { type: string }
+        reason:
+          $ref: '#/components/schemas/SessionInvalidatedEventReason'
+
+# WRONG: $ref to another service's events (causes NSwag duplication)
+components:
+  schemas:
+    AccountDeletedEvent:
+      $ref: './accounts-events.yaml#/components/schemas/AccountDeletedEvent'  # NO!
+```
+
+**Accessing Other Services' Events in Code**: Use the shared namespace:
+```csharp
+using BeyondImmersion.BannouService.Events;
+
+// All event types from all services are available here
+var acctEvent = new AccountDeletedEvent { ... };  // From AccountsEventsModels.cs
+var authEvent = new SessionInvalidatedEvent { ... };  // From AuthEventsModels.cs
+```
+
+### Code Generation Sequence
+
+The generation pipeline runs in this specific order (defined in `scripts/generate-all-services.sh`):
+
+```
+1. Lifecycle Events     → generate-lifecycle-events.py
+   (x-lifecycle in {service}-events.yaml → schemas/Generated/{service}-lifecycle-events.yaml)
+
+2. Common Events        → generate-common-events.sh
+   (common-events.yaml → bannou-service/Generated/Events/CommonEventsModels.cs)
+
+3. Service Events       → generate-service-events.sh
+   ({service}-events.yaml → bannou-service/Generated/Events/{Service}EventsModels.cs)
+
+4. Client Events        → generate-client-events.sh
+   ({service}-client-events.yaml → lib-{service}/Generated/{Service}ClientEventsModels.cs)
+
+5. Service APIs         → generate-service.sh (for each service)
+   ({service}-api.yaml → controllers, models, clients, interfaces)
+
+6. Configuration        → generate-config.sh (for each service)
+   ({service}-configuration.yaml → lib-{service}/Generated/{Service}ServiceConfiguration.cs)
+
+7. Permissions          → generate-permissions.sh (for each service)
+   (x-permissions in {service}-api.yaml → lib-{service}/Generated/{Service}PermissionRegistration.cs)
+
+8. Event Subscriptions  → generate-event-subscriptions.sh (for each service)
+   (x-event-subscriptions → {Service}EventsController.Generated.cs)
+```
+
+**Order Matters**: Events must be generated before service APIs because services may reference event types.
+
+### Namespace for Generated Events
+
+All event models are generated into a single namespace for easy access:
+
+```csharp
+using BeyondImmersion.BannouService.Events;
+
+// All event types available:
+// - CommonEventsModels.cs (SessionConnectedEvent, ServiceHeartbeatEvent, etc.)
+// - AuthEventsModels.cs (SessionInvalidatedEvent, SessionUpdatedEvent)
+// - PermissionsEventsModels.cs (PermissionCapabilityUpdate, SessionStateChangeEvent)
+// etc.
+```
+
+### Migration from x-subscribes-to
+
+The legacy `x-subscribes-to` in `{service}-api.yaml` is deprecated. Migrate to `x-event-subscriptions` in `{service}-events.yaml`:
+
+```yaml
+# OLD (deprecated) - in {service}-api.yaml
+info:
+  x-subscribes-to:
+    - topic: session.connected
+      event: SessionConnectedEvent
+      handler: HandleSessionConnected
+
+# NEW (preferred) - in {service}-events.yaml
+info:
+  x-event-subscriptions:
+    - topic: session.connected
+      event: SessionConnectedEvent
+      handler: HandleSessionConnected
+```
+
+The generation script supports both patterns during migration, preferring events yaml if present.
+
+### Typed Event Parsing (MANDATORY)
+
+All event controllers MUST use typed parsing via `DaprEventHelper.ReadEventAsync<T>`:
+
+```csharp
+// CORRECT: Typed parsing
+var evt = await DaprEventHelper.ReadEventAsync<SessionInvalidatedEvent>(Request);
+if (evt == null) return BadRequest("Invalid event data");
+
+var sessionIds = evt.SessionIds?.ToList() ?? new List<string>();
+var reason = evt.Reason.ToString();
+
+// WRONG: Manual JSON parsing
+var json = await DaprEventHelper.ReadEventJsonAsync(Request);  // NO!
+var sessionIds = json.Value.GetProperty("sessionIds")...       // NO!
+```
+
+**Rationale**: Typed parsing provides compile-time safety, automatic enum handling, and consistent error handling.
 
 ---
 
