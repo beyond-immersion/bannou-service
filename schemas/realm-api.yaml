@@ -56,6 +56,29 @@ paths:
         '404':
           description: Realm not found
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetRealmRequest\"\
+        ,\n  \"$defs\": {\n    \"GetRealmRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"realmId\"\
+        \n      ],\n      \"properties\": {\n        \"realmId\": {\n          \"type\": \"string\",\n          \"format\"\
+        : \"uuid\",\n          \"description\": \"Unique identifier of the realm\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RealmResponse\"\
+        ,\n  \"$defs\": {\n    \"RealmResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"realmId\"\
+        ,\n        \"code\",\n        \"name\",\n        \"isActive\",\n        \"isDeprecated\",\n        \"createdAt\",\n\
+        \        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"realmId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n \
+        \       \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"\
+        string\",\n          \"nullable\": true\n        },\n        \"category\": {\n          \"type\": \"string\",\n  \
+        \        \"nullable\": true\n        },\n        \"isActive\": {\n          \"type\": \"boolean\"\n        },\n  \
+        \      \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this realm is deprecated
+        and cannot be used for new entities\"\n        },\n        \"deprecatedAt\": {\n          \"type\": \"string\",\n\
+        \          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"Timestamp when
+        this realm was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\": \"string\",\n     \
+        \     \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n        },\n        \"\
+        metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
+        : true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
+        \n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n   \
+        \     }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Get realm by ID\",\n  \"description\": \"\",\n  \"tags\": [\n    \"Realm\"\
+        \n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getRealm\"\n}"
   /realm/get-by-code:
     post:
       summary: Get realm by code
@@ -82,6 +105,31 @@ paths:
         '404':
           description: Realm not found
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetRealmByCodeRequest\"\
+        ,\n  \"$defs\": {\n    \"GetRealmByCodeRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        code\"\n      ],\n      \"properties\": {\n        \"code\": {\n          \"type\": \"string\",\n          \"minLength\"\
+        : 1,\n          \"maxLength\": 50,\n          \"pattern\": \"^[A-Z][A-Z0-9_]*$\",\n          \"description\": \"Unique
+        code for the realm (e.g., \\\"OMEGA\\\", \\\"ARCADIA\\\", \\\"FANTASIA\\\")\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RealmResponse\"\
+        ,\n  \"$defs\": {\n    \"RealmResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"realmId\"\
+        ,\n        \"code\",\n        \"name\",\n        \"isActive\",\n        \"isDeprecated\",\n        \"createdAt\",\n\
+        \        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"realmId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n \
+        \       \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"\
+        string\",\n          \"nullable\": true\n        },\n        \"category\": {\n          \"type\": \"string\",\n  \
+        \        \"nullable\": true\n        },\n        \"isActive\": {\n          \"type\": \"boolean\"\n        },\n  \
+        \      \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this realm is deprecated
+        and cannot be used for new entities\"\n        },\n        \"deprecatedAt\": {\n          \"type\": \"string\",\n\
+        \          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"Timestamp when
+        this realm was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\": \"string\",\n     \
+        \     \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n        },\n        \"\
+        metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
+        : true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
+        \n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n   \
+        \     }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Get realm by code\",\n  \"description\": \"Retrieve a realm using its unique
+        code (e.g., \\\"OMEGA\\\", \\\"ARCADIA\\\", \\\"FANTASIA\\\")\",\n  \"tags\": [\n    \"Realm\"\n  ],\n  \"deprecated\"\
+        : false,\n  \"operationId\": \"getRealmByCode\"\n}"
   /realm/list:
     post:
       summary: List all realms
@@ -106,6 +154,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/RealmListResponse'
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListRealmsRequest\"\
+        ,\n  \"$defs\": {\n    \"ListRealmsRequest\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"\
+        category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Filter
+        by category (e.g., \\\"MAIN\\\", \\\"SPECIAL\\\", \\\"TEST\\\")\"\n        },\n        \"isActive\": {\n         \
+        \ \"type\": \"boolean\",\n          \"nullable\": true,\n          \"description\": \"Filter by active status\"\n\
+        \        },\n        \"includeDeprecated\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n \
+        \         \"description\": \"Whether to include deprecated realms in the response\"\n        },\n        \"page\"\
+        : {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"default\": 1\n        },\n        \"\
+        pageSize\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"maximum\": 100,\n        \
+        \  \"default\": 20\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RealmListResponse\"\
+        ,\n  \"$defs\": {\n    \"RealmListResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"realms\"\
+        ,\n        \"totalCount\",\n        \"page\",\n        \"pageSize\"\n      ],\n      \"properties\": {\n        \"\
+        realms\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/RealmResponse\"\
+        \n          }\n        },\n        \"totalCount\": {\n          \"type\": \"integer\"\n        },\n        \"page\"\
+        : {\n          \"type\": \"integer\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\"\n     \
+        \   },\n        \"hasNextPage\": {\n          \"type\": \"boolean\"\n        },\n        \"hasPreviousPage\": {\n\
+        \          \"type\": \"boolean\"\n        }\n      }\n    },\n    \"RealmResponse\": {\n      \"type\": \"object\"\
+        ,\n      \"required\": [\n        \"realmId\",\n        \"code\",\n        \"name\",\n        \"isActive\",\n    \
+        \    \"isDeprecated\",\n        \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n       \
+        \ \"realmId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"code\": {\n\
+        \          \"type\": \"string\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n   \
+        \     \"description\": {\n          \"type\": \"string\",\n          \"nullable\": true\n        },\n        \"category\"\
+        : {\n          \"type\": \"string\",\n          \"nullable\": true\n        },\n        \"isActive\": {\n        \
+        \  \"type\": \"boolean\"\n        },\n        \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"\
+        description\": \"Whether this realm is deprecated and cannot be used for new entities\"\n        },\n        \"deprecatedAt\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"nullable\": true,\n      \
+        \    \"description\": \"Timestamp when this realm was deprecated\"\n        },\n        \"deprecationReason\": {\n\
+        \          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Optional reason for
+        deprecation\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : true,\n          \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n   \
+        \       \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n       \
+        \   \"format\": \"date-time\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"List all realms\",\n  \"description\": \"Retrieve all realms with optional
+        filtering\",\n  \"tags\": [\n    \"Realm\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"listRealms\"\n}"
   /realm/create:
     post:
       summary: Create new realm
@@ -133,6 +216,39 @@ paths:
         '409':
           description: Realm with this code already exists
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateRealmRequest\"\
+        ,\n  \"$defs\": {\n    \"CreateRealmRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"code\"\
+        ,\n        \"name\"\n      ],\n      \"properties\": {\n        \"code\": {\n          \"type\": \"string\",\n   \
+        \       \"minLength\": 1,\n          \"maxLength\": 50,\n          \"pattern\": \"^[A-Z][A-Z0-9_]*$\",\n         \
+        \ \"description\": \"Unique code for the realm (e.g., \\\"OMEGA\\\", \\\"ARCADIA\\\")\"\n        },\n        \"name\"\
+        : {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"maxLength\": 100,\n          \"description\"\
+        : \"Display name for the realm\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n      \
+        \    \"maxLength\": 2000,\n          \"nullable\": true,\n          \"description\": \"Description of the realm\"\n\
+        \        },\n        \"category\": {\n          \"type\": \"string\",\n          \"maxLength\": 50,\n          \"\
+        nullable\": true,\n          \"description\": \"Category for grouping (e.g., \\\"MAIN\\\", \\\"SPECIAL\\\")\"\n  \
+        \      },\n        \"isActive\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\"\
+        : \"Whether the realm is currently active for gameplay\"\n        },\n        \"metadata\": {\n          \"type\"\
+        : \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n          \"description\"\
+        : \"Additional metadata for the realm (JSON)\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RealmResponse\"\
+        ,\n  \"$defs\": {\n    \"RealmResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"realmId\"\
+        ,\n        \"code\",\n        \"name\",\n        \"isActive\",\n        \"isDeprecated\",\n        \"createdAt\",\n\
+        \        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"realmId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n \
+        \       \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"\
+        string\",\n          \"nullable\": true\n        },\n        \"category\": {\n          \"type\": \"string\",\n  \
+        \        \"nullable\": true\n        },\n        \"isActive\": {\n          \"type\": \"boolean\"\n        },\n  \
+        \      \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this realm is deprecated
+        and cannot be used for new entities\"\n        },\n        \"deprecatedAt\": {\n          \"type\": \"string\",\n\
+        \          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"Timestamp when
+        this realm was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\": \"string\",\n     \
+        \     \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n        },\n        \"\
+        metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
+        : true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
+        \n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n   \
+        \     }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Create new realm\",\n  \"description\": \"\",\n  \"tags\": [\n    \"Realm
+        Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"createRealm\"\n}"
   /realm/update:
     post:
       summary: Update realm
@@ -160,6 +276,38 @@ paths:
         '400':
           description: Invalid update data
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UpdateRealmRequest\"\
+        ,\n  \"$defs\": {\n    \"UpdateRealmRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"realmId\"\
+        \n      ],\n      \"properties\": {\n        \"realmId\": {\n          \"type\": \"string\",\n          \"format\"\
+        : \"uuid\",\n          \"description\": \"ID of the realm to update\"\n        },\n        \"name\": {\n         \
+        \ \"type\": \"string\",\n          \"minLength\": 1,\n          \"maxLength\": 100,\n          \"nullable\": true,\n\
+        \          \"description\": \"Display name for the realm\"\n        },\n        \"description\": {\n          \"type\"\
+        : \"string\",\n          \"maxLength\": 2000,\n          \"nullable\": true,\n          \"description\": \"Description
+        of the realm\"\n        },\n        \"category\": {\n          \"type\": \"string\",\n          \"maxLength\": 50,\n\
+        \          \"nullable\": true,\n          \"description\": \"Category for grouping\"\n        },\n        \"isActive\"\
+        : {\n          \"type\": \"boolean\",\n          \"nullable\": true,\n          \"description\": \"Whether the realm
+        is currently active\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : true,\n          \"nullable\": true,\n          \"description\": \"Additional metadata\"\n        }\n      }\n \
+        \   }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RealmResponse\"\
+        ,\n  \"$defs\": {\n    \"RealmResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"realmId\"\
+        ,\n        \"code\",\n        \"name\",\n        \"isActive\",\n        \"isDeprecated\",\n        \"createdAt\",\n\
+        \        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"realmId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n \
+        \       \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"\
+        string\",\n          \"nullable\": true\n        },\n        \"category\": {\n          \"type\": \"string\",\n  \
+        \        \"nullable\": true\n        },\n        \"isActive\": {\n          \"type\": \"boolean\"\n        },\n  \
+        \      \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this realm is deprecated
+        and cannot be used for new entities\"\n        },\n        \"deprecatedAt\": {\n          \"type\": \"string\",\n\
+        \          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"Timestamp when
+        this realm was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\": \"string\",\n     \
+        \     \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n        },\n        \"\
+        metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
+        : true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
+        \n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n   \
+        \     }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Update realm\",\n  \"description\": \"\",\n  \"tags\": [\n    \"Realm Admin\"\
+        \n  ],\n  \"deprecated\": false,\n  \"operationId\": \"updateRealm\"\n}"
   /realm/delete:
     post:
       summary: Delete realm
@@ -188,6 +336,15 @@ paths:
         '409':
           description: Cannot delete - realm is in use by characters, species, or locations
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/DeleteRealmRequest\"\
+        ,\n  \"$defs\": {\n    \"DeleteRealmRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"realmId\"\
+        \n      ],\n      \"properties\": {\n        \"realmId\": {\n          \"type\": \"string\",\n          \"format\"\
+        : \"uuid\",\n          \"description\": \"ID of the realm to delete\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n  \"summary\": \"Delete realm\",\n  \"description\": \"Hard delete a realm. This will fail
+        if the realm is still in use.\\nFor safe removal, first deprecate the realm, then delete after all\\nreferences are
+        removed. Only deprecated realms with zero references\\ncan be deleted.\\n\",\n  \"tags\": [\n    \"Realm Admin\"\n\
+        \  ],\n  \"deprecated\": false,\n  \"operationId\": \"deleteRealm\"\n}"
   /realm/deprecate:
     post:
       summary: Deprecate a realm
@@ -221,6 +378,33 @@ paths:
         '409':
           description: Realm is already deprecated
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/DeprecateRealmRequest\"\
+        ,\n  \"$defs\": {\n    \"DeprecateRealmRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        realmId\"\n      ],\n      \"properties\": {\n        \"realmId\": {\n          \"type\": \"string\",\n          \"\
+        format\": \"uuid\",\n          \"description\": \"ID of the realm to deprecate\"\n        },\n        \"reason\":
+        {\n          \"type\": \"string\",\n          \"maxLength\": 500,\n          \"nullable\": true,\n          \"description\"\
+        : \"Optional reason for deprecation (for audit purposes)\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RealmResponse\"\
+        ,\n  \"$defs\": {\n    \"RealmResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"realmId\"\
+        ,\n        \"code\",\n        \"name\",\n        \"isActive\",\n        \"isDeprecated\",\n        \"createdAt\",\n\
+        \        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"realmId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n \
+        \       \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"\
+        string\",\n          \"nullable\": true\n        },\n        \"category\": {\n          \"type\": \"string\",\n  \
+        \        \"nullable\": true\n        },\n        \"isActive\": {\n          \"type\": \"boolean\"\n        },\n  \
+        \      \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this realm is deprecated
+        and cannot be used for new entities\"\n        },\n        \"deprecatedAt\": {\n          \"type\": \"string\",\n\
+        \          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"Timestamp when
+        this realm was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\": \"string\",\n     \
+        \     \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n        },\n        \"\
+        metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
+        : true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
+        \n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n   \
+        \     }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Deprecate a realm\",\n  \"description\": \"Soft-delete a realm by marking
+        it as deprecated.\\nDeprecated realms:\\n- Remain queryable for historical data\\n- Cannot be used for creating new
+        entities (characters, locations, etc.)\\n- Can be hard-deleted after all references are removed\\n\",\n  \"tags\"\
+        : [\n    \"Realm Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"deprecateRealm\"\n}"
   /realm/undeprecate:
     post:
       summary: Restore a deprecated realm
@@ -251,6 +435,31 @@ paths:
         '400':
           description: Realm is not deprecated
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UndeprecateRealmRequest\"\
+        ,\n  \"$defs\": {\n    \"UndeprecateRealmRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n      \
+        \  \"realmId\"\n      ],\n      \"properties\": {\n        \"realmId\": {\n          \"type\": \"string\",\n     \
+        \     \"format\": \"uuid\",\n          \"description\": \"ID of the realm to restore\"\n        }\n      }\n    }\n\
+        \  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RealmResponse\"\
+        ,\n  \"$defs\": {\n    \"RealmResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"realmId\"\
+        ,\n        \"code\",\n        \"name\",\n        \"isActive\",\n        \"isDeprecated\",\n        \"createdAt\",\n\
+        \        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"realmId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n \
+        \       \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"\
+        string\",\n          \"nullable\": true\n        },\n        \"category\": {\n          \"type\": \"string\",\n  \
+        \        \"nullable\": true\n        },\n        \"isActive\": {\n          \"type\": \"boolean\"\n        },\n  \
+        \      \"isDeprecated\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether this realm is deprecated
+        and cannot be used for new entities\"\n        },\n        \"deprecatedAt\": {\n          \"type\": \"string\",\n\
+        \          \"format\": \"date-time\",\n          \"nullable\": true,\n          \"description\": \"Timestamp when
+        this realm was deprecated\"\n        },\n        \"deprecationReason\": {\n          \"type\": \"string\",\n     \
+        \     \"nullable\": true,\n          \"description\": \"Optional reason for deprecation\"\n        },\n        \"\
+        metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
+        : true\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
+        \n        },\n        \"updatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n   \
+        \     }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Restore a deprecated realm\",\n  \"description\": \"Remove the deprecated
+        status from a realm, making it\\navailable for new entities again.\\n\",\n  \"tags\": [\n    \"Realm Admin\"\n  ],\n\
+        \  \"deprecated\": false,\n  \"operationId\": \"undeprecateRealm\"\n}"
   /realm/exists:
     post:
       summary: Check if realm exists and is active
@@ -277,6 +486,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/RealmExistsResponse'
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RealmExistsRequest\"\
+        ,\n  \"$defs\": {\n    \"RealmExistsRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"realmId\"\
+        \n      ],\n      \"properties\": {\n        \"realmId\": {\n          \"type\": \"string\",\n          \"format\"\
+        : \"uuid\",\n          \"description\": \"ID of the realm to validate\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RealmExistsResponse\"\
+        ,\n  \"$defs\": {\n    \"RealmExistsResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        exists\",\n        \"isActive\"\n      ],\n      \"properties\": {\n        \"exists\": {\n          \"type\": \"\
+        boolean\",\n          \"description\": \"Whether the realm exists\"\n        },\n        \"isActive\": {\n       \
+        \   \"type\": \"boolean\",\n          \"description\": \"Whether the realm is active (false if deprecated or not found)\"\
+        \n        },\n        \"realmId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n         \
+        \ \"nullable\": true,\n          \"description\": \"The realm ID if found\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Check if realm exists and is active\",\n  \"description\": \"Fast validation
+        endpoint for other services to check realm validity.\\nReturns true if realm exists and is not deprecated, false otherwise.\\\
+        n\",\n  \"tags\": [\n    \"Realm\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"realmExists\"\n}"
   /realm/seed:
     post:
       summary: Seed realms from configuration
@@ -306,6 +529,34 @@ paths:
         '400':
           description: Invalid seed data
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SeedRealmsRequest\"\
+        ,\n  \"$defs\": {\n    \"SeedRealmsRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"realms\"\
+        \n      ],\n      \"properties\": {\n        \"realms\": {\n          \"type\": \"array\",\n          \"items\": {\n\
+        \            \"$ref\": \"#/$defs/SeedRealm\"\n          },\n          \"description\": \"List of realms to seed\"\n\
+        \        },\n        \"updateExisting\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n    \
+        \      \"description\": \"Whether to update realms that already exist\"\n        }\n      }\n    },\n    \"SeedRealm\"\
+        : {\n      \"type\": \"object\",\n      \"required\": [\n        \"code\",\n        \"name\"\n      ],\n      \"properties\"\
+        : {\n        \"code\": {\n          \"type\": \"string\",\n          \"description\": \"Unique code for the realm\"\
+        \n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Display name\"\n\
+        \        },\n        \"description\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n        \
+        \  \"description\": \"Description\"\n        },\n        \"category\": {\n          \"type\": \"string\",\n      \
+        \    \"nullable\": true,\n          \"description\": \"Category for grouping\"\n        },\n        \"isActive\":
+        {\n          \"type\": \"boolean\",\n          \"default\": true\n        },\n        \"metadata\": {\n          \"\
+        type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true\n        }\n      }\n\
+        \    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SeedRealmsResponse\"\
+        ,\n  \"$defs\": {\n    \"SeedRealmsResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"created\"\
+        ,\n        \"updated\",\n        \"skipped\",\n        \"errors\"\n      ],\n      \"properties\": {\n        \"created\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Number of new realms created\"\n        },\n \
+        \       \"updated\": {\n          \"type\": \"integer\",\n          \"description\": \"Number of existing realms updated\"\
+        \n        },\n        \"skipped\": {\n          \"type\": \"integer\",\n          \"description\": \"Number of realms
+        skipped (already exist, updateExisting=false)\"\n        },\n        \"errors\": {\n          \"type\": \"array\"\
+        ,\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"List of error
+        messages for realms that failed to seed\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Seed realms from configuration\",\n  \"description\": \"Idempotent operation
+        to seed realms from provided data.\\nCreates realms that don't exist, optionally updates existing realms.\\nTypically
+        called at service startup with YAML-defined realms.\\n\",\n  \"tags\": [\n    \"Realm Admin\"\n  ],\n  \"deprecated\"\
+        : false,\n  \"operationId\": \"seedRealms\"\n}"
 components:
   schemas:
     GetRealmRequest:

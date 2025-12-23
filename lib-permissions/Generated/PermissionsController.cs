@@ -324,6 +324,1090 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
         return ConvertToActionResult(statusCode, result);
     }
 
+
+    #region Meta Endpoints for GetCapabilities
+
+    private static readonly string _GetCapabilities_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CapabilityRequest",
+  "$defs": {
+    "CapabilityRequest": {
+      "type": "object",
+      "required": [
+        "sessionId"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Session ID for lookup in Redis"
+        },
+        "serviceIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional filter for specific services"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetCapabilities_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CapabilityResponse",
+  "$defs": {
+    "CapabilityResponse": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "permissions"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": "Map of ServiceID -> List of available methods"
+        },
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When these permissions were compiled"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetCapabilities_Info = """
+{
+  "summary": "Get available API methods for session",
+  "description": "Returns compiled list of methods available to this session",
+  "tags": [
+    "Permission Lookup"
+  ],
+  "deprecated": false,
+  "operationId": "getCapabilities"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetCapabilities</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/capabilities/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCapabilities_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Permissions",
+            "Post",
+            "permissions/capabilities",
+            _GetCapabilities_Info));
+
+    /// <summary>Returns request schema for GetCapabilities</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/capabilities/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCapabilities_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/capabilities",
+            "request-schema",
+            _GetCapabilities_RequestSchema));
+
+    /// <summary>Returns response schema for GetCapabilities</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/capabilities/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCapabilities_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/capabilities",
+            "response-schema",
+            _GetCapabilities_ResponseSchema));
+
+    /// <summary>Returns full schema for GetCapabilities</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/capabilities/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCapabilities_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/capabilities",
+            _GetCapabilities_Info,
+            _GetCapabilities_RequestSchema,
+            _GetCapabilities_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ValidateApiAccess
+
+    private static readonly string _ValidateApiAccess_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ValidationRequest",
+  "$defs": {
+    "ValidationRequest": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "serviceId",
+        "method"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "serviceId": {
+          "type": "string",
+          "description": "Target service ID"
+        },
+        "method": {
+          "type": "string",
+          "description": "Method name being accessed"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ValidateApiAccess_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ValidationResponse",
+  "$defs": {
+    "ValidationResponse": {
+      "type": "object",
+      "required": [
+        "allowed",
+        "sessionId"
+      ],
+      "properties": {
+        "allowed": {
+          "type": "boolean",
+          "description": "Whether access is permitted"
+        },
+        "sessionId": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason for denial (if applicable)"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ValidateApiAccess_Info = """
+{
+  "summary": "Validate specific API access for session",
+  "description": "Fast O(1) validation using Redis lookup",
+  "tags": [
+    "Permission Validation"
+  ],
+  "deprecated": false,
+  "operationId": "validateApiAccess"
+}
+""";
+
+    /// <summary>Returns endpoint information for ValidateApiAccess</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/validate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateApiAccess_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Permissions",
+            "Post",
+            "permissions/validate",
+            _ValidateApiAccess_Info));
+
+    /// <summary>Returns request schema for ValidateApiAccess</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/validate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateApiAccess_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/validate",
+            "request-schema",
+            _ValidateApiAccess_RequestSchema));
+
+    /// <summary>Returns response schema for ValidateApiAccess</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/validate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateApiAccess_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/validate",
+            "response-schema",
+            _ValidateApiAccess_ResponseSchema));
+
+    /// <summary>Returns full schema for ValidateApiAccess</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/validate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateApiAccess_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/validate",
+            _ValidateApiAccess_Info,
+            _ValidateApiAccess_RequestSchema,
+            _ValidateApiAccess_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RegisterServicePermissions
+
+    private static readonly string _RegisterServicePermissions_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ServicePermissionMatrix",
+  "$defs": {
+    "ServicePermissionMatrix": {
+      "type": "object",
+      "required": [
+        "serviceId",
+        "permissions"
+      ],
+      "properties": {
+        "serviceId": {
+          "type": "string",
+          "description": "Unique service identifier"
+        },
+        "serviceName": {
+          "type": "string",
+          "description": "Human-readable service name"
+        },
+        "permissions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/StatePermissions"
+          },
+          "description": "Map of State -> Role -> Methods structure"
+        },
+        "version": {
+          "type": "string",
+          "description": "Service API version for change tracking"
+        }
+      }
+    },
+    "StatePermissions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "description": "Map of Role -> List of Methods for this state",
+      "example": {
+        "user": [
+          "ListGameSessions",
+          "GetGameSession"
+        ],
+        "admin": [
+          "ListGameSessions",
+          "GetGameSession",
+          "CreateGameSession"
+        ]
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _RegisterServicePermissions_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/RegistrationResponse",
+  "$defs": {
+    "RegistrationResponse": {
+      "type": "object",
+      "required": [
+        "serviceId",
+        "success",
+        "affectedSessions"
+      ],
+      "properties": {
+        "serviceId": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean",
+          "description": "Whether registration was successful"
+        },
+        "message": {
+          "type": "string",
+          "description": "Success or error message"
+        },
+        "registered": {
+          "type": "boolean",
+          "description": "Whether registration was successful"
+        },
+        "affectedSessions": {
+          "type": "integer",
+          "description": "Number of sessions that had permissions recompiled"
+        },
+        "recompiledAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _RegisterServicePermissions_Info = """
+{
+  "summary": "Register or update service permission matrix",
+  "description": "Updates Redis with ServiceID -> State -> Role -> Methods structure",
+  "tags": [
+    "Service Management"
+  ],
+  "deprecated": false,
+  "operationId": "registerServicePermissions"
+}
+""";
+
+    /// <summary>Returns endpoint information for RegisterServicePermissions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/register-service/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RegisterServicePermissions_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Permissions",
+            "Post",
+            "permissions/register-service",
+            _RegisterServicePermissions_Info));
+
+    /// <summary>Returns request schema for RegisterServicePermissions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/register-service/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RegisterServicePermissions_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/register-service",
+            "request-schema",
+            _RegisterServicePermissions_RequestSchema));
+
+    /// <summary>Returns response schema for RegisterServicePermissions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/register-service/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RegisterServicePermissions_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/register-service",
+            "response-schema",
+            _RegisterServicePermissions_ResponseSchema));
+
+    /// <summary>Returns full schema for RegisterServicePermissions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/register-service/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RegisterServicePermissions_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/register-service",
+            _RegisterServicePermissions_Info,
+            _RegisterServicePermissions_RequestSchema,
+            _RegisterServicePermissions_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateSessionState
+
+    private static readonly string _UpdateSessionState_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SessionStateUpdate",
+  "$defs": {
+    "SessionStateUpdate": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "serviceId",
+        "newState"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "serviceId": {
+          "type": "string",
+          "description": "Service whose state is changing for this session"
+        },
+        "newState": {
+          "type": "string",
+          "description": "New state value (lobby, in_game, etc.)"
+        },
+        "previousState": {
+          "type": "string",
+          "description": "Previous state value (null for initial state)",
+          "nullable": true
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Optional context data"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateSessionState_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SessionUpdateResponse",
+  "$defs": {
+    "SessionUpdateResponse": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "success",
+        "permissionsChanged"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean",
+          "description": "Whether update was successful"
+        },
+        "message": {
+          "type": "string",
+          "description": "Success or error message"
+        },
+        "permissionsChanged": {
+          "type": "boolean",
+          "description": "Whether compiled permissions actually changed"
+        },
+        "newPermissions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": "Updated ServiceID -> Methods if permissions changed"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateSessionState_Info = """
+{
+  "summary": "Update session state for specific service",
+  "description": "Updates SessionID -> ServiceID -> State and recompiles permissions",
+  "tags": [
+    "Session Management"
+  ],
+  "deprecated": false,
+  "operationId": "updateSessionState"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateSessionState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/update-session-state/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateSessionState_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Permissions",
+            "Post",
+            "permissions/update-session-state",
+            _UpdateSessionState_Info));
+
+    /// <summary>Returns request schema for UpdateSessionState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/update-session-state/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateSessionState_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/update-session-state",
+            "request-schema",
+            _UpdateSessionState_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateSessionState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/update-session-state/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateSessionState_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/update-session-state",
+            "response-schema",
+            _UpdateSessionState_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateSessionState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/update-session-state/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateSessionState_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/update-session-state",
+            _UpdateSessionState_Info,
+            _UpdateSessionState_RequestSchema,
+            _UpdateSessionState_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateSessionRole
+
+    private static readonly string _UpdateSessionRole_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SessionRoleUpdate",
+  "$defs": {
+    "SessionRoleUpdate": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "newRole"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "newRole": {
+          "type": "string",
+          "description": "New role (user, admin, etc.)"
+        },
+        "previousRole": {
+          "type": "string",
+          "description": "Previous role (null for initial role)",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateSessionRole_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SessionUpdateResponse",
+  "$defs": {
+    "SessionUpdateResponse": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "success",
+        "permissionsChanged"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean",
+          "description": "Whether update was successful"
+        },
+        "message": {
+          "type": "string",
+          "description": "Success or error message"
+        },
+        "permissionsChanged": {
+          "type": "boolean",
+          "description": "Whether compiled permissions actually changed"
+        },
+        "newPermissions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": "Updated ServiceID -> Methods if permissions changed"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateSessionRole_Info = """
+{
+  "summary": "Update session role (affects all services)",
+  "description": "Updates SessionID -> Role and recompiles all service permissions",
+  "tags": [
+    "Session Management"
+  ],
+  "deprecated": false,
+  "operationId": "updateSessionRole"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateSessionRole</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/update-session-role/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateSessionRole_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Permissions",
+            "Post",
+            "permissions/update-session-role",
+            _UpdateSessionRole_Info));
+
+    /// <summary>Returns request schema for UpdateSessionRole</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/update-session-role/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateSessionRole_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/update-session-role",
+            "request-schema",
+            _UpdateSessionRole_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateSessionRole</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/update-session-role/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateSessionRole_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/update-session-role",
+            "response-schema",
+            _UpdateSessionRole_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateSessionRole</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/update-session-role/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateSessionRole_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/update-session-role",
+            _UpdateSessionRole_Info,
+            _UpdateSessionRole_RequestSchema,
+            _UpdateSessionRole_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ClearSessionState
+
+    private static readonly string _ClearSessionState_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ClearSessionStateRequest",
+  "$defs": {
+    "ClearSessionStateRequest": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "serviceId"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Session ID to clear state from"
+        },
+        "serviceId": {
+          "type": "string",
+          "description": "Service whose state should be cleared"
+        },
+        "states": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional list of state values to match. If provided, only clears if\ ncurrent state matches one of these values. If empty or not provided,\nclears the state unconditionally.\n",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ClearSessionState_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SessionUpdateResponse",
+  "$defs": {
+    "SessionUpdateResponse": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "success",
+        "permissionsChanged"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean",
+          "description": "Whether update was successful"
+        },
+        "message": {
+          "type": "string",
+          "description": "Success or error message"
+        },
+        "permissionsChanged": {
+          "type": "boolean",
+          "description": "Whether compiled permissions actually changed"
+        },
+        "newPermissions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": "Updated ServiceID -> Methods if permissions changed"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ClearSessionState_Info = """
+{
+  "summary": "Clear session state for specific service",
+  "description": "Removes state for a specific service from the session and recompiles permissions.\nIf states list is provided, only clears if current state matches one of the values.\nIf states list is empty or not provided, clears the state unconditionally.\n",
+  "tags": [
+    "Session Management"
+  ],
+  "deprecated": false,
+  "operationId": "clearSessionState"
+}
+""";
+
+    /// <summary>Returns endpoint information for ClearSessionState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/clear-session-state/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ClearSessionState_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Permissions",
+            "Post",
+            "permissions/clear-session-state",
+            _ClearSessionState_Info));
+
+    /// <summary>Returns request schema for ClearSessionState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/clear-session-state/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ClearSessionState_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/clear-session-state",
+            "request-schema",
+            _ClearSessionState_RequestSchema));
+
+    /// <summary>Returns response schema for ClearSessionState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/clear-session-state/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ClearSessionState_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/clear-session-state",
+            "response-schema",
+            _ClearSessionState_ResponseSchema));
+
+    /// <summary>Returns full schema for ClearSessionState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/clear-session-state/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ClearSessionState_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/clear-session-state",
+            _ClearSessionState_Info,
+            _ClearSessionState_RequestSchema,
+            _ClearSessionState_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetSessionInfo
+
+    private static readonly string _GetSessionInfo_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SessionInfoRequest",
+  "$defs": {
+    "SessionInfoRequest": {
+      "type": "object",
+      "required": [
+        "sessionId"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetSessionInfo_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SessionInfo",
+  "$defs": {
+    "SessionInfo": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "role",
+        "states",
+        "permissions"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "description": "Current session role"
+        },
+        "states": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Map of ServiceID -> Current State"
+        },
+        "permissions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": "Map of ServiceID -> List of available methods"
+        },
+        "compiledPermissions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": "Map of ServiceID -> List of available methods"
+        },
+        "version": {
+          "type": "integer",
+          "description": "Permission version number"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When permissions were last recompiled"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetSessionInfo_Info = """
+{
+  "summary": "Get complete session information",
+  "description": "Returns current states, role, and compiled permissions",
+  "tags": [
+    "Session Management"
+  ],
+  "deprecated": false,
+  "operationId": "getSessionInfo"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetSessionInfo</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/get-session-info/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSessionInfo_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Permissions",
+            "Post",
+            "permissions/get-session-info",
+            _GetSessionInfo_Info));
+
+    /// <summary>Returns request schema for GetSessionInfo</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/get-session-info/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSessionInfo_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/get-session-info",
+            "request-schema",
+            _GetSessionInfo_RequestSchema));
+
+    /// <summary>Returns response schema for GetSessionInfo</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/get-session-info/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSessionInfo_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/get-session-info",
+            "response-schema",
+            _GetSessionInfo_ResponseSchema));
+
+    /// <summary>Returns full schema for GetSessionInfo</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/get-session-info/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSessionInfo_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/get-session-info",
+            _GetSessionInfo_Info,
+            _GetSessionInfo_RequestSchema,
+            _GetSessionInfo_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetRegisteredServices
+
+    private static readonly string _GetRegisteredServices_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ListServicesRequest",
+  "$defs": {
+    "ListServicesRequest": {
+      "type": "object",
+      "description": "Request to list registered services (empty body allowed for listing all)",
+      "properties": {
+        "serviceIdFilter": {
+          "type": "string",
+          "description": "Optional filter by service ID prefix",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetRegisteredServices_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/RegisteredServicesResponse",
+  "$defs": {
+    "RegisteredServicesResponse": {
+      "type": "object",
+      "required": [
+        "services",
+        "timestamp"
+      ],
+      "properties": {
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RegisteredServiceInfo"
+          },
+          "description": "List of all registered services"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this response was generated"
+        }
+      }
+    },
+    "RegisteredServiceInfo": {
+      "type": "object",
+      "required": [
+        "serviceId",
+        "registeredAt",
+        "endpointCount"
+      ],
+      "properties": {
+        "serviceId": {
+          "type": "string",
+          "description": "Unique service identifier"
+        },
+        "serviceName": {
+          "type": "string",
+          "description": "Human-readable service name"
+        },
+        "version": {
+          "type": "string",
+          "description": "Service API version"
+        },
+        "registeredAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the service registered its permissions"
+        },
+        "endpointCount": {
+          "type": "integer",
+          "description": "Number of API endpoints registered by this service"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetRegisteredServices_Info = """
+{
+  "summary": "List all registered services",
+  "description": "Returns list of all services that have registered their permissions.\nThis endpoint is used by testers to wait for service readiness - a service\nappearing in this list means it has completed startup and registered its\nAPI permissions, indicating it's ready to handle requests.\n\nFor service-to-service calls (via Dapr), this endpoint is unrestricted.\nFor client calls through WebSocket/Connect, only admin users can access it.\n",
+  "tags": [
+    "Service Management"
+  ],
+  "deprecated": false,
+  "operationId": "getRegisteredServices"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetRegisteredServices</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/services/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRegisteredServices_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Permissions",
+            "Post",
+            "permissions/services/list",
+            _GetRegisteredServices_Info));
+
+    /// <summary>Returns request schema for GetRegisteredServices</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/services/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRegisteredServices_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/services/list",
+            "request-schema",
+            _GetRegisteredServices_RequestSchema));
+
+    /// <summary>Returns response schema for GetRegisteredServices</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/services/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRegisteredServices_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/services/list",
+            "response-schema",
+            _GetRegisteredServices_ResponseSchema));
+
+    /// <summary>Returns full schema for GetRegisteredServices</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/services/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRegisteredServices_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Permissions",
+            "Post",
+            "permissions/services/list",
+            _GetRegisteredServices_Info,
+            _GetRegisteredServices_RequestSchema,
+            _GetRegisteredServices_ResponseSchema));
+
+    #endregion
+
 }
 
 

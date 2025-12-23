@@ -460,6 +460,2492 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
         return ConvertToActionResult(statusCode, result);
     }
 
+
+    #region Meta Endpoints for GetStatus
+
+    private static readonly string _GetStatus_RequestSchema = """
+{}
+""";
+
+    private static readonly string _GetStatus_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/StatusResponse",
+  "$defs": {
+    "StatusResponse": {
+      "type": "object",
+      "required": [
+        "status",
+        "version",
+        "uptime"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "healthy",
+            "degraded",
+            "maintenance"
+          ]
+        },
+        "version": {
+          "type": "string",
+          "example": "1.0.0"
+        },
+        "uptime": {
+          "type": "integer",
+          "description": "Uptime in seconds"
+        },
+        "maintenanceMessage": {
+          "type": "string",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetStatus_Info = """
+{
+  "summary": "Get website status and version",
+  "description": "",
+  "tags": [
+    "Status"
+  ],
+  "deprecated": false,
+  "operationId": "getStatus"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/status/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetStatus_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Website",
+            "Get",
+            "website/status",
+            _GetStatus_Info));
+
+    /// <summary>Returns request schema for GetStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/status/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetStatus_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/status",
+            "request-schema",
+            _GetStatus_RequestSchema));
+
+    /// <summary>Returns response schema for GetStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/status/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetStatus_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/status",
+            "response-schema",
+            _GetStatus_ResponseSchema));
+
+    /// <summary>Returns full schema for GetStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/status/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetStatus_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Website",
+            "Get",
+            "website/status",
+            _GetStatus_Info,
+            _GetStatus_RequestSchema,
+            _GetStatus_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetPageContent
+
+    private static readonly string _GetPageContent_RequestSchema = """
+{}
+""";
+
+    private static readonly string _GetPageContent_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/PageContent",
+  "$defs": {
+    "PageContent": {
+      "type": "object",
+      "required": [
+        "slug",
+        "title",
+        "content",
+        "contentType",
+        "published"
+      ],
+      "properties": {
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string",
+          "description": "HTML, Markdown, or custom template content"
+        },
+        "contentType": {
+          "type": "string",
+          "enum": [
+            "html",
+            "markdown",
+            "blazor"
+          ]
+        },
+        "template": {
+          "type": "string",
+          "nullable": true,
+          "description": "Template name for custom layouts"
+        },
+        "published": {
+          "type": "boolean"
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "lastModified": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "author": {
+          "type": "string",
+          "nullable": true
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Custom metadata for the page"
+        },
+        "seo": {
+          "$ref": "#/$defs/SEOMetadata"
+        }
+      }
+    },
+    "SEOMetadata": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ogTitle": {
+          "type": "string",
+          "nullable": true
+        },
+        "ogDescription": {
+          "type": "string",
+          "nullable": true
+        },
+        "ogImage": {
+          "type": "string",
+          "format": "uri",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetPageContent_Info = """
+{
+  "summary": "Get dynamic page content from CMS",
+  "description": "",
+  "tags": [
+    "Content"
+  ],
+  "deprecated": false,
+  "operationId": "getPageContent"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetPageContent</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/content/{slug}/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetPageContent_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Website",
+            "Get",
+            "website/content/{slug}",
+            _GetPageContent_Info));
+
+    /// <summary>Returns request schema for GetPageContent</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/content/{slug}/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetPageContent_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/content/{slug}",
+            "request-schema",
+            _GetPageContent_RequestSchema));
+
+    /// <summary>Returns response schema for GetPageContent</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/content/{slug}/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetPageContent_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/content/{slug}",
+            "response-schema",
+            _GetPageContent_ResponseSchema));
+
+    /// <summary>Returns full schema for GetPageContent</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/content/{slug}/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetPageContent_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Website",
+            "Get",
+            "website/content/{slug}",
+            _GetPageContent_Info,
+            _GetPageContent_RequestSchema,
+            _GetPageContent_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetNews
+
+    private static readonly string _GetNews_RequestSchema = """
+{}
+""";
+
+    private static readonly string _GetNews_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/NewsResponse",
+  "$defs": {
+    "NewsResponse": {
+      "type": "object",
+      "required": [
+        "items",
+        "total"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NewsItem"
+          }
+        },
+        "total": {
+          "type": "integer"
+        },
+        "hasMore": {
+          "type": "boolean"
+        }
+      }
+    },
+    "NewsItem": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "summary",
+        "publishedAt"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string",
+          "nullable": true
+        },
+        "author": {
+          "type": "string"
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetNews_Info = """
+{
+  "summary": "Get latest news and announcements",
+  "description": "",
+  "tags": [
+    "Content"
+  ],
+  "deprecated": false,
+  "operationId": "getNews"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetNews</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/news/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetNews_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Website",
+            "Get",
+            "website/news",
+            _GetNews_Info));
+
+    /// <summary>Returns request schema for GetNews</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/news/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetNews_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/news",
+            "request-schema",
+            _GetNews_RequestSchema));
+
+    /// <summary>Returns response schema for GetNews</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/news/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetNews_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/news",
+            "response-schema",
+            _GetNews_ResponseSchema));
+
+    /// <summary>Returns full schema for GetNews</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/news/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetNews_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Website",
+            "Get",
+            "website/news",
+            _GetNews_Info,
+            _GetNews_RequestSchema,
+            _GetNews_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetServerStatus
+
+    private static readonly string _GetServerStatus_RequestSchema = """
+{}
+""";
+
+    private static readonly string _GetServerStatus_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ServerStatusResponse",
+  "$defs": {
+    "ServerStatusResponse": {
+      "type": "object",
+      "required": [
+        "realms",
+        "globalStatus"
+      ],
+      "properties": {
+        "globalStatus": {
+          "type": "string",
+          "enum": [
+            "online",
+            "partial",
+            "offline",
+            "maintenance"
+          ]
+        },
+        "realms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RealmStatus"
+          }
+        }
+      }
+    },
+    "RealmStatus": {
+      "type": "object",
+      "required": [
+        "realmId",
+        "name",
+        "status",
+        "population"
+      ],
+      "properties": {
+        "realmId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "online",
+            "offline",
+            "maintenance",
+            "full"
+          ]
+        },
+        "population": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "full"
+          ]
+        },
+        "playerCount": {
+          "type": "integer",
+          "nullable": true
+        },
+        "ping": {
+          "type": "integer",
+          "description": "Latency in milliseconds",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetServerStatus_Info = """
+{
+  "summary": "Get game server status for all realms",
+  "description": "",
+  "tags": [
+    "Status"
+  ],
+  "deprecated": false,
+  "operationId": "getServerStatus"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetServerStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/server-status/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetServerStatus_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Website",
+            "Get",
+            "website/server-status",
+            _GetServerStatus_Info));
+
+    /// <summary>Returns request schema for GetServerStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/server-status/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetServerStatus_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/server-status",
+            "request-schema",
+            _GetServerStatus_RequestSchema));
+
+    /// <summary>Returns response schema for GetServerStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/server-status/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetServerStatus_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/server-status",
+            "response-schema",
+            _GetServerStatus_ResponseSchema));
+
+    /// <summary>Returns full schema for GetServerStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/server-status/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetServerStatus_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Website",
+            "Get",
+            "website/server-status",
+            _GetServerStatus_Info,
+            _GetServerStatus_RequestSchema,
+            _GetServerStatus_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetDownloads
+
+    private static readonly string _GetDownloads_RequestSchema = """
+{}
+""";
+
+    private static readonly string _GetDownloads_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/DownloadsResponse",
+  "$defs": {
+    "DownloadsResponse": {
+      "type": "object",
+      "required": [
+        "clients"
+      ],
+      "properties": {
+        "clients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DownloadInfo"
+          }
+        }
+      }
+    },
+    "DownloadInfo": {
+      "type": "object",
+      "required": [
+        "platform",
+        "version",
+        "url",
+        "size",
+        "checksum"
+      ],
+      "properties": {
+        "platform": {
+          "type": "string",
+          "enum": [
+            "windows",
+            "macos",
+            "linux"
+          ]
+        },
+        "version": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "size": {
+          "type": "integer",
+          "description": "File size in bytes"
+        },
+        "checksum": {
+          "type": "string",
+          "description": "SHA256 checksum"
+        },
+        "releaseNotes": {
+          "type": "string",
+          "nullable": true
+        },
+        "minimumRequirements": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetDownloads_Info = """
+{
+  "summary": "Get download links for game clients",
+  "description": "",
+  "tags": [
+    "Downloads"
+  ],
+  "deprecated": false,
+  "operationId": "getDownloads"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetDownloads</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/downloads/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetDownloads_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Website",
+            "Get",
+            "website/downloads",
+            _GetDownloads_Info));
+
+    /// <summary>Returns request schema for GetDownloads</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/downloads/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetDownloads_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/downloads",
+            "request-schema",
+            _GetDownloads_RequestSchema));
+
+    /// <summary>Returns response schema for GetDownloads</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/downloads/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetDownloads_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/downloads",
+            "response-schema",
+            _GetDownloads_ResponseSchema));
+
+    /// <summary>Returns full schema for GetDownloads</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/downloads/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetDownloads_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Website",
+            "Get",
+            "website/downloads",
+            _GetDownloads_Info,
+            _GetDownloads_RequestSchema,
+            _GetDownloads_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for SubmitContact
+
+    private static readonly string _SubmitContact_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ContactRequest",
+  "$defs": {
+    "ContactRequest": {
+      "type": "object",
+      "required": [
+        "email",
+        "subject",
+        "message"
+      ],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "name": {
+          "type": "string",
+          "nullable": true
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 200
+        },
+        "message": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 2000
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "general",
+            "support",
+            "bug",
+            "feedback",
+            "business"
+          ],
+          "default": "general"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _SubmitContact_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ContactResponse",
+  "$defs": {
+    "ContactResponse": {
+      "type": "object",
+      "required": [
+        "ticketId",
+        "message"
+      ],
+      "properties": {
+        "ticketId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "message": {
+          "type": "string",
+          "default": "Thank you for contacting us. We will respond within 24-48 hours."
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _SubmitContact_Info = """
+{
+  "summary": "Submit contact form",
+  "description": "",
+  "tags": [
+    "Contact"
+  ],
+  "deprecated": false,
+  "operationId": "submitContact"
+}
+""";
+
+    /// <summary>Returns endpoint information for SubmitContact</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/contact/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SubmitContact_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Website",
+            "Post",
+            "website/contact",
+            _SubmitContact_Info));
+
+    /// <summary>Returns request schema for SubmitContact</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/contact/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SubmitContact_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Post",
+            "website/contact",
+            "request-schema",
+            _SubmitContact_RequestSchema));
+
+    /// <summary>Returns response schema for SubmitContact</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/contact/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SubmitContact_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Post",
+            "website/contact",
+            "response-schema",
+            _SubmitContact_ResponseSchema));
+
+    /// <summary>Returns full schema for SubmitContact</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/contact/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SubmitContact_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Website",
+            "Post",
+            "website/contact",
+            _SubmitContact_Info,
+            _SubmitContact_RequestSchema,
+            _SubmitContact_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetAccountProfile
+
+    private static readonly string _GetAccountProfile_RequestSchema = """
+{}
+""";
+
+    private static readonly string _GetAccountProfile_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AccountProfile",
+  "$defs": {
+    "AccountProfile": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "email",
+        "createdAt"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastLogin": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "characterSlots": {
+          "type": "integer"
+        },
+        "usedSlots": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetAccountProfile_Info = """
+{
+  "summary": "Get account profile for logged-in user",
+  "description": "",
+  "tags": [
+    "Account"
+  ],
+  "deprecated": false,
+  "operationId": "getAccountProfile"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetAccountProfile</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/account/profile/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountProfile_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Website",
+            "Get",
+            "website/account/profile",
+            _GetAccountProfile_Info));
+
+    /// <summary>Returns request schema for GetAccountProfile</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/account/profile/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountProfile_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/account/profile",
+            "request-schema",
+            _GetAccountProfile_RequestSchema));
+
+    /// <summary>Returns response schema for GetAccountProfile</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/account/profile/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountProfile_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/account/profile",
+            "response-schema",
+            _GetAccountProfile_ResponseSchema));
+
+    /// <summary>Returns full schema for GetAccountProfile</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/account/profile/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountProfile_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Website",
+            "Get",
+            "website/account/profile",
+            _GetAccountProfile_Info,
+            _GetAccountProfile_RequestSchema,
+            _GetAccountProfile_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetAccountCharacters
+
+    private static readonly string _GetAccountCharacters_RequestSchema = """
+{}
+""";
+
+    private static readonly string _GetAccountCharacters_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CharacterListResponse",
+  "$defs": {
+    "CharacterListResponse": {
+      "type": "object",
+      "required": [
+        "characters"
+      ],
+      "properties": {
+        "characters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CharacterSummary"
+          }
+        }
+      }
+    },
+    "CharacterSummary": {
+      "type": "object",
+      "required": [
+        "characterId",
+        "name",
+        "realm",
+        "level"
+      ],
+      "properties": {
+        "characterId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string"
+        },
+        "realm": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "class": {
+          "type": "string",
+          "nullable": true
+        },
+        "lastPlayed": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetAccountCharacters_Info = """
+{
+  "summary": "Get character list for logged-in user",
+  "description": "",
+  "tags": [
+    "Account"
+  ],
+  "deprecated": false,
+  "operationId": "getAccountCharacters"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetAccountCharacters</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/account/characters/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountCharacters_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Website",
+            "Get",
+            "website/account/characters",
+            _GetAccountCharacters_Info));
+
+    /// <summary>Returns request schema for GetAccountCharacters</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/account/characters/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountCharacters_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/account/characters",
+            "request-schema",
+            _GetAccountCharacters_RequestSchema));
+
+    /// <summary>Returns response schema for GetAccountCharacters</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/account/characters/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountCharacters_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/account/characters",
+            "response-schema",
+            _GetAccountCharacters_ResponseSchema));
+
+    /// <summary>Returns full schema for GetAccountCharacters</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/account/characters/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountCharacters_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Website",
+            "Get",
+            "website/account/characters",
+            _GetAccountCharacters_Info,
+            _GetAccountCharacters_RequestSchema,
+            _GetAccountCharacters_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ListPages
+
+    private static readonly string _ListPages_RequestSchema = """
+{}
+""";
+
+    private static readonly string _ListPages_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "array",
+  "items": {
+    "$ref": "#/$defs/PageMetadata"
+  },
+  "$defs": {
+    "PageMetadata": {
+      "type": "object",
+      "required": [
+        "slug",
+        "title",
+        "published"
+      ],
+      "properties": {
+        "slug": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "published": {
+          "type": "boolean"
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "lastModified": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "author": {
+          "type": "string",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ListPages_Info = """
+{
+  "summary": "List all CMS pages",
+  "description": "",
+  "tags": [
+    "CMS"
+  ],
+  "deprecated": false,
+  "operationId": "listPages"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListPages</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListPages_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Website",
+            "Get",
+            "website/cms/pages",
+            _ListPages_Info));
+
+    /// <summary>Returns request schema for ListPages</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListPages_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/cms/pages",
+            "request-schema",
+            _ListPages_RequestSchema));
+
+    /// <summary>Returns response schema for ListPages</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListPages_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/cms/pages",
+            "response-schema",
+            _ListPages_ResponseSchema));
+
+    /// <summary>Returns full schema for ListPages</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListPages_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Website",
+            "Get",
+            "website/cms/pages",
+            _ListPages_Info,
+            _ListPages_RequestSchema,
+            _ListPages_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CreatePage
+
+    private static readonly string _CreatePage_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/PageContent",
+  "$defs": {
+    "PageContent": {
+      "type": "object",
+      "required": [
+        "slug",
+        "title",
+        "content",
+        "contentType",
+        "published"
+      ],
+      "properties": {
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string",
+          "description": "HTML, Markdown, or custom template content"
+        },
+        "contentType": {
+          "type": "string",
+          "enum": [
+            "html",
+            "markdown",
+            "blazor"
+          ]
+        },
+        "template": {
+          "type": "string",
+          "nullable": true,
+          "description": "Template name for custom layouts"
+        },
+        "published": {
+          "type": "boolean"
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "lastModified": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "author": {
+          "type": "string",
+          "nullable": true
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Custom metadata for the page"
+        },
+        "seo": {
+          "$ref": "#/$defs/SEOMetadata"
+        }
+      }
+    },
+    "SEOMetadata": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ogTitle": {
+          "type": "string",
+          "nullable": true
+        },
+        "ogDescription": {
+          "type": "string",
+          "nullable": true
+        },
+        "ogImage": {
+          "type": "string",
+          "format": "uri",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CreatePage_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/PageContent",
+  "$defs": {
+    "PageContent": {
+      "type": "object",
+      "required": [
+        "slug",
+        "title",
+        "content",
+        "contentType",
+        "published"
+      ],
+      "properties": {
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string",
+          "description": "HTML, Markdown, or custom template content"
+        },
+        "contentType": {
+          "type": "string",
+          "enum": [
+            "html",
+            "markdown",
+            "blazor"
+          ]
+        },
+        "template": {
+          "type": "string",
+          "nullable": true,
+          "description": "Template name for custom layouts"
+        },
+        "published": {
+          "type": "boolean"
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "lastModified": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "author": {
+          "type": "string",
+          "nullable": true
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Custom metadata for the page"
+        },
+        "seo": {
+          "$ref": "#/$defs/SEOMetadata"
+        }
+      }
+    },
+    "SEOMetadata": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ogTitle": {
+          "type": "string",
+          "nullable": true
+        },
+        "ogDescription": {
+          "type": "string",
+          "nullable": true
+        },
+        "ogImage": {
+          "type": "string",
+          "format": "uri",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CreatePage_Info = """
+{
+  "summary": "Create new CMS page",
+  "description": "",
+  "tags": [
+    "CMS"
+  ],
+  "deprecated": false,
+  "operationId": "createPage"
+}
+""";
+
+    /// <summary>Returns endpoint information for CreatePage</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreatePage_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Website",
+            "Post",
+            "website/cms/pages",
+            _CreatePage_Info));
+
+    /// <summary>Returns request schema for CreatePage</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreatePage_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Post",
+            "website/cms/pages",
+            "request-schema",
+            _CreatePage_RequestSchema));
+
+    /// <summary>Returns response schema for CreatePage</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreatePage_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Post",
+            "website/cms/pages",
+            "response-schema",
+            _CreatePage_ResponseSchema));
+
+    /// <summary>Returns full schema for CreatePage</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreatePage_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Website",
+            "Post",
+            "website/cms/pages",
+            _CreatePage_Info,
+            _CreatePage_RequestSchema,
+            _CreatePage_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdatePage
+
+    private static readonly string _UpdatePage_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/PageContent",
+  "$defs": {
+    "PageContent": {
+      "type": "object",
+      "required": [
+        "slug",
+        "title",
+        "content",
+        "contentType",
+        "published"
+      ],
+      "properties": {
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string",
+          "description": "HTML, Markdown, or custom template content"
+        },
+        "contentType": {
+          "type": "string",
+          "enum": [
+            "html",
+            "markdown",
+            "blazor"
+          ]
+        },
+        "template": {
+          "type": "string",
+          "nullable": true,
+          "description": "Template name for custom layouts"
+        },
+        "published": {
+          "type": "boolean"
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "lastModified": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "author": {
+          "type": "string",
+          "nullable": true
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Custom metadata for the page"
+        },
+        "seo": {
+          "$ref": "#/$defs/SEOMetadata"
+        }
+      }
+    },
+    "SEOMetadata": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ogTitle": {
+          "type": "string",
+          "nullable": true
+        },
+        "ogDescription": {
+          "type": "string",
+          "nullable": true
+        },
+        "ogImage": {
+          "type": "string",
+          "format": "uri",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdatePage_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/PageContent",
+  "$defs": {
+    "PageContent": {
+      "type": "object",
+      "required": [
+        "slug",
+        "title",
+        "content",
+        "contentType",
+        "published"
+      ],
+      "properties": {
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string",
+          "description": "HTML, Markdown, or custom template content"
+        },
+        "contentType": {
+          "type": "string",
+          "enum": [
+            "html",
+            "markdown",
+            "blazor"
+          ]
+        },
+        "template": {
+          "type": "string",
+          "nullable": true,
+          "description": "Template name for custom layouts"
+        },
+        "published": {
+          "type": "boolean"
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "lastModified": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "author": {
+          "type": "string",
+          "nullable": true
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Custom metadata for the page"
+        },
+        "seo": {
+          "$ref": "#/$defs/SEOMetadata"
+        }
+      }
+    },
+    "SEOMetadata": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ogTitle": {
+          "type": "string",
+          "nullable": true
+        },
+        "ogDescription": {
+          "type": "string",
+          "nullable": true
+        },
+        "ogImage": {
+          "type": "string",
+          "format": "uri",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdatePage_Info = """
+{
+  "summary": "Update CMS page",
+  "description": "",
+  "tags": [
+    "CMS"
+  ],
+  "deprecated": false,
+  "operationId": "updatePage"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdatePage</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/{slug}/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdatePage_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Website",
+            "Put",
+            "website/cms/pages/{slug}",
+            _UpdatePage_Info));
+
+    /// <summary>Returns request schema for UpdatePage</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/{slug}/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdatePage_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Put",
+            "website/cms/pages/{slug}",
+            "request-schema",
+            _UpdatePage_RequestSchema));
+
+    /// <summary>Returns response schema for UpdatePage</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/{slug}/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdatePage_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Put",
+            "website/cms/pages/{slug}",
+            "response-schema",
+            _UpdatePage_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdatePage</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/{slug}/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdatePage_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Website",
+            "Put",
+            "website/cms/pages/{slug}",
+            _UpdatePage_Info,
+            _UpdatePage_RequestSchema,
+            _UpdatePage_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeletePage
+
+    private static readonly string _DeletePage_RequestSchema = """
+{}
+""";
+
+    private static readonly string _DeletePage_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _DeletePage_Info = """
+{
+  "summary": "Delete CMS page",
+  "description": "",
+  "tags": [
+    "CMS"
+  ],
+  "deprecated": false,
+  "operationId": "deletePage"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeletePage</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/{slug}/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeletePage_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Website",
+            "Delete",
+            "website/cms/pages/{slug}",
+            _DeletePage_Info));
+
+    /// <summary>Returns request schema for DeletePage</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/{slug}/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeletePage_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Delete",
+            "website/cms/pages/{slug}",
+            "request-schema",
+            _DeletePage_RequestSchema));
+
+    /// <summary>Returns response schema for DeletePage</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/{slug}/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeletePage_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Delete",
+            "website/cms/pages/{slug}",
+            "response-schema",
+            _DeletePage_ResponseSchema));
+
+    /// <summary>Returns full schema for DeletePage</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/{slug}/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeletePage_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Website",
+            "Delete",
+            "website/cms/pages/{slug}",
+            _DeletePage_Info,
+            _DeletePage_RequestSchema,
+            _DeletePage_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetSiteSettings
+
+    private static readonly string _GetSiteSettings_RequestSchema = """
+{}
+""";
+
+    private static readonly string _GetSiteSettings_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SiteSettings",
+  "$defs": {
+    "SiteSettings": {
+      "type": "object",
+      "required": [
+        "siteName",
+        "siteUrl",
+        "defaultLanguage"
+      ],
+      "properties": {
+        "siteName": {
+          "type": "string"
+        },
+        "siteUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "tagline": {
+          "type": "string",
+          "nullable": true
+        },
+        "defaultLanguage": {
+          "type": "string",
+          "default": "en"
+        },
+        "supportedLanguages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "maintenanceMode": {
+          "type": "boolean",
+          "default": false
+        },
+        "maintenanceMessage": {
+          "type": "string",
+          "nullable": true
+        },
+        "contactEmail": {
+          "type": "string",
+          "format": "email"
+        },
+        "socialLinks": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "analytics": {
+          "type": "object",
+          "properties": {
+            "googleAnalyticsId": {
+              "type": "string",
+              "nullable": true
+            },
+            "otherTrackers": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "customScripts": {
+          "type": "object",
+          "properties": {
+            "head": {
+              "type": "string",
+              "nullable": true
+            },
+            "bodyStart": {
+              "type": "string",
+              "nullable": true
+            },
+            "bodyEnd": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetSiteSettings_Info = """
+{
+  "summary": "Get site configuration",
+  "description": "",
+  "tags": [
+    "CMS"
+  ],
+  "deprecated": false,
+  "operationId": "getSiteSettings"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetSiteSettings</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/site-settings/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSiteSettings_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Website",
+            "Get",
+            "website/cms/site-settings",
+            _GetSiteSettings_Info));
+
+    /// <summary>Returns request schema for GetSiteSettings</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/site-settings/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSiteSettings_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/cms/site-settings",
+            "request-schema",
+            _GetSiteSettings_RequestSchema));
+
+    /// <summary>Returns response schema for GetSiteSettings</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/site-settings/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSiteSettings_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/cms/site-settings",
+            "response-schema",
+            _GetSiteSettings_ResponseSchema));
+
+    /// <summary>Returns full schema for GetSiteSettings</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/site-settings/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSiteSettings_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Website",
+            "Get",
+            "website/cms/site-settings",
+            _GetSiteSettings_Info,
+            _GetSiteSettings_RequestSchema,
+            _GetSiteSettings_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateSiteSettings
+
+    private static readonly string _UpdateSiteSettings_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SiteSettings",
+  "$defs": {
+    "SiteSettings": {
+      "type": "object",
+      "required": [
+        "siteName",
+        "siteUrl",
+        "defaultLanguage"
+      ],
+      "properties": {
+        "siteName": {
+          "type": "string"
+        },
+        "siteUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "tagline": {
+          "type": "string",
+          "nullable": true
+        },
+        "defaultLanguage": {
+          "type": "string",
+          "default": "en"
+        },
+        "supportedLanguages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "maintenanceMode": {
+          "type": "boolean",
+          "default": false
+        },
+        "maintenanceMessage": {
+          "type": "string",
+          "nullable": true
+        },
+        "contactEmail": {
+          "type": "string",
+          "format": "email"
+        },
+        "socialLinks": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "analytics": {
+          "type": "object",
+          "properties": {
+            "googleAnalyticsId": {
+              "type": "string",
+              "nullable": true
+            },
+            "otherTrackers": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "customScripts": {
+          "type": "object",
+          "properties": {
+            "head": {
+              "type": "string",
+              "nullable": true
+            },
+            "bodyStart": {
+              "type": "string",
+              "nullable": true
+            },
+            "bodyEnd": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateSiteSettings_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SiteSettings",
+  "$defs": {
+    "SiteSettings": {
+      "type": "object",
+      "required": [
+        "siteName",
+        "siteUrl",
+        "defaultLanguage"
+      ],
+      "properties": {
+        "siteName": {
+          "type": "string"
+        },
+        "siteUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "tagline": {
+          "type": "string",
+          "nullable": true
+        },
+        "defaultLanguage": {
+          "type": "string",
+          "default": "en"
+        },
+        "supportedLanguages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "maintenanceMode": {
+          "type": "boolean",
+          "default": false
+        },
+        "maintenanceMessage": {
+          "type": "string",
+          "nullable": true
+        },
+        "contactEmail": {
+          "type": "string",
+          "format": "email"
+        },
+        "socialLinks": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "analytics": {
+          "type": "object",
+          "properties": {
+            "googleAnalyticsId": {
+              "type": "string",
+              "nullable": true
+            },
+            "otherTrackers": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "customScripts": {
+          "type": "object",
+          "properties": {
+            "head": {
+              "type": "string",
+              "nullable": true
+            },
+            "bodyStart": {
+              "type": "string",
+              "nullable": true
+            },
+            "bodyEnd": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateSiteSettings_Info = """
+{
+  "summary": "Update site configuration",
+  "description": "",
+  "tags": [
+    "CMS"
+  ],
+  "deprecated": false,
+  "operationId": "updateSiteSettings"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateSiteSettings</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/site-settings/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateSiteSettings_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Website",
+            "Put",
+            "website/cms/site-settings",
+            _UpdateSiteSettings_Info));
+
+    /// <summary>Returns request schema for UpdateSiteSettings</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/site-settings/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateSiteSettings_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Put",
+            "website/cms/site-settings",
+            "request-schema",
+            _UpdateSiteSettings_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateSiteSettings</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/site-settings/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateSiteSettings_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Put",
+            "website/cms/site-settings",
+            "response-schema",
+            _UpdateSiteSettings_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateSiteSettings</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/site-settings/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateSiteSettings_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Website",
+            "Put",
+            "website/cms/site-settings",
+            _UpdateSiteSettings_Info,
+            _UpdateSiteSettings_RequestSchema,
+            _UpdateSiteSettings_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetTheme
+
+    private static readonly string _GetTheme_RequestSchema = """
+{}
+""";
+
+    private static readonly string _GetTheme_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ThemeConfig",
+  "$defs": {
+    "ThemeConfig": {
+      "type": "object",
+      "required": [
+        "themeName",
+        "primaryColor"
+      ],
+      "properties": {
+        "themeName": {
+          "type": "string"
+        },
+        "primaryColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "secondaryColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "backgroundColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "textColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "fontFamily": {
+          "type": "string"
+        },
+        "customCSS": {
+          "type": "string",
+          "nullable": true
+        },
+        "logo": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "alt": {
+              "type": "string"
+            }
+          }
+        },
+        "favicon": {
+          "type": "string",
+          "format": "uri",
+          "nullable": true
+        },
+        "navigation": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NavigationItem"
+          }
+        }
+      }
+    },
+    "NavigationItem": {
+      "type": "object",
+      "required": [
+        "label",
+        "url",
+        "order"
+      ],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer"
+        },
+        "target": {
+          "type": "string",
+          "enum": [
+            "_self",
+            "_blank"
+          ],
+          "default": "_self"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NavigationItem"
+          }
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetTheme_Info = """
+{
+  "summary": "Get current theme configuration",
+  "description": "",
+  "tags": [
+    "CMS"
+  ],
+  "deprecated": false,
+  "operationId": "getTheme"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetTheme</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/theme/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetTheme_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Website",
+            "Get",
+            "website/cms/theme",
+            _GetTheme_Info));
+
+    /// <summary>Returns request schema for GetTheme</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/theme/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetTheme_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/cms/theme",
+            "request-schema",
+            _GetTheme_RequestSchema));
+
+    /// <summary>Returns response schema for GetTheme</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/theme/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetTheme_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/cms/theme",
+            "response-schema",
+            _GetTheme_ResponseSchema));
+
+    /// <summary>Returns full schema for GetTheme</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/theme/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetTheme_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Website",
+            "Get",
+            "website/cms/theme",
+            _GetTheme_Info,
+            _GetTheme_RequestSchema,
+            _GetTheme_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateTheme
+
+    private static readonly string _UpdateTheme_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ThemeConfig",
+  "$defs": {
+    "ThemeConfig": {
+      "type": "object",
+      "required": [
+        "themeName",
+        "primaryColor"
+      ],
+      "properties": {
+        "themeName": {
+          "type": "string"
+        },
+        "primaryColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "secondaryColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "backgroundColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "textColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "fontFamily": {
+          "type": "string"
+        },
+        "customCSS": {
+          "type": "string",
+          "nullable": true
+        },
+        "logo": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "alt": {
+              "type": "string"
+            }
+          }
+        },
+        "favicon": {
+          "type": "string",
+          "format": "uri",
+          "nullable": true
+        },
+        "navigation": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NavigationItem"
+          }
+        }
+      }
+    },
+    "NavigationItem": {
+      "type": "object",
+      "required": [
+        "label",
+        "url",
+        "order"
+      ],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer"
+        },
+        "target": {
+          "type": "string",
+          "enum": [
+            "_self",
+            "_blank"
+          ],
+          "default": "_self"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NavigationItem"
+          }
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateTheme_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _UpdateTheme_Info = """
+{
+  "summary": "Update theme configuration",
+  "description": "",
+  "tags": [
+    "CMS"
+  ],
+  "deprecated": false,
+  "operationId": "updateTheme"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateTheme</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/theme/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateTheme_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Website",
+            "Put",
+            "website/cms/theme",
+            _UpdateTheme_Info));
+
+    /// <summary>Returns request schema for UpdateTheme</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/theme/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateTheme_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Put",
+            "website/cms/theme",
+            "request-schema",
+            _UpdateTheme_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateTheme</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/theme/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateTheme_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Put",
+            "website/cms/theme",
+            "response-schema",
+            _UpdateTheme_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateTheme</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/theme/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateTheme_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Website",
+            "Put",
+            "website/cms/theme",
+            _UpdateTheme_Info,
+            _UpdateTheme_RequestSchema,
+            _UpdateTheme_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetSubscription
+
+    private static readonly string _GetSubscription_RequestSchema = """
+{}
+""";
+
+    private static readonly string _GetSubscription_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SubscriptionResponse",
+  "$defs": {
+    "SubscriptionResponse": {
+      "type": "object",
+      "required": [
+        "status",
+        "type"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "inactive",
+            "trial",
+            "expired"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "free",
+            "basic",
+            "premium",
+            "lifetime"
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "autoRenew": {
+          "type": "boolean"
+        },
+        "benefits": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetSubscription_Info = """
+{
+  "summary": "Get subscription status",
+  "description": "",
+  "tags": [
+    "Account"
+  ],
+  "deprecated": false,
+  "operationId": "getSubscription"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/account/subscription/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSubscription_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Website",
+            "Get",
+            "website/account/subscription",
+            _GetSubscription_Info));
+
+    /// <summary>Returns request schema for GetSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/account/subscription/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSubscription_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/account/subscription",
+            "request-schema",
+            _GetSubscription_RequestSchema));
+
+    /// <summary>Returns response schema for GetSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/account/subscription/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSubscription_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Website",
+            "Get",
+            "website/account/subscription",
+            "response-schema",
+            _GetSubscription_ResponseSchema));
+
+    /// <summary>Returns full schema for GetSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/account/subscription/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSubscription_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Website",
+            "Get",
+            "website/account/subscription",
+            _GetSubscription_Info,
+            _GetSubscription_RequestSchema,
+            _GetSubscription_ResponseSchema));
+
+    #endregion
+
 }
 
 

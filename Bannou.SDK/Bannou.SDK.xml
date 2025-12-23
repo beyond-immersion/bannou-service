@@ -490,6 +490,13 @@
             Only meaningful for response messages.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.Protocol.BinaryMessage.IsMeta">
+            <summary>
+            Returns true if this message requests endpoint metadata instead of executing the endpoint.
+            When set, the Channel field specifies the meta type:
+            0 = endpoint-info, 1 = request-schema, 2 = response-schema, 3 = full-schema.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Connect.Protocol.BinaryMessage.ToString">
             <summary>
             Returns a string representation of the message for debugging.
@@ -541,9 +548,12 @@
             Message is a response to an RPC (not a new request)
             </summary>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Connect.Protocol.MessageFlags.Reserved">
+        <member name="F:BeyondImmersion.BannouService.Connect.Protocol.MessageFlags.Meta">
             <summary>
-            Reserved for future use
+            Request metadata about endpoint instead of executing it.
+            When set, the Channel field specifies the meta type:
+            0 = endpoint-info, 1 = request-schema, 2 = response-schema, 3 = full-schema.
+            Connect service transforms the path and routes to companion endpoints.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Connect.Protocol.NetworkByteOrder">

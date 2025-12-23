@@ -88,6 +88,16 @@ else
 fi
 echo ""
 
+# Embed meta schemas into API schemas for companion endpoint generation
+echo -e "${BLUE}📋 Embedding meta schemas into API schemas...${NC}"
+if python3 "$SCRIPT_DIR/embed-meta-schemas.py"; then
+    echo -e "${GREEN}✅ Meta schemas embedded successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to embed meta schemas${NC}"
+    exit 1
+fi
+echo ""
+
 # Find all schema files
 SCHEMA_FILES=(../schemas/*-api.yaml)
 if [ ! -e "${SCHEMA_FILES[0]}" ]; then

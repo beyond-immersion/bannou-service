@@ -420,6 +420,1382 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         return ConvertToActionResult(statusCode, result);
     }
 
+
+    #region Meta Endpoints for Login
+
+    private static readonly string _Login_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/LoginRequest",
+  "$defs": {
+    "LoginRequest": {
+      "type": "object",
+      "required": [
+        "email",
+        "password"
+      ],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "password": {
+          "type": "string",
+          "format": "password"
+        },
+        "rememberMe": {
+          "type": "boolean",
+          "default": false
+        },
+        "deviceInfo": {
+          "$ref": "#/$defs/DeviceInfo"
+        }
+      }
+    },
+    "DeviceInfo": {
+      "type": "object",
+      "properties": {
+        "deviceType": {
+          "type": "string",
+          "enum": [
+            "desktop",
+            "mobile",
+            "tablet",
+            "console"
+          ]
+        },
+        "platform": {
+          "type": "string"
+        },
+        "browser": {
+          "type": "string",
+          "nullable": true
+        },
+        "appVersion": {
+          "type": "string",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _Login_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AuthResponse",
+  "$defs": {
+    "AuthResponse": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "accessToken",
+        "refreshToken",
+        "expiresIn",
+        "connectUrl"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "accessToken": {
+          "type": "string"
+        },
+        "refreshToken": {
+          "type": "string"
+        },
+        "expiresIn": {
+          "type": "integer",
+          "description": "Seconds until access token expires"
+        },
+        "connectUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "WebSocket endpoint for Connect service"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requiresTwoFactor": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _Login_Info = """
+{
+  "summary": "Login with email/password",
+  "description": "",
+  "tags": [
+    "Authentication"
+  ],
+  "deprecated": false,
+  "operationId": "login"
+}
+""";
+
+    /// <summary>Returns endpoint information for Login</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/login/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Login_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "Post",
+            "auth/login",
+            _Login_Info));
+
+    /// <summary>Returns request schema for Login</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/login/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Login_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/login",
+            "request-schema",
+            _Login_RequestSchema));
+
+    /// <summary>Returns response schema for Login</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/login/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Login_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/login",
+            "response-schema",
+            _Login_ResponseSchema));
+
+    /// <summary>Returns full schema for Login</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/login/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Login_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/login",
+            _Login_Info,
+            _Login_RequestSchema,
+            _Login_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for Register
+
+    private static readonly string _Register_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/RegisterRequest",
+  "$defs": {
+    "RegisterRequest": {
+      "type": "object",
+      "description": "Request to register a new user account",
+      "required": [
+        "username",
+        "password"
+      ],
+      "properties": {
+        "username": {
+          "type": "string",
+          "description": "Unique username for the account",
+          "minLength": 3,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_]+$",
+          "example": "gameuser123"
+        },
+        "password": {
+          "type": "string",
+          "description": "Password for the account (will be hashed)",
+          "minLength": 8,
+          "format": "password",
+          "example": "SecurePassword123!"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Optional email for account recovery",
+          "example": "user@example.com"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _Register_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/RegisterResponse",
+  "$defs": {
+    "RegisterResponse": {
+      "type": "object",
+      "description": "Response from successful user registration",
+      "required": [
+        "accessToken",
+        "connectUrl"
+      ],
+      "properties": {
+        "accessToken": {
+          "type": "string",
+          "description": "JWT access token for immediate authentication",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnYW1ldXNlcjEyMyIsImlhdCI6MTY0MDk5NTIwMCwiZXhwIjoxNjQwOTk4ODAwfQ.signature"
+        },
+        "refreshToken": {
+          "type": "string",
+          "description": "Refresh token for obtaining new access tokens",
+          "nullable": true,
+          "example": "refresh_token_abc123xyz789"
+        },
+        "connectUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "WebSocket endpoint for Connect service"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _Register_Info = """
+{
+  "summary": "Register new user account",
+  "description": "",
+  "tags": [
+    "Authentication"
+  ],
+  "deprecated": false,
+  "operationId": "register"
+}
+""";
+
+    /// <summary>Returns endpoint information for Register</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/register/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Register_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "Post",
+            "auth/register",
+            _Register_Info));
+
+    /// <summary>Returns request schema for Register</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/register/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Register_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/register",
+            "request-schema",
+            _Register_RequestSchema));
+
+    /// <summary>Returns response schema for Register</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/register/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Register_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/register",
+            "response-schema",
+            _Register_ResponseSchema));
+
+    /// <summary>Returns full schema for Register</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/register/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Register_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/register",
+            _Register_Info,
+            _Register_RequestSchema,
+            _Register_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for InitOAuth
+
+    private static readonly string _InitOAuth_RequestSchema = """
+{}
+""";
+
+    private static readonly string _InitOAuth_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _InitOAuth_Info = """
+{
+  "summary": "Initialize OAuth2 flow (browser redirect)",
+  "description": "Browser-facing endpoint for initiating OAuth flows. The user's browser navigates\nto this URL directly, which then redirects to the OAuth provider.\n\n**Note**: This endpoint uses GET with path parameters because it's a browser\nredirect flow, not a WebSocket-routed API call.\n",
+  "tags": [
+    "OAuth"
+  ],
+  "deprecated": false,
+  "operationId": "initOAuth"
+}
+""";
+
+    /// <summary>Returns endpoint information for InitOAuth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/oauth/{provider}/init/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> InitOAuth_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "Get",
+            "auth/oauth/{provider}/init",
+            _InitOAuth_Info));
+
+    /// <summary>Returns request schema for InitOAuth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/oauth/{provider}/init/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> InitOAuth_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Get",
+            "auth/oauth/{provider}/init",
+            "request-schema",
+            _InitOAuth_RequestSchema));
+
+    /// <summary>Returns response schema for InitOAuth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/oauth/{provider}/init/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> InitOAuth_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Get",
+            "auth/oauth/{provider}/init",
+            "response-schema",
+            _InitOAuth_ResponseSchema));
+
+    /// <summary>Returns full schema for InitOAuth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/oauth/{provider}/init/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> InitOAuth_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "Get",
+            "auth/oauth/{provider}/init",
+            _InitOAuth_Info,
+            _InitOAuth_RequestSchema,
+            _InitOAuth_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CompleteOAuth
+
+    private static readonly string _CompleteOAuth_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/OAuthCallbackRequest",
+  "$defs": {
+    "OAuthCallbackRequest": {
+      "type": "object",
+      "required": [
+        "code"
+      ],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "nullable": true
+        },
+        "deviceInfo": {
+          "$ref": "#/$defs/DeviceInfo"
+        }
+      }
+    },
+    "DeviceInfo": {
+      "type": "object",
+      "properties": {
+        "deviceType": {
+          "type": "string",
+          "enum": [
+            "desktop",
+            "mobile",
+            "tablet",
+            "console"
+          ]
+        },
+        "platform": {
+          "type": "string"
+        },
+        "browser": {
+          "type": "string",
+          "nullable": true
+        },
+        "appVersion": {
+          "type": "string",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CompleteOAuth_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AuthResponse",
+  "$defs": {
+    "AuthResponse": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "accessToken",
+        "refreshToken",
+        "expiresIn",
+        "connectUrl"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "accessToken": {
+          "type": "string"
+        },
+        "refreshToken": {
+          "type": "string"
+        },
+        "expiresIn": {
+          "type": "integer",
+          "description": "Seconds until access token expires"
+        },
+        "connectUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "WebSocket endpoint for Connect service"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requiresTwoFactor": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CompleteOAuth_Info = """
+{
+  "summary": "Complete OAuth2 flow (browser redirect callback)",
+  "description": "Browser-facing callback endpoint for OAuth providers. The OAuth provider redirects\nthe user's browser back to this URL after authentication.\n\n**Note**: This endpoint uses path parameters because the callback URL is registered\ nwith OAuth providers and cannot be changed without updating provider configurations.\n",
+  "tags": [
+    "OAuth"
+  ],
+  "deprecated": false,
+  "operationId": "completeOAuth"
+}
+""";
+
+    /// <summary>Returns endpoint information for CompleteOAuth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/oauth/{provider}/callback/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CompleteOAuth_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "Post",
+            "auth/oauth/{provider}/callback",
+            _CompleteOAuth_Info));
+
+    /// <summary>Returns request schema for CompleteOAuth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/oauth/{provider}/callback/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CompleteOAuth_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/oauth/{provider}/callback",
+            "request-schema",
+            _CompleteOAuth_RequestSchema));
+
+    /// <summary>Returns response schema for CompleteOAuth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/oauth/{provider}/callback/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CompleteOAuth_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/oauth/{provider}/callback",
+            "response-schema",
+            _CompleteOAuth_ResponseSchema));
+
+    /// <summary>Returns full schema for CompleteOAuth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/oauth/{provider}/callback/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CompleteOAuth_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/oauth/{provider}/callback",
+            _CompleteOAuth_Info,
+            _CompleteOAuth_RequestSchema,
+            _CompleteOAuth_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for VerifySteamAuth
+
+    private static readonly string _VerifySteamAuth_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SteamVerifyRequest",
+  "$defs": {
+    "SteamVerifyRequest": {
+      "type": "object",
+      "description": "Request to verify a Steam Session Ticket. The ticket is obtained client-side via\nISteamUser::GetAuthTicketForWebApi(\"bannou\"). SteamID is NOT included because\nit must be obtained from Steam's Web API response (never trust client-provided SteamID).\n",
+      "required": [
+        "ticket"
+      ],
+      "properties": {
+        "ticket": {
+          "type": "string",
+          "description": "Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\ nClient converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\"-\", \"\")\n",
+          "example": "140000006A7B3C8E..."
+        },
+        "deviceInfo": {
+          "$ref": "#/$defs/DeviceInfo"
+        }
+      }
+    },
+    "DeviceInfo": {
+      "type": "object",
+      "properties": {
+        "deviceType": {
+          "type": "string",
+          "enum": [
+            "desktop",
+            "mobile",
+            "tablet",
+            "console"
+          ]
+        },
+        "platform": {
+          "type": "string"
+        },
+        "browser": {
+          "type": "string",
+          "nullable": true
+        },
+        "appVersion": {
+          "type": "string",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _VerifySteamAuth_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AuthResponse",
+  "$defs": {
+    "AuthResponse": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "accessToken",
+        "refreshToken",
+        "expiresIn",
+        "connectUrl"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "accessToken": {
+          "type": "string"
+        },
+        "refreshToken": {
+          "type": "string"
+        },
+        "expiresIn": {
+          "type": "integer",
+          "description": "Seconds until access token expires"
+        },
+        "connectUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "WebSocket endpoint for Connect service"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requiresTwoFactor": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _VerifySteamAuth_Info = """
+{
+  "summary": "Verify Steam Session Ticket",
+  "description": "Validates a Steam Session Ticket obtained from the game client via ISteamUser::GetAuthTicketForWebApi().\nThe server validates the ticket with Steam's Web API and retrieves the SteamID from Steam's response.\nNEVER trust client-provided SteamID - it must come from Steam's authenticated response.\n",
+  "tags": [
+    "Steam"
+  ],
+  "deprecated": false,
+  "operationId": "verifySteamAuth"
+}
+""";
+
+    /// <summary>Returns endpoint information for VerifySteamAuth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/steam/verify/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> VerifySteamAuth_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "Post",
+            "auth/steam/verify",
+            _VerifySteamAuth_Info));
+
+    /// <summary>Returns request schema for VerifySteamAuth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/steam/verify/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> VerifySteamAuth_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/steam/verify",
+            "request-schema",
+            _VerifySteamAuth_RequestSchema));
+
+    /// <summary>Returns response schema for VerifySteamAuth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/steam/verify/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> VerifySteamAuth_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/steam/verify",
+            "response-schema",
+            _VerifySteamAuth_ResponseSchema));
+
+    /// <summary>Returns full schema for VerifySteamAuth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/steam/verify/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> VerifySteamAuth_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/steam/verify",
+            _VerifySteamAuth_Info,
+            _VerifySteamAuth_RequestSchema,
+            _VerifySteamAuth_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RefreshToken
+
+    private static readonly string _RefreshToken_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/RefreshRequest",
+  "$defs": {
+    "RefreshRequest": {
+      "type": "object",
+      "required": [
+        "refreshToken"
+      ],
+      "properties": {
+        "refreshToken": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _RefreshToken_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AuthResponse",
+  "$defs": {
+    "AuthResponse": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "accessToken",
+        "refreshToken",
+        "expiresIn",
+        "connectUrl"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "accessToken": {
+          "type": "string"
+        },
+        "refreshToken": {
+          "type": "string"
+        },
+        "expiresIn": {
+          "type": "integer",
+          "description": "Seconds until access token expires"
+        },
+        "connectUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "WebSocket endpoint for Connect service"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requiresTwoFactor": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _RefreshToken_Info = """
+{
+  "summary": "Refresh access token",
+  "description": "",
+  "tags": [
+    "Tokens"
+  ],
+  "deprecated": false,
+  "operationId": "refreshToken"
+}
+""";
+
+    /// <summary>Returns endpoint information for RefreshToken</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/refresh/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RefreshToken_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "Post",
+            "auth/refresh",
+            _RefreshToken_Info));
+
+    /// <summary>Returns request schema for RefreshToken</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/refresh/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RefreshToken_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/refresh",
+            "request-schema",
+            _RefreshToken_RequestSchema));
+
+    /// <summary>Returns response schema for RefreshToken</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/refresh/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RefreshToken_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/refresh",
+            "response-schema",
+            _RefreshToken_ResponseSchema));
+
+    /// <summary>Returns full schema for RefreshToken</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/refresh/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RefreshToken_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/refresh",
+            _RefreshToken_Info,
+            _RefreshToken_RequestSchema,
+            _RefreshToken_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ValidateToken
+
+    private static readonly string _ValidateToken_RequestSchema = """
+{}
+""";
+
+    private static readonly string _ValidateToken_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ValidateTokenResponse",
+  "$defs": {
+    "ValidateTokenResponse": {
+      "type": "object",
+      "required": [
+        "valid",
+        "accountId",
+        "sessionId"
+      ],
+      "properties": {
+        "valid": {
+          "type": "boolean"
+        },
+        "accountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Session identifier for WebSocket connections and service routing"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "authorizations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Authorization strings from active subscriptions.\nFormat: \"{stubName}:{state}\" (e.g., \"arcadia:authorized\")\n"
+        },
+        "remainingTime": {
+          "type": "integer",
+          "description": "Seconds until expiration"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ValidateToken_Info = """
+{
+  "summary": "Validate access token",
+  "description": "",
+  "tags": [
+    "Tokens"
+  ],
+  "deprecated": false,
+  "operationId": "validateToken"
+}
+""";
+
+    /// <summary>Returns endpoint information for ValidateToken</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/validate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateToken_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "Post",
+            "auth/validate",
+            _ValidateToken_Info));
+
+    /// <summary>Returns request schema for ValidateToken</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/validate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateToken_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/validate",
+            "request-schema",
+            _ValidateToken_RequestSchema));
+
+    /// <summary>Returns response schema for ValidateToken</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/validate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateToken_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/validate",
+            "response-schema",
+            _ValidateToken_ResponseSchema));
+
+    /// <summary>Returns full schema for ValidateToken</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/validate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateToken_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/validate",
+            _ValidateToken_Info,
+            _ValidateToken_RequestSchema,
+            _ValidateToken_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for Logout
+
+    private static readonly string _Logout_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/LogoutRequest",
+  "$defs": {
+    "LogoutRequest": {
+      "type": "object",
+      "properties": {
+        "allSessions": {
+          "type": "boolean",
+          "default": false,
+          "description": "Logout from all sessions/devices"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _Logout_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _Logout_Info = """
+{
+  "summary": "Logout and invalidate tokens",
+  "description": "",
+  "tags": [
+    "Authentication"
+  ],
+  "deprecated": false,
+  "operationId": "logout"
+}
+""";
+
+    /// <summary>Returns endpoint information for Logout</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/logout/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Logout_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "Post",
+            "auth/logout",
+            _Logout_Info));
+
+    /// <summary>Returns request schema for Logout</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/logout/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Logout_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/logout",
+            "request-schema",
+            _Logout_RequestSchema));
+
+    /// <summary>Returns response schema for Logout</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/logout/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Logout_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/logout",
+            "response-schema",
+            _Logout_ResponseSchema));
+
+    /// <summary>Returns full schema for Logout</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/logout/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Logout_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/logout",
+            _Logout_Info,
+            _Logout_RequestSchema,
+            _Logout_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetSessions
+
+    private static readonly string _GetSessions_RequestSchema = """
+{}
+""";
+
+    private static readonly string _GetSessions_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SessionsResponse",
+  "$defs": {
+    "SessionsResponse": {
+      "type": "object",
+      "required": [
+        "sessions"
+      ],
+      "properties": {
+        "sessions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SessionInfo"
+          }
+        }
+      }
+    },
+    "SessionInfo": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "createdAt",
+        "lastActive"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "deviceInfo": {
+          "$ref": "#/$defs/DeviceInfo"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastActive": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string",
+          "nullable": true
+        }
+      }
+    },
+    "DeviceInfo": {
+      "type": "object",
+      "properties": {
+        "deviceType": {
+          "type": "string",
+          "enum": [
+            "desktop",
+            "mobile",
+            "tablet",
+            "console"
+          ]
+        },
+        "platform": {
+          "type": "string"
+        },
+        "browser": {
+          "type": "string",
+          "nullable": true
+        },
+        "appVersion": {
+          "type": "string",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetSessions_Info = """
+{
+  "summary": "Get active sessions for account",
+  "description": "",
+  "tags": [
+    "Sessions"
+  ],
+  "deprecated": false,
+  "operationId": "getSessions"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetSessions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/sessions/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSessions_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "Post",
+            "auth/sessions/list",
+            _GetSessions_Info));
+
+    /// <summary>Returns request schema for GetSessions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/sessions/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSessions_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/sessions/list",
+            "request-schema",
+            _GetSessions_RequestSchema));
+
+    /// <summary>Returns response schema for GetSessions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/sessions/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSessions_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/sessions/list",
+            "response-schema",
+            _GetSessions_ResponseSchema));
+
+    /// <summary>Returns full schema for GetSessions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/sessions/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSessions_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/sessions/list",
+            _GetSessions_Info,
+            _GetSessions_RequestSchema,
+            _GetSessions_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for TerminateSession
+
+    private static readonly string _TerminateSession_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/TerminateSessionRequest",
+  "$defs": {
+    "TerminateSessionRequest": {
+      "type": "object",
+      "description": "Request to terminate a specific session",
+      "required": [
+        "sessionId"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the session to terminate"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _TerminateSession_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _TerminateSession_Info = """
+{
+  "summary": "Terminate specific session",
+  "description": "",
+  "tags": [
+    "Sessions"
+  ],
+  "deprecated": false,
+  "operationId": "terminateSession"
+}
+""";
+
+    /// <summary>Returns endpoint information for TerminateSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/sessions/terminate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TerminateSession_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "Post",
+            "auth/sessions/terminate",
+            _TerminateSession_Info));
+
+    /// <summary>Returns request schema for TerminateSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/sessions/terminate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TerminateSession_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/sessions/terminate",
+            "request-schema",
+            _TerminateSession_RequestSchema));
+
+    /// <summary>Returns response schema for TerminateSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/sessions/terminate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TerminateSession_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/sessions/terminate",
+            "response-schema",
+            _TerminateSession_ResponseSchema));
+
+    /// <summary>Returns full schema for TerminateSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/sessions/terminate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TerminateSession_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/sessions/terminate",
+            _TerminateSession_Info,
+            _TerminateSession_RequestSchema,
+            _TerminateSession_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RequestPasswordReset
+
+    private static readonly string _RequestPasswordReset_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/PasswordResetRequest",
+  "$defs": {
+    "PasswordResetRequest": {
+      "type": "object",
+      "required": [
+        "email"
+      ],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _RequestPasswordReset_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _RequestPasswordReset_Info = """
+{
+  "summary": "Request password reset",
+  "description": "",
+  "tags": [
+    "Password"
+  ],
+  "deprecated": false,
+  "operationId": "requestPasswordReset"
+}
+""";
+
+    /// <summary>Returns endpoint information for RequestPasswordReset</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/password/reset/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RequestPasswordReset_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "Post",
+            "auth/password/reset",
+            _RequestPasswordReset_Info));
+
+    /// <summary>Returns request schema for RequestPasswordReset</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/password/reset/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RequestPasswordReset_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/password/reset",
+            "request-schema",
+            _RequestPasswordReset_RequestSchema));
+
+    /// <summary>Returns response schema for RequestPasswordReset</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/password/reset/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RequestPasswordReset_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/password/reset",
+            "response-schema",
+            _RequestPasswordReset_ResponseSchema));
+
+    /// <summary>Returns full schema for RequestPasswordReset</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/password/reset/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RequestPasswordReset_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/password/reset",
+            _RequestPasswordReset_Info,
+            _RequestPasswordReset_RequestSchema,
+            _RequestPasswordReset_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ConfirmPasswordReset
+
+    private static readonly string _ConfirmPasswordReset_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/PasswordResetConfirmRequest",
+  "$defs": {
+    "PasswordResetConfirmRequest": {
+      "type": "object",
+      "required": [
+        "token",
+        "newPassword"
+      ],
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "newPassword": {
+          "type": "string",
+          "format": "password",
+          "minLength": 8
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ConfirmPasswordReset_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _ConfirmPasswordReset_Info = """
+{
+  "summary": "Confirm password reset with token",
+  "description": "",
+  "tags": [
+    "Password"
+  ],
+  "deprecated": false,
+  "operationId": "confirmPasswordReset"
+}
+""";
+
+    /// <summary>Returns endpoint information for ConfirmPasswordReset</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/password/confirm/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmPasswordReset_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "Post",
+            "auth/password/confirm",
+            _ConfirmPasswordReset_Info));
+
+    /// <summary>Returns request schema for ConfirmPasswordReset</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/password/confirm/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmPasswordReset_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/password/confirm",
+            "request-schema",
+            _ConfirmPasswordReset_RequestSchema));
+
+    /// <summary>Returns response schema for ConfirmPasswordReset</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/password/confirm/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmPasswordReset_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/password/confirm",
+            "response-schema",
+            _ConfirmPasswordReset_ResponseSchema));
+
+    /// <summary>Returns full schema for ConfirmPasswordReset</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/password/confirm/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmPasswordReset_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/password/confirm",
+            _ConfirmPasswordReset_Info,
+            _ConfirmPasswordReset_RequestSchema,
+            _ConfirmPasswordReset_ResponseSchema));
+
+    #endregion
+
 }
 
 

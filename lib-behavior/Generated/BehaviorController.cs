@@ -264,6 +264,1363 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         return ConvertToActionResult(statusCode, result);
     }
 
+
+    #region Meta Endpoints for CompileAbmlBehavior
+
+    private static readonly string _CompileAbmlBehavior_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CompileBehaviorRequest",
+  "$defs": {
+    "CompileBehaviorRequest": {
+      "type": "object",
+      "required": [
+        "abml_content"
+      ],
+      "properties": {
+        "abml_content": {
+          "type": "string",
+          "description": "Raw ABML YAML content to compile",
+          "example": "version: \"1.0.0\"\nmetadata:\n  id: \"example_behavior\"\n  category: \"basic\"\nbehaviors:\n  example:\n    triggers:\n      - condition: \"true\"\n    actions:\n      - log:\n          message: \"Hello World\"\n"
+        },
+        "character_context": {
+          "$ref": "#/$defs/CharacterContext"
+        },
+        "compilation_options": {
+          "$ref": "#/$defs/CompilationOptions"
+        }
+      }
+    },
+    "CharacterContext": {
+      "type": "object",
+      "properties": {
+        "npc_id": {
+          "type": "string",
+          "description": "Unique identifier for the NPC",
+          "example": "npc_12345"
+        },
+        "culture": {
+          "type": "string",
+          "description": "Cultural background identifier",
+          "example": "european_medieval"
+        },
+        "profession": {
+          "type": "string",
+          "description": "Character profession identifier",
+          "example": "blacksmith"
+        },
+        "stats": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Character statistics and attributes",
+          "example": {
+            "energy": 0.8,
+            "health": 1.0,
+            "hunger": 0.3
+          }
+        },
+        "skills": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Character skill levels",
+          "example": {
+            "blacksmithing": 85,
+            "trading": 42
+          }
+        },
+        "location": {
+          "type": "object",
+          "properties": {
+            "current": {
+              "type": "string"
+            },
+            "region": {
+              "type": "string"
+            },
+            "coordinates": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "z": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "relationships": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Relationship values with other characters"
+        },
+        "world_state": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Relevant world state information"
+        }
+      }
+    },
+    "CompilationOptions": {
+      "type": "object",
+      "properties": {
+        "enable_optimizations": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable behavior tree optimizations"
+        },
+        "cache_compiled_result": {
+          "type": "boolean",
+          "default": true,
+          "description": "Cache the compiled behavior for reuse"
+        },
+        "strict_validation": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable strict validation mode"
+        },
+        "cultural_adaptations": {
+          "type": "boolean",
+          "default": true,
+          "description": "Apply cultural adaptations during compilation"
+        },
+        "goap_integration": {
+          "type": "boolean",
+          "default": true,
+          "description": "Generate GOAP goals from behaviors"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CompileAbmlBehavior_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CompileBehaviorResponse",
+  "$defs": {
+    "CompileBehaviorResponse": {
+      "type": "object",
+      "required": [
+        "success",
+        "behavior_id"
+      ],
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Whether compilation was successful"
+        },
+        "behavior_id": {
+          "type": "string",
+          "description": "Unique identifier for the compiled behavior",
+          "example": "behavior_abc123"
+        },
+        "compiled_behavior": {
+          "$ref": "#/$defs/CompiledBehavior"
+        },
+        "compilation_time_ms": {
+          "type": "integer",
+          "description": "Time taken to compile the behavior"
+        },
+        "cache_key": {
+          "type": "string",
+          "description": "Key for caching the compiled behavior"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Non-fatal warnings during compilation"
+        }
+      }
+    },
+    "CompiledBehavior": {
+      "type": "object",
+      "required": [
+        "behavior_tree",
+        "context_schema"
+      ],
+      "properties": {
+        "behavior_tree": {
+          "type": "object",
+          "description": "Compiled executable behavior tree structure"
+        },
+        "context_schema": {
+          "type": "object",
+          "description": "Schema defining required context variables"
+        },
+        "service_dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of required services for this behavior"
+        },
+        "goap_goals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GoapGoal"
+          },
+          "description": "GOAP goals extracted from the behavior"
+        },
+        "execution_metadata": {
+          "type": "object",
+          "properties": {
+            "estimated_duration": {
+              "type": "integer",
+              "description": "Estimated execution time in seconds"
+            },
+            "resource_requirements": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number"
+              }
+            },
+            "interrupt_conditions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "GoapGoal": {
+      "type": "object",
+      "required": [
+        "name",
+        "conditions",
+        "priority"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the goal",
+          "example": "satisfy_hunger"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the goal"
+        },
+        "conditions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "World state conditions that satisfy this goal",
+          "example": {
+            "hunger_level": 0.0
+          }
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Priority of this goal relative to others"
+        },
+        "preconditions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "World state conditions required to pursue this goal"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CompileAbmlBehavior_Info = """
+{
+  "summary": "Compile ABML behavior definition",
+  "description": "Compiles a YAML-based ABML behavior definition into executable behavior trees.\nHandles stackable behavior sets, cultural adaptations, and context variable resolution.\n",
+  "tags": [
+    "ABML"
+  ],
+  "deprecated": false,
+  "operationId": "CompileAbmlBehavior"
+}
+""";
+
+    /// <summary>Returns endpoint information for CompileAbmlBehavior</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("compile/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CompileAbmlBehavior_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Behavior",
+            "Post",
+            "compile",
+            _CompileAbmlBehavior_Info));
+
+    /// <summary>Returns request schema for CompileAbmlBehavior</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("compile/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CompileAbmlBehavior_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Behavior",
+            "Post",
+            "compile",
+            "request-schema",
+            _CompileAbmlBehavior_RequestSchema));
+
+    /// <summary>Returns response schema for CompileAbmlBehavior</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("compile/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CompileAbmlBehavior_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Behavior",
+            "Post",
+            "compile",
+            "response-schema",
+            _CompileAbmlBehavior_ResponseSchema));
+
+    /// <summary>Returns full schema for CompileAbmlBehavior</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("compile/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CompileAbmlBehavior_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Behavior",
+            "Post",
+            "compile",
+            _CompileAbmlBehavior_Info,
+            _CompileAbmlBehavior_RequestSchema,
+            _CompileAbmlBehavior_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CompileBehaviorStack
+
+    private static readonly string _CompileBehaviorStack_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/BehaviorStackRequest",
+  "$defs": {
+    "BehaviorStackRequest": {
+      "type": "object",
+      "required": [
+        "behavior_sets"
+      ],
+      "properties": {
+        "behavior_sets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BehaviorSetDefinition"
+          },
+          "description": "Array of behavior sets to compile together"
+        },
+        "character_context": {
+          "$ref": "#/$defs/CharacterContext"
+        },
+        "compilation_options": {
+          "$ref": "#/$defs/CompilationOptions"
+        }
+      }
+    },
+    "BehaviorSetDefinition": {
+      "type": "object",
+      "required": [
+        "id",
+        "priority",
+        "abml_content"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the behavior set",
+          "example": "base_humanoid"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Priority level for merging (higher priority overrides lower)",
+          "example": 50
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the behavior set",
+          "enum": [
+            "base",
+            "cultural",
+            "professional",
+            "personal",
+            "situational"
+          ]
+        },
+        "abml_content": {
+          "type": "string",
+          "description": "Raw ABML YAML content for this behavior set"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Additional metadata for the behavior set"
+        }
+      }
+    },
+    "CharacterContext": {
+      "type": "object",
+      "properties": {
+        "npc_id": {
+          "type": "string",
+          "description": "Unique identifier for the NPC",
+          "example": "npc_12345"
+        },
+        "culture": {
+          "type": "string",
+          "description": "Cultural background identifier",
+          "example": "european_medieval"
+        },
+        "profession": {
+          "type": "string",
+          "description": "Character profession identifier",
+          "example": "blacksmith"
+        },
+        "stats": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Character statistics and attributes",
+          "example": {
+            "energy": 0.8,
+            "health": 1.0,
+            "hunger": 0.3
+          }
+        },
+        "skills": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Character skill levels",
+          "example": {
+            "blacksmithing": 85,
+            "trading": 42
+          }
+        },
+        "location": {
+          "type": "object",
+          "properties": {
+            "current": {
+              "type": "string"
+            },
+            "region": {
+              "type": "string"
+            },
+            "coordinates": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "z": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "relationships": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Relationship values with other characters"
+        },
+        "world_state": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Relevant world state information"
+        }
+      }
+    },
+    "CompilationOptions": {
+      "type": "object",
+      "properties": {
+        "enable_optimizations": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable behavior tree optimizations"
+        },
+        "cache_compiled_result": {
+          "type": "boolean",
+          "default": true,
+          "description": "Cache the compiled behavior for reuse"
+        },
+        "strict_validation": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable strict validation mode"
+        },
+        "cultural_adaptations": {
+          "type": "boolean",
+          "default": true,
+          "description": "Apply cultural adaptations during compilation"
+        },
+        "goap_integration": {
+          "type": "boolean",
+          "default": true,
+          "description": "Generate GOAP goals from behaviors"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CompileBehaviorStack_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CompileBehaviorResponse",
+  "$defs": {
+    "CompileBehaviorResponse": {
+      "type": "object",
+      "required": [
+        "success",
+        "behavior_id"
+      ],
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Whether compilation was successful"
+        },
+        "behavior_id": {
+          "type": "string",
+          "description": "Unique identifier for the compiled behavior",
+          "example": "behavior_abc123"
+        },
+        "compiled_behavior": {
+          "$ref": "#/$defs/CompiledBehavior"
+        },
+        "compilation_time_ms": {
+          "type": "integer",
+          "description": "Time taken to compile the behavior"
+        },
+        "cache_key": {
+          "type": "string",
+          "description": "Key for caching the compiled behavior"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Non-fatal warnings during compilation"
+        }
+      }
+    },
+    "CompiledBehavior": {
+      "type": "object",
+      "required": [
+        "behavior_tree",
+        "context_schema"
+      ],
+      "properties": {
+        "behavior_tree": {
+          "type": "object",
+          "description": "Compiled executable behavior tree structure"
+        },
+        "context_schema": {
+          "type": "object",
+          "description": "Schema defining required context variables"
+        },
+        "service_dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of required services for this behavior"
+        },
+        "goap_goals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GoapGoal"
+          },
+          "description": "GOAP goals extracted from the behavior"
+        },
+        "execution_metadata": {
+          "type": "object",
+          "properties": {
+            "estimated_duration": {
+              "type": "integer",
+              "description": "Estimated execution time in seconds"
+            },
+            "resource_requirements": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number"
+              }
+            },
+            "interrupt_conditions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "GoapGoal": {
+      "type": "object",
+      "required": [
+        "name",
+        "conditions",
+        "priority"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the goal",
+          "example": "satisfy_hunger"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the goal"
+        },
+        "conditions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "World state conditions that satisfy this goal",
+          "example": {
+            "hunger_level": 0.0
+          }
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Priority of this goal relative to others"
+        },
+        "preconditions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "World state conditions required to pursue this goal"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CompileBehaviorStack_Info = """
+{
+  "summary": "Compile stackable behavior sets",
+  "description": "Compiles multiple ABML behavior sets with priority-based merging.\nHandles cultural adaptations, profession specializations, and context resolution.\n",
+  "tags": [
+    "BehaviorStacks"
+  ],
+  "deprecated": false,
+  "operationId": "CompileBehaviorStack"
+}
+""";
+
+    /// <summary>Returns endpoint information for CompileBehaviorStack</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("stack/compile/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CompileBehaviorStack_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Behavior",
+            "Post",
+            "stack/compile",
+            _CompileBehaviorStack_Info));
+
+    /// <summary>Returns request schema for CompileBehaviorStack</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("stack/compile/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CompileBehaviorStack_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Behavior",
+            "Post",
+            "stack/compile",
+            "request-schema",
+            _CompileBehaviorStack_RequestSchema));
+
+    /// <summary>Returns response schema for CompileBehaviorStack</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("stack/compile/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CompileBehaviorStack_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Behavior",
+            "Post",
+            "stack/compile",
+            "response-schema",
+            _CompileBehaviorStack_ResponseSchema));
+
+    /// <summary>Returns full schema for CompileBehaviorStack</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("stack/compile/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CompileBehaviorStack_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Behavior",
+            "Post",
+            "stack/compile",
+            _CompileBehaviorStack_Info,
+            _CompileBehaviorStack_RequestSchema,
+            _CompileBehaviorStack_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ValidateAbml
+
+    private static readonly string _ValidateAbml_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ValidateAbmlRequest",
+  "$defs": {
+    "ValidateAbmlRequest": {
+      "type": "object",
+      "required": [
+        "abml_content"
+      ],
+      "properties": {
+        "abml_content": {
+          "type": "string",
+          "description": "Raw ABML YAML content to validate"
+        },
+        "strict_mode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable strict validation mode with enhanced checking"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ValidateAbml_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ValidateAbmlResponse",
+  "$defs": {
+    "ValidateAbmlResponse": {
+      "type": "object",
+      "required": [
+        "is_valid"
+      ],
+      "properties": {
+        "is_valid": {
+          "type": "boolean",
+          "description": "Whether the ABML definition is valid"
+        },
+        "validation_errors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ValidationError"
+          },
+          "description": "List of validation errors if invalid"
+        },
+        "semantic_warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Semantic warnings that don't prevent compilation"
+        },
+        "schema_version": {
+          "type": "string",
+          "description": "ABML schema version used for validation"
+        }
+      }
+    },
+    "ValidationError": {
+      "type": "object",
+      "required": [
+        "type",
+        "message"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "syntax",
+            "semantic",
+            "schema",
+            "context",
+            "service_dependency"
+          ],
+          "description": "Type of validation error"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable error message"
+        },
+        "line_number": {
+          "type": "integer",
+          "description": "Line number where the error occurred (if applicable)"
+        },
+        "column_number": {
+          "type": "integer",
+          "description": "Column number where the error occurred (if applicable)"
+        },
+        "yaml_path": {
+          "type": "string",
+          "description": "YAML path to the problematic element",
+          "example": "behaviors.morning_startup.actions[0]"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ValidateAbml_Info = """
+{
+  "summary": "Validate ABML definition",
+  "description": "Validates ABML YAML against schema and checks for semantic correctness.\nIncludes context variable validation and service dependency checking.\n",
+  "tags": [
+    "Validation"
+  ],
+  "deprecated": false,
+  "operationId": "ValidateAbml"
+}
+""";
+
+    /// <summary>Returns endpoint information for ValidateAbml</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("validate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateAbml_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Behavior",
+            "Post",
+            "validate",
+            _ValidateAbml_Info));
+
+    /// <summary>Returns request schema for ValidateAbml</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("validate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateAbml_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Behavior",
+            "Post",
+            "validate",
+            "request-schema",
+            _ValidateAbml_RequestSchema));
+
+    /// <summary>Returns response schema for ValidateAbml</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("validate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateAbml_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Behavior",
+            "Post",
+            "validate",
+            "response-schema",
+            _ValidateAbml_ResponseSchema));
+
+    /// <summary>Returns full schema for ValidateAbml</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("validate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateAbml_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Behavior",
+            "Post",
+            "validate",
+            _ValidateAbml_Info,
+            _ValidateAbml_RequestSchema,
+            _ValidateAbml_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetCachedBehavior
+
+    private static readonly string _GetCachedBehavior_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetCachedBehaviorRequest",
+  "$defs": {
+    "GetCachedBehaviorRequest": {
+      "type": "object",
+      "description": "Request to get a cached compiled behavior",
+      "required": [
+        "behaviorId"
+      ],
+      "properties": {
+        "behaviorId": {
+          "type": "string",
+          "description": "Unique identifier for the cached behavior"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetCachedBehavior_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CachedBehaviorResponse",
+  "$defs": {
+    "CachedBehaviorResponse": {
+      "type": "object",
+      "required": [
+        "behavior_id",
+        "compiled_behavior"
+      ],
+      "properties": {
+        "behavior_id": {
+          "type": "string",
+          "description": "Unique identifier for the cached behavior"
+        },
+        "compiled_behavior": {
+          "$ref": "#/$defs/CompiledBehavior"
+        },
+        "cache_timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the behavior was cached"
+        },
+        "cache_hit": {
+          "type": "boolean",
+          "description": "Whether this was a cache hit or miss"
+        }
+      }
+    },
+    "CompiledBehavior": {
+      "type": "object",
+      "required": [
+        "behavior_tree",
+        "context_schema"
+      ],
+      "properties": {
+        "behavior_tree": {
+          "type": "object",
+          "description": "Compiled executable behavior tree structure"
+        },
+        "context_schema": {
+          "type": "object",
+          "description": "Schema defining required context variables"
+        },
+        "service_dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of required services for this behavior"
+        },
+        "goap_goals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GoapGoal"
+          },
+          "description": "GOAP goals extracted from the behavior"
+        },
+        "execution_metadata": {
+          "type": "object",
+          "properties": {
+            "estimated_duration": {
+              "type": "integer",
+              "description": "Estimated execution time in seconds"
+            },
+            "resource_requirements": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number"
+              }
+            },
+            "interrupt_conditions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "GoapGoal": {
+      "type": "object",
+      "required": [
+        "name",
+        "conditions",
+        "priority"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the goal",
+          "example": "satisfy_hunger"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the goal"
+        },
+        "conditions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "World state conditions that satisfy this goal",
+          "example": {
+            "hunger_level": 0.0
+          }
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Priority of this goal relative to others"
+        },
+        "preconditions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "World state conditions required to pursue this goal"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetCachedBehavior_Info = """
+{
+  "summary": "Get cached compiled behavior",
+  "description": "Retrieves a previously compiled behavior from the cache.\nUsed for performance optimization in high-frequency behavior execution.\n",
+  "tags": [
+    "Cache"
+  ],
+  "deprecated": false,
+  "operationId": "GetCachedBehavior"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetCachedBehavior</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("cache/get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCachedBehavior_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Behavior",
+            "Post",
+            "cache/get",
+            _GetCachedBehavior_Info));
+
+    /// <summary>Returns request schema for GetCachedBehavior</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("cache/get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCachedBehavior_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Behavior",
+            "Post",
+            "cache/get",
+            "request-schema",
+            _GetCachedBehavior_RequestSchema));
+
+    /// <summary>Returns response schema for GetCachedBehavior</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("cache/get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCachedBehavior_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Behavior",
+            "Post",
+            "cache/get",
+            "response-schema",
+            _GetCachedBehavior_ResponseSchema));
+
+    /// <summary>Returns full schema for GetCachedBehavior</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("cache/get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCachedBehavior_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Behavior",
+            "Post",
+            "cache/get",
+            _GetCachedBehavior_Info,
+            _GetCachedBehavior_RequestSchema,
+            _GetCachedBehavior_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for InvalidateCachedBehavior
+
+    private static readonly string _InvalidateCachedBehavior_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/InvalidateCacheRequest",
+  "$defs": {
+    "InvalidateCacheRequest": {
+      "type": "object",
+      "description": "Request to invalidate a cached behavior",
+      "required": [
+        "behaviorId"
+      ],
+      "properties": {
+        "behaviorId": {
+          "type": "string",
+          "description": "Unique identifier for the cached behavior to invalidate"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _InvalidateCachedBehavior_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _InvalidateCachedBehavior_Info = """
+{
+  "summary": "Invalidate cached behavior",
+  "description": "Removes a behavior from the cache, forcing recompilation on next access.\nUsed when behavior definitions are updated.\n",
+  "tags": [
+    "Cache"
+  ],
+  "deprecated": false,
+  "operationId": "InvalidateCachedBehavior"
+}
+""";
+
+    /// <summary>Returns endpoint information for InvalidateCachedBehavior</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("cache/invalidate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> InvalidateCachedBehavior_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Behavior",
+            "Post",
+            "cache/invalidate",
+            _InvalidateCachedBehavior_Info));
+
+    /// <summary>Returns request schema for InvalidateCachedBehavior</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("cache/invalidate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> InvalidateCachedBehavior_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Behavior",
+            "Post",
+            "cache/invalidate",
+            "request-schema",
+            _InvalidateCachedBehavior_RequestSchema));
+
+    /// <summary>Returns response schema for InvalidateCachedBehavior</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("cache/invalidate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> InvalidateCachedBehavior_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Behavior",
+            "Post",
+            "cache/invalidate",
+            "response-schema",
+            _InvalidateCachedBehavior_ResponseSchema));
+
+    /// <summary>Returns full schema for InvalidateCachedBehavior</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("cache/invalidate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> InvalidateCachedBehavior_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Behavior",
+            "Post",
+            "cache/invalidate",
+            _InvalidateCachedBehavior_Info,
+            _InvalidateCachedBehavior_RequestSchema,
+            _InvalidateCachedBehavior_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ResolveContextVariables
+
+    private static readonly string _ResolveContextVariables_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ResolveContextRequest",
+  "$defs": {
+    "ResolveContextRequest": {
+      "type": "object",
+      "required": [
+        "context_expression",
+        "character_context"
+      ],
+      "properties": {
+        "context_expression": {
+          "type": "string",
+          "description": "Context variable expression to resolve",
+          "example": "${npc.stats.energy > 0.5 && world.time.hour < 18}"
+        },
+        "character_context": {
+          "$ref": "#/$defs/CharacterContext"
+        }
+      }
+    },
+    "CharacterContext": {
+      "type": "object",
+      "properties": {
+        "npc_id": {
+          "type": "string",
+          "description": "Unique identifier for the NPC",
+          "example": "npc_12345"
+        },
+        "culture": {
+          "type": "string",
+          "description": "Cultural background identifier",
+          "example": "european_medieval"
+        },
+        "profession": {
+          "type": "string",
+          "description": "Character profession identifier",
+          "example": "blacksmith"
+        },
+        "stats": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Character statistics and attributes",
+          "example": {
+            "energy": 0.8,
+            "health": 1.0,
+            "hunger": 0.3
+          }
+        },
+        "skills": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Character skill levels",
+          "example": {
+            "blacksmithing": 85,
+            "trading": 42
+          }
+        },
+        "location": {
+          "type": "object",
+          "properties": {
+            "current": {
+              "type": "string"
+            },
+            "region": {
+              "type": "string"
+            },
+            "coordinates": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "z": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "relationships": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Relationship values with other characters"
+        },
+        "world_state": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Relevant world state information"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ResolveContextVariables_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ResolveContextResponse",
+  "$defs": {
+    "ResolveContextResponse": {
+      "type": "object",
+      "required": [
+        "resolved_value"
+      ],
+      "properties": {
+        "resolved_value": {
+          "description": "The resolved value of the context expression"
+        },
+        "resolved_type": {
+          "type": "string",
+          "enum": [
+            "boolean",
+            "string",
+            "number",
+            "object",
+            "array"
+          ],
+          "description": "Type of the resolved value"
+        },
+        "context_variables_used": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of context variables referenced in the expression"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ResolveContextVariables_Info = """
+{
+  "summary": "Resolve context variables",
+  "description": "Resolves context variables in ABML definitions against character and world state.\nUsed for dynamic behavior adaptation based on current game state.\n",
+  "tags": [
+    "Context"
+  ],
+  "deprecated": false,
+  "operationId": "ResolveContextVariables"
+}
+""";
+
+    /// <summary>Returns endpoint information for ResolveContextVariables</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("context/resolve/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ResolveContextVariables_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Behavior",
+            "Post",
+            "context/resolve",
+            _ResolveContextVariables_Info));
+
+    /// <summary>Returns request schema for ResolveContextVariables</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("context/resolve/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ResolveContextVariables_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Behavior",
+            "Post",
+            "context/resolve",
+            "request-schema",
+            _ResolveContextVariables_RequestSchema));
+
+    /// <summary>Returns response schema for ResolveContextVariables</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("context/resolve/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ResolveContextVariables_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Behavior",
+            "Post",
+            "context/resolve",
+            "response-schema",
+            _ResolveContextVariables_ResponseSchema));
+
+    /// <summary>Returns full schema for ResolveContextVariables</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("context/resolve/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ResolveContextVariables_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Behavior",
+            "Post",
+            "context/resolve",
+            _ResolveContextVariables_Info,
+            _ResolveContextVariables_RequestSchema,
+            _ResolveContextVariables_ResponseSchema));
+
+    #endregion
+
 }
 
 

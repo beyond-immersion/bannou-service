@@ -778,6 +778,3730 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         return ConvertToActionResult(statusCode, result);
     }
 
+
+    #region Meta Endpoints for GetInfrastructureHealth
+
+    private static readonly string _GetInfrastructureHealth_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/InfrastructureHealthRequest",
+  "$defs": {
+    "InfrastructureHealthRequest": {
+      "type": "object",
+      "description": "Request to check infrastructure health (empty body allowed)",
+      "properties": {
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional filter for specific components (redis, rabbitmq, placement)",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetInfrastructureHealth_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/InfrastructureHealthResponse",
+  "$defs": {
+    "InfrastructureHealthResponse": {
+      "type": "object",
+      "required": [
+        "healthy",
+        "timestamp",
+        "components"
+      ],
+      "properties": {
+        "healthy": {
+          "type": "boolean",
+          "description": "Overall infrastructure health status"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When health check was performed"
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ComponentHealth"
+          },
+          "description": "Individual component health status"
+        }
+      }
+    },
+    "ComponentHealth": {
+      "type": "object",
+      "required": [
+        "name",
+        "status",
+        "lastSeen"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Component name (redis, rabbitmq, placement)"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "healthy",
+            "degraded",
+            "unavailable"
+          ],
+          "description": "Component health status"
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last successful connection time"
+        },
+        "message": {
+          "type": "string",
+          "description": "Additional status information"
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Component-specific metrics (e.g., ping time)"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetInfrastructureHealth_Info = """
+{
+  "summary": "Check infrastructure component health",
+  "description": "Validates connectivity and health of core infrastructure components:\n- Redis (direct connection via StackExchange.Redis)\ n- RabbitMQ (direct connection via RabbitMQ.Client)\n- Dapr Placement service\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "GetInfrastructureHealth"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetInfrastructureHealth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/health/infrastructure/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetInfrastructureHealth_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/health/infrastructure",
+            _GetInfrastructureHealth_Info));
+
+    /// <summary>Returns request schema for GetInfrastructureHealth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/health/infrastructure/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetInfrastructureHealth_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/health/infrastructure",
+            "request-schema",
+            _GetInfrastructureHealth_RequestSchema));
+
+    /// <summary>Returns response schema for GetInfrastructureHealth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/health/infrastructure/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetInfrastructureHealth_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/health/infrastructure",
+            "response-schema",
+            _GetInfrastructureHealth_ResponseSchema));
+
+    /// <summary>Returns full schema for GetInfrastructureHealth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/health/infrastructure/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetInfrastructureHealth_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/health/infrastructure",
+            _GetInfrastructureHealth_Info,
+            _GetInfrastructureHealth_RequestSchema,
+            _GetInfrastructureHealth_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetServicesHealth
+
+    private static readonly string _GetServicesHealth_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ServiceHealthRequest",
+  "$defs": {
+    "ServiceHealthRequest": {
+      "type": "object",
+      "description": "Request to get service health status (empty body allowed)",
+      "properties": {
+        "serviceFilter": {
+          "type": "string",
+          "description": "Optional filter by service name",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetServicesHealth_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ServiceHealthReport",
+  "$defs": {
+    "ServiceHealthReport": {
+      "type": "object",
+      "required": [
+        "timestamp",
+        "totalServices",
+        "healthPercentage",
+        "healthyServices",
+        "unhealthyServices"
+      ],
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When report was generated"
+        },
+        "totalServices": {
+          "type": "integer",
+          "description": "Total number of services"
+        },
+        "healthPercentage": {
+          "type": "number",
+          "format": "float",
+          "description": "Percentage of healthy services (0-100)"
+        },
+        "healthyServices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ServiceHealthStatus"
+          },
+          "description": "Services with recent heartbeats"
+        },
+        "unhealthyServices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ServiceHealthStatus"
+          },
+          "description": "Services with expired heartbeats"
+        }
+      }
+    },
+    "ServiceHealthStatus": {
+      "type": "object",
+      "description": "Service health status from heartbeat monitoring.\nUses ServiceHeartbeatEvent schema from common-events.yaml.\n",
+      "required": [
+        "serviceId",
+        "appId",
+        "status",
+        "lastSeen"
+      ],
+      "properties": {
+        "serviceId": {
+          "type": "string",
+          "description": "Service ID (e.g., \"behavior\", \"accounts\")"
+        },
+        "appId": {
+          "type": "string",
+          "description": "Dapr app-id (e.g., \"bannou\", \"npc-omega-01\")"
+        },
+        "status": {
+          "type": "string",
+          "description": "Service status from heartbeat"
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last heartbeat timestamp"
+        },
+        "capacity": {
+          "type": "object",
+          "description": "Service capacity from heartbeat",
+          "properties": {
+            "maxConnections": {
+              "type": "integer"
+            },
+            "currentConnections": {
+              "type": "integer"
+            },
+            "cpuUsage": {
+              "type": "number",
+              "format": "float"
+            },
+            "memoryUsage": {
+              "type": "number",
+              "format": "float"
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Additional service metadata"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetServicesHealth_Info = """
+{
+  "summary": "Get health status of all services",
+  "description": "Retrieves health information from all services via Redis heartbeat monitoring.\nUses existing ServiceHeartbeatEvent schema from common-events.yaml.\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "GetServicesHealth"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetServicesHealth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/health/services/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetServicesHealth_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/health/services",
+            _GetServicesHealth_Info));
+
+    /// <summary>Returns request schema for GetServicesHealth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/health/services/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetServicesHealth_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/health/services",
+            "request-schema",
+            _GetServicesHealth_RequestSchema));
+
+    /// <summary>Returns response schema for GetServicesHealth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/health/services/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetServicesHealth_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/health/services",
+            "response-schema",
+            _GetServicesHealth_ResponseSchema));
+
+    /// <summary>Returns full schema for GetServicesHealth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/health/services/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetServicesHealth_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/health/services",
+            _GetServicesHealth_Info,
+            _GetServicesHealth_RequestSchema,
+            _GetServicesHealth_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RestartService
+
+    private static readonly string _RestartService_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ServiceRestartRequest",
+  "$defs": {
+    "ServiceRestartRequest": {
+      "type": "object",
+      "required": [
+        "serviceName"
+      ],
+      "properties": {
+        "serviceName": {
+          "type": "string",
+          "description": "Name of service to restart"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Optional environment variable updates"
+        },
+        "force": {
+          "type": "boolean",
+          "description": "Force restart even if healthy (default false)"
+        },
+        "timeout": {
+          "type": "integer",
+          "description": "Timeout for service to become healthy (seconds, default 120)"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _RestartService_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ServiceRestartResult",
+  "$defs": {
+    "ServiceRestartResult": {
+      "type": "object",
+      "required": [
+        "success",
+        "serviceName",
+        "duration"
+      ],
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Restart success status"
+        },
+        "serviceName": {
+          "type": "string",
+          "description": "Service that was restarted"
+        },
+        "duration": {
+          "type": "string",
+          "description": "Time taken to restart and become healthy"
+        },
+        "previousStatus": {
+          "type": "string",
+          "description": "Service status before restart"
+        },
+        "currentStatus": {
+          "type": "string",
+          "description": "Service status after restart"
+        },
+        "message": {
+          "type": "string",
+          "description": "Restart result message"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _RestartService_Info = """
+{
+  "summary": "Restart service with optional configuration",
+  "description": "Performs intelligent service restart based on health metrics.\nOnly restarts if truly necessary (e.g., 5+ minute degradation).\ n\nSupports optional environment variable updates during restart.\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "RestartService"
+}
+""";
+
+    /// <summary>Returns endpoint information for RestartService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/services/restart/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestartService_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/services/restart",
+            _RestartService_Info));
+
+    /// <summary>Returns request schema for RestartService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/services/restart/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestartService_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/services/restart",
+            "request-schema",
+            _RestartService_RequestSchema));
+
+    /// <summary>Returns response schema for RestartService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/services/restart/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestartService_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/services/restart",
+            "response-schema",
+            _RestartService_ResponseSchema));
+
+    /// <summary>Returns full schema for RestartService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/services/restart/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestartService_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/services/restart",
+            _RestartService_Info,
+            _RestartService_RequestSchema,
+            _RestartService_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ShouldRestartService
+
+    private static readonly string _ShouldRestartService_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ShouldRestartServiceRequest",
+  "$defs": {
+    "ShouldRestartServiceRequest": {
+      "type": "object",
+      "required": [
+        "serviceName"
+      ],
+      "properties": {
+        "serviceName": {
+          "type": "string",
+          "description": "Name of service to evaluate"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ShouldRestartService_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/RestartRecommendation",
+  "$defs": {
+    "RestartRecommendation": {
+      "type": "object",
+      "required": [
+        "shouldRestart",
+        "serviceName",
+        "currentStatus",
+        "reason"
+      ],
+      "properties": {
+        "shouldRestart": {
+          "type": "boolean",
+          "description": "Whether restart is recommended"
+        },
+        "serviceName": {
+          "type": "string",
+          "description": "Service being evaluated"
+        },
+        "currentStatus": {
+          "type": "string",
+          "description": "Current service health status"
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last heartbeat timestamp"
+        },
+        "degradedDuration": {
+          "type": "string",
+          "description": "How long service has been degraded"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Explanation for recommendation"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ShouldRestartService_Info = """
+{
+  "summary": "Check if service needs restart",
+  "description": "Evaluates service health and determines if restart is necessary.\n\nRestart logic:\n- Healthy: No restart needed\n- Degraded < 5 min: No restart needed\n- Degraded > 5 min: Restart recommended\n- Unavailable: Restart needed\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "ShouldRestartService"
+}
+""";
+
+    /// <summary>Returns endpoint information for ShouldRestartService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/services/should-restart/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ShouldRestartService_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/services/should-restart",
+            _ShouldRestartService_Info));
+
+    /// <summary>Returns request schema for ShouldRestartService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/services/should-restart/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ShouldRestartService_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/services/should-restart",
+            "request-schema",
+            _ShouldRestartService_RequestSchema));
+
+    /// <summary>Returns response schema for ShouldRestartService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/services/should-restart/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ShouldRestartService_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/services/should-restart",
+            "response-schema",
+            _ShouldRestartService_ResponseSchema));
+
+    /// <summary>Returns full schema for ShouldRestartService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/services/should-restart/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ShouldRestartService_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/services/should-restart",
+            _ShouldRestartService_Info,
+            _ShouldRestartService_RequestSchema,
+            _ShouldRestartService_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetBackends
+
+    private static readonly string _GetBackends_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ListBackendsRequest",
+  "$defs": {
+    "ListBackendsRequest": {
+      "type": "object",
+      "description": "Request to list available backends (empty body allowed)",
+      "properties": {
+        "refresh": {
+          "type": "boolean",
+          "default": false,
+          "description": "Force refresh detection instead of using cached results"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetBackends_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/BackendsResponse",
+  "$defs": {
+    "BackendsResponse": {
+      "type": "object",
+      "required": [
+        "timestamp",
+        "backends",
+        "recommended"
+      ],
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When detection was performed"
+        },
+        "backends": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BackendInfo"
+          },
+          "description": "All detected backends with status"
+        },
+        "recommended": {
+          "$ref": "#/$defs/BackendType"
+        },
+        "activeBackend": {
+          "$ref": "#/$defs/BackendType",
+          "description": "Currently active backend (if environment deployed)"
+        }
+      }
+    },
+    "BackendInfo": {
+      "type": "object",
+      "required": [
+        "type",
+        "available",
+        "priority"
+      ],
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/BackendType"
+        },
+        "available": {
+          "type": "boolean",
+          "description": "Whether this backend is currently available"
+        },
+        "priority": {
+          "type": "integer",
+          "description": "Selection priority (1 = highest)"
+        },
+        "version": {
+          "type": "string",
+          "description": "Backend version (e.g., \"1.28.0\" for Docker)"
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "Backend API endpoint (if applicable)"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Supported capabilities for this backend:\n- live-topology: Can change service distribution without restart\n- scaling: Can scale services horizontally\n- rolling-update: Supports rolling deployments\n- secrets: Native secrets management\n- volumes: Persistent volume support\n- networks: Custom network creation\n"
+        },
+        "error": {
+          "type": "string",
+          "description": "Error message if detection failed"
+        }
+      }
+    },
+    "BackendType": {
+      "type": "string",
+      "enum": [
+        "kubernetes",
+        "portainer",
+        "swarm",
+        "compose"
+      ],
+      "description": "Container orchestration backend type.\nPriority order: kubernetes > portainer > swarm > compose\n"
+    }
+  }
+}
+""";
+
+    private static readonly string _GetBackends_Info = """
+{
+  "summary": "Detect available container orchestration backends",
+  "description": "Detects which container orchestration backends are available on this system.\nReturns availability status and capabilities for each backend.\n\n**Priority Order** (for automatic selection):\n1. Kubernetes - Full cluster orchestration with operators\n2. Portainer - API abstraction over Compose/Swarm with web UI\n3. Docker Swarm - Native Docker cluster orchestration\n4. Docker Compose - Single-host container management\n\nDetection methods:\n- Kubernetes: Check for kubectl and cluster connectivity\n- Portainer: Check for Portainer API endpoint\n- Swarm: Check `docker info` for swarm mode\n- Compose: Check for docker compose v2 availability\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "GetBackends"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetBackends</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/backends/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetBackends_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/backends/list",
+            _GetBackends_Info));
+
+    /// <summary>Returns request schema for GetBackends</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/backends/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetBackends_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/backends/list",
+            "request-schema",
+            _GetBackends_RequestSchema));
+
+    /// <summary>Returns response schema for GetBackends</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/backends/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetBackends_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/backends/list",
+            "response-schema",
+            _GetBackends_ResponseSchema));
+
+    /// <summary>Returns full schema for GetBackends</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/backends/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetBackends_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/backends/list",
+            _GetBackends_Info,
+            _GetBackends_RequestSchema,
+            _GetBackends_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetPresets
+
+    private static readonly string _GetPresets_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ListPresetsRequest",
+  "$defs": {
+    "ListPresetsRequest": {
+      "type": "object",
+      "description": "Request to list available presets (empty body allowed)",
+      "properties": {
+        "category": {
+          "type": "string",
+          "enum": [
+            "development",
+            "testing",
+            "production",
+            "custom"
+          ],
+          "description": "Optional filter by category",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetPresets_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/PresetsResponse",
+  "$defs": {
+    "PresetsResponse": {
+      "type": "object",
+      "required": [
+        "presets"
+      ],
+      "properties": {
+        "presets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeploymentPreset"
+          },
+          "description": "Available deployment presets"
+        },
+        "activePreset": {
+          "type": "string",
+          "description": "Currently active preset name (if any)"
+        }
+      }
+    },
+    "DeploymentPreset": {
+      "type": "object",
+      "required": [
+        "name",
+        "description",
+        "topology"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique preset identifier (e.g., \"local-development\")"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable preset description"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "development",
+            "testing",
+            "production",
+            "custom"
+          ],
+          "description": "Preset category"
+        },
+        "topology": {
+          "$ref": "#/$defs/ServiceTopology"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Default environment variables for this preset"
+        },
+        "requiredBackends": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BackendType"
+          },
+          "description": "Backends that support this preset (empty = all)"
+        },
+        "builtIn": {
+          "type": "boolean",
+          "description": "Whether this is a built-in preset"
+        },
+        "filePath": {
+          "type": "string",
+          "description": "Path to preset configuration file"
+        }
+      }
+    },
+    "ServiceTopology": {
+      "type": "object",
+      "required": [
+        "nodes"
+      ],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TopologyNode"
+          },
+          "description": "Container/pod definitions with service assignments"
+        },
+        "infrastructure": {
+          "$ref": "#/$defs/InfrastructureConfig",
+          "description": "Infrastructure service configuration"
+        }
+      }
+    },
+    "TopologyNode": {
+      "type": "object",
+      "required": [
+        "name",
+        "services"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Node/container name (e.g., \"bannou-main\", \"bannou-auth\")"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Services enabled on this node.\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"accounts\", \"auth\", \"permissions\"]\n"
+        },
+        "replicas": {
+          "type": "integer",
+          "default": 1,
+          "description": "Number of replicas for this node"
+        },
+        "resources": {
+          "$ref": "#/$defs/ResourceLimits"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Node-specific environment overrides"
+        },
+        "daprEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to attach Dapr sidecar"
+        },
+        "daprAppId": {
+          "type": "string",
+          "description": "Dapr app-id override (default derives from node name)"
+        }
+      }
+    },
+    "ResourceLimits": {
+      "type": "object",
+      "properties": {
+        "cpuLimit": {
+          "type": "string",
+          "description": "CPU limit (e.g., \"0.5\", \"2\")"
+        },
+        "memoryLimit": {
+          "type": "string",
+          "description": "Memory limit (e.g., \"512m\", \"2g\")"
+        },
+        "cpuRequest": {
+          "type": "string",
+          "description": "CPU request (Kubernetes)"
+        },
+        "memoryRequest": {
+          "type": "string",
+          "description": "Memory request (Kubernetes)"
+        }
+      }
+    },
+    "InfrastructureConfig": {
+      "type": "object",
+      "properties": {
+        "redis": {
+          "$ref": "#/$defs/InfraServiceConfig"
+        },
+        "rabbitmq": {
+          "$ref": "#/$defs/InfraServiceConfig"
+        },
+        "mysql": {
+          "$ref": "#/$defs/InfraServiceConfig"
+        },
+        "placement": {
+          "$ref": "#/$defs/InfraServiceConfig",
+          "description": "Dapr placement service"
+        },
+        "ingress": {
+          "$ref": "#/$defs/IngressConfig"
+        }
+      }
+    },
+    "InfraServiceConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "image": {
+          "type": "string",
+          "description": "Docker image override"
+        },
+        "resources": {
+          "$ref": "#/$defs/ResourceLimits"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "volumes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Volume mounts"
+        }
+      }
+    },
+    "IngressConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "openresty",
+            "nginx",
+            "traefik",
+            "none"
+          ],
+          "default": "openresty"
+        },
+        "ports": {
+          "type": "object",
+          "properties": {
+            "http": {
+              "type": "integer",
+              "default": 80
+            },
+            "https": {
+              "type": "integer",
+              "default": 443
+            }
+          }
+        },
+        "ssl": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "BackendType": {
+      "type": "string",
+      "enum": [
+        "kubernetes",
+        "portainer",
+        "swarm",
+        "compose"
+      ],
+      "description": "Container orchestration backend type.\ nPriority order: kubernetes > portainer > swarm > compose\n"
+    }
+  }
+}
+""";
+
+    private static readonly string _GetPresets_Info = """
+{
+  "summary": "List available deployment presets",
+  "description": "Returns all available deployment presets from the orchestrator's preset directory.\nPresets define service combinations and configuration for specific use cases.\n\nBuilt-in presets:\n- `local-development`: All services in single container with Dapr\ n- `local-testing`: Test environment with infrastructure services\n- `integration-http`: HTTP integration testing preset\n- `integration-edge`: WebSocket/edge testing preset\n- `split-auth-accounts`: Auth and Accounts in separate containers\n- `distributed-npc`: NPC processing distributed across nodes\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "GetPresets"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetPresets</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/presets/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetPresets_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/presets/list",
+            _GetPresets_Info));
+
+    /// <summary>Returns request schema for GetPresets</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/presets/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetPresets_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/presets/list",
+            "request-schema",
+            _GetPresets_RequestSchema));
+
+    /// <summary>Returns response schema for GetPresets</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/presets/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetPresets_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/presets/list",
+            "response-schema",
+            _GetPresets_ResponseSchema));
+
+    /// <summary>Returns full schema for GetPresets</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/presets/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetPresets_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/presets/list",
+            _GetPresets_Info,
+            _GetPresets_RequestSchema,
+            _GetPresets_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for Deploy
+
+    private static readonly string _Deploy_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/DeployRequest",
+  "$defs": {
+    "DeployRequest": {
+      "type": "object",
+      "properties": {
+        "preset": {
+          "type": "string",
+          "description": "Preset name to deploy (mutually exclusive with topology)"
+        },
+        "topology": {
+          "$ref": "#/$defs/ServiceTopology",
+          "description": "Custom topology (mutually exclusive with preset)"
+        },
+        "backend": {
+          "$ref": "#/$defs/BackendType",
+          "description": "Specific backend to use (fails if unavailable)"
+        },
+        "mode": {
+          "$ref": "#/$defs/DeploymentMode",
+          "default": "graceful"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Environment variable overrides"
+        },
+        "timeout": {
+          "type": "integer",
+          "default": 300,
+          "description": "Deployment timeout in seconds"
+        },
+        "waitForHealthy": {
+          "type": "boolean",
+          "default": true,
+          "description": "Wait for all services to report healthy"
+        }
+      }
+    },
+    "ServiceTopology": {
+      "type": "object",
+      "required": [
+        "nodes"
+      ],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TopologyNode"
+          },
+          "description": "Container/pod definitions with service assignments"
+        },
+        "infrastructure": {
+          "$ref": "#/$defs/InfrastructureConfig",
+          "description": "Infrastructure service configuration"
+        }
+      }
+    },
+    "TopologyNode": {
+      "type": "object",
+      "required": [
+        "name",
+        "services"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Node/container name (e.g., \"bannou-main\", \"bannou-auth\")"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Services enabled on this node.\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"accounts\", \"auth\", \"permissions\"]\n"
+        },
+        "replicas": {
+          "type": "integer",
+          "default": 1,
+          "description": "Number of replicas for this node"
+        },
+        "resources": {
+          "$ref": "#/$defs/ResourceLimits"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Node-specific environment overrides"
+        },
+        "daprEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to attach Dapr sidecar"
+        },
+        "daprAppId": {
+          "type": "string",
+          "description": "Dapr app-id override (default derives from node name)"
+        }
+      }
+    },
+    "ResourceLimits": {
+      "type": "object",
+      "properties": {
+        "cpuLimit": {
+          "type": "string",
+          "description": "CPU limit (e.g., \"0.5\", \"2\")"
+        },
+        "memoryLimit": {
+          "type": "string",
+          "description": "Memory limit (e.g., \"512m\", \"2g\")"
+        },
+        "cpuRequest": {
+          "type": "string",
+          "description": "CPU request (Kubernetes)"
+        },
+        "memoryRequest": {
+          "type": "string",
+          "description": "Memory request (Kubernetes)"
+        }
+      }
+    },
+    "InfrastructureConfig": {
+      "type": "object",
+      "properties": {
+        "redis": {
+          "$ref": "#/$defs/InfraServiceConfig"
+        },
+        "rabbitmq": {
+          "$ref": "#/$defs/InfraServiceConfig"
+        },
+        "mysql": {
+          "$ref": "#/$defs/InfraServiceConfig"
+        },
+        "placement": {
+          "$ref": "#/$defs/InfraServiceConfig",
+          "description": "Dapr placement service"
+        },
+        "ingress": {
+          "$ref": "#/$defs/IngressConfig"
+        }
+      }
+    },
+    "InfraServiceConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "image": {
+          "type": "string",
+          "description": "Docker image override"
+        },
+        "resources": {
+          "$ref": "#/$defs/ResourceLimits"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "volumes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Volume mounts"
+        }
+      }
+    },
+    "IngressConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "openresty",
+            "nginx",
+            "traefik",
+            "none"
+          ],
+          "default": "openresty"
+        },
+        "ports": {
+          "type": "object",
+          "properties": {
+            "http": {
+              "type": "integer",
+              "default": 80
+            },
+            "https": {
+              "type": "integer",
+              "default": 443
+            }
+          }
+        },
+        "ssl": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "BackendType": {
+      "type": "string",
+      "enum": [
+        "kubernetes",
+        "portainer",
+        "swarm",
+        "compose"
+      ],
+      "description": "Container orchestration backend type.\nPriority order: kubernetes > portainer > swarm > compose\n"
+    },
+    "DeploymentMode": {
+      "type": "string",
+      "enum": [
+        "graceful",
+        "force",
+        "clean"
+      ],
+      "description": "Deployment mode:\n- graceful: Wait for connections to drain\ n- force: Apply immediately\n- clean: Tear down and rebuild\n"
+    }
+  }
+}
+""";
+
+    private static readonly string _Deploy_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/DeployResponse",
+  "$defs": {
+    "DeployResponse": {
+      "type": "object",
+      "required": [
+        "success",
+        "deploymentId",
+        "backend",
+        "duration"
+      ],
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Deployment succeeded"
+        },
+        "deploymentId": {
+          "type": "string",
+          "description": "Unique deployment identifier for tracking"
+        },
+        "backend": {
+          "$ref": "#/$defs/BackendType"
+        },
+        "preset": {
+          "type": "string",
+          "description": "Preset used (if applicable)"
+        },
+        "duration": {
+          "type": "string",
+          "description": "Time taken to deploy"
+        },
+        "topology": {
+          "$ref": "#/$defs/ServiceTopology",
+          "description": "Final applied topology"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeployedService"
+          },
+          "description": "Status of deployed services"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Non-fatal warnings during deployment"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable deployment summary"
+        }
+      }
+    },
+    "BackendType": {
+      "type": "string",
+      "enum": [
+        "kubernetes",
+        "portainer",
+        "swarm",
+        "compose"
+      ],
+      "description": "Container orchestration backend type.\nPriority order: kubernetes > portainer > swarm > compose\n"
+    },
+    "ServiceTopology": {
+      "type": "object",
+      "required": [
+        "nodes"
+      ],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TopologyNode"
+          },
+          "description": "Container/pod definitions with service assignments"
+        },
+        "infrastructure": {
+          "$ref": "#/$defs/InfrastructureConfig",
+          "description": "Infrastructure service configuration"
+        }
+      }
+    },
+    "TopologyNode": {
+      "type": "object",
+      "required": [
+        "name",
+        "services"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Node/container name (e.g., \"bannou-main\", \"bannou-auth\")"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Services enabled on this node.\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"accounts\", \"auth\", \"permissions\"]\n"
+        },
+        "replicas": {
+          "type": "integer",
+          "default": 1,
+          "description": "Number of replicas for this node"
+        },
+        "resources": {
+          "$ref": "#/$defs/ResourceLimits"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Node-specific environment overrides"
+        },
+        "daprEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to attach Dapr sidecar"
+        },
+        "daprAppId": {
+          "type": "string",
+          "description": "Dapr app-id override (default derives from node name)"
+        }
+      }
+    },
+    "ResourceLimits": {
+      "type": "object",
+      "properties": {
+        "cpuLimit": {
+          "type": "string",
+          "description": "CPU limit (e.g., \"0.5\", \"2\")"
+        },
+        "memoryLimit": {
+          "type": "string",
+          "description": "Memory limit (e.g., \"512m\", \"2g\")"
+        },
+        "cpuRequest": {
+          "type": "string",
+          "description": "CPU request (Kubernetes)"
+        },
+        "memoryRequest": {
+          "type": "string",
+          "description": "Memory request (Kubernetes)"
+        }
+      }
+    },
+    "InfrastructureConfig": {
+      "type": "object",
+      "properties": {
+        "redis": {
+          "$ref": "#/$defs/InfraServiceConfig"
+        },
+        "rabbitmq": {
+          "$ref": "#/$defs/InfraServiceConfig"
+        },
+        "mysql": {
+          "$ref": "#/$defs/InfraServiceConfig"
+        },
+        "placement": {
+          "$ref": "#/$defs/InfraServiceConfig",
+          "description": "Dapr placement service"
+        },
+        "ingress": {
+          "$ref": "#/$defs/IngressConfig"
+        }
+      }
+    },
+    "InfraServiceConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "image": {
+          "type": "string",
+          "description": "Docker image override"
+        },
+        "resources": {
+          "$ref": "#/$defs/ResourceLimits"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "volumes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Volume mounts"
+        }
+      }
+    },
+    "IngressConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "openresty",
+            "nginx",
+            "traefik",
+            "none"
+          ],
+          "default": "openresty"
+        },
+        "ports": {
+          "type": "object",
+          "properties": {
+            "http": {
+              "type": "integer",
+              "default": 80
+            },
+            "https": {
+              "type": "integer",
+              "default": 443
+            }
+          }
+        },
+        "ssl": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "DeployedService": {
+      "type": "object",
+      "required": [
+        "name",
+        "status",
+        "node"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Service name"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "starting",
+            "running",
+            "healthy",
+            "unhealthy",
+            "stopped"
+          ]
+        },
+        "node": {
+          "type": "string",
+          "description": "Node/container hosting this service"
+        },
+        "containerId": {
+          "type": "string",
+          "description": "Container ID (Compose/Swarm)"
+        },
+        "podName": {
+          "type": "string",
+          "description": "Pod name (Kubernetes)"
+        },
+        "endpoints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Exposed endpoints"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _Deploy_Info = """
+{
+  "summary": "Deploy or update an environment",
+  "description": "Deploys a complete environment using a preset or custom configuration.\nSupports graceful transitions, forced deployments, and clean rebuilds.\n\n**Deployment Modes**:\n- `graceful`: Wait for existing connections to drain before changing topology\ n- `force`: Immediately apply changes (may interrupt active connections)\n- `clean`: Tear down completely and rebuild from scratch\n\n**Backend Selection**:\n- If `backend` not specified, uses highest-priority available backend\ n- If `backend` specified but unavailable, returns error (no fallback)\n\n**Live Topology Changes**:\nSupports changing service distribution without full restart:\n- Move auth/accounts to separate container while keeping other services together\n- Scale specific services to additional nodes\n- Update environment variables without restart (where supported)\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "Deploy"
+}
+""";
+
+    /// <summary>Returns endpoint information for Deploy</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/deploy/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Deploy_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/deploy",
+            _Deploy_Info));
+
+    /// <summary>Returns request schema for Deploy</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/deploy/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Deploy_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/deploy",
+            "request-schema",
+            _Deploy_RequestSchema));
+
+    /// <summary>Returns response schema for Deploy</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/deploy/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Deploy_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/deploy",
+            "response-schema",
+            _Deploy_ResponseSchema));
+
+    /// <summary>Returns full schema for Deploy</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/deploy/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Deploy_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/deploy",
+            _Deploy_Info,
+            _Deploy_RequestSchema,
+            _Deploy_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetServiceRouting
+
+    private static readonly string _GetServiceRouting_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetServiceRoutingRequest",
+  "$defs": {
+    "GetServiceRoutingRequest": {
+      "type": "object",
+      "description": "Request to get service routing mappings (empty body allowed)",
+      "properties": {
+        "serviceFilter": {
+          "type": "string",
+          "description": "Optional filter by service name prefix",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetServiceRouting_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ServiceRoutingResponse",
+  "$defs": {
+    "ServiceRoutingResponse": {
+      "type": "object",
+      "required": [
+        "mappings",
+        "defaultAppId",
+        "generatedAt"
+      ],
+      "properties": {
+        "mappings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Map of service names to Dapr app-id routing destinations.\nExample: { \"accounts\": \"bannou\", \"behavior\": \"npc-processing-01\" }\n"
+        },
+        "defaultAppId": {
+          "type": "string",
+          "description": "Default app-id used when no specific mapping exists",
+          "default": "bannou"
+        },
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this routing information was generated"
+        },
+        "totalServices": {
+          "type": "integer",
+          "description": "Total number of services with routing mappings",
+          "minimum": 0
+        },
+        "deploymentId": {
+          "type": "string",
+          "description": "Current deployment identifier (if environment is deployed)",
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetServiceRouting_Info = """
+{
+  "summary": "Get current service-to-app-id routing mappings",
+  "description": "Returns the current service-to-app-id routing mappings used for Dapr service invocation.\nThis is the authoritative source of truth for how services are routed in the current deployment.\n\nIn development, all services route to \"bannou\" by default. In production, services may be\ndistributed across multiple app-ids based on deployment topology.\n\n**Use Cases**:\n- Services querying routing on startup\n- Debugging service communication issues\ n- Monitoring deployment topology\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "GetServiceRouting"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetServiceRouting</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/service-routing/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetServiceRouting_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/service-routing",
+            _GetServiceRouting_Info));
+
+    /// <summary>Returns request schema for GetServiceRouting</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/service-routing/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetServiceRouting_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/service-routing",
+            "request-schema",
+            _GetServiceRouting_RequestSchema));
+
+    /// <summary>Returns response schema for GetServiceRouting</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/service-routing/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetServiceRouting_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/service-routing",
+            "response-schema",
+            _GetServiceRouting_ResponseSchema));
+
+    /// <summary>Returns full schema for GetServiceRouting</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/service-routing/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetServiceRouting_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/service-routing",
+            _GetServiceRouting_Info,
+            _GetServiceRouting_RequestSchema,
+            _GetServiceRouting_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetStatus
+
+    private static readonly string _GetStatus_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetStatusRequest",
+  "$defs": {
+    "GetStatusRequest": {
+      "type": "object",
+      "description": "Request to get environment status (empty body allowed)",
+      "properties": {
+        "includeResources": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include resource usage metrics"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetStatus_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/EnvironmentStatus",
+  "$defs": {
+    "EnvironmentStatus": {
+      "type": "object",
+      "required": [
+        "deployed",
+        "timestamp"
+      ],
+      "properties": {
+        "deployed": {
+          "type": "boolean",
+          "description": "Whether an environment is currently deployed"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "deploymentId": {
+          "type": "string",
+          "description": "Current deployment identifier"
+        },
+        "backend": {
+          "$ref": "#/$defs/BackendType"
+        },
+        "preset": {
+          "type": "string",
+          "description": "Active preset name"
+        },
+        "topology": {
+          "$ref": "#/$defs/ServiceTopology",
+          "description": "Current topology configuration"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeployedService"
+          },
+          "description": "All deployed services with status"
+        },
+        "infrastructure": {
+          "$ref": "#/$defs/InfrastructureHealthResponse",
+          "description": "Infrastructure component health"
+        },
+        "resources": {
+          "$ref": "#/$defs/ResourceUsage",
+          "description": "Overall resource usage"
+        },
+        "uptime": {
+          "type": "string",
+          "description": "Time since deployment"
+        }
+      }
+    },
+    "BackendType": {
+      "type": "string",
+      "enum": [
+        "kubernetes",
+        "portainer",
+        "swarm",
+        "compose"
+      ],
+      "description": "Container orchestration backend type.\nPriority order: kubernetes > portainer > swarm > compose\n"
+    },
+    "ServiceTopology": {
+      "type": "object",
+      "required": [
+        "nodes"
+      ],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TopologyNode"
+          },
+          "description": "Container/pod definitions with service assignments"
+        },
+        "infrastructure": {
+          "$ref": "#/$defs/InfrastructureConfig",
+          "description": "Infrastructure service configuration"
+        }
+      }
+    },
+    "TopologyNode": {
+      "type": "object",
+      "required": [
+        "name",
+        "services"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Node/container name (e.g., \"bannou-main\", \"bannou-auth\")"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Services enabled on this node.\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"accounts\", \"auth\", \"permissions\"]\n"
+        },
+        "replicas": {
+          "type": "integer",
+          "default": 1,
+          "description": "Number of replicas for this node"
+        },
+        "resources": {
+          "$ref": "#/$defs/ResourceLimits"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Node-specific environment overrides"
+        },
+        "daprEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to attach Dapr sidecar"
+        },
+        "daprAppId": {
+          "type": "string",
+          "description": "Dapr app-id override (default derives from node name)"
+        }
+      }
+    },
+    "ResourceLimits": {
+      "type": "object",
+      "properties": {
+        "cpuLimit": {
+          "type": "string",
+          "description": "CPU limit (e.g., \"0.5\", \"2\")"
+        },
+        "memoryLimit": {
+          "type": "string",
+          "description": "Memory limit (e.g., \"512m\", \"2g\")"
+        },
+        "cpuRequest": {
+          "type": "string",
+          "description": "CPU request (Kubernetes)"
+        },
+        "memoryRequest": {
+          "type": "string",
+          "description": "Memory request (Kubernetes)"
+        }
+      }
+    },
+    "InfrastructureConfig": {
+      "type": "object",
+      "properties": {
+        "redis": {
+          "$ref": "#/$defs/InfraServiceConfig"
+        },
+        "rabbitmq": {
+          "$ref": "#/$defs/InfraServiceConfig"
+        },
+        "mysql": {
+          "$ref": "#/$defs/InfraServiceConfig"
+        },
+        "placement": {
+          "$ref": "#/$defs/InfraServiceConfig",
+          "description": "Dapr placement service"
+        },
+        "ingress": {
+          "$ref": "#/$defs/IngressConfig"
+        }
+      }
+    },
+    "InfraServiceConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "image": {
+          "type": "string",
+          "description": "Docker image override"
+        },
+        "resources": {
+          "$ref": "#/$defs/ResourceLimits"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "volumes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Volume mounts"
+        }
+      }
+    },
+    "IngressConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "openresty",
+            "nginx",
+            "traefik",
+            "none"
+          ],
+          "default": "openresty"
+        },
+        "ports": {
+          "type": "object",
+          "properties": {
+            "http": {
+              "type": "integer",
+              "default": 80
+            },
+            "https": {
+              "type": "integer",
+              "default": 443
+            }
+          }
+        },
+        "ssl": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "DeployedService": {
+      "type": "object",
+      "required": [
+        "name",
+        "status",
+        "node"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Service name"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "starting",
+            "running",
+            "healthy",
+            "unhealthy",
+            "stopped"
+          ]
+        },
+        "node": {
+          "type": "string",
+          "description": "Node/container hosting this service"
+        },
+        "containerId": {
+          "type": "string",
+          "description": "Container ID (Compose/Swarm)"
+        },
+        "podName": {
+          "type": "string",
+          "description": "Pod name (Kubernetes)"
+        },
+        "endpoints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Exposed endpoints"
+        }
+      }
+    },
+    "InfrastructureHealthResponse": {
+      "type": "object",
+      "required": [
+        "healthy",
+        "timestamp",
+        "components"
+      ],
+      "properties": {
+        "healthy": {
+          "type": "boolean",
+          "description": "Overall infrastructure health status"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When health check was performed"
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ComponentHealth"
+          },
+          "description": "Individual component health status"
+        }
+      }
+    },
+    "ComponentHealth": {
+      "type": "object",
+      "required": [
+        "name",
+        "status",
+        "lastSeen"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Component name (redis, rabbitmq, placement)"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "healthy",
+            "degraded",
+            "unavailable"
+          ],
+          "description": "Component health status"
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last successful connection time"
+        },
+        "message": {
+          "type": "string",
+          "description": "Additional status information"
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Component-specific metrics (e.g., ping time)"
+        }
+      }
+    },
+    "ResourceUsage": {
+      "type": "object",
+      "properties": {
+        "cpuPercent": {
+          "type": "number",
+          "format": "float",
+          "description": "Total CPU usage percentage"
+        },
+        "memoryUsedMb": {
+          "type": "integer",
+          "description": "Total memory used (MB)"
+        },
+        "memoryTotalMb": {
+          "type": "integer",
+          "description": "Total memory available (MB)"
+        },
+        "diskUsedGb": {
+          "type": "number",
+          "format": "float",
+          "description": "Disk space used (GB)"
+        },
+        "networkInMb": {
+          "type": "number",
+          "format": "float",
+          "description": "Network input (MB)"
+        },
+        "networkOutMb": {
+          "type": "number",
+          "format": "float",
+          "description": "Network output (MB)"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetStatus_Info = """
+{
+  "summary": "Get current environment status",
+  "description": "Returns comprehensive status of the current deployment including:\n- Active backend and deployment configuration\n- Service topology (which services on which containers)\n- Container health and resource usage\n- Infrastructure component status\n- Active preset and any customizations\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "GetStatus"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/status/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetStatus_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/status",
+            _GetStatus_Info));
+
+    /// <summary>Returns request schema for GetStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/status/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetStatus_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/status",
+            "request-schema",
+            _GetStatus_RequestSchema));
+
+    /// <summary>Returns response schema for GetStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/status/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetStatus_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/status",
+            "response-schema",
+            _GetStatus_ResponseSchema));
+
+    /// <summary>Returns full schema for GetStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/status/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetStatus_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/status",
+            _GetStatus_Info,
+            _GetStatus_RequestSchema,
+            _GetStatus_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for Teardown
+
+    private static readonly string _Teardown_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/TeardownRequest",
+  "$defs": {
+    "TeardownRequest": {
+      "type": "object",
+      "properties": {
+        "dryRun": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, simulates teardown without actually stopping or removing containers.\nReturns what would be torn down. ALWAYS use dryRun=true first to preview the impact.\n"
+        },
+        "mode": {
+          "$ref": "#/$defs/TeardownMode",
+          "default": "graceful"
+        },
+        "timeout": {
+          "type": "integer",
+          "default": 60,
+          "description": "Graceful shutdown timeout in seconds"
+        },
+        "removeVolumes": {
+          "type": "boolean",
+          "default": false,
+          "description": "Also remove associated volumes"
+        },
+        "removeNetworks": {
+          "type": "boolean",
+          "default": false,
+          "description": "Also remove associated networks"
+        },
+        "includeInfrastructure": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, also removes support infrastructure (Redis, RabbitMQ, MySQL, etc.).\nThis is determined by scanning compose files or finding containers in the same\nDocker swarm/Kubernetes namespace as bannou services. USE WITH EXTREME CAUTION -\nthis will destroy all data and require a full re-deployment.\n"
+        }
+      }
+    },
+    "TeardownMode": {
+      "type": "string",
+      "enum": [
+        "graceful",
+        "force",
+        "preserve-data"
+      ],
+      "description": "Teardown mode:\n- graceful: Signal shutdown, wait for clean exit\n- force: Immediately stop (SIGKILL)\n- preserve-data: Keep volumes/networks, remove containers\n"
+    }
+  }
+}
+""";
+
+    private static readonly string _Teardown_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/TeardownResponse",
+  "$defs": {
+    "TeardownResponse": {
+      "type": "object",
+      "required": [
+        "success",
+        "duration"
+      ],
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "duration": {
+          "type": "string"
+        },
+        "stoppedContainers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Container IDs that were stopped"
+        },
+        "removedVolumes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Volumes that were removed"
+        },
+        "removedNetworks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Networks that were removed"
+        },
+        "removedInfrastructure": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Infrastructure services that were removed (Redis, RabbitMQ, MySQL, etc.)"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Non-fatal errors during teardown"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _Teardown_Info = """
+{
+  "summary": "Tear down the current environment",
+  "description": "Tears down all containers and services in the current deployment.\nOptionally preserves volumes and networks for faster redeployment.\ n\n**Teardown Modes**:\n- `graceful`: Signal shutdown and wait for clean exit\n- `force`: Immediately stop all containers (SIGKILL)\n- `preserve-data`: Keep volumes and networks, only remove containers\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "Teardown"
+}
+""";
+
+    /// <summary>Returns endpoint information for Teardown</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/teardown/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Teardown_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/teardown",
+            _Teardown_Info));
+
+    /// <summary>Returns request schema for Teardown</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/teardown/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Teardown_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/teardown",
+            "request-schema",
+            _Teardown_RequestSchema));
+
+    /// <summary>Returns response schema for Teardown</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/teardown/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Teardown_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/teardown",
+            "response-schema",
+            _Teardown_ResponseSchema));
+
+    /// <summary>Returns full schema for Teardown</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/teardown/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Teardown_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/teardown",
+            _Teardown_Info,
+            _Teardown_RequestSchema,
+            _Teardown_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for Clean
+
+    private static readonly string _Clean_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CleanRequest",
+  "$defs": {
+    "CleanRequest": {
+      "type": "object",
+      "required": [
+        "targets"
+      ],
+      "properties": {
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CleanTarget"
+          },
+          "description": "Resources to clean (or \"all\")"
+        },
+        "force": {
+          "type": "boolean",
+          "default": false,
+          "description": "Force removal without confirmation"
+        },
+        "olderThan": {
+          "type": "string",
+          "description": "Only clean resources older than (e.g., \"24h\", \"7d\")"
+        },
+        "labelFilter": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Only clean resources matching labels"
+        }
+      }
+    },
+    "CleanTarget": {
+      "type": "string",
+      "enum": [
+        "containers",
+        "networks",
+        "volumes",
+        "images",
+        "all"
+      ],
+      "description": "Type of resource to clean"
+    }
+  }
+}
+""";
+
+    private static readonly string _Clean_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CleanResponse",
+  "$defs": {
+    "CleanResponse": {
+      "type": "object",
+      "required": [
+        "success"
+      ],
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "reclaimedSpaceMb": {
+          "type": "integer",
+          "description": "Disk space reclaimed (MB)"
+        },
+        "removedContainers": {
+          "type": "integer"
+        },
+        "removedNetworks": {
+          "type": "integer"
+        },
+        "removedVolumes": {
+          "type": "integer"
+        },
+        "removedImages": {
+          "type": "integer"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _Clean_Info = """
+{
+  "summary": "Clean up unused resources",
+  "description": "Prunes unused Docker resources to reclaim disk space and clean up\norphaned containers, networks, volumes, and images.\n\nEquivalent to running various `docker system prune` commands.\n\n**Clean Targets**:\n- `containers`: Remove stopped containers\n- `networks`: Remove unused networks\n- `volumes`: Remove unused volumes (CAUTION: data loss)\n- `images`: Remove dangling images\ n- `all`: All of the above\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "Clean"
+}
+""";
+
+    /// <summary>Returns endpoint information for Clean</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/clean/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Clean_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/clean",
+            _Clean_Info));
+
+    /// <summary>Returns request schema for Clean</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/clean/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Clean_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/clean",
+            "request-schema",
+            _Clean_RequestSchema));
+
+    /// <summary>Returns response schema for Clean</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/clean/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Clean_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/clean",
+            "response-schema",
+            _Clean_ResponseSchema));
+
+    /// <summary>Returns full schema for Clean</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/clean/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Clean_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/clean",
+            _Clean_Info,
+            _Clean_RequestSchema,
+            _Clean_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetLogs
+
+    private static readonly string _GetLogs_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetLogsRequest",
+  "$defs": {
+    "GetLogsRequest": {
+      "type": "object",
+      "description": "Request to get service/container logs",
+      "properties": {
+        "service": {
+          "type": "string",
+          "description": "Service name to get logs for",
+          "nullable": true
+        },
+        "container": {
+          "type": "string",
+          "description": "Container ID or name (alternative to service)",
+          "nullable": true
+        },
+        "since": {
+          "type": "string",
+          "description": "Return logs since timestamp (RFC3339 or relative like \"5m\")",
+          "nullable": true
+        },
+        "until": {
+          "type": "string",
+          "description": "Return logs until timestamp",
+          "nullable": true
+        },
+        "tail": {
+          "type": "integer",
+          "default": 100,
+          "description": "Number of lines from end of logs"
+        },
+        "follow": {
+          "type": "boolean",
+          "default": false,
+          "description": "Stream logs in real-time (WebSocket upgrade)"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetLogs_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/LogsResponse",
+  "$defs": {
+    "LogsResponse": {
+      "type": "object",
+      "required": [
+        "logs"
+      ],
+      "properties": {
+        "service": {
+          "type": "string",
+          "description": "Service name (if queried by service)"
+        },
+        "container": {
+          "type": "string",
+          "description": "Container ID/name"
+        },
+        "logs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LogEntry"
+          }
+        },
+        "truncated": {
+          "type": "boolean",
+          "description": "Whether output was truncated"
+        }
+      }
+    },
+    "LogEntry": {
+      "type": "object",
+      "required": [
+        "timestamp",
+        "message"
+      ],
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "stream": {
+          "type": "string",
+          "enum": [
+            "stdout",
+            "stderr"
+          ]
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetLogs_Info = """
+{
+  "summary": "Get service/container logs",
+  "description": "Retrieves logs from services or containers with filtering options.\nSupports real-time streaming via WebSocket upgrade.\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "GetLogs"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetLogs</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/logs/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetLogs_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/logs",
+            _GetLogs_Info));
+
+    /// <summary>Returns request schema for GetLogs</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/logs/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetLogs_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/logs",
+            "request-schema",
+            _GetLogs_RequestSchema));
+
+    /// <summary>Returns response schema for GetLogs</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/logs/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetLogs_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/logs",
+            "response-schema",
+            _GetLogs_ResponseSchema));
+
+    /// <summary>Returns full schema for GetLogs</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/logs/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetLogs_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/logs",
+            _GetLogs_Info,
+            _GetLogs_RequestSchema,
+            _GetLogs_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateTopology
+
+    private static readonly string _UpdateTopology_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/TopologyUpdateRequest",
+  "$defs": {
+    "TopologyUpdateRequest": {
+      "type": "object",
+      "required": [
+        "changes"
+      ],
+      "properties": {
+        "changes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TopologyChange"
+          },
+          "description": "List of topology changes to apply"
+        },
+        "mode": {
+          "$ref": "#/$defs/DeploymentMode",
+          "default": "graceful"
+        },
+        "timeout": {
+          "type": "integer",
+          "default": 120,
+          "description": "Timeout for topology update"
+        }
+      }
+    },
+    "TopologyChange": {
+      "type": "object",
+      "required": [
+        "action"
+      ],
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "add-node",
+            "remove-node",
+            "move-service",
+            "scale",
+            "update-env"
+          ],
+          "description": "Type of topology change"
+        },
+        "nodeName": {
+          "type": "string",
+          "description": "Target node name"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Services affected by this change"
+        },
+        "replicas": {
+          "type": "integer",
+          "description": "New replica count (for scale action)"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Environment updates (for update-env action)"
+        },
+        "nodeConfig": {
+          "$ref": "#/$defs/TopologyNode",
+          "description": "Full node config (for add-node action)"
+        }
+      }
+    },
+    "TopologyNode": {
+      "type": "object",
+      "required": [
+        "name",
+        "services"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Node/container name (e.g., \"bannou-main\", \"bannou-auth\")"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Services enabled on this node.\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"accounts\", \"auth\", \"permissions\"]\n"
+        },
+        "replicas": {
+          "type": "integer",
+          "default": 1,
+          "description": "Number of replicas for this node"
+        },
+        "resources": {
+          "$ref": "#/$defs/ResourceLimits"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Node-specific environment overrides"
+        },
+        "daprEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to attach Dapr sidecar"
+        },
+        "daprAppId": {
+          "type": "string",
+          "description": "Dapr app-id override (default derives from node name)"
+        }
+      }
+    },
+    "ResourceLimits": {
+      "type": "object",
+      "properties": {
+        "cpuLimit": {
+          "type": "string",
+          "description": "CPU limit (e.g., \"0.5\", \"2\")"
+        },
+        "memoryLimit": {
+          "type": "string",
+          "description": "Memory limit (e.g., \"512m\", \"2g\")"
+        },
+        "cpuRequest": {
+          "type": "string",
+          "description": "CPU request (Kubernetes)"
+        },
+        "memoryRequest": {
+          "type": "string",
+          "description": "Memory request (Kubernetes)"
+        }
+      }
+    },
+    "DeploymentMode": {
+      "type": "string",
+      "enum": [
+        "graceful",
+        "force",
+        "clean"
+      ],
+      "description": "Deployment mode:\n- graceful: Wait for connections to drain\n- force: Apply immediately\ n- clean: Tear down and rebuild\n"
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateTopology_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/TopologyUpdateResponse",
+  "$defs": {
+    "TopologyUpdateResponse": {
+      "type": "object",
+      "required": [
+        "success",
+        "appliedChanges"
+      ],
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "appliedChanges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AppliedChange"
+          }
+        },
+        "topology": {
+          "$ref": "#/$defs/ServiceTopology",
+          "description": "New topology after changes"
+        },
+        "duration": {
+          "type": "string"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "AppliedChange": {
+      "type": "object",
+      "required": [
+        "action",
+        "success"
+      ],
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string",
+          "description": "Node or service affected"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "error": {
+          "type": "string",
+          "description": "Error message if failed"
+        }
+      }
+    },
+    "ServiceTopology": {
+      "type": "object",
+      "required": [
+        "nodes"
+      ],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TopologyNode"
+          },
+          "description": "Container/pod definitions with service assignments"
+        },
+        "infrastructure": {
+          "$ref": "#/$defs/InfrastructureConfig",
+          "description": "Infrastructure service configuration"
+        }
+      }
+    },
+    "TopologyNode": {
+      "type": "object",
+      "required": [
+        "name",
+        "services"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Node/container name (e.g., \"bannou-main\", \"bannou-auth\")"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Services enabled on this node.\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"accounts\", \"auth\", \"permissions\"]\n"
+        },
+        "replicas": {
+          "type": "integer",
+          "default": 1,
+          "description": "Number of replicas for this node"
+        },
+        "resources": {
+          "$ref": "#/$defs/ResourceLimits"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Node-specific environment overrides"
+        },
+        "daprEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to attach Dapr sidecar"
+        },
+        "daprAppId": {
+          "type": "string",
+          "description": "Dapr app-id override (default derives from node name)"
+        }
+      }
+    },
+    "ResourceLimits": {
+      "type": "object",
+      "properties": {
+        "cpuLimit": {
+          "type": "string",
+          "description": "CPU limit (e.g., \"0.5\", \"2\")"
+        },
+        "memoryLimit": {
+          "type": "string",
+          "description": "Memory limit (e.g., \"512m\", \"2g\")"
+        },
+        "cpuRequest": {
+          "type": "string",
+          "description": "CPU request (Kubernetes)"
+        },
+        "memoryRequest": {
+          "type": "string",
+          "description": "Memory request (Kubernetes)"
+        }
+      }
+    },
+    "InfrastructureConfig": {
+      "type": "object",
+      "properties": {
+        "redis": {
+          "$ref": "#/$defs/InfraServiceConfig"
+        },
+        "rabbitmq": {
+          "$ref": "#/$defs/InfraServiceConfig"
+        },
+        "mysql": {
+          "$ref": "#/$defs/InfraServiceConfig"
+        },
+        "placement": {
+          "$ref": "#/$defs/InfraServiceConfig",
+          "description": "Dapr placement service"
+        },
+        "ingress": {
+          "$ref": "#/$defs/IngressConfig"
+        }
+      }
+    },
+    "InfraServiceConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "image": {
+          "type": "string",
+          "description": "Docker image override"
+        },
+        "resources": {
+          "$ref": "#/$defs/ResourceLimits"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "volumes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Volume mounts"
+        }
+      }
+    },
+    "IngressConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "openresty",
+            "nginx",
+            "traefik",
+            "none"
+          ],
+          "default": "openresty"
+        },
+        "ports": {
+          "type": "object",
+          "properties": {
+            "http": {
+              "type": "integer",
+              "default": 80
+            },
+            "https": {
+              "type": "integer",
+              "default": 443
+            }
+          }
+        },
+        "ssl": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateTopology_Info = """
+{
+  "summary": "Update service topology without full redeploy",
+  "description": "Changes which services run on which containers without tearing down\nthe entire environment. Enables live topology changes.\ n\n**Use Cases**:\n- Move auth service to dedicated container for scaling\n- Consolidate services during low-traffic periods\n- Split services for debugging/isolation\n- Add new service nodes to running environment\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "UpdateTopology"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateTopology</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/topology/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateTopology_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/topology",
+            _UpdateTopology_Info));
+
+    /// <summary>Returns request schema for UpdateTopology</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/topology/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateTopology_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/topology",
+            "request-schema",
+            _UpdateTopology_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateTopology</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/topology/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateTopology_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/topology",
+            "response-schema",
+            _UpdateTopology_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateTopology</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/topology/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateTopology_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/topology",
+            _UpdateTopology_Info,
+            _UpdateTopology_RequestSchema,
+            _UpdateTopology_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RequestContainerRestart
+
+    private static readonly string _RequestContainerRestart_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ContainerRestartRequestBody",
+  "$defs": {
+    "ContainerRestartRequestBody": {
+      "type": "object",
+      "required": [
+        "appName",
+        "reason"
+      ],
+      "properties": {
+        "appName": {
+          "type": "string",
+          "description": "Container's Dapr app name (e.g., \"bannou\", \"npc-omega\")"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Why restart is needed (for logging/auditing)",
+          "example": "configuration_change"
+        },
+        "priority": {
+          "$ref": "#/$defs/RestartPriority"
+        },
+        "shutdownGracePeriod": {
+          "type": "integer",
+          "default": 30,
+          "description": "Seconds to allow graceful shutdown before force-kill"
+        }
+      }
+    },
+    "RestartPriority": {
+      "type": "string",
+      "enum": [
+        "graceful",
+        "immediate",
+        "force"
+      ],
+      "description": "Restart urgency level:\n- graceful: Rolling update, wait for healthy before cycling next instance\n- immediate: Rolling update but don't wait for connection drain\n- force: Kill all instances simultaneously (causes downtime)\n"
+    }
+  }
+}
+""";
+
+    private static readonly string _RequestContainerRestart_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ContainerRestartResponse",
+  "$defs": {
+    "ContainerRestartResponse": {
+      "type": "object",
+      "required": [
+        "accepted",
+        "appName"
+      ],
+      "properties": {
+        "accepted": {
+          "type": "boolean",
+          "description": "Whether the restart request was accepted"
+        },
+        "appName": {
+          "type": "string",
+          "description": "Container that will be restarted"
+        },
+        "scheduledFor": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When restart is scheduled (may be queued)"
+        },
+        "currentInstances": {
+          "type": "integer",
+          "description": "Number of running instances"
+        },
+        "restartStrategy": {
+          "type": "string",
+          "enum": [
+            "rolling",
+            "simultaneous"
+          ],
+          "description": "How restart will be performed"
+        },
+        "message": {
+          "type": "string",
+          "description": "Additional information"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _RequestContainerRestart_Info = """
+{
+  "summary": "Request container restart (self-service pattern)",
+  "description": "Plugins call this endpoint to request restart of their own container.\nThis is part of the self-service configuration update pattern where\nplugins decide if they care about config changes and request restarts.\n\n**Flow**:\n1. Orchestrator publishes ConfigurationChangedEvent with changed keys\n2. Plugins check if any changed keys match their dependencies\n3. Plugins that care call this endpoint to request restart\n4. Orchestrator performs rolling restart of requested containers\n\n**Priority Levels**:\n- `graceful`: Rolling update, wait for healthy before cycling next instance\n- `immediate`: Rolling update but don't wait for connection drain\n- `force`: Kill all instances simultaneously (causes downtime)\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "RequestContainerRestart"
+}
+""";
+
+    /// <summary>Returns endpoint information for RequestContainerRestart</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/containers/request-restart/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RequestContainerRestart_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/containers/request-restart",
+            _RequestContainerRestart_Info));
+
+    /// <summary>Returns request schema for RequestContainerRestart</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/containers/request-restart/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RequestContainerRestart_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/containers/request-restart",
+            "request-schema",
+            _RequestContainerRestart_RequestSchema));
+
+    /// <summary>Returns response schema for RequestContainerRestart</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/containers/request-restart/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RequestContainerRestart_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/containers/request-restart",
+            "response-schema",
+            _RequestContainerRestart_ResponseSchema));
+
+    /// <summary>Returns full schema for RequestContainerRestart</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/containers/request-restart/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RequestContainerRestart_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/containers/request-restart",
+            _RequestContainerRestart_Info,
+            _RequestContainerRestart_RequestSchema,
+            _RequestContainerRestart_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetContainerStatus
+
+    private static readonly string _GetContainerStatus_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetContainerStatusRequest",
+  "$defs": {
+    "GetContainerStatusRequest": {
+      "type": "object",
+      "required": [
+        "appName"
+      ],
+      "properties": {
+        "appName": {
+          "type": "string",
+          "description": "Container's Dapr app name"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetContainerStatus_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ContainerStatus",
+  "$defs": {
+    "ContainerStatus": {
+      "type": "object",
+      "required": [
+        "appName",
+        "status",
+        "timestamp"
+      ],
+      "properties": {
+        "appName": {
+          "type": "string",
+          "description": "Container's Dapr app name"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "running",
+            "starting",
+            "stopping",
+            "stopped",
+            "unhealthy"
+          ]
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "instances": {
+          "type": "integer",
+          "description": "Number of running instances"
+        },
+        "plugins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Plugins running in this container"
+        },
+        "lastRestart": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When container was last restarted"
+        },
+        "restartCount": {
+          "type": "integer",
+          "description": "Number of restarts in last 24 hours"
+        },
+        "restartHistory": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RestartHistoryEntry"
+          },
+          "description": "Recent restart history"
+        },
+        "healthChecks": {
+          "type": "object",
+          "properties": {
+            "lastCheck": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "status": {
+              "type": "string"
+            },
+            "consecutiveFailures": {
+              "type": "integer"
+            }
+          }
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Container labels for metadata and management"
+        }
+      }
+    },
+    "RestartHistoryEntry": {
+      "type": "object",
+      "required": [
+        "timestamp",
+        "reason"
+      ],
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "priority": {
+          "$ref": "#/$defs/RestartPriority"
+        },
+        "duration": {
+          "type": "string",
+          "description": "Time taken to restart"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "error": {
+          "type": "string",
+          "description": "Error message if restart failed"
+        }
+      }
+    },
+    "RestartPriority": {
+      "type": "string",
+      "enum": [
+        "graceful",
+        "immediate",
+        "force"
+      ],
+      "description": "Restart urgency level:\n- graceful: Rolling update, wait for healthy before cycling next instance\n- immediate: Rolling update but don't wait for connection drain\n- force: Kill all instances simultaneously (causes downtime)\n"
+    }
+  }
+}
+""";
+
+    private static readonly string _GetContainerStatus_Info = """
+{
+  "summary": "Get container health and restart history",
+  "description": "Returns detailed status of a container including health, restart history,\nrunning plugins, and current configuration.\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "GetContainerStatus"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetContainerStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/containers/status/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetContainerStatus_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/containers/status",
+            _GetContainerStatus_Info));
+
+    /// <summary>Returns request schema for GetContainerStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/containers/status/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetContainerStatus_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/containers/status",
+            "request-schema",
+            _GetContainerStatus_RequestSchema));
+
+    /// <summary>Returns response schema for GetContainerStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/containers/status/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetContainerStatus_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/containers/status",
+            "response-schema",
+            _GetContainerStatus_ResponseSchema));
+
+    /// <summary>Returns full schema for GetContainerStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/containers/status/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetContainerStatus_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/containers/status",
+            _GetContainerStatus_Info,
+            _GetContainerStatus_RequestSchema,
+            _GetContainerStatus_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RollbackConfiguration
+
+    private static readonly string _RollbackConfiguration_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ConfigRollbackRequest",
+  "$defs": {
+    "ConfigRollbackRequest": {
+      "type": "object",
+      "required": [
+        "reason"
+      ],
+      "properties": {
+        "reason": {
+          "type": "string",
+          "description": "Why rollback is needed (for auditing)",
+          "example": "auth.jwt_secret broke authentication"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _RollbackConfiguration_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ConfigRollbackResponse",
+  "$defs": {
+    "ConfigRollbackResponse": {
+      "type": "object",
+      "required": [
+        "success",
+        "previousVersion",
+        "currentVersion"
+      ],
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "previousVersion": {
+          "type": "integer",
+          "description": "Config version before rollback"
+        },
+        "currentVersion": {
+          "type": "integer",
+          "description": "Config version after rollback (now active)"
+        },
+        "changedKeys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys that were reverted"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _RollbackConfiguration_Info = """
+{
+  "summary": "Rollback to previous configuration",
+  "description": "Quickly rollback to the previous configuration without waiting for CI.\nSwaps currentConfig with previousConfig and publishes ConfigurationChangedEvent\ nwith the reverted keys so services can request restart.\n\n**Note**: This is a quick fix. GitHub secrets should still be corrected\nto prevent re-breaking on next orchestrator deploy.\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "RollbackConfiguration"
+}
+""";
+
+    /// <summary>Returns endpoint information for RollbackConfiguration</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/config/rollback/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RollbackConfiguration_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/config/rollback",
+            _RollbackConfiguration_Info));
+
+    /// <summary>Returns request schema for RollbackConfiguration</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/config/rollback/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RollbackConfiguration_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/config/rollback",
+            "request-schema",
+            _RollbackConfiguration_RequestSchema));
+
+    /// <summary>Returns response schema for RollbackConfiguration</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/config/rollback/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RollbackConfiguration_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/config/rollback",
+            "response-schema",
+            _RollbackConfiguration_ResponseSchema));
+
+    /// <summary>Returns full schema for RollbackConfiguration</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/config/rollback/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RollbackConfiguration_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/config/rollback",
+            _RollbackConfiguration_Info,
+            _RollbackConfiguration_RequestSchema,
+            _RollbackConfiguration_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetConfigVersion
+
+    private static readonly string _GetConfigVersion_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetConfigVersionRequest",
+  "$defs": {
+    "GetConfigVersionRequest": {
+      "type": "object",
+      "description": "Request to get configuration version (empty body allowed)",
+      "properties": {
+        "includeKeyPrefixes": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include list of configuration key prefixes"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetConfigVersion_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ConfigVersionResponse",
+  "$defs": {
+    "ConfigVersionResponse": {
+      "type": "object",
+      "required": [
+        "version",
+        "timestamp"
+      ],
+      "properties": {
+        "version": {
+          "type": "integer",
+          "description": "Current configuration version number"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When current config was applied"
+        },
+        "hasPreviousConfig": {
+          "type": "boolean",
+          "description": "Whether a previous config is available for rollback"
+        },
+        "keyCount": {
+          "type": "integer",
+          "description": "Number of configuration keys (not values for security)"
+        },
+        "keyPrefixes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Configuration key prefixes present (e.g., \"auth\", \"database\")"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetConfigVersion_Info = """
+{
+  "summary": "Get current configuration version and metadata",
+  "description": "Returns the current configuration version, last update time,\nand summary of configuration state (not actual values for security).\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "GetConfigVersion"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetConfigVersion</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/config/version/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetConfigVersion_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/config/version",
+            _GetConfigVersion_Info));
+
+    /// <summary>Returns request schema for GetConfigVersion</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/config/version/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetConfigVersion_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/config/version",
+            "request-schema",
+            _GetConfigVersion_RequestSchema));
+
+    /// <summary>Returns response schema for GetConfigVersion</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/config/version/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetConfigVersion_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/config/version",
+            "response-schema",
+            _GetConfigVersion_ResponseSchema));
+
+    /// <summary>Returns full schema for GetConfigVersion</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/config/version/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetConfigVersion_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/config/version",
+            _GetConfigVersion_Info,
+            _GetConfigVersion_RequestSchema,
+            _GetConfigVersion_ResponseSchema));
+
+    #endregion
+
 }
 
 

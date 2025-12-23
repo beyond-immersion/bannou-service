@@ -216,6 +216,1047 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
         return ConvertToActionResult(statusCode, result);
     }
 
+
+    #region Meta Endpoints for CreateCharacter
+
+    private static readonly string _CreateCharacter_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CreateCharacterRequest",
+  "$defs": {
+    "CreateCharacterRequest": {
+      "type": "object",
+      "required": [
+        "name",
+        "realmId",
+        "speciesId",
+        "birthDate"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Character name"
+        },
+        "realmId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Realm ID (foreign key to future Realm service, partition key)"
+        },
+        "speciesId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Species ID (foreign key to future Species service)"
+        },
+        "birthDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "In-game birth timestamp"
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/CharacterStatus"
+            }
+          ],
+          "default": "alive"
+        }
+      }
+    },
+    "CharacterStatus": {
+      "type": "string",
+      "description": "Character lifecycle status",
+      "enum": [
+        "alive",
+        "dead",
+        "dormant"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _CreateCharacter_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CharacterResponse",
+  "$defs": {
+    "CharacterResponse": {
+      "type": "object",
+      "required": [
+        "characterId",
+        "name",
+        "realmId",
+        "speciesId",
+        "birthDate",
+        "status",
+        "createdAt"
+      ],
+      "properties": {
+        "characterId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string"
+        },
+        "realmId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Realm ID (partition key)"
+        },
+        "speciesId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "birthDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "In-game birth timestamp"
+        },
+        "deathDate": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "In-game death timestamp"
+        },
+        "status": {
+          "$ref": "#/$defs/CharacterStatus"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Real-world creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "Real-world last update timestamp"
+        }
+      }
+    },
+    "CharacterStatus": {
+      "type": "string",
+      "description": "Character lifecycle status",
+      "enum": [
+        "alive",
+        "dead",
+        "dormant"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _CreateCharacter_Info = """
+{
+  "summary": "Create new character",
+  "description": "",
+  "tags": [
+    "Character Management"
+  ],
+  "deprecated": false,
+  "operationId": "createCharacter"
+}
+""";
+
+    /// <summary>Returns endpoint information for CreateCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/create/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateCharacter_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Character",
+            "Post",
+            "character/create",
+            _CreateCharacter_Info));
+
+    /// <summary>Returns request schema for CreateCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/create/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateCharacter_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "Post",
+            "character/create",
+            "request-schema",
+            _CreateCharacter_RequestSchema));
+
+    /// <summary>Returns response schema for CreateCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/create/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateCharacter_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "Post",
+            "character/create",
+            "response-schema",
+            _CreateCharacter_ResponseSchema));
+
+    /// <summary>Returns full schema for CreateCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/create/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateCharacter_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Character",
+            "Post",
+            "character/create",
+            _CreateCharacter_Info,
+            _CreateCharacter_RequestSchema,
+            _CreateCharacter_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetCharacter
+
+    private static readonly string _GetCharacter_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetCharacterRequest",
+  "$defs": {
+    "GetCharacterRequest": {
+      "type": "object",
+      "required": [
+        "characterId"
+      ],
+      "properties": {
+        "characterId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the character to retrieve"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetCharacter_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CharacterResponse",
+  "$defs": {
+    "CharacterResponse": {
+      "type": "object",
+      "required": [
+        "characterId",
+        "name",
+        "realmId",
+        "speciesId",
+        "birthDate",
+        "status",
+        "createdAt"
+      ],
+      "properties": {
+        "characterId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string"
+        },
+        "realmId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Realm ID (partition key)"
+        },
+        "speciesId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "birthDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "In-game birth timestamp"
+        },
+        "deathDate": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "In-game death timestamp"
+        },
+        "status": {
+          "$ref": "#/$defs/CharacterStatus"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Real-world creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "Real-world last update timestamp"
+        }
+      }
+    },
+    "CharacterStatus": {
+      "type": "string",
+      "description": "Character lifecycle status",
+      "enum": [
+        "alive",
+        "dead",
+        "dormant"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _GetCharacter_Info = """
+{
+  "summary": "Get character by ID",
+  "description": "",
+  "tags": [
+    "Character Management"
+  ],
+  "deprecated": false,
+  "operationId": "getCharacter"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCharacter_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Character",
+            "Post",
+            "character/get",
+            _GetCharacter_Info));
+
+    /// <summary>Returns request schema for GetCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCharacter_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "Post",
+            "character/get",
+            "request-schema",
+            _GetCharacter_RequestSchema));
+
+    /// <summary>Returns response schema for GetCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCharacter_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "Post",
+            "character/get",
+            "response-schema",
+            _GetCharacter_ResponseSchema));
+
+    /// <summary>Returns full schema for GetCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCharacter_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Character",
+            "Post",
+            "character/get",
+            _GetCharacter_Info,
+            _GetCharacter_RequestSchema,
+            _GetCharacter_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateCharacter
+
+    private static readonly string _UpdateCharacter_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/UpdateCharacterRequest",
+  "$defs": {
+    "UpdateCharacterRequest": {
+      "type": "object",
+      "required": [
+        "characterId"
+      ],
+      "properties": {
+        "characterId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the character to update"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "nullable": true
+        },
+        "speciesId": {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true,
+          "description": "Update character's species (used for species merge migrations)"
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/CharacterStatus"
+            }
+          ],
+          "nullable": true
+        },
+        "deathDate": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "In-game death timestamp (sets status to dead)"
+        }
+      }
+    },
+    "CharacterStatus": {
+      "type": "string",
+      "description": "Character lifecycle status",
+      "enum": [
+        "alive",
+        "dead",
+        "dormant"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateCharacter_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CharacterResponse",
+  "$defs": {
+    "CharacterResponse": {
+      "type": "object",
+      "required": [
+        "characterId",
+        "name",
+        "realmId",
+        "speciesId",
+        "birthDate",
+        "status",
+        "createdAt"
+      ],
+      "properties": {
+        "characterId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string"
+        },
+        "realmId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Realm ID (partition key)"
+        },
+        "speciesId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "birthDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "In-game birth timestamp"
+        },
+        "deathDate": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "In-game death timestamp"
+        },
+        "status": {
+          "$ref": "#/$defs/CharacterStatus"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Real-world creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "Real-world last update timestamp"
+        }
+      }
+    },
+    "CharacterStatus": {
+      "type": "string",
+      "description": "Character lifecycle status",
+      "enum": [
+        "alive",
+        "dead",
+        "dormant"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateCharacter_Info = """
+{
+  "summary": "Update character",
+  "description": "",
+  "tags": [
+    "Character Management"
+  ],
+  "deprecated": false,
+  "operationId": "updateCharacter"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/update/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateCharacter_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Character",
+            "Post",
+            "character/update",
+            _UpdateCharacter_Info));
+
+    /// <summary>Returns request schema for UpdateCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/update/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateCharacter_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "Post",
+            "character/update",
+            "request-schema",
+            _UpdateCharacter_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/update/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateCharacter_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "Post",
+            "character/update",
+            "response-schema",
+            _UpdateCharacter_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/update/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateCharacter_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Character",
+            "Post",
+            "character/update",
+            _UpdateCharacter_Info,
+            _UpdateCharacter_RequestSchema,
+            _UpdateCharacter_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeleteCharacter
+
+    private static readonly string _DeleteCharacter_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/DeleteCharacterRequest",
+  "$defs": {
+    "DeleteCharacterRequest": {
+      "type": "object",
+      "required": [
+        "characterId"
+      ],
+      "properties": {
+        "characterId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the character to delete"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _DeleteCharacter_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _DeleteCharacter_Info = """
+{
+  "summary": "Delete character (permanent removal)",
+  "description": "",
+  "tags": [
+    "Character Management"
+  ],
+  "deprecated": false,
+  "operationId": "deleteCharacter"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteCharacter_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Character",
+            "Post",
+            "character/delete",
+            _DeleteCharacter_Info));
+
+    /// <summary>Returns request schema for DeleteCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteCharacter_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "Post",
+            "character/delete",
+            "request-schema",
+            _DeleteCharacter_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteCharacter_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "Post",
+            "character/delete",
+            "response-schema",
+            _DeleteCharacter_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteCharacter_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Character",
+            "Post",
+            "character/delete",
+            _DeleteCharacter_Info,
+            _DeleteCharacter_RequestSchema,
+            _DeleteCharacter_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ListCharacters
+
+    private static readonly string _ListCharacters_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ListCharactersRequest",
+  "$defs": {
+    "ListCharactersRequest": {
+      "type": "object",
+      "properties": {
+        "realmId": {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true,
+          "description": "Filter by realm"
+        },
+        "speciesId": {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true,
+          "description": "Filter by species"
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/CharacterStatus"
+            }
+          ],
+          "nullable": true,
+          "description": "Filter by status"
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "pageSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      }
+    },
+    "CharacterStatus": {
+      "type": "string",
+      "description": "Character lifecycle status",
+      "enum": [
+        "alive",
+        "dead",
+        "dormant"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _ListCharacters_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CharacterListResponse",
+  "$defs": {
+    "CharacterListResponse": {
+      "type": "object",
+      "required": [
+        "characters",
+        "totalCount",
+        "page",
+        "pageSize"
+      ],
+      "properties": {
+        "characters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CharacterResponse"
+          }
+        },
+        "totalCount": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        },
+        "pageSize": {
+          "type": "integer"
+        },
+        "hasNextPage": {
+          "type": "boolean"
+        },
+        "hasPreviousPage": {
+          "type": "boolean"
+        }
+      }
+    },
+    "CharacterResponse": {
+      "type": "object",
+      "required": [
+        "characterId",
+        "name",
+        "realmId",
+        "speciesId",
+        "birthDate",
+        "status",
+        "createdAt"
+      ],
+      "properties": {
+        "characterId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string"
+        },
+        "realmId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Realm ID (partition key)"
+        },
+        "speciesId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "birthDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "In-game birth timestamp"
+        },
+        "deathDate": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "In-game death timestamp"
+        },
+        "status": {
+          "$ref": "#/$defs/CharacterStatus"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Real-world creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "Real-world last update timestamp"
+        }
+      }
+    },
+    "CharacterStatus": {
+      "type": "string",
+      "description": "Character lifecycle status",
+      "enum": [
+        "alive",
+        "dead",
+        "dormant"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _ListCharacters_Info = """
+{
+  "summary": "List characters with filtering",
+  "description": "",
+  "tags": [
+    "Character Management"
+  ],
+  "deprecated": false,
+  "operationId": "listCharacters"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListCharacters</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListCharacters_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Character",
+            "Post",
+            "character/list",
+            _ListCharacters_Info));
+
+    /// <summary>Returns request schema for ListCharacters</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListCharacters_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "Post",
+            "character/list",
+            "request-schema",
+            _ListCharacters_RequestSchema));
+
+    /// <summary>Returns response schema for ListCharacters</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListCharacters_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "Post",
+            "character/list",
+            "response-schema",
+            _ListCharacters_ResponseSchema));
+
+    /// <summary>Returns full schema for ListCharacters</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListCharacters_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Character",
+            "Post",
+            "character/list",
+            _ListCharacters_Info,
+            _ListCharacters_RequestSchema,
+            _ListCharacters_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetCharactersByRealm
+
+    private static readonly string _GetCharactersByRealm_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetCharactersByRealmRequest",
+  "$defs": {
+    "GetCharactersByRealmRequest": {
+      "type": "object",
+      "required": [
+        "realmId"
+      ],
+      "properties": {
+        "realmId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Realm ID to query (uses partition key for efficiency)"
+        },
+        "speciesId": {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true,
+          "description": "Filter by species"
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/CharacterStatus"
+            }
+          ],
+          "nullable": true,
+          "description": "Optional status filter"
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "pageSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      }
+    },
+    "CharacterStatus": {
+      "type": "string",
+      "description": "Character lifecycle status",
+      "enum": [
+        "alive",
+        "dead",
+        "dormant"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _GetCharactersByRealm_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CharacterListResponse",
+  "$defs": {
+    "CharacterListResponse": {
+      "type": "object",
+      "required": [
+        "characters",
+        "totalCount",
+        "page",
+        "pageSize"
+      ],
+      "properties": {
+        "characters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CharacterResponse"
+          }
+        },
+        "totalCount": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        },
+        "pageSize": {
+          "type": "integer"
+        },
+        "hasNextPage": {
+          "type": "boolean"
+        },
+        "hasPreviousPage": {
+          "type": "boolean"
+        }
+      }
+    },
+    "CharacterResponse": {
+      "type": "object",
+      "required": [
+        "characterId",
+        "name",
+        "realmId",
+        "speciesId",
+        "birthDate",
+        "status",
+        "createdAt"
+      ],
+      "properties": {
+        "characterId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string"
+        },
+        "realmId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Realm ID (partition key)"
+        },
+        "speciesId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "birthDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "In-game birth timestamp"
+        },
+        "deathDate": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "In-game death timestamp"
+        },
+        "status": {
+          "$ref": "#/$defs/CharacterStatus"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Real-world creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "Real-world last update timestamp"
+        }
+      }
+    },
+    "CharacterStatus": {
+      "type": "string",
+      "description": "Character lifecycle status",
+      "enum": [
+        "alive",
+        "dead",
+        "dormant"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _GetCharactersByRealm_Info = """
+{
+  "summary": "Get all characters in a realm (primary query pattern)",
+  "description": "",
+  "tags": [
+    "Character Lookup"
+  ],
+  "deprecated": false,
+  "operationId": "getCharactersByRealm"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetCharactersByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/by-realm/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCharactersByRealm_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Character",
+            "Post",
+            "character/by-realm",
+            _GetCharactersByRealm_Info));
+
+    /// <summary>Returns request schema for GetCharactersByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/by-realm/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCharactersByRealm_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "Post",
+            "character/by-realm",
+            "request-schema",
+            _GetCharactersByRealm_RequestSchema));
+
+    /// <summary>Returns response schema for GetCharactersByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/by-realm/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCharactersByRealm_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "Post",
+            "character/by-realm",
+            "response-schema",
+            _GetCharactersByRealm_ResponseSchema));
+
+    /// <summary>Returns full schema for GetCharactersByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character/by-realm/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCharactersByRealm_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Character",
+            "Post",
+            "character/by-realm",
+            _GetCharactersByRealm_Info,
+            _GetCharactersByRealm_RequestSchema,
+            _GetCharactersByRealm_ResponseSchema));
+
+    #endregion
+
 }
 
 
