@@ -224,6 +224,681 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
         return ConvertToActionResult(statusCode, result);
     }
 
+
+    #region Meta Endpoints for ListServices
+
+    private static readonly string _ListServices_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ListServicesRequest",
+  "$defs": {
+    "ListServicesRequest": {
+      "type": "object",
+      "description": "Request to list all game services",
+      "properties": {
+        "activeOnly": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, only return active services"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ListServices_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ListServicesResponse",
+  "$defs": {
+    "ListServicesResponse": {
+      "type": "object",
+      "description": "Response containing list of game services",
+      "required": [
+        "services",
+        "totalCount"
+      ],
+      "properties": {
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ServiceInfo"
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "description": "Total number of services matching the filter"
+        }
+      }
+    },
+    "ServiceInfo": {
+      "type": "object",
+      "description": "Information about a game service",
+      "required": [
+        "serviceId",
+        "stubName",
+        "displayName",
+        "isActive",
+        "createdAt"
+      ],
+      "properties": {
+        "serviceId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for the service"
+        },
+        "stubName": {
+          "type": "string",
+          "description": "URL-safe identifier (e.g., \"arcadia\")"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Human-readable name (e.g., \"Arcadia Online\")"
+        },
+        "description": {
+          "type": "string",
+          "nullable": true,
+          "description": "Optional description"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the service is currently active"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the service was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the service was last updated"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ListServices_Info = """
+{
+  "summary": "List all registered game services",
+  "description": "Returns all game services, optionally filtered by active status.",
+  "tags": [
+    "Service Registry"
+  ],
+  "deprecated": false,
+  "operationId": "listServices"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListServices</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListServices_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/list",
+            _ListServices_Info));
+
+    /// <summary>Returns request schema for ListServices</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListServices_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/list",
+            "request-schema",
+            _ListServices_RequestSchema));
+
+    /// <summary>Returns response schema for ListServices</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListServices_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/list",
+            "response-schema",
+            _ListServices_ResponseSchema));
+
+    /// <summary>Returns full schema for ListServices</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListServices_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/list",
+            _ListServices_Info,
+            _ListServices_RequestSchema,
+            _ListServices_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetService
+
+    private static readonly string _GetService_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetServiceRequest",
+  "$defs": {
+    "GetServiceRequest": {
+      "type": "object",
+      "description": "Request to get a service by ID or stub name",
+      "properties": {
+        "serviceId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the service to retrieve"
+        },
+        "stubName": {
+          "type": "string",
+          "description": "Stub name of the service to retrieve (e.g., \"arcadia\")"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetService_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ServiceInfo",
+  "$defs": {
+    "ServiceInfo": {
+      "type": "object",
+      "description": "Information about a game service",
+      "required": [
+        "serviceId",
+        "stubName",
+        "displayName",
+        "isActive",
+        "createdAt"
+      ],
+      "properties": {
+        "serviceId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for the service"
+        },
+        "stubName": {
+          "type": "string",
+          "description": "URL-safe identifier (e.g., \"arcadia\")"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Human-readable name (e.g., \"Arcadia Online\")"
+        },
+        "description": {
+          "type": "string",
+          "nullable": true,
+          "description": "Optional description"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the service is currently active"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the service was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the service was last updated"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetService_Info = """
+{
+  "summary": "Get service by ID or stub name",
+  "description": "Retrieves a single service by either serviceId (GUID) or stubName.",
+  "tags": [
+    "Service Registry"
+  ],
+  "deprecated": false,
+  "operationId": "getService"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetService_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/get",
+            _GetService_Info));
+
+    /// <summary>Returns request schema for GetService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetService_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/get",
+            "request-schema",
+            _GetService_RequestSchema));
+
+    /// <summary>Returns response schema for GetService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetService_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/get",
+            "response-schema",
+            _GetService_ResponseSchema));
+
+    /// <summary>Returns full schema for GetService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetService_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/get",
+            _GetService_Info,
+            _GetService_RequestSchema,
+            _GetService_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CreateService
+
+    private static readonly string _CreateService_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CreateServiceRequest",
+  "$defs": {
+    "CreateServiceRequest": {
+      "type": "object",
+      "description": "Request to create a new game service",
+      "required": [
+        "stubName",
+        "displayName"
+      ],
+      "properties": {
+        "stubName": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "minLength": 2,
+          "maxLength": 50,
+          "description": "URL-safe identifier for the service (e.g., \"arcadia\", \"fantasia\")"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Human-readable name for the service (e.g., \"Arcadia Online\")"
+        },
+        "description": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 500,
+          "description": "Optional description of the service"
+        },
+        "isActive": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether the service is currently active"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CreateService_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ServiceInfo",
+  "$defs": {
+    "ServiceInfo": {
+      "type": "object",
+      "description": "Information about a game service",
+      "required": [
+        "serviceId",
+        "stubName",
+        "displayName",
+        "isActive",
+        "createdAt"
+      ],
+      "properties": {
+        "serviceId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for the service"
+        },
+        "stubName": {
+          "type": "string",
+          "description": "URL-safe identifier (e.g., \"arcadia\")"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Human-readable name (e.g., \"Arcadia Online\")"
+        },
+        "description": {
+          "type": "string",
+          "nullable": true,
+          "description": "Optional description"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the service is currently active"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the service was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the service was last updated"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CreateService_Info = """
+{
+  "summary": "Create a new game service entry",
+  "description": "Admin-only endpoint to register a new game service in the registry.",
+  "tags": [
+    "Service Registry"
+  ],
+  "deprecated": false,
+  "operationId": "createService"
+}
+""";
+
+    /// <summary>Returns endpoint information for CreateService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/create/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateService_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/create",
+            _CreateService_Info));
+
+    /// <summary>Returns request schema for CreateService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/create/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateService_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/create",
+            "request-schema",
+            _CreateService_RequestSchema));
+
+    /// <summary>Returns response schema for CreateService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/create/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateService_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/create",
+            "response-schema",
+            _CreateService_ResponseSchema));
+
+    /// <summary>Returns full schema for CreateService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/create/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateService_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/create",
+            _CreateService_Info,
+            _CreateService_RequestSchema,
+            _CreateService_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateService
+
+    private static readonly string _UpdateService_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/UpdateServiceRequest",
+  "$defs": {
+    "UpdateServiceRequest": {
+      "type": "object",
+      "description": "Request to update an existing game service",
+      "required": [
+        "serviceId"
+      ],
+      "properties": {
+        "serviceId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the service to update"
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 100,
+          "description": "New display name"
+        },
+        "description": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 500,
+          "description": "New description"
+        },
+        "isActive": {
+          "type": "boolean",
+          "nullable": true,
+          "description": "New active status"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateService_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ServiceInfo",
+  "$defs": {
+    "ServiceInfo": {
+      "type": "object",
+      "description": "Information about a game service",
+      "required": [
+        "serviceId",
+        "stubName",
+        "displayName",
+        "isActive",
+        "createdAt"
+      ],
+      "properties": {
+        "serviceId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for the service"
+        },
+        "stubName": {
+          "type": "string",
+          "description": "URL-safe identifier (e.g., \"arcadia\")"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Human-readable name (e.g., \"Arcadia Online\")"
+        },
+        "description": {
+          "type": "string",
+          "nullable": true,
+          "description": "Optional description"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the service is currently active"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the service was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the service was last updated"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateService_Info = """
+{
+  "summary": "Update a game service entry",
+  "description": "Admin-only endpoint to update an existing game service.",
+  "tags": [
+    "Service Registry"
+  ],
+  "deprecated": false,
+  "operationId": "updateService"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/update/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateService_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/update",
+            _UpdateService_Info));
+
+    /// <summary>Returns request schema for UpdateService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/update/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateService_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/update",
+            "request-schema",
+            _UpdateService_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/update/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateService_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/update",
+            "response-schema",
+            _UpdateService_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/update/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateService_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/update",
+            _UpdateService_Info,
+            _UpdateService_RequestSchema,
+            _UpdateService_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeleteService
+
+    private static readonly string _DeleteService_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/DeleteServiceRequest",
+  "$defs": {
+    "DeleteServiceRequest": {
+      "type": "object",
+      "description": "Request to delete a game service",
+      "required": [
+        "serviceId"
+      ],
+      "properties": {
+        "serviceId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the service to delete"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _DeleteService_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _DeleteService_Info = """
+{
+  "summary": "Delete a game service entry",
+  "description": "Admin-only endpoint to remove a game service from the registry.",
+  "tags": [
+    "Service Registry"
+  ],
+  "deprecated": false,
+  "operationId": "deleteService"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteService_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/delete",
+            _DeleteService_Info));
+
+    /// <summary>Returns request schema for DeleteService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteService_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/delete",
+            "request-schema",
+            _DeleteService_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteService_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/delete",
+            "response-schema",
+            _DeleteService_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteService</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("servicedata/services/delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteService_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Servicedata",
+            "Post",
+            "servicedata/services/delete",
+            _DeleteService_Info,
+            _DeleteService_RequestSchema,
+            _DeleteService_ResponseSchema));
+
+    #endregion
+
 }
 
 

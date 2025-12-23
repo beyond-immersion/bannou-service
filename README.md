@@ -34,7 +34,7 @@ make test-edge             # WebSocket protocol tests
 ## Key Features
 
 - **WebSocket-First**: Connect service edge gateway with 31-byte binary headers for zero-copy routing
-- **Schema-Driven**: OpenAPI specs generate controllers, models, clients, and tests automatically
+- **Schema-Driven**: OpenAPI specs generate controllers, models, clients, and tests—[you write only 18-35% of the code](docs/reference/AUTOMATION-ANALYSIS.md)
 - **Plugin Architecture**: Each service is an independent assembly, loadable via environment config
 - **Dapr Integration**: Portable infrastructure (databases, messaging) via Dapr components
 - **Monoservice Flexibility**: Same binary deploys as monolith or distributed microservices

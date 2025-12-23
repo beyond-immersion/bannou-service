@@ -370,6 +370,2063 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
         return ConvertToActionResult(statusCode, result);
     }
 
+
+    #region Meta Endpoints for ListAccounts
+
+    private static readonly string _ListAccounts_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ListAccountsRequest",
+  "$defs": {
+    "ListAccountsRequest": {
+      "type": "object",
+      "description": "Request to list accounts with optional filtering",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "nullable": true
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "provider": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/AuthProvider"
+            }
+          ],
+          "nullable": true
+        },
+        "verified": {
+          "type": "boolean",
+          "nullable": true
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "pageSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      }
+    },
+    "AuthProvider": {
+      "type": "string",
+      "description": "All authentication provider types including email",
+      "enum": [
+        "email",
+        "google",
+        "discord",
+        "twitch",
+        "steam"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _ListAccounts_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AccountListResponse",
+  "$defs": {
+    "AccountListResponse": {
+      "type": "object",
+      "required": [
+        "accounts",
+        "totalCount",
+        "page",
+        "pageSize"
+      ],
+      "properties": {
+        "accounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AccountResponse"
+          }
+        },
+        "totalCount": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        },
+        "pageSize": {
+          "type": "integer"
+        },
+        "hasNextPage": {
+          "type": "boolean"
+        },
+        "hasPreviousPage": {
+          "type": "boolean"
+        }
+      }
+    },
+    "AccountResponse": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "email",
+        "createdAt",
+        "emailVerified",
+        "roles"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "passwordHash": {
+          "type": "string",
+          "nullable": true,
+          "description": "BCrypt hashed password for authentication"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "emailVerified": {
+          "type": "boolean"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "authMethods": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuthMethodInfo"
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "nullable": true
+        }
+      }
+    },
+    "AuthMethodInfo": {
+      "type": "object",
+      "required": [
+        "provider",
+        "linkedAt"
+      ],
+      "properties": {
+        "methodId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "provider": {
+          "$ref": "#/$defs/AuthProvider"
+        },
+        "externalId": {
+          "type": "string",
+          "nullable": true
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "linkedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "AuthProvider": {
+      "type": "string",
+      "description": "All authentication provider types including email",
+      "enum": [
+        "email",
+        "google",
+        "discord",
+        "twitch",
+        "steam"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _ListAccounts_Info = """
+{
+  "summary": "List accounts with filtering",
+  "description": "",
+  "tags": [
+    "Account Management"
+  ],
+  "deprecated": false,
+  "operationId": "listAccounts"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListAccounts</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListAccounts_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Accounts",
+            "Post",
+            "accounts/list",
+            _ListAccounts_Info));
+
+    /// <summary>Returns request schema for ListAccounts</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListAccounts_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/list",
+            "request-schema",
+            _ListAccounts_RequestSchema));
+
+    /// <summary>Returns response schema for ListAccounts</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListAccounts_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/list",
+            "response-schema",
+            _ListAccounts_ResponseSchema));
+
+    /// <summary>Returns full schema for ListAccounts</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListAccounts_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/list",
+            _ListAccounts_Info,
+            _ListAccounts_RequestSchema,
+            _ListAccounts_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CreateAccount
+
+    private static readonly string _CreateAccount_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CreateAccountRequest",
+  "$defs": {
+    "CreateAccountRequest": {
+      "type": "object",
+      "required": [
+        "email"
+      ],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "passwordHash": {
+          "type": "string",
+          "nullable": true,
+          "description": "Pre-hashed password from Auth service"
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 100
+        },
+        "emailVerified": {
+          "type": "boolean",
+          "default": false
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CreateAccount_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AccountResponse",
+  "$defs": {
+    "AccountResponse": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "email",
+        "createdAt",
+        "emailVerified",
+        "roles"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "passwordHash": {
+          "type": "string",
+          "nullable": true,
+          "description": "BCrypt hashed password for authentication"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "emailVerified": {
+          "type": "boolean"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "authMethods": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuthMethodInfo"
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "nullable": true
+        }
+      }
+    },
+    "AuthMethodInfo": {
+      "type": "object",
+      "required": [
+        "provider",
+        "linkedAt"
+      ],
+      "properties": {
+        "methodId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "provider": {
+          "$ref": "#/$defs/AuthProvider"
+        },
+        "externalId": {
+          "type": "string",
+          "nullable": true
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "linkedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "AuthProvider": {
+      "type": "string",
+      "description": "All authentication provider types including email",
+      "enum": [
+        "email",
+        "google",
+        "discord",
+        "twitch",
+        "steam"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _CreateAccount_Info = """
+{
+  "summary": "Create new account",
+  "description": "",
+  "tags": [
+    "Account Management"
+  ],
+  "deprecated": false,
+  "operationId": "createAccount"
+}
+""";
+
+    /// <summary>Returns endpoint information for CreateAccount</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/create/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateAccount_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Accounts",
+            "Post",
+            "accounts/create",
+            _CreateAccount_Info));
+
+    /// <summary>Returns request schema for CreateAccount</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/create/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateAccount_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/create",
+            "request-schema",
+            _CreateAccount_RequestSchema));
+
+    /// <summary>Returns response schema for CreateAccount</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/create/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateAccount_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/create",
+            "response-schema",
+            _CreateAccount_ResponseSchema));
+
+    /// <summary>Returns full schema for CreateAccount</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/create/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateAccount_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/create",
+            _CreateAccount_Info,
+            _CreateAccount_RequestSchema,
+            _CreateAccount_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetAccount
+
+    private static readonly string _GetAccount_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetAccountRequest",
+  "$defs": {
+    "GetAccountRequest": {
+      "type": "object",
+      "description": "Request to get a specific account by ID",
+      "required": [
+        "accountId"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account to retrieve"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetAccount_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AccountResponse",
+  "$defs": {
+    "AccountResponse": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "email",
+        "createdAt",
+        "emailVerified",
+        "roles"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "passwordHash": {
+          "type": "string",
+          "nullable": true,
+          "description": "BCrypt hashed password for authentication"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "emailVerified": {
+          "type": "boolean"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "authMethods": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuthMethodInfo"
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "nullable": true
+        }
+      }
+    },
+    "AuthMethodInfo": {
+      "type": "object",
+      "required": [
+        "provider",
+        "linkedAt"
+      ],
+      "properties": {
+        "methodId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "provider": {
+          "$ref": "#/$defs/AuthProvider"
+        },
+        "externalId": {
+          "type": "string",
+          "nullable": true
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "linkedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "AuthProvider": {
+      "type": "string",
+      "description": "All authentication provider types including email",
+      "enum": [
+        "email",
+        "google",
+        "discord",
+        "twitch",
+        "steam"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _GetAccount_Info = """
+{
+  "summary": "Get account by ID",
+  "description": "",
+  "tags": [
+    "Account Management"
+  ],
+  "deprecated": false,
+  "operationId": "getAccount"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetAccount</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccount_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Accounts",
+            "Post",
+            "accounts/get",
+            _GetAccount_Info));
+
+    /// <summary>Returns request schema for GetAccount</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccount_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/get",
+            "request-schema",
+            _GetAccount_RequestSchema));
+
+    /// <summary>Returns response schema for GetAccount</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccount_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/get",
+            "response-schema",
+            _GetAccount_ResponseSchema));
+
+    /// <summary>Returns full schema for GetAccount</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccount_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/get",
+            _GetAccount_Info,
+            _GetAccount_RequestSchema,
+            _GetAccount_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateAccount
+
+    private static readonly string _UpdateAccount_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/UpdateAccountRequest",
+  "$defs": {
+    "UpdateAccountRequest": {
+      "type": "object",
+      "required": [
+        "accountId"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account to update"
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 100
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateAccount_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AccountResponse",
+  "$defs": {
+    "AccountResponse": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "email",
+        "createdAt",
+        "emailVerified",
+        "roles"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "passwordHash": {
+          "type": "string",
+          "nullable": true,
+          "description": "BCrypt hashed password for authentication"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "emailVerified": {
+          "type": "boolean"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "authMethods": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuthMethodInfo"
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "nullable": true
+        }
+      }
+    },
+    "AuthMethodInfo": {
+      "type": "object",
+      "required": [
+        "provider",
+        "linkedAt"
+      ],
+      "properties": {
+        "methodId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "provider": {
+          "$ref": "#/$defs/AuthProvider"
+        },
+        "externalId": {
+          "type": "string",
+          "nullable": true
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "linkedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "AuthProvider": {
+      "type": "string",
+      "description": "All authentication provider types including email",
+      "enum": [
+        "email",
+        "google",
+        "discord",
+        "twitch",
+        "steam"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateAccount_Info = """
+{
+  "summary": "Update account",
+  "description": "",
+  "tags": [
+    "Account Management"
+  ],
+  "deprecated": false,
+  "operationId": "updateAccount"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateAccount</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/update/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateAccount_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Accounts",
+            "Post",
+            "accounts/update",
+            _UpdateAccount_Info));
+
+    /// <summary>Returns request schema for UpdateAccount</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/update/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateAccount_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/update",
+            "request-schema",
+            _UpdateAccount_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateAccount</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/update/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateAccount_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/update",
+            "response-schema",
+            _UpdateAccount_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateAccount</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/update/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateAccount_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/update",
+            _UpdateAccount_Info,
+            _UpdateAccount_RequestSchema,
+            _UpdateAccount_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeleteAccount
+
+    private static readonly string _DeleteAccount_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/DeleteAccountRequest",
+  "$defs": {
+    "DeleteAccountRequest": {
+      "type": "object",
+      "description": "Request to delete a specific account",
+      "required": [
+        "accountId"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account to delete"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _DeleteAccount_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _DeleteAccount_Info = """
+{
+  "summary": "Delete account",
+  "description": "",
+  "tags": [
+    "Account Management"
+  ],
+  "deprecated": false,
+  "operationId": "deleteAccount"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteAccount</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteAccount_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Accounts",
+            "Post",
+            "accounts/delete",
+            _DeleteAccount_Info));
+
+    /// <summary>Returns request schema for DeleteAccount</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteAccount_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/delete",
+            "request-schema",
+            _DeleteAccount_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteAccount</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteAccount_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/delete",
+            "response-schema",
+            _DeleteAccount_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteAccount</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteAccount_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/delete",
+            _DeleteAccount_Info,
+            _DeleteAccount_RequestSchema,
+            _DeleteAccount_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetAccountByEmail
+
+    private static readonly string _GetAccountByEmail_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetAccountByEmailRequest",
+  "$defs": {
+    "GetAccountByEmailRequest": {
+      "type": "object",
+      "description": "Request to get account by email address",
+      "required": [
+        "email"
+      ],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Email address to look up"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetAccountByEmail_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AccountResponse",
+  "$defs": {
+    "AccountResponse": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "email",
+        "createdAt",
+        "emailVerified",
+        "roles"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "passwordHash": {
+          "type": "string",
+          "nullable": true,
+          "description": "BCrypt hashed password for authentication"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "emailVerified": {
+          "type": "boolean"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "authMethods": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuthMethodInfo"
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "nullable": true
+        }
+      }
+    },
+    "AuthMethodInfo": {
+      "type": "object",
+      "required": [
+        "provider",
+        "linkedAt"
+      ],
+      "properties": {
+        "methodId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "provider": {
+          "$ref": "#/$defs/AuthProvider"
+        },
+        "externalId": {
+          "type": "string",
+          "nullable": true
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "linkedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "AuthProvider": {
+      "type": "string",
+      "description": "All authentication provider types including email",
+      "enum": [
+        "email",
+        "google",
+        "discord",
+        "twitch",
+        "steam"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _GetAccountByEmail_Info = """
+{
+  "summary": "Get account by email",
+  "description": "",
+  "tags": [
+    "Account Lookup"
+  ],
+  "deprecated": false,
+  "operationId": "getAccountByEmail"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetAccountByEmail</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/by-email/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountByEmail_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Accounts",
+            "Post",
+            "accounts/by-email",
+            _GetAccountByEmail_Info));
+
+    /// <summary>Returns request schema for GetAccountByEmail</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/by-email/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountByEmail_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/by-email",
+            "request-schema",
+            _GetAccountByEmail_RequestSchema));
+
+    /// <summary>Returns response schema for GetAccountByEmail</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/by-email/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountByEmail_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/by-email",
+            "response-schema",
+            _GetAccountByEmail_ResponseSchema));
+
+    /// <summary>Returns full schema for GetAccountByEmail</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/by-email/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountByEmail_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/by-email",
+            _GetAccountByEmail_Info,
+            _GetAccountByEmail_RequestSchema,
+            _GetAccountByEmail_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetAuthMethods
+
+    private static readonly string _GetAuthMethods_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetAuthMethodsRequest",
+  "$defs": {
+    "GetAuthMethodsRequest": {
+      "type": "object",
+      "description": "Request to get authentication methods for an account",
+      "required": [
+        "accountId"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetAuthMethods_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AuthMethodsResponse",
+  "$defs": {
+    "AuthMethodsResponse": {
+      "type": "object",
+      "required": [
+        "authMethods"
+      ],
+      "properties": {
+        "authMethods": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuthMethodInfo"
+          }
+        }
+      }
+    },
+    "AuthMethodInfo": {
+      "type": "object",
+      "required": [
+        "provider",
+        "linkedAt"
+      ],
+      "properties": {
+        "methodId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "provider": {
+          "$ref": "#/$defs/AuthProvider"
+        },
+        "externalId": {
+          "type": "string",
+          "nullable": true
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "linkedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "AuthProvider": {
+      "type": "string",
+      "description": "All authentication provider types including email",
+      "enum": [
+        "email",
+        "google",
+        "discord",
+        "twitch",
+        "steam"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _GetAuthMethods_Info = """
+{
+  "summary": "Get authentication methods for account",
+  "description": "",
+  "tags": [
+    "Authentication Methods"
+  ],
+  "deprecated": false,
+  "operationId": "getAuthMethods"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetAuthMethods</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/auth-methods/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAuthMethods_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Accounts",
+            "Post",
+            "accounts/auth-methods/list",
+            _GetAuthMethods_Info));
+
+    /// <summary>Returns request schema for GetAuthMethods</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/auth-methods/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAuthMethods_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/auth-methods/list",
+            "request-schema",
+            _GetAuthMethods_RequestSchema));
+
+    /// <summary>Returns response schema for GetAuthMethods</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/auth-methods/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAuthMethods_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/auth-methods/list",
+            "response-schema",
+            _GetAuthMethods_ResponseSchema));
+
+    /// <summary>Returns full schema for GetAuthMethods</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/auth-methods/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAuthMethods_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/auth-methods/list",
+            _GetAuthMethods_Info,
+            _GetAuthMethods_RequestSchema,
+            _GetAuthMethods_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for AddAuthMethod
+
+    private static readonly string _AddAuthMethod_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AddAuthMethodRequest",
+  "$defs": {
+    "AddAuthMethodRequest": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "provider"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account to add auth method to"
+        },
+        "provider": {
+          "$ref": "#/$defs/OAuthProvider"
+        },
+        "externalId": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        }
+      }
+    },
+    "OAuthProvider": {
+      "type": "string",
+      "description": "OAuth provider types (excludes email)",
+      "enum": [
+        "google",
+        "discord",
+        "twitch",
+        "steam"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _AddAuthMethod_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AuthMethodResponse",
+  "$defs": {
+    "AuthMethodResponse": {
+      "type": "object",
+      "required": [
+        "methodId",
+        "provider",
+        "linkedAt"
+      ],
+      "properties": {
+        "methodId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "provider": {
+          "$ref": "#/$defs/OAuthProvider"
+        },
+        "externalId": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "linkedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "OAuthProvider": {
+      "type": "string",
+      "description": "OAuth provider types (excludes email)",
+      "enum": [
+        "google",
+        "discord",
+        "twitch",
+        "steam"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _AddAuthMethod_Info = """
+{
+  "summary": "Add authentication method to account",
+  "description": "",
+  "tags": [
+    "Authentication Methods"
+  ],
+  "deprecated": false,
+  "operationId": "addAuthMethod"
+}
+""";
+
+    /// <summary>Returns endpoint information for AddAuthMethod</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/auth-methods/add/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AddAuthMethod_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Accounts",
+            "Post",
+            "accounts/auth-methods/add",
+            _AddAuthMethod_Info));
+
+    /// <summary>Returns request schema for AddAuthMethod</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/auth-methods/add/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AddAuthMethod_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/auth-methods/add",
+            "request-schema",
+            _AddAuthMethod_RequestSchema));
+
+    /// <summary>Returns response schema for AddAuthMethod</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/auth-methods/add/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AddAuthMethod_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/auth-methods/add",
+            "response-schema",
+            _AddAuthMethod_ResponseSchema));
+
+    /// <summary>Returns full schema for AddAuthMethod</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/auth-methods/add/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AddAuthMethod_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/auth-methods/add",
+            _AddAuthMethod_Info,
+            _AddAuthMethod_RequestSchema,
+            _AddAuthMethod_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RemoveAuthMethod
+
+    private static readonly string _RemoveAuthMethod_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/RemoveAuthMethodRequest",
+  "$defs": {
+    "RemoveAuthMethodRequest": {
+      "type": "object",
+      "description": "Request to remove an authentication method from an account",
+      "required": [
+        "accountId",
+        "methodId"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account"
+        },
+        "methodId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the authentication method to remove"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _RemoveAuthMethod_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _RemoveAuthMethod_Info = """
+{
+  "summary": "Remove authentication method from account",
+  "description": "",
+  "tags": [
+    "Authentication Methods"
+  ],
+  "deprecated": false,
+  "operationId": "removeAuthMethod"
+}
+""";
+
+    /// <summary>Returns endpoint information for RemoveAuthMethod</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/auth-methods/remove/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RemoveAuthMethod_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Accounts",
+            "Post",
+            "accounts/auth-methods/remove",
+            _RemoveAuthMethod_Info));
+
+    /// <summary>Returns request schema for RemoveAuthMethod</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/auth-methods/remove/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RemoveAuthMethod_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/auth-methods/remove",
+            "request-schema",
+            _RemoveAuthMethod_RequestSchema));
+
+    /// <summary>Returns response schema for RemoveAuthMethod</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/auth-methods/remove/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RemoveAuthMethod_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/auth-methods/remove",
+            "response-schema",
+            _RemoveAuthMethod_ResponseSchema));
+
+    /// <summary>Returns full schema for RemoveAuthMethod</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/auth-methods/remove/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RemoveAuthMethod_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/auth-methods/remove",
+            _RemoveAuthMethod_Info,
+            _RemoveAuthMethod_RequestSchema,
+            _RemoveAuthMethod_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetAccountByProvider
+
+    private static readonly string _GetAccountByProvider_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetAccountByProviderRequest",
+  "$defs": {
+    "GetAccountByProviderRequest": {
+      "type": "object",
+      "description": "Request to get account by external provider ID",
+      "required": [
+        "provider",
+        "externalId"
+      ],
+      "properties": {
+        "provider": {
+          "$ref": "#/$defs/OAuthProvider",
+          "description": "OAuth provider type"
+        },
+        "externalId": {
+          "type": "string",
+          "description": "External ID from the provider"
+        }
+      }
+    },
+    "OAuthProvider": {
+      "type": "string",
+      "description": "OAuth provider types (excludes email)",
+      "enum": [
+        "google",
+        "discord",
+        "twitch",
+        "steam"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _GetAccountByProvider_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AccountResponse",
+  "$defs": {
+    "AccountResponse": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "email",
+        "createdAt",
+        "emailVerified",
+        "roles"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "passwordHash": {
+          "type": "string",
+          "nullable": true,
+          "description": "BCrypt hashed password for authentication"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "emailVerified": {
+          "type": "boolean"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "authMethods": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuthMethodInfo"
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "nullable": true
+        }
+      }
+    },
+    "AuthMethodInfo": {
+      "type": "object",
+      "required": [
+        "provider",
+        "linkedAt"
+      ],
+      "properties": {
+        "methodId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "provider": {
+          "$ref": "#/$defs/AuthProvider"
+        },
+        "externalId": {
+          "type": "string",
+          "nullable": true
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "linkedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "AuthProvider": {
+      "type": "string",
+      "description": "All authentication provider types including email",
+      "enum": [
+        "email",
+        "google",
+        "discord",
+        "twitch",
+        "steam"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _GetAccountByProvider_Info = """
+{
+  "summary": "Get account by external provider ID",
+  "description": "",
+  "tags": [
+    "Account Lookup"
+  ],
+  "deprecated": false,
+  "operationId": "getAccountByProvider"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetAccountByProvider</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/by-provider/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountByProvider_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Accounts",
+            "Post",
+            "accounts/by-provider",
+            _GetAccountByProvider_Info));
+
+    /// <summary>Returns request schema for GetAccountByProvider</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/by-provider/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountByProvider_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/by-provider",
+            "request-schema",
+            _GetAccountByProvider_RequestSchema));
+
+    /// <summary>Returns response schema for GetAccountByProvider</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/by-provider/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountByProvider_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/by-provider",
+            "response-schema",
+            _GetAccountByProvider_ResponseSchema));
+
+    /// <summary>Returns full schema for GetAccountByProvider</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/by-provider/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountByProvider_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/by-provider",
+            _GetAccountByProvider_Info,
+            _GetAccountByProvider_RequestSchema,
+            _GetAccountByProvider_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateProfile
+
+    private static readonly string _UpdateProfile_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/UpdateProfileRequest",
+  "$defs": {
+    "UpdateProfileRequest": {
+      "type": "object",
+      "required": [
+        "accountId"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account to update"
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 100
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "nullable": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateProfile_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AccountResponse",
+  "$defs": {
+    "AccountResponse": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "email",
+        "createdAt",
+        "emailVerified",
+        "roles"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "passwordHash": {
+          "type": "string",
+          "nullable": true,
+          "description": "BCrypt hashed password for authentication"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "emailVerified": {
+          "type": "boolean"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "authMethods": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuthMethodInfo"
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "nullable": true
+        }
+      }
+    },
+    "AuthMethodInfo": {
+      "type": "object",
+      "required": [
+        "provider",
+        "linkedAt"
+      ],
+      "properties": {
+        "methodId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "provider": {
+          "$ref": "#/$defs/AuthProvider"
+        },
+        "externalId": {
+          "type": "string",
+          "nullable": true
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true
+        },
+        "linkedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "AuthProvider": {
+      "type": "string",
+      "description": "All authentication provider types including email",
+      "enum": [
+        "email",
+        "google",
+        "discord",
+        "twitch",
+        "steam"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateProfile_Info = """
+{
+  "summary": "Update account profile",
+  "description": "",
+  "tags": [
+    "Profile Management"
+  ],
+  "deprecated": false,
+  "operationId": "updateProfile"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateProfile</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/profile/update/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateProfile_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Accounts",
+            "Post",
+            "accounts/profile/update",
+            _UpdateProfile_Info));
+
+    /// <summary>Returns request schema for UpdateProfile</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/profile/update/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateProfile_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/profile/update",
+            "request-schema",
+            _UpdateProfile_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateProfile</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/profile/update/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateProfile_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/profile/update",
+            "response-schema",
+            _UpdateProfile_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateProfile</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/profile/update/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateProfile_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/profile/update",
+            _UpdateProfile_Info,
+            _UpdateProfile_RequestSchema,
+            _UpdateProfile_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdatePasswordHash
+
+    private static readonly string _UpdatePasswordHash_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/UpdatePasswordRequest",
+  "$defs": {
+    "UpdatePasswordRequest": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "passwordHash"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account to update"
+        },
+        "passwordHash": {
+          "type": "string",
+          "description": "New pre-hashed password from Auth service"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdatePasswordHash_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _UpdatePasswordHash_Info = """
+{
+  "summary": "Update account password hash",
+  "description": "",
+  "tags": [
+    "Account Management"
+  ],
+  "deprecated": false,
+  "operationId": "updatePasswordHash"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdatePasswordHash</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/password/update/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdatePasswordHash_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Accounts",
+            "Post",
+            "accounts/password/update",
+            _UpdatePasswordHash_Info));
+
+    /// <summary>Returns request schema for UpdatePasswordHash</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/password/update/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdatePasswordHash_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/password/update",
+            "request-schema",
+            _UpdatePasswordHash_RequestSchema));
+
+    /// <summary>Returns response schema for UpdatePasswordHash</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/password/update/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdatePasswordHash_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/password/update",
+            "response-schema",
+            _UpdatePasswordHash_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdatePasswordHash</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/password/update/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdatePasswordHash_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/password/update",
+            _UpdatePasswordHash_Info,
+            _UpdatePasswordHash_RequestSchema,
+            _UpdatePasswordHash_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateVerificationStatus
+
+    private static readonly string _UpdateVerificationStatus_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/UpdateVerificationRequest",
+  "$defs": {
+    "UpdateVerificationRequest": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "emailVerified"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account to update"
+        },
+        "emailVerified": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateVerificationStatus_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _UpdateVerificationStatus_Info = """
+{
+  "summary": "Update email verification status",
+  "description": "",
+  "tags": [
+    "Account Management"
+  ],
+  "deprecated": false,
+  "operationId": "updateVerificationStatus"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateVerificationStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/verification/update/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateVerificationStatus_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Accounts",
+            "Post",
+            "accounts/verification/update",
+            _UpdateVerificationStatus_Info));
+
+    /// <summary>Returns request schema for UpdateVerificationStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/verification/update/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateVerificationStatus_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/verification/update",
+            "request-schema",
+            _UpdateVerificationStatus_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateVerificationStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/verification/update/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateVerificationStatus_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/verification/update",
+            "response-schema",
+            _UpdateVerificationStatus_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateVerificationStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/verification/update/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateVerificationStatus_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Accounts",
+            "Post",
+            "accounts/verification/update",
+            _UpdateVerificationStatus_Info,
+            _UpdateVerificationStatus_RequestSchema,
+            _UpdateVerificationStatus_ResponseSchema));
+
+    #endregion
+
 }
 
 

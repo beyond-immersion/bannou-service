@@ -294,6 +294,1225 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
         return ConvertToActionResult(statusCode, result);
     }
 
+
+    #region Meta Endpoints for ListGameSessions
+
+    private static readonly string _ListGameSessions_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ListGameSessionsRequest",
+  "$defs": {
+    "ListGameSessionsRequest": {
+      "type": "object",
+      "description": "Request to list available game sessions",
+      "properties": {
+        "gameType": {
+          "type": "string",
+          "enum": [
+            "arcadia",
+            "generic"
+          ],
+          "description": "Filter by game type"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "waiting",
+            "active",
+            "full"
+          ],
+          "description": "Filter by session status"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ListGameSessions_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GameSessionListResponse",
+  "$defs": {
+    "GameSessionListResponse": {
+      "type": "object",
+      "required": [
+        "sessions"
+      ],
+      "properties": {
+        "sessions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GameSessionResponse"
+          }
+        },
+        "totalCount": {
+          "type": "integer"
+        }
+      }
+    },
+    "GameSessionResponse": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "gameType",
+        "status",
+        "createdAt"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "gameType": {
+          "type": "string",
+          "enum": [
+            "arcadia",
+            "generic"
+          ]
+        },
+        "sessionName": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "waiting",
+            "active",
+            "full",
+            "finished"
+          ]
+        },
+        "maxPlayers": {
+          "type": "integer"
+        },
+        "currentPlayers": {
+          "type": "integer"
+        },
+        "isPrivate": {
+          "type": "boolean"
+        },
+        "owner": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "players": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GamePlayer"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "gameSettings": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "GamePlayer": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "joinedAt",
+        "role"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "player",
+            "spectator",
+            "moderator"
+          ]
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "characterData": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "voiceSessionId": {
+          "type": "string",
+          "nullable": true,
+          "description": "Voice participant session ID (if player has joined voice)"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ListGameSessions_Info = """
+{
+  "summary": "List available game sessions",
+  "description": "List available game sessions. This endpoint is not directly accessible via WebSocket API.\nAccess is granted through session shortcuts or internal service calls.\n",
+  "tags": [
+    "Game Sessions"
+  ],
+  "deprecated": false,
+  "operationId": "listGameSessions"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListGameSessions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListGameSessions_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "GameSession",
+            "Post",
+            "sessions/list",
+            _ListGameSessions_Info));
+
+    /// <summary>Returns request schema for ListGameSessions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListGameSessions_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/list",
+            "request-schema",
+            _ListGameSessions_RequestSchema));
+
+    /// <summary>Returns response schema for ListGameSessions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListGameSessions_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/list",
+            "response-schema",
+            _ListGameSessions_ResponseSchema));
+
+    /// <summary>Returns full schema for ListGameSessions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListGameSessions_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/list",
+            _ListGameSessions_Info,
+            _ListGameSessions_RequestSchema,
+            _ListGameSessions_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CreateGameSession
+
+    private static readonly string _CreateGameSession_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CreateGameSessionRequest",
+  "$defs": {
+    "CreateGameSessionRequest": {
+      "type": "object",
+      "required": [
+        "gameType",
+        "maxPlayers"
+      ],
+      "properties": {
+        "gameType": {
+          "type": "string",
+          "enum": [
+            "arcadia",
+            "generic"
+          ]
+        },
+        "maxPlayers": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "sessionName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "isPrivate": {
+          "type": "boolean",
+          "default": false
+        },
+        "gameSettings": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CreateGameSession_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GameSessionResponse",
+  "$defs": {
+    "GameSessionResponse": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "gameType",
+        "status",
+        "createdAt"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "gameType": {
+          "type": "string",
+          "enum": [
+            "arcadia",
+            "generic"
+          ]
+        },
+        "sessionName": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "waiting",
+            "active",
+            "full",
+            "finished"
+          ]
+        },
+        "maxPlayers": {
+          "type": "integer"
+        },
+        "currentPlayers": {
+          "type": "integer"
+        },
+        "isPrivate": {
+          "type": "boolean"
+        },
+        "owner": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "players": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GamePlayer"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "gameSettings": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "GamePlayer": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "joinedAt",
+        "role"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "player",
+            "spectator",
+            "moderator"
+          ]
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "characterData": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "voiceSessionId": {
+          "type": "string",
+          "nullable": true,
+          "description": "Voice participant session ID (if player has joined voice)"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CreateGameSession_Info = """
+{
+  "summary": "Create new game session",
+  "description": "Create a new game session. This endpoint is not directly accessible via WebSocket API.\nAccess is granted through session shortcuts or internal service calls.\n",
+  "tags": [
+    "Game Sessions"
+  ],
+  "deprecated": false,
+  "operationId": "createGameSession"
+}
+""";
+
+    /// <summary>Returns endpoint information for CreateGameSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/create/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateGameSession_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "GameSession",
+            "Post",
+            "sessions/create",
+            _CreateGameSession_Info));
+
+    /// <summary>Returns request schema for CreateGameSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/create/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateGameSession_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/create",
+            "request-schema",
+            _CreateGameSession_RequestSchema));
+
+    /// <summary>Returns response schema for CreateGameSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/create/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateGameSession_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/create",
+            "response-schema",
+            _CreateGameSession_ResponseSchema));
+
+    /// <summary>Returns full schema for CreateGameSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/create/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateGameSession_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/create",
+            _CreateGameSession_Info,
+            _CreateGameSession_RequestSchema,
+            _CreateGameSession_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetGameSession
+
+    private static readonly string _GetGameSession_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetGameSessionRequest",
+  "$defs": {
+    "GetGameSessionRequest": {
+      "type": "object",
+      "description": "Request to get a specific game session",
+      "required": [
+        "sessionId"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the game session to retrieve"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetGameSession_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GameSessionResponse",
+  "$defs": {
+    "GameSessionResponse": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "gameType",
+        "status",
+        "createdAt"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "gameType": {
+          "type": "string",
+          "enum": [
+            "arcadia",
+            "generic"
+          ]
+        },
+        "sessionName": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "waiting",
+            "active",
+            "full",
+            "finished"
+          ]
+        },
+        "maxPlayers": {
+          "type": "integer"
+        },
+        "currentPlayers": {
+          "type": "integer"
+        },
+        "isPrivate": {
+          "type": "boolean"
+        },
+        "owner": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "players": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GamePlayer"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "gameSettings": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "GamePlayer": {
+      "type": "object",
+      "required": [
+        "accountId",
+        "joinedAt",
+        "role"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "player",
+            "spectator",
+            "moderator"
+          ]
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "characterData": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "voiceSessionId": {
+          "type": "string",
+          "nullable": true,
+          "description": "Voice participant session ID (if player has joined voice)"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetGameSession_Info = """
+{
+  "summary": "Get game session details",
+  "description": "Get details of the current game session the user has joined.",
+  "tags": [
+    "Game Sessions"
+  ],
+  "deprecated": false,
+  "operationId": "getGameSession"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetGameSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetGameSession_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "GameSession",
+            "Post",
+            "sessions/get",
+            _GetGameSession_Info));
+
+    /// <summary>Returns request schema for GetGameSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetGameSession_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/get",
+            "request-schema",
+            _GetGameSession_RequestSchema));
+
+    /// <summary>Returns response schema for GetGameSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetGameSession_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/get",
+            "response-schema",
+            _GetGameSession_ResponseSchema));
+
+    /// <summary>Returns full schema for GetGameSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetGameSession_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/get",
+            _GetGameSession_Info,
+            _GetGameSession_RequestSchema,
+            _GetGameSession_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for JoinGameSession
+
+    private static readonly string _JoinGameSession_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/JoinGameSessionRequest",
+  "$defs": {
+    "JoinGameSessionRequest": {
+      "type": "object",
+      "required": [
+        "sessionId"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the game session to join"
+        },
+        "password": {
+          "type": "string",
+          "description": "Password for private sessions"
+        },
+        "characterData": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Game-specific character data"
+        },
+        "voiceEndpoint": {
+          "$ref": "#/$defs/VoiceSipEndpoint",
+          "description": "Client's SIP endpoint for voice communication (optional)"
+        }
+      }
+    },
+    "VoiceSipEndpoint": {
+      "type": "object",
+      "description": "Client's SIP/WebRTC endpoint for voice communication",
+      "required": [
+        "sdpOffer"
+      ],
+      "properties": {
+        "sdpOffer": {
+          "type": "string",
+          "description": "SDP offer for WebRTC negotiation"
+        },
+        "iceCandidates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "ICE candidates for NAT traversal"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _JoinGameSession_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/JoinGameSessionResponse",
+  "$defs": {
+    "JoinGameSessionResponse": {
+      "type": "object",
+      "required": [
+        "success",
+        "sessionId",
+        "playerRole"
+      ],
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "sessionId": {
+          "type": "string"
+        },
+        "playerRole": {
+          "type": "string",
+          "enum": [
+            "player",
+            "spectator",
+            "moderator"
+          ]
+        },
+        "gameData": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Initial game state data"
+        },
+        "newPermissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Additional permissions granted by joining"
+        },
+        "voice": {
+          "$ref": "#/$defs/VoiceConnectionInfo",
+          "description": "Voice connection info (if voice is enabled for this session)"
+        }
+      }
+    },
+    "VoiceConnectionInfo": {
+      "type": "object",
+      "description": "Minimal voice metadata returned when joining a session.\ n\n**Event-Only Pattern**: Peer connection details are NOT included here.\nClients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).\nThis avoids race conditions between response processing and event handling.\n",
+      "required": [
+        "voiceEnabled"
+      ],
+      "properties": {
+        "voiceEnabled": {
+          "type": "boolean",
+          "description": "Whether voice is enabled for this game session"
+        },
+        "roomId": {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true,
+          "description": "Voice room ID (null until room is created when 2+ participants join with voice)"
+        },
+        "tier": {
+          "type": "string",
+          "enum": [
+            "p2p",
+            "scaled"
+          ],
+          "nullable": true,
+          "description": "Expected voice tier (may change based on participant count)"
+        },
+        "codec": {
+          "type": "string",
+          "enum": [
+            "opus",
+            "g711",
+            "g722"
+          ],
+          "description": "Audio codec to use"
+        },
+        "stunServers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "STUN server URIs for NAT traversal (clients should configure these early)"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _JoinGameSession_Info = """
+{
+  "summary": "Join a game session",
+  "description": "Join an existing game session. This endpoint is not directly accessible via WebSocket API.\nAccess is granted through session shortcuts published by the game-session service when\na subscribed user connects. The shortcut contains a pre-bound JoinGameSessionRequest\ nwith the target session ID already filled in.\n",
+  "tags": [
+    "Game Sessions"
+  ],
+  "deprecated": false,
+  "operationId": "joinGameSession"
+}
+""";
+
+    /// <summary>Returns endpoint information for JoinGameSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/join/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> JoinGameSession_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "GameSession",
+            "Post",
+            "sessions/join",
+            _JoinGameSession_Info));
+
+    /// <summary>Returns request schema for JoinGameSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/join/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> JoinGameSession_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/join",
+            "request-schema",
+            _JoinGameSession_RequestSchema));
+
+    /// <summary>Returns response schema for JoinGameSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/join/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> JoinGameSession_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/join",
+            "response-schema",
+            _JoinGameSession_ResponseSchema));
+
+    /// <summary>Returns full schema for JoinGameSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/join/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> JoinGameSession_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/join",
+            _JoinGameSession_Info,
+            _JoinGameSession_RequestSchema,
+            _JoinGameSession_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for LeaveGameSession
+
+    private static readonly string _LeaveGameSession_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/LeaveGameSessionRequest",
+  "$defs": {
+    "LeaveGameSessionRequest": {
+      "type": "object",
+      "description": "Request to leave a game session",
+      "required": [
+        "sessionId"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the game session to leave"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _LeaveGameSession_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _LeaveGameSession_Info = """
+{
+  "summary": "Leave a game session",
+  "description": "",
+  "tags": [
+    "Game Sessions"
+  ],
+  "deprecated": false,
+  "operationId": "leaveGameSession"
+}
+""";
+
+    /// <summary>Returns endpoint information for LeaveGameSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/leave/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveGameSession_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "GameSession",
+            "Post",
+            "sessions/leave",
+            _LeaveGameSession_Info));
+
+    /// <summary>Returns request schema for LeaveGameSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/leave/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveGameSession_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/leave",
+            "request-schema",
+            _LeaveGameSession_RequestSchema));
+
+    /// <summary>Returns response schema for LeaveGameSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/leave/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveGameSession_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/leave",
+            "response-schema",
+            _LeaveGameSession_ResponseSchema));
+
+    /// <summary>Returns full schema for LeaveGameSession</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/leave/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveGameSession_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/leave",
+            _LeaveGameSession_Info,
+            _LeaveGameSession_RequestSchema,
+            _LeaveGameSession_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for KickPlayer
+
+    private static readonly string _KickPlayer_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/KickPlayerRequest",
+  "$defs": {
+    "KickPlayerRequest": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "targetAccountId"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the game session"
+        },
+        "targetAccountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Account ID of the player to kick"
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Reason for kicking the player"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _KickPlayer_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _KickPlayer_Info = """
+{
+  "summary": "Kick player from game session (admin only)",
+  "description": "",
+  "tags": [
+    "Game Sessions"
+  ],
+  "deprecated": false,
+  "operationId": "kickPlayer"
+}
+""";
+
+    /// <summary>Returns endpoint information for KickPlayer</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/kick/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> KickPlayer_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "GameSession",
+            "Post",
+            "sessions/kick",
+            _KickPlayer_Info));
+
+    /// <summary>Returns request schema for KickPlayer</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/kick/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> KickPlayer_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/kick",
+            "request-schema",
+            _KickPlayer_RequestSchema));
+
+    /// <summary>Returns response schema for KickPlayer</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/kick/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> KickPlayer_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/kick",
+            "response-schema",
+            _KickPlayer_ResponseSchema));
+
+    /// <summary>Returns full schema for KickPlayer</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/kick/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> KickPlayer_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/kick",
+            _KickPlayer_Info,
+            _KickPlayer_RequestSchema,
+            _KickPlayer_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for SendChatMessage
+
+    private static readonly string _SendChatMessage_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ChatMessageRequest",
+  "$defs": {
+    "ChatMessageRequest": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "message"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the game session"
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "messageType": {
+          "type": "string",
+          "enum": [
+            "public",
+            "whisper",
+            "system"
+          ],
+          "default": "public"
+        },
+        "targetPlayerId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "For whisper messages"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _SendChatMessage_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _SendChatMessage_Info = """
+{
+  "summary": "Send chat message to game session",
+  "description": "",
+  "tags": [
+    "Game Chat"
+  ],
+  "deprecated": false,
+  "operationId": "sendChatMessage"
+}
+""";
+
+    /// <summary>Returns endpoint information for SendChatMessage</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/chat/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SendChatMessage_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "GameSession",
+            "Post",
+            "sessions/chat",
+            _SendChatMessage_Info));
+
+    /// <summary>Returns request schema for SendChatMessage</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/chat/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SendChatMessage_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/chat",
+            "request-schema",
+            _SendChatMessage_RequestSchema));
+
+    /// <summary>Returns response schema for SendChatMessage</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/chat/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SendChatMessage_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/chat",
+            "response-schema",
+            _SendChatMessage_ResponseSchema));
+
+    /// <summary>Returns full schema for SendChatMessage</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/chat/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SendChatMessage_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/chat",
+            _SendChatMessage_Info,
+            _SendChatMessage_RequestSchema,
+            _SendChatMessage_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for PerformGameAction
+
+    private static readonly string _PerformGameAction_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GameActionRequest",
+  "$defs": {
+    "GameActionRequest": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "actionType"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the game session"
+        },
+        "actionType": {
+          "type": "string",
+          "enum": [
+            "move",
+            "interact",
+            "attack",
+            "cast_spell",
+            "use_item"
+          ]
+        },
+        "actionData": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Action-specific data"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Target of the action (if applicable)"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _PerformGameAction_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GameActionResponse",
+  "$defs": {
+    "GameActionResponse": {
+      "type": "object",
+      "required": [
+        "success",
+        "actionId"
+      ],
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "actionId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "result": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Action result data"
+        },
+        "newGameState": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Updated game state (if applicable)"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _PerformGameAction_Info = """
+{
+  "summary": "Perform game action (enhanced permissions after joining)",
+  "description": "",
+  "tags": [
+    "Game Actions"
+  ],
+  "deprecated": false,
+  "operationId": "performGameAction"
+}
+""";
+
+    /// <summary>Returns endpoint information for PerformGameAction</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/actions/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> PerformGameAction_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "GameSession",
+            "Post",
+            "sessions/actions",
+            _PerformGameAction_Info));
+
+    /// <summary>Returns request schema for PerformGameAction</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/actions/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> PerformGameAction_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/actions",
+            "request-schema",
+            _PerformGameAction_RequestSchema));
+
+    /// <summary>Returns response schema for PerformGameAction</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/actions/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> PerformGameAction_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/actions",
+            "response-schema",
+            _PerformGameAction_ResponseSchema));
+
+    /// <summary>Returns full schema for PerformGameAction</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/actions/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> PerformGameAction_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/actions",
+            _PerformGameAction_Info,
+            _PerformGameAction_RequestSchema,
+            _PerformGameAction_ResponseSchema));
+
+    #endregion
+
 }
 
 

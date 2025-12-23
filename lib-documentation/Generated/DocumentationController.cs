@@ -556,6 +556,2679 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         return ConvertToActionResult(statusCode, result);
     }
 
+
+    #region Meta Endpoints for ViewDocumentBySlug
+
+    private static readonly string _ViewDocumentBySlug_RequestSchema = """
+{}
+""";
+
+    private static readonly string _ViewDocumentBySlug_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _ViewDocumentBySlug_Info = """
+{
+  "summary": "View documentation page in browser",
+  "description": "Browser-facing endpoint for viewing documentation.\nRouted via NGINX, not exposed to WebSocket clients.\nReturns HTML-rendered documentation page.\n",
+  "tags": [
+    "Browser"
+  ],
+  "deprecated": false,
+  "operationId": "viewDocumentBySlug"
+}
+""";
+
+    /// <summary>Returns endpoint information for ViewDocumentBySlug</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/view/{slug}/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ViewDocumentBySlug_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Get",
+            "documentation/view/{slug}",
+            _ViewDocumentBySlug_Info));
+
+    /// <summary>Returns request schema for ViewDocumentBySlug</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/view/{slug}/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ViewDocumentBySlug_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Get",
+            "documentation/view/{slug}",
+            "request-schema",
+            _ViewDocumentBySlug_RequestSchema));
+
+    /// <summary>Returns response schema for ViewDocumentBySlug</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/view/{slug}/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ViewDocumentBySlug_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Get",
+            "documentation/view/{slug}",
+            "response-schema",
+            _ViewDocumentBySlug_ResponseSchema));
+
+    /// <summary>Returns full schema for ViewDocumentBySlug</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/view/{slug}/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ViewDocumentBySlug_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Get",
+            "documentation/view/{slug}",
+            _ViewDocumentBySlug_Info,
+            _ViewDocumentBySlug_RequestSchema,
+            _ViewDocumentBySlug_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for QueryDocumentation
+
+    private static readonly string _QueryDocumentation_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/QueryDocumentationRequest",
+  "$defs": {
+    "QueryDocumentationRequest": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "query"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50,
+          "description": "Documentation namespace"
+        },
+        "query": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 500,
+          "description": "Natural language query"
+        },
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Optional session ID for conversational context"
+        },
+        "category": {
+          "$ref": "#/$defs/DocumentCategory"
+        },
+        "maxResults": {
+          "type": "integer",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 20
+        },
+        "includeContent": {
+          "type": "boolean",
+          "default": false
+        },
+        "maxSummaryLength": {
+          "type": "integer",
+          "default": 300,
+          "minimum": 50,
+          "maximum": 500
+        },
+        "minRelevanceScore": {
+          "type": "number",
+          "format": "float",
+          "default": 0.3,
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    },
+    "DocumentCategory": {
+      "type": "string",
+      "enum": [
+        "getting-started",
+        "api-reference",
+        "architecture",
+        "deployment",
+        "troubleshooting",
+        "tutorials",
+        "game-systems",
+        "world-lore",
+        "npc-ai",
+        "other"
+      ],
+      "description": "Fixed categories for type-safe filtering"
+    }
+  }
+}
+""";
+
+    private static readonly string _QueryDocumentation_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/QueryDocumentationResponse",
+  "$defs": {
+    "QueryDocumentationResponse": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "query",
+        "results"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DocumentResult"
+          }
+        },
+        "totalResults": {
+          "type": "integer"
+        },
+        "voiceSummary": {
+          "type": "string",
+          "description": "Concise spoken summary for voice AI"
+        },
+        "suggestedFollowups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "noResultsMessage": {
+          "type": "string"
+        }
+      }
+    },
+    "DocumentResult": {
+      "type": "object",
+      "required": [
+        "documentId",
+        "slug",
+        "title",
+        "relevanceScore"
+      ],
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "category": {
+          "$ref": "#/$defs/DocumentCategory"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "voiceSummary": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "relevanceScore": {
+          "type": "number",
+          "format": "float"
+        },
+        "matchHighlights": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "DocumentCategory": {
+      "type": "string",
+      "enum": [
+        "getting-started",
+        "api-reference",
+        "architecture",
+        "deployment",
+        "troubleshooting",
+        "tutorials",
+        "game-systems",
+        "world-lore",
+        "npc-ai",
+        "other"
+      ],
+      "description": "Fixed categories for type-safe filtering"
+    }
+  }
+}
+""";
+
+    private static readonly string _QueryDocumentation_Info = """
+{
+  "summary": "Natural language documentation search",
+  "description": "Search documentation using natural language queries.\nReturns the most relevant documents with voice-friendly summaries.\n",
+  "tags": [
+    "Search"
+  ],
+  "deprecated": false,
+  "operationId": "queryDocumentation"
+}
+""";
+
+    /// <summary>Returns endpoint information for QueryDocumentation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/query/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryDocumentation_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/query",
+            _QueryDocumentation_Info));
+
+    /// <summary>Returns request schema for QueryDocumentation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/query/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryDocumentation_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/query",
+            "request-schema",
+            _QueryDocumentation_RequestSchema));
+
+    /// <summary>Returns response schema for QueryDocumentation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/query/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryDocumentation_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/query",
+            "response-schema",
+            _QueryDocumentation_ResponseSchema));
+
+    /// <summary>Returns full schema for QueryDocumentation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/query/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryDocumentation_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/query",
+            _QueryDocumentation_Info,
+            _QueryDocumentation_RequestSchema,
+            _QueryDocumentation_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetDocument
+
+    private static readonly string _GetDocument_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetDocumentRequest",
+  "$defs": {
+    "GetDocumentRequest": {
+      "type": "object",
+      "required": [
+        "namespace"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "sessionId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "includeRelated": {
+          "$ref": "#/$defs/RelatedDepth"
+        },
+        "includeContent": {
+          "type": "boolean",
+          "default": false
+        },
+        "renderHtml": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "RelatedDepth": {
+      "type": "string",
+      "enum": [
+        "none",
+        "direct",
+        "extended"
+      ],
+      "default": "direct",
+      "description": "How deep to traverse related document links:\n- none: No related documents included\n- direct: Only directly linked documents (depth 1)\n- extended: Related documents + their related documents (depth 2)\n"
+    }
+  }
+}
+""";
+
+    private static readonly string _GetDocument_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetDocumentResponse",
+  "$defs": {
+    "GetDocumentResponse": {
+      "type": "object",
+      "required": [
+        "document"
+      ],
+      "properties": {
+        "document": {
+          "$ref": "#/$defs/Document"
+        },
+        "relatedDocuments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DocumentSummary"
+          }
+        },
+        "contentFormat": {
+          "type": "string",
+          "enum": [
+            "markdown",
+            "html",
+            "none"
+          ]
+        }
+      }
+    },
+    "Document": {
+      "type": "object",
+      "required": [
+        "documentId",
+        "namespace",
+        "slug",
+        "title",
+        "category",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "category": {
+          "$ref": "#/$defs/DocumentCategory"
+        },
+        "content": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "voiceSummary": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "relatedDocuments": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "DocumentCategory": {
+      "type": "string",
+      "enum": [
+        "getting-started",
+        "api-reference",
+        "architecture",
+        "deployment",
+        "troubleshooting",
+        "tutorials",
+        "game-systems",
+        "world-lore",
+        "npc-ai",
+        "other"
+      ],
+      "description": "Fixed categories for type-safe filtering"
+    },
+    "DocumentSummary": {
+      "type": "object",
+      "required": [
+        "documentId",
+        "slug",
+        "title",
+        "category"
+      ],
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "category": {
+          "$ref": "#/$defs/DocumentCategory"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "voiceSummary": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetDocument_Info = """
+{
+  "summary": "Get specific document by ID or slug",
+  "description": "Retrieve a specific document by its unique identifier or slug.\nReturns full content with metadata.\n",
+  "tags": [
+    "Documents"
+  ],
+  "deprecated": false,
+  "operationId": "getDocument"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetDocument_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/get",
+            _GetDocument_Info));
+
+    /// <summary>Returns request schema for GetDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetDocument_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/get",
+            "request-schema",
+            _GetDocument_RequestSchema));
+
+    /// <summary>Returns response schema for GetDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetDocument_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/get",
+            "response-schema",
+            _GetDocument_ResponseSchema));
+
+    /// <summary>Returns full schema for GetDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetDocument_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/get",
+            _GetDocument_Info,
+            _GetDocument_RequestSchema,
+            _GetDocument_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for SearchDocumentation
+
+    private static readonly string _SearchDocumentation_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SearchDocumentationRequest",
+  "$defs": {
+    "SearchDocumentationRequest": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "searchTerm"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "searchTerm": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 200
+        },
+        "sessionId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "category": {
+          "$ref": "#/$defs/DocumentCategory"
+        },
+        "maxResults": {
+          "type": "integer",
+          "default": 10,
+          "minimum": 1,
+          "maximum": 50
+        },
+        "searchIn": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SearchField"
+          }
+        },
+        "sortBy": {
+          "type": "string",
+          "enum": [
+            "relevance",
+            "recency",
+            "alphabetical"
+          ],
+          "default": "relevance"
+        },
+        "includeContent": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "DocumentCategory": {
+      "type": "string",
+      "enum": [
+        "getting-started",
+        "api-reference",
+        "architecture",
+        "deployment",
+        "troubleshooting",
+        "tutorials",
+        "game-systems",
+        "world-lore",
+        "npc-ai",
+        "other"
+      ],
+      "description": "Fixed categories for type-safe filtering"
+    },
+    "SearchField": {
+      "type": "string",
+      "enum": [
+        "title",
+        "content",
+        "tags",
+        "summary"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _SearchDocumentation_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SearchDocumentationResponse",
+  "$defs": {
+    "SearchDocumentationResponse": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "results"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DocumentResult"
+          }
+        },
+        "totalResults": {
+          "type": "integer"
+        },
+        "searchTerm": {
+          "type": "string"
+        }
+      }
+    },
+    "DocumentResult": {
+      "type": "object",
+      "required": [
+        "documentId",
+        "slug",
+        "title",
+        "relevanceScore"
+      ],
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "category": {
+          "$ref": "#/$defs/DocumentCategory"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "voiceSummary": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "relevanceScore": {
+          "type": "number",
+          "format": "float"
+        },
+        "matchHighlights": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "DocumentCategory": {
+      "type": "string",
+      "enum": [
+        "getting-started",
+        "api-reference",
+        "architecture",
+        "deployment",
+        "troubleshooting",
+        "tutorials",
+        "game-systems",
+        "world-lore",
+        "npc-ai",
+        "other"
+      ],
+      "description": "Fixed categories for type-safe filtering"
+    }
+  }
+}
+""";
+
+    private static readonly string _SearchDocumentation_Info = """
+{
+  "summary": "Full-text keyword search",
+  "description": "Search documentation using exact keyword matching.\nFaster than semantic search but less flexible.\n",
+  "tags": [
+    "Search"
+  ],
+  "deprecated": false,
+  "operationId": "searchDocumentation"
+}
+""";
+
+    /// <summary>Returns endpoint information for SearchDocumentation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/search/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SearchDocumentation_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/search",
+            _SearchDocumentation_Info));
+
+    /// <summary>Returns request schema for SearchDocumentation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/search/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SearchDocumentation_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/search",
+            "request-schema",
+            _SearchDocumentation_RequestSchema));
+
+    /// <summary>Returns response schema for SearchDocumentation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/search/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SearchDocumentation_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/search",
+            "response-schema",
+            _SearchDocumentation_ResponseSchema));
+
+    /// <summary>Returns full schema for SearchDocumentation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/search/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SearchDocumentation_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/search",
+            _SearchDocumentation_Info,
+            _SearchDocumentation_RequestSchema,
+            _SearchDocumentation_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ListDocuments
+
+    private static readonly string _ListDocuments_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ListDocumentsRequest",
+  "$defs": {
+    "ListDocumentsRequest": {
+      "type": "object",
+      "required": [
+        "namespace"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "category": {
+          "$ref": "#/$defs/DocumentCategory"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tagsMatch": {
+          "type": "string",
+          "enum": [
+            "all",
+            "any"
+          ],
+          "default": "all"
+        },
+        "createdAfter": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBefore": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAfter": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedBefore": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "titlesOnly": {
+          "type": "boolean",
+          "default": false
+        },
+        "page": {
+          "type": "integer",
+          "default": 1,
+          "minimum": 1
+        },
+        "pageSize": {
+          "type": "integer",
+          "default": 20,
+          "minimum": 1,
+          "maximum": 100
+        },
+        "sortBy": {
+          "$ref": "#/$defs/ListSortField"
+        },
+        "sortOrder": {
+          "type": "string",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "default": "desc"
+        }
+      }
+    },
+    "DocumentCategory": {
+      "type": "string",
+      "enum": [
+        "getting-started",
+        "api-reference",
+        "architecture",
+        "deployment",
+        "troubleshooting",
+        "tutorials",
+        "game-systems",
+        "world-lore",
+        "npc-ai",
+        "other"
+      ],
+      "description": "Fixed categories for type-safe filtering"
+    },
+    "ListSortField": {
+      "type": "string",
+      "enum": [
+        "created_at",
+        "updated_at",
+        "title"
+      ],
+      "default": "updated_at"
+    }
+  }
+}
+""";
+
+    private static readonly string _ListDocuments_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ListDocumentsResponse",
+  "$defs": {
+    "ListDocumentsResponse": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "documents"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DocumentSummary"
+          }
+        },
+        "totalCount": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        },
+        "pageSize": {
+          "type": "integer"
+        },
+        "totalPages": {
+          "type": "integer"
+        }
+      }
+    },
+    "DocumentSummary": {
+      "type": "object",
+      "required": [
+        "documentId",
+        "slug",
+        "title",
+        "category"
+      ],
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "category": {
+          "$ref": "#/$defs/DocumentCategory"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "voiceSummary": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "DocumentCategory": {
+      "type": "string",
+      "enum": [
+        "getting-started",
+        "api-reference",
+        "architecture",
+        "deployment",
+        "troubleshooting",
+        "tutorials",
+        "game-systems",
+        "world-lore",
+        "npc-ai",
+        "other"
+      ],
+      "description": "Fixed categories for type-safe filtering"
+    }
+  }
+}
+""";
+
+    private static readonly string _ListDocuments_Info = """
+{
+  "summary": "List documents by category",
+  "description": "List all documents in a specific category or all categories.\nSupports pagination for large result sets.\n",
+  "tags": [
+    "Documents"
+  ],
+  "deprecated": false,
+  "operationId": "listDocuments"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListDocuments</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListDocuments_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/list",
+            _ListDocuments_Info));
+
+    /// <summary>Returns request schema for ListDocuments</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListDocuments_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/list",
+            "request-schema",
+            _ListDocuments_RequestSchema));
+
+    /// <summary>Returns response schema for ListDocuments</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListDocuments_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/list",
+            "response-schema",
+            _ListDocuments_ResponseSchema));
+
+    /// <summary>Returns full schema for ListDocuments</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListDocuments_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/list",
+            _ListDocuments_Info,
+            _ListDocuments_RequestSchema,
+            _ListDocuments_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for SuggestRelatedTopics
+
+    private static readonly string _SuggestRelatedTopics_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SuggestRelatedRequest",
+  "$defs": {
+    "SuggestRelatedRequest": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "suggestionSource"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "suggestionSource": {
+          "$ref": "#/$defs/SuggestionSource"
+        },
+        "sourceValue": {
+          "type": "string"
+        },
+        "sessionId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "maxSuggestions": {
+          "type": "integer",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 10
+        },
+        "excludeRecentlyViewed": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "SuggestionSource": {
+      "type": "string",
+      "enum": [
+        "document_id",
+        "slug",
+        "topic",
+        "category"
+      ]
+    }
+  }
+}
+""";
+
+    private static readonly string _SuggestRelatedTopics_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SuggestRelatedResponse",
+  "$defs": {
+    "SuggestRelatedResponse": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "suggestions"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string"
+        },
+        "suggestions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TopicSuggestion"
+          }
+        },
+        "voicePrompt": {
+          "type": "string"
+        },
+        "sessionInfluenced": {
+          "type": "boolean"
+        }
+      }
+    },
+    "TopicSuggestion": {
+      "type": "object",
+      "required": [
+        "documentId",
+        "title"
+      ],
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "category": {
+          "$ref": "#/$defs/DocumentCategory"
+        },
+        "relevanceReason": {
+          "type": "string"
+        }
+      }
+    },
+    "DocumentCategory": {
+      "type": "string",
+      "enum": [
+        "getting-started",
+        "api-reference",
+        "architecture",
+        "deployment",
+        "troubleshooting",
+        "tutorials",
+        "game-systems",
+        "world-lore",
+        "npc-ai",
+        "other"
+      ],
+      "description": "Fixed categories for type-safe filtering"
+    }
+  }
+}
+""";
+
+    private static readonly string _SuggestRelatedTopics_Info = """
+{
+  "summary": "Get related topics and follow-up suggestions",
+  "description": "Given a topic or document ID, returns related topics the user\nmight want to explore. Useful for conversational AI flow.\n",
+  "tags": [
+    "Search"
+  ],
+  "deprecated": false,
+  "operationId": "suggestRelatedTopics"
+}
+""";
+
+    /// <summary>Returns endpoint information for SuggestRelatedTopics</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/suggest/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SuggestRelatedTopics_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/suggest",
+            _SuggestRelatedTopics_Info));
+
+    /// <summary>Returns request schema for SuggestRelatedTopics</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/suggest/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SuggestRelatedTopics_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/suggest",
+            "request-schema",
+            _SuggestRelatedTopics_RequestSchema));
+
+    /// <summary>Returns response schema for SuggestRelatedTopics</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/suggest/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SuggestRelatedTopics_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/suggest",
+            "response-schema",
+            _SuggestRelatedTopics_ResponseSchema));
+
+    /// <summary>Returns full schema for SuggestRelatedTopics</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/suggest/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SuggestRelatedTopics_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/suggest",
+            _SuggestRelatedTopics_Info,
+            _SuggestRelatedTopics_RequestSchema,
+            _SuggestRelatedTopics_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CreateDocument
+
+    private static readonly string _CreateDocument_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CreateDocumentRequest",
+  "$defs": {
+    "CreateDocumentRequest": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "slug",
+        "title",
+        "category",
+        "content"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 100
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "category": {
+          "$ref": "#/$defs/DocumentCategory"
+        },
+        "content": {
+          "type": "string",
+          "description": "Markdown content (max 500KB)"
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "voiceSummary": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "relatedDocuments": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "DocumentCategory": {
+      "type": "string",
+      "enum": [
+        "getting-started",
+        "api-reference",
+        "architecture",
+        "deployment",
+        "troubleshooting",
+        "tutorials",
+        "game-systems",
+        "world-lore",
+        "npc-ai",
+        "other"
+      ],
+      "description": "Fixed categories for type-safe filtering"
+    }
+  }
+}
+""";
+
+    private static readonly string _CreateDocument_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CreateDocumentResponse",
+  "$defs": {
+    "CreateDocumentResponse": {
+      "type": "object",
+      "required": [
+        "documentId",
+        "slug"
+      ],
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CreateDocument_Info = """
+{
+  "summary": "Create new documentation entry",
+  "description": "",
+  "tags": [
+    "Admin"
+  ],
+  "deprecated": false,
+  "operationId": "createDocument"
+}
+""";
+
+    /// <summary>Returns endpoint information for CreateDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/create/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateDocument_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/create",
+            _CreateDocument_Info));
+
+    /// <summary>Returns request schema for CreateDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/create/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateDocument_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/create",
+            "request-schema",
+            _CreateDocument_RequestSchema));
+
+    /// <summary>Returns response schema for CreateDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/create/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateDocument_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/create",
+            "response-schema",
+            _CreateDocument_ResponseSchema));
+
+    /// <summary>Returns full schema for CreateDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/create/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateDocument_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/create",
+            _CreateDocument_Info,
+            _CreateDocument_RequestSchema,
+            _CreateDocument_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateDocument
+
+    private static readonly string _UpdateDocument_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/UpdateDocumentRequest",
+  "$defs": {
+    "UpdateDocumentRequest": {
+      "type": "object",
+      "required": [
+        "namespace"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "category": {
+          "$ref": "#/$defs/DocumentCategory"
+        },
+        "content": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "voiceSummary": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "relatedDocuments": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "DocumentCategory": {
+      "type": "string",
+      "enum": [
+        "getting-started",
+        "api-reference",
+        "architecture",
+        "deployment",
+        "troubleshooting",
+        "tutorials",
+        "game-systems",
+        "world-lore",
+        "npc-ai",
+        "other"
+      ],
+      "description": "Fixed categories for type-safe filtering"
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateDocument_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/UpdateDocumentResponse",
+  "$defs": {
+    "UpdateDocumentResponse": {
+      "type": "object",
+      "required": [
+        "documentId",
+        "updatedAt"
+      ],
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateDocument_Info = """
+{
+  "summary": "Update existing documentation entry",
+  "description": "",
+  "tags": [
+    "Admin"
+  ],
+  "deprecated": false,
+  "operationId": "updateDocument"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/update/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateDocument_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/update",
+            _UpdateDocument_Info));
+
+    /// <summary>Returns request schema for UpdateDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/update/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateDocument_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/update",
+            "request-schema",
+            _UpdateDocument_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/update/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateDocument_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/update",
+            "response-schema",
+            _UpdateDocument_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/update/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateDocument_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/update",
+            _UpdateDocument_Info,
+            _UpdateDocument_RequestSchema,
+            _UpdateDocument_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeleteDocument
+
+    private static readonly string _DeleteDocument_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/DeleteDocumentRequest",
+  "$defs": {
+    "DeleteDocumentRequest": {
+      "type": "object",
+      "required": [
+        "namespace"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "slug": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _DeleteDocument_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/DeleteDocumentResponse",
+  "$defs": {
+    "DeleteDocumentResponse": {
+      "type": "object",
+      "required": [
+        "documentId",
+        "deletedAt",
+        "recoverableUntil"
+      ],
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "deletedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "recoverableUntil": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _DeleteDocument_Info = """
+{
+  "summary": "Soft-delete documentation entry to trashcan",
+  "description": "Moves document to trashcan for recovery within TTL period.\nDocuments are automatically cleaned up after TrashcanTtlDays.\n",
+  "tags": [
+    "Admin"
+  ],
+  "deprecated": false,
+  "operationId": "deleteDocument"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteDocument_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/delete",
+            _DeleteDocument_Info));
+
+    /// <summary>Returns request schema for DeleteDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteDocument_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/delete",
+            "request-schema",
+            _DeleteDocument_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteDocument_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/delete",
+            "response-schema",
+            _DeleteDocument_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteDocument_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/delete",
+            _DeleteDocument_Info,
+            _DeleteDocument_RequestSchema,
+            _DeleteDocument_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RecoverDocument
+
+    private static readonly string _RecoverDocument_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/RecoverDocumentRequest",
+  "$defs": {
+    "RecoverDocumentRequest": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "documentId"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _RecoverDocument_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/RecoverDocumentResponse",
+  "$defs": {
+    "RecoverDocumentResponse": {
+      "type": "object",
+      "required": [
+        "documentId",
+        "recoveredAt"
+      ],
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "recoveredAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _RecoverDocument_Info = """
+{
+  "summary": "Recover document from trashcan",
+  "description": "Restores a soft-deleted document from the trashcan.\nMust be called before the trashcan TTL expires.\n",
+  "tags": [
+    "Admin"
+  ],
+  "deprecated": false,
+  "operationId": "recoverDocument"
+}
+""";
+
+    /// <summary>Returns endpoint information for RecoverDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/recover/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RecoverDocument_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/recover",
+            _RecoverDocument_Info));
+
+    /// <summary>Returns request schema for RecoverDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/recover/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RecoverDocument_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/recover",
+            "request-schema",
+            _RecoverDocument_RequestSchema));
+
+    /// <summary>Returns response schema for RecoverDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/recover/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RecoverDocument_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/recover",
+            "response-schema",
+            _RecoverDocument_ResponseSchema));
+
+    /// <summary>Returns full schema for RecoverDocument</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/recover/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RecoverDocument_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/recover",
+            _RecoverDocument_Info,
+            _RecoverDocument_RequestSchema,
+            _RecoverDocument_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for BulkUpdateDocuments
+
+    private static readonly string _BulkUpdateDocuments_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/BulkUpdateRequest",
+  "$defs": {
+    "BulkUpdateRequest": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "documentIds"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "documentIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "category": {
+          "$ref": "#/$defs/DocumentCategory"
+        },
+        "addTags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "removeTags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "DocumentCategory": {
+      "type": "string",
+      "enum": [
+        "getting-started",
+        "api-reference",
+        "architecture",
+        "deployment",
+        "troubleshooting",
+        "tutorials",
+        "game-systems",
+        "world-lore",
+        "npc-ai",
+        "other"
+      ],
+      "description": "Fixed categories for type-safe filtering"
+    }
+  }
+}
+""";
+
+    private static readonly string _BulkUpdateDocuments_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/BulkUpdateResponse",
+  "$defs": {
+    "BulkUpdateResponse": {
+      "type": "object",
+      "required": [
+        "succeeded",
+        "failed"
+      ],
+      "properties": {
+        "succeeded": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "failed": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BulkOperationFailure"
+          }
+        }
+      }
+    },
+    "BulkOperationFailure": {
+      "type": "object",
+      "required": [
+        "documentId",
+        "error"
+      ],
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _BulkUpdateDocuments_Info = """
+{
+  "summary": "Bulk update document metadata",
+  "description": "Apply category, tag, or metadata changes to multiple documents at once.\nEach document is processed independently - partial success is possible.\n",
+  "tags": [
+    "Admin"
+  ],
+  "deprecated": false,
+  "operationId": "bulkUpdateDocuments"
+}
+""";
+
+    /// <summary>Returns endpoint information for BulkUpdateDocuments</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/bulk-update/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkUpdateDocuments_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/bulk-update",
+            _BulkUpdateDocuments_Info));
+
+    /// <summary>Returns request schema for BulkUpdateDocuments</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/bulk-update/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkUpdateDocuments_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/bulk-update",
+            "request-schema",
+            _BulkUpdateDocuments_RequestSchema));
+
+    /// <summary>Returns response schema for BulkUpdateDocuments</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/bulk-update/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkUpdateDocuments_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/bulk-update",
+            "response-schema",
+            _BulkUpdateDocuments_ResponseSchema));
+
+    /// <summary>Returns full schema for BulkUpdateDocuments</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/bulk-update/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkUpdateDocuments_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/bulk-update",
+            _BulkUpdateDocuments_Info,
+            _BulkUpdateDocuments_RequestSchema,
+            _BulkUpdateDocuments_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for BulkDeleteDocuments
+
+    private static readonly string _BulkDeleteDocuments_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/BulkDeleteRequest",
+  "$defs": {
+    "BulkDeleteRequest": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "documentIds"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "documentIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _BulkDeleteDocuments_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/BulkDeleteResponse",
+  "$defs": {
+    "BulkDeleteResponse": {
+      "type": "object",
+      "required": [
+        "succeeded",
+        "failed"
+      ],
+      "properties": {
+        "succeeded": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "failed": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BulkOperationFailure"
+          }
+        }
+      }
+    },
+    "BulkOperationFailure": {
+      "type": "object",
+      "required": [
+        "documentId",
+        "error"
+      ],
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _BulkDeleteDocuments_Info = """
+{
+  "summary": "Bulk soft-delete documents to trashcan",
+  "description": "Move multiple documents to trashcan at once.\nEach document is processed independently - partial success is possible.\n",
+  "tags": [
+    "Admin"
+  ],
+  "deprecated": false,
+  "operationId": "bulkDeleteDocuments"
+}
+""";
+
+    /// <summary>Returns endpoint information for BulkDeleteDocuments</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/bulk-delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkDeleteDocuments_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/bulk-delete",
+            _BulkDeleteDocuments_Info));
+
+    /// <summary>Returns request schema for BulkDeleteDocuments</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/bulk-delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkDeleteDocuments_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/bulk-delete",
+            "request-schema",
+            _BulkDeleteDocuments_RequestSchema));
+
+    /// <summary>Returns response schema for BulkDeleteDocuments</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/bulk-delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkDeleteDocuments_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/bulk-delete",
+            "response-schema",
+            _BulkDeleteDocuments_ResponseSchema));
+
+    /// <summary>Returns full schema for BulkDeleteDocuments</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/bulk-delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BulkDeleteDocuments_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/bulk-delete",
+            _BulkDeleteDocuments_Info,
+            _BulkDeleteDocuments_RequestSchema,
+            _BulkDeleteDocuments_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ImportDocumentation
+
+    private static readonly string _ImportDocumentation_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ImportDocumentationRequest",
+  "$defs": {
+    "ImportDocumentationRequest": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "documents"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ImportDocument"
+          }
+        },
+        "onConflict": {
+          "type": "string",
+          "enum": [
+            "skip",
+            "update",
+            "fail"
+          ],
+          "default": "skip"
+        }
+      }
+    },
+    "ImportDocument": {
+      "type": "object",
+      "required": [
+        "slug",
+        "title",
+        "category",
+        "content"
+      ],
+      "properties": {
+        "slug": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "category": {
+          "$ref": "#/$defs/DocumentCategory"
+        },
+        "content": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "voiceSummary": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "DocumentCategory": {
+      "type": "string",
+      "enum": [
+        "getting-started",
+        "api-reference",
+        "architecture",
+        "deployment",
+        "troubleshooting",
+        "tutorials",
+        "game-systems",
+        "world-lore",
+        "npc-ai",
+        "other"
+      ],
+      "description": "Fixed categories for type-safe filtering"
+    }
+  }
+}
+""";
+
+    private static readonly string _ImportDocumentation_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ImportDocumentationResponse",
+  "$defs": {
+    "ImportDocumentationResponse": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "created",
+        "updated",
+        "skipped",
+        "failed"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string"
+        },
+        "created": {
+          "type": "integer"
+        },
+        "updated": {
+          "type": "integer"
+        },
+        "skipped": {
+          "type": "integer"
+        },
+        "failed": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ImportFailure"
+          }
+        }
+      }
+    },
+    "ImportFailure": {
+      "type": "object",
+      "required": [
+        "slug",
+        "error"
+      ],
+      "properties": {
+        "slug": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ImportDocumentation_Info = """
+{
+  "summary": "Bulk import documentation from structured source",
+  "description": "Import multiple documents. Each document processed independently.\nPartial success is possible - failures reported per document.\n",
+  "tags": [
+    "Admin"
+  ],
+  "deprecated": false,
+  "operationId": "importDocumentation"
+}
+""";
+
+    /// <summary>Returns endpoint information for ImportDocumentation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/import/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ImportDocumentation_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/import",
+            _ImportDocumentation_Info));
+
+    /// <summary>Returns request schema for ImportDocumentation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/import/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ImportDocumentation_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/import",
+            "request-schema",
+            _ImportDocumentation_RequestSchema));
+
+    /// <summary>Returns response schema for ImportDocumentation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/import/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ImportDocumentation_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/import",
+            "response-schema",
+            _ImportDocumentation_ResponseSchema));
+
+    /// <summary>Returns full schema for ImportDocumentation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/import/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ImportDocumentation_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/import",
+            _ImportDocumentation_Info,
+            _ImportDocumentation_RequestSchema,
+            _ImportDocumentation_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ListTrashcan
+
+    private static readonly string _ListTrashcan_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ListTrashcanRequest",
+  "$defs": {
+    "ListTrashcanRequest": {
+      "type": "object",
+      "required": [
+        "namespace"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "page": {
+          "type": "integer",
+          "default": 1
+        },
+        "pageSize": {
+          "type": "integer",
+          "default": 20
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ListTrashcan_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ListTrashcanResponse",
+  "$defs": {
+    "ListTrashcanResponse": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "items"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TrashcanItem"
+          }
+        },
+        "totalCount": {
+          "type": "integer"
+        }
+      }
+    },
+    "TrashcanItem": {
+      "type": "object",
+      "required": [
+        "documentId",
+        "title",
+        "deletedAt",
+        "expiresAt"
+      ],
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "category": {
+          "$ref": "#/$defs/DocumentCategory"
+        },
+        "deletedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "DocumentCategory": {
+      "type": "string",
+      "enum": [
+        "getting-started",
+        "api-reference",
+        "architecture",
+        "deployment",
+        "troubleshooting",
+        "tutorials",
+        "game-systems",
+        "world-lore",
+        "npc-ai",
+        "other"
+      ],
+      "description": "Fixed categories for type-safe filtering"
+    }
+  }
+}
+""";
+
+    private static readonly string _ListTrashcan_Info = """
+{
+  "summary": "List documents in the trashcan",
+  "description": "List all soft-deleted documents within the namespace's trashcan.\nDocuments remain recoverable until TTL expires or purge is called.\n",
+  "tags": [
+    "Admin"
+  ],
+  "deprecated": false,
+  "operationId": "listTrashcan"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListTrashcan</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/trashcan/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListTrashcan_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/trashcan",
+            _ListTrashcan_Info));
+
+    /// <summary>Returns request schema for ListTrashcan</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/trashcan/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListTrashcan_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/trashcan",
+            "request-schema",
+            _ListTrashcan_RequestSchema));
+
+    /// <summary>Returns response schema for ListTrashcan</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/trashcan/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListTrashcan_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/trashcan",
+            "response-schema",
+            _ListTrashcan_ResponseSchema));
+
+    /// <summary>Returns full schema for ListTrashcan</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/trashcan/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListTrashcan_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/trashcan",
+            _ListTrashcan_Info,
+            _ListTrashcan_RequestSchema,
+            _ListTrashcan_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for PurgeTrashcan
+
+    private static readonly string _PurgeTrashcan_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/PurgeTrashcanRequest",
+  "$defs": {
+    "PurgeTrashcanRequest": {
+      "type": "object",
+      "required": [
+        "namespace"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "documentIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "If empty, purges all trashcan items"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _PurgeTrashcan_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/PurgeTrashcanResponse",
+  "$defs": {
+    "PurgeTrashcanResponse": {
+      "type": "object",
+      "required": [
+        "purgedCount"
+      ],
+      "properties": {
+        "purgedCount": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _PurgeTrashcan_Info = """
+{
+  "summary": "Permanently delete trashcan items",
+  "description": "Permanently delete specified documents from trashcan, or purge all.\nThis operation is irreversible - documents cannot be recovered after purge.\n",
+  "tags": [
+    "Admin"
+  ],
+  "deprecated": false,
+  "operationId": "purgeTrashcan"
+}
+""";
+
+    /// <summary>Returns endpoint information for PurgeTrashcan</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/purge/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> PurgeTrashcan_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/purge",
+            _PurgeTrashcan_Info));
+
+    /// <summary>Returns request schema for PurgeTrashcan</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/purge/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> PurgeTrashcan_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/purge",
+            "request-schema",
+            _PurgeTrashcan_RequestSchema));
+
+    /// <summary>Returns response schema for PurgeTrashcan</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/purge/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> PurgeTrashcan_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/purge",
+            "response-schema",
+            _PurgeTrashcan_ResponseSchema));
+
+    /// <summary>Returns full schema for PurgeTrashcan</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/purge/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> PurgeTrashcan_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/purge",
+            _PurgeTrashcan_Info,
+            _PurgeTrashcan_RequestSchema,
+            _PurgeTrashcan_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetNamespaceStats
+
+    private static readonly string _GetNamespaceStats_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetNamespaceStatsRequest",
+  "$defs": {
+    "GetNamespaceStatsRequest": {
+      "type": "object",
+      "required": [
+        "namespace"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetNamespaceStats_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/NamespaceStatsResponse",
+  "$defs": {
+    "NamespaceStatsResponse": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "documentCount"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string"
+        },
+        "documentCount": {
+          "type": "integer"
+        },
+        "categoryCounts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "trashcanCount": {
+          "type": "integer"
+        },
+        "totalContentSizeBytes": {
+          "type": "integer"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetNamespaceStats_Info = """
+{
+  "summary": "Get namespace documentation statistics",
+  "description": "Retrieve usage statistics and metadata for a documentation namespace.\nUseful for monitoring, capacity planning, and administrative dashboards.\n",
+  "tags": [
+    "Admin"
+  ],
+  "deprecated": false,
+  "operationId": "getNamespaceStats"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetNamespaceStats</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/stats/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetNamespaceStats_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/stats",
+            _GetNamespaceStats_Info));
+
+    /// <summary>Returns request schema for GetNamespaceStats</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/stats/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetNamespaceStats_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/stats",
+            "request-schema",
+            _GetNamespaceStats_RequestSchema));
+
+    /// <summary>Returns response schema for GetNamespaceStats</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/stats/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetNamespaceStats_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/stats",
+            "response-schema",
+            _GetNamespaceStats_ResponseSchema));
+
+    /// <summary>Returns full schema for GetNamespaceStats</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/stats/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetNamespaceStats_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/stats",
+            _GetNamespaceStats_Info,
+            _GetNamespaceStats_RequestSchema,
+            _GetNamespaceStats_ResponseSchema));
+
+    #endregion
+
 }
 
 

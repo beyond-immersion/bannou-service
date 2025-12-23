@@ -310,6 +310,1040 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
         return ConvertToActionResult(statusCode, result);
     }
 
+
+    #region Meta Endpoints for CreateVoiceRoom
+
+    private static readonly string _CreateVoiceRoom_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CreateVoiceRoomRequest",
+  "$defs": {
+    "CreateVoiceRoomRequest": {
+      "type": "object",
+      "description": "Request to create a voice room for a game session",
+      "required": [
+        "sessionId"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Game session ID this voice room is associated with"
+        },
+        "preferredTier": {
+          "$ref": "#/$defs/VoiceTier",
+          "description": "Preferred voice tier (defaults to p2p)"
+        },
+        "maxParticipants": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 100,
+          "default": 6,
+          "description": "Maximum participants before tier upgrade"
+        },
+        "codec": {
+          "$ref": "#/$defs/VoiceCodec",
+          "description": "Preferred audio codec (defaults to opus)"
+        }
+      }
+    },
+    "VoiceTier": {
+      "type": "string",
+      "enum": [
+        "p2p",
+        "scaled"
+      ],
+      "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\n- scaled: RTP server-mediated communication (unlimited participants)\n"
+    },
+    "VoiceCodec": {
+      "type": "string",
+      "enum": [
+        "opus",
+        "g711",
+        "g722"
+      ],
+      "description": "Audio codec for voice communication"
+    }
+  }
+}
+""";
+
+    private static readonly string _CreateVoiceRoom_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/VoiceRoomResponse",
+  "$defs": {
+    "VoiceRoomResponse": {
+      "type": "object",
+      "description": "Voice room details",
+      "required": [
+        "roomId",
+        "sessionId",
+        "tier",
+        "createdAt"
+      ],
+      "properties": {
+        "roomId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique voice room identifier"
+        },
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Associated game session ID"
+        },
+        "tier": {
+          "$ref": "#/$defs/VoiceTier",
+          "description": "Current voice tier"
+        },
+        "codec": {
+          "$ref": "#/$defs/VoiceCodec",
+          "description": "Active audio codec"
+        },
+        "maxParticipants": {
+          "type": "integer",
+          "description": "Maximum participants before tier upgrade"
+        },
+        "currentParticipants": {
+          "type": "integer",
+          "description": "Current number of participants"
+        },
+        "participants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/VoiceParticipant"
+          },
+          "description": "List of current participants"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the room was created"
+        },
+        "rtpServerUri": {
+          "type": "string",
+          "nullable": true,
+          "description": "RTP server URI (only present in scaled tier)"
+        }
+      }
+    },
+    "VoiceTier": {
+      "type": "string",
+      "enum": [
+        "p2p",
+        "scaled"
+      ],
+      "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\n- scaled: RTP server-mediated communication (unlimited participants)\n"
+    },
+    "VoiceCodec": {
+      "type": "string",
+      "enum": [
+        "opus",
+        "g711",
+        "g722"
+      ],
+      "description": "Audio codec for voice communication"
+    },
+    "VoiceParticipant": {
+      "type": "object",
+      "description": "Participant in a voice room",
+      "required": [
+        "sessionId",
+        "joinedAt"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "WebSocket session ID (unique participant identifier)"
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true,
+          "description": "Display name"
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the participant joined"
+        },
+        "isMuted": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether participant is muted"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CreateVoiceRoom_Info = """
+{
+  "summary": "Create voice room for a game session",
+  "description": "Creates a new voice room associated with a game session.\nCalled by GameSession service when creating a session with voice enabled.\ nReturns room ID and initial configuration.\n",
+  "tags": [
+    "Voice Rooms"
+  ],
+  "deprecated": false,
+  "operationId": "createVoiceRoom"
+}
+""";
+
+    /// <summary>Returns endpoint information for CreateVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/create/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateVoiceRoom_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Voice",
+            "Post",
+            "voice/room/create",
+            _CreateVoiceRoom_Info));
+
+    /// <summary>Returns request schema for CreateVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/create/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateVoiceRoom_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/room/create",
+            "request-schema",
+            _CreateVoiceRoom_RequestSchema));
+
+    /// <summary>Returns response schema for CreateVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/create/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateVoiceRoom_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/room/create",
+            "response-schema",
+            _CreateVoiceRoom_ResponseSchema));
+
+    /// <summary>Returns full schema for CreateVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/create/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateVoiceRoom_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/room/create",
+            _CreateVoiceRoom_Info,
+            _CreateVoiceRoom_RequestSchema,
+            _CreateVoiceRoom_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetVoiceRoom
+
+    private static readonly string _GetVoiceRoom_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetVoiceRoomRequest",
+  "$defs": {
+    "GetVoiceRoomRequest": {
+      "type": "object",
+      "description": "Request to get voice room details",
+      "required": [
+        "roomId"
+      ],
+      "properties": {
+        "roomId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Voice room ID to retrieve"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetVoiceRoom_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/VoiceRoomResponse",
+  "$defs": {
+    "VoiceRoomResponse": {
+      "type": "object",
+      "description": "Voice room details",
+      "required": [
+        "roomId",
+        "sessionId",
+        "tier",
+        "createdAt"
+      ],
+      "properties": {
+        "roomId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique voice room identifier"
+        },
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Associated game session ID"
+        },
+        "tier": {
+          "$ref": "#/$defs/VoiceTier",
+          "description": "Current voice tier"
+        },
+        "codec": {
+          "$ref": "#/$defs/VoiceCodec",
+          "description": "Active audio codec"
+        },
+        "maxParticipants": {
+          "type": "integer",
+          "description": "Maximum participants before tier upgrade"
+        },
+        "currentParticipants": {
+          "type": "integer",
+          "description": "Current number of participants"
+        },
+        "participants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/VoiceParticipant"
+          },
+          "description": "List of current participants"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the room was created"
+        },
+        "rtpServerUri": {
+          "type": "string",
+          "nullable": true,
+          "description": "RTP server URI (only present in scaled tier)"
+        }
+      }
+    },
+    "VoiceTier": {
+      "type": "string",
+      "enum": [
+        "p2p",
+        "scaled"
+      ],
+      "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\n- scaled: RTP server-mediated communication (unlimited participants)\n"
+    },
+    "VoiceCodec": {
+      "type": "string",
+      "enum": [
+        "opus",
+        "g711",
+        "g722"
+      ],
+      "description": "Audio codec for voice communication"
+    },
+    "VoiceParticipant": {
+      "type": "object",
+      "description": "Participant in a voice room",
+      "required": [
+        "sessionId",
+        "joinedAt"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "WebSocket session ID (unique participant identifier)"
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true,
+          "description": "Display name"
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the participant joined"
+        },
+        "isMuted": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether participant is muted"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetVoiceRoom_Info = """
+{
+  "summary": "Get voice room details",
+  "description": "Retrieves current state of a voice room including participant list.\nCalled by GameSession service to check room status.\n",
+  "tags": [
+    "Voice Rooms"
+  ],
+  "deprecated": false,
+  "operationId": "getVoiceRoom"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetVoiceRoom_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Voice",
+            "Post",
+            "voice/room/get",
+            _GetVoiceRoom_Info));
+
+    /// <summary>Returns request schema for GetVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetVoiceRoom_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/room/get",
+            "request-schema",
+            _GetVoiceRoom_RequestSchema));
+
+    /// <summary>Returns response schema for GetVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetVoiceRoom_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/room/get",
+            "response-schema",
+            _GetVoiceRoom_ResponseSchema));
+
+    /// <summary>Returns full schema for GetVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetVoiceRoom_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/room/get",
+            _GetVoiceRoom_Info,
+            _GetVoiceRoom_RequestSchema,
+            _GetVoiceRoom_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for JoinVoiceRoom
+
+    private static readonly string _JoinVoiceRoom_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/JoinVoiceRoomRequest",
+  "$defs": {
+    "JoinVoiceRoomRequest": {
+      "type": "object",
+      "description": "Request to join a voice room",
+      "required": [
+        "roomId",
+        "sessionId",
+        "sipEndpoint"
+      ],
+      "properties": {
+        "roomId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Voice room ID to join"
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "WebSocket session ID (unique participant identifier)"
+        },
+        "sipEndpoint": {
+          "$ref": "#/$defs/SipEndpoint",
+          "description": "Participant's SIP endpoint details"
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Display name for UI"
+        }
+      }
+    },
+    "SipEndpoint": {
+      "type": "object",
+      "description": "SIP/WebRTC endpoint details for a participant",
+      "required": [
+        "sdpOffer"
+      ],
+      "properties": {
+        "sdpOffer": {
+          "type": "string",
+          "description": "SDP offer for WebRTC negotiation"
+        },
+        "iceCandidates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "ICE candidates for NAT traversal"
+        },
+        "publicIp": {
+          "type": "string",
+          "nullable": true,
+          "description": "Public IP address if known"
+        },
+        "port": {
+          "type": "integer",
+          "nullable": true,
+          "description": "UDP port for RTP"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _JoinVoiceRoom_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/JoinVoiceRoomResponse",
+  "$defs": {
+    "JoinVoiceRoomResponse": {
+      "type": "object",
+      "description": "Response after joining a voice room",
+      "required": [
+        "success",
+        "roomId",
+        "tier"
+      ],
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Whether join was successful"
+        },
+        "roomId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Voice room ID"
+        },
+        "tier": {
+          "$ref": "#/$defs/VoiceTier",
+          "description": "Current voice tier"
+        },
+        "codec": {
+          "$ref": "#/$defs/VoiceCodec",
+          "description": "Codec to use"
+        },
+        "peers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/VoicePeer"
+          },
+          "description": "Current peers to connect to (P2P mode only)"
+        },
+        "rtpServerUri": {
+          "type": "string",
+          "nullable": true,
+          "description": "RTP server URI (scaled mode only)"
+        },
+        "stunServers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "STUN server URIs for NAT traversal"
+        },
+        "tierUpgradePending": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if room is about to upgrade to scaled tier"
+        }
+      }
+    },
+    "VoiceTier": {
+      "type": "string",
+      "enum": [
+        "p2p",
+        "scaled"
+      ],
+      "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\ n- scaled: RTP server-mediated communication (unlimited participants)\n"
+    },
+    "VoiceCodec": {
+      "type": "string",
+      "enum": [
+        "opus",
+        "g711",
+        "g722"
+      ],
+      "description": "Audio codec for voice communication"
+    },
+    "VoicePeer": {
+      "type": "object",
+      "description": "Peer endpoint details for P2P connection",
+      "required": [
+        "sessionId",
+        "sipEndpoint"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "WebSocket session ID for this peer (ephemeral identifier)"
+        },
+        "displayName": {
+          "type": "string",
+          "nullable": true,
+          "description": "Display name"
+        },
+        "sipEndpoint": {
+          "$ref": "#/$defs/SipEndpoint",
+          "description": "Peer's SIP endpoint for direct connection"
+        }
+      }
+    },
+    "SipEndpoint": {
+      "type": "object",
+      "description": "SIP/WebRTC endpoint details for a participant",
+      "required": [
+        "sdpOffer"
+      ],
+      "properties": {
+        "sdpOffer": {
+          "type": "string",
+          "description": "SDP offer for WebRTC negotiation"
+        },
+        "iceCandidates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "ICE candidates for NAT traversal"
+        },
+        "publicIp": {
+          "type": "string",
+          "nullable": true,
+          "description": "Public IP address if known"
+        },
+        "port": {
+          "type": "integer",
+          "nullable": true,
+          "description": "UDP port for RTP"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _JoinVoiceRoom_Info = """
+{
+  "summary": "Join voice room and register SIP endpoint",
+  "description": "Registers a participant's SIP endpoint with the voice room.\nCalled by GameSession service when a player joins a session.\ nReturns connection info and current peer list for P2P mode,\nor RTP server details for scaled mode.\n",
+  "tags": [
+    "Voice Rooms"
+  ],
+  "deprecated": false,
+  "operationId": "joinVoiceRoom"
+}
+""";
+
+    /// <summary>Returns endpoint information for JoinVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/join/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> JoinVoiceRoom_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Voice",
+            "Post",
+            "voice/room/join",
+            _JoinVoiceRoom_Info));
+
+    /// <summary>Returns request schema for JoinVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/join/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> JoinVoiceRoom_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/room/join",
+            "request-schema",
+            _JoinVoiceRoom_RequestSchema));
+
+    /// <summary>Returns response schema for JoinVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/join/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> JoinVoiceRoom_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/room/join",
+            "response-schema",
+            _JoinVoiceRoom_ResponseSchema));
+
+    /// <summary>Returns full schema for JoinVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/join/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> JoinVoiceRoom_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/room/join",
+            _JoinVoiceRoom_Info,
+            _JoinVoiceRoom_RequestSchema,
+            _JoinVoiceRoom_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for LeaveVoiceRoom
+
+    private static readonly string _LeaveVoiceRoom_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/LeaveVoiceRoomRequest",
+  "$defs": {
+    "LeaveVoiceRoomRequest": {
+      "type": "object",
+      "description": "Request to leave a voice room",
+      "required": [
+        "roomId",
+        "sessionId"
+      ],
+      "properties": {
+        "roomId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Voice room ID to leave"
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "WebSocket session ID of the leaving participant"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _LeaveVoiceRoom_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _LeaveVoiceRoom_Info = """
+{
+  "summary": "Leave voice room",
+  "description": "Removes a participant from the voice room and notifies other peers.\nCalled by GameSession service when a player leaves a session.\n",
+  "tags": [
+    "Voice Rooms"
+  ],
+  "deprecated": false,
+  "operationId": "leaveVoiceRoom"
+}
+""";
+
+    /// <summary>Returns endpoint information for LeaveVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/leave/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveVoiceRoom_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Voice",
+            "Post",
+            "voice/room/leave",
+            _LeaveVoiceRoom_Info));
+
+    /// <summary>Returns request schema for LeaveVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/leave/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveVoiceRoom_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/room/leave",
+            "request-schema",
+            _LeaveVoiceRoom_RequestSchema));
+
+    /// <summary>Returns response schema for LeaveVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/leave/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveVoiceRoom_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/room/leave",
+            "response-schema",
+            _LeaveVoiceRoom_ResponseSchema));
+
+    /// <summary>Returns full schema for LeaveVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/leave/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveVoiceRoom_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/room/leave",
+            _LeaveVoiceRoom_Info,
+            _LeaveVoiceRoom_RequestSchema,
+            _LeaveVoiceRoom_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeleteVoiceRoom
+
+    private static readonly string _DeleteVoiceRoom_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/DeleteVoiceRoomRequest",
+  "$defs": {
+    "DeleteVoiceRoomRequest": {
+      "type": "object",
+      "description": "Request to delete a voice room",
+      "required": [
+        "roomId"
+      ],
+      "properties": {
+        "roomId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Voice room ID to delete"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason for deletion (e.g., \"session_ended\")"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _DeleteVoiceRoom_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _DeleteVoiceRoom_Info = """
+{
+  "summary": "Delete voice room",
+  "description": "Deletes a voice room and notifies all participants.\nCalled by GameSession service when a session is deleted.\n",
+  "tags": [
+    "Voice Rooms"
+  ],
+  "deprecated": false,
+  "operationId": "deleteVoiceRoom"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteVoiceRoom_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Voice",
+            "Post",
+            "voice/room/delete",
+            _DeleteVoiceRoom_Info));
+
+    /// <summary>Returns request schema for DeleteVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteVoiceRoom_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/room/delete",
+            "request-schema",
+            _DeleteVoiceRoom_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteVoiceRoom_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/room/delete",
+            "response-schema",
+            _DeleteVoiceRoom_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteVoiceRoom</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/room/delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteVoiceRoom_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/room/delete",
+            _DeleteVoiceRoom_Info,
+            _DeleteVoiceRoom_RequestSchema,
+            _DeleteVoiceRoom_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for PeerHeartbeat
+
+    private static readonly string _PeerHeartbeat_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/PeerHeartbeatRequest",
+  "$defs": {
+    "PeerHeartbeatRequest": {
+      "type": "object",
+      "description": "Heartbeat to keep peer registration active",
+      "required": [
+        "roomId",
+        "sessionId"
+      ],
+      "properties": {
+        "roomId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Voice room ID"
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "WebSocket session ID of the peer"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _PeerHeartbeat_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _PeerHeartbeat_Info = """
+{
+  "summary": "Update peer endpoint TTL",
+  "description": "Refreshes the TTL for a participant's endpoint registration.\nShould be called periodically to prevent endpoint expiration.\n",
+  "tags": [
+    "Voice Peers"
+  ],
+  "deprecated": false,
+  "operationId": "peerHeartbeat"
+}
+""";
+
+    /// <summary>Returns endpoint information for PeerHeartbeat</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/peer/heartbeat/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> PeerHeartbeat_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Voice",
+            "Post",
+            "voice/peer/heartbeat",
+            _PeerHeartbeat_Info));
+
+    /// <summary>Returns request schema for PeerHeartbeat</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/peer/heartbeat/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> PeerHeartbeat_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/peer/heartbeat",
+            "request-schema",
+            _PeerHeartbeat_RequestSchema));
+
+    /// <summary>Returns response schema for PeerHeartbeat</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/peer/heartbeat/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> PeerHeartbeat_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/peer/heartbeat",
+            "response-schema",
+            _PeerHeartbeat_ResponseSchema));
+
+    /// <summary>Returns full schema for PeerHeartbeat</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/peer/heartbeat/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> PeerHeartbeat_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/peer/heartbeat",
+            _PeerHeartbeat_Info,
+            _PeerHeartbeat_RequestSchema,
+            _PeerHeartbeat_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for AnswerPeer
+
+    private static readonly string _AnswerPeer_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AnswerPeerRequest",
+  "$defs": {
+    "AnswerPeerRequest": {
+      "type": "object",
+      "description": "Request to send an SDP answer to complete a WebRTC handshake.\nSent by clients after receiving a VoicePeerJoinedEvent with an SDP offer.\n",
+      "required": [
+        "roomId",
+        "senderSessionId",
+        "targetSessionId",
+        "sdpAnswer"
+      ],
+      "properties": {
+        "roomId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Voice room ID"
+        },
+        "senderSessionId": {
+          "type": "string",
+          "description": "Session ID of the answering peer (caller of this endpoint)"
+        },
+        "targetSessionId": {
+          "type": "string",
+          "description": "Session ID of the peer whose offer we're answering"
+        },
+        "sdpAnswer": {
+          "type": "string",
+          "description": "SDP answer generated by this client's WebRTC stack"
+        },
+        "iceCandidates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "ICE candidates for NAT traversal (can be trickled later)"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _AnswerPeer_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _AnswerPeer_Info = """
+{
+  "summary": "Send SDP answer to complete WebRTC handshake",
+  "description": "Called by clients after receiving a VoicePeerJoinedEvent containing an SDP offer.\nThe client generates an SDP answer and sends it via this endpoint.\nThe answering peer is notified via VoicePeerUpdatedEvent.\n\n**Access Control**: This endpoint requires the `voice:ringing` state, which is\nautomatically set by the Voice service when a VoicePeerJoinedEvent is sent to the client.\nThe state is cleared after the answer is processed or times out.\n",
+  "tags": [
+    "Voice Peers"
+  ],
+  "deprecated": false,
+  "operationId": "answerPeer"
+}
+""";
+
+    /// <summary>Returns endpoint information for AnswerPeer</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/peer/answer/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AnswerPeer_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Voice",
+            "Post",
+            "voice/peer/answer",
+            _AnswerPeer_Info));
+
+    /// <summary>Returns request schema for AnswerPeer</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/peer/answer/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AnswerPeer_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/peer/answer",
+            "request-schema",
+            _AnswerPeer_RequestSchema));
+
+    /// <summary>Returns response schema for AnswerPeer</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/peer/answer/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AnswerPeer_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/peer/answer",
+            "response-schema",
+            _AnswerPeer_ResponseSchema));
+
+    /// <summary>Returns full schema for AnswerPeer</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("voice/peer/answer/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AnswerPeer_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Voice",
+            "Post",
+            "voice/peer/answer",
+            _AnswerPeer_Info,
+            _AnswerPeer_RequestSchema,
+            _AnswerPeer_ResponseSchema));
+
+    #endregion
+
 }
 
 

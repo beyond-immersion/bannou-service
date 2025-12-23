@@ -18,6 +18,24 @@ lib-{service}/
 └── lib-{service}.csproj
 ```
 
+## The Automation Advantage
+
+Schema-first development means you write **18-35% of the code** for a typical service:
+
+| What You Write | What Gets Generated |
+|----------------|---------------------|
+| ~200-500 lines of OpenAPI YAML | ~2,000-5,000 lines of C# (controllers, models, clients) |
+| ~500-2,000 lines of business logic | Validation, routing, serialization, permissions |
+| ~200-800 lines of tests | Test infrastructure and patterns to follow |
+
+**Key stats across 18 services:**
+- **63.6%** of service code is auto-generated
+- Schema-to-code amplification: **3.97x** (1 YAML line → 4 C# lines)
+- Simple CRUD services: 65-85% generated
+- Complex services (Auth, Connect): 35-50% generated
+
+For the complete analysis with per-service breakdowns, see [Automation Analysis](../reference/AUTOMATION-ANALYSIS.md).
+
 ## Creating a New Service
 
 ### Step 1: Define the OpenAPI Schema

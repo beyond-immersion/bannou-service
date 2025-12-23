@@ -807,6 +807,32 @@ public partial class ConnectService : IConnectService
             // Analyze message for routing
             var routeInfo = MessageRouter.AnalyzeMessage(message, connectionState);
 
+            // META REQUEST INTERCEPTION: Check before validation/routing
+            // When Meta flag is set, route to companion meta endpoints instead of executing the endpoint
+            if (message.IsMeta)
+            {
+                if (!routeInfo.IsValid)
+                {
+                    _logger.LogDebug("Meta request validation failed from session {SessionId}: {Error}",
+                        sessionId, routeInfo.ErrorMessage);
+                    var errorResponse = BinaryMessage.CreateResponse(message, routeInfo.ErrorCode);
+                    await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
+                    return;
+                }
+
+                if (routeInfo.ServiceName == null)
+                {
+                    _logger.LogDebug("Meta request for unknown GUID {Guid} from session {SessionId}",
+                        message.ServiceGuid, sessionId);
+                    var errorResponse = BinaryMessage.CreateResponse(message, ResponseCodes.ServiceNotFound);
+                    await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
+                    return;
+                }
+
+                await HandleMetaRequestAsync(message, routeInfo, sessionId, connectionState, cancellationToken);
+                return;
+            }
+
             if (!routeInfo.IsValid)
             {
                 _logger.LogWarning("Invalid message from session {SessionId}: {Error}",
@@ -1104,6 +1130,67 @@ public partial class ConnectService : IConnectService
                 connectionState.RemovePendingMessage(message.MessageId);
             }
         }
+    }
+
+    /// <summary>
+    /// Handles meta endpoint requests by transforming the path and routing to companion endpoints.
+    /// Meta type is encoded in the Channel field (0=info, 1=request-schema, 2=response-schema, 3=full-schema).
+    /// </summary>
+    private async Task HandleMetaRequestAsync(
+        BinaryMessage message,
+        MessageRouteInfo routeInfo,
+        string sessionId,
+        ConnectionState connectionState,
+        CancellationToken cancellationToken)
+    {
+        // Parse endpoint key: "serviceName:METHOD:/path"
+        var parts = routeInfo.ServiceName!.Split(':', 3);
+        if (parts.Length < 3)
+        {
+            _logger.LogWarning("Invalid endpoint key format for meta request: {EndpointKey}", routeInfo.ServiceName);
+            var errorResponse = BinaryMessage.CreateResponse(message, ResponseCodes.RequestError);
+            await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
+            return;
+        }
+
+        var serviceName = parts[0];
+        var httpMethod = parts[1];
+        var originalPath = parts[2];
+
+        // Determine meta type from Channel field
+        var metaType = (MetaType)message.Channel;
+        var metaSuffix = metaType switch
+        {
+            MetaType.EndpointInfo => "info",
+            MetaType.RequestSchema => "request-schema",
+            MetaType.ResponseSchema => "response-schema",
+            MetaType.FullSchema => "schema",
+            _ => "info"  // Default fallback for unknown values
+        };
+
+        // Transform path to companion endpoint
+        var metaPath = $"{originalPath}/meta/{metaSuffix}";
+
+        _logger.LogTrace("Meta request: {MetaType} for {ServiceName}:{HttpMethod}:{Path} -> {MetaPath}",
+            metaType, serviceName, httpMethod, originalPath, metaPath);
+
+        // Create modified routeInfo with transformed path
+        // Meta endpoints are always GET requests
+        var metaRouteInfo = new MessageRouteInfo
+        {
+            Message = routeInfo.Message,
+            IsValid = routeInfo.IsValid,
+            RouteType = routeInfo.RouteType,
+            TargetType = routeInfo.TargetType,
+            TargetId = routeInfo.TargetId,
+            Channel = routeInfo.Channel,
+            Priority = routeInfo.Priority,
+            RequiresResponse = true, // Meta requests always expect a response
+            ServiceName = $"{serviceName}:GET:{metaPath}"
+        };
+
+        // Route to service (companion endpoint handles the response)
+        await RouteToServiceAsync(message, metaRouteInfo, sessionId, connectionState, cancellationToken);
     }
 
     /// <summary>

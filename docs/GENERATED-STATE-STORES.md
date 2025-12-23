@@ -1,6 +1,6 @@
 # Generated State Store Reference
 
-> **Auto-generated**: 2025-12-23 02:33:15
+> **Auto-generated**: 2025-12-23 05:34:44
 > **Source**: `provisioning/dapr/components/*.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 

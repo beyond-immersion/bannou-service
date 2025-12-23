@@ -14,8 +14,8 @@ info:
     (NGINX-routed) per Tenet 15 and has NO x-permissions.
   version: 1.0.0
 servers:
-  - url: http://localhost:3500/v1.0/invoke/bannou/method
-    description: Dapr sidecar endpoint (MUST use "bannou" app-id)
+- url: http://localhost:3500/v1.0/invoke/bannou/method
+  description: Dapr sidecar endpoint (MUST use "bannou" app-id)
 
 paths:
   # ===== Browser-Facing Endpoint (Tenet 15) =====
@@ -29,22 +29,22 @@ paths:
         Routed via NGINX, not exposed to WebSocket clients.
         Returns HTML-rendered documentation page.
       tags:
-        - Browser
+      - Browser
       parameters:
-        - name: slug
-          in: path
-          required: true
-          schema:
-            type: string
-            pattern: '^[a-z0-9-]+$'
-          description: Document slug within namespace
-        - name: ns
-          in: query
-          required: false
-          schema:
-            type: string
-            default: bannou
-          description: Documentation namespace (defaults to bannou)
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+        description: Document slug within namespace
+      - name: ns
+        in: query
+        required: false
+        schema:
+          type: string
+          default: bannou
+        description: Documentation namespace (defaults to bannou)
       responses:
         '200':
           description: HTML documentation page (returns ContentResult)
@@ -53,6 +53,12 @@ paths:
       # NOTE: No x-permissions = browser-facing endpoint (Tenet 15)
 
   # ===== Query Endpoints (WebSocket accessible) =====
+      x-request-schema-json: '{}'
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n  \"summary\": \"View documentation page in browser\",\n  \"description\": \"Browser-facing
+        endpoint for viewing documentation.\\nRouted via NGINX, not exposed to WebSocket clients.\\nReturns HTML-rendered
+        documentation page.\\n\",\n  \"tags\": [\n    \"Browser\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"viewDocumentBySlug\"\
+        \n}"
   /documentation/query:
     post:
       operationId: queryDocumentation
@@ -61,10 +67,10 @@ paths:
         Search documentation using natural language queries.
         Returns the most relevant documents with voice-friendly summaries.
       tags:
-        - Search
+      - Search
       x-permissions:
-        - role: anonymous
-          states: {}
+      - role: anonymous
+        states: {}
       requestBody:
         required: true
         content:
@@ -83,6 +89,49 @@ paths:
         '500':
           description: Internal server error
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/QueryDocumentationRequest\"\
+        ,\n  \"$defs\": {\n    \"QueryDocumentationRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n    \
+        \    \"namespace\",\n        \"query\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"\
+        type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50,\n          \"description\"\
+        : \"Documentation namespace\"\n        },\n        \"query\": {\n          \"type\": \"string\",\n          \"minLength\"\
+        : 3,\n          \"maxLength\": 500,\n          \"description\": \"Natural language query\"\n        },\n        \"\
+        sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Optional
+        session ID for conversational context\"\n        },\n        \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\"\
+        \n        },\n        \"maxResults\": {\n          \"type\": \"integer\",\n          \"default\": 5,\n          \"\
+        minimum\": 1,\n          \"maximum\": 20\n        },\n        \"includeContent\": {\n          \"type\": \"boolean\"\
+        ,\n          \"default\": false\n        },\n        \"maxSummaryLength\": {\n          \"type\": \"integer\",\n \
+        \         \"default\": 300,\n          \"minimum\": 50,\n          \"maximum\": 500\n        },\n        \"minRelevanceScore\"\
+        : {\n          \"type\": \"number\",\n          \"format\": \"float\",\n          \"default\": 0.3,\n          \"\
+        minimum\": 0.0,\n          \"maximum\": 1.0\n        }\n      }\n    },\n    \"DocumentCategory\": {\n      \"type\"\
+        : \"string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n        \"architecture\"\
+        ,\n        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n    \
+        \    \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\": \"Fixed categories
+        for type-safe filtering\"\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/QueryDocumentationResponse\"\
+        ,\n  \"$defs\": {\n    \"QueryDocumentationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n   \
+        \     \"namespace\",\n        \"query\",\n        \"results\"\n      ],\n      \"properties\": {\n        \"namespace\"\
+        : {\n          \"type\": \"string\"\n        },\n        \"query\": {\n          \"type\": \"string\"\n        },\n\
+        \        \"results\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/DocumentResult\"\
+        \n          }\n        },\n        \"totalResults\": {\n          \"type\": \"integer\"\n        },\n        \"voiceSummary\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Concise spoken summary for voice AI\"\n       \
+        \ },\n        \"suggestedFollowups\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\"\
+        : \"string\"\n          }\n        },\n        \"noResultsMessage\": {\n          \"type\": \"string\"\n        }\n\
+        \      }\n    },\n    \"DocumentResult\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"documentId\"\
+        ,\n        \"slug\",\n        \"title\",\n        \"relevanceScore\"\n      ],\n      \"properties\": {\n        \"\
+        documentId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"slug\": {\n\
+        \          \"type\": \"string\"\n        },\n        \"title\": {\n          \"type\": \"string\"\n        },\n  \
+        \      \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\"\n        },\n        \"summary\": {\n   \
+        \       \"type\": \"string\"\n        },\n        \"voiceSummary\": {\n          \"type\": \"string\"\n        },\n\
+        \        \"content\": {\n          \"type\": \"string\"\n        },\n        \"relevanceScore\": {\n          \"type\"\
+        : \"number\",\n          \"format\": \"float\"\n        },\n        \"matchHighlights\": {\n          \"type\": \"\
+        array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        }\n      }\n    },\n    \"\
+        DocumentCategory\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\"\
+        ,\n        \"architecture\",\n        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n    \
+        \    \"game-systems\",\n        \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\"\
+        : \"Fixed categories for type-safe filtering\"\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Natural language documentation search\",\n  \"description\": \"Search documentation
+        using natural language queries.\\nReturns the most relevant documents with voice-friendly summaries.\\n\",\n  \"tags\"\
+        : [\n    \"Search\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"queryDocumentation\"\n}"
   /documentation/get:
     post:
       operationId: getDocument
@@ -91,10 +140,10 @@ paths:
         Retrieve a specific document by its unique identifier or slug.
         Returns full content with metadata.
       tags:
-        - Documents
+      - Documents
       x-permissions:
-        - role: anonymous
-          states: {}
+      - role: anonymous
+        states: {}
       requestBody:
         required: true
         content:
@@ -111,6 +160,53 @@ paths:
         '404':
           description: Document not found
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetDocumentRequest\"\
+        ,\n  \"$defs\": {\n    \"GetDocumentRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"namespace\"\
+        \n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\",\n          \"pattern\"\
+        : \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        },\n        \"documentId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\"\n        },\n        \"slug\": {\n          \"type\": \"string\",\n          \"\
+        pattern\": \"^[a-z0-9-]+$\"\n        },\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\"\
+        : \"uuid\"\n        },\n        \"includeRelated\": {\n          \"$ref\": \"#/$defs/RelatedDepth\"\n        },\n\
+        \        \"includeContent\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        },\n     \
+        \   \"renderHtml\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        }\n      }\n    },\n\
+        \    \"RelatedDepth\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"none\",\n        \"direct\",\n\
+        \        \"extended\"\n      ],\n      \"default\": \"direct\",\n      \"description\": \"How deep to traverse related
+        document links:\\n- none: No related documents included\\n- direct: Only directly linked documents (depth 1)\\n- extended:
+        Related documents + their related documents (depth 2)\\n\"\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetDocumentResponse\"\
+        ,\n  \"$defs\": {\n    \"GetDocumentResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        document\"\n      ],\n      \"properties\": {\n        \"document\": {\n          \"$ref\": \"#/$defs/Document\"\n\
+        \        },\n        \"relatedDocuments\": {\n          \"type\": \"array\",\n          \"items\": {\n           \
+        \ \"$ref\": \"#/$defs/DocumentSummary\"\n          }\n        },\n        \"contentFormat\": {\n          \"type\"\
+        : \"string\",\n          \"enum\": [\n            \"markdown\",\n            \"html\",\n            \"none\"\n   \
+        \       ]\n        }\n      }\n    },\n    \"Document\": {\n      \"type\": \"object\",\n      \"required\": [\n \
+        \       \"documentId\",\n        \"namespace\",\n        \"slug\",\n        \"title\",\n        \"category\",\n  \
+        \      \"createdAt\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"documentId\": {\n     \
+        \     \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"namespace\": {\n          \"type\"\
+        : \"string\"\n        },\n        \"slug\": {\n          \"type\": \"string\"\n        },\n        \"title\": {\n\
+        \          \"type\": \"string\"\n        },\n        \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\"\
+        \n        },\n        \"content\": {\n          \"type\": \"string\"\n        },\n        \"summary\": {\n       \
+        \   \"type\": \"string\"\n        },\n        \"voiceSummary\": {\n          \"type\": \"string\"\n        },\n  \
+        \      \"tags\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n   \
+        \       }\n        },\n        \"relatedDocuments\": {\n          \"type\": \"array\",\n          \"items\": {\n \
+        \           \"type\": \"string\",\n            \"format\": \"uuid\"\n          }\n        },\n        \"metadata\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true\n        },\n        \"createdAt\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"updatedAt\": {\n\
+        \          \"type\": \"string\",\n          \"format\": \"date-time\"\n        }\n      }\n    },\n    \"DocumentCategory\"\
+        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n  \
+        \      \"architecture\",\n        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n        \"\
+        game-systems\",\n        \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\"\
+        : \"Fixed categories for type-safe filtering\"\n    },\n    \"DocumentSummary\": {\n      \"type\": \"object\",\n\
+        \      \"required\": [\n        \"documentId\",\n        \"slug\",\n        \"title\",\n        \"category\"\n   \
+        \   ],\n      \"properties\": {\n        \"documentId\": {\n          \"type\": \"string\",\n          \"format\"\
+        : \"uuid\"\n        },\n        \"slug\": {\n          \"type\": \"string\"\n        },\n        \"title\": {\n  \
+        \        \"type\": \"string\"\n        },\n        \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\"\
+        \n        },\n        \"summary\": {\n          \"type\": \"string\"\n        },\n        \"voiceSummary\": {\n  \
+        \        \"type\": \"string\"\n        },\n        \"tags\": {\n          \"type\": \"array\",\n          \"items\"\
+        : {\n            \"type\": \"string\"\n          }\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Get specific document by ID or slug\",\n  \"description\": \"Retrieve a specific
+        document by its unique identifier or slug.\\nReturns full content with metadata.\\n\",\n  \"tags\": [\n    \"Documents\"\
+        \n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getDocument\"\n}"
   /documentation/search:
     post:
       operationId: searchDocumentation
@@ -119,10 +215,10 @@ paths:
         Search documentation using exact keyword matching.
         Faster than semantic search but less flexible.
       tags:
-        - Search
+      - Search
       x-permissions:
-        - role: anonymous
-          states: {}
+      - role: anonymous
+        states: {}
       requestBody:
         required: true
         content:
@@ -137,6 +233,46 @@ paths:
               schema:
                 $ref: '#/components/schemas/SearchDocumentationResponse'
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SearchDocumentationRequest\"\
+        ,\n  \"$defs\": {\n    \"SearchDocumentationRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n   \
+        \     \"namespace\",\n        \"searchTerm\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n      \
+        \    \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        },\n  \
+        \      \"searchTerm\": {\n          \"type\": \"string\",\n          \"minLength\": 2,\n          \"maxLength\": 200\n\
+        \        },\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n\
+        \        \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\"\n        },\n        \"maxResults\": {\n\
+        \          \"type\": \"integer\",\n          \"default\": 10,\n          \"minimum\": 1,\n          \"maximum\": 50\n\
+        \        },\n        \"searchIn\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\"\
+        : \"#/$defs/SearchField\"\n          }\n        },\n        \"sortBy\": {\n          \"type\": \"string\",\n     \
+        \     \"enum\": [\n            \"relevance\",\n            \"recency\",\n            \"alphabetical\"\n          ],\n\
+        \          \"default\": \"relevance\"\n        },\n        \"includeContent\": {\n          \"type\": \"boolean\"\
+        ,\n          \"default\": false\n        }\n      }\n    },\n    \"DocumentCategory\": {\n      \"type\": \"string\"\
+        ,\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n        \"architecture\",\n      \
+        \  \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n        \"world-lore\"\
+        ,\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\": \"Fixed categories for type-safe filtering\"\
+        \n    },\n    \"SearchField\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"title\",\n        \"content\"\
+        ,\n        \"tags\",\n        \"summary\"\n      ]\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SearchDocumentationResponse\"\
+        ,\n  \"$defs\": {\n    \"SearchDocumentationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n  \
+        \      \"namespace\",\n        \"results\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n        \
+        \  \"type\": \"string\"\n        },\n        \"results\": {\n          \"type\": \"array\",\n          \"items\":
+        {\n            \"$ref\": \"#/$defs/DocumentResult\"\n          }\n        },\n        \"totalResults\": {\n      \
+        \    \"type\": \"integer\"\n        },\n        \"searchTerm\": {\n          \"type\": \"string\"\n        }\n   \
+        \   }\n    },\n    \"DocumentResult\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"documentId\"\
+        ,\n        \"slug\",\n        \"title\",\n        \"relevanceScore\"\n      ],\n      \"properties\": {\n        \"\
+        documentId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"slug\": {\n\
+        \          \"type\": \"string\"\n        },\n        \"title\": {\n          \"type\": \"string\"\n        },\n  \
+        \      \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\"\n        },\n        \"summary\": {\n   \
+        \       \"type\": \"string\"\n        },\n        \"voiceSummary\": {\n          \"type\": \"string\"\n        },\n\
+        \        \"content\": {\n          \"type\": \"string\"\n        },\n        \"relevanceScore\": {\n          \"type\"\
+        : \"number\",\n          \"format\": \"float\"\n        },\n        \"matchHighlights\": {\n          \"type\": \"\
+        array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        }\n      }\n    },\n    \"\
+        DocumentCategory\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\"\
+        ,\n        \"architecture\",\n        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n    \
+        \    \"game-systems\",\n        \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\"\
+        : \"Fixed categories for type-safe filtering\"\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Full-text keyword search\",\n  \"description\": \"Search documentation using
+        exact keyword matching.\\nFaster than semantic search but less flexible.\\n\",\n  \"tags\": [\n    \"Search\"\n  ],\n\
+        \  \"deprecated\": false,\n  \"operationId\": \"searchDocumentation\"\n}"
   /documentation/list:
     post:
       operationId: listDocuments
@@ -145,10 +281,10 @@ paths:
         List all documents in a specific category or all categories.
         Supports pagination for large result sets.
       tags:
-        - Documents
+      - Documents
       x-permissions:
-        - role: anonymous
-          states: {}
+      - role: anonymous
+        states: {}
       requestBody:
         required: true
         content:
@@ -163,6 +299,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListDocumentsResponse'
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListDocumentsRequest\"\
+        ,\n  \"$defs\": {\n    \"ListDocumentsRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        namespace\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\",\n      \
+        \    \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        },\n        \"category\": {\n          \"\
+        $ref\": \"#/$defs/DocumentCategory\"\n        },\n        \"tags\": {\n          \"type\": \"array\",\n          \"\
+        items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"tagsMatch\": {\n          \"type\"\
+        : \"string\",\n          \"enum\": [\n            \"all\",\n            \"any\"\n          ],\n          \"default\"\
+        : \"all\"\n        },\n        \"createdAfter\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
+        \n        },\n        \"createdBefore\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n\
+        \        },\n        \"updatedAfter\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n \
+        \       },\n        \"updatedBefore\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n \
+        \       },\n        \"titlesOnly\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        },\n\
+        \        \"page\": {\n          \"type\": \"integer\",\n          \"default\": 1,\n          \"minimum\": 1\n    \
+        \    },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"default\": 20,\n          \"minimum\"\
+        : 1,\n          \"maximum\": 100\n        },\n        \"sortBy\": {\n          \"$ref\": \"#/$defs/ListSortField\"\
+        \n        },\n        \"sortOrder\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"asc\"\
+        ,\n            \"desc\"\n          ],\n          \"default\": \"desc\"\n        }\n      }\n    },\n    \"DocumentCategory\"\
+        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n  \
+        \      \"architecture\",\n        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n        \"\
+        game-systems\",\n        \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\"\
+        : \"Fixed categories for type-safe filtering\"\n    },\n    \"ListSortField\": {\n      \"type\": \"string\",\n  \
+        \    \"enum\": [\n        \"created_at\",\n        \"updated_at\",\n        \"title\"\n      ],\n      \"default\"\
+        : \"updated_at\"\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListDocumentsResponse\"\
+        ,\n  \"$defs\": {\n    \"ListDocumentsResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        namespace\",\n        \"documents\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\"\
+        : \"string\"\n        },\n        \"documents\": {\n          \"type\": \"array\",\n          \"items\": {\n     \
+        \       \"$ref\": \"#/$defs/DocumentSummary\"\n          }\n        },\n        \"totalCount\": {\n          \"type\"\
+        : \"integer\"\n        },\n        \"page\": {\n          \"type\": \"integer\"\n        },\n        \"pageSize\"\
+        : {\n          \"type\": \"integer\"\n        },\n        \"totalPages\": {\n          \"type\": \"integer\"\n   \
+        \     }\n      }\n    },\n    \"DocumentSummary\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
+        \ \"documentId\",\n        \"slug\",\n        \"title\",\n        \"category\"\n      ],\n      \"properties\": {\n\
+        \        \"documentId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"\
+        slug\": {\n          \"type\": \"string\"\n        },\n        \"title\": {\n          \"type\": \"string\"\n    \
+        \    },\n        \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\"\n        },\n        \"summary\"\
+        : {\n          \"type\": \"string\"\n        },\n        \"voiceSummary\": {\n          \"type\": \"string\"\n   \
+        \     },\n        \"tags\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\
+        \n          }\n        }\n      }\n    },\n    \"DocumentCategory\": {\n      \"type\": \"string\",\n      \"enum\"\
+        : [\n        \"getting-started\",\n        \"api-reference\",\n        \"architecture\",\n        \"deployment\",\n\
+        \        \"troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n        \"world-lore\",\n      \
+        \  \"npc-ai\",\n        \"other\"\n      ],\n      \"description\": \"Fixed categories for type-safe filtering\"\n\
+        \    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"List documents by category\",\n  \"description\": \"List all documents in
+        a specific category or all categories.\\nSupports pagination for large result sets.\\n\",\n  \"tags\": [\n    \"Documents\"\
+        \n  ],\n  \"deprecated\": false,\n  \"operationId\": \"listDocuments\"\n}"
   /documentation/suggest:
     post:
       operationId: suggestRelatedTopics
@@ -171,10 +352,10 @@ paths:
         Given a topic or document ID, returns related topics the user
         might want to explore. Useful for conversational AI flow.
       tags:
-        - Search
+      - Search
       x-permissions:
-        - role: anonymous
-          states: {}
+      - role: anonymous
+        states: {}
       requestBody:
         required: true
         content:
@@ -190,15 +371,45 @@ paths:
                 $ref: '#/components/schemas/SuggestRelatedResponse'
 
   # ===== Admin Endpoints =====
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SuggestRelatedRequest\"\
+        ,\n  \"$defs\": {\n    \"SuggestRelatedRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        namespace\",\n        \"suggestionSource\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n        \
+        \  \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        },\n    \
+        \    \"suggestionSource\": {\n          \"$ref\": \"#/$defs/SuggestionSource\"\n        },\n        \"sourceValue\"\
+        : {\n          \"type\": \"string\"\n        },\n        \"sessionId\": {\n          \"type\": \"string\",\n     \
+        \     \"format\": \"uuid\"\n        },\n        \"maxSuggestions\": {\n          \"type\": \"integer\",\n        \
+        \  \"default\": 5,\n          \"minimum\": 1,\n          \"maximum\": 10\n        },\n        \"excludeRecentlyViewed\"\
+        : {\n          \"type\": \"boolean\",\n          \"default\": true\n        }\n      }\n    },\n    \"SuggestionSource\"\
+        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"document_id\",\n        \"slug\",\n        \"topic\"\
+        ,\n        \"category\"\n      ]\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SuggestRelatedResponse\"\
+        ,\n  \"$defs\": {\n    \"SuggestRelatedResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
+        \ \"namespace\",\n        \"suggestions\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n         \
+        \ \"type\": \"string\"\n        },\n        \"suggestions\": {\n          \"type\": \"array\",\n          \"items\"\
+        : {\n            \"$ref\": \"#/$defs/TopicSuggestion\"\n          }\n        },\n        \"voicePrompt\": {\n    \
+        \      \"type\": \"string\"\n        },\n        \"sessionInfluenced\": {\n          \"type\": \"boolean\"\n     \
+        \   }\n      }\n    },\n    \"TopicSuggestion\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        documentId\",\n        \"title\"\n      ],\n      \"properties\": {\n        \"documentId\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"uuid\"\n        },\n        \"slug\": {\n          \"type\": \"string\"\n \
+        \       },\n        \"title\": {\n          \"type\": \"string\"\n        },\n        \"category\": {\n          \"\
+        $ref\": \"#/$defs/DocumentCategory\"\n        },\n        \"relevanceReason\": {\n          \"type\": \"string\"\n\
+        \        }\n      }\n    },\n    \"DocumentCategory\": {\n      \"type\": \"string\",\n      \"enum\": [\n       \
+        \ \"getting-started\",\n        \"api-reference\",\n        \"architecture\",\n        \"deployment\",\n        \"\
+        troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n        \"world-lore\",\n        \"npc-ai\"\
+        ,\n        \"other\"\n      ],\n      \"description\": \"Fixed categories for type-safe filtering\"\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Get related topics and follow-up suggestions\",\n  \"description\": \"Given
+        a topic or document ID, returns related topics the user\\nmight want to explore. Useful for conversational AI flow.\\\
+        n\",\n  \"tags\": [\n    \"Search\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"suggestRelatedTopics\"\n\
+        }"
   /documentation/create:
     post:
       operationId: createDocument
       summary: Create new documentation entry
       tags:
-        - Admin
+      - Admin
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -215,15 +426,41 @@ paths:
         '409':
           description: Document with same slug already exists
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateDocumentRequest\"\
+        ,\n  \"$defs\": {\n    \"CreateDocumentRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        namespace\",\n        \"slug\",\n        \"title\",\n        \"category\",\n        \"content\"\n      ],\n      \"\
+        properties\": {\n        \"namespace\": {\n          \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\"\
+        ,\n          \"maxLength\": 50\n        },\n        \"slug\": {\n          \"type\": \"string\",\n          \"pattern\"\
+        : \"^[a-z0-9-]+$\",\n          \"maxLength\": 100\n        },\n        \"title\": {\n          \"type\": \"string\"\
+        ,\n          \"maxLength\": 200\n        },\n        \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\"\
+        \n        },\n        \"content\": {\n          \"type\": \"string\",\n          \"description\": \"Markdown content
+        (max 500KB)\"\n        },\n        \"summary\": {\n          \"type\": \"string\",\n          \"maxLength\": 500\n\
+        \        },\n        \"voiceSummary\": {\n          \"type\": \"string\",\n          \"maxLength\": 200\n        },\n\
+        \        \"tags\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n \
+        \         }\n        },\n        \"relatedDocuments\": {\n          \"type\": \"array\",\n          \"items\": {\n\
+        \            \"type\": \"string\",\n            \"format\": \"uuid\"\n          }\n        },\n        \"metadata\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true\n        }\n      }\n    },\n    \"\
+        DocumentCategory\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\"\
+        ,\n        \"architecture\",\n        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n    \
+        \    \"game-systems\",\n        \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\"\
+        : \"Fixed categories for type-safe filtering\"\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateDocumentResponse\"\
+        ,\n  \"$defs\": {\n    \"CreateDocumentResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
+        \ \"documentId\",\n        \"slug\"\n      ],\n      \"properties\": {\n        \"documentId\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"uuid\"\n        },\n        \"slug\": {\n          \"type\": \"string\"\n \
+        \       },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n     \
+        \   }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Create new documentation entry\",\n  \"description\": \"\",\n  \"tags\":
+        [\n    \"Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"createDocument\"\n}"
   /documentation/update:
     post:
       operationId: updateDocument
       summary: Update existing documentation entry
       tags:
-        - Admin
+      - Admin
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -240,6 +477,30 @@ paths:
         '404':
           description: Document not found
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UpdateDocumentRequest\"\
+        ,\n  \"$defs\": {\n    \"UpdateDocumentRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        namespace\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\",\n      \
+        \    \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        },\n        \"documentId\": {\n        \
+        \  \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"slug\": {\n          \"type\": \"\
+        string\"\n        },\n        \"title\": {\n          \"type\": \"string\"\n        },\n        \"category\": {\n\
+        \          \"$ref\": \"#/$defs/DocumentCategory\"\n        },\n        \"content\": {\n          \"type\": \"string\"\
+        \n        },\n        \"summary\": {\n          \"type\": \"string\"\n        },\n        \"voiceSummary\": {\n  \
+        \        \"type\": \"string\"\n        },\n        \"tags\": {\n          \"type\": \"array\",\n          \"items\"\
+        : {\n            \"type\": \"string\"\n          }\n        },\n        \"relatedDocuments\": {\n          \"type\"\
+        : \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"format\": \"uuid\"\n      \
+        \    }\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\":
+        true\n        }\n      }\n    },\n    \"DocumentCategory\": {\n      \"type\": \"string\",\n      \"enum\": [\n  \
+        \      \"getting-started\",\n        \"api-reference\",\n        \"architecture\",\n        \"deployment\",\n    \
+        \    \"troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n        \"world-lore\",\n        \"\
+        npc-ai\",\n        \"other\"\n      ],\n      \"description\": \"Fixed categories for type-safe filtering\"\n    }\n\
+        \  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UpdateDocumentResponse\"\
+        ,\n  \"$defs\": {\n    \"UpdateDocumentResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
+        \ \"documentId\",\n        \"updatedAt\"\n      ],\n      \"properties\": {\n        \"documentId\": {\n         \
+        \ \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"updatedAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Update existing documentation entry\",\n  \"description\": \"\",\n  \"tags\"\
+        : [\n    \"Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"updateDocument\"\n}"
   /documentation/delete:
     post:
       operationId: deleteDocument
@@ -248,10 +509,10 @@ paths:
         Moves document to trashcan for recovery within TTL period.
         Documents are automatically cleaned up after TrashcanTtlDays.
       tags:
-        - Admin
+      - Admin
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -268,6 +529,21 @@ paths:
         '404':
           description: Document not found
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/DeleteDocumentRequest\"\
+        ,\n  \"$defs\": {\n    \"DeleteDocumentRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        namespace\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\",\n      \
+        \    \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        },\n        \"documentId\": {\n        \
+        \  \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"slug\": {\n          \"type\": \"\
+        string\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/DeleteDocumentResponse\"\
+        ,\n  \"$defs\": {\n    \"DeleteDocumentResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
+        \ \"documentId\",\n        \"deletedAt\",\n        \"recoverableUntil\"\n      ],\n      \"properties\": {\n     \
+        \   \"documentId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"deletedAt\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"recoverableUntil\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Soft-delete documentation entry to trashcan\",\n  \"description\": \"Moves
+        document to trashcan for recovery within TTL period.\\nDocuments are automatically cleaned up after TrashcanTtlDays.\\\
+        n\",\n  \"tags\": [\n    \"Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"deleteDocument\"\n}"
   /documentation/recover:
     post:
       operationId: recoverDocument
@@ -276,10 +552,10 @@ paths:
         Restores a soft-deleted document from the trashcan.
         Must be called before the trashcan TTL expires.
       tags:
-        - Admin
+      - Admin
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -298,6 +574,20 @@ paths:
         '409':
           description: Conflict with existing document
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RecoverDocumentRequest\"\
+        ,\n  \"$defs\": {\n    \"RecoverDocumentRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
+        \ \"namespace\",\n        \"documentId\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"\
+        type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        },\n        \"\
+        documentId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        }\n      }\n    }\n  }\n\
+        }"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RecoverDocumentResponse\"\
+        ,\n  \"$defs\": {\n    \"RecoverDocumentResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n      \
+        \  \"documentId\",\n        \"recoveredAt\"\n      ],\n      \"properties\": {\n        \"documentId\": {\n      \
+        \    \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"recoveredAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Recover document from trashcan\",\n  \"description\": \"Restores a soft-deleted
+        document from the trashcan.\\nMust be called before the trashcan TTL expires.\\n\",\n  \"tags\": [\n    \"Admin\"\n\
+        \  ],\n  \"deprecated\": false,\n  \"operationId\": \"recoverDocument\"\n}"
   /documentation/bulk-update:
     post:
       operationId: bulkUpdateDocuments
@@ -306,10 +596,10 @@ paths:
         Apply category, tag, or metadata changes to multiple documents at once.
         Each document is processed independently - partial success is possible.
       tags:
-        - Admin
+      - Admin
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -324,6 +614,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/BulkUpdateResponse'
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/BulkUpdateRequest\"\
+        ,\n  \"$defs\": {\n    \"BulkUpdateRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"namespace\"\
+        ,\n        \"documentIds\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\"\
+        ,\n          \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        },\n        \"documentIds\": {\n\
+        \          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"format\"\
+        : \"uuid\"\n          }\n        },\n        \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\"\n \
+        \       },\n        \"addTags\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\":
+        \"string\"\n          }\n        },\n        \"removeTags\": {\n          \"type\": \"array\",\n          \"items\"\
+        : {\n            \"type\": \"string\"\n          }\n        }\n      }\n    },\n    \"DocumentCategory\": {\n    \
+        \  \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n        \"\
+        architecture\",\n        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n        \"game-systems\"\
+        ,\n        \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\": \"Fixed categories
+        for type-safe filtering\"\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/BulkUpdateResponse\"\
+        ,\n  \"$defs\": {\n    \"BulkUpdateResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"succeeded\"\
+        ,\n        \"failed\"\n      ],\n      \"properties\": {\n        \"succeeded\": {\n          \"type\": \"array\"\
+        ,\n          \"items\": {\n            \"type\": \"string\",\n            \"format\": \"uuid\"\n          }\n    \
+        \    },\n        \"failed\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/BulkOperationFailure\"\
+        \n          }\n        }\n      }\n    },\n    \"BulkOperationFailure\": {\n      \"type\": \"object\",\n      \"\
+        required\": [\n        \"documentId\",\n        \"error\"\n      ],\n      \"properties\": {\n        \"documentId\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"error\": {\n         \
+        \ \"type\": \"string\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Bulk update document metadata\",\n  \"description\": \"Apply category, tag,
+        or metadata changes to multiple documents at once.\\nEach document is processed independently - partial success is
+        possible.\\n\",\n  \"tags\": [\n    \"Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"bulkUpdateDocuments\"\
+        \n}"
   /documentation/bulk-delete:
     post:
       operationId: bulkDeleteDocuments
@@ -332,10 +648,10 @@ paths:
         Move multiple documents to trashcan at once.
         Each document is processed independently - partial success is possible.
       tags:
-        - Admin
+      - Admin
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -350,6 +666,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/BulkDeleteResponse'
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/BulkDeleteRequest\"\
+        ,\n  \"$defs\": {\n    \"BulkDeleteRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"namespace\"\
+        ,\n        \"documentIds\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\"\
+        ,\n          \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        },\n        \"documentIds\": {\n\
+        \          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"format\"\
+        : \"uuid\"\n          }\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/BulkDeleteResponse\"\
+        ,\n  \"$defs\": {\n    \"BulkDeleteResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"succeeded\"\
+        ,\n        \"failed\"\n      ],\n      \"properties\": {\n        \"succeeded\": {\n          \"type\": \"array\"\
+        ,\n          \"items\": {\n            \"type\": \"string\",\n            \"format\": \"uuid\"\n          }\n    \
+        \    },\n        \"failed\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/BulkOperationFailure\"\
+        \n          }\n        }\n      }\n    },\n    \"BulkOperationFailure\": {\n      \"type\": \"object\",\n      \"\
+        required\": [\n        \"documentId\",\n        \"error\"\n      ],\n      \"properties\": {\n        \"documentId\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"error\": {\n         \
+        \ \"type\": \"string\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Bulk soft-delete documents to trashcan\",\n  \"description\": \"Move multiple
+        documents to trashcan at once.\\nEach document is processed independently - partial success is possible.\\n\",\n \
+        \ \"tags\": [\n    \"Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"bulkDeleteDocuments\"\n}"
   /documentation/import:
     post:
       operationId: importDocumentation
@@ -358,10 +692,10 @@ paths:
         Import multiple documents. Each document processed independently.
         Partial success is possible - failures reported per document.
       tags:
-        - Admin
+      - Admin
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -376,6 +710,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/ImportDocumentationResponse'
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ImportDocumentationRequest\"\
+        ,\n  \"$defs\": {\n    \"ImportDocumentationRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n   \
+        \     \"namespace\",\n        \"documents\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n       \
+        \   \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        },\n   \
+        \     \"documents\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/ImportDocument\"\
+        \n          }\n        },\n        \"onConflict\": {\n          \"type\": \"string\",\n          \"enum\": [\n   \
+        \         \"skip\",\n            \"update\",\n            \"fail\"\n          ],\n          \"default\": \"skip\"\n\
+        \        }\n      }\n    },\n    \"ImportDocument\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
+        \   \"slug\",\n        \"title\",\n        \"category\",\n        \"content\"\n      ],\n      \"properties\": {\n\
+        \        \"slug\": {\n          \"type\": \"string\"\n        },\n        \"title\": {\n          \"type\": \"string\"\
+        \n        },\n        \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\"\n        },\n        \"content\"\
+        : {\n          \"type\": \"string\"\n        },\n        \"summary\": {\n          \"type\": \"string\"\n        },\n\
+        \        \"voiceSummary\": {\n          \"type\": \"string\"\n        },\n        \"tags\": {\n          \"type\"\
+        : \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"metadata\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true\n        }\n      }\n    },\n    \"\
+        DocumentCategory\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\"\
+        ,\n        \"architecture\",\n        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n    \
+        \    \"game-systems\",\n        \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\"\
+        : \"Fixed categories for type-safe filtering\"\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ImportDocumentationResponse\"\
+        ,\n  \"$defs\": {\n    \"ImportDocumentationResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n  \
+        \      \"namespace\",\n        \"created\",\n        \"updated\",\n        \"skipped\",\n        \"failed\"\n    \
+        \  ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\"\n        },\n        \"created\"\
+        : {\n          \"type\": \"integer\"\n        },\n        \"updated\": {\n          \"type\": \"integer\"\n      \
+        \  },\n        \"skipped\": {\n          \"type\": \"integer\"\n        },\n        \"failed\": {\n          \"type\"\
+        : \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/ImportFailure\"\n          }\n        }\n  \
+        \    }\n    },\n    \"ImportFailure\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"slug\",\n\
+        \        \"error\"\n      ],\n      \"properties\": {\n        \"slug\": {\n          \"type\": \"string\"\n     \
+        \   },\n        \"error\": {\n          \"type\": \"string\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Bulk import documentation from structured source\",\n  \"description\": \"\
+        Import multiple documents. Each document processed independently.\\nPartial success is possible - failures reported
+        per document.\\n\",\n  \"tags\": [\n    \"Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"importDocumentation\"\
+        \n}"
   /documentation/trashcan:
     post:
       operationId: listTrashcan
@@ -384,10 +751,10 @@ paths:
         List all soft-deleted documents within the namespace's trashcan.
         Documents remain recoverable until TTL expires or purge is called.
       tags:
-        - Admin
+      - Admin
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -402,6 +769,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListTrashcanResponse'
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListTrashcanRequest\"\
+        ,\n  \"$defs\": {\n    \"ListTrashcanRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        namespace\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\",\n      \
+        \    \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        },\n        \"page\": {\n          \"type\"\
+        : \"integer\",\n          \"default\": 1\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n\
+        \          \"default\": 20\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListTrashcanResponse\"\
+        ,\n  \"$defs\": {\n    \"ListTrashcanResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        namespace\",\n        \"items\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\":
+        \"string\"\n        },\n        \"items\": {\n          \"type\": \"array\",\n          \"items\": {\n           \
+        \ \"$ref\": \"#/$defs/TrashcanItem\"\n          }\n        },\n        \"totalCount\": {\n          \"type\": \"integer\"\
+        \n        }\n      }\n    },\n    \"TrashcanItem\": {\n      \"type\": \"object\",\n      \"required\": [\n      \
+        \  \"documentId\",\n        \"title\",\n        \"deletedAt\",\n        \"expiresAt\"\n      ],\n      \"properties\"\
+        : {\n        \"documentId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n    \
+        \    \"slug\": {\n          \"type\": \"string\"\n        },\n        \"title\": {\n          \"type\": \"string\"\
+        \n        },\n        \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\"\n        },\n        \"deletedAt\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"expiresAt\": {\n\
+        \          \"type\": \"string\",\n          \"format\": \"date-time\"\n        }\n      }\n    },\n    \"DocumentCategory\"\
+        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n  \
+        \      \"architecture\",\n        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n        \"\
+        game-systems\",\n        \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\"\
+        : \"Fixed categories for type-safe filtering\"\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"List documents in the trashcan\",\n  \"description\": \"List all soft-deleted
+        documents within the namespace's trashcan.\\nDocuments remain recoverable until TTL expires or purge is called.\\\
+        n\",\n  \"tags\": [\n    \"Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"listTrashcan\"\n}"
   /documentation/purge:
     post:
       operationId: purgeTrashcan
@@ -410,10 +802,10 @@ paths:
         Permanently delete specified documents from trashcan, or purge all.
         This operation is irreversible - documents cannot be recovered after purge.
       tags:
-        - Admin
+      - Admin
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -428,6 +820,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/PurgeTrashcanResponse'
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/PurgeTrashcanRequest\"\
+        ,\n  \"$defs\": {\n    \"PurgeTrashcanRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        namespace\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\",\n      \
+        \    \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        },\n        \"documentIds\": {\n       \
+        \   \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"format\": \"uuid\"\
+        \n          },\n          \"description\": \"If empty, purges all trashcan items\"\n        }\n      }\n    }\n  }\n\
+        }"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/PurgeTrashcanResponse\"\
+        ,\n  \"$defs\": {\n    \"PurgeTrashcanResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        purgedCount\"\n      ],\n      \"properties\": {\n        \"purgedCount\": {\n          \"type\": \"integer\"\n  \
+        \      }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Permanently delete trashcan items\",\n  \"description\": \"Permanently delete
+        specified documents from trashcan, or purge all.\\nThis operation is irreversible - documents cannot be recovered
+        after purge.\\n\",\n  \"tags\": [\n    \"Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"purgeTrashcan\"\
+        \n}"
   /documentation/stats:
     post:
       operationId: getNamespaceStats
@@ -436,10 +843,10 @@ paths:
         Retrieve usage statistics and metadata for a documentation namespace.
         Useful for monitoring, capacity planning, and administrative dashboards.
       tags:
-        - Admin
+      - Admin
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -454,30 +861,46 @@ paths:
               schema:
                 $ref: '#/components/schemas/NamespaceStatsResponse'
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetNamespaceStatsRequest\"\
+        ,\n  \"$defs\": {\n    \"GetNamespaceStatsRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
+        \   \"namespace\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\",\n\
+        \          \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/NamespaceStatsResponse\"\
+        ,\n  \"$defs\": {\n    \"NamespaceStatsResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
+        \ \"namespace\",\n        \"documentCount\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n       \
+        \   \"type\": \"string\"\n        },\n        \"documentCount\": {\n          \"type\": \"integer\"\n        },\n\
+        \        \"categoryCounts\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n         \
+        \   \"type\": \"integer\"\n          }\n        },\n        \"trashcanCount\": {\n          \"type\": \"integer\"\n\
+        \        },\n        \"totalContentSizeBytes\": {\n          \"type\": \"integer\"\n        },\n        \"lastUpdated\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Get namespace documentation statistics\",\n  \"description\": \"Retrieve
+        usage statistics and metadata for a documentation namespace.\\nUseful for monitoring, capacity planning, and administrative
+        dashboards.\\n\",\n  \"tags\": [\n    \"Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getNamespaceStats\"\
+        \n}"
 components:
   schemas:
     # ===== Common Types =====
     DocumentCategory:
       type: string
       enum:
-        - getting-started
-        - api-reference
-        - architecture
-        - deployment
-        - troubleshooting
-        - tutorials
-        - game-systems
-        - world-lore
-        - npc-ai
-        - other
+      - getting-started
+      - api-reference
+      - architecture
+      - deployment
+      - troubleshooting
+      - tutorials
+      - game-systems
+      - world-lore
+      - npc-ai
+      - other
       description: Fixed categories for type-safe filtering
 
     RelatedDepth:
       type: string
       enum:
-        - none
-        - direct
-        - extended
+      - none
+      - direct
+      - extended
       default: direct
       description: |
         How deep to traverse related document links:
@@ -488,33 +911,33 @@ components:
     SearchField:
       type: string
       enum:
-        - title
-        - content
-        - tags
-        - summary
+      - title
+      - content
+      - tags
+      - summary
 
     ListSortField:
       type: string
       enum:
-        - created_at
-        - updated_at
-        - title
+      - created_at
+      - updated_at
+      - title
       default: updated_at
 
     SuggestionSource:
       type: string
       enum:
-        - document_id
-        - slug
-        - topic
-        - category
+      - document_id
+      - slug
+      - topic
+      - category
 
     # ===== Query Endpoint =====
     QueryDocumentationRequest:
       type: object
       required:
-        - namespace
-        - query
+      - namespace
+      - query
       properties:
         namespace:
           type: string
@@ -555,9 +978,9 @@ components:
     QueryDocumentationResponse:
       type: object
       required:
-        - namespace
-        - query
-        - results
+      - namespace
+      - query
+      - results
       properties:
         namespace:
           type: string
@@ -583,7 +1006,7 @@ components:
     GetDocumentRequest:
       type: object
       required:
-        - namespace
+      - namespace
       properties:
         namespace:
           type: string
@@ -610,7 +1033,7 @@ components:
     GetDocumentResponse:
       type: object
       required:
-        - document
+      - document
       properties:
         document:
           $ref: '#/components/schemas/Document'
@@ -621,16 +1044,16 @@ components:
         contentFormat:
           type: string
           enum:
-            - markdown
-            - html
-            - none
+          - markdown
+          - html
+          - none
 
     # ===== Search Endpoint =====
     SearchDocumentationRequest:
       type: object
       required:
-        - namespace
-        - searchTerm
+      - namespace
+      - searchTerm
       properties:
         namespace:
           type: string
@@ -657,9 +1080,9 @@ components:
         sortBy:
           type: string
           enum:
-            - relevance
-            - recency
-            - alphabetical
+          - relevance
+          - recency
+          - alphabetical
           default: relevance
         includeContent:
           type: boolean
@@ -668,8 +1091,8 @@ components:
     SearchDocumentationResponse:
       type: object
       required:
-        - namespace
-        - results
+      - namespace
+      - results
       properties:
         namespace:
           type: string
@@ -686,7 +1109,7 @@ components:
     ListDocumentsRequest:
       type: object
       required:
-        - namespace
+      - namespace
       properties:
         namespace:
           type: string
@@ -701,8 +1124,8 @@ components:
         tagsMatch:
           type: string
           enum:
-            - all
-            - any
+          - all
+          - any
           default: all
         createdAfter:
           type: string
@@ -733,15 +1156,15 @@ components:
         sortOrder:
           type: string
           enum:
-            - asc
-            - desc
+          - asc
+          - desc
           default: desc
 
     ListDocumentsResponse:
       type: object
       required:
-        - namespace
-        - documents
+      - namespace
+      - documents
       properties:
         namespace:
           type: string
@@ -762,8 +1185,8 @@ components:
     SuggestRelatedRequest:
       type: object
       required:
-        - namespace
-        - suggestionSource
+      - namespace
+      - suggestionSource
       properties:
         namespace:
           type: string
@@ -788,8 +1211,8 @@ components:
     SuggestRelatedResponse:
       type: object
       required:
-        - namespace
-        - suggestions
+      - namespace
+      - suggestions
       properties:
         namespace:
           type: string
@@ -805,8 +1228,8 @@ components:
     TopicSuggestion:
       type: object
       required:
-        - documentId
-        - title
+      - documentId
+      - title
       properties:
         documentId:
           type: string
@@ -824,11 +1247,11 @@ components:
     CreateDocumentRequest:
       type: object
       required:
-        - namespace
-        - slug
-        - title
-        - category
-        - content
+      - namespace
+      - slug
+      - title
+      - category
+      - content
       properties:
         namespace:
           type: string
@@ -868,8 +1291,8 @@ components:
     CreateDocumentResponse:
       type: object
       required:
-        - documentId
-        - slug
+      - documentId
+      - slug
       properties:
         documentId:
           type: string
@@ -883,7 +1306,7 @@ components:
     UpdateDocumentRequest:
       type: object
       required:
-        - namespace
+      - namespace
       properties:
         namespace:
           type: string
@@ -920,8 +1343,8 @@ components:
     UpdateDocumentResponse:
       type: object
       required:
-        - documentId
-        - updatedAt
+      - documentId
+      - updatedAt
       properties:
         documentId:
           type: string
@@ -933,7 +1356,7 @@ components:
     DeleteDocumentRequest:
       type: object
       required:
-        - namespace
+      - namespace
       properties:
         namespace:
           type: string
@@ -948,9 +1371,9 @@ components:
     DeleteDocumentResponse:
       type: object
       required:
-        - documentId
-        - deletedAt
-        - recoverableUntil
+      - documentId
+      - deletedAt
+      - recoverableUntil
       properties:
         documentId:
           type: string
@@ -966,8 +1389,8 @@ components:
     RecoverDocumentRequest:
       type: object
       required:
-        - namespace
-        - documentId
+      - namespace
+      - documentId
       properties:
         namespace:
           type: string
@@ -980,8 +1403,8 @@ components:
     RecoverDocumentResponse:
       type: object
       required:
-        - documentId
-        - recoveredAt
+      - documentId
+      - recoveredAt
       properties:
         documentId:
           type: string
@@ -994,8 +1417,8 @@ components:
     BulkUpdateRequest:
       type: object
       required:
-        - namespace
-        - documentIds
+      - namespace
+      - documentIds
       properties:
         namespace:
           type: string
@@ -1020,8 +1443,8 @@ components:
     BulkUpdateResponse:
       type: object
       required:
-        - succeeded
-        - failed
+      - succeeded
+      - failed
       properties:
         succeeded:
           type: array
@@ -1036,8 +1459,8 @@ components:
     BulkDeleteRequest:
       type: object
       required:
-        - namespace
-        - documentIds
+      - namespace
+      - documentIds
       properties:
         namespace:
           type: string
@@ -1052,8 +1475,8 @@ components:
     BulkDeleteResponse:
       type: object
       required:
-        - succeeded
-        - failed
+      - succeeded
+      - failed
       properties:
         succeeded:
           type: array
@@ -1068,8 +1491,8 @@ components:
     BulkOperationFailure:
       type: object
       required:
-        - documentId
-        - error
+      - documentId
+      - error
       properties:
         documentId:
           type: string
@@ -1081,8 +1504,8 @@ components:
     ImportDocumentationRequest:
       type: object
       required:
-        - namespace
-        - documents
+      - namespace
+      - documents
       properties:
         namespace:
           type: string
@@ -1095,18 +1518,18 @@ components:
         onConflict:
           type: string
           enum:
-            - skip
-            - update
-            - fail
+          - skip
+          - update
+          - fail
           default: skip
 
     ImportDocument:
       type: object
       required:
-        - slug
-        - title
-        - category
-        - content
+      - slug
+      - title
+      - category
+      - content
       properties:
         slug:
           type: string
@@ -1131,11 +1554,11 @@ components:
     ImportDocumentationResponse:
       type: object
       required:
-        - namespace
-        - created
-        - updated
-        - skipped
-        - failed
+      - namespace
+      - created
+      - updated
+      - skipped
+      - failed
       properties:
         namespace:
           type: string
@@ -1153,8 +1576,8 @@ components:
     ImportFailure:
       type: object
       required:
-        - slug
-        - error
+      - slug
+      - error
       properties:
         slug:
           type: string
@@ -1165,7 +1588,7 @@ components:
     ListTrashcanRequest:
       type: object
       required:
-        - namespace
+      - namespace
       properties:
         namespace:
           type: string
@@ -1181,8 +1604,8 @@ components:
     ListTrashcanResponse:
       type: object
       required:
-        - namespace
-        - items
+      - namespace
+      - items
       properties:
         namespace:
           type: string
@@ -1196,10 +1619,10 @@ components:
     TrashcanItem:
       type: object
       required:
-        - documentId
-        - title
-        - deletedAt
-        - expiresAt
+      - documentId
+      - title
+      - deletedAt
+      - expiresAt
       properties:
         documentId:
           type: string
@@ -1220,7 +1643,7 @@ components:
     PurgeTrashcanRequest:
       type: object
       required:
-        - namespace
+      - namespace
       properties:
         namespace:
           type: string
@@ -1236,7 +1659,7 @@ components:
     PurgeTrashcanResponse:
       type: object
       required:
-        - purgedCount
+      - purgedCount
       properties:
         purgedCount:
           type: integer
@@ -1245,7 +1668,7 @@ components:
     GetNamespaceStatsRequest:
       type: object
       required:
-        - namespace
+      - namespace
       properties:
         namespace:
           type: string
@@ -1255,8 +1678,8 @@ components:
     NamespaceStatsResponse:
       type: object
       required:
-        - namespace
-        - documentCount
+      - namespace
+      - documentCount
       properties:
         namespace:
           type: string
@@ -1278,13 +1701,13 @@ components:
     Document:
       type: object
       required:
-        - documentId
-        - namespace
-        - slug
-        - title
-        - category
-        - createdAt
-        - updatedAt
+      - documentId
+      - namespace
+      - slug
+      - title
+      - category
+      - createdAt
+      - updatedAt
       properties:
         documentId:
           type: string
@@ -1325,10 +1748,10 @@ components:
     DocumentSummary:
       type: object
       required:
-        - documentId
-        - slug
-        - title
-        - category
+      - documentId
+      - slug
+      - title
+      - category
       properties:
         documentId:
           type: string
@@ -1351,10 +1774,10 @@ components:
     DocumentResult:
       type: object
       required:
-        - documentId
-        - slug
-        - title
-        - relevanceScore
+      - documentId
+      - slug
+      - title
+      - relevanceScore
       properties:
         documentId:
           type: string

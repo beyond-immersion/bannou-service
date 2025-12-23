@@ -68,6 +68,41 @@ paths:
   # NOTE: Service routing mappings (service-name → app-id) are now in Orchestrator API
   # at /orchestrator/service-routing. Connect service handles client capabilities only.
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/InternalProxyRequest\"\
+        ,\n  \"$defs\": {\n    \"InternalProxyRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        sessionId\",\n        \"targetService\",\n        \"targetEndpoint\",\n        \"method\"\n      ],\n      \"properties\"\
+        : {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"description\": \"WebSocket session ID
+        making the request\"\n        },\n        \"targetService\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Target service name (e.g., \\\"accounts\\\", \\\"auth\\\", \\\"behavior\\\")\"\n        },\n        \"targetEndpoint\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Target API endpoint path (e.g., \\\"/accounts/{id}\\\
+        \")\"\n        },\n        \"method\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"GET\"\
+        ,\n            \"POST\",\n            \"PUT\",\n            \"DELETE\",\n            \"PATCH\"\n          ],\n   \
+        \       \"description\": \"HTTP method for the target endpoint\"\n        },\n        \"headers\": {\n          \"\
+        type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n          },\n     \
+        \     \"description\": \"Additional headers to forward to the service\"\n        },\n        \"body\": {\n       \
+        \   \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Request body to
+        forward to target service\"\n        },\n        \"pathParameters\": {\n          \"type\": \"object\",\n        \
+        \  \"additionalProperties\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"Path
+        parameters for the endpoint\"\n        },\n        \"queryParameters\": {\n          \"type\": \"object\",\n     \
+        \     \"additionalProperties\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"Query
+        string parameters for the endpoint\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/InternalProxyResponse\"\
+        ,\n  \"$defs\": {\n    \"InternalProxyResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        success\",\n        \"statusCode\"\n      ],\n      \"properties\": {\n        \"success\": {\n          \"type\"\
+        : \"boolean\",\n          \"description\": \"Whether the proxy request was successful\"\n        },\n        \"statusCode\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"HTTP status code from the target service\"\n \
+        \       },\n        \"response\": {\n          \"type\": \"string\",\n          \"description\": \"JSON response from
+        the target service (as string)\"\n        },\n        \"headers\": {\n          \"type\": \"object\",\n          \"\
+        additionalProperties\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"\
+        string\"\n            }\n          },\n          \"description\": \"Response headers from the target service\"\n \
+        \       },\n        \"error\": {\n          \"type\": \"string\",\n          \"description\": \"Error message if the
+        request failed\"\n        },\n        \"executionTime\": {\n          \"type\": \"integer\",\n          \"description\"\
+        : \"Request execution time in milliseconds\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Internal API proxy for stateless requests\",\n  \"description\": \"Stateless
+        HTTP proxy for internal requests that don't require persistent sessions.\\nApplies permission validation and rate
+        limiting based on agent role and context.\\nPerfect for AI agents making one-off API calls or bulk operations.\\n\"\
+        ,\n  \"tags\": [\n    \"Internal Proxy\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"proxyInternalRequest\"\
+        \n}"
   /client-capabilities:
     post:
       summary: Get client capability manifest (GUID → API mappings)
@@ -109,6 +144,68 @@ paths:
         '500':
           description: Error retrieving capabilities
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetClientCapabilitiesRequest\"\
+        ,\n  \"$defs\": {\n    \"GetClientCapabilitiesRequest\": {\n      \"type\": \"object\",\n      \"description\": \"\
+        Request to get client capability manifest (empty body allowed)\",\n      \"properties\": {\n        \"serviceFilter\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Optional filter by service name prefix\",\n   \
+        \       \"nullable\": true\n        },\n        \"includeMetadata\": {\n          \"type\": \"boolean\",\n       \
+        \   \"description\": \"Include additional metadata about each capability\",\n          \"default\": false\n      \
+        \  }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ClientCapabilitiesResponse\"\
+        ,\n  \"$defs\": {\n    \"ClientCapabilitiesResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n   \
+        \     \"sessionId\",\n        \"capabilities\",\n        \"version\",\n        \"generatedAt\"\n      ],\n      \"\
+        properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"description\": \"Session ID
+        this capability manifest belongs to\"\n        },\n        \"capabilities\": {\n          \"type\": \"array\",\n \
+        \         \"items\": {\n            \"$ref\": \"#/$defs/ClientCapability\"\n          },\n          \"description\"\
+        : \"Available API capabilities for this client\"\n        },\n        \"shortcuts\": {\n          \"type\": \"array\"\
+        ,\n          \"items\": {\n            \"$ref\": \"#/$defs/ClientShortcut\"\n          },\n          \"description\"\
+        : \"Pre-bound API calls available for this session.\\nShortcuts are invoked like normal capabilities but Connect injects\\
+        na pre-bound payload instead of using the client's payload.\\n\",\n          \"nullable\": true\n        },\n    \
+        \    \"version\": {\n          \"type\": \"integer\",\n          \"description\": \"Capability manifest version (increments
+        on changes)\"\n        },\n        \"generatedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
+        ,\n          \"description\": \"When this capability manifest was generated\"\n        },\n        \"expiresAt\":
+        {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When these
+        capabilities expire and need refresh\",\n          \"nullable\": true\n        }\n      }\n    },\n    \"ClientCapability\"\
+        : {\n      \"type\": \"object\",\n      \"required\": [\n        \"guid\",\n        \"service\",\n        \"endpoint\"\
+        ,\n        \"method\"\n      ],\n      \"properties\": {\n        \"guid\": {\n          \"type\": \"string\",\n \
+        \         \"format\": \"uuid\",\n          \"description\": \"Client-salted GUID for this API endpoint (unique per
+        session)\"\n        },\n        \"service\": {\n          \"type\": \"string\",\n          \"description\": \"Service
+        name (e.g., \\\"accounts\\\", \\\"auth\\\")\"\n        },\n        \"endpoint\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"API endpoint path (e.g., \\\"/accounts/create\\\")\"\n        },\n        \"method\"\
+        : {\n          \"type\": \"string\",\n          \"enum\": [\n            \"GET\",\n            \"POST\",\n       \
+        \     \"PUT\",\n            \"DELETE\",\n            \"PATCH\"\n          ],\n          \"description\": \"HTTP method
+        for this endpoint\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Human-readable description of this capability\",\n          \"nullable\": true\n        },\n        \"channel\"\
+        : {\n          \"type\": \"integer\",\n          \"format\": \"uint16\",\n          \"description\": \"Preferred WebSocket
+        channel for this capability\",\n          \"default\": 0\n        }\n      }\n    },\n    \"ClientShortcut\": {\n\
+        \      \"type\": \"object\",\n      \"description\": \"Session shortcut information sent to clients in the capability
+        manifest.\\nShortcuts appear as invocable capabilities but Connect injects a pre-bound\\npayload when the shortcut
+        GUID is used, replacing any client-provided payload.\\n\",\n      \"required\": [\n        \"guid\",\n        \"targetService\"\
+        ,\n        \"targetEndpoint\",\n        \"name\"\n      ],\n      \"properties\": {\n        \"guid\": {\n       \
+        \   \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"GUID to use in WebSocket
+        message header when invoking this shortcut.\\nUses UUID version 7 bits to distinguish from regular service GUIDs (version
+        5).\\n\"\n        },\n        \"targetService\": {\n          \"type\": \"string\",\n          \"description\": \"\
+        The service this shortcut invokes (for client display purposes).\"\n        },\n        \"targetEndpoint\": {\n  \
+        \        \"type\": \"string\",\n          \"description\": \"The endpoint this shortcut invokes (for client display
+        purposes).\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Machine-readable
+        shortcut identifier (e.g., \\\"get_my_stats\\\", \\\"join_game\\\").\"\n        },\n        \"description\": {\n \
+        \         \"type\": \"string\",\n          \"description\": \"Human-readable description of what this shortcut does.\"\
+        ,\n          \"nullable\": true\n        },\n        \"displayName\": {\n          \"type\": \"string\",\n       \
+        \   \"description\": \"User-friendly name for display in client UIs.\",\n          \"nullable\": true\n        },\n\
+        \        \"sourceService\": {\n          \"type\": \"string\",\n          \"description\": \"The service that created
+        this shortcut.\",\n          \"nullable\": true\n        },\n        \"tags\": {\n          \"type\": \"array\",\n\
+        \          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"Categorization
+        tags for client-side organization.\",\n          \"nullable\": true\n        },\n        \"expiresAt\": {\n      \
+        \    \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When this shortcut
+        expires (if time-limited).\",\n          \"nullable\": true\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Get client capability manifest (GUID \\u2192 API mappings)\",\n  \"description\"\
+        : \"Returns the capability manifest for the authenticated client's session.\\nMaps client-salted GUIDs to available
+        API endpoints based on the client's\\ncurrent permissions and session state.\\n\\n**Security**: Each client receives
+        unique GUIDs for the same API endpoints.\\nThis prevents cross-session exploitation and enables per-client rate limiting.\\
+        n\\n**Dynamic Updates**: Capabilities may change during a session when:\\n- Role changes occur (admin promotion, etc.)\\
+        n- Subscription status changes\\n- Session state transitions\\n\\nClients should listen for capability update events
+        via WebSocket to stay current.\\n\",\n  \"tags\": [\n    \"Client Capabilities\"\n  ],\n  \"deprecated\": false,\n\
+        \  \"operationId\": \"getClientCapabilities\"\n}"
   /connect:
     get:
       summary: Establish WebSocket connection
@@ -224,6 +321,16 @@ paths:
                     error: "InternalServerError"
                     message: "An error occurred establishing the WebSocket connection"
                     status_code: 500
+      x-request-schema-json: '{}'
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n  \"summary\": \"Establish WebSocket connection\",\n  \"description\": \"Initiates a WebSocket
+        connection for real-time communication.\\nRequires JWT authentication via Authorization header.\\n\\n**Connection
+        Flow:**\\n1. Send HTTP GET request with `Connection: Upgrade` and `Upgrade: websocket` headers\\n2. Include `Authorization:
+        Bearer <jwt_token>` header for authentication\\n3. Server validates JWT and extracts user claims (roles, scopes, services)\\
+        n4. Connection upgrades to WebSocket protocol\\n5. Client can send binary messages using the custom protocol\\n\\\
+        n**Reconnection:**\\nFor existing sessions, use `Authorization: Reconnect <reconnect_token>` instead.\\n\",\n  \"\
+        tags\": [\n    \"WebSocket Connection\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"ConnectWebSocket\"\n\
+        }"
     post:
       summary: Establish WebSocket connection (POST variant)
       description: |
@@ -285,6 +392,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/ConnectErrorResponse'
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ConnectRequest\"\
+        ,\n  \"$defs\": {\n    \"ConnectRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request model
+        for WebSocket connection establishment.\\nCurrently contains no specific fields but extends the base ApiRequest.\\\
+        n\",\n      \"properties\": {},\n      \"additionalProperties\": false\n    }\n  }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n  \"summary\": \"Establish WebSocket connection (POST variant)\",\n  \"description\": \"Alternative
+        POST method for establishing WebSocket connections.\\nFunctionally identical to the GET method but supports clients
+        that\\nrequire POST for WebSocket upgrades.\\n\",\n  \"tags\": [\n    \"WebSocket Connection\"\n  ],\n  \"deprecated\"\
+        : false,\n  \"operationId\": \"ConnectWebSocketPost\"\n}"
 components:
   schemas:
     # Request Models for POST-only pattern

@@ -278,6 +278,1257 @@ public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.Controll
         return ConvertToActionResult(statusCode, result);
     }
 
+
+    #region Meta Endpoints for GetAccountSubscriptions
+
+    private static readonly string _GetAccountSubscriptions_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetAccountSubscriptionsRequest",
+  "$defs": {
+    "GetAccountSubscriptionsRequest": {
+      "type": "object",
+      "description": "Request to get subscriptions for an account",
+      "required": [
+        "accountId"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account to get subscriptions for"
+        },
+        "includeInactive": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, include cancelled subscriptions"
+        },
+        "includeExpired": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, include expired subscriptions"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetAccountSubscriptions_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SubscriptionListResponse",
+  "$defs": {
+    "SubscriptionListResponse": {
+      "type": "object",
+      "description": "Response containing list of subscriptions",
+      "required": [
+        "subscriptions",
+        "totalCount"
+      ],
+      "properties": {
+        "subscriptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SubscriptionInfo"
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "description": "Total number of subscriptions matching the filter"
+        }
+      }
+    },
+    "SubscriptionInfo": {
+      "type": "object",
+      "description": "Information about a subscription",
+      "required": [
+        "subscriptionId",
+        "accountId",
+        "serviceId",
+        "stubName",
+        "startDate",
+        "isActive",
+        "createdAt"
+      ],
+      "properties": {
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for the subscription"
+        },
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account this subscription belongs to"
+        },
+        "serviceId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the subscribed service (game)"
+        },
+        "stubName": {
+          "type": "string",
+          "description": "Stub name of the service (denormalized for efficiency)"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the service (denormalized for efficiency)"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the subscription started"
+        },
+        "expirationDate": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription expires (null for unlimited)"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the subscription is currently active"
+        },
+        "cancelledAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription was cancelled (if applicable)"
+        },
+        "cancellationReason": {
+          "type": "string",
+          "nullable": true,
+          "description": "Reason for cancellation (if applicable)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the subscription was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription was last updated"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetAccountSubscriptions_Info = """
+{
+  "summary": "Get subscriptions for an account",
+  "description": "Returns all subscriptions for a given account, with optional filtering.",
+  "tags": [
+    "Subscription Management"
+  ],
+  "deprecated": false,
+  "operationId": "getAccountSubscriptions"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetAccountSubscriptions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/account/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountSubscriptions_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/account/list",
+            _GetAccountSubscriptions_Info));
+
+    /// <summary>Returns request schema for GetAccountSubscriptions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/account/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountSubscriptions_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/account/list",
+            "request-schema",
+            _GetAccountSubscriptions_RequestSchema));
+
+    /// <summary>Returns response schema for GetAccountSubscriptions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/account/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountSubscriptions_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/account/list",
+            "response-schema",
+            _GetAccountSubscriptions_ResponseSchema));
+
+    /// <summary>Returns full schema for GetAccountSubscriptions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/account/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAccountSubscriptions_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/account/list",
+            _GetAccountSubscriptions_Info,
+            _GetAccountSubscriptions_RequestSchema,
+            _GetAccountSubscriptions_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetCurrentSubscriptions
+
+    private static readonly string _GetCurrentSubscriptions_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetCurrentSubscriptionsRequest",
+  "$defs": {
+    "GetCurrentSubscriptionsRequest": {
+      "type": "object",
+      "description": "Request to get current active subscriptions",
+      "required": [
+        "accountId"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account to get current subscriptions for"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetCurrentSubscriptions_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CurrentSubscriptionsResponse",
+  "$defs": {
+    "CurrentSubscriptionsResponse": {
+      "type": "object",
+      "description": "Response containing current active subscriptions and authorization strings",
+      "required": [
+        "accountId",
+        "authorizations"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account"
+        },
+        "authorizations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of authorization strings (e.g., [\"arcadia:authorized\", \"fantasia:authorized\"])"
+        },
+        "subscriptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SubscriptionInfo"
+          },
+          "description": "Full subscription details (optional, for debugging)"
+        }
+      }
+    },
+    "SubscriptionInfo": {
+      "type": "object",
+      "description": "Information about a subscription",
+      "required": [
+        "subscriptionId",
+        "accountId",
+        "serviceId",
+        "stubName",
+        "startDate",
+        "isActive",
+        "createdAt"
+      ],
+      "properties": {
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for the subscription"
+        },
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account this subscription belongs to"
+        },
+        "serviceId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the subscribed service (game)"
+        },
+        "stubName": {
+          "type": "string",
+          "description": "Stub name of the service (denormalized for efficiency)"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the service (denormalized for efficiency)"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the subscription started"
+        },
+        "expirationDate": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription expires (null for unlimited)"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the subscription is currently active"
+        },
+        "cancelledAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription was cancelled (if applicable)"
+        },
+        "cancellationReason": {
+          "type": "string",
+          "nullable": true,
+          "description": "Reason for cancellation (if applicable)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the subscription was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription was last updated"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetCurrentSubscriptions_Info = """
+{
+  "summary": "Get current (active, non-expired) subscriptions",
+  "description": "Returns only active, non-expired subscriptions as authorization strings.\nUsed by Auth service during session creation to populate session authorizations.\n",
+  "tags": [
+    "Subscription Management"
+  ],
+  "deprecated": false,
+  "operationId": "getCurrentSubscriptions"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetCurrentSubscriptions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/account/current/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCurrentSubscriptions_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/account/current",
+            _GetCurrentSubscriptions_Info));
+
+    /// <summary>Returns request schema for GetCurrentSubscriptions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/account/current/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCurrentSubscriptions_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/account/current",
+            "request-schema",
+            _GetCurrentSubscriptions_RequestSchema));
+
+    /// <summary>Returns response schema for GetCurrentSubscriptions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/account/current/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCurrentSubscriptions_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/account/current",
+            "response-schema",
+            _GetCurrentSubscriptions_ResponseSchema));
+
+    /// <summary>Returns full schema for GetCurrentSubscriptions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/account/current/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCurrentSubscriptions_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/account/current",
+            _GetCurrentSubscriptions_Info,
+            _GetCurrentSubscriptions_RequestSchema,
+            _GetCurrentSubscriptions_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetSubscription
+
+    private static readonly string _GetSubscription_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetSubscriptionRequest",
+  "$defs": {
+    "GetSubscriptionRequest": {
+      "type": "object",
+      "description": "Request to get a specific subscription",
+      "required": [
+        "subscriptionId"
+      ],
+      "properties": {
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the subscription to retrieve"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetSubscription_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SubscriptionInfo",
+  "$defs": {
+    "SubscriptionInfo": {
+      "type": "object",
+      "description": "Information about a subscription",
+      "required": [
+        "subscriptionId",
+        "accountId",
+        "serviceId",
+        "stubName",
+        "startDate",
+        "isActive",
+        "createdAt"
+      ],
+      "properties": {
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for the subscription"
+        },
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account this subscription belongs to"
+        },
+        "serviceId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the subscribed service (game)"
+        },
+        "stubName": {
+          "type": "string",
+          "description": "Stub name of the service (denormalized for efficiency)"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the service (denormalized for efficiency)"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the subscription started"
+        },
+        "expirationDate": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription expires (null for unlimited)"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the subscription is currently active"
+        },
+        "cancelledAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription was cancelled (if applicable)"
+        },
+        "cancellationReason": {
+          "type": "string",
+          "nullable": true,
+          "description": "Reason for cancellation (if applicable)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the subscription was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription was last updated"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetSubscription_Info = """
+{
+  "summary": "Get a specific subscription by ID",
+  "description": "",
+  "tags": [
+    "Subscription Management"
+  ],
+  "deprecated": false,
+  "operationId": "getSubscription"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSubscription_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/get",
+            _GetSubscription_Info));
+
+    /// <summary>Returns request schema for GetSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSubscription_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/get",
+            "request-schema",
+            _GetSubscription_RequestSchema));
+
+    /// <summary>Returns response schema for GetSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSubscription_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/get",
+            "response-schema",
+            _GetSubscription_ResponseSchema));
+
+    /// <summary>Returns full schema for GetSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSubscription_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/get",
+            _GetSubscription_Info,
+            _GetSubscription_RequestSchema,
+            _GetSubscription_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CreateSubscription
+
+    private static readonly string _CreateSubscription_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CreateSubscriptionRequest",
+  "$defs": {
+    "CreateSubscriptionRequest": {
+      "type": "object",
+      "description": "Request to create a new subscription",
+      "required": [
+        "accountId",
+        "serviceId"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account to create subscription for"
+        },
+        "serviceId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the service (game) to subscribe to"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription starts (defaults to now)"
+        },
+        "expirationDate": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription expires (null for unlimited)"
+        },
+        "durationDays": {
+          "type": "integer",
+          "nullable": true,
+          "description": "Alternative to expirationDate - number of days from startDate"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CreateSubscription_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SubscriptionInfo",
+  "$defs": {
+    "SubscriptionInfo": {
+      "type": "object",
+      "description": "Information about a subscription",
+      "required": [
+        "subscriptionId",
+        "accountId",
+        "serviceId",
+        "stubName",
+        "startDate",
+        "isActive",
+        "createdAt"
+      ],
+      "properties": {
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for the subscription"
+        },
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account this subscription belongs to"
+        },
+        "serviceId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the subscribed service (game)"
+        },
+        "stubName": {
+          "type": "string",
+          "description": "Stub name of the service (denormalized for efficiency)"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the service (denormalized for efficiency)"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the subscription started"
+        },
+        "expirationDate": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription expires (null for unlimited)"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the subscription is currently active"
+        },
+        "cancelledAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription was cancelled (if applicable)"
+        },
+        "cancellationReason": {
+          "type": "string",
+          "nullable": true,
+          "description": "Reason for cancellation (if applicable)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the subscription was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription was last updated"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CreateSubscription_Info = """
+{
+  "summary": "Create a new subscription",
+  "description": "Admin-only endpoint to create a new subscription for an account.",
+  "tags": [
+    "Subscription Management"
+  ],
+  "deprecated": false,
+  "operationId": "createSubscription"
+}
+""";
+
+    /// <summary>Returns endpoint information for CreateSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/create/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateSubscription_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/create",
+            _CreateSubscription_Info));
+
+    /// <summary>Returns request schema for CreateSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/create/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateSubscription_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/create",
+            "request-schema",
+            _CreateSubscription_RequestSchema));
+
+    /// <summary>Returns response schema for CreateSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/create/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateSubscription_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/create",
+            "response-schema",
+            _CreateSubscription_ResponseSchema));
+
+    /// <summary>Returns full schema for CreateSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/create/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateSubscription_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/create",
+            _CreateSubscription_Info,
+            _CreateSubscription_RequestSchema,
+            _CreateSubscription_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateSubscription
+
+    private static readonly string _UpdateSubscription_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/UpdateSubscriptionRequest",
+  "$defs": {
+    "UpdateSubscriptionRequest": {
+      "type": "object",
+      "description": "Request to update an existing subscription",
+      "required": [
+        "subscriptionId"
+      ],
+      "properties": {
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the subscription to update"
+        },
+        "expirationDate": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "New expiration date"
+        },
+        "isActive": {
+          "type": "boolean",
+          "nullable": true,
+          "description": "New active status"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateSubscription_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SubscriptionInfo",
+  "$defs": {
+    "SubscriptionInfo": {
+      "type": "object",
+      "description": "Information about a subscription",
+      "required": [
+        "subscriptionId",
+        "accountId",
+        "serviceId",
+        "stubName",
+        "startDate",
+        "isActive",
+        "createdAt"
+      ],
+      "properties": {
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for the subscription"
+        },
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account this subscription belongs to"
+        },
+        "serviceId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the subscribed service (game)"
+        },
+        "stubName": {
+          "type": "string",
+          "description": "Stub name of the service (denormalized for efficiency)"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the service (denormalized for efficiency)"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the subscription started"
+        },
+        "expirationDate": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription expires (null for unlimited)"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the subscription is currently active"
+        },
+        "cancelledAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription was cancelled (if applicable)"
+        },
+        "cancellationReason": {
+          "type": "string",
+          "nullable": true,
+          "description": "Reason for cancellation (if applicable)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the subscription was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription was last updated"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateSubscription_Info = """
+{
+  "summary": "Update a subscription",
+  "description": "Admin-only endpoint to update an existing subscription.",
+  "tags": [
+    "Subscription Management"
+  ],
+  "deprecated": false,
+  "operationId": "updateSubscription"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/update/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateSubscription_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/update",
+            _UpdateSubscription_Info));
+
+    /// <summary>Returns request schema for UpdateSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/update/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateSubscription_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/update",
+            "request-schema",
+            _UpdateSubscription_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/update/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateSubscription_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/update",
+            "response-schema",
+            _UpdateSubscription_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/update/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateSubscription_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/update",
+            _UpdateSubscription_Info,
+            _UpdateSubscription_RequestSchema,
+            _UpdateSubscription_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CancelSubscription
+
+    private static readonly string _CancelSubscription_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CancelSubscriptionRequest",
+  "$defs": {
+    "CancelSubscriptionRequest": {
+      "type": "object",
+      "description": "Request to cancel a subscription",
+      "required": [
+        "subscriptionId"
+      ],
+      "properties": {
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the subscription to cancel"
+        },
+        "reason": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 500,
+          "description": "Optional reason for cancellation"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CancelSubscription_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SubscriptionInfo",
+  "$defs": {
+    "SubscriptionInfo": {
+      "type": "object",
+      "description": "Information about a subscription",
+      "required": [
+        "subscriptionId",
+        "accountId",
+        "serviceId",
+        "stubName",
+        "startDate",
+        "isActive",
+        "createdAt"
+      ],
+      "properties": {
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for the subscription"
+        },
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account this subscription belongs to"
+        },
+        "serviceId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the subscribed service (game)"
+        },
+        "stubName": {
+          "type": "string",
+          "description": "Stub name of the service (denormalized for efficiency)"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the service (denormalized for efficiency)"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the subscription started"
+        },
+        "expirationDate": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription expires (null for unlimited)"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the subscription is currently active"
+        },
+        "cancelledAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription was cancelled (if applicable)"
+        },
+        "cancellationReason": {
+          "type": "string",
+          "nullable": true,
+          "description": "Reason for cancellation (if applicable)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the subscription was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription was last updated"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CancelSubscription_Info = """
+{
+  "summary": "Cancel a subscription",
+  "description": "Cancels a subscription. Users can cancel their own subscriptions,\nadmins can cancel any subscription.\n",
+  "tags": [
+    "Subscription Management"
+  ],
+  "deprecated": false,
+  "operationId": "cancelSubscription"
+}
+""";
+
+    /// <summary>Returns endpoint information for CancelSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/cancel/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CancelSubscription_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/cancel",
+            _CancelSubscription_Info));
+
+    /// <summary>Returns request schema for CancelSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/cancel/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CancelSubscription_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/cancel",
+            "request-schema",
+            _CancelSubscription_RequestSchema));
+
+    /// <summary>Returns response schema for CancelSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/cancel/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CancelSubscription_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/cancel",
+            "response-schema",
+            _CancelSubscription_ResponseSchema));
+
+    /// <summary>Returns full schema for CancelSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/cancel/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CancelSubscription_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/cancel",
+            _CancelSubscription_Info,
+            _CancelSubscription_RequestSchema,
+            _CancelSubscription_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RenewSubscription
+
+    private static readonly string _RenewSubscription_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/RenewSubscriptionRequest",
+  "$defs": {
+    "RenewSubscriptionRequest": {
+      "type": "object",
+      "description": "Request to renew or extend a subscription",
+      "required": [
+        "subscriptionId"
+      ],
+      "properties": {
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the subscription to renew"
+        },
+        "extensionDays": {
+          "type": "integer",
+          "description": "Number of days to extend the subscription"
+        },
+        "newExpirationDate": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "Alternative to extensionDays - set specific new expiration"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _RenewSubscription_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SubscriptionInfo",
+  "$defs": {
+    "SubscriptionInfo": {
+      "type": "object",
+      "description": "Information about a subscription",
+      "required": [
+        "subscriptionId",
+        "accountId",
+        "serviceId",
+        "stubName",
+        "startDate",
+        "isActive",
+        "createdAt"
+      ],
+      "properties": {
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for the subscription"
+        },
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the account this subscription belongs to"
+        },
+        "serviceId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the subscribed service (game)"
+        },
+        "stubName": {
+          "type": "string",
+          "description": "Stub name of the service (denormalized for efficiency)"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the service (denormalized for efficiency)"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the subscription started"
+        },
+        "expirationDate": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription expires (null for unlimited)"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the subscription is currently active"
+        },
+        "cancelledAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription was cancelled (if applicable)"
+        },
+        "cancellationReason": {
+          "type": "string",
+          "nullable": true,
+          "description": "Reason for cancellation (if applicable)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the subscription was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true,
+          "description": "When the subscription was last updated"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _RenewSubscription_Info = """
+{
+  "summary": "Renew or extend a subscription",
+  "description": "Admin-only endpoint to renew or extend an existing subscription.",
+  "tags": [
+    "Subscription Management"
+  ],
+  "deprecated": false,
+  "operationId": "renewSubscription"
+}
+""";
+
+    /// <summary>Returns endpoint information for RenewSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/renew/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RenewSubscription_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/renew",
+            _RenewSubscription_Info));
+
+    /// <summary>Returns request schema for RenewSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/renew/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RenewSubscription_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/renew",
+            "request-schema",
+            _RenewSubscription_RequestSchema));
+
+    /// <summary>Returns response schema for RenewSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/renew/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RenewSubscription_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/renew",
+            "response-schema",
+            _RenewSubscription_ResponseSchema));
+
+    /// <summary>Returns full schema for RenewSubscription</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("subscriptions/renew/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RenewSubscription_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Subscriptions",
+            "Post",
+            "subscriptions/renew",
+            _RenewSubscription_Info,
+            _RenewSubscription_RequestSchema,
+            _RenewSubscription_ResponseSchema));
+
+    #endregion
+
 }
 
 

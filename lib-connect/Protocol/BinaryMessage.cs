@@ -345,6 +345,13 @@ public readonly struct BinaryMessage
     public bool IsError => IsResponse && ResponseCode != 0;
 
     /// <summary>
+    /// Returns true if this message requests endpoint metadata instead of executing the endpoint.
+    /// When set, the Channel field specifies the meta type:
+    /// 0 = endpoint-info, 1 = request-schema, 2 = response-schema, 3 = full-schema.
+    /// </summary>
+    public bool IsMeta => Flags.HasFlag(MessageFlags.Meta);
+
+    /// <summary>
     /// Returns a string representation of the message for debugging.
     /// </summary>
     public override string ToString()

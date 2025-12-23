@@ -100,6 +100,84 @@ paths:
               schema:
                 $ref: '#/components/schemas/AbmlErrorResponse'
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CompileBehaviorRequest\"\
+        ,\n  \"$defs\": {\n    \"CompileBehaviorRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
+        \ \"abml_content\"\n      ],\n      \"properties\": {\n        \"abml_content\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"Raw ABML YAML content to compile\",\n          \"example\": \"version: \\\"1.0.0\\\
+        \"\\nmetadata:\\n  id: \\\"example_behavior\\\"\\n  category: \\\"basic\\\"\\nbehaviors:\\n  example:\\n    triggers:\\\
+        n      - condition: \\\"true\\\"\\n    actions:\\n      - log:\\n          message: \\\"Hello World\\\"\\n\"\n   \
+        \     },\n        \"character_context\": {\n          \"$ref\": \"#/$defs/CharacterContext\"\n        },\n       \
+        \ \"compilation_options\": {\n          \"$ref\": \"#/$defs/CompilationOptions\"\n        }\n      }\n    },\n   \
+        \ \"CharacterContext\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"npc_id\": {\n         \
+        \ \"type\": \"string\",\n          \"description\": \"Unique identifier for the NPC\",\n          \"example\": \"\
+        npc_12345\"\n        },\n        \"culture\": {\n          \"type\": \"string\",\n          \"description\": \"Cultural
+        background identifier\",\n          \"example\": \"european_medieval\"\n        },\n        \"profession\": {\n  \
+        \        \"type\": \"string\",\n          \"description\": \"Character profession identifier\",\n          \"example\"\
+        : \"blacksmith\"\n        },\n        \"stats\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : {\n            \"type\": \"number\"\n          },\n          \"description\": \"Character statistics and attributes\"\
+        ,\n          \"example\": {\n            \"energy\": 0.8,\n            \"health\": 1.0,\n            \"hunger\": 0.3\n\
+        \          }\n        },\n        \"skills\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : {\n            \"type\": \"number\"\n          },\n          \"description\": \"Character skill levels\",\n    \
+        \      \"example\": {\n            \"blacksmithing\": 85,\n            \"trading\": 42\n          }\n        },\n\
+        \        \"location\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"current\": {\n\
+        \              \"type\": \"string\"\n            },\n            \"region\": {\n              \"type\": \"string\"\
+        \n            },\n            \"coordinates\": {\n              \"type\": \"object\",\n              \"properties\"\
+        : {\n                \"x\": {\n                  \"type\": \"number\"\n                },\n                \"y\":
+        {\n                  \"type\": \"number\"\n                },\n                \"z\": {\n                  \"type\"\
+        : \"number\"\n                }\n              }\n            }\n          }\n        },\n        \"relationships\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"number\"\n  \
+        \        },\n          \"description\": \"Relationship values with other characters\"\n        },\n        \"world_state\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Relevant
+        world state information\"\n        }\n      }\n    },\n    \"CompilationOptions\": {\n      \"type\": \"object\",\n\
+        \      \"properties\": {\n        \"enable_optimizations\": {\n          \"type\": \"boolean\",\n          \"default\"\
+        : true,\n          \"description\": \"Enable behavior tree optimizations\"\n        },\n        \"cache_compiled_result\"\
+        : {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\": \"Cache the compiled
+        behavior for reuse\"\n        },\n        \"strict_validation\": {\n          \"type\": \"boolean\",\n          \"\
+        default\": false,\n          \"description\": \"Enable strict validation mode\"\n        },\n        \"cultural_adaptations\"\
+        : {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\": \"Apply cultural adaptations
+        during compilation\"\n        },\n        \"goap_integration\": {\n          \"type\": \"boolean\",\n          \"\
+        default\": true,\n          \"description\": \"Generate GOAP goals from behaviors\"\n        }\n      }\n    }\n \
+        \ }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CompileBehaviorResponse\"\
+        ,\n  \"$defs\": {\n    \"CompileBehaviorResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n      \
+        \  \"success\",\n        \"behavior_id\"\n      ],\n      \"properties\": {\n        \"success\": {\n          \"\
+        type\": \"boolean\",\n          \"description\": \"Whether compilation was successful\"\n        },\n        \"behavior_id\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Unique identifier for the compiled behavior\",\n\
+        \          \"example\": \"behavior_abc123\"\n        },\n        \"compiled_behavior\": {\n          \"$ref\": \"\
+        #/$defs/CompiledBehavior\"\n        },\n        \"compilation_time_ms\": {\n          \"type\": \"integer\",\n   \
+        \       \"description\": \"Time taken to compile the behavior\"\n        },\n        \"cache_key\": {\n          \"\
+        type\": \"string\",\n          \"description\": \"Key for caching the compiled behavior\"\n        },\n        \"\
+        warnings\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n        \
+        \  },\n          \"description\": \"Non-fatal warnings during compilation\"\n        }\n      }\n    },\n    \"CompiledBehavior\"\
+        : {\n      \"type\": \"object\",\n      \"required\": [\n        \"behavior_tree\",\n        \"context_schema\"\n\
+        \      ],\n      \"properties\": {\n        \"behavior_tree\": {\n          \"type\": \"object\",\n          \"description\"\
+        : \"Compiled executable behavior tree structure\"\n        },\n        \"context_schema\": {\n          \"type\":
+        \"object\",\n          \"description\": \"Schema defining required context variables\"\n        },\n        \"service_dependencies\"\
+        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n    \
+        \      \"description\": \"List of required services for this behavior\"\n        },\n        \"goap_goals\": {\n \
+        \         \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/GoapGoal\"\n          },\n\
+        \          \"description\": \"GOAP goals extracted from the behavior\"\n        },\n        \"execution_metadata\"\
+        : {\n          \"type\": \"object\",\n          \"properties\": {\n            \"estimated_duration\": {\n       \
+        \       \"type\": \"integer\",\n              \"description\": \"Estimated execution time in seconds\"\n         \
+        \   },\n            \"resource_requirements\": {\n              \"type\": \"object\",\n              \"additionalProperties\"\
+        : {\n                \"type\": \"number\"\n              }\n            },\n            \"interrupt_conditions\":
+        {\n              \"type\": \"array\",\n              \"items\": {\n                \"type\": \"string\"\n        \
+        \      }\n            }\n          }\n        }\n      }\n    },\n    \"GoapGoal\": {\n      \"type\": \"object\"\
+        ,\n      \"required\": [\n        \"name\",\n        \"conditions\",\n        \"priority\"\n      ],\n      \"properties\"\
+        : {\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Name of the goal\",\n    \
+        \      \"example\": \"satisfy_hunger\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n\
+        \          \"description\": \"Human-readable description of the goal\"\n        },\n        \"conditions\": {\n  \
+        \        \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"number\"\n        \
+        \  },\n          \"description\": \"World state conditions that satisfy this goal\",\n          \"example\": {\n \
+        \           \"hunger_level\": 0.0\n          }\n        },\n        \"priority\": {\n          \"type\": \"integer\"\
+        ,\n          \"minimum\": 1,\n          \"maximum\": 100,\n          \"description\": \"Priority of this goal relative
+        to others\"\n        },\n        \"preconditions\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : {\n            \"type\": \"number\"\n          },\n          \"description\": \"World state conditions required
+        to pursue this goal\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Compile ABML behavior definition\",\n  \"description\": \"Compiles a YAML-based
+        ABML behavior definition into executable behavior trees.\\nHandles stackable behavior sets, cultural adaptations,
+        and context variable resolution.\\n\",\n  \"tags\": [\n    \"ABML\"\n  ],\n  \"deprecated\": false,\n  \"operationId\"\
+        : \"CompileAbmlBehavior\"\n}"
   /stack/compile:
     post:
       summary: Compile stackable behavior sets
@@ -132,6 +210,93 @@ paths:
               schema:
                 $ref: '#/components/schemas/AbmlErrorResponse'
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/BehaviorStackRequest\"\
+        ,\n  \"$defs\": {\n    \"BehaviorStackRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        behavior_sets\"\n      ],\n      \"properties\": {\n        \"behavior_sets\": {\n          \"type\": \"array\",\n\
+        \          \"items\": {\n            \"$ref\": \"#/$defs/BehaviorSetDefinition\"\n          },\n          \"description\"\
+        : \"Array of behavior sets to compile together\"\n        },\n        \"character_context\": {\n          \"$ref\"\
+        : \"#/$defs/CharacterContext\"\n        },\n        \"compilation_options\": {\n          \"$ref\": \"#/$defs/CompilationOptions\"\
+        \n        }\n      }\n    },\n    \"BehaviorSetDefinition\": {\n      \"type\": \"object\",\n      \"required\": [\n\
+        \        \"id\",\n        \"priority\",\n        \"abml_content\"\n      ],\n      \"properties\": {\n        \"id\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Unique identifier for the behavior set\",\n   \
+        \       \"example\": \"base_humanoid\"\n        },\n        \"priority\": {\n          \"type\": \"integer\",\n  \
+        \        \"minimum\": 1,\n          \"maximum\": 100,\n          \"description\": \"Priority level for merging (higher
+        priority overrides lower)\",\n          \"example\": 50\n        },\n        \"category\": {\n          \"type\":
+        \"string\",\n          \"description\": \"Category of the behavior set\",\n          \"enum\": [\n            \"base\"\
+        ,\n            \"cultural\",\n            \"professional\",\n            \"personal\",\n            \"situational\"\
+        \n          ]\n        },\n        \"abml_content\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Raw ABML YAML content for this behavior set\"\n        },\n        \"metadata\": {\n          \"type\": \"object\"\
+        ,\n          \"additionalProperties\": true,\n          \"description\": \"Additional metadata for the behavior set\"\
+        \n        }\n      }\n    },\n    \"CharacterContext\": {\n      \"type\": \"object\",\n      \"properties\": {\n\
+        \        \"npc_id\": {\n          \"type\": \"string\",\n          \"description\": \"Unique identifier for the NPC\"\
+        ,\n          \"example\": \"npc_12345\"\n        },\n        \"culture\": {\n          \"type\": \"string\",\n   \
+        \       \"description\": \"Cultural background identifier\",\n          \"example\": \"european_medieval\"\n     \
+        \   },\n        \"profession\": {\n          \"type\": \"string\",\n          \"description\": \"Character profession
+        identifier\",\n          \"example\": \"blacksmith\"\n        },\n        \"stats\": {\n          \"type\": \"object\"\
+        ,\n          \"additionalProperties\": {\n            \"type\": \"number\"\n          },\n          \"description\"\
+        : \"Character statistics and attributes\",\n          \"example\": {\n            \"energy\": 0.8,\n            \"\
+        health\": 1.0,\n            \"hunger\": 0.3\n          }\n        },\n        \"skills\": {\n          \"type\": \"\
+        object\",\n          \"additionalProperties\": {\n            \"type\": \"number\"\n          },\n          \"description\"\
+        : \"Character skill levels\",\n          \"example\": {\n            \"blacksmithing\": 85,\n            \"trading\"\
+        : 42\n          }\n        },\n        \"location\": {\n          \"type\": \"object\",\n          \"properties\"\
+        : {\n            \"current\": {\n              \"type\": \"string\"\n            },\n            \"region\": {\n \
+        \             \"type\": \"string\"\n            },\n            \"coordinates\": {\n              \"type\": \"object\"\
+        ,\n              \"properties\": {\n                \"x\": {\n                  \"type\": \"number\"\n           \
+        \     },\n                \"y\": {\n                  \"type\": \"number\"\n                },\n                \"\
+        z\": {\n                  \"type\": \"number\"\n                }\n              }\n            }\n          }\n \
+        \       },\n        \"relationships\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n\
+        \            \"type\": \"number\"\n          },\n          \"description\": \"Relationship values with other characters\"\
+        \n        },\n        \"world_state\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
+        \          \"description\": \"Relevant world state information\"\n        }\n      }\n    },\n    \"CompilationOptions\"\
+        : {\n      \"type\": \"object\",\n      \"properties\": {\n        \"enable_optimizations\": {\n          \"type\"\
+        : \"boolean\",\n          \"default\": true,\n          \"description\": \"Enable behavior tree optimizations\"\n\
+        \        },\n        \"cache_compiled_result\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n\
+        \          \"description\": \"Cache the compiled behavior for reuse\"\n        },\n        \"strict_validation\":
+        {\n          \"type\": \"boolean\",\n          \"default\": false,\n          \"description\": \"Enable strict validation
+        mode\"\n        },\n        \"cultural_adaptations\": {\n          \"type\": \"boolean\",\n          \"default\":
+        true,\n          \"description\": \"Apply cultural adaptations during compilation\"\n        },\n        \"goap_integration\"\
+        : {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\": \"Generate GOAP goals
+        from behaviors\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CompileBehaviorResponse\"\
+        ,\n  \"$defs\": {\n    \"CompileBehaviorResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n      \
+        \  \"success\",\n        \"behavior_id\"\n      ],\n      \"properties\": {\n        \"success\": {\n          \"\
+        type\": \"boolean\",\n          \"description\": \"Whether compilation was successful\"\n        },\n        \"behavior_id\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Unique identifier for the compiled behavior\",\n\
+        \          \"example\": \"behavior_abc123\"\n        },\n        \"compiled_behavior\": {\n          \"$ref\": \"\
+        #/$defs/CompiledBehavior\"\n        },\n        \"compilation_time_ms\": {\n          \"type\": \"integer\",\n   \
+        \       \"description\": \"Time taken to compile the behavior\"\n        },\n        \"cache_key\": {\n          \"\
+        type\": \"string\",\n          \"description\": \"Key for caching the compiled behavior\"\n        },\n        \"\
+        warnings\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n        \
+        \  },\n          \"description\": \"Non-fatal warnings during compilation\"\n        }\n      }\n    },\n    \"CompiledBehavior\"\
+        : {\n      \"type\": \"object\",\n      \"required\": [\n        \"behavior_tree\",\n        \"context_schema\"\n\
+        \      ],\n      \"properties\": {\n        \"behavior_tree\": {\n          \"type\": \"object\",\n          \"description\"\
+        : \"Compiled executable behavior tree structure\"\n        },\n        \"context_schema\": {\n          \"type\":
+        \"object\",\n          \"description\": \"Schema defining required context variables\"\n        },\n        \"service_dependencies\"\
+        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n    \
+        \      \"description\": \"List of required services for this behavior\"\n        },\n        \"goap_goals\": {\n \
+        \         \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/GoapGoal\"\n          },\n\
+        \          \"description\": \"GOAP goals extracted from the behavior\"\n        },\n        \"execution_metadata\"\
+        : {\n          \"type\": \"object\",\n          \"properties\": {\n            \"estimated_duration\": {\n       \
+        \       \"type\": \"integer\",\n              \"description\": \"Estimated execution time in seconds\"\n         \
+        \   },\n            \"resource_requirements\": {\n              \"type\": \"object\",\n              \"additionalProperties\"\
+        : {\n                \"type\": \"number\"\n              }\n            },\n            \"interrupt_conditions\":
+        {\n              \"type\": \"array\",\n              \"items\": {\n                \"type\": \"string\"\n        \
+        \      }\n            }\n          }\n        }\n      }\n    },\n    \"GoapGoal\": {\n      \"type\": \"object\"\
+        ,\n      \"required\": [\n        \"name\",\n        \"conditions\",\n        \"priority\"\n      ],\n      \"properties\"\
+        : {\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Name of the goal\",\n    \
+        \      \"example\": \"satisfy_hunger\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n\
+        \          \"description\": \"Human-readable description of the goal\"\n        },\n        \"conditions\": {\n  \
+        \        \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"number\"\n        \
+        \  },\n          \"description\": \"World state conditions that satisfy this goal\",\n          \"example\": {\n \
+        \           \"hunger_level\": 0.0\n          }\n        },\n        \"priority\": {\n          \"type\": \"integer\"\
+        ,\n          \"minimum\": 1,\n          \"maximum\": 100,\n          \"description\": \"Priority of this goal relative
+        to others\"\n        },\n        \"preconditions\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : {\n            \"type\": \"number\"\n          },\n          \"description\": \"World state conditions required
+        to pursue this goal\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Compile stackable behavior sets\",\n  \"description\": \"Compiles multiple
+        ABML behavior sets with priority-based merging.\\nHandles cultural adaptations, profession specializations, and context
+        resolution.\\n\",\n  \"tags\": [\n    \"BehaviorStacks\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"CompileBehaviorStack\"\
+        \n}"
   /validate:
     post:
       summary: Validate ABML definition
@@ -162,6 +327,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidateAbmlResponse'
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ValidateAbmlRequest\"\
+        ,\n  \"$defs\": {\n    \"ValidateAbmlRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        abml_content\"\n      ],\n      \"properties\": {\n        \"abml_content\": {\n          \"type\": \"string\",\n\
+        \          \"description\": \"Raw ABML YAML content to validate\"\n        },\n        \"strict_mode\": {\n      \
+        \    \"type\": \"boolean\",\n          \"default\": false,\n          \"description\": \"Enable strict validation
+        mode with enhanced checking\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ValidateAbmlResponse\"\
+        ,\n  \"$defs\": {\n    \"ValidateAbmlResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        is_valid\"\n      ],\n      \"properties\": {\n        \"is_valid\": {\n          \"type\": \"boolean\",\n       \
+        \   \"description\": \"Whether the ABML definition is valid\"\n        },\n        \"validation_errors\": {\n    \
+        \      \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/ValidationError\"\n         \
+        \ },\n          \"description\": \"List of validation errors if invalid\"\n        },\n        \"semantic_warnings\"\
+        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n    \
+        \      \"description\": \"Semantic warnings that don't prevent compilation\"\n        },\n        \"schema_version\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"ABML schema version used for validation\"\n   \
+        \     }\n      }\n    },\n    \"ValidationError\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
+        \ \"type\",\n        \"message\"\n      ],\n      \"properties\": {\n        \"type\": {\n          \"type\": \"string\"\
+        ,\n          \"enum\": [\n            \"syntax\",\n            \"semantic\",\n            \"schema\",\n          \
+        \  \"context\",\n            \"service_dependency\"\n          ],\n          \"description\": \"Type of validation
+        error\"\n        },\n        \"message\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable
+        error message\"\n        },\n        \"line_number\": {\n          \"type\": \"integer\",\n          \"description\"\
+        : \"Line number where the error occurred (if applicable)\"\n        },\n        \"column_number\": {\n          \"\
+        type\": \"integer\",\n          \"description\": \"Column number where the error occurred (if applicable)\"\n    \
+        \    },\n        \"yaml_path\": {\n          \"type\": \"string\",\n          \"description\": \"YAML path to the
+        problematic element\",\n          \"example\": \"behaviors.morning_startup.actions[0]\"\n        }\n      }\n    }\n\
+        \  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Validate ABML definition\",\n  \"description\": \"Validates ABML YAML against
+        schema and checks for semantic correctness.\\nIncludes context variable validation and service dependency checking.\\\
+        n\",\n  \"tags\": [\n    \"Validation\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"ValidateAbml\"\n}"
   /cache/get:
     post:
       summary: Get cached compiled behavior
@@ -194,6 +388,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/AbmlErrorResponse'
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetCachedBehaviorRequest\"\
+        ,\n  \"$defs\": {\n    \"GetCachedBehaviorRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request
+        to get a cached compiled behavior\",\n      \"required\": [\n        \"behaviorId\"\n      ],\n      \"properties\"\
+        : {\n        \"behaviorId\": {\n          \"type\": \"string\",\n          \"description\": \"Unique identifier for
+        the cached behavior\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CachedBehaviorResponse\"\
+        ,\n  \"$defs\": {\n    \"CachedBehaviorResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
+        \ \"behavior_id\",\n        \"compiled_behavior\"\n      ],\n      \"properties\": {\n        \"behavior_id\": {\n\
+        \          \"type\": \"string\",\n          \"description\": \"Unique identifier for the cached behavior\"\n     \
+        \   },\n        \"compiled_behavior\": {\n          \"$ref\": \"#/$defs/CompiledBehavior\"\n        },\n        \"\
+        cache_timestamp\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        : \"When the behavior was cached\"\n        },\n        \"cache_hit\": {\n          \"type\": \"boolean\",\n     \
+        \     \"description\": \"Whether this was a cache hit or miss\"\n        }\n      }\n    },\n    \"CompiledBehavior\"\
+        : {\n      \"type\": \"object\",\n      \"required\": [\n        \"behavior_tree\",\n        \"context_schema\"\n\
+        \      ],\n      \"properties\": {\n        \"behavior_tree\": {\n          \"type\": \"object\",\n          \"description\"\
+        : \"Compiled executable behavior tree structure\"\n        },\n        \"context_schema\": {\n          \"type\":
+        \"object\",\n          \"description\": \"Schema defining required context variables\"\n        },\n        \"service_dependencies\"\
+        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n    \
+        \      \"description\": \"List of required services for this behavior\"\n        },\n        \"goap_goals\": {\n \
+        \         \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/GoapGoal\"\n          },\n\
+        \          \"description\": \"GOAP goals extracted from the behavior\"\n        },\n        \"execution_metadata\"\
+        : {\n          \"type\": \"object\",\n          \"properties\": {\n            \"estimated_duration\": {\n       \
+        \       \"type\": \"integer\",\n              \"description\": \"Estimated execution time in seconds\"\n         \
+        \   },\n            \"resource_requirements\": {\n              \"type\": \"object\",\n              \"additionalProperties\"\
+        : {\n                \"type\": \"number\"\n              }\n            },\n            \"interrupt_conditions\":
+        {\n              \"type\": \"array\",\n              \"items\": {\n                \"type\": \"string\"\n        \
+        \      }\n            }\n          }\n        }\n      }\n    },\n    \"GoapGoal\": {\n      \"type\": \"object\"\
+        ,\n      \"required\": [\n        \"name\",\n        \"conditions\",\n        \"priority\"\n      ],\n      \"properties\"\
+        : {\n        \"name\": {\n          \"type\": \"string\",\n          \"description\": \"Name of the goal\",\n    \
+        \      \"example\": \"satisfy_hunger\"\n        },\n        \"description\": {\n          \"type\": \"string\",\n\
+        \          \"description\": \"Human-readable description of the goal\"\n        },\n        \"conditions\": {\n  \
+        \        \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"number\"\n        \
+        \  },\n          \"description\": \"World state conditions that satisfy this goal\",\n          \"example\": {\n \
+        \           \"hunger_level\": 0.0\n          }\n        },\n        \"priority\": {\n          \"type\": \"integer\"\
+        ,\n          \"minimum\": 1,\n          \"maximum\": 100,\n          \"description\": \"Priority of this goal relative
+        to others\"\n        },\n        \"preconditions\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : {\n            \"type\": \"number\"\n          },\n          \"description\": \"World state conditions required
+        to pursue this goal\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Get cached compiled behavior\",\n  \"description\": \"Retrieves a previously
+        compiled behavior from the cache.\\nUsed for performance optimization in high-frequency behavior execution.\\n\",\n\
+        \  \"tags\": [\n    \"Cache\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"GetCachedBehavior\"\n}"
   /cache/invalidate:
     post:
       summary: Invalidate cached behavior
@@ -218,6 +453,15 @@ paths:
         '404':
           description: Behavior not found in cache
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/InvalidateCacheRequest\"\
+        ,\n  \"$defs\": {\n    \"InvalidateCacheRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request
+        to invalidate a cached behavior\",\n      \"required\": [\n        \"behaviorId\"\n      ],\n      \"properties\"\
+        : {\n        \"behaviorId\": {\n          \"type\": \"string\",\n          \"description\": \"Unique identifier for
+        the cached behavior to invalidate\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n  \"summary\": \"Invalidate cached behavior\",\n  \"description\": \"Removes a behavior from
+        the cache, forcing recompilation on next access.\\nUsed when behavior definitions are updated.\\n\",\n  \"tags\":
+        [\n    \"Cache\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"InvalidateCachedBehavior\"\n}"
   /context/resolve:
     post:
       summary: Resolve context variables
@@ -244,6 +488,46 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResolveContextResponse'
 
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ResolveContextRequest\"\
+        ,\n  \"$defs\": {\n    \"ResolveContextRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        context_expression\",\n        \"character_context\"\n      ],\n      \"properties\": {\n        \"context_expression\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Context variable expression to resolve\",\n   \
+        \       \"example\": \"${npc.stats.energy > 0.5 && world.time.hour < 18}\"\n        },\n        \"character_context\"\
+        : {\n          \"$ref\": \"#/$defs/CharacterContext\"\n        }\n      }\n    },\n    \"CharacterContext\": {\n \
+        \     \"type\": \"object\",\n      \"properties\": {\n        \"npc_id\": {\n          \"type\": \"string\",\n   \
+        \       \"description\": \"Unique identifier for the NPC\",\n          \"example\": \"npc_12345\"\n        },\n  \
+        \      \"culture\": {\n          \"type\": \"string\",\n          \"description\": \"Cultural background identifier\"\
+        ,\n          \"example\": \"european_medieval\"\n        },\n        \"profession\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"Character profession identifier\",\n          \"example\": \"blacksmith\"\n      \
+        \  },\n        \"stats\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"\
+        type\": \"number\"\n          },\n          \"description\": \"Character statistics and attributes\",\n          \"\
+        example\": {\n            \"energy\": 0.8,\n            \"health\": 1.0,\n            \"hunger\": 0.3\n          }\n\
+        \        },\n        \"skills\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n     \
+        \       \"type\": \"number\"\n          },\n          \"description\": \"Character skill levels\",\n          \"example\"\
+        : {\n            \"blacksmithing\": 85,\n            \"trading\": 42\n          }\n        },\n        \"location\"\
+        : {\n          \"type\": \"object\",\n          \"properties\": {\n            \"current\": {\n              \"type\"\
+        : \"string\"\n            },\n            \"region\": {\n              \"type\": \"string\"\n            },\n    \
+        \        \"coordinates\": {\n              \"type\": \"object\",\n              \"properties\": {\n              \
+        \  \"x\": {\n                  \"type\": \"number\"\n                },\n                \"y\": {\n              \
+        \    \"type\": \"number\"\n                },\n                \"z\": {\n                  \"type\": \"number\"\n\
+        \                }\n              }\n            }\n          }\n        },\n        \"relationships\": {\n      \
+        \    \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"number\"\n          },\n\
+        \          \"description\": \"Relationship values with other characters\"\n        },\n        \"world_state\": {\n\
+        \          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Relevant
+        world state information\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ResolveContextResponse\"\
+        ,\n  \"$defs\": {\n    \"ResolveContextResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
+        \ \"resolved_value\"\n      ],\n      \"properties\": {\n        \"resolved_value\": {\n          \"description\"\
+        : \"The resolved value of the context expression\"\n        },\n        \"resolved_type\": {\n          \"type\":
+        \"string\",\n          \"enum\": [\n            \"boolean\",\n            \"string\",\n            \"number\",\n \
+        \           \"object\",\n            \"array\"\n          ],\n          \"description\": \"Type of the resolved value\"\
+        \n        },\n        \"context_variables_used\": {\n          \"type\": \"array\",\n          \"items\": {\n    \
+        \        \"type\": \"string\"\n          },\n          \"description\": \"List of context variables referenced in
+        the expression\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Resolve context variables\",\n  \"description\": \"Resolves context variables
+        in ABML definitions against character and world state.\\nUsed for dynamic behavior adaptation based on current game
+        state.\\n\",\n  \"tags\": [\n    \"Context\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"ResolveContextVariables\"\
+        \n}"
 components:
   schemas:
     # Request Models for POST-only pattern

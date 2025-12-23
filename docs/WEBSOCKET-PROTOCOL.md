@@ -92,7 +92,7 @@ Response codes are protocol-level codes (not HTTP codes). The client SDK maps th
 Bit 7  Bit 6  Bit 5  Bit 4  Bit 3  Bit 2  Bit 1  Bit 0
  ▼      ▼      ▼      ▼      ▼      ▼      ▼      ▼
 ┌──────┬──────┬──────┬──────┬──────┬──────┬──────┬──────┐
-│Rsvd  │Resp  │Client│Event │HiPri │Compr │Encr  │Binary│
+│Meta  │Resp  │Client│Event │HiPri │Compr │Encr  │Binary│
 └──────┴──────┴──────┴──────┴──────┴──────┴──────┴──────┘
 ```
 
@@ -106,7 +106,7 @@ Bit 7  Bit 6  Bit 5  Bit 4  Bit 3  Bit 2  Bit 1  Bit 0
 | Event | 0x10 | Fire-and-forget, no response expected |
 | Client | 0x20 | Route to another WebSocket client (P2P) |
 | Response | 0x40 | This is a response (uses 16-byte header format) |
-| Reserved | 0x80 | Reserved for future use |
+| Meta | 0x80 | Request endpoint metadata instead of executing (see Meta Endpoints) |
 
 ## Client-Salted GUIDs
 
@@ -273,6 +273,88 @@ Standard WebSocket close with optional reason code.
 3. Creates binary message with `Event` flag (0x10)
 4. Pushes to client's WebSocket
 
+## Meta Endpoints
+
+The Meta flag (0x80) enables runtime introspection of API endpoints. When set, Connect service routes to companion endpoints that return JSON Schema and endpoint metadata instead of executing the endpoint.
+
+### Meta Type Selection (Channel Field Override)
+
+When the Meta flag is set, the **Channel field** is repurposed to specify which type of metadata to return:
+
+| Channel Value | Meta Type | Description |
+|---------------|-----------|-------------|
+| 0 | EndpointInfo | Human-readable endpoint description (summary, tags, deprecated) |
+| 1 | RequestSchema | JSON Schema for the request body |
+| 2 | ResponseSchema | JSON Schema for the response body |
+| 3 | FullSchema | Complete schema (info + request + response combined) |
+
+### Meta Request Flow
+
+1. Client sends request with **Meta flag (0x80)** set
+2. Client sets **Channel field** to desired meta type (0-3)
+3. Client uses the **same Service GUID** as the target endpoint
+4. Connect service intercepts and transforms the path:
+   - Original: `POST:/accounts/get`
+   - Transformed: `GET:/accounts/get/meta/{suffix}` where suffix is `info`, `request-schema`, `response-schema`, or `schema`
+5. Routes to companion endpoint (always HTTP GET)
+6. Returns MetaResponse with schema data
+
+### Meta Request Example
+
+**Request metadata for POST /accounts/get (response schema):**
+```
+Header (31 bytes):
+  Byte 0:     0x80 (Flags: Meta)
+  Bytes 1-2:  0x0002 (Channel: 2 = ResponseSchema)
+  Bytes 3-6:  0x00000001 (Sequence: 1)
+  Bytes 7-22: <accounts/get service GUID>
+  Bytes 23-30: 0x0123456789ABCDEF (MessageId)
+
+Payload: (empty - meta requests have no body)
+```
+
+**Response:**
+```json
+{
+  "metaType": "response-schema",
+  "endpointKey": "POST:/accounts/get",
+  "serviceName": "Accounts",
+  "method": "POST",
+  "path": "/accounts/get",
+  "data": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "id": { "type": "string" },
+      "email": { "type": "string" }
+    }
+  },
+  "generatedAt": "2025-01-15T12:00:00Z",
+  "schemaVersion": "1.0.0"
+}
+```
+
+### Meta Response Model
+
+| Field | Type | Description |
+|-------|------|-------------|
+| metaType | string | Type of metadata: `endpoint-info`, `request-schema`, `response-schema`, `full-schema` |
+| endpointKey | string | Endpoint identifier: `METHOD:/path` |
+| serviceName | string | Service that owns this endpoint |
+| method | string | HTTP method (GET, POST, etc.) |
+| path | string | Endpoint path |
+| data | object | Metadata payload (varies by metaType) |
+| generatedAt | string | UTC timestamp of response generation |
+| schemaVersion | string | Assembly version for schema versioning |
+
+### Implementation Notes
+
+- Meta endpoints are **always HTTP GET** regardless of the original endpoint's method
+- Schema data is **embedded at build time** via code generation
+- The Channel field's normal ordering semantics are ignored when Meta flag is set
+- Meta requests expect a response (not fire-and-forget)
+- Meta endpoints are generated companion endpoints (e.g., `/path/meta/schema`)
+
 ## Error Handling
 
 **Timeout:** 30 seconds default for request/response correlation
@@ -283,6 +365,7 @@ Standard WebSocket close with optional reason code.
 
 - `/lib-connect/Protocol/BinaryMessage.cs` - Message structure and parsing
 - `/lib-connect/Protocol/MessageFlags.cs` - Flag definitions
+- `/lib-connect/Protocol/MetaType.cs` - Meta endpoint type enumeration
 - `/lib-connect/Protocol/GuidGenerator.cs` - GUID generation
 - `/lib-connect/Protocol/ConnectionState.cs` - Connection lifecycle
 - `/lib-connect/Protocol/NetworkByteOrder.cs` - Byte order utilities

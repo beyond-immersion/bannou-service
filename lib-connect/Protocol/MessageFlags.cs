@@ -50,7 +50,10 @@ public enum MessageFlags : byte
     Response = 0x40,
 
     /// <summary>
-    /// Reserved for future use
+    /// Request metadata about endpoint instead of executing it.
+    /// When set, the Channel field specifies the meta type:
+    /// 0 = endpoint-info, 1 = request-schema, 2 = response-schema, 3 = full-schema.
+    /// Connect service transforms the path and routes to companion endpoints.
     /// </summary>
-    Reserved = 0x80
+    Meta = 0x80
 }
