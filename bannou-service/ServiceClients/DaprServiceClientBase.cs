@@ -85,7 +85,7 @@ public abstract class DaprServiceClientBase : IDaprClient
     /// The ServiceAppMappingResolver can dynamically route to different Dapr sidecars, but
     /// the path structure (including app-id) must match what controllers expect.
     ///
-    /// See API-DESIGN.md "servers URL Constraint" section for full documentation.
+    /// See docs/BANNOU_DESIGN.md "servers URL Constraint" section for full documentation.
     /// </remarks>
     protected string BaseUrl
     {

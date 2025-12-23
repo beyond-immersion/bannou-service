@@ -1,6 +1,6 @@
 -- Queue Grant Handler
 -- Implements queue grant with token generation and service routing
--- Based on API-DESIGN.md queue system requirements
+-- Based on docs/BANNOU_DESIGN.md queue system architecture
 
 local redis = require "resty.redis"
 local cjson = require "cjson"

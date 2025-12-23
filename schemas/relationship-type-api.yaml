@@ -6,7 +6,7 @@ info:
 
     **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
-    See API-DESIGN.md for architectural rationale.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
 
     Relationship types define the kinds of relationships entities can have with each other
     (e.g., parent, child, friend, enemy). Types support hierarchical parent relationships,

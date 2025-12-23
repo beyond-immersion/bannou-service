@@ -57,7 +57,7 @@ public class TokenService : ITokenService
 
         _logger.LogDebug("Generating access token for account {AccountId}", account.AccountId);
 
-        // Generate opaque session key (per API-DESIGN.md security pattern)
+        // Generate opaque session key for JWT Redis key security
         var sessionKey = Guid.NewGuid().ToString("N");
         var sessionId = Guid.NewGuid().ToString();
 

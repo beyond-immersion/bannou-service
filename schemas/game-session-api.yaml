@@ -6,7 +6,7 @@ info:
 
     **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
-    See API-DESIGN.md for architectural rationale.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
   version: 2.0.0
   # NOTE: Event subscriptions moved to game-session-events.yaml (x-event-subscriptions)
 servers:

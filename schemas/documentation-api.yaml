@@ -8,7 +8,7 @@ info:
 
     **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
-    See API-DESIGN.md for architectural rationale.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
 
     **Browser Endpoint**: The GET /documentation/view/{slug} endpoint is browser-facing
     (NGINX-routed) per Tenet 15 and has NO x-permissions.
