@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -475,7 +476,7 @@ public class ExampleAccountsClient : DaprServiceClientBase
 
             // Use base class BaseUrl property which handles app-id resolution
             var jsonContent = new StringContent(
-                System.Text.Json.JsonSerializer.Serialize(request),
+                BannouJson.Serialize(request),
                 System.Text.Encoding.UTF8,
                 "application/json");
 
@@ -484,7 +485,7 @@ public class ExampleAccountsClient : DaprServiceClientBase
             if (response.IsSuccessStatusCode)
             {
                 var responseContent = await response.Content.ReadAsStringAsync();
-                return System.Text.Json.JsonSerializer.Deserialize<CreateAccountResponse>(responseContent);
+                return BannouJson.Deserialize<CreateAccountResponse>(responseContent);
             }
 
             return null;

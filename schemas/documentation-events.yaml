@@ -1,0 +1,223 @@
+openapi: 3.0.3
+info:
+  title: Documentation Service Events
+  description: |
+    Event models for Documentation service RabbitMQ pub/sub via Dapr.
+    Contains documentation-specific events and subscription/publication declarations.
+  version: 1.0.0
+  # Minimal event subscriptions - sessions use TTL cleanup, no external events needed
+  x-event-subscriptions: []
+  x-event-publications:
+    # Document lifecycle events (auto-generated from x-lifecycle)
+    - topic: document.created
+      event: DocumentCreatedEvent
+      description: Published when a document is created
+    - topic: document.updated
+      event: DocumentUpdatedEvent
+      description: Published when a document is updated
+    - topic: document.deleted
+      event: DocumentDeletedEvent
+      description: Published when a document is soft-deleted
+    # Analytics events
+    - topic: documentation.queried
+      event: DocumentationQueriedEvent
+      description: Published when documentation is queried
+    - topic: documentation.searched
+      event: DocumentationSearchedEvent
+      description: Published when documentation is searched
+    - topic: documentation.viewed
+      event: DocumentViewedEvent
+      description: Published when a document is viewed
+    # Import events
+    - topic: documentation.import.started
+      event: DocumentationImportStartedEvent
+      description: Published when an import operation starts
+    - topic: documentation.import.completed
+      event: DocumentationImportCompletedEvent
+      description: Published when an import operation completes
+
+paths: {}  # Events don't have HTTP paths
+
+# Auto-generate CRUD events for Document entity
+x-lifecycle:
+  Document:
+    model:
+      documentId:
+        type: string
+        format: uuid
+        primary: true
+        required: true
+      namespace:
+        type: string
+        required: true
+      slug:
+        type: string
+        required: true
+      title:
+        type: string
+        required: true
+      category:
+        type: string
+        required: true
+      tags:
+        type: array
+        items:
+          type: string
+      createdAt:
+        type: string
+        format: date-time
+        required: true
+      updatedAt:
+        type: string
+        format: date-time
+        required: true
+    # Fields excluded from events (content too large for pub/sub)
+    sensitive:
+      - content
+      - summary
+      - voiceSummary
+      - metadata
+
+components:
+  schemas:
+    # Note: DocumentCreatedEvent, DocumentUpdatedEvent, DocumentDeletedEvent are auto-generated
+    # from the x-lifecycle definition above. Do not define them manually here.
+
+    # Analytics events
+    DocumentationQueriedEvent:
+      type: object
+      description: Published when documentation is queried with natural language
+      required:
+        - eventId
+        - timestamp
+        - namespace
+        - query
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        namespace:
+          type: string
+        query:
+          type: string
+        sessionId:
+          type: string
+          format: uuid
+          nullable: true
+        resultCount:
+          type: integer
+        topResultId:
+          type: string
+          format: uuid
+          nullable: true
+        relevanceScore:
+          type: number
+          nullable: true
+
+    DocumentationSearchedEvent:
+      type: object
+      description: Published when documentation is searched with keywords
+      required:
+        - eventId
+        - timestamp
+        - namespace
+        - searchTerm
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        namespace:
+          type: string
+        searchTerm:
+          type: string
+        sessionId:
+          type: string
+          format: uuid
+          nullable: true
+        resultCount:
+          type: integer
+
+    DocumentViewedEvent:
+      type: object
+      description: Published when a document is viewed
+      required:
+        - eventId
+        - timestamp
+        - namespace
+        - documentId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        namespace:
+          type: string
+        documentId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+          nullable: true
+        source:
+          type: string
+          enum:
+            - query
+            - search
+            - direct
+            - related
+            - browser
+
+    # Import events
+    DocumentationImportStartedEvent:
+      type: object
+      description: Published when an import operation starts
+      required:
+        - eventId
+        - timestamp
+        - namespace
+        - documentCount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        namespace:
+          type: string
+        documentCount:
+          type: integer
+
+    DocumentationImportCompletedEvent:
+      type: object
+      description: Published when an import operation completes
+      required:
+        - eventId
+        - timestamp
+        - namespace
+        - succeededCount
+        - failedCount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        namespace:
+          type: string
+        succeededCount:
+          type: integer
+        failedCount:
+          type: integer
+        durationMs:
+          type: integer

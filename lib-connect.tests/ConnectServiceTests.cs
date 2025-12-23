@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Auth;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
@@ -427,8 +428,8 @@ public class ConnectServiceTests
 
         // Assert
         Assert.NotNull(result);
-        var resultJson = JsonSerializer.Serialize(result);
-        var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
+        var resultJson = BannouJson.Serialize(result);
+        var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
         Assert.NotNull(resultDict);
         Assert.Equal("processed", resultDict["status"].ToString());
         Assert.Equal("test-session-456", resultDict["sessionId"].ToString());
@@ -450,8 +451,8 @@ public class ConnectServiceTests
 
         // Assert
         Assert.NotNull(result);
-        var resultJson = JsonSerializer.Serialize(result);
-        var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
+        var resultJson = BannouJson.Serialize(result);
+        var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
         Assert.NotNull(resultDict);
         Assert.Equal("processed", resultDict["status"].ToString());
         Assert.Equal("new-service-123", resultDict["serviceId"].ToString());
@@ -485,8 +486,8 @@ public class ConnectServiceTests
 
         // Assert
         Assert.NotNull(result);
-        var resultJson = JsonSerializer.Serialize(result);
-        var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
+        var resultJson = BannouJson.Serialize(result);
+        var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
         Assert.NotNull(resultDict);
         Assert.Equal("delivered", resultDict["status"].ToString());
         Assert.Equal("client-789", resultDict["clientId"].ToString());
@@ -513,8 +514,8 @@ public class ConnectServiceTests
 
         // Assert
         Assert.NotNull(result);
-        var resultJson = JsonSerializer.Serialize(result);
-        var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
+        var resultJson = BannouJson.Serialize(result);
+        var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
         Assert.NotNull(resultDict);
         Assert.Equal("sent", resultDict["status"].ToString());
         Assert.Equal("client-rpc-999", resultDict["clientId"].ToString());

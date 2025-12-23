@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
@@ -327,10 +328,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
             }
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            var metadata = System.Text.Json.JsonSerializer.Deserialize<DaprMetadataResponse>(content, new System.Text.Json.JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var metadata = BannouJson.Deserialize<DaprMetadataResponse>(content);
 
             if (metadata?.Subscriptions == null || metadata.Subscriptions.Count == 0)
             {

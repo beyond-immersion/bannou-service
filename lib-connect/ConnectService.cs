@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect.ClientEvents;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
@@ -190,7 +191,7 @@ public partial class ConnectService : IConnectService
                 else
                 {
                     // For POST/PUT/PATCH, include body
-                    var jsonBody = body.Body != null ? JsonSerializer.Serialize(body.Body) : null;
+                    var jsonBody = body.Body != null ? BannouJson.Serialize(body.Body) : null;
 
                     var content = jsonBody != null ?
                         new StringContent(jsonBody, Encoding.UTF8, "application/json") : null;
@@ -750,7 +751,7 @@ public partial class ConnectService : IConnectService
                             reason = "graceful_disconnect"
                         };
 
-                        var notificationJson = System.Text.Json.JsonSerializer.Serialize(disconnectNotification);
+                        var notificationJson = BannouJson.Serialize(disconnectNotification);
                         var notificationBytes = System.Text.Encoding.UTF8.GetBytes(notificationJson);
 
                         await webSocket.SendAsync(
@@ -1016,7 +1017,7 @@ public partial class ConnectService : IConnectService
                     statusCode = 504,
                     message = $"Request to {serviceName} timed out after 120 seconds"
                 };
-                responseJson = JsonSerializer.Serialize(errorPayload);
+                responseJson = BannouJson.Serialize(errorPayload);
             }
             catch (TaskCanceledException tcEx)
             {
@@ -1033,7 +1034,7 @@ public partial class ConnectService : IConnectService
                         statusCode = 504,
                         message = $"Request to {serviceName} timed out"
                     };
-                    responseJson = JsonSerializer.Serialize(errorPayload);
+                    responseJson = BannouJson.Serialize(errorPayload);
                 }
                 else
                 {
@@ -1046,7 +1047,7 @@ public partial class ConnectService : IConnectService
                         statusCode = 499,
                         message = "Request was cancelled"
                     };
-                    responseJson = JsonSerializer.Serialize(errorPayload);
+                    responseJson = BannouJson.Serialize(errorPayload);
                 }
             }
             catch (HttpRequestException httpEx)
@@ -1061,7 +1062,7 @@ public partial class ConnectService : IConnectService
                     statusCode = (int?)httpEx.StatusCode ?? 500,
                     message = httpEx.Message
                 };
-                responseJson = JsonSerializer.Serialize(errorPayload);
+                responseJson = BannouJson.Serialize(errorPayload);
             }
             catch (Exception ex)
             {
@@ -1073,7 +1074,7 @@ public partial class ConnectService : IConnectService
                     error = "Internal server error",
                     message = ex.Message
                 };
-                responseJson = JsonSerializer.Serialize(errorPayload);
+                responseJson = BannouJson.Serialize(errorPayload);
             }
 
             // Send response back to WebSocket client
@@ -1147,7 +1148,7 @@ public partial class ConnectService : IConnectService
                 };
 
                 var ackMessage = BinaryMessage.CreateResponse(
-                    message, ResponseCodes.OK, Encoding.UTF8.GetBytes(JsonSerializer.Serialize(ackPayload)));
+                    message, ResponseCodes.OK, Encoding.UTF8.GetBytes(BannouJson.Serialize(ackPayload)));
 
                 await _connectionManager.SendMessageAsync(sessionId, ackMessage, cancellationToken);
             }
@@ -1897,7 +1898,7 @@ public partial class ConnectService : IConnectService
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
             };
 
-            var manifestJson = JsonSerializer.Serialize(capabilityManifest);
+            var manifestJson = BannouJson.Serialize(capabilityManifest);
             var manifestBytes = Encoding.UTF8.GetBytes(manifestJson);
 
             // Create a binary message as an Event (no response expected)
@@ -2041,7 +2042,7 @@ public partial class ConnectService : IConnectService
                 reason = reason
             };
 
-            var manifestJson = JsonSerializer.Serialize(capabilityManifest);
+            var manifestJson = BannouJson.Serialize(capabilityManifest);
             var manifestBytes = Encoding.UTF8.GetBytes(manifestJson);
 
             var capabilityMessage = new BinaryMessage(
@@ -2507,7 +2508,7 @@ public partial class ConnectService : IConnectService
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
             };
 
-            var manifestJson = JsonSerializer.Serialize(capabilityManifest);
+            var manifestJson = BannouJson.Serialize(capabilityManifest);
             var manifestBytes = Encoding.UTF8.GetBytes(manifestJson);
 
             var capabilityMessage = new BinaryMessage(

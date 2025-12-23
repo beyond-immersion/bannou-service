@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Client.SDK;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using System.Net.WebSockets;
 using System.Text;
@@ -36,7 +37,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest.Content = new StringContent(
-                JsonSerializer.Serialize(registerContent),
+                BannouJson.Serialize(registerContent),
                 Encoding.UTF8,
                 "application/json");
 
@@ -274,7 +275,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             Console.WriteLine("✅ WebSocket connected for binary protocol test");
 
             // Create a test message using binary protocol
-            var testPayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new { test = "Binary protocol validation", timestamp = DateTime.UtcNow }));
+            var testPayload = Encoding.UTF8.GetBytes(BannouJson.Serialize(new { test = "Binary protocol validation", timestamp = DateTime.UtcNow }));
 
             var binaryMessage = new BinaryMessage(
                 flags: MessageFlags.None,
@@ -503,7 +504,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 ClientTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 SequenceNumber = 1
             };
-            var requestPayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(pingRequest));
+            var requestPayload = Encoding.UTF8.GetBytes(BannouJson.Serialize(pingRequest));
 
             var binaryMessage = new BinaryMessage(
                 flags: MessageFlags.None,
@@ -652,7 +653,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         try
         {
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
-            registerRequest.Content = new StringContent(JsonSerializer.Serialize(registerContent), Encoding.UTF8, "application/json");
+            registerRequest.Content = new StringContent(BannouJson.Serialize(registerContent), Encoding.UTF8, "application/json");
 
             using var registerResponse = await Program.HttpClient.SendAsync(registerRequest);
             if (registerResponse.StatusCode != System.Net.HttpStatusCode.OK)
@@ -1200,7 +1201,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest.Content = new StringContent(
-                JsonSerializer.Serialize(registerContent),
+                BannouJson.Serialize(registerContent),
                 Encoding.UTF8,
                 "application/json");
 
@@ -1878,7 +1879,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest.Content = new StringContent(
-                JsonSerializer.Serialize(registerContent),
+                BannouJson.Serialize(registerContent),
                 Encoding.UTF8,
                 "application/json");
 
@@ -2058,7 +2059,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest.Content = new StringContent(
-                JsonSerializer.Serialize(registerContent),
+                BannouJson.Serialize(registerContent),
                 Encoding.UTF8,
                 "application/json");
 

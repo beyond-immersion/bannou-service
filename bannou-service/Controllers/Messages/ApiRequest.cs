@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using System.Net.Mime;
 using System.Text;
 
@@ -154,7 +155,7 @@ public class ApiRequest : ApiMessage
             StringContent? requestContent = null;
             if (httpMethod == HttpMethodTypes.POST)
             {
-                var requestData = JsonSerializer.Serialize(this, GetType());
+                var requestData = BannouJson.Serialize(this, GetType());
                 requestContent = new StringContent(requestData, Encoding.UTF8, MediaTypeNames.Application.Json);
             }
 
@@ -182,7 +183,7 @@ public class ApiRequest : ApiMessage
                 }
 
                 var responseContent = await responseMsg.Content.ReadAsStringAsync();
-                var responseData = JsonSerializer.Deserialize<T>(responseContent) ?? throw new NullReferenceException();
+                var responseData = BannouJson.DeserializeRequired<T>(responseContent);
 
                 responseData.SetHeadersToProperties(responseMsg.Headers);
 

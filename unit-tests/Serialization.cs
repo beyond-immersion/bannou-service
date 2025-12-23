@@ -96,11 +96,11 @@ public class Serialization : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    public void DaprSerializerConfig_PropertyNameCaseInsensitive_IsFalse()
+    public void DaprSerializerConfig_PropertyNameCaseInsensitive_IsTrue()
     {
-        // Verify PropertyNameCaseInsensitive is false (case-sensitive matching)
+        // Verify PropertyNameCaseInsensitive is true (case-insensitive matching for flexibility)
         var config = IServiceConfiguration.DaprSerializerConfig;
-        Assert.False(config.PropertyNameCaseInsensitive);
+        Assert.True(config.PropertyNameCaseInsensitive);
     }
 
     [Fact]
@@ -211,26 +211,23 @@ public class Serialization : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    public void CaseSensitive_CamelCase_DoesNot_Match_PascalCase()
+    public void CaseInsensitive_CamelCase_Matches_PascalCase()
     {
-        // THIS IS THE BUG: camelCase JSON should NOT match PascalCase properties
-        // with PropertyNameCaseInsensitive = false
+        // With PropertyNameCaseInsensitive = true, camelCase JSON matches PascalCase properties
         var camelCaseJson = """{"pascalCase":"value1","allcaps":"value2","lowercase":"value3"}""";
         var deserialized = JsonSerializer.Deserialize<CaseSensitiveModel>(camelCaseJson, IServiceConfiguration.DaprSerializerConfig);
 
         Assert.NotNull(deserialized);
-        // With case-sensitive matching, camelCase should NOT match PascalCase
-        Assert.Equal(string.Empty, deserialized.PascalCase); // Default value - NOT "value1"
-        Assert.Equal(string.Empty, deserialized.ALLCAPS);    // Default value - NOT "value2"
-        Assert.Equal("value3", deserialized.lowercase);       // This should match (exact case)
+        // With case-insensitive matching, camelCase matches PascalCase
+        Assert.Equal("value1", deserialized.PascalCase);
+        Assert.Equal("value2", deserialized.ALLCAPS);
+        Assert.Equal("value3", deserialized.lowercase);
     }
 
     [Fact]
-    public void SessionDataModel_CamelCase_DoesNot_Deserialize_ExpiresAtUnix()
+    public void SessionDataModel_CamelCase_Deserializes_ExpiresAtUnix()
     {
-        // THIS TEST DEMONSTRATES THE ROOT CAUSE OF THE 401 BUG
-        // If data was saved with camelCase (by Dapr defaults) but read with our config,
-        // the ExpiresAtUnix property will be 0 (default) instead of the actual value
+        // With PropertyNameCaseInsensitive = true, camelCase JSON properly deserializes
         var camelCaseJson = """
         {
             "accountId":"00000000-0000-0000-0000-000000000001",
@@ -244,12 +241,12 @@ public class Serialization : IClassFixture<CollectionFixture>
         var deserialized = JsonSerializer.Deserialize<SessionDataModel>(camelCaseJson, IServiceConfiguration.DaprSerializerConfig);
 
         Assert.NotNull(deserialized);
-        // With case-sensitive matching, camelCase properties should NOT match PascalCase
-        Assert.Equal(Guid.Empty, deserialized.AccountId);   // Default - NOT the value
-        Assert.Equal(string.Empty, deserialized.Email);     // Default - NOT "test@example.com"
-        Assert.Equal(string.Empty, deserialized.SessionId); // Default - NOT "test-session-123"
-        Assert.Equal(0, deserialized.CreatedAtUnix);        // Default - NOT 1733500000
-        Assert.Equal(0, deserialized.ExpiresAtUnix);        // Default - NOT 1733503600  <-- THIS CAUSES 401!
+        // With case-insensitive matching, camelCase properties match PascalCase
+        Assert.Equal(new Guid("00000000-0000-0000-0000-000000000001"), deserialized.AccountId);
+        Assert.Equal("test@example.com", deserialized.Email);
+        Assert.Equal("test-session-123", deserialized.SessionId);
+        Assert.Equal(1733500000, deserialized.CreatedAtUnix);
+        Assert.Equal(1733503600, deserialized.ExpiresAtUnix);
     }
 
     [Fact]
@@ -357,10 +354,10 @@ public class Serialization : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    public void CrossSerializer_DaprDefaultsWrite_OurConfigRead_Fails()
+    public void CrossSerializer_DaprDefaultsWrite_OurConfigRead_Succeeds()
     {
-        // THIS TEST DEMONSTRATES THE EXACT BUG SCENARIO
-        // Data written with Dapr defaults (camelCase) cannot be read with our config (case-sensitive PascalCase)
+        // With PropertyNameCaseInsensitive = true, data written with Dapr defaults (camelCase)
+        // can be read with our config
 
         var defaultOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 
@@ -377,9 +374,9 @@ public class Serialization : IClassFixture<CollectionFixture>
         var deserialized = JsonSerializer.Deserialize<SessionDataModel>(jsonFromDaprDefaults, IServiceConfiguration.DaprSerializerConfig);
 
         Assert.NotNull(deserialized);
-        // THE BUG: ExpiresAtUnix is 0 because camelCase doesn't match PascalCase
-        Assert.Equal(0, deserialized.ExpiresAtUnix);           // WRONG - should be 1733503600
-        Assert.Equal(string.Empty, deserialized.SessionId);    // WRONG - should be "important-session-id"
+        // With case-insensitive matching, camelCase works correctly
+        Assert.Equal(1733503600, deserialized.ExpiresAtUnix);
+        Assert.Equal("important-session-id", deserialized.SessionId);
     }
 
     [Fact]

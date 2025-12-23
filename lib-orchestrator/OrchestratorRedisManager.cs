@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
 using Microsoft.Extensions.Logging;
@@ -37,12 +38,7 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
     private static readonly TimeSpan ROUTING_TTL = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan CONFIG_HISTORY_TTL = TimeSpan.FromDays(30); // Keep history for 30 days
 
-    // JSON options matching generated types (camelCase) for consistent serialization/deserialization
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true // For robustness when reading
-    };
+    // Use centralized BannouJson for consistent serialization/deserialization
 
     /// <summary>
     /// Creates OrchestratorRedisManager with connection string read directly from environment.
@@ -151,7 +147,7 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
                         continue;
                     }
 
-                    var heartbeat = JsonSerializer.Deserialize<ServiceHealthStatus>(value.ToString(), JsonOptions);
+                    var heartbeat = BannouJson.Deserialize<ServiceHealthStatus>(value.ToString());
                     if (heartbeat != null)
                     {
                         heartbeats.Add(heartbeat);
@@ -220,7 +216,7 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
                 return null;
             }
 
-            return JsonSerializer.Deserialize<ServiceHealthStatus>(value.ToString(), JsonOptions);
+            return BannouJson.Deserialize<ServiceHealthStatus>(value.ToString());
         }
         catch (Exception ex)
         {
@@ -289,7 +285,7 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
                 MemoryUsage = heartbeat.Capacity?.MemoryUsage ?? 0
             };
 
-            var value = JsonSerializer.Serialize(healthStatus, JsonOptions);
+            var value = BannouJson.Serialize(healthStatus);
             await _database.StringSetAsync(key, value, HEARTBEAT_TTL);
 
             _logger.LogDebug(
@@ -321,7 +317,7 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
             var key = $"{ROUTING_KEY_PREFIX}{serviceName}";
             routing.LastUpdated = DateTimeOffset.UtcNow;
 
-            var value = JsonSerializer.Serialize(routing, JsonOptions);
+            var value = BannouJson.Serialize(routing);
             await _database.StringSetAsync(key, value, ROUTING_TTL);
 
             _logger.LogInformation(
@@ -369,7 +365,7 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
                         continue;
                     }
 
-                    var routing = JsonSerializer.Deserialize<ServiceRouting>(value.ToString(), JsonOptions);
+                    var routing = BannouJson.Deserialize<ServiceRouting>(value.ToString());
                     if (routing != null)
                     {
                         // Extract service name from key
@@ -503,7 +499,7 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
             configuration.Version = newVersion;
             configuration.Timestamp = DateTimeOffset.UtcNow;
 
-            var json = JsonSerializer.Serialize(configuration, JsonOptions);
+            var json = BannouJson.Serialize(configuration);
 
             // Save to history with TTL
             var historyKey = $"{CONFIG_HISTORY_PREFIX}{newVersion}";
@@ -550,7 +546,7 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
                 return null;
             }
 
-            return JsonSerializer.Deserialize<DeploymentConfiguration>(value.ToString(), JsonOptions);
+            return BannouJson.Deserialize<DeploymentConfiguration>(value.ToString());
         }
         catch (Exception ex)
         {
@@ -580,7 +576,7 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
                 return null;
             }
 
-            return JsonSerializer.Deserialize<DeploymentConfiguration>(value.ToString(), JsonOptions);
+            return BannouJson.Deserialize<DeploymentConfiguration>(value.ToString());
         }
         catch (Exception ex)
         {
@@ -619,7 +615,7 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
             historicalConfig.Timestamp = DateTimeOffset.UtcNow;
             historicalConfig.Description = $"Rolled back from version {currentVersion} to version {version}";
 
-            var json = JsonSerializer.Serialize(historicalConfig, JsonOptions);
+            var json = BannouJson.Serialize(historicalConfig);
 
             // Save the rollback as a new version in history
             var historyKey = $"{CONFIG_HISTORY_PREFIX}{rollbackVersion}";

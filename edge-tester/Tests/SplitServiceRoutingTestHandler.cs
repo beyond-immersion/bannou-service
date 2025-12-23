@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Client.SDK;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using System.Net.WebSockets;
 using System.Text;
@@ -125,7 +126,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             dryRun = false
         };
 
-        var requestJson = JsonSerializer.Serialize(deployRequest);
+        var requestJson = BannouJson.Serialize(deployRequest);
         Console.WriteLine($"   Request: {requestJson}");
 
         // Send via WebSocket binary protocol
@@ -655,7 +656,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         };
 
         Console.WriteLine($"   Deploying preset: default via WebSocket (reset to single-node topology)");
-        Console.WriteLine($"   Request: {JsonSerializer.Serialize(deployRequest)}");
+        Console.WriteLine($"   Request: {BannouJson.Serialize(deployRequest)}");
 
         try
         {
@@ -717,7 +718,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             force = true
         };
 
-        Console.WriteLine($"   Clean API request via WebSocket: {JsonSerializer.Serialize(cleanRequest)}");
+        Console.WriteLine($"   Clean API request via WebSocket: {BannouJson.Serialize(cleanRequest)}");
 
         try
         {

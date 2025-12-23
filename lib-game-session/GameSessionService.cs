@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Protocol;
@@ -1121,7 +1122,7 @@ public partial class GameSessionService : IGameSessionService
                 {
                     route_guid = routeGuid.ToString(),
                     target_guid = targetGuid.ToString(),
-                    bound_payload = JsonSerializer.Serialize(boundPayload),
+                    bound_payload = BannouJson.Serialize(boundPayload),
                     metadata = new
                     {
                         name = shortcutName,

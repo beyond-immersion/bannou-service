@@ -1,0 +1,1380 @@
+openapi: 3.0.0
+info:
+  title: Bannou Documentation API
+  description: |
+    Knowledge base API for AI agents to query documentation.
+    Designed for SignalWire SWAIG, OpenAI function calling, and Claude tool use.
+    All endpoints return voice-friendly summaries alongside detailed content.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See API-DESIGN.md for architectural rationale.
+
+    **Browser Endpoint**: The GET /documentation/view/{slug} endpoint is browser-facing
+    (NGINX-routed) per Tenet 15 and has NO x-permissions.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3500/v1.0/invoke/bannou/method
+    description: Dapr sidecar endpoint (MUST use "bannou" app-id)
+
+paths:
+  # ===== Browser-Facing Endpoint (Tenet 15) =====
+  # NO x-permissions = NGINX-routed, not WebSocket accessible
+  /documentation/view/{slug}:
+    get:
+      operationId: viewDocumentBySlug
+      summary: View documentation page in browser
+      description: |
+        Browser-facing endpoint for viewing documentation.
+        Routed via NGINX, not exposed to WebSocket clients.
+        Returns HTML-rendered documentation page.
+      tags:
+        - Browser
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-z0-9-]+$'
+          description: Document slug within namespace
+        - name: ns
+          in: query
+          required: false
+          schema:
+            type: string
+            default: bannou
+          description: Documentation namespace (defaults to bannou)
+      responses:
+        '200':
+          description: HTML documentation page (returns ContentResult)
+        '404':
+          description: Document not found
+      # NOTE: No x-permissions = browser-facing endpoint (Tenet 15)
+
+  # ===== Query Endpoints (WebSocket accessible) =====
+  /documentation/query:
+    post:
+      operationId: queryDocumentation
+      summary: Natural language documentation search
+      description: |
+        Search documentation using natural language queries.
+        Returns the most relevant documents with voice-friendly summaries.
+      tags:
+        - Search
+      x-permissions:
+        - role: anonymous
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryDocumentationRequest'
+      responses:
+        '200':
+          description: Search results with voice-friendly summaries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryDocumentationResponse'
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+
+  /documentation/get:
+    post:
+      operationId: getDocument
+      summary: Get specific document by ID or slug
+      description: |
+        Retrieve a specific document by its unique identifier or slug.
+        Returns full content with metadata.
+      tags:
+        - Documents
+      x-permissions:
+        - role: anonymous
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetDocumentRequest'
+      responses:
+        '200':
+          description: Document content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetDocumentResponse'
+        '404':
+          description: Document not found
+
+  /documentation/search:
+    post:
+      operationId: searchDocumentation
+      summary: Full-text keyword search
+      description: |
+        Search documentation using exact keyword matching.
+        Faster than semantic search but less flexible.
+      tags:
+        - Search
+      x-permissions:
+        - role: anonymous
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchDocumentationRequest'
+      responses:
+        '200':
+          description: Matching documents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchDocumentationResponse'
+
+  /documentation/list:
+    post:
+      operationId: listDocuments
+      summary: List documents by category
+      description: |
+        List all documents in a specific category or all categories.
+        Supports pagination for large result sets.
+      tags:
+        - Documents
+      x-permissions:
+        - role: anonymous
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListDocumentsRequest'
+      responses:
+        '200':
+          description: Document list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDocumentsResponse'
+
+  /documentation/suggest:
+    post:
+      operationId: suggestRelatedTopics
+      summary: Get related topics and follow-up suggestions
+      description: |
+        Given a topic or document ID, returns related topics the user
+        might want to explore. Useful for conversational AI flow.
+      tags:
+        - Search
+      x-permissions:
+        - role: anonymous
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuggestRelatedRequest'
+      responses:
+        '200':
+          description: Related topics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuggestRelatedResponse'
+
+  # ===== Admin Endpoints =====
+  /documentation/create:
+    post:
+      operationId: createDocument
+      summary: Create new documentation entry
+      tags:
+        - Admin
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDocumentRequest'
+      responses:
+        '200':
+          description: Document created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateDocumentResponse'
+        '409':
+          description: Document with same slug already exists
+
+  /documentation/update:
+    post:
+      operationId: updateDocument
+      summary: Update existing documentation entry
+      tags:
+        - Admin
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDocumentRequest'
+      responses:
+        '200':
+          description: Document updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateDocumentResponse'
+        '404':
+          description: Document not found
+
+  /documentation/delete:
+    post:
+      operationId: deleteDocument
+      summary: Soft-delete documentation entry to trashcan
+      description: |
+        Moves document to trashcan for recovery within TTL period.
+        Documents are automatically cleaned up after TrashcanTtlDays.
+      tags:
+        - Admin
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteDocumentRequest'
+      responses:
+        '200':
+          description: Document moved to trashcan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteDocumentResponse'
+        '404':
+          description: Document not found
+
+  /documentation/recover:
+    post:
+      operationId: recoverDocument
+      summary: Recover document from trashcan
+      description: |
+        Restores a soft-deleted document from the trashcan.
+        Must be called before the trashcan TTL expires.
+      tags:
+        - Admin
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecoverDocumentRequest'
+      responses:
+        '200':
+          description: Document recovered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoverDocumentResponse'
+        '404':
+          description: Trashcan entry not found or expired
+        '409':
+          description: Conflict with existing document
+
+  /documentation/bulk-update:
+    post:
+      operationId: bulkUpdateDocuments
+      summary: Bulk update document metadata
+      description: |
+        Apply category, tag, or metadata changes to multiple documents at once.
+        Each document is processed independently - partial success is possible.
+      tags:
+        - Admin
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkUpdateRequest'
+      responses:
+        '200':
+          description: Bulk update results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkUpdateResponse'
+
+  /documentation/bulk-delete:
+    post:
+      operationId: bulkDeleteDocuments
+      summary: Bulk soft-delete documents to trashcan
+      description: |
+        Move multiple documents to trashcan at once.
+        Each document is processed independently - partial success is possible.
+      tags:
+        - Admin
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkDeleteRequest'
+      responses:
+        '200':
+          description: Bulk delete results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkDeleteResponse'
+
+  /documentation/import:
+    post:
+      operationId: importDocumentation
+      summary: Bulk import documentation from structured source
+      description: |
+        Import multiple documents. Each document processed independently.
+        Partial success is possible - failures reported per document.
+      tags:
+        - Admin
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportDocumentationRequest'
+      responses:
+        '200':
+          description: Import results (may include partial failures)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportDocumentationResponse'
+
+  /documentation/trashcan:
+    post:
+      operationId: listTrashcan
+      summary: List documents in the trashcan
+      description: |
+        List all soft-deleted documents within the namespace's trashcan.
+        Documents remain recoverable until TTL expires or purge is called.
+      tags:
+        - Admin
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListTrashcanRequest'
+      responses:
+        '200':
+          description: Trashcan contents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTrashcanResponse'
+
+  /documentation/purge:
+    post:
+      operationId: purgeTrashcan
+      summary: Permanently delete trashcan items
+      description: |
+        Permanently delete specified documents from trashcan, or purge all.
+        This operation is irreversible - documents cannot be recovered after purge.
+      tags:
+        - Admin
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurgeTrashcanRequest'
+      responses:
+        '200':
+          description: Purge results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurgeTrashcanResponse'
+
+  /documentation/stats:
+    post:
+      operationId: getNamespaceStats
+      summary: Get namespace documentation statistics
+      description: |
+        Retrieve usage statistics and metadata for a documentation namespace.
+        Useful for monitoring, capacity planning, and administrative dashboards.
+      tags:
+        - Admin
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetNamespaceStatsRequest'
+      responses:
+        '200':
+          description: Namespace statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NamespaceStatsResponse'
+
+components:
+  schemas:
+    # ===== Common Types =====
+    DocumentCategory:
+      type: string
+      enum:
+        - getting-started
+        - api-reference
+        - architecture
+        - deployment
+        - troubleshooting
+        - tutorials
+        - game-systems
+        - world-lore
+        - npc-ai
+        - other
+      description: Fixed categories for type-safe filtering
+
+    RelatedDepth:
+      type: string
+      enum:
+        - none
+        - direct
+        - extended
+      default: direct
+      description: |
+        How deep to traverse related document links:
+        - none: No related documents included
+        - direct: Only directly linked documents (depth 1)
+        - extended: Related documents + their related documents (depth 2)
+
+    SearchField:
+      type: string
+      enum:
+        - title
+        - content
+        - tags
+        - summary
+
+    ListSortField:
+      type: string
+      enum:
+        - created_at
+        - updated_at
+        - title
+      default: updated_at
+
+    SuggestionSource:
+      type: string
+      enum:
+        - document_id
+        - slug
+        - topic
+        - category
+
+    # ===== Query Endpoint =====
+    QueryDocumentationRequest:
+      type: object
+      required:
+        - namespace
+        - query
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+          description: Documentation namespace
+        query:
+          type: string
+          minLength: 3
+          maxLength: 500
+          description: Natural language query
+        sessionId:
+          type: string
+          format: uuid
+          description: Optional session ID for conversational context
+        category:
+          $ref: '#/components/schemas/DocumentCategory'
+        maxResults:
+          type: integer
+          default: 5
+          minimum: 1
+          maximum: 20
+        includeContent:
+          type: boolean
+          default: false
+        maxSummaryLength:
+          type: integer
+          default: 300
+          minimum: 50
+          maximum: 500
+        minRelevanceScore:
+          type: number
+          format: float
+          default: 0.3
+          minimum: 0.0
+          maximum: 1.0
+
+    QueryDocumentationResponse:
+      type: object
+      required:
+        - namespace
+        - query
+        - results
+      properties:
+        namespace:
+          type: string
+        query:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentResult'
+        totalResults:
+          type: integer
+        voiceSummary:
+          type: string
+          description: Concise spoken summary for voice AI
+        suggestedFollowups:
+          type: array
+          items:
+            type: string
+        noResultsMessage:
+          type: string
+
+    # ===== Get Document Endpoint =====
+    GetDocumentRequest:
+      type: object
+      required:
+        - namespace
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        documentId:
+          type: string
+          format: uuid
+        slug:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+        sessionId:
+          type: string
+          format: uuid
+        includeRelated:
+          $ref: '#/components/schemas/RelatedDepth'
+        includeContent:
+          type: boolean
+          default: false
+        renderHtml:
+          type: boolean
+          default: false
+
+    GetDocumentResponse:
+      type: object
+      required:
+        - document
+      properties:
+        document:
+          $ref: '#/components/schemas/Document'
+        relatedDocuments:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentSummary'
+        contentFormat:
+          type: string
+          enum:
+            - markdown
+            - html
+            - none
+
+    # ===== Search Endpoint =====
+    SearchDocumentationRequest:
+      type: object
+      required:
+        - namespace
+        - searchTerm
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        searchTerm:
+          type: string
+          minLength: 2
+          maxLength: 200
+        sessionId:
+          type: string
+          format: uuid
+        category:
+          $ref: '#/components/schemas/DocumentCategory'
+        maxResults:
+          type: integer
+          default: 10
+          minimum: 1
+          maximum: 50
+        searchIn:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchField'
+        sortBy:
+          type: string
+          enum:
+            - relevance
+            - recency
+            - alphabetical
+          default: relevance
+        includeContent:
+          type: boolean
+          default: false
+
+    SearchDocumentationResponse:
+      type: object
+      required:
+        - namespace
+        - results
+      properties:
+        namespace:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentResult'
+        totalResults:
+          type: integer
+        searchTerm:
+          type: string
+
+    # ===== List Endpoint =====
+    ListDocumentsRequest:
+      type: object
+      required:
+        - namespace
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        category:
+          $ref: '#/components/schemas/DocumentCategory'
+        tags:
+          type: array
+          items:
+            type: string
+        tagsMatch:
+          type: string
+          enum:
+            - all
+            - any
+          default: all
+        createdAfter:
+          type: string
+          format: date-time
+        createdBefore:
+          type: string
+          format: date-time
+        updatedAfter:
+          type: string
+          format: date-time
+        updatedBefore:
+          type: string
+          format: date-time
+        titlesOnly:
+          type: boolean
+          default: false
+        page:
+          type: integer
+          default: 1
+          minimum: 1
+        pageSize:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+        sortBy:
+          $ref: '#/components/schemas/ListSortField'
+        sortOrder:
+          type: string
+          enum:
+            - asc
+            - desc
+          default: desc
+
+    ListDocumentsResponse:
+      type: object
+      required:
+        - namespace
+        - documents
+      properties:
+        namespace:
+          type: string
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentSummary'
+        totalCount:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalPages:
+          type: integer
+
+    # ===== Suggest Endpoint =====
+    SuggestRelatedRequest:
+      type: object
+      required:
+        - namespace
+        - suggestionSource
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        suggestionSource:
+          $ref: '#/components/schemas/SuggestionSource'
+        sourceValue:
+          type: string
+        sessionId:
+          type: string
+          format: uuid
+        maxSuggestions:
+          type: integer
+          default: 5
+          minimum: 1
+          maximum: 10
+        excludeRecentlyViewed:
+          type: boolean
+          default: true
+
+    SuggestRelatedResponse:
+      type: object
+      required:
+        - namespace
+        - suggestions
+      properties:
+        namespace:
+          type: string
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopicSuggestion'
+        voicePrompt:
+          type: string
+        sessionInfluenced:
+          type: boolean
+
+    TopicSuggestion:
+      type: object
+      required:
+        - documentId
+        - title
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        title:
+          type: string
+        category:
+          $ref: '#/components/schemas/DocumentCategory'
+        relevanceReason:
+          type: string
+
+    # ===== Admin: Create/Update/Delete =====
+    CreateDocumentRequest:
+      type: object
+      required:
+        - namespace
+        - slug
+        - title
+        - category
+        - content
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        slug:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 100
+        title:
+          type: string
+          maxLength: 200
+        category:
+          $ref: '#/components/schemas/DocumentCategory'
+        content:
+          type: string
+          description: Markdown content (max 500KB)
+        summary:
+          type: string
+          maxLength: 500
+        voiceSummary:
+          type: string
+          maxLength: 200
+        tags:
+          type: array
+          items:
+            type: string
+        relatedDocuments:
+          type: array
+          items:
+            type: string
+            format: uuid
+        metadata:
+          type: object
+          additionalProperties: true
+
+    CreateDocumentResponse:
+      type: object
+      required:
+        - documentId
+        - slug
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    UpdateDocumentRequest:
+      type: object
+      required:
+        - namespace
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        documentId:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        title:
+          type: string
+        category:
+          $ref: '#/components/schemas/DocumentCategory'
+        content:
+          type: string
+        summary:
+          type: string
+        voiceSummary:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        relatedDocuments:
+          type: array
+          items:
+            type: string
+            format: uuid
+        metadata:
+          type: object
+          additionalProperties: true
+
+    UpdateDocumentResponse:
+      type: object
+      required:
+        - documentId
+        - updatedAt
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        updatedAt:
+          type: string
+          format: date-time
+
+    DeleteDocumentRequest:
+      type: object
+      required:
+        - namespace
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        documentId:
+          type: string
+          format: uuid
+        slug:
+          type: string
+
+    DeleteDocumentResponse:
+      type: object
+      required:
+        - documentId
+        - deletedAt
+        - recoverableUntil
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        deletedAt:
+          type: string
+          format: date-time
+        recoverableUntil:
+          type: string
+          format: date-time
+
+    # ===== Admin: Recover =====
+    RecoverDocumentRequest:
+      type: object
+      required:
+        - namespace
+        - documentId
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        documentId:
+          type: string
+          format: uuid
+
+    RecoverDocumentResponse:
+      type: object
+      required:
+        - documentId
+        - recoveredAt
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        recoveredAt:
+          type: string
+          format: date-time
+
+    # ===== Admin: Bulk Operations =====
+    BulkUpdateRequest:
+      type: object
+      required:
+        - namespace
+        - documentIds
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        documentIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        category:
+          $ref: '#/components/schemas/DocumentCategory'
+        addTags:
+          type: array
+          items:
+            type: string
+        removeTags:
+          type: array
+          items:
+            type: string
+
+    BulkUpdateResponse:
+      type: object
+      required:
+        - succeeded
+        - failed
+      properties:
+        succeeded:
+          type: array
+          items:
+            type: string
+            format: uuid
+        failed:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkOperationFailure'
+
+    BulkDeleteRequest:
+      type: object
+      required:
+        - namespace
+        - documentIds
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        documentIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    BulkDeleteResponse:
+      type: object
+      required:
+        - succeeded
+        - failed
+      properties:
+        succeeded:
+          type: array
+          items:
+            type: string
+            format: uuid
+        failed:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkOperationFailure'
+
+    BulkOperationFailure:
+      type: object
+      required:
+        - documentId
+        - error
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        error:
+          type: string
+
+    # ===== Admin: Import =====
+    ImportDocumentationRequest:
+      type: object
+      required:
+        - namespace
+        - documents
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportDocument'
+        onConflict:
+          type: string
+          enum:
+            - skip
+            - update
+            - fail
+          default: skip
+
+    ImportDocument:
+      type: object
+      required:
+        - slug
+        - title
+        - category
+        - content
+      properties:
+        slug:
+          type: string
+        title:
+          type: string
+        category:
+          $ref: '#/components/schemas/DocumentCategory'
+        content:
+          type: string
+        summary:
+          type: string
+        voiceSummary:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties: true
+
+    ImportDocumentationResponse:
+      type: object
+      required:
+        - namespace
+        - created
+        - updated
+        - skipped
+        - failed
+      properties:
+        namespace:
+          type: string
+        created:
+          type: integer
+        updated:
+          type: integer
+        skipped:
+          type: integer
+        failed:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportFailure'
+
+    ImportFailure:
+      type: object
+      required:
+        - slug
+        - error
+      properties:
+        slug:
+          type: string
+        error:
+          type: string
+
+    # ===== Admin: Trashcan =====
+    ListTrashcanRequest:
+      type: object
+      required:
+        - namespace
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        page:
+          type: integer
+          default: 1
+        pageSize:
+          type: integer
+          default: 20
+
+    ListTrashcanResponse:
+      type: object
+      required:
+        - namespace
+        - items
+      properties:
+        namespace:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrashcanItem'
+        totalCount:
+          type: integer
+
+    TrashcanItem:
+      type: object
+      required:
+        - documentId
+        - title
+        - deletedAt
+        - expiresAt
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        title:
+          type: string
+        category:
+          $ref: '#/components/schemas/DocumentCategory'
+        deletedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    PurgeTrashcanRequest:
+      type: object
+      required:
+        - namespace
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        documentIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: If empty, purges all trashcan items
+
+    PurgeTrashcanResponse:
+      type: object
+      required:
+        - purgedCount
+      properties:
+        purgedCount:
+          type: integer
+
+    # ===== Admin: Stats =====
+    GetNamespaceStatsRequest:
+      type: object
+      required:
+        - namespace
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+
+    NamespaceStatsResponse:
+      type: object
+      required:
+        - namespace
+        - documentCount
+      properties:
+        namespace:
+          type: string
+        documentCount:
+          type: integer
+        categoryCounts:
+          type: object
+          additionalProperties:
+            type: integer
+        trashcanCount:
+          type: integer
+        totalContentSizeBytes:
+          type: integer
+        lastUpdated:
+          type: string
+          format: date-time
+
+    # ===== Core Document Types =====
+    Document:
+      type: object
+      required:
+        - documentId
+        - namespace
+        - slug
+        - title
+        - category
+        - createdAt
+        - updatedAt
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        namespace:
+          type: string
+        slug:
+          type: string
+        title:
+          type: string
+        category:
+          $ref: '#/components/schemas/DocumentCategory'
+        content:
+          type: string
+        summary:
+          type: string
+        voiceSummary:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        relatedDocuments:
+          type: array
+          items:
+            type: string
+            format: uuid
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    DocumentSummary:
+      type: object
+      required:
+        - documentId
+        - slug
+        - title
+        - category
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        title:
+          type: string
+        category:
+          $ref: '#/components/schemas/DocumentCategory'
+        summary:
+          type: string
+        voiceSummary:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    DocumentResult:
+      type: object
+      required:
+        - documentId
+        - slug
+        - title
+        - relevanceScore
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        title:
+          type: string
+        category:
+          $ref: '#/components/schemas/DocumentCategory'
+        summary:
+          type: string
+        voiceSummary:
+          type: string
+        content:
+          type: string
+        relevanceScore:
+          type: number
+          format: float
+        matchHighlights:
+          type: array
+          items:
+            type: string

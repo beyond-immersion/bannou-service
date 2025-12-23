@@ -41,6 +41,7 @@
       <Compile Include="../bannou-service/Generated/Clients/VoiceClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/SubscriptionsClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/GameSessionClient.cs" />
+      <Compile Include="../bannou-service/Generated/Clients/DocumentationClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/ConnectClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/SpeciesClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/RelationshipClient.cs" />
@@ -66,10 +67,12 @@
       <Compile Include="../bannou-service/Generated/Models/OrchestratorModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/WebsiteModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/RealmModels.cs" />
+      <Compile Include="../bannou-service/Generated/Models/DocumentationModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/ConnectModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/GameSessionModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/VoiceModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/SpeciesModels.cs" />
+      <Compile Include="../bannou-service/Generated/Events/DocumentationLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/SpeciesEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/RelationshipLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/RelationshipTypeEventsModels.cs" />
@@ -87,6 +90,7 @@
       <Compile Include="../bannou-service/Generated/Events/SpeciesLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/PermissionsEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/CharacterEventsModels.cs" />
+      <Compile Include="../bannou-service/Generated/Events/DocumentationEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/RealmLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/RelationshipEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/CommonEventsModels.cs" />
@@ -102,6 +106,7 @@
     <Compile Include="../bannou-service/ServiceClients/DaprServiceClientBase.cs" Condition="Exists('../bannou-service/ServiceClients/DaprServiceClientBase.cs')" />
     <Compile Include="../bannou-service/Services/IServiceAppMappingResolver.cs" Condition="Exists('../bannou-service/Services/IServiceAppMappingResolver.cs')" />
     <Compile Include="../bannou-service/ApiException.cs" Condition="Exists('../bannou-service/ApiException.cs')" />
+    <Compile Include="../bannou-service/Configuration/BannouJson.cs" Condition="Exists('../bannou-service/Configuration/BannouJson.cs')" />
   </ItemGroup>
 
   <!-- WebSocket Binary Protocol -->

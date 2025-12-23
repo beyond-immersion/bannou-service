@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Client.SDK;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.GameSession;
 using System.Text;
 using System.Text.Json;
@@ -54,7 +55,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
 
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest.Content = new StringContent(
-                JsonSerializer.Serialize(registerContent),
+                BannouJson.Serialize(registerContent),
                 Encoding.UTF8,
                 "application/json");
 

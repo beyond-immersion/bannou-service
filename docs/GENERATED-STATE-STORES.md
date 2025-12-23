@@ -1,6 +1,6 @@
 # Generated State Store Reference
 
-> **Auto-generated**: 2025-12-22 08:23:14
+> **Auto-generated**: 2025-12-23 02:33:15
 > **Source**: `provisioning/dapr/components/*.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -14,6 +14,7 @@ This document lists all Dapr state store components used in Bannou.
 | `auth-statestore` | Redis | Auth | Session/token state (ephemeral) |
 | `character-statestore` | MySQL | Character | Persistent queryable data |
 | `connect-statestore` | Redis | Connect | WebSocket session state |
+| `documentation-statestore` | Redis | Documentation | Service-specific state |
 | `game-session-statestore` | Redis | Game-session | Active game session state |
 | `location-statestore` | MySQL | Location | Persistent queryable data |
 | `permissions-store` | Redis | Permissions | Permission cache and session capabilities |

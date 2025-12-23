@@ -13,25 +13,12 @@ public interface IServiceConfiguration
 {
     /// <summary>
     /// Shared serializer options, between all dapr services/consumers.
+    /// References BannouJson.Options as the single source of truth for JSON serialization.
     /// IMPORTANT: Must include JsonStringEnumConverter to ensure enum values serialize
     /// as strings (e.g., "permissions.capabilities_refresh") instead of numbers (e.g., 0).
     /// This is critical for client event handling where event_name is matched by string value.
     /// </summary>
-    public static readonly JsonSerializerOptions DaprSerializerConfig = new()
-    {
-        AllowTrailingCommas = true,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
-        IgnoreReadOnlyFields = false,
-        IgnoreReadOnlyProperties = false,
-        IncludeFields = false,
-        MaxDepth = 32,
-        NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.Strict,
-        PropertyNameCaseInsensitive = false,
-        ReadCommentHandling = JsonCommentHandling.Disallow,
-        UnknownTypeHandling = System.Text.Json.Serialization.JsonUnknownTypeHandling.JsonElement,
-        WriteIndented = false,
-        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
-    };
+    public static readonly JsonSerializerOptions DaprSerializerConfig = BannouJson.Options;
 
     /// <summary>
     /// Set to override GUID for administrative service endpoints.

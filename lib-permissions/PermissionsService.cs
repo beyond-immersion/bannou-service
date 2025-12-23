@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Dapr;
@@ -162,7 +163,7 @@ public partial class PermissionsService : IPermissionsService
                 {
                     // Parse JSON array of endpoints
                     var jsonElement = (JsonElement)item.Value;
-                    var endpoints = JsonSerializer.Deserialize<List<string>>(jsonElement.GetRawText());
+                    var endpoints = BannouJson.Deserialize<List<string>>(jsonElement.GetRawText());
                     if (endpoints != null)
                     {
                         permissions[item.Key] = endpoints;
@@ -222,7 +223,7 @@ public partial class PermissionsService : IPermissionsService
 
             // Parse allowed endpoints
             var jsonElement = (JsonElement)permissionsData[body.ServiceId];
-            var allowedEndpoints = JsonSerializer.Deserialize<List<string>>(jsonElement.GetRawText());
+            var allowedEndpoints = BannouJson.Deserialize<List<string>>(jsonElement.GetRawText());
             var allowed = allowedEndpoints?.Contains(body.Method) ?? false;
 
             _logger.LogDebug("API access validation result for session {SessionId}: {Allowed}",
@@ -328,7 +329,7 @@ public partial class PermissionsService : IPermissionsService
                         }
 
                         transactionRequests.Add(new StateTransactionRequest(
-                            matrixKey, JsonSerializer.SerializeToUtf8Bytes(existingEndpoints), StateOperationType.Upsert));
+                            matrixKey, BannouJson.SerializeToUtf8Bytes(existingEndpoints), StateOperationType.Upsert));
                     }
                 }
             }
@@ -340,7 +341,7 @@ public partial class PermissionsService : IPermissionsService
             // Update service version
             transactionRequests.Add(new StateTransactionRequest(
                 $"{PERMISSION_VERSION_KEY}:{body.ServiceId}",
-                JsonSerializer.SerializeToUtf8Bytes(body.Version),
+                BannouJson.SerializeToUtf8Bytes(body.Version),
                 StateOperationType.Upsert));
 
             // Execute atomic transaction
@@ -554,8 +555,8 @@ public partial class PermissionsService : IPermissionsService
             // Atomic transaction to update session state, version, and active sessions
             var transactionRequests = new List<StateTransactionRequest>
             {
-                new StateTransactionRequest(statesKey, JsonSerializer.SerializeToUtf8Bytes(sessionStates), StateOperationType.Upsert),
-                new StateTransactionRequest(ACTIVE_SESSIONS_KEY, JsonSerializer.SerializeToUtf8Bytes(activeSessions), StateOperationType.Upsert)
+                new StateTransactionRequest(statesKey, BannouJson.SerializeToUtf8Bytes(sessionStates), StateOperationType.Upsert),
+                new StateTransactionRequest(ACTIVE_SESSIONS_KEY, BannouJson.SerializeToUtf8Bytes(activeSessions), StateOperationType.Upsert)
             };
 
             await _daprClient.ExecuteStateTransactionAsync(STATE_STORE, transactionRequests, cancellationToken: cancellationToken);
@@ -607,8 +608,8 @@ public partial class PermissionsService : IPermissionsService
             // Atomic update
             var transactionRequests = new List<StateTransactionRequest>
             {
-                new StateTransactionRequest(statesKey, JsonSerializer.SerializeToUtf8Bytes(sessionStates), StateOperationType.Upsert),
-                new StateTransactionRequest(ACTIVE_SESSIONS_KEY, JsonSerializer.SerializeToUtf8Bytes(activeSessions), StateOperationType.Upsert)
+                new StateTransactionRequest(statesKey, BannouJson.SerializeToUtf8Bytes(sessionStates), StateOperationType.Upsert),
+                new StateTransactionRequest(ACTIVE_SESSIONS_KEY, BannouJson.SerializeToUtf8Bytes(activeSessions), StateOperationType.Upsert)
             };
 
             await _daprClient.ExecuteStateTransactionAsync(STATE_STORE, transactionRequests, cancellationToken: cancellationToken);
@@ -692,7 +693,7 @@ public partial class PermissionsService : IPermissionsService
             // Atomic update
             var transactionRequests = new List<StateTransactionRequest>
             {
-                new StateTransactionRequest(statesKey, JsonSerializer.SerializeToUtf8Bytes(sessionStates), StateOperationType.Upsert)
+                new StateTransactionRequest(statesKey, BannouJson.SerializeToUtf8Bytes(sessionStates), StateOperationType.Upsert)
             };
 
             await _daprClient.ExecuteStateTransactionAsync(STATE_STORE, transactionRequests, cancellationToken: cancellationToken);
@@ -762,7 +763,7 @@ public partial class PermissionsService : IPermissionsService
                 else if (item.Key != "generated_at")
                 {
                     var jsonElement = (JsonElement)item.Value;
-                    var endpoints = JsonSerializer.Deserialize<List<string>>(jsonElement.GetRawText());
+                    var endpoints = BannouJson.Deserialize<List<string>>(jsonElement.GetRawText());
                     if (endpoints != null)
                     {
                         permissions[item.Key] = endpoints;

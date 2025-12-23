@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
@@ -135,7 +136,7 @@ public partial class RelationshipService : IRelationshipService
             foreach (var result in bulkResults)
             {
                 if (string.IsNullOrEmpty(result.Value)) continue;
-                var model = JsonSerializer.Deserialize<RelationshipModel>(result.Value);
+                var model = BannouJson.Deserialize<RelationshipModel>(result.Value);
                 if (model != null) relationships.Add(model);
             }
 
@@ -236,7 +237,7 @@ public partial class RelationshipService : IRelationshipService
             foreach (var result in bulkResults)
             {
                 if (string.IsNullOrEmpty(result.Value)) continue;
-                var model = JsonSerializer.Deserialize<RelationshipModel>(result.Value);
+                var model = BannouJson.Deserialize<RelationshipModel>(result.Value);
                 if (model == null) continue;
 
                 // Filter to only include relationships with entity2
@@ -321,7 +322,7 @@ public partial class RelationshipService : IRelationshipService
             foreach (var result in bulkResults)
             {
                 if (string.IsNullOrEmpty(result.Value)) continue;
-                var model = JsonSerializer.Deserialize<RelationshipModel>(result.Value);
+                var model = BannouJson.Deserialize<RelationshipModel>(result.Value);
                 if (model != null) relationships.Add(model);
             }
 

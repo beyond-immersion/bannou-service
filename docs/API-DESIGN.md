@@ -1507,8 +1507,8 @@ local target_instance = select_optimal_instance(healthy_instances, preferred_con
 ```csharp
 public static readonly JsonSerializerOptions DaprSerializerConfig = new()
 {
-    PropertyNamingPolicy = null,               // PascalCase property names
-    PropertyNameCaseInsensitive = false,       // Case-SENSITIVE matching (prevents bugs)
+    PropertyNamingPolicy = null,               // PascalCase property names when writing
+    PropertyNameCaseInsensitive = true,        // Case-insensitive matching when reading
     NumberHandling = JsonNumberHandling.Strict, // No string-to-number coercion
     WriteIndented = false,                      // Compact JSON for efficiency
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -1521,10 +1521,11 @@ public static readonly JsonSerializerOptions DaprSerializerConfig = new()
 - Better Dapr SDK compatibility
 - Simpler AOT compilation support for future optimization
 
-**Why Case-Sensitive**:
-- Prevents subtle bugs where `ExpiresAtUnix` vs `expiresAtUnix` cause silent deserialization failures
-- Properties default to `0`/`null` instead of throwing, creating hard-to-debug issues
-- Explicit casing catches schema mismatches during development rather than production
+**Why Case-Insensitive Matching**:
+- Allows reading JSON from external APIs (Dapr metadata, third-party services) that use camelCase
+- Matches ASP.NET input formatter behavior and NSwag client defaults
+- Handles both PascalCase (our models) and camelCase (external APIs) seamlessly
+- Writing still uses PascalCase via `PropertyNamingPolicy = null`
 
 ### Unix Timestamp Pattern for DateTimeOffset
 

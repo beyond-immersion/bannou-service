@@ -1,9 +1,9 @@
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Testing;
 
@@ -192,14 +192,14 @@ public class ServiceRegistrationTestHandler : IServiceTestHandler
             };
 
             // Test JSON serialization
-            var json = JsonSerializer.Serialize(testEvent);
+            var json = BannouJson.Serialize(testEvent);
             if (string.IsNullOrEmpty(json))
                 return Task.FromResult(new TestResult(false, "ServiceRegistrationEvent serialization failed"));
 
             Console.WriteLine("✓ ServiceRegistrationEvent serializes to JSON");
 
             // Test JSON deserialization
-            var deserializedEvent = JsonSerializer.Deserialize<ServiceRegistrationEvent>(json);
+            var deserializedEvent = BannouJson.Deserialize<ServiceRegistrationEvent>(json);
             if (deserializedEvent == null)
                 return Task.FromResult(new TestResult(false, "ServiceRegistrationEvent deserialization failed"));
 

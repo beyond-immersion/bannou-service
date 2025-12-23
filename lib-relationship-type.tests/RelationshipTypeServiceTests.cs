@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.RelationshipType;
@@ -7,7 +8,6 @@ using BeyondImmersion.BannouService.Testing;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.Text.Json;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.RelationshipType.Tests;
@@ -603,7 +603,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
 
         var bulkResults = typeIds.Select((id, idx) => new BulkStateItem(
             $"type:{id}",
-            JsonSerializer.Serialize(CreateTestRelationshipTypeModel(Guid.Parse(id), $"TYPE{idx}", $"Type {idx}")),
+            BannouJson.Serialize(CreateTestRelationshipTypeModel(Guid.Parse(id), $"TYPE{idx}", $"Type {idx}")),
             "etag")).ToList();
 
         _mockDaprClient

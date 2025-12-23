@@ -33,7 +33,7 @@ public class RealmTestHandler : IServiceTestHandler
 
             // Error handling
             new ServiceTest(TestGetNonExistentRealm, "GetNonExistentRealm", "Realm", "Test 404 for non-existent realm"),
-            new ServiceTest(TestDuplicateCodeConflict, "DuplicateCodeConflict", "Realm", "Test 409 for duplicate code"),
+            new ServiceTest(TestDuplicateCodeConflict, "Realm_DuplicateCodeConflict", "Realm", "Test 409 for duplicate code"),
 
             // Seed operation
             new ServiceTest(TestSeedRealms, "SeedRealms", "Realm", "Test seeding realms"),

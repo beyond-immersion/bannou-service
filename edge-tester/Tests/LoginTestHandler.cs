@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -162,7 +163,7 @@ public class LoginTestHandler : IServiceTestHandler
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, registerUrl);
-        request.Content = new StringContent(JsonSerializer.Serialize(content), Encoding.UTF8, "application/json");
+        request.Content = new StringContent(BannouJson.Serialize(content), Encoding.UTF8, "application/json");
 
         using var response = await Program.HttpClient.SendAsync(request);
         var responseBody = await response.Content.ReadAsStringAsync();
@@ -216,7 +217,7 @@ public class LoginTestHandler : IServiceTestHandler
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, loginUrl);
-        request.Content = new StringContent(JsonSerializer.Serialize(content), Encoding.UTF8, "application/json");
+        request.Content = new StringContent(BannouJson.Serialize(content), Encoding.UTF8, "application/json");
 
         using var response = await Program.HttpClient.SendAsync(request);
         var responseBody = await response.Content.ReadAsStringAsync();
@@ -277,7 +278,7 @@ public class LoginTestHandler : IServiceTestHandler
         };
 
         using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
-        loginRequest.Content = new StringContent(JsonSerializer.Serialize(loginContent), Encoding.UTF8, "application/json");
+        loginRequest.Content = new StringContent(BannouJson.Serialize(loginContent), Encoding.UTF8, "application/json");
 
         using var loginResponse = await Program.HttpClient.SendAsync(loginRequest);
         if (loginResponse.StatusCode != System.Net.HttpStatusCode.OK)
@@ -316,7 +317,7 @@ public class LoginTestHandler : IServiceTestHandler
 
         using var refreshRequest = new HttpRequestMessage(HttpMethod.Post, refreshUrl);
         refreshRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
-        refreshRequest.Content = new StringContent(JsonSerializer.Serialize(refreshContent), Encoding.UTF8, "application/json");
+        refreshRequest.Content = new StringContent(BannouJson.Serialize(refreshContent), Encoding.UTF8, "application/json");
         refreshRequest.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 
         using var refreshResponse = await Program.HttpClient.SendAsync(refreshRequest);
@@ -363,7 +364,7 @@ public class LoginTestHandler : IServiceTestHandler
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, loginUrl);
-        request.Content = new StringContent(JsonSerializer.Serialize(content), Encoding.UTF8, "application/json");
+        request.Content = new StringContent(BannouJson.Serialize(content), Encoding.UTF8, "application/json");
 
         using var response = await Program.HttpClient.SendAsync(request);
         var responseBody = await response.Content.ReadAsStringAsync();
@@ -430,7 +431,7 @@ public class LoginTestHandler : IServiceTestHandler
         };
 
         using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
-        loginRequest.Content = new StringContent(JsonSerializer.Serialize(loginContent), Encoding.UTF8, "application/json");
+        loginRequest.Content = new StringContent(BannouJson.Serialize(loginContent), Encoding.UTF8, "application/json");
 
         using var loginResponse = await Program.HttpClient.SendAsync(loginRequest);
         if (loginResponse.StatusCode != System.Net.HttpStatusCode.OK)
@@ -521,7 +522,7 @@ public class LoginTestHandler : IServiceTestHandler
         };
 
         using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
-        loginRequest.Content = new StringContent(JsonSerializer.Serialize(loginContent), Encoding.UTF8, "application/json");
+        loginRequest.Content = new StringContent(BannouJson.Serialize(loginContent), Encoding.UTF8, "application/json");
 
         using var loginResponse = await Program.HttpClient.SendAsync(loginRequest);
         if (loginResponse.StatusCode != System.Net.HttpStatusCode.OK)
@@ -619,7 +620,7 @@ public class LoginTestHandler : IServiceTestHandler
         };
 
         using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
-        loginRequest.Content = new StringContent(JsonSerializer.Serialize(loginContent), Encoding.UTF8, "application/json");
+        loginRequest.Content = new StringContent(BannouJson.Serialize(loginContent), Encoding.UTF8, "application/json");
 
         using var loginResponse = await Program.HttpClient.SendAsync(loginRequest);
         if (loginResponse.StatusCode != System.Net.HttpStatusCode.OK)
@@ -648,7 +649,7 @@ public class LoginTestHandler : IServiceTestHandler
 
         using var logoutRequest = new HttpRequestMessage(HttpMethod.Post, logoutUrl);
         logoutRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
-        logoutRequest.Content = new StringContent(JsonSerializer.Serialize(logoutContent), Encoding.UTF8, "application/json");
+        logoutRequest.Content = new StringContent(BannouJson.Serialize(logoutContent), Encoding.UTF8, "application/json");
 
         using var logoutResponse = await Program.HttpClient.SendAsync(logoutRequest);
 
@@ -815,7 +816,7 @@ public class LoginTestHandler : IServiceTestHandler
         };
 
         using var steamRequest = new HttpRequestMessage(HttpMethod.Post, steamUrl);
-        steamRequest.Content = new StringContent(JsonSerializer.Serialize(steamContent), Encoding.UTF8, "application/json");
+        steamRequest.Content = new StringContent(BannouJson.Serialize(steamContent), Encoding.UTF8, "application/json");
 
         using var steamResponse = await Program.HttpClient.SendAsync(steamRequest);
         var steamBody = await steamResponse.Content.ReadAsStringAsync();

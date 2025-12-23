@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using System.Net.Http.Json;
 using System.Net.WebSockets;
@@ -40,7 +41,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
 
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest.Content = new StringContent(
-                JsonSerializer.Serialize(registerContent),
+                BannouJson.Serialize(registerContent),
                 Encoding.UTF8,
                 "application/json");
 
@@ -301,7 +302,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
 
             using var registerRequest1 = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest1.Content = new StringContent(
-                System.Text.Json.JsonSerializer.Serialize(registerContent),
+                BannouJson.Serialize(registerContent),
                 Encoding.UTF8,
                 "application/json");
 
@@ -338,7 +339,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
 
             using var registerRequest2 = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest2.Content = new StringContent(
-                System.Text.Json.JsonSerializer.Serialize(registerContent),
+                BannouJson.Serialize(registerContent),
                 Encoding.UTF8,
                 "application/json");
 
@@ -446,7 +447,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 headers = new Dictionary<string, string>(),
                 body = (string?)null
             };
-            var requestPayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(apiRequest));
+            var requestPayload = Encoding.UTF8.GetBytes(BannouJson.Serialize(apiRequest));
 
             var binaryMessage = new BinaryMessage(
                 flags: MessageFlags.None,

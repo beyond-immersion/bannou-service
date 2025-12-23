@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.Services;
@@ -162,7 +163,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             foreach (var result in bulkResults)
             {
                 if (string.IsNullOrEmpty(result.Value)) continue;
-                var model = JsonSerializer.Deserialize<RelationshipTypeModel>(result.Value);
+                var model = BannouJson.Deserialize<RelationshipTypeModel>(result.Value);
                 if (model != null) types.Add(model);
             }
 
@@ -250,7 +251,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             foreach (var result in bulkResults)
             {
                 if (string.IsNullOrEmpty(result.Value)) continue;
-                var model = JsonSerializer.Deserialize<RelationshipTypeModel>(result.Value);
+                var model = BannouJson.Deserialize<RelationshipTypeModel>(result.Value);
                 if (model != null)
                 {
                     responses.Add(await MapToResponseAsync(model, cancellationToken));

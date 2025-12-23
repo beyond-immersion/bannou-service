@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
@@ -8,7 +9,6 @@ using BeyondImmersion.BannouService.Testing;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.Text.Json;
 using Xunit;
 
 #pragma warning disable CS8620 // Argument of type cannot be used for parameter of type due to differences in the nullability
@@ -716,7 +716,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     /// </summary>
     private static BulkStateItem CreateBulkStateItem<T>(string key, T model)
     {
-        var json = JsonSerializer.Serialize(model);
+        var json = BannouJson.Serialize(model);
         return new BulkStateItem(key, json, string.Empty);
     }
 
