@@ -25,8 +25,8 @@ public class MetaEndpointTestHandler : IServiceTestHandler
                 "Test requesting response schema using Meta flag with MetaType.ResponseSchema"),
             new ServiceTest(TestMetaFlagFullSchema, "Meta - Full Schema via Flag", "WebSocket",
                 "Test requesting full schema using Meta flag with MetaType.FullSchema"),
-            new ServiceTest(TestDirectHttpMetaEndpoint, "Meta - Direct HTTP Access", "HTTP",
-                "Test direct HTTP access to companion meta endpoints (e.g., /accounts/get/meta/schema)"),
+            new ServiceTest(TestMetaEndpointsNotExposedViaNginx, "Meta - Not Exposed via NGINX", "HTTP",
+                "Verify meta endpoints are NOT accessible via NGINX (security: only via WebSocket Meta flag)"),
             new ServiceTest(TestMetaFlagUnknownGuid, "Meta - Unknown GUID Error", "WebSocket",
                 "Test that meta request with unknown GUID returns ServiceNotFound error"),
         };
@@ -437,14 +437,14 @@ public class MetaEndpointTestHandler : IServiceTestHandler
         }
     }
 
-    private void TestDirectHttpMetaEndpoint(string[] args)
+    private void TestMetaEndpointsNotExposedViaNginx(string[] args)
     {
-        Console.WriteLine("=== Direct HTTP Meta Endpoint Test ===");
-        Console.WriteLine("Testing direct HTTP access to companion meta endpoints...");
+        Console.WriteLine("=== Meta Endpoints Not Exposed via NGINX Test ===");
+        Console.WriteLine("Verifying meta endpoints are NOT accessible via NGINX (security test)...");
 
         try
         {
-            var result = Task.Run(async () => await PerformDirectHttpMetaTest()).Result;
+            var result = Task.Run(async () => await PerformMetaNotExposedTest()).Result;
             Console.WriteLine(result ? "✅ Test PASSED" : "❌ Test FAILED");
         }
         catch (Exception ex)
@@ -453,7 +453,7 @@ public class MetaEndpointTestHandler : IServiceTestHandler
         }
     }
 
-    private async Task<bool> PerformDirectHttpMetaTest()
+    private async Task<bool> PerformMetaNotExposedTest()
     {
         if (Program.Configuration == null)
         {
@@ -464,9 +464,12 @@ public class MetaEndpointTestHandler : IServiceTestHandler
         var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
         var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
 
-        // Test direct HTTP access to a meta endpoint (no auth required for schema introspection)
-        var metaUrl = $"http://{openrestyHost}:{openrestyPort}/accounts/get/meta/schema";
-        Console.WriteLine($"📡 Fetching: {metaUrl}");
+        // Test that meta endpoints for NGINX-exposed routes are NOT accessible
+        // /auth/register is exposed via NGINX, but /auth/register/meta/schema should NOT be
+        // This is a security test - meta info should only be accessible via WebSocket Meta flag
+        var metaUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register/meta/schema";
+        Console.WriteLine($"📡 Testing: {metaUrl}");
+        Console.WriteLine("   (Expected: 404 - meta endpoints should NOT be exposed via NGINX)");
 
         try
         {
@@ -475,40 +478,23 @@ public class MetaEndpointTestHandler : IServiceTestHandler
 
             Console.WriteLine($"📥 Response status: {response.StatusCode}");
 
-            if (!response.IsSuccessStatusCode)
+            // We EXPECT 404 - meta endpoints should not be accessible via NGINX
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                var errorBody = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"❌ HTTP request failed: {response.StatusCode} - {errorBody}");
+                Console.WriteLine("✅ Correctly returned 404 - meta endpoints not exposed via NGINX");
+                return true;
+            }
+
+            // If we got a 200, that's a security issue - meta endpoints shouldn't be exposed
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("❌ SECURITY: Meta endpoint unexpectedly accessible via NGINX!");
+                Console.WriteLine("   Meta endpoints should only be accessible via WebSocket Meta flag");
                 return false;
             }
 
-            var responseBody = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"📥 Response length: {responseBody.Length} bytes");
-
-            // Parse and validate
-            using var doc = JsonDocument.Parse(responseBody);
-            var root = doc.RootElement;
-
-            // Validate it's a full-schema response
-            if (!root.TryGetProperty("metaType", out var metaTypeProp) ||
-                metaTypeProp.GetString() != "full-schema")
-            {
-                Console.WriteLine($"❌ Expected metaType 'full-schema', got '{metaTypeProp.GetString()}'");
-                return false;
-            }
-            Console.WriteLine("✅ metaType: full-schema");
-
-            // Check for data with info, request, response
-            if (root.TryGetProperty("data", out var dataProp))
-            {
-                if (dataProp.TryGetProperty("info", out _))
-                    Console.WriteLine("✅ data.info present");
-                if (dataProp.TryGetProperty("request", out _))
-                    Console.WriteLine("✅ data.request present");
-                if (dataProp.TryGetProperty("response", out _))
-                    Console.WriteLine("✅ data.response present");
-            }
-
+            // Other error codes are acceptable (nginx might return 403, 405, etc.)
+            Console.WriteLine($"✅ Meta endpoint not accessible (status: {response.StatusCode})");
             return true;
         }
         catch (Exception ex)
@@ -611,7 +597,7 @@ public class MetaEndpointTestHandler : IServiceTestHandler
                     {
                         Console.WriteLine($"📥 Response code: {response.ResponseCode}");
 
-                        // Expect ServiceNotFound error (code 51)
+                        // Expect ServiceNotFound error (code 30) for unknown GUID
                         if (response.ResponseCode == (byte)ResponseCodes.ServiceNotFound)
                         {
                             Console.WriteLine("✅ Correctly received ServiceNotFound error for unknown GUID");
@@ -619,8 +605,8 @@ public class MetaEndpointTestHandler : IServiceTestHandler
                         }
                         else if (response.ResponseCode != 0)
                         {
-                            Console.WriteLine($"✅ Received error response (code: {response.ResponseCode})");
-                            return true; // Any error is acceptable for unknown GUID
+                            Console.WriteLine($"⚠️ Received unexpected error code {response.ResponseCode} (expected ServiceNotFound={((byte)ResponseCodes.ServiceNotFound)})");
+                            return false; // Wrong error code is still a failure
                         }
                         else
                         {

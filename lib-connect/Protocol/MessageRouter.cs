@@ -23,10 +23,11 @@ public static class MessageRouter
         };
 
         // Validate message structure (shortcuts are allowed to have empty payloads - we inject the bound payload)
-        // Non-shortcut, non-event messages require a payload
+        // Non-shortcut, non-event, non-meta messages require a payload
+        // Meta messages intentionally have empty payloads - they only contain header with ServiceGuid + MetaType
         var isShortcut = connectionState.TryGetShortcut(message.ServiceGuid, out var shortcut);
 
-        if (!isShortcut && message.Payload.IsEmpty && !message.Flags.HasFlag(MessageFlags.Event))
+        if (!isShortcut && message.Payload.IsEmpty && !message.Flags.HasFlag(MessageFlags.Event) && !message.IsMeta)
         {
             routeInfo.IsValid = false;
             routeInfo.ErrorCode = ResponseCodes.RequestError;

@@ -857,6 +857,11 @@ public class Program
         foreach (ServiceTest serviceTest in voiceTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
+        // load meta endpoint tests (schema introspection via Meta flag)
+        var metaEndpointTestHandler = new Tests.MetaEndpointTestHandler();
+        foreach (ServiceTest serviceTest in metaEndpointTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
         // load split-service routing tests (MUST BE LAST - modifies deployment topology)
         // These tests deploy a multi-node configuration and validate dynamic routing
         var splitRoutingTestHandler = new SplitServiceRoutingTestHandler();

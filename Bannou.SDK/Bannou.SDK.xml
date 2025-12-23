@@ -12601,6 +12601,68 @@
             JSON Schema for the response body.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.ResponseCodes">
+            <summary>
+            Response codes used in the binary WebSocket protocol for success/error indication.
+            These codes are returned in the response header's ResponseCode field.
+            </summary>
+            <remarks>
+            Codes 0-49 are protocol-level errors (Connect service).
+            Codes 50-69 are service-level errors (downstream service responses).
+            Codes 70+ are shortcut-specific errors.
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.OK">
+            <summary>Request completed successfully.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.RequestError">
+            <summary>Generic request error (malformed message, invalid format).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.RequestTooLarge">
+            <summary>Request payload exceeds maximum allowed size.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.TooManyRequests">
+            <summary>Rate limit exceeded for this client/session.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.InvalidRequestChannel">
+            <summary>Invalid channel number in request header.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Unauthorized">
+            <summary>Authentication required but not provided or invalid.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.ServiceNotFound">
+            <summary>Target service GUID not found in capability manifest.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.ClientNotFound">
+            <summary>Target client GUID not found (for client-to-client messages).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.MessageNotFound">
+            <summary>Referenced message ID not found.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Service_BadRequest">
+            <summary>Service returned 400 Bad Request.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Service_NotFound">
+            <summary>Service returned 404 Not Found.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Service_Unauthorized">
+            <summary>Service returned 401/403 Unauthorized/Forbidden.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Service_Conflict">
+            <summary>Service returned 409 Conflict.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Service_InternalServerError">
+            <summary>Service returned 500 Internal Server Error.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.ShortcutExpired">
+            <summary>Shortcut has expired and is no longer valid.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.ShortcutTargetNotFound">
+            <summary>Shortcut target endpoint no longer exists.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.ShortcutRevoked">
+            <summary>Shortcut was explicitly revoked.</summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent">
             <summary>
             Sent to all session participants when the session state changes.

@@ -811,9 +811,19 @@ public partial class ConnectService : IConnectService
             // When Meta flag is set, route to companion meta endpoints instead of executing the endpoint
             if (message.IsMeta)
             {
-                if (!routeInfo.IsValid || routeInfo.ServiceName == null)
+                if (!routeInfo.IsValid)
                 {
-                    _logger.LogDebug("Meta request for invalid/unknown GUID from session {SessionId}", sessionId);
+                    _logger.LogDebug("Meta request validation failed from session {SessionId}: {Error}",
+                        sessionId, routeInfo.ErrorMessage);
+                    var errorResponse = BinaryMessage.CreateResponse(message, routeInfo.ErrorCode);
+                    await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
+                    return;
+                }
+
+                if (routeInfo.ServiceName == null)
+                {
+                    _logger.LogDebug("Meta request for unknown GUID {Guid} from session {SessionId}",
+                        message.ServiceGuid, sessionId);
                     var errorResponse = BinaryMessage.CreateResponse(message, ResponseCodes.ServiceNotFound);
                     await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
                     return;
