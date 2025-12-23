@@ -370,6 +370,153 @@ public class BannouClient : IAsyncDisposable
     }
 
     /// <summary>
+    /// Requests metadata about an endpoint instead of executing it.
+    /// Uses the Meta flag (0x80) which triggers route transformation at Connect service.
+    /// Meta type is encoded in Channel field (Connect never reads payloads - zero-copy principle).
+    /// </summary>
+    /// <typeparam name="T">The expected data type for the meta response (e.g., JsonSchemaData, EndpointInfoData)</typeparam>
+    /// <param name="method">HTTP method (GET, POST, PUT, DELETE)</param>
+    /// <param name="path">API path (e.g., "/accounts/get")</param>
+    /// <param name="metaType">Type of metadata to request</param>
+    /// <param name="timeout">Request timeout (default 10 seconds)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>MetaResponse containing the requested metadata</returns>
+    public async Task<MetaResponse<T>> GetEndpointMetaAsync<T>(
+        string method,
+        string path,
+        MetaType metaType = MetaType.FullSchema,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (_webSocket?.State != WebSocketState.Open)
+        {
+            throw new InvalidOperationException("WebSocket is not connected. Call ConnectAsync first.");
+        }
+
+        if (_connectionState == null)
+        {
+            throw new InvalidOperationException("Connection state not initialized.");
+        }
+
+        // Get service GUID (same as regular requests)
+        var serviceGuid = GetServiceGuid(method, path);
+        if (serviceGuid == null)
+        {
+            var availableEndpoints = string.Join(", ", _apiMappings.Keys.Take(10));
+            throw new ArgumentException($"Unknown endpoint: {method} {path}. Available: {availableEndpoints}...");
+        }
+
+        // Create meta message - meta type encoded in Channel field, payload is EMPTY
+        var messageId = GuidGenerator.GenerateMessageId();
+        var sequenceNumber = _connectionState.GetNextSequenceNumber((ushort)metaType);
+
+        var message = new BinaryMessage(
+            flags: MessageFlags.Meta,            // Meta flag triggers route transformation
+            channel: (ushort)metaType,           // Meta type in Channel (0=info, 1=req, 2=resp, 3=full)
+            sequenceNumber: sequenceNumber,
+            serviceGuid: serviceGuid.Value,
+            messageId: messageId,
+            payload: Array.Empty<byte>());       // EMPTY - Connect never reads payloads
+
+        // Set up response awaiter (same pattern as InvokeAsync)
+        var tcs = new TaskCompletionSource<BinaryMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _pendingRequests[messageId] = tcs;
+        _connectionState.AddPendingMessage(messageId, $"META:{method}:{path}", DateTimeOffset.UtcNow);
+
+        try
+        {
+            // Send message
+            var messageBytes = message.ToByteArray();
+            await _webSocket.SendAsync(
+                new ArraySegment<byte>(messageBytes),
+                WebSocketMessageType.Binary,
+                endOfMessage: true,
+                cancellationToken);
+
+            // Wait for response with timeout (shorter default for meta requests)
+            var effectiveTimeout = timeout ?? TimeSpan.FromSeconds(10);
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutCts.CancelAfter(effectiveTimeout);
+
+            try
+            {
+                var response = await tcs.Task.WaitAsync(timeoutCts.Token);
+
+                // Check response code
+                if (response.ResponseCode != 0)
+                {
+                    throw new InvalidOperationException(
+                        $"Meta request failed with response code {response.ResponseCode}");
+                }
+
+                // Parse meta response
+                var responseJson = response.GetJsonPayload();
+                var result = BannouJson.Deserialize<MetaResponse<T>>(responseJson)
+                    ?? throw new InvalidOperationException("Failed to deserialize meta response");
+
+                return result;
+            }
+            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+            {
+                throw new TimeoutException($"Meta request for {method} {path} timed out after {effectiveTimeout.TotalSeconds} seconds");
+            }
+        }
+        finally
+        {
+            _pendingRequests.TryRemove(messageId, out _);
+            _connectionState.RemovePendingMessage(messageId);
+        }
+    }
+
+    /// <summary>
+    /// Gets human-readable endpoint information (summary, description, tags, deprecated status).
+    /// </summary>
+    /// <param name="method">HTTP method</param>
+    /// <param name="path">API path</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    public Task<MetaResponse<EndpointInfoData>> GetEndpointInfoAsync(
+        string method,
+        string path,
+        CancellationToken cancellationToken = default)
+        => GetEndpointMetaAsync<EndpointInfoData>(method, path, MetaType.EndpointInfo, null, cancellationToken);
+
+    /// <summary>
+    /// Gets JSON Schema for the request body of an endpoint.
+    /// </summary>
+    /// <param name="method">HTTP method</param>
+    /// <param name="path">API path</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    public Task<MetaResponse<JsonSchemaData>> GetRequestSchemaAsync(
+        string method,
+        string path,
+        CancellationToken cancellationToken = default)
+        => GetEndpointMetaAsync<JsonSchemaData>(method, path, MetaType.RequestSchema, null, cancellationToken);
+
+    /// <summary>
+    /// Gets JSON Schema for the response body of an endpoint.
+    /// </summary>
+    /// <param name="method">HTTP method</param>
+    /// <param name="path">API path</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    public Task<MetaResponse<JsonSchemaData>> GetResponseSchemaAsync(
+        string method,
+        string path,
+        CancellationToken cancellationToken = default)
+        => GetEndpointMetaAsync<JsonSchemaData>(method, path, MetaType.ResponseSchema, null, cancellationToken);
+
+    /// <summary>
+    /// Gets full schema including info, request schema, and response schema.
+    /// </summary>
+    /// <param name="method">HTTP method</param>
+    /// <param name="path">API path</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    public Task<MetaResponse<FullSchemaData>> GetFullSchemaAsync(
+        string method,
+        string path,
+        CancellationToken cancellationToken = default)
+        => GetEndpointMetaAsync<FullSchemaData>(method, path, MetaType.FullSchema, null, cancellationToken);
+
+    /// <summary>
     /// Registers a handler for server-pushed events.
     /// </summary>
     /// <param name="eventType">Event type to handle (e.g., "capability_manifest")</param>

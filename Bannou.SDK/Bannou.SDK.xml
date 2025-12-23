@@ -12282,6 +12282,52 @@
             <param name="channel">Message channel for ordering</param>
             <param name="cancellationToken">Cancellation token</param>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouClient.GetEndpointMetaAsync``1(System.String,System.String,BeyondImmersion.Bannou.Client.SDK.MetaType,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Requests metadata about an endpoint instead of executing it.
+            Uses the Meta flag (0x80) which triggers route transformation at Connect service.
+            Meta type is encoded in Channel field (Connect never reads payloads - zero-copy principle).
+            </summary>
+            <typeparam name="T">The expected data type for the meta response (e.g., JsonSchemaData, EndpointInfoData)</typeparam>
+            <param name="method">HTTP method (GET, POST, PUT, DELETE)</param>
+            <param name="path">API path (e.g., "/accounts/get")</param>
+            <param name="metaType">Type of metadata to request</param>
+            <param name="timeout">Request timeout (default 10 seconds)</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>MetaResponse containing the requested metadata</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouClient.GetEndpointInfoAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets human-readable endpoint information (summary, description, tags, deprecated status).
+            </summary>
+            <param name="method">HTTP method</param>
+            <param name="path">API path</param>
+            <param name="cancellationToken">Cancellation token</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouClient.GetRequestSchemaAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets JSON Schema for the request body of an endpoint.
+            </summary>
+            <param name="method">HTTP method</param>
+            <param name="path">API path</param>
+            <param name="cancellationToken">Cancellation token</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouClient.GetResponseSchemaAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets JSON Schema for the response body of an endpoint.
+            </summary>
+            <param name="method">HTTP method</param>
+            <param name="path">API path</param>
+            <param name="cancellationToken">Cancellation token</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouClient.GetFullSchemaAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets full schema including info, request schema, and response schema.
+            </summary>
+            <param name="method">HTTP method</param>
+            <param name="path">API path</param>
+            <param name="cancellationToken">Cancellation token</param>
+        </member>
         <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouClient.OnEvent(System.String,System.Action{System.String})">
             <summary>
             Registers a handler for server-pushed events.
@@ -12397,6 +12443,163 @@
             Useful for test code or scenarios where exceptions are preferred over explicit error handling.
             </summary>
             <exception cref="T:System.InvalidOperationException">Thrown when the response is an error.</exception>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.MetaType">
+            <summary>
+            Meta endpoint types for requesting endpoint metadata instead of executing.
+            When the Meta flag (0x80) is set, this value is encoded in the Channel field.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.MetaType.EndpointInfo">
+            <summary>Human-readable endpoint description (summary, tags, deprecated)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.MetaType.RequestSchema">
+            <summary>JSON Schema for the request body</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.MetaType.ResponseSchema">
+            <summary>JSON Schema for the response body</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.MetaType.FullSchema">
+            <summary>Complete endpoint schema (info + request + response combined)</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1">
+            <summary>
+            Response wrapper for meta endpoint requests.
+            Contains endpoint metadata, schema information, or full schema data.
+            </summary>
+            <typeparam name="T">The type of data contained in this meta response.</typeparam>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.MetaType">
+            <summary>
+            Type of metadata returned.
+            Values: "endpoint-info", "request-schema", "response-schema", "full-schema"
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.EndpointKey">
+            <summary>
+            Endpoint key in format "METHOD:/path" (e.g., "POST:/accounts/get")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.ServiceName">
+            <summary>
+            Service name that owns this endpoint (e.g., "Accounts")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.Method">
+            <summary>
+            HTTP method (POST, GET, PUT, DELETE, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.Path">
+            <summary>
+            Endpoint path (e.g., "/accounts/get")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.Data">
+            <summary>
+            Metadata payload. Structure varies by MetaType.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.GeneratedAt">
+            <summary>
+            When this response was generated (UTC)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.SchemaVersion">
+            <summary>
+            Schema version (assembly version) for cache invalidation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData">
+            <summary>
+            Endpoint info metadata containing human-readable endpoint description.
+            Returned when MetaType is EndpointInfo.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData.Summary">
+            <summary>
+            Brief summary of what the endpoint does.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData.Description">
+            <summary>
+            Detailed description of endpoint behavior.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData.Tags">
+            <summary>
+            Categorization tags for the endpoint.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData.Deprecated">
+            <summary>
+            Whether this endpoint is deprecated.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData.OperationId">
+            <summary>
+            Operation ID from OpenAPI specification.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData">
+            <summary>
+            JSON Schema data for request or response bodies.
+            Returned when MetaType is RequestSchema or ResponseSchema.
+            This is a flexible container that holds any valid JSON Schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.Schema">
+            <summary>
+            JSON Schema draft specification (e.g., "http://json-schema.org/draft-07/schema#")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.Type">
+            <summary>
+            Root type of the schema (e.g., "object", "array", "string")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.Required">
+            <summary>
+            List of required property names (for object types).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.Properties">
+            <summary>
+            Property definitions (for object types).
+            Values are JSON Schema property definitions.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.Defs">
+            <summary>
+            Shared definitions referenced via $ref.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.ExtensionData">
+            <summary>
+            Additional properties beyond standard JSON Schema fields.
+            Captured via JsonExtensionData to preserve all schema content.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.FullSchemaData">
+            <summary>
+            Full schema data combining info, request schema, and response schema.
+            Returned when MetaType is FullSchema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.FullSchemaData.Info">
+            <summary>
+            Endpoint info (summary, description, tags, deprecated).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.FullSchemaData.Request">
+            <summary>
+            JSON Schema for the request body.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.FullSchemaData.Response">
+            <summary>
+            JSON Schema for the response body.
+            </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent">
             <summary>

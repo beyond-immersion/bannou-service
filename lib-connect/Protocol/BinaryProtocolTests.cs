@@ -34,6 +34,10 @@ public static class BinaryProtocolTests
         // Test 5: Real-world message scenarios
         results.Add(RunTest("Real-World Message Scenarios", TestRealWorldMessageScenarios));
 
+        // Test 6: Meta flag and MetaType
+        results.Add(RunTest("Meta Flag Support", TestMetaFlagSupport));
+        results.Add(RunTest("Meta Type Channel Encoding", TestMetaTypeChannelEncoding));
+
         // Report results
         var totalTests = results.Count;
         var passedTests = 0;
@@ -273,5 +277,99 @@ public static class BinaryProtocolTests
                 a.ServiceGuid == b.ServiceGuid &&
                 a.MessageId == b.MessageId &&
                 a.Payload.Span.SequenceEqual(b.Payload.Span);
+    }
+
+    private static bool TestMetaFlagSupport()
+    {
+        // Test that Meta flag is correctly set and detected
+
+        // Message without Meta flag
+        var regularMessage = BinaryMessage.FromJson(
+            0, // Channel
+            1, // Sequence
+            GuidGenerator.GenerateServiceGuid("session-123", "accounts", "server-salt"),
+            GuidGenerator.GenerateMessageId(),
+            "{\"id\":\"test\"}"
+        );
+
+        if (regularMessage.IsMeta)
+        {
+            return false; // Regular message should not be meta
+        }
+
+        // Message with Meta flag
+        var metaMessage = new BinaryMessage(
+            MessageFlags.Meta,
+            (ushort)MetaType.FullSchema,
+            1,
+            GuidGenerator.GenerateServiceGuid("session-123", "accounts", "server-salt"),
+            GuidGenerator.GenerateMessageId(),
+            Array.Empty<byte>() // Meta requests have empty payload
+        );
+
+        if (!metaMessage.IsMeta)
+        {
+            return false; // Meta message should be detected
+        }
+
+        // Round-trip test
+        var serialized = metaMessage.ToByteArray();
+        var deserialized = BinaryMessage.Parse(serialized, serialized.Length);
+
+        if (!deserialized.IsMeta)
+        {
+            return false; // Meta flag should survive serialization
+        }
+
+        return true;
+    }
+
+    private static bool TestMetaTypeChannelEncoding()
+    {
+        // Test that MetaType values are correctly encoded in Channel field
+        var testCases = new[]
+        {
+            (MetaType.EndpointInfo, "endpoint-info"),
+            (MetaType.RequestSchema, "request-schema"),
+            (MetaType.ResponseSchema, "response-schema"),
+            (MetaType.FullSchema, "full-schema")
+        };
+
+        foreach (var (metaType, _) in testCases)
+        {
+            var message = new BinaryMessage(
+                MessageFlags.Meta,
+                (ushort)metaType, // MetaType encoded in Channel
+                1,
+                GuidGenerator.GenerateServiceGuid("session-123", "accounts", "server-salt"),
+                GuidGenerator.GenerateMessageId(),
+                Array.Empty<byte>()
+            );
+
+            // Verify Channel matches MetaType
+            if (message.Channel != (ushort)metaType)
+            {
+                return false;
+            }
+
+            // Round-trip
+            var serialized = message.ToByteArray();
+            var deserialized = BinaryMessage.Parse(serialized, serialized.Length);
+
+            // Verify Channel survives serialization
+            if (deserialized.Channel != (ushort)metaType)
+            {
+                return false;
+            }
+
+            // Verify can cast back to MetaType
+            var extractedMetaType = (MetaType)deserialized.Channel;
+            if (extractedMetaType != metaType)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
