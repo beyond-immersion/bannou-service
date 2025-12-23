@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
@@ -698,7 +699,7 @@ public partial class RealmService : IRealmService
             {
                 try
                 {
-                    var model = JsonSerializer.Deserialize<RealmModel>(result.Value);
+                    var model = BannouJson.Deserialize<RealmModel>(result.Value);
                     if (model != null)
                     {
                         realmList.Add(model);

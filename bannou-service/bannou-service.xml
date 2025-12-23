@@ -806,6 +806,94 @@
             This ensures newly deployed containers have correct routing information.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Configuration.BannouJson">
+             <summary>
+             Static helper for JSON serialization/deserialization that always uses Bannou's
+             standard configuration. This is the SINGLE SOURCE OF TRUTH for JSON serialization
+             settings across all Bannou services and SDKs.
+            
+             USE THIS INSTEAD OF JsonSerializer.Deserialize/Serialize DIRECTLY.
+            
+             This ensures consistent behavior across the codebase:
+             - Case-insensitive property matching (handles both PascalCase and camelCase)
+             - Enums serialize as strings matching C# enum names (e.g., "GettingStarted")
+             - Null values are ignored when writing
+             - Strict number handling (no string-to-number coercion)
+             - Proper handling of all Bannou model types
+            
+             Example usage:
+               var model = BannouJson.Deserialize&lt;MyModel&gt;(jsonString);
+               var json = BannouJson.Serialize(model);
+             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Configuration.BannouJson.Options">
+            <summary>
+            Standard JSON serializer options used throughout Bannou.
+            This is the canonical configuration - all JSON operations should use this.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.BannouJson.Deserialize``1(System.String)">
+            <summary>
+            Deserialize JSON string to object using Bannou's standard configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.BannouJson.DeserializeRequired``1(System.String)">
+            <summary>
+            Deserialize JSON string to object using Bannou's standard configuration.
+            Throws if result is null.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.BannouJson.Serialize``1(``0)">
+            <summary>
+            Serialize object to JSON string using Bannou's standard configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.BannouJson.Serialize(System.Object,System.Type)">
+            <summary>
+            Serialize object to JSON string using Bannou's standard configuration with explicit type.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.BannouJson.Deserialize``1(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Deserialize from UTF-8 bytes using Bannou's standard configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes``1(``0)">
+            <summary>
+            Serialize object to UTF-8 bytes using Bannou's standard configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.BannouJson.DeserializeAsync``1(System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+            Async deserialize from stream using Bannou's standard configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.BannouJson.SerializeAsync``1(System.IO.Stream,``0,System.Threading.CancellationToken)">
+            <summary>
+            Async serialize to stream using Bannou's standard configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToElement``1(``0)">
+            <summary>
+            Serialize object to JsonElement using Bannou's standard configuration.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Configuration.BannouJsonExtensions">
+            <summary>
+            Extension methods for JSON serialization using Bannou's standard configuration.
+            Provides a fluent API for common JSON operations.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.BannouJsonExtensions.FromJson``1(System.String)">
+            <summary>
+            Deserialize this JSON string using Bannou's standard configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.BannouJsonExtensions.ToJson``1(``0)">
+            <summary>
+            Serialize this object to JSON using Bannou's standard configuration.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Configuration.BaseServiceConfiguration">
             <summary>
             Base configuration class for Bannou services with common configuration properties.
@@ -825,6 +913,7 @@
         <member name="F:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.DaprSerializerConfig">
             <summary>
             Shared serializer options, between all dapr services/consumers.
+            References BannouJson.Options as the single source of truth for JSON serialization.
             IMPORTANT: Must include JsonStringEnumConverter to ensure enum values serialize
             as strings (e.g., "permissions.capabilities_refresh") instead of numbers (e.g., 0).
             This is critical for client event handling where event_name is matched by string value.
@@ -1190,14 +1279,13 @@
             <param name="request">The HTTP request containing the event</param>
             <returns>The unwrapped event JSON element, or null if parsing fails</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.DaprEventHelper.ReadEventAsync``1(Microsoft.AspNetCore.Http.HttpRequest,System.Text.Json.JsonSerializerOptions)">
+        <member name="M:BeyondImmersion.BannouService.DaprEventHelper.ReadEventAsync``1(Microsoft.AspNetCore.Http.HttpRequest)">
             <summary>
             Reads and parses a Dapr pub/sub event from the HTTP request body.
             Automatically handles both CloudEvents format (with 'data' wrapper) and raw format.
             </summary>
             <typeparam name="T">The event model type to deserialize</typeparam>
             <param name="request">The HTTP request containing the event</param>
-            <param name="options">Optional JSON serializer options (defaults to PropertyNameCaseInsensitive)</param>
             <returns>The deserialized event model, or null if parsing fails</returns>
         </member>
         <member name="M:BeyondImmersion.BannouService.DaprEventHelper.UnwrapCloudEventsEnvelope(System.Byte[])">
@@ -2221,6 +2309,86 @@
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CharacterDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.DocumentationQueriedEvent">
+            <summary>
+            Published when documentation is queried with natural language
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.DocumentationSearchedEvent">
+            <summary>
+            Published when documentation is searched with keywords
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.DocumentViewedEvent">
+            <summary>
+            Published when a document is viewed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.DocumentationImportStartedEvent">
+            <summary>
+            Published when an import operation starts
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.DocumentationImportCompletedEvent">
+            <summary>
+            Published when an import operation completes
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.DocumentCreatedEvent">
+            <summary>
+            Published to document.created when a document is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentCreatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.DocumentUpdatedEvent">
+            <summary>
+            Published to document.updated when a document is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentUpdatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.DocumentDeletedEvent">
+            <summary>
+            Published to document.deleted when a document is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentDeletedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentDeletedEvent.DeletedReason">
             <summary>
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
@@ -5339,6 +5507,439 @@
         <member name="P:BeyondImmersion.BannouService.Connect.PermissionRecompileEvent.Metadata">
             <summary>
             Additional context for the recompilation
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.ViewDocumentBySlugAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            View documentation page in browser
+            </summary>
+            <remarks>
+            Browser-facing endpoint for viewing documentation.
+            <br/>Routed via NGINX, not exposed to WebSocket clients.
+            <br/>Returns HTML-rendered documentation page.
+            </remarks>
+            <param name="slug">Document slug within namespace</param>
+            <param name="ns">Documentation namespace (defaults to bannou)</param>
+            <returns>HTML documentation page (returns ContentResult)</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.QueryDocumentationAsync(BeyondImmersion.BannouService.Documentation.QueryDocumentationRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Natural language documentation search
+            </summary>
+            <remarks>
+            Search documentation using natural language queries.
+            <br/>Returns the most relevant documents with voice-friendly summaries.
+            </remarks>
+            <returns>Search results with voice-friendly summaries</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.GetDocumentAsync(BeyondImmersion.BannouService.Documentation.GetDocumentRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get specific document by ID or slug
+            </summary>
+            <remarks>
+            Retrieve a specific document by its unique identifier or slug.
+            <br/>Returns full content with metadata.
+            </remarks>
+            <returns>Document content</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.SearchDocumentationAsync(BeyondImmersion.BannouService.Documentation.SearchDocumentationRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Full-text keyword search
+            </summary>
+            <remarks>
+            Search documentation using exact keyword matching.
+            <br/>Faster than semantic search but less flexible.
+            </remarks>
+            <returns>Matching documents</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.ListDocumentsAsync(BeyondImmersion.BannouService.Documentation.ListDocumentsRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List documents by category
+            </summary>
+            <remarks>
+            List all documents in a specific category or all categories.
+            <br/>Supports pagination for large result sets.
+            </remarks>
+            <returns>Document list</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.SuggestRelatedTopicsAsync(BeyondImmersion.BannouService.Documentation.SuggestRelatedRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get related topics and follow-up suggestions
+            </summary>
+            <remarks>
+            Given a topic or document ID, returns related topics the user
+            <br/>might want to explore. Useful for conversational AI flow.
+            </remarks>
+            <returns>Related topics</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.CreateDocumentAsync(BeyondImmersion.BannouService.Documentation.CreateDocumentRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create new documentation entry
+            </summary>
+            <returns>Document created</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.UpdateDocumentAsync(BeyondImmersion.BannouService.Documentation.UpdateDocumentRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update existing documentation entry
+            </summary>
+            <returns>Document updated</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.DeleteDocumentAsync(BeyondImmersion.BannouService.Documentation.DeleteDocumentRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Soft-delete documentation entry to trashcan
+            </summary>
+            <remarks>
+            Moves document to trashcan for recovery within TTL period.
+            <br/>Documents are automatically cleaned up after TrashcanTtlDays.
+            </remarks>
+            <returns>Document moved to trashcan</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.RecoverDocumentAsync(BeyondImmersion.BannouService.Documentation.RecoverDocumentRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Recover document from trashcan
+            </summary>
+            <remarks>
+            Restores a soft-deleted document from the trashcan.
+            <br/>Must be called before the trashcan TTL expires.
+            </remarks>
+            <returns>Document recovered</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.BulkUpdateDocumentsAsync(BeyondImmersion.BannouService.Documentation.BulkUpdateRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Bulk update document metadata
+            </summary>
+            <remarks>
+            Apply category, tag, or metadata changes to multiple documents at once.
+            <br/>Each document is processed independently - partial success is possible.
+            </remarks>
+            <returns>Bulk update results</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.BulkDeleteDocumentsAsync(BeyondImmersion.BannouService.Documentation.BulkDeleteRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Bulk soft-delete documents to trashcan
+            </summary>
+            <remarks>
+            Move multiple documents to trashcan at once.
+            <br/>Each document is processed independently - partial success is possible.
+            </remarks>
+            <returns>Bulk delete results</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.ImportDocumentationAsync(BeyondImmersion.BannouService.Documentation.ImportDocumentationRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Bulk import documentation from structured source
+            </summary>
+            <remarks>
+            Import multiple documents. Each document processed independently.
+            <br/>Partial success is possible - failures reported per document.
+            </remarks>
+            <returns>Import results (may include partial failures)</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.ListTrashcanAsync(BeyondImmersion.BannouService.Documentation.ListTrashcanRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List documents in the trashcan
+            </summary>
+            <remarks>
+            List all soft-deleted documents within the namespace's trashcan.
+            <br/>Documents remain recoverable until TTL expires or purge is called.
+            </remarks>
+            <returns>Trashcan contents</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.PurgeTrashcanAsync(BeyondImmersion.BannouService.Documentation.PurgeTrashcanRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Permanently delete trashcan items
+            </summary>
+            <remarks>
+            Permanently delete specified documents from trashcan, or purge all.
+            <br/>This operation is irreversible - documents cannot be recovered after purge.
+            </remarks>
+            <returns>Purge results</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.GetNamespaceStatsAsync(BeyondImmersion.BannouService.Documentation.GetNamespaceStatsRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get namespace documentation statistics
+            </summary>
+            <remarks>
+            Retrieve usage statistics and metadata for a documentation namespace.
+            <br/>Useful for monitoring, capacity planning, and administrative dashboards.
+            </remarks>
+            <returns>Namespace statistics</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+            <summary>
+            Creates and configures an HttpClient instance for this service client.
+            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.ViewDocumentBySlugAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            View documentation page in browser
+            </summary>
+            <remarks>
+            Browser-facing endpoint for viewing documentation.
+            <br/>Routed via NGINX, not exposed to WebSocket clients.
+            <br/>Returns HTML-rendered documentation page.
+            </remarks>
+            <param name="slug">Document slug within namespace</param>
+            <param name="ns">Documentation namespace (defaults to bannou)</param>
+            <returns>HTML documentation page (returns ContentResult)</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.QueryDocumentationAsync(BeyondImmersion.BannouService.Documentation.QueryDocumentationRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Natural language documentation search
+            </summary>
+            <remarks>
+            Search documentation using natural language queries.
+            <br/>Returns the most relevant documents with voice-friendly summaries.
+            </remarks>
+            <returns>Search results with voice-friendly summaries</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.GetDocumentAsync(BeyondImmersion.BannouService.Documentation.GetDocumentRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get specific document by ID or slug
+            </summary>
+            <remarks>
+            Retrieve a specific document by its unique identifier or slug.
+            <br/>Returns full content with metadata.
+            </remarks>
+            <returns>Document content</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.SearchDocumentationAsync(BeyondImmersion.BannouService.Documentation.SearchDocumentationRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Full-text keyword search
+            </summary>
+            <remarks>
+            Search documentation using exact keyword matching.
+            <br/>Faster than semantic search but less flexible.
+            </remarks>
+            <returns>Matching documents</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.ListDocumentsAsync(BeyondImmersion.BannouService.Documentation.ListDocumentsRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List documents by category
+            </summary>
+            <remarks>
+            List all documents in a specific category or all categories.
+            <br/>Supports pagination for large result sets.
+            </remarks>
+            <returns>Document list</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.SuggestRelatedTopicsAsync(BeyondImmersion.BannouService.Documentation.SuggestRelatedRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get related topics and follow-up suggestions
+            </summary>
+            <remarks>
+            Given a topic or document ID, returns related topics the user
+            <br/>might want to explore. Useful for conversational AI flow.
+            </remarks>
+            <returns>Related topics</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.CreateDocumentAsync(BeyondImmersion.BannouService.Documentation.CreateDocumentRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create new documentation entry
+            </summary>
+            <returns>Document created</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.UpdateDocumentAsync(BeyondImmersion.BannouService.Documentation.UpdateDocumentRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update existing documentation entry
+            </summary>
+            <returns>Document updated</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.DeleteDocumentAsync(BeyondImmersion.BannouService.Documentation.DeleteDocumentRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Soft-delete documentation entry to trashcan
+            </summary>
+            <remarks>
+            Moves document to trashcan for recovery within TTL period.
+            <br/>Documents are automatically cleaned up after TrashcanTtlDays.
+            </remarks>
+            <returns>Document moved to trashcan</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.RecoverDocumentAsync(BeyondImmersion.BannouService.Documentation.RecoverDocumentRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Recover document from trashcan
+            </summary>
+            <remarks>
+            Restores a soft-deleted document from the trashcan.
+            <br/>Must be called before the trashcan TTL expires.
+            </remarks>
+            <returns>Document recovered</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.BulkUpdateDocumentsAsync(BeyondImmersion.BannouService.Documentation.BulkUpdateRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Bulk update document metadata
+            </summary>
+            <remarks>
+            Apply category, tag, or metadata changes to multiple documents at once.
+            <br/>Each document is processed independently - partial success is possible.
+            </remarks>
+            <returns>Bulk update results</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.BulkDeleteDocumentsAsync(BeyondImmersion.BannouService.Documentation.BulkDeleteRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Bulk soft-delete documents to trashcan
+            </summary>
+            <remarks>
+            Move multiple documents to trashcan at once.
+            <br/>Each document is processed independently - partial success is possible.
+            </remarks>
+            <returns>Bulk delete results</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.ImportDocumentationAsync(BeyondImmersion.BannouService.Documentation.ImportDocumentationRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Bulk import documentation from structured source
+            </summary>
+            <remarks>
+            Import multiple documents. Each document processed independently.
+            <br/>Partial success is possible - failures reported per document.
+            </remarks>
+            <returns>Import results (may include partial failures)</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.ListTrashcanAsync(BeyondImmersion.BannouService.Documentation.ListTrashcanRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List documents in the trashcan
+            </summary>
+            <remarks>
+            List all soft-deleted documents within the namespace's trashcan.
+            <br/>Documents remain recoverable until TTL expires or purge is called.
+            </remarks>
+            <returns>Trashcan contents</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.PurgeTrashcanAsync(BeyondImmersion.BannouService.Documentation.PurgeTrashcanRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Permanently delete trashcan items
+            </summary>
+            <remarks>
+            Permanently delete specified documents from trashcan, or purge all.
+            <br/>This operation is irreversible - documents cannot be recovered after purge.
+            </remarks>
+            <returns>Purge results</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.GetNamespaceStatsAsync(BeyondImmersion.BannouService.Documentation.GetNamespaceStatsRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get namespace documentation statistics
+            </summary>
+            <remarks>
+            Retrieve usage statistics and metadata for a documentation namespace.
+            <br/>Useful for monitoring, capacity planning, and administrative dashboards.
+            </remarks>
+            <returns>Namespace statistics</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.DocumentCategory">
+            <summary>
+            Fixed categories for type-safe filtering
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.RelatedDepth">
+            <summary>
+            How deep to traverse related document links:
+            <br/>- none: No related documents included
+            <br/>- direct: Only directly linked documents (depth 1)
+            <br/>- extended: Related documents + their related documents (depth 2)
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.QueryDocumentationRequest.Namespace">
+            <summary>
+            Documentation namespace
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.QueryDocumentationRequest.Query">
+            <summary>
+            Natural language query
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.QueryDocumentationRequest.SessionId">
+            <summary>
+            Optional session ID for conversational context
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.QueryDocumentationResponse.VoiceSummary">
+            <summary>
+            Concise spoken summary for voice AI
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.CreateDocumentRequest.Content">
+            <summary>
+            Markdown content (max 500KB)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.PurgeTrashcanRequest.DocumentIds">
+            <summary>
+            If empty, purges all trashcan items
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.GameSession.IGameSessionClient.ListGameSessionsAsync(BeyondImmersion.BannouService.GameSession.ListGameSessionsRequest,System.Threading.CancellationToken)">

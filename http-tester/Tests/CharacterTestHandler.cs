@@ -1,4 +1,6 @@
 using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.Testing;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
@@ -9,7 +11,7 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 ///
 /// Note: Character APIs test service-to-service communication via Dapr.
 /// These tests validate full CRUD operations with real datastores.
-/// Relationship tests are in RelationshipTestHandler (separate service).
+/// Characters require valid Realm and Species - these are created as dependencies.
 /// </summary>
 public class CharacterTestHandler : IServiceTestHandler
 {
@@ -35,17 +37,60 @@ public class CharacterTestHandler : IServiceTestHandler
         };
     }
 
+    /// <summary>
+    /// Helper to create a test realm for character tests.
+    /// </summary>
+    private static async Task<RealmResponse> CreateTestRealmAsync(string suffix)
+    {
+        var realmClient = new RealmClient();
+        return await realmClient.CreateRealmAsync(new CreateRealmRequest
+        {
+            Code = $"CHAR_TEST_{DateTime.Now.Ticks}_{suffix}",
+            Name = $"Character Test Realm {suffix}",
+            Category = "TEST"
+        });
+    }
+
+    /// <summary>
+    /// Helper to create a test species and add it to a realm for character tests.
+    /// </summary>
+    private static async Task<SpeciesResponse> CreateTestSpeciesAsync(Guid realmId, string suffix)
+    {
+        var speciesClient = new SpeciesClient();
+
+        // Create the species
+        var species = await speciesClient.CreateSpeciesAsync(new CreateSpeciesRequest
+        {
+            Code = $"CHAR_SPECIES_{DateTime.Now.Ticks}_{suffix}",
+            Name = $"Character Test Species {suffix}",
+            Description = "Test species for character tests"
+        });
+
+        // Add species to the realm
+        await speciesClient.AddSpeciesToRealmAsync(new AddSpeciesToRealmRequest
+        {
+            SpeciesId = species.SpeciesId,
+            RealmId = realmId
+        });
+
+        return species;
+    }
+
     private static async Task<TestResult> TestCreateCharacter(ITestClient client, string[] args)
     {
         try
         {
+            // Create dependencies first
+            var realm = await CreateTestRealmAsync("CREATE");
+            var species = await CreateTestSpeciesAsync(realm.RealmId, "CREATE");
+
             var characterClient = new CharacterClient();
 
             var createRequest = new CreateCharacterRequest
             {
                 Name = $"TestCharacter_{DateTime.Now.Ticks}",
-                RealmId = Guid.NewGuid(),
-                SpeciesId = Guid.NewGuid(),
+                RealmId = realm.RealmId,
+                SpeciesId = species.SpeciesId,
                 BirthDate = DateTimeOffset.UtcNow.AddYears(-25),
                 Status = CharacterStatus.Alive
             };
@@ -77,14 +122,18 @@ public class CharacterTestHandler : IServiceTestHandler
     {
         try
         {
+            // Create dependencies first
+            var realm = await CreateTestRealmAsync("GET");
+            var species = await CreateTestSpeciesAsync(realm.RealmId, "GET");
+
             var characterClient = new CharacterClient();
 
             // First create a test character
             var createRequest = new CreateCharacterRequest
             {
                 Name = $"GetTest_{DateTime.Now.Ticks}",
-                RealmId = Guid.NewGuid(),
-                SpeciesId = Guid.NewGuid(),
+                RealmId = realm.RealmId,
+                SpeciesId = species.SpeciesId,
                 BirthDate = DateTimeOffset.UtcNow.AddYears(-30),
                 Status = CharacterStatus.Alive
             };
@@ -119,14 +168,18 @@ public class CharacterTestHandler : IServiceTestHandler
     {
         try
         {
+            // Create dependencies first
+            var realm = await CreateTestRealmAsync("UPDATE");
+            var species = await CreateTestSpeciesAsync(realm.RealmId, "UPDATE");
+
             var characterClient = new CharacterClient();
 
             // First create a test character
             var createRequest = new CreateCharacterRequest
             {
                 Name = $"UpdateTest_{DateTime.Now.Ticks}",
-                RealmId = Guid.NewGuid(),
-                SpeciesId = Guid.NewGuid(),
+                RealmId = realm.RealmId,
+                SpeciesId = species.SpeciesId,
                 BirthDate = DateTimeOffset.UtcNow.AddYears(-20),
                 Status = CharacterStatus.Alive
             };
@@ -166,14 +219,18 @@ public class CharacterTestHandler : IServiceTestHandler
     {
         try
         {
+            // Create dependencies first
+            var realm = await CreateTestRealmAsync("DELETE");
+            var species = await CreateTestSpeciesAsync(realm.RealmId, "DELETE");
+
             var characterClient = new CharacterClient();
 
             // First create a test character
             var createRequest = new CreateCharacterRequest
             {
                 Name = $"DeleteTest_{DateTime.Now.Ticks}",
-                RealmId = Guid.NewGuid(),
-                SpeciesId = Guid.NewGuid(),
+                RealmId = realm.RealmId,
+                SpeciesId = species.SpeciesId,
                 BirthDate = DateTimeOffset.UtcNow.AddYears(-18),
                 Status = CharacterStatus.Alive
             };
@@ -212,19 +269,20 @@ public class CharacterTestHandler : IServiceTestHandler
     {
         try
         {
+            // Create dependencies first
+            var realm = await CreateTestRealmAsync("LIST");
+            var species = await CreateTestSpeciesAsync(realm.RealmId, "LIST");
+
             var characterClient = new CharacterClient();
 
-            // Create a few test characters first with the same realm for filtering
-            var testRealmId = Guid.NewGuid();
-            var testSpeciesId = Guid.NewGuid();
-
+            // Create a few test characters with the same realm for filtering
             for (int i = 0; i < 3; i++)
             {
                 var createRequest = new CreateCharacterRequest
                 {
                     Name = $"ListTest_{DateTime.Now.Ticks}_{i}",
-                    RealmId = testRealmId,
-                    SpeciesId = testSpeciesId,
+                    RealmId = realm.RealmId,
+                    SpeciesId = species.SpeciesId,
                     BirthDate = DateTimeOffset.UtcNow.AddYears(-25 - i),
                     Status = CharacterStatus.Alive
                 };
@@ -234,7 +292,7 @@ public class CharacterTestHandler : IServiceTestHandler
             // List characters with realm filter
             var listRequest = new ListCharactersRequest
             {
-                RealmId = testRealmId,
+                RealmId = realm.RealmId,
                 Status = CharacterStatus.Alive,
                 Page = 1,
                 PageSize = 10
@@ -264,19 +322,20 @@ public class CharacterTestHandler : IServiceTestHandler
     {
         try
         {
+            // Create dependencies first
+            var realm = await CreateTestRealmAsync("REALM");
+            var species = await CreateTestSpeciesAsync(realm.RealmId, "REALM");
+
             var characterClient = new CharacterClient();
 
-            // Create test characters in a specific realm
-            var testRealmId = Guid.NewGuid();
-            var testSpeciesId = Guid.NewGuid();
-
+            // Create test characters in the specific realm
             for (int i = 0; i < 3; i++)
             {
                 var createRequest = new CreateCharacterRequest
                 {
                     Name = $"RealmTest_{DateTime.Now.Ticks}_{i}",
-                    RealmId = testRealmId,
-                    SpeciesId = testSpeciesId,
+                    RealmId = realm.RealmId,
+                    SpeciesId = species.SpeciesId,
                     BirthDate = DateTimeOffset.UtcNow.AddYears(-20 - i),
                     Status = CharacterStatus.Alive
                 };
@@ -286,7 +345,7 @@ public class CharacterTestHandler : IServiceTestHandler
             // Query by realm
             var realmRequest = new GetCharactersByRealmRequest
             {
-                RealmId = testRealmId,
+                RealmId = realm.RealmId,
                 Page = 1,
                 PageSize = 10
             };
@@ -302,11 +361,11 @@ public class CharacterTestHandler : IServiceTestHandler
             // Verify all returned characters are in the correct realm
             foreach (var character in response.Characters)
             {
-                if (character.RealmId != testRealmId)
-                    return TestResult.Failed($"Character {character.CharacterId} has wrong realm: expected '{testRealmId}', got '{character.RealmId}'");
+                if (character.RealmId != realm.RealmId)
+                    return TestResult.Failed($"Character {character.CharacterId} has wrong realm: expected '{realm.RealmId}', got '{character.RealmId}'");
             }
 
-            return TestResult.Successful($"Retrieved {response.Characters.Count} characters from realm {testRealmId}");
+            return TestResult.Successful($"Retrieved {response.Characters.Count} characters from realm {realm.RealmId}");
         }
         catch (ApiException ex)
         {
@@ -353,16 +412,18 @@ public class CharacterTestHandler : IServiceTestHandler
     {
         try
         {
+            // Create dependencies first
+            var realm = await CreateTestRealmAsync("LIFECYCLE");
+            var species = await CreateTestSpeciesAsync(realm.RealmId, "LIFECYCLE");
+
             var characterClient = new CharacterClient();
-            var realmId = Guid.NewGuid();
-            var speciesId = Guid.NewGuid();
 
             // Step 1: Create character
             var createRequest = new CreateCharacterRequest
             {
                 Name = $"LifecycleTest_{DateTime.Now.Ticks}",
-                RealmId = realmId,
-                SpeciesId = speciesId,
+                RealmId = realm.RealmId,
+                SpeciesId = species.SpeciesId,
                 BirthDate = DateTimeOffset.UtcNow.AddYears(-25),
                 Status = CharacterStatus.Alive
             };

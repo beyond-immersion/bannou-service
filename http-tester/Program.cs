@@ -190,14 +190,22 @@ public class Program
             // Register generated service clients using simple scoped registration (NSwag parameterless constructor architecture)
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Auth.IAuthClient, BeyondImmersion.BannouService.Auth.AuthClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Accounts.IAccountsClient, BeyondImmersion.BannouService.Accounts.AccountsClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Connect.IConnectClient, BeyondImmersion.BannouService.Connect.ConnectClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Behavior.IBehaviorClient, BeyondImmersion.BannouService.Behavior.BehaviorClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Permissions.IPermissionsClient, BeyondImmersion.BannouService.Permissions.PermissionsClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Character.ICharacterClient, BeyondImmersion.BannouService.Character.CharacterClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Connect.IConnectClient, BeyondImmersion.BannouService.Connect.ConnectClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Documentation.IDocumentationClient, BeyondImmersion.BannouService.Documentation.DocumentationClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.GameSession.IGameSessionClient, BeyondImmersion.BannouService.GameSession.GameSessionClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Website.IWebsiteClient, BeyondImmersion.BannouService.Website.WebsiteClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Location.ILocationClient, BeyondImmersion.BannouService.Location.LocationClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient, BeyondImmersion.BannouService.Orchestrator.OrchestratorClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Permissions.IPermissionsClient, BeyondImmersion.BannouService.Permissions.PermissionsClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Realm.IRealmClient, BeyondImmersion.BannouService.Realm.RealmClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Relationship.IRelationshipClient, BeyondImmersion.BannouService.Relationship.RelationshipClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient, BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Servicedata.IServicedataClient, BeyondImmersion.BannouService.Servicedata.ServicedataClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Species.ISpeciesClient, BeyondImmersion.BannouService.Species.SpeciesClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient, BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Website.IWebsiteClient, BeyondImmersion.BannouService.Website.WebsiteClient>();
+            // Note: TestingTestHandler uses direct HTTP calls, not a generated client
 
             // Build the service provider
             ServiceProvider = serviceCollection.BuildServiceProvider();
@@ -397,6 +405,7 @@ public class Program
         {
             "auth",
             "accounts",
+            "documentation",
             "permissions",
             "subscriptions",  // Required for auth service login flow
             "servicedata"     // Required by subscriptions service
@@ -631,13 +640,20 @@ public class Program
         {
             new AccountTestHandler(),
             new AuthTestHandler(),
+            new CharacterTestHandler(),
             new ConnectTestHandler(),
+            new DocumentationTestHandler(),
             new GameSessionTestHandler(),
+            new LocationTestHandler(),
             new OrchestratorTestHandler(),
             new PermissionsTestHandler(),
+            new RealmTestHandler(),
+            new RelationshipTestHandler(),
+            new RelationshipTypeTestHandler(),
             new ServicedataTestHandler(),
-            new SubscriptionsTestHandler()
-            // Add more test handlers as needed
+            new SpeciesTestHandler(),
+            new SubscriptionsTestHandler(),
+            new TestingTestHandler()
         };
 
         // Filter test handlers by plugin if specified

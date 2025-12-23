@@ -1,0 +1,80 @@
+openapi: 3.0.3
+info:
+  title: Documentation Service Configuration
+  description: |
+    Configuration schema for Documentation service.
+    Properties are bound to environment variables with DOCUMENTATION_ prefix.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Search Index Configuration
+    SearchIndexRebuildOnStartup:
+      type: boolean
+      description: Whether to rebuild search index on service startup
+      env: DOCUMENTATION_SEARCH_INDEX_REBUILD_ON_STARTUP
+      default: true
+
+    # Session Configuration
+    SessionTtlSeconds:
+      type: integer
+      description: TTL for informal session tracking (24 hours default)
+      env: DOCUMENTATION_SESSION_TTL_SECONDS
+      default: 86400
+
+    # Content Size Limits
+    MaxContentSizeBytes:
+      type: integer
+      description: Maximum document content size in bytes (500KB default)
+      env: DOCUMENTATION_MAX_CONTENT_SIZE_BYTES
+      default: 524288
+
+    # Trashcan Configuration
+    TrashcanTtlDays:
+      type: integer
+      description: Days before trashcan items are auto-purged
+      env: DOCUMENTATION_TRASHCAN_TTL_DAYS
+      default: 7
+
+    # Voice Summary Configuration
+    VoiceSummaryMaxLength:
+      type: integer
+      description: Maximum characters for voice summaries
+      env: DOCUMENTATION_VOICE_SUMMARY_MAX_LENGTH
+      default: 200
+
+    # Search Configuration
+    SearchCacheTtlSeconds:
+      type: integer
+      description: TTL for search result caching
+      env: DOCUMENTATION_SEARCH_CACHE_TTL_SECONDS
+      default: 300
+    MinRelevanceScore:
+      type: number
+      description: Default minimum relevance score for search results
+      env: DOCUMENTATION_MIN_RELEVANCE_SCORE
+      default: 0.3
+    MaxSearchResults:
+      type: integer
+      description: Maximum search results to return
+      env: DOCUMENTATION_MAX_SEARCH_RESULTS
+      default: 20
+
+    # Import Configuration
+    MaxImportDocuments:
+      type: integer
+      description: Maximum documents per import (0 = unlimited)
+      env: DOCUMENTATION_MAX_IMPORT_DOCUMENTS
+      default: 0
+
+    # AI Enhancement Configuration (disabled by default)
+    AiEnhancementsEnabled:
+      type: boolean
+      description: Enable AI-powered semantic search (future feature)
+      env: DOCUMENTATION_AI_ENHANCEMENTS_ENABLED
+      default: false
+    AiEmbeddingsModel:
+      type: string
+      description: Model for generating embeddings (when AI enabled)
+      env: DOCUMENTATION_AI_EMBEDDINGS_MODEL
+      default: ""

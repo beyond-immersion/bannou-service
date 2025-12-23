@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
@@ -8,7 +9,6 @@ using BeyondImmersion.BannouService.Testing;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.Text.Json;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Species.Tests;
@@ -560,7 +560,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         var bulkResults = speciesIds.Select((id, idx) => new BulkStateItem(
             $"species:{id}",
-            JsonSerializer.Serialize(CreateTestSpeciesModel(Guid.Parse(id), $"SPEC{idx}", $"Species {idx}")),
+            BannouJson.Serialize(CreateTestSpeciesModel(Guid.Parse(id), $"SPEC{idx}", $"Species {idx}")),
             "etag")).ToList();
 
         _mockDaprClient
@@ -606,8 +606,8 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         var bulkResults = new List<BulkStateItem>
         {
-            new($"species:{speciesId1}", JsonSerializer.Serialize(model1), "etag"),
-            new($"species:{speciesId2}", JsonSerializer.Serialize(model2), "etag")
+            new($"species:{speciesId1}", BannouJson.Serialize(model1), "etag"),
+            new($"species:{speciesId2}", BannouJson.Serialize(model2), "etag")
         };
 
         _mockDaprClient

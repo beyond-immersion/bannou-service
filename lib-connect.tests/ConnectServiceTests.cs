@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Auth;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
@@ -7,6 +8,7 @@ using Dapr.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
@@ -426,8 +428,8 @@ public class ConnectServiceTests
 
         // Assert
         Assert.NotNull(result);
-        var resultJson = JsonSerializer.Serialize(result);
-        var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
+        var resultJson = BannouJson.Serialize(result);
+        var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
         Assert.NotNull(resultDict);
         Assert.Equal("processed", resultDict["status"].ToString());
         Assert.Equal("test-session-456", resultDict["sessionId"].ToString());
@@ -449,8 +451,8 @@ public class ConnectServiceTests
 
         // Assert
         Assert.NotNull(result);
-        var resultJson = JsonSerializer.Serialize(result);
-        var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
+        var resultJson = BannouJson.Serialize(result);
+        var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
         Assert.NotNull(resultDict);
         Assert.Equal("processed", resultDict["status"].ToString());
         Assert.Equal("new-service-123", resultDict["serviceId"].ToString());
@@ -484,8 +486,8 @@ public class ConnectServiceTests
 
         // Assert
         Assert.NotNull(result);
-        var resultJson = JsonSerializer.Serialize(result);
-        var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
+        var resultJson = BannouJson.Serialize(result);
+        var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
         Assert.NotNull(resultDict);
         Assert.Equal("delivered", resultDict["status"].ToString());
         Assert.Equal("client-789", resultDict["clientId"].ToString());
@@ -512,8 +514,8 @@ public class ConnectServiceTests
 
         // Assert
         Assert.NotNull(result);
-        var resultJson = JsonSerializer.Serialize(result);
-        var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
+        var resultJson = BannouJson.Serialize(result);
+        var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
         Assert.NotNull(resultDict);
         Assert.Equal("sent", resultDict["status"].ToString());
         Assert.Equal("client-rpc-999", resultDict["clientId"].ToString());
@@ -609,6 +611,125 @@ public class ConnectServiceTests
         return service;
     }
 
+
+    #endregion
+
+    #region HTTP Routing Optimization Tests
+
+    /// <summary>
+    /// Tests that static header values are properly initialized for request optimization.
+    /// These static fields avoid per-request allocation of MediaType headers.
+    /// </summary>
+    [Fact]
+    public void StaticHeaders_ShouldBeProperlyInitialized()
+    {
+        // Arrange - access static fields via reflection
+        var acceptHeaderField = typeof(ConnectService).GetField("s_jsonAcceptHeader",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        var contentTypeField = typeof(ConnectService).GetField("s_jsonContentType",
+            BindingFlags.NonPublic | BindingFlags.Static);
+
+        // Assert - fields exist
+        Assert.NotNull(acceptHeaderField);
+        Assert.NotNull(contentTypeField);
+
+        // Act - get values
+        var acceptHeader = acceptHeaderField?.GetValue(null) as MediaTypeWithQualityHeaderValue;
+        var contentType = contentTypeField?.GetValue(null) as MediaTypeHeaderValue;
+
+        // Assert - values are correct
+        Assert.NotNull(acceptHeader);
+        Assert.NotNull(contentType);
+        Assert.Equal("application/json", acceptHeader?.MediaType);
+        Assert.Equal("application/json", contentType?.MediaType);
+        Assert.Equal("utf-8", contentType?.CharSet);
+    }
+
+    /// <summary>
+    /// Tests that BinaryMessage.Payload provides direct access to raw bytes,
+    /// enabling zero-copy forwarding without UTF-16 string conversion.
+    /// </summary>
+    [Fact]
+    public void BinaryMessage_Payload_ShouldProvideRawBytesDirectly()
+    {
+        // Arrange - create message with known JSON payload
+        var originalJson = "{\"test\":\"zero-copy-optimization\",\"value\":12345}";
+        var originalBytes = Encoding.UTF8.GetBytes(originalJson);
+
+        var message = BinaryMessage.FromJson(
+            100, // channel
+            200, // sequence
+            Guid.NewGuid(),
+            GuidGenerator.GenerateMessageId(),
+            originalJson
+        );
+
+        // Act - get payload bytes directly (used in ByteArrayContent optimization)
+        var payloadBytes = message.Payload;
+
+        // Assert - bytes should match original UTF-8 encoding
+        Assert.Equal(originalBytes.Length, payloadBytes.Length);
+        Assert.True(payloadBytes.Span.SequenceEqual(originalBytes));
+
+        // Verify ToArray() produces correct bytes for ByteArrayContent
+        var arrayBytes = payloadBytes.ToArray();
+        Assert.Equal(originalBytes, arrayBytes);
+    }
+
+    /// <summary>
+    /// Tests that using Payload.ToArray() is equivalent to GetJsonPayload() encoded back to UTF-8,
+    /// confirming the optimization preserves data integrity.
+    /// </summary>
+    [Fact]
+    public void BinaryMessage_PayloadToArray_ShouldBeEquivalentToGetJsonPayload()
+    {
+        // Arrange - various JSON payloads including Unicode
+        var testPayloads = new[]
+        {
+            "{\"simple\":\"test\"}",
+            "{\"unicode\":\"日本語テスト\",\"emoji\":\"🎮🎯\"}",
+            "{\"nested\":{\"array\":[1,2,3],\"bool\":true}}",
+            "{\"empty\":\"\",\"null\":null}",
+            "{\"large\":\"" + new string('x', 1000) + "\"}"
+        };
+
+        foreach (var originalJson in testPayloads)
+        {
+            var message = BinaryMessage.FromJson(
+                1, 0, Guid.NewGuid(),
+                GuidGenerator.GenerateMessageId(),
+                originalJson
+            );
+
+            // Act - compare both access methods
+            var viaPayload = message.Payload.ToArray();
+            var viaGetJson = Encoding.UTF8.GetBytes(message.GetJsonPayload());
+
+            // Assert - both should produce identical bytes
+            Assert.Equal(viaGetJson, viaPayload);
+        }
+    }
+
+    /// <summary>
+    /// Tests that empty payloads are handled correctly in the optimized path.
+    /// </summary>
+    [Fact]
+    public void BinaryMessage_EmptyPayload_ShouldBeHandledCorrectly()
+    {
+        // Arrange - message with empty payload (no JSON body)
+        var message = BinaryMessage.FromJson(
+            1, 0, Guid.NewGuid(),
+            GuidGenerator.GenerateMessageId(),
+            ""
+        );
+
+        // Act
+        var payloadBytes = message.Payload;
+
+        // Assert - empty payload should have zero length
+        Assert.Equal(0, payloadBytes.Length);
+        Assert.Empty(payloadBytes.ToArray());
+    }
 
     #endregion
 }

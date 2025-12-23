@@ -1,7 +1,7 @@
 # Bannou Service Development Tenets
 
-> **Version**: 2.0
-> **Last Updated**: 2025-12-22
+> **Version**: 2.1
+> **Last Updated**: 2025-12-23
 > **Scope**: All Bannou microservices and related infrastructure
 
 This document establishes the mandatory tenets for developing high-quality Bannou services. All service implementations, tests, and infrastructure MUST adhere to these tenets. Tenets must not be changed or added without EXPLICIT approval, without exception.
@@ -1202,6 +1202,77 @@ Generated files in `*/Generated/` directories do not require manual documentatio
 
 ---
 
+## Tenet 20: JSON Serialization (MANDATORY)
+
+**Rule**: All JSON serialization and deserialization MUST use `BannouJson` helper methods. Direct use of `JsonSerializer` is forbidden except in unit tests specifically testing serialization behavior.
+
+### Why Centralized Serialization?
+
+Inconsistent serialization options caused significant debugging issues:
+- Enum format mismatches (kebab-case vs PascalCase vs snake_case)
+- Case sensitivity failures between services
+- Missing converters causing deserialization exceptions
+
+`BannouJson` provides the single source of truth for all serialization settings.
+
+### Required Pattern
+
+```csharp
+using BeyondImmersion.BannouService.Configuration;
+
+// CORRECT: Use BannouJson helper
+var model = BannouJson.Deserialize<MyModel>(jsonString);
+var json = BannouJson.Serialize(model);
+
+// CORRECT: Extension method syntax also available
+var model = jsonString.FromJson<MyModel>();
+var json = model.ToJson();
+
+// FORBIDDEN: Direct JsonSerializer usage
+var model = JsonSerializer.Deserialize<MyModel>(jsonString); // NO!
+var json = JsonSerializer.Serialize(model); // NO!
+var model = JsonSerializer.Deserialize<MyModel>(jsonString, options); // NO - even with custom options!
+```
+
+### Key Serialization Behaviors
+
+All serialization via `BannouJson` uses these settings:
+
+| Behavior | Setting | Example |
+|----------|---------|---------|
+| **Enums** | PascalCase strings matching C# names | `GettingStarted` (NOT `getting-started` or `getting_started`) |
+| **Property matching** | Case-insensitive | Handles both `AccountId` and `accountId` |
+| **Null values** | Ignored when writing | `{ "name": "test" }` not `{ "name": "test", "optional": null }` |
+| **Numbers** | Strict parsing | `"123"` does NOT coerce to integer 123 |
+
+### Async and Stream Operations
+
+```csharp
+// Async stream operations
+var model = await BannouJson.DeserializeAsync<MyModel>(stream, ct);
+await BannouJson.SerializeAsync(stream, model, ct);
+
+// UTF-8 byte operations
+var bytes = BannouJson.SerializeToUtf8Bytes(model);
+var model = BannouJson.Deserialize<MyModel>(utf8Bytes);
+```
+
+### Exception: Serialization Unit Tests
+
+Unit tests that specifically validate serialization behavior MAY use `JsonSerializer` directly to test against the raw API:
+
+```csharp
+// Allowed in serialization-focused unit tests only
+[Fact]
+public void BannouJson_Options_SerializesEnumsAsPascalCase()
+{
+    var result = JsonSerializer.Serialize(MyEnum.SomeValue, BannouJson.Options);
+    Assert.Equal("\"SomeValue\"", result);
+}
+```
+
+---
+
 ## Quick Reference: Common Violations
 
 | Violation | Tenet | Fix |
@@ -1222,6 +1293,7 @@ Generated files in `*/Generated/` directories do not require manual documentatio
 | Changing test to pass with buggy impl | 12 | Keep test, fix implementation |
 | GPL library in NuGet package | 18 | Use MIT/BSD alternative |
 | Missing XML documentation | 19 | Add `<summary>`, `<param>`, `<returns>` |
+| Direct `JsonSerializer` usage | 20 | Use `BannouJson.Serialize/Deserialize` |
 
 ---
 

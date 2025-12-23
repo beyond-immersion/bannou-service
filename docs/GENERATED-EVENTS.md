@@ -1,6 +1,6 @@
 # Generated Events Reference
 
-> **Auto-generated**: 2025-12-22 08:23:14
+> **Auto-generated**: 2025-12-23 02:33:16
 > **Source**: `schemas/*-events.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -40,6 +40,16 @@ This document lists all events defined in Bannou's event schemas.
 | `SessionCapabilitiesEvent` | Custom | `session-capabilities` | Internal event carrying compiled capabilities from... |
 | `SystemErrorEvent` | Error | `system.error` | Generic error notification sent to client. |
 | `SystemNotificationEvent` | Custom | `system-notification` | Generic notification event for system-level messag... |
+
+### Documentation
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `DocumentViewedEvent` | Custom | `document-viewed` | Published when a document is viewed |
+| `DocumentationImportCompletedEvent` | Custom | `documentation-import-completed` | Published when an import operation completes |
+| `DocumentationImportStartedEvent` | Custom | `documentation-import-started` | Published when an import operation starts |
+| `DocumentationQueriedEvent` | Custom | `documentation-queried` | Published when documentation is queried with natur... |
+| `DocumentationSearchedEvent` | Custom | `documentation-searched` | Published when documentation is searched with keyw... |
 
 ### Game Session (client)
 

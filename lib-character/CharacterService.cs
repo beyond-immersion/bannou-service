@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
@@ -578,7 +579,7 @@ public partial class CharacterService : ICharacterService
             if (string.IsNullOrEmpty(result.Value))
                 continue;
 
-            var character = JsonSerializer.Deserialize<CharacterModel>(result.Value);
+            var character = BannouJson.Deserialize<CharacterModel>(result.Value);
             if (character == null)
                 continue;
 

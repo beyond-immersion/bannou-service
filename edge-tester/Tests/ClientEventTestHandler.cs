@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using System.Net.WebSockets;
 using System.Text;
@@ -39,7 +40,7 @@ public class ClientEventTestHandler : IServiceTestHandler
 
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest.Content = new StringContent(
-                JsonSerializer.Serialize(registerContent),
+                BannouJson.Serialize(registerContent),
                 Encoding.UTF8,
                 "application/json");
 

@@ -45,7 +45,7 @@ public class LocationTestHandler : IServiceTestHandler
 
             // Error handling
             new ServiceTest(TestGetNonExistentLocation, "GetNonExistentLocation", "Location", "Test 404 for non-existent location"),
-            new ServiceTest(TestDuplicateCodeConflict, "DuplicateCodeConflict", "Location", "Test 409 for duplicate code in realm"),
+            new ServiceTest(TestDuplicateCodeConflict, "Location_DuplicateCodeConflict", "Location", "Test 409 for duplicate code in realm"),
 
             // Seed operation
             new ServiceTest(TestSeedLocations, "SeedLocations", "Location", "Test seeding locations"),
@@ -320,13 +320,16 @@ public class LocationTestHandler : IServiceTestHandler
                 });
             }
 
-            // List all
-            var response = await locationClient.ListLocationsAsync(new ListLocationsRequest());
+            // List all locations in the realm (RealmId is required)
+            var response = await locationClient.ListLocationsAsync(new ListLocationsRequest
+            {
+                RealmId = realm.RealmId
+            });
 
             if (response.Locations == null || response.Locations.Count < 3)
                 return TestResult.Failed($"Expected at least 3 locations, got {response.Locations?.Count ?? 0}");
 
-            return TestResult.Successful($"Listed {response.Locations.Count} locations");
+            return TestResult.Successful($"Listed {response.Locations.Count} locations in realm");
         }
         catch (ApiException ex)
         {

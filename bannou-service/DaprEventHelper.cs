@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using Microsoft.AspNetCore.Http;
 using System.IO;
 using System.Text;
@@ -38,7 +39,7 @@ public static class DaprEventHelper
         JsonElement eventJson;
         try
         {
-            eventJson = System.Text.Json.JsonSerializer.Deserialize<JsonElement>(rawBody);
+            eventJson = BannouJson.Deserialize<JsonElement>(rawBody);
         }
         catch (System.Text.Json.JsonException)
         {
@@ -62,9 +63,8 @@ public static class DaprEventHelper
     /// </summary>
     /// <typeparam name="T">The event model type to deserialize</typeparam>
     /// <param name="request">The HTTP request containing the event</param>
-    /// <param name="options">Optional JSON serializer options (defaults to PropertyNameCaseInsensitive)</param>
     /// <returns>The deserialized event model, or null if parsing fails</returns>
-    public static async Task<T?> ReadEventAsync<T>(HttpRequest request, JsonSerializerOptions? options = null) where T : class
+    public static async Task<T?> ReadEventAsync<T>(HttpRequest request) where T : class
     {
         // Read the raw request body
         string rawBody;
@@ -82,7 +82,7 @@ public static class DaprEventHelper
         JsonElement eventJson;
         try
         {
-            eventJson = System.Text.Json.JsonSerializer.Deserialize<JsonElement>(rawBody);
+            eventJson = BannouJson.Deserialize<JsonElement>(rawBody);
         }
         catch (System.Text.Json.JsonException)
         {
@@ -97,13 +97,8 @@ public static class DaprEventHelper
             actualEventData = dataElement;
         }
 
-        // Deserialize to the target type
-        var serializerOptions = options ?? new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        };
-
-        return System.Text.Json.JsonSerializer.Deserialize<T>(actualEventData.GetRawText(), serializerOptions);
+        // Deserialize to the target type using centralized BannouJson
+        return BannouJson.Deserialize<T>(actualEventData.GetRawText());
     }
 
     /// <summary>

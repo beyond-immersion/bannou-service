@@ -11,10 +11,11 @@
 **MANDATORY**: Never declare success or move to the next step until the current task is 100% complete and verified.
 
 **COMPLETION VERIFICATION RULES**:
-- All code must compile without errors
-- All tests must pass
+- All code must compile without errors (`dotnet build` succeeds)
+- If the user ran tests and they were failing, those tests must now pass
 - All generated files must work together correctly
 - Architectural problems must be fully resolved, not worked around
+- **NOTE**: This does NOT mean "run tests after every change" - see "NEVER Run Integration Tests Unless Explicitly Asked" below
 
 **STEP-BY-STEP ENFORCEMENT**:
 - Complete each step fully before proceeding
@@ -72,6 +73,14 @@
 - **Correct**: Use .env files and Docker Compose environment configuration
 - **Incorrect**: `export VARIABLE=value` commands
 - **Principle**: We use containerization workflows - configuration belongs in containers, not host environments
+
+### ⛔ NEVER Run Integration Tests Unless Explicitly Asked
+**MANDATORY**: NEVER run `make test-http`, `make test-edge`, `make test-infrastructure`, or `make all` unless the user EXPLICITLY asks you to run tests.
+- **Verification for code changes**: A successful `dotnet build` is sufficient verification for refactoring, bug fixes, and feature implementation
+- **DO NOT** add "test" or "rebuild and test" to your todo lists unless the user specifically requested testing
+- **DO NOT** run container-based tests to "verify" your changes work - the build verifies compilation
+- **The user will ask for tests when they want tests** - do not assume testing is needed
+- **Why this matters**: Integration tests take 5-10 minutes, rebuild containers, and are disruptive. Running them without being asked wastes significant time.
 
 ### ⚠️ MANDATORY REFERENCE - TESTING.md for ALL Testing Tasks
 **CRITICAL**: For ANY task involving tests, testing architecture, or test placement, you MUST ALWAYS reference the testing documentation (`docs/guides/TESTING.md`) FIRST and IN FULL before proceeding with any work.

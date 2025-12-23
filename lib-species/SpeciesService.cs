@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
@@ -1081,7 +1082,7 @@ public partial class SpeciesService : ISpeciesService
             {
                 try
                 {
-                    var model = JsonSerializer.Deserialize<SpeciesModel>(result.Value);
+                    var model = BannouJson.Deserialize<SpeciesModel>(result.Value);
                     if (model != null)
                     {
                         speciesList.Add(model);

@@ -1,5 +1,6 @@
 using System.Net.Http;
 using System.Text.Json;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Testing;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
@@ -13,10 +14,12 @@ public class TestingTestHandler : IServiceTestHandler
 {
     private static readonly HttpClient _httpClient = new();
     private static readonly string _baseUrl;
+    private const string DAPR_PREFIX = "/v1.0/invoke/bannou/method";
 
     static TestingTestHandler()
     {
         // Get base URL from environment or default to localhost
+        // Note: When connecting via Dapr sidecar, paths must include /v1.0/invoke/{appId}/method/ prefix
         var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT") ?? "http://localhost:5012";
         _baseUrl = daprHttpEndpoint;
     }
@@ -48,7 +51,7 @@ public class TestingTestHandler : IServiceTestHandler
     {
         try
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/health");
+            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/health");
 
             if (!response.IsSuccessStatusCode)
             {
@@ -71,7 +74,7 @@ public class TestingTestHandler : IServiceTestHandler
     {
         try
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
+            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path");
 
             if (!response.IsSuccessStatusCode)
             {
@@ -79,10 +82,7 @@ public class TestingTestHandler : IServiceTestHandler
             }
 
             var content = await response.Content.ReadAsStringAsync();
-            var debugInfo = JsonSerializer.Deserialize<RoutingDebugInfo>(content, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var debugInfo = BannouJson.Deserialize<RoutingDebugInfo>(content);
 
             if (debugInfo == null)
             {
@@ -106,7 +106,7 @@ public class TestingTestHandler : IServiceTestHandler
     {
         try
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
+            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path");
 
             if (!response.IsSuccessStatusCode)
             {
@@ -114,10 +114,7 @@ public class TestingTestHandler : IServiceTestHandler
             }
 
             var content = await response.Content.ReadAsStringAsync();
-            var debugInfo = JsonSerializer.Deserialize<RoutingDebugInfo>(content, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var debugInfo = BannouJson.Deserialize<RoutingDebugInfo>(content);
 
             if (debugInfo == null)
             {
@@ -166,7 +163,7 @@ public class TestingTestHandler : IServiceTestHandler
         {
             // Test with a nested path to see what the catch-all captures
             var testPath = "some/nested/path/segments";
-            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path/{testPath}");
+            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path/{testPath}");
 
             if (!response.IsSuccessStatusCode)
             {
@@ -174,10 +171,7 @@ public class TestingTestHandler : IServiceTestHandler
             }
 
             var content = await response.Content.ReadAsStringAsync();
-            var debugInfo = JsonSerializer.Deserialize<RoutingDebugInfo>(content, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var debugInfo = BannouJson.Deserialize<RoutingDebugInfo>(content);
 
             if (debugInfo == null)
             {
@@ -213,7 +207,7 @@ public class TestingTestHandler : IServiceTestHandler
     {
         try
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
+            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path");
 
             if (!response.IsSuccessStatusCode)
             {
@@ -221,10 +215,7 @@ public class TestingTestHandler : IServiceTestHandler
             }
 
             var content = await response.Content.ReadAsStringAsync();
-            var debugInfo = JsonSerializer.Deserialize<RoutingDebugInfo>(content, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var debugInfo = BannouJson.Deserialize<RoutingDebugInfo>(content);
 
             if (debugInfo == null)
             {
@@ -261,7 +252,7 @@ public class TestingTestHandler : IServiceTestHandler
     {
         try
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
+            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path");
 
             if (!response.IsSuccessStatusCode)
             {
@@ -269,10 +260,7 @@ public class TestingTestHandler : IServiceTestHandler
             }
 
             var content = await response.Content.ReadAsStringAsync();
-            var debugInfo = JsonSerializer.Deserialize<RoutingDebugInfo>(content, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var debugInfo = BannouJson.Deserialize<RoutingDebugInfo>(content);
 
             if (debugInfo == null)
             {
@@ -309,8 +297,8 @@ public class TestingTestHandler : IServiceTestHandler
     {
         try
         {
-            // Direct call to the service
-            var directResponse = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
+            // Call through Dapr sidecar with proper prefix
+            var directResponse = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path");
 
             if (!directResponse.IsSuccessStatusCode)
             {
@@ -318,10 +306,7 @@ public class TestingTestHandler : IServiceTestHandler
             }
 
             var directContent = await directResponse.Content.ReadAsStringAsync();
-            var directInfo = JsonSerializer.Deserialize<RoutingDebugInfo>(directContent, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var directInfo = BannouJson.Deserialize<RoutingDebugInfo>(directContent);
 
             if (directInfo == null)
             {
@@ -339,10 +324,7 @@ public class TestingTestHandler : IServiceTestHandler
                 if (daprResponse.IsSuccessStatusCode)
                 {
                     var daprContent = await daprResponse.Content.ReadAsStringAsync();
-                    var daprInfo = JsonSerializer.Deserialize<RoutingDebugInfo>(daprContent, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
+                    var daprInfo = BannouJson.Deserialize<RoutingDebugInfo>(daprContent);
 
                     if (daprInfo != null)
                     {
@@ -391,10 +373,7 @@ public class TestingTestHandler : IServiceTestHandler
                     if (response.IsSuccessStatusCode)
                     {
                         var content = await response.Content.ReadAsStringAsync();
-                        var info = JsonSerializer.Deserialize<RoutingDebugInfo>(content, new JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        });
+                        var info = BannouJson.Deserialize<RoutingDebugInfo>(content);
 
                         results.Add($"[{testPath}] => {response.StatusCode}, received: {info?.Path}");
                     }

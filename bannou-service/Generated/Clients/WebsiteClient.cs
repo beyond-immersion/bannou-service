@@ -178,30 +178,15 @@ public partial interface IWebsiteClient : BeyondImmersion.BannouService.ServiceC
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase, IWebsiteClient, BeyondImmersion.BannouService.ServiceClients.IServiceClient<WebsiteClient>
 {
-    private static System.Lazy<System.Text.Json.JsonSerializerOptions> _settings = new System.Lazy<System.Text.Json.JsonSerializerOptions>(CreateSerializerSettings, true);
-    private System.Text.Json.JsonSerializerOptions? _instanceSettings;
+    // Use centralized BannouJson serialization helper
+    private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = BeyondImmersion.BannouService.Configuration.BannouJson.Options;
 
     public WebsiteClient()
     {
         Initialize();
     }
 
-    private static System.Text.Json.JsonSerializerOptions CreateSerializerSettings()
-    {
-        var settings = new System.Text.Json.JsonSerializerOptions();
-        // Configure System.Text.Json to match ASP.NET Core configuration
-        settings.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
-        settings.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-        settings.PropertyNameCaseInsensitive = true; // CRITICAL: Case-insensitive deserialization
-        settings.WriteIndented = false;
-        settings.AllowTrailingCommas = true;
-        settings.ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip;
-        settings.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString;
-        settings.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
-        return settings;
-    }
-
-    protected System.Text.Json.JsonSerializerOptions JsonSerializerSettings { get { return _instanceSettings ?? _settings.Value; } }
+    protected System.Text.Json.JsonSerializerOptions JsonSerializerSettings { get { return _jsonOptions; } }
 
     partial void Initialize();
 
@@ -656,7 +641,7 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
                 var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
@@ -1001,7 +986,7 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
                 var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
@@ -1084,7 +1069,7 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
                 var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
@@ -1309,7 +1294,7 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
                 var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
@@ -1462,7 +1447,7 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
                 var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
@@ -1637,44 +1622,44 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
 
     public bool ReadResponseAsString { get; set; }
 
-    protected virtual async System.Threading.Tasks.Task<ObjectResponseResult<T>> ReadObjectResponseAsync<T>(System.Net.Http.HttpResponseMessage response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Threading.CancellationToken cancellationToken)
-    {
-        if (response == null || response.Content == null)
+        protected virtual async System.Threading.Tasks.Task<ObjectResponseResult<T>> ReadObjectResponseAsync<T>(System.Net.Http.HttpResponseMessage response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Threading.CancellationToken cancellationToken)
         {
-            return new ObjectResponseResult<T>(default(T)!, string.Empty);
-        }
+            if (response == null || response.Content == null)
+            {
+                return new ObjectResponseResult<T>(default(T)!, string.Empty);
+            }
 
-        if (ReadResponseAsString)
-        {
-            var responseText = await ReadAsStringAsync(response.Content, cancellationToken).ConfigureAwait(false);
-            try
+            if (ReadResponseAsString)
             {
-                var typedBody = System.Text.Json.JsonSerializer.Deserialize<T>(responseText, JsonSerializerSettings);
-                return new ObjectResponseResult<T>(typedBody!, responseText);
-            }
-            catch (System.Text.Json.JsonException exception)
-            {
-                var message = "Could not deserialize the response body string as " + typeof(T).FullName + ".";
-                throw new ApiException(message, (int)response.StatusCode, responseText, headers, exception);
-            }
-        }
-        else
-        {
-            try
-            {
-                using (var responseStream = await ReadAsStreamAsync(response.Content, cancellationToken).ConfigureAwait(false))
+                var responseText = await ReadAsStringAsync(response.Content, cancellationToken).ConfigureAwait(false);
+                try
                 {
-                    var typedBody = await System.Text.Json.JsonSerializer.DeserializeAsync<T>(responseStream, JsonSerializerSettings, cancellationToken).ConfigureAwait(false);
-                    return new ObjectResponseResult<T>(typedBody!, string.Empty);
+                    var typedBody = BeyondImmersion.BannouService.Configuration.BannouJson.Deserialize<T>(responseText);
+                    return new ObjectResponseResult<T>(typedBody!, responseText);
+                }
+                catch (System.Text.Json.JsonException exception)
+                {
+                    var message = "Could not deserialize the response body string as " + typeof(T).FullName + ".";
+                    throw new ApiException(message, (int)response.StatusCode, responseText, headers, exception);
                 }
             }
-            catch (System.Text.Json.JsonException exception)
+            else
             {
-                var message = "Could not deserialize the response body stream as " + typeof(T).FullName + ".";
-                throw new ApiException(message, (int)response.StatusCode, string.Empty, headers, exception);
+                try
+                {
+                    using (var responseStream = await ReadAsStreamAsync(response.Content, cancellationToken).ConfigureAwait(false))
+                    {
+                        var typedBody = await BeyondImmersion.BannouService.Configuration.BannouJson.DeserializeAsync<T>(responseStream, cancellationToken).ConfigureAwait(false);
+                        return new ObjectResponseResult<T>(typedBody!, string.Empty);
+                    }
+                }
+                catch (System.Text.Json.JsonException exception)
+                {
+                    var message = "Could not deserialize the response body stream as " + typeof(T).FullName + ".";
+                    throw new ApiException(message, (int)response.StatusCode, string.Empty, headers, exception);
+                }
             }
         }
-    }
 
     private string ConvertToString(object? value, System.Globalization.CultureInfo cultureInfo)
     {

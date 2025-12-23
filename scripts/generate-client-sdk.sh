@@ -123,6 +123,7 @@ cat >> "$SERVER_SDK_PROJECT" << 'EOF'
     <Compile Include="../bannou-service/ServiceClients/DaprServiceClientBase.cs" Condition="Exists('../bannou-service/ServiceClients/DaprServiceClientBase.cs')" />
     <Compile Include="../bannou-service/Services/IServiceAppMappingResolver.cs" Condition="Exists('../bannou-service/Services/IServiceAppMappingResolver.cs')" />
     <Compile Include="../bannou-service/ApiException.cs" Condition="Exists('../bannou-service/ApiException.cs')" />
+    <Compile Include="../bannou-service/Configuration/BannouJson.cs" Condition="Exists('../bannou-service/Configuration/BannouJson.cs')" />
   </ItemGroup>
 
   <!-- WebSocket Binary Protocol -->
@@ -296,9 +297,10 @@ cat >> "$CLIENT_SDK_PROJECT" << 'EOF'
     </ItemGroup>
   </Target>
 
-  <!-- Shared Exception Types (no Dapr dependency) -->
+  <!-- Shared Infrastructure (no Dapr dependency) -->
   <ItemGroup>
     <Compile Include="../bannou-service/ApiException.cs" Condition="Exists('../bannou-service/ApiException.cs')" />
+    <Compile Include="../bannou-service/Configuration/BannouJson.cs" Condition="Exists('../bannou-service/Configuration/BannouJson.cs')" />
   </ItemGroup>
 
   <!-- WebSocket Binary Protocol -->

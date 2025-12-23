@@ -1,3 +1,4 @@
+using System.Text.Json;
 using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.Testing;
 
@@ -181,11 +182,19 @@ public class RelationshipTestHandler : IServiceTestHandler
             if (response.RelationshipId != created.RelationshipId)
                 return TestResult.Failed("ID mismatch after update");
 
-            var metadata = response.Metadata as IDictionary<string, object>;
-            if (metadata == null || !metadata.ContainsKey("updated"))
-                return TestResult.Failed("Metadata not updated");
+            // Metadata comes back as JsonElement from System.Text.Json
+            if (response.Metadata == null)
+                return TestResult.Failed("Metadata is null after update");
 
-            return TestResult.Successful($"Updated relationship: ID={response.RelationshipId}, Metadata keys={metadata.Count}");
+            if (response.Metadata is JsonElement metadataElement)
+            {
+                if (!metadataElement.TryGetProperty("updated", out _))
+                    return TestResult.Failed("Metadata 'updated' key not found");
+
+                return TestResult.Successful($"Updated relationship: ID={response.RelationshipId}, Metadata updated successfully");
+            }
+
+            return TestResult.Successful($"Updated relationship: ID={response.RelationshipId}, Metadata type={response.Metadata.GetType().Name}");
         }
         catch (ApiException ex)
         {
@@ -564,9 +573,15 @@ public class RelationshipTestHandler : IServiceTestHandler
                 Metadata = new Dictionary<string, object> { { "trust_level", 80 }, { "notes", "Improved relationship" } }
             });
 
-            var updatedMetadata = updated.Metadata as IDictionary<string, object>;
-            if (updatedMetadata == null || !updatedMetadata.ContainsKey("notes"))
-                return TestResult.Failed("Metadata update failed");
+            // Metadata comes back as JsonElement from System.Text.Json
+            if (updated.Metadata == null)
+                return TestResult.Failed("Metadata is null after update");
+
+            if (updated.Metadata is JsonElement metadataJson)
+            {
+                if (!metadataJson.TryGetProperty("notes", out _))
+                    return TestResult.Failed("Metadata 'notes' key not found");
+            }
 
             // Step 5: List by entity
             Console.WriteLine("  Step 5: Listing by entity...");

@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
-using System.Text.Json;
 using BeyondImmersion.Bannou.Client.SDK;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.Bannou.Voice.Services;
 
 // Voice event models from generated code - these are included in the main SDK
@@ -374,7 +374,7 @@ public sealed class VoiceRoomManager : IDisposable
     {
         try
         {
-            var evt = JsonSerializer.Deserialize<VoiceRoomStateEvent>(json);
+            var evt = BannouJson.Deserialize<VoiceRoomStateEvent>(json);
             if (evt == null) return;
 
             _currentRoomId = evt.Room_id;
@@ -400,7 +400,7 @@ public sealed class VoiceRoomManager : IDisposable
     {
         try
         {
-            var evt = JsonSerializer.Deserialize<VoicePeerJoinedEvent>(json);
+            var evt = BannouJson.Deserialize<VoicePeerJoinedEvent>(json);
             if (evt == null || evt.Room_id != _currentRoomId) return;
 
             if (_currentTier == VoiceRoomStateEventTier.P2p)
@@ -420,7 +420,7 @@ public sealed class VoiceRoomManager : IDisposable
     {
         try
         {
-            var evt = JsonSerializer.Deserialize<VoicePeerLeftEvent>(json);
+            var evt = BannouJson.Deserialize<VoicePeerLeftEvent>(json);
             if (evt == null || evt.Room_id != _currentRoomId) return;
 
             if (_peers.TryRemove(evt.Peer_session_id, out var peer))
@@ -440,7 +440,7 @@ public sealed class VoiceRoomManager : IDisposable
     {
         try
         {
-            var evt = JsonSerializer.Deserialize<VoicePeerUpdatedEvent>(json);
+            var evt = BannouJson.Deserialize<VoicePeerUpdatedEvent>(json);
             if (evt == null || evt.Room_id != _currentRoomId) return;
 
             // Add any new ICE candidates from the peer
@@ -462,7 +462,7 @@ public sealed class VoiceRoomManager : IDisposable
     {
         try
         {
-            var evt = JsonSerializer.Deserialize<VoiceTierUpgradeEvent>(json);
+            var evt = BannouJson.Deserialize<VoiceTierUpgradeEvent>(json);
             if (evt == null || evt.Room_id != _currentRoomId) return;
 
             _currentTier = VoiceRoomStateEventTier.Scaled;
@@ -559,7 +559,7 @@ public sealed class VoiceRoomManager : IDisposable
     {
         try
         {
-            var evt = JsonSerializer.Deserialize<VoiceRoomClosedEvent>(json);
+            var evt = BannouJson.Deserialize<VoiceRoomClosedEvent>(json);
             if (evt == null || evt.Room_id != _currentRoomId) return;
 
             _ = CloseAllPeersAsync();

@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.Testing;
 
@@ -9,6 +10,7 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 ///
 /// Note: Species APIs test service-to-service communication via Dapr.
 /// These tests validate realm-associated species management with real datastores.
+/// Species-realm associations require real Realms to exist first.
 /// </summary>
 public class SpeciesTestHandler : IServiceTestHandler
 {
@@ -31,7 +33,7 @@ public class SpeciesTestHandler : IServiceTestHandler
 
             // Error handling
             new ServiceTest(TestGetNonExistentSpecies, "GetNonExistentSpecies", "Species", "Test 404 for non-existent species"),
-            new ServiceTest(TestDuplicateCodeConflict, "DuplicateCodeConflict", "Species", "Test 409 for duplicate code"),
+            new ServiceTest(TestDuplicateCodeConflict, "Species_DuplicateCodeConflict", "Species", "Test 409 for duplicate code"),
 
             // Seed operation
             new ServiceTest(TestSeedSpecies, "SeedSpecies", "Species", "Test seeding species"),
@@ -41,18 +43,32 @@ public class SpeciesTestHandler : IServiceTestHandler
         };
     }
 
+    /// <summary>
+    /// Helper to create a test realm for species tests.
+    /// </summary>
+    private static async Task<RealmResponse> CreateTestRealmAsync(string suffix)
+    {
+        var realmClient = new RealmClient();
+        return await realmClient.CreateRealmAsync(new CreateRealmRequest
+        {
+            Code = $"SPECIES_TEST_{DateTime.Now.Ticks}_{suffix}",
+            Name = $"Species Test Realm {suffix}",
+            Category = "TEST"
+        });
+    }
+
     private static async Task<TestResult> TestCreateSpecies(ITestClient client, string[] args)
     {
         try
         {
             var speciesClient = new SpeciesClient();
 
+            // Create without realm association for basic creation test
             var createRequest = new CreateSpeciesRequest
             {
                 Code = $"TEST_SPECIES_{DateTime.Now.Ticks}",
                 Name = "Test Species",
-                Description = "A test species for HTTP testing",
-                RealmIds = new List<Guid> { Guid.NewGuid() }
+                Description = "A test species for HTTP testing"
             };
 
             var response = await speciesClient.CreateSpeciesAsync(createRequest);
@@ -271,6 +287,9 @@ public class SpeciesTestHandler : IServiceTestHandler
     {
         try
         {
+            // Create a real realm first
+            var realm = await CreateTestRealmAsync("ADD");
+
             var speciesClient = new SpeciesClient();
 
             // Create a species
@@ -280,18 +299,17 @@ public class SpeciesTestHandler : IServiceTestHandler
                 Name = "Add Realm Species"
             });
 
-            // Add to a realm
-            var realmId = Guid.NewGuid();
+            // Add to the real realm
             var response = await speciesClient.AddSpeciesToRealmAsync(new AddSpeciesToRealmRequest
             {
                 SpeciesId = species.SpeciesId,
-                RealmId = realmId
+                RealmId = realm.RealmId
             });
 
-            if (response.RealmIds == null || !response.RealmIds.Contains(realmId))
+            if (response.RealmIds == null || !response.RealmIds.Contains(realm.RealmId))
                 return TestResult.Failed("Realm ID not added to species");
 
-            return TestResult.Successful($"Added species to realm: SpeciesID={species.SpeciesId}, RealmID={realmId}");
+            return TestResult.Successful($"Added species to realm: SpeciesID={species.SpeciesId}, RealmID={realm.RealmId}");
         }
         catch (ApiException ex)
         {
@@ -307,29 +325,31 @@ public class SpeciesTestHandler : IServiceTestHandler
     {
         try
         {
+            // Create real realms first
+            var realm1 = await CreateTestRealmAsync("REMOVE1");
+            var realm2 = await CreateTestRealmAsync("REMOVE2");
+
             var speciesClient = new SpeciesClient();
 
             // Create a species with realm associations
-            var realmId1 = Guid.NewGuid();
-            var realmId2 = Guid.NewGuid();
             var species = await speciesClient.CreateSpeciesAsync(new CreateSpeciesRequest
             {
                 Code = $"REMOVE_REALM_SPECIES_{DateTime.Now.Ticks}",
                 Name = "Remove Realm Species",
-                RealmIds = new List<Guid> { realmId1, realmId2 }
+                RealmIds = new List<Guid> { realm1.RealmId, realm2.RealmId }
             });
 
             // Remove from one realm
             var response = await speciesClient.RemoveSpeciesFromRealmAsync(new RemoveSpeciesFromRealmRequest
             {
                 SpeciesId = species.SpeciesId,
-                RealmId = realmId1
+                RealmId = realm1.RealmId
             });
 
-            if (response.RealmIds != null && response.RealmIds.Contains(realmId1))
+            if (response.RealmIds != null && response.RealmIds.Contains(realm1.RealmId))
                 return TestResult.Failed("Realm ID still present after removal");
 
-            if (response.RealmIds == null || !response.RealmIds.Contains(realmId2))
+            if (response.RealmIds == null || !response.RealmIds.Contains(realm2.RealmId))
                 return TestResult.Failed("Other realm ID should still be present");
 
             return TestResult.Successful($"Removed species from realm: SpeciesID={species.SpeciesId}");
@@ -348,30 +368,32 @@ public class SpeciesTestHandler : IServiceTestHandler
     {
         try
         {
+            // Create a real realm first
+            var realm = await CreateTestRealmAsync("LIST");
+
             var speciesClient = new SpeciesClient();
 
-            // Create species with a specific realm
-            var realmId = Guid.NewGuid();
+            // Create species with the specific realm
             for (int i = 0; i < 3; i++)
             {
                 await speciesClient.CreateSpeciesAsync(new CreateSpeciesRequest
                 {
                     Code = $"REALM_LIST_SPECIES_{DateTime.Now.Ticks}_{i}",
                     Name = $"Realm List Species {i}",
-                    RealmIds = new List<Guid> { realmId }
+                    RealmIds = new List<Guid> { realm.RealmId }
                 });
             }
 
             // List by realm
             var response = await speciesClient.ListSpeciesByRealmAsync(new ListSpeciesByRealmRequest
             {
-                RealmId = realmId
+                RealmId = realm.RealmId
             });
 
             if (response.Species == null || response.Species.Count < 3)
                 return TestResult.Failed($"Expected at least 3 species in realm, got {response.Species?.Count ?? 0}");
 
-            return TestResult.Successful($"Listed {response.Species.Count} species in realm {realmId}");
+            return TestResult.Successful($"Listed {response.Species.Count} species in realm {realm.RealmId}");
         }
         catch (ApiException ex)
         {
@@ -499,6 +521,9 @@ public class SpeciesTestHandler : IServiceTestHandler
     {
         try
         {
+            // Create a real realm first for lifecycle test
+            var realm = await CreateTestRealmAsync("LIFECYCLE");
+
             var speciesClient = new SpeciesClient();
             var testId = DateTime.Now.Ticks;
 
@@ -524,21 +549,20 @@ public class SpeciesTestHandler : IServiceTestHandler
 
             // Step 3: Add to realm
             Console.WriteLine("  Step 3: Adding to realm...");
-            var realmId = Guid.NewGuid();
             species = await speciesClient.AddSpeciesToRealmAsync(new AddSpeciesToRealmRequest
             {
                 SpeciesId = species.SpeciesId,
-                RealmId = realmId
+                RealmId = realm.RealmId
             });
 
-            if (species.RealmIds == null || !species.RealmIds.Contains(realmId))
+            if (species.RealmIds == null || !species.RealmIds.Contains(realm.RealmId))
                 return TestResult.Failed("Realm not added");
 
             // Step 4: Verify by realm listing
             Console.WriteLine("  Step 4: Verifying realm listing...");
             var realmSpecies = await speciesClient.ListSpeciesByRealmAsync(new ListSpeciesByRealmRequest
             {
-                RealmId = realmId
+                RealmId = realm.RealmId
             });
             if (realmSpecies.Species == null || !realmSpecies.Species.Any(s => s.SpeciesId == species.SpeciesId))
                 return TestResult.Failed("Species not found in realm listing");
@@ -557,10 +581,10 @@ public class SpeciesTestHandler : IServiceTestHandler
             species = await speciesClient.RemoveSpeciesFromRealmAsync(new RemoveSpeciesFromRealmRequest
             {
                 SpeciesId = species.SpeciesId,
-                RealmId = realmId
+                RealmId = realm.RealmId
             });
 
-            if (species.RealmIds != null && species.RealmIds.Contains(realmId))
+            if (species.RealmIds != null && species.RealmIds.Contains(realm.RealmId))
                 return TestResult.Failed("Realm still present after removal");
 
             // Step 7: Delete species

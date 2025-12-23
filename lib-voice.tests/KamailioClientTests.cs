@@ -1,10 +1,10 @@
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Voice.Clients;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 using System.Net;
 using System.Text;
-using System.Text.Json;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Voice.Tests;
@@ -145,7 +145,7 @@ public class KamailioClientTests
     public async Task GetActiveDialogsAsync_WhenJsonRpcError_ReturnsEmptyList()
     {
         // Arrange
-        var jsonResponse = JsonSerializer.Serialize(new
+        var jsonResponse = BannouJson.Serialize(new
         {
             jsonrpc = "2.0",
             id = 1,
@@ -166,7 +166,7 @@ public class KamailioClientTests
     public async Task GetActiveDialogsAsync_WhenNullDialogs_ReturnsEmptyList()
     {
         // Arrange
-        var jsonResponse = JsonSerializer.Serialize(new
+        var jsonResponse = BannouJson.Serialize(new
         {
             jsonrpc = "2.0",
             id = 1,
@@ -215,7 +215,7 @@ public class KamailioClientTests
     public async Task TerminateDialogAsync_WhenSuccessful_ReturnsTrue()
     {
         // Arrange
-        var jsonResponse = JsonSerializer.Serialize(new
+        var jsonResponse = BannouJson.Serialize(new
         {
             jsonrpc = "2.0",
             id = 1,
@@ -254,7 +254,7 @@ public class KamailioClientTests
     public async Task ReloadDispatcherAsync_WhenSuccessful_ReturnsTrue()
     {
         // Arrange
-        var jsonResponse = JsonSerializer.Serialize(new
+        var jsonResponse = BannouJson.Serialize(new
         {
             jsonrpc = "2.0",
             id = 1,
@@ -293,7 +293,7 @@ public class KamailioClientTests
     public async Task GetStatsAsync_WhenSuccessful_ReturnsStats()
     {
         // Arrange
-        var jsonResponse = JsonSerializer.Serialize(new
+        var jsonResponse = BannouJson.Serialize(new
         {
             jsonrpc = "2.0",
             id = 1,

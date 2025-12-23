@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using System;
 using System.Collections.Concurrent;
@@ -221,7 +222,7 @@ public class BannouClient : IAsyncDisposable
         }
 
         // Serialize request to JSON
-        var jsonPayload = JsonSerializer.Serialize(request);
+        var jsonPayload = BannouJson.Serialize(request);
         var payloadBytes = Encoding.UTF8.GetBytes(jsonPayload);
 
         // Create binary message
@@ -285,7 +286,7 @@ public class BannouClient : IAsyncDisposable
                 }
 
                 var responseJson = response.GetJsonPayload();
-                var result = JsonSerializer.Deserialize<TResponse>(responseJson);
+                var result = BannouJson.Deserialize<TResponse>(responseJson);
                 if (result == null)
                 {
                     return ApiResponse<TResponse>.Failure(new ErrorResponse
@@ -344,7 +345,7 @@ public class BannouClient : IAsyncDisposable
             ?? throw new ArgumentException($"Unknown endpoint: {method} {path}");
 
         // Serialize request to JSON
-        var jsonPayload = JsonSerializer.Serialize(request);
+        var jsonPayload = BannouJson.Serialize(request);
         var payloadBytes = Encoding.UTF8.GetBytes(jsonPayload);
 
         // Create binary message with Event flag

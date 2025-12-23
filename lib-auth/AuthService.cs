@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
@@ -1811,7 +1812,7 @@ public partial class AuthService : IAuthService
             }
 
             var tokenJson = await tokenResponse.Content.ReadAsStringAsync(cancellationToken);
-            var tokenData = JsonSerializer.Deserialize<DiscordTokenResponse>(tokenJson);
+            var tokenData = BannouJson.Deserialize<DiscordTokenResponse>(tokenJson);
             if (tokenData == null || string.IsNullOrEmpty(tokenData.AccessToken))
             {
                 _logger.LogWarning("Discord token response missing access_token");
@@ -1831,7 +1832,7 @@ public partial class AuthService : IAuthService
             }
 
             var userJson = await userResponse.Content.ReadAsStringAsync(cancellationToken);
-            var userData = JsonSerializer.Deserialize<DiscordUserResponse>(userJson);
+            var userData = BannouJson.Deserialize<DiscordUserResponse>(userJson);
             if (userData == null)
             {
                 _logger.LogWarning("Failed to parse Discord user response");
@@ -1881,7 +1882,7 @@ public partial class AuthService : IAuthService
             }
 
             var tokenJson = await tokenResponse.Content.ReadAsStringAsync(cancellationToken);
-            var tokenData = JsonSerializer.Deserialize<GoogleTokenResponse>(tokenJson);
+            var tokenData = BannouJson.Deserialize<GoogleTokenResponse>(tokenJson);
             if (tokenData == null || string.IsNullOrEmpty(tokenData.AccessToken))
             {
                 _logger.LogWarning("Google token response missing access_token");
@@ -1901,7 +1902,7 @@ public partial class AuthService : IAuthService
             }
 
             var userJson = await userResponse.Content.ReadAsStringAsync(cancellationToken);
-            var userData = JsonSerializer.Deserialize<GoogleUserResponse>(userJson);
+            var userData = BannouJson.Deserialize<GoogleUserResponse>(userJson);
             if (userData == null)
             {
                 _logger.LogWarning("Failed to parse Google user response");
@@ -1951,7 +1952,7 @@ public partial class AuthService : IAuthService
             }
 
             var tokenJson = await tokenResponse.Content.ReadAsStringAsync(cancellationToken);
-            var tokenData = JsonSerializer.Deserialize<TwitchTokenResponse>(tokenJson);
+            var tokenData = BannouJson.Deserialize<TwitchTokenResponse>(tokenJson);
             if (tokenData == null || string.IsNullOrEmpty(tokenData.AccessToken))
             {
                 _logger.LogWarning("Twitch token response missing access_token");
@@ -1972,7 +1973,7 @@ public partial class AuthService : IAuthService
             }
 
             var userJson = await userResponse.Content.ReadAsStringAsync(cancellationToken);
-            var usersData = JsonSerializer.Deserialize<TwitchUsersResponse>(userJson);
+            var usersData = BannouJson.Deserialize<TwitchUsersResponse>(userJson);
             var userData = usersData?.Data?.FirstOrDefault();
             if (userData == null)
             {
@@ -2015,7 +2016,7 @@ public partial class AuthService : IAuthService
             }
 
             var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
-            var steamResponse = JsonSerializer.Deserialize<SteamAuthResponse>(responseJson);
+            var steamResponse = BannouJson.Deserialize<SteamAuthResponse>(responseJson);
 
             if (steamResponse?.Response?.Error != null)
             {

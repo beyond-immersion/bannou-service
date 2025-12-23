@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Client.SDK;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.EdgeTester.Application;
 using System.Net.WebSockets;
@@ -615,7 +616,7 @@ public class Program
         {
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
             registerRequest.Content = new StringContent(
-                System.Text.Json.JsonSerializer.Serialize(registerContent),
+                BannouJson.Serialize(registerContent),
                 Encoding.UTF8,
                 "application/json");
 
@@ -844,6 +845,11 @@ public class Program
         // load subscription websocket tests
         var subscriptionTestHandler = new SubscriptionsWebSocketTestHandler();
         foreach (ServiceTest serviceTest in subscriptionTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
+        // load documentation websocket tests
+        var documentationTestHandler = new DocumentationWebSocketTestHandler();
+        foreach (ServiceTest serviceTest in documentationTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
         // load voice websocket tests

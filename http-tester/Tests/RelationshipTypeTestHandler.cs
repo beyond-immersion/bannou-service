@@ -32,7 +32,7 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
 
             // Error handling
             new ServiceTest(TestGetNonExistentType, "GetNonExistentType", "RelationshipType", "Test 404 for non-existent type"),
-            new ServiceTest(TestDuplicateCodeConflict, "DuplicateCodeConflict", "RelationshipType", "Test 409 for duplicate code"),
+            new ServiceTest(TestDuplicateCodeConflict, "RelationshipType_DuplicateCodeConflict", "RelationshipType", "Test 409 for duplicate code"),
             new ServiceTest(TestDeleteTypeWithChildren, "DeleteTypeWithChildren", "RelationshipType", "Test 409 when deleting type with children"),
 
             // Seed operation
@@ -592,22 +592,27 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
         {
             var typeClient = new RelationshipTypeClient();
 
+            // Capture ticks once so parent reference matches actual parent code
+            var testId = DateTime.Now.Ticks;
+            var rootCode = $"SEED_ROOT_{testId}";
+            var childCode = $"SEED_CHILD_{testId}";
+
             var seedRequest = new SeedRelationshipTypesRequest
             {
                 Types = new List<SeedRelationshipType>
                 {
                     new SeedRelationshipType
                     {
-                        Code = $"SEED_ROOT_{DateTime.Now.Ticks}",
+                        Code = rootCode,
                         Name = "Seed Root",
                         Category = "SEED_TEST"
                     },
                     new SeedRelationshipType
                     {
-                        Code = $"SEED_CHILD_{DateTime.Now.Ticks}",
+                        Code = childCode,
                         Name = "Seed Child",
                         Category = "SEED_TEST",
-                        ParentTypeCode = $"SEED_ROOT_{DateTime.Now.Ticks}"
+                        ParentTypeCode = rootCode  // Same reference as parent
                     }
                 },
                 UpdateExisting = false

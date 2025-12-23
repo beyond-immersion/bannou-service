@@ -1,12 +1,12 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.Text.Json;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Permissions.Tests;
@@ -659,7 +659,7 @@ public class PermissionsServiceTests
         {
             ["version"] = 1,
             ["generated_at"] = DateTimeOffset.UtcNow.ToString(),
-            ["orchestrator"] = JsonSerializer.SerializeToElement(new List<string>
+            ["orchestrator"] = BannouJson.SerializeToElement(new List<string>
             {
                 "GET:/orchestrator/health",
                 "POST:/orchestrator/deploy"
@@ -880,7 +880,7 @@ public class PermissionsServiceTests
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
         var compiledPermissions = new Dictionary<string, object>
         {
-            ["orchestrator"] = JsonSerializer.SerializeToElement(new List<string>
+            ["orchestrator"] = BannouJson.SerializeToElement(new List<string>
             {
                 "GET:/orchestrator/health",
                 "POST:/orchestrator/deploy"
@@ -923,7 +923,7 @@ public class PermissionsServiceTests
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
         var compiledPermissions = new Dictionary<string, object>
         {
-            ["accounts"] = JsonSerializer.SerializeToElement(new List<string>
+            ["accounts"] = BannouJson.SerializeToElement(new List<string>
             {
                 "GET:/accounts/profile"
             })

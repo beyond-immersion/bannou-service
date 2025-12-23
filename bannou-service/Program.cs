@@ -214,6 +214,7 @@ public static class Program
                     jsonOptions.JsonSerializerOptions.AllowTrailingCommas = true;
                     jsonOptions.JsonSerializerOptions.ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip;
                     jsonOptions.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString;
+                    // Serialize enums as strings matching C# enum names (e.g., GettingStarted -> "GettingStarted")
                     jsonOptions.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
                 });
 
@@ -666,7 +667,7 @@ public static class Program
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync(cancellationToken);
-                    var mappingsResponse = System.Text.Json.JsonSerializer.Deserialize<ServiceMappingsResponse>(json);
+                    var mappingsResponse = BannouJson.Deserialize<ServiceMappingsResponse>(json);
 
                     if (mappingsResponse?.Mappings != null)
                     {
