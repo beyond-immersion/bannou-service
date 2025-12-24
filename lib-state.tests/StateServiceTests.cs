@@ -471,7 +471,7 @@ public class StateServiceTests
     }
 
     [Fact]
-    public async Task QueryStateAsync_WithRedisBackend_ReturnsBadRequest()
+    public async Task QueryStateAsync_WithRedisBackendWithoutSearch_ReturnsBadRequest()
     {
         // Arrange
         var service = CreateService();
@@ -479,6 +479,7 @@ public class StateServiceTests
 
         _mockStateStoreFactory.Setup(f => f.HasStore("redis-store")).Returns(true);
         _mockStateStoreFactory.Setup(f => f.GetBackendType("redis-store")).Returns(Services.StateBackend.Redis);
+        _mockStateStoreFactory.Setup(f => f.SupportsSearch("redis-store")).Returns(false);
 
         // Act
         var (status, response) = await service.QueryStateAsync(request, CancellationToken.None);
@@ -489,21 +490,208 @@ public class StateServiceTests
     }
 
     [Fact]
-    public async Task QueryStateAsync_WithMySqlBackend_ReturnsInternalServerError()
+    public async Task QueryStateAsync_WithMySqlBackend_ReturnsQueryResults()
     {
-        // Arrange - Currently returns InternalServerError because JSON filter parsing is not implemented
+        // Arrange
         var service = CreateService();
-        var request = new QueryStateRequest { StoreName = "mysql-store", Filter = new { } };
+        var request = new QueryStateRequest { StoreName = "mysql-store", Page = 0, PageSize = 10 };
+
+        var mockJsonStore = new Mock<IJsonQueryableStateStore<object>>();
+        var queryResults = new JsonPagedResult<object>(
+            Items: new List<JsonQueryResult<object>>
+            {
+                new JsonQueryResult<object>("key1", new { Name = "Value1" }),
+                new JsonQueryResult<object>("key2", new { Name = "Value2" })
+            },
+            TotalCount: 2,
+            Offset: 0,
+            Limit: 10);
 
         _mockStateStoreFactory.Setup(f => f.HasStore("mysql-store")).Returns(true);
         _mockStateStoreFactory.Setup(f => f.GetBackendType("mysql-store")).Returns(Services.StateBackend.MySql);
+        _mockStateStoreFactory.Setup(f => f.GetJsonQueryableStore<object>("mysql-store")).Returns(mockJsonStore.Object);
+        mockJsonStore.Setup(s => s.JsonQueryPagedAsync(
+            It.IsAny<IReadOnlyList<JsonQueryCondition>?>(),
+            It.IsAny<int>(),
+            It.IsAny<int>(),
+            It.IsAny<JsonSortSpec?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(queryResults);
 
         // Act
         var (status, response) = await service.QueryStateAsync(request, CancellationToken.None);
 
-        // Assert - Not yet implemented
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Results.Count);
+        Assert.Equal(2, response.TotalCount);
+        Assert.Equal(0, response.Page);
+        Assert.Equal(10, response.PageSize);
+    }
+
+    [Fact]
+    public async Task QueryStateAsync_WithMySqlBackendAndSortSpec_PassesSortToStore()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new QueryStateRequest
+        {
+            StoreName = "mysql-store",
+            Sort = new List<SortField> { new SortField { Field = "$.name", Order = SortFieldOrder.Desc } },
+            Page = 0,
+            PageSize = 10
+        };
+
+        var mockJsonStore = new Mock<IJsonQueryableStateStore<object>>();
+        JsonSortSpec? capturedSort = null;
+
+        _mockStateStoreFactory.Setup(f => f.HasStore("mysql-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("mysql-store")).Returns(Services.StateBackend.MySql);
+        _mockStateStoreFactory.Setup(f => f.GetJsonQueryableStore<object>("mysql-store")).Returns(mockJsonStore.Object);
+        mockJsonStore.Setup(s => s.JsonQueryPagedAsync(
+            It.IsAny<IReadOnlyList<JsonQueryCondition>?>(),
+            It.IsAny<int>(),
+            It.IsAny<int>(),
+            It.IsAny<JsonSortSpec?>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<JsonQueryCondition>?, int, int, JsonSortSpec?, CancellationToken>((_, _, _, sort, _) => capturedSort = sort)
+            .ReturnsAsync(new JsonPagedResult<object>(
+                Items: new List<JsonQueryResult<object>>(),
+                TotalCount: 0,
+                Offset: 0,
+                Limit: 10));
+
+        // Act
+        await service.QueryStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(capturedSort);
+        Assert.Equal("$.name", capturedSort.Path);
+        Assert.True(capturedSort.Descending);
+    }
+
+    [Fact]
+    public async Task QueryStateAsync_WithRedisBackendAndSearchEnabled_ReturnsSearchResults()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new QueryStateRequest
+        {
+            StoreName = "redis-search-store",
+            Query = "@name:John",
+            Page = 0,
+            PageSize = 10
+        };
+
+        var mockSearchStore = new Mock<ISearchableStateStore<object>>();
+        var searchResults = new SearchPagedResult<object>(
+            Items: new List<SearchResult<object>>
+            {
+                new SearchResult<object>("key1", new { Name = "John" }, 1.0)
+            },
+            TotalCount: 1,
+            Offset: 0,
+            Limit: 10);
+
+        _mockStateStoreFactory.Setup(f => f.HasStore("redis-search-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("redis-search-store")).Returns(Services.StateBackend.Redis);
+        _mockStateStoreFactory.Setup(f => f.SupportsSearch("redis-search-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetSearchableStore<object>("redis-search-store")).Returns(mockSearchStore.Object);
+        mockSearchStore.Setup(s => s.SearchAsync(
+            It.IsAny<string>(),
+            "@name:John",
+            It.IsAny<SearchQueryOptions?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(searchResults);
+
+        // Act
+        var (status, response) = await service.QueryStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Results);
+        Assert.Equal(1, response.TotalCount);
+    }
+
+    [Fact]
+    public async Task QueryStateAsync_WithRedisBackendAndCustomIndexName_UsesProvidedIndex()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new QueryStateRequest
+        {
+            StoreName = "redis-search-store",
+            IndexName = "custom-idx",
+            Query = "*",
+            Page = 0,
+            PageSize = 10
+        };
+
+        var mockSearchStore = new Mock<ISearchableStateStore<object>>();
+        string? capturedIndexName = null;
+
+        _mockStateStoreFactory.Setup(f => f.HasStore("redis-search-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("redis-search-store")).Returns(Services.StateBackend.Redis);
+        _mockStateStoreFactory.Setup(f => f.SupportsSearch("redis-search-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetSearchableStore<object>("redis-search-store")).Returns(mockSearchStore.Object);
+        mockSearchStore.Setup(s => s.SearchAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<SearchQueryOptions?>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, string, SearchQueryOptions?, CancellationToken>((idx, _, _, _) => capturedIndexName = idx)
+            .ReturnsAsync(new SearchPagedResult<object>(
+                Items: new List<SearchResult<object>>(),
+                TotalCount: 0,
+                Offset: 0,
+                Limit: 10));
+
+        // Act
+        await service.QueryStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal("custom-idx", capturedIndexName);
+    }
+
+    [Fact]
+    public async Task QueryStateAsync_WithRedisBackendDefaultsIndexName_UsesStoreNameBasedIndex()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new QueryStateRequest
+        {
+            StoreName = "my-store",
+            Query = "*",
+            Page = 0,
+            PageSize = 10
+        };
+
+        var mockSearchStore = new Mock<ISearchableStateStore<object>>();
+        string? capturedIndexName = null;
+
+        _mockStateStoreFactory.Setup(f => f.HasStore("my-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("my-store")).Returns(Services.StateBackend.Redis);
+        _mockStateStoreFactory.Setup(f => f.SupportsSearch("my-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetSearchableStore<object>("my-store")).Returns(mockSearchStore.Object);
+        mockSearchStore.Setup(s => s.SearchAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<SearchQueryOptions?>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, string, SearchQueryOptions?, CancellationToken>((idx, _, _, _) => capturedIndexName = idx)
+            .ReturnsAsync(new SearchPagedResult<object>(
+                Items: new List<SearchResult<object>>(),
+                TotalCount: 0,
+                Offset: 0,
+                Limit: 10));
+
+        // Act
+        await service.QueryStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal("my-store-idx", capturedIndexName);
     }
 
     [Fact]

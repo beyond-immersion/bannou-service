@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.HttpTester.Tests;
+using BeyondImmersion.BannouService.Mesh.Services;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Yarp.ReverseProxy.Forwarder;
 
 namespace BeyondImmersion.BannouService.HttpTester;
 
@@ -207,7 +209,15 @@ public class Program
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Website.IWebsiteClient, BeyondImmersion.BannouService.Website.WebsiteClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Messaging.IMessagingClient, BeyondImmersion.BannouService.Messaging.MessagingClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.State.IStateClient, BeyondImmersion.BannouService.State.StateClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Mesh.IMeshClient, BeyondImmersion.BannouService.Mesh.MeshClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Asset.IAssetClient, BeyondImmersion.BannouService.Asset.AssetClient>();
             // Note: TestingTestHandler uses direct HTTP calls, not a generated client
+
+            // Add YARP HTTP forwarder for MeshInvocationClient
+            serviceCollection.AddHttpForwarder();
+
+            // Register MeshInvocationClient (Dapr replacement for service-to-service calls)
+            serviceCollection.AddSingleton<IMeshInvocationClient, MeshInvocationClient>();
 
             // Build the service provider
             ServiceProvider = serviceCollection.BuildServiceProvider();
@@ -657,7 +667,8 @@ public class Program
             new SubscriptionsTestHandler(),
             new TestingTestHandler(),
             new MessagingTestHandler(),
-            new StateTestHandler()
+            new StateTestHandler(),
+            new MeshTestHandler()
         };
 
         // Filter test handlers by plugin if specified

@@ -276,21 +276,54 @@ public partial class QueryStateRequest
 {
 
     /// <summary>
-    /// Name of the state store (must be MySQL backend)
+    /// Name of the state store (MySQL or Redis with search enabled)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
-    /// JSON filter expression
+    /// Filter expression. Format depends on backend:
+    /// <br/>
+    /// <br/>**MySQL JSON queries** - structured conditions:
+    /// <br/>```json
+    /// <br/>{
+    /// <br/>  "conditions": [
+    /// <br/>    { "path": "$.name", "operator": "equals", "value": "John" },
+    /// <br/>    { "path": "$.age", "operator": "gte", "value": 18 }
+    /// <br/>  ]
+    /// <br/>}
+    /// <br/>```
+    /// <br/>
+    /// <br/>**MySQL simple equality** - flat object format:
+    /// <br/>```json
+    /// <br/>{ "$.name": "John", "$.status": "active" }
+    /// <br/>```
+    /// <br/>
+    /// <br/>**Redis search** - use indexName and query properties instead
+    /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("filter")]
-    [System.ComponentModel.DataAnnotations.Required]
-    public object Filter { get; set; } = new object();
+    public object? Filter { get; set; } = default!;
 
     /// <summary>
-    /// Sort order
+    /// Redis search index name. Defaults to "{storeName}-idx".
+    /// <br/>Only used for Redis stores with search enabled.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("indexName")]
+    public string? IndexName { get; set; } = default!;
+
+    /// <summary>
+    /// RedisSearch query string (e.g., "@name:John", "@age:[18 +inf]", "*").
+    /// <br/>Defaults to "*" (match all). Only used for Redis stores with search enabled.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("query")]
+    public string? Query { get; set; } = default!;
+
+    /// <summary>
+    /// Sort order (first field only is used)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sort")]
     public System.Collections.Generic.ICollection<SortField> Sort { get; set; } = default!;
@@ -302,7 +335,7 @@ public partial class QueryStateRequest
     public int Page { get; set; } = 0;
 
     /// <summary>
-    /// Items per page
+    /// Items per page (max 1000)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     public int PageSize { get; set; } = 100;
@@ -323,7 +356,7 @@ public partial class SortField
 {
 
     /// <summary>
-    /// Field name to sort by
+    /// Field name to sort by (JSON path for MySQL, field name for Redis)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("field")]
     public string Field { get; set; } = default!;
@@ -343,6 +376,89 @@ public partial class SortField
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
+
+}
+
+/// <summary>
+/// A single query condition for MySQL JSON queries
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class QueryCondition
+{
+
+    /// <summary>
+    /// JSON path to query (e.g., "$.name", "$.address.city", "$.tags[0]")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("path")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Path { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("operator")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public QueryOperator Operator { get; set; } = default!;
+
+    /// <summary>
+    /// Value to compare against. Not required for exists/notExists operators.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("value")]
+    public object Value { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Comparison operator for query conditions
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum QueryOperator
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"equals")]
+    Equals = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"notEquals")]
+    NotEquals = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"greaterThan")]
+    GreaterThan = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"greaterThanOrEqual")]
+    GreaterThanOrEqual = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"lessThan")]
+    LessThan = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"lessThanOrEqual")]
+    LessThanOrEqual = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"contains")]
+    Contains = 6,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"startsWith")]
+    StartsWith = 7,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"endsWith")]
+    EndsWith = 8,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"in")]
+    In = 9,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"exists")]
+    Exists = 10,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"notExists")]
+    NotExists = 11,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"fullText")]
+    FullText = 12,
 
 }
 

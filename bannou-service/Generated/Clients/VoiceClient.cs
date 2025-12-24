@@ -443,7 +443,7 @@ public partial class VoiceClient : BeyondImmersion.BannouService.ServiceClients.
                         throw new ApiException("Room full or already joined", status_, responseText_, headers_, null);
                     }
                     else
-                    if (status_ == 503)
+                    if (status_ == 500)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
                         throw new ApiException("Voice tier unavailable (P2P full, scaled tier disabled)", status_, responseText_, headers_, null);

@@ -252,8 +252,8 @@ paths:
                 $ref: '#/components/schemas/AuthResponse'
         '401':
           description: Invalid or expired Steam ticket
-        '503':
-          description: Steam API unavailable
+        '500':
+          description: Steam API unavailable or internal error
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SteamVerifyRequest\"\
         ,\n  \"$defs\": {\n    \"SteamVerifyRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request to

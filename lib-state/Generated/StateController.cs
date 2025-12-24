@@ -58,7 +58,7 @@ public interface IStateController : BeyondImmersion.BannouService.Controllers.ID
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteStateResponse>> DeleteStateAsync(DeleteStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Query state (MySQL stores only)
+    /// Query state (MySQL JSON queries or Redis with search enabled)
     /// </summary>
 
 
@@ -178,7 +178,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     }
 
     /// <summary>
-    /// Query state (MySQL stores only)
+    /// Query state (MySQL JSON queries or Redis with search enabled)
     /// </summary>
     /// <returns>Query results</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("state/query")]
@@ -593,24 +593,34 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "QueryStateRequest": {
       "type": "object",
       "required": [
-        "storeName",
-        "filter"
+        "storeName"
       ],
       "properties": {
         "storeName": {
           "type": "string",
-          "description": "Name of the state store (must be MySQL backend)"
+          "description": "Name of the state store (MySQL or Redis with search enabled)"
         },
         "filter": {
           "type": "object",
-          "description": "JSON filter expression"
+          "nullable": true,
+          "description": "Filter expression. Format depends on backend:\n\n**MySQL JSON queries** - structured conditions:\n```json\n{\n  \"conditions\": [\n    { \"path\": \"$.name\", \"operator\": \"equals\", \"value\": \"John\" },\n    { \"path\": \"$.age\", \"operator\": \"gte\", \"value\": 18 }\n  ]\n}\n```\n\n**MySQL simple equality** - flat object format:\n```json\n{ \"$.name\": \"John\", \"$.status\": \"active\" }\n```\n\n**Redis search** - use indexName and query properties instead\n"
+        },
+        "indexName": {
+          "type": "string",
+          "nullable": true,
+          "description": "Redis search index name. Defaults to \"{storeName}-idx\".\nOnly used for Redis stores with search enabled.\n"
+        },
+        "query": {
+          "type": "string",
+          "nullable": true,
+          "description": "RedisSearch query string (e.g., \"@name:John\", \"@age:[18 +inf]\", \"*\").\nDefaults to \"*\" (match all). Only used for Redis stores with search enabled.\n"
         },
         "sort": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/SortField"
           },
-          "description": "Sort order"
+          "description": "Sort order (first field only is used)"
         },
         "page": {
           "type": "integer",
@@ -620,7 +630,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
         "pageSize": {
           "type": "integer",
           "default": 100,
-          "description": "Items per page"
+          "description": "Items per page (max 1000)"
         }
       }
     },
@@ -629,7 +639,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
       "properties": {
         "field": {
           "type": "string",
-          "description": "Field name to sort by"
+          "description": "Field name to sort by (JSON path for MySQL, field name for Redis)"
         },
         "order": {
           "type": "string",
@@ -681,7 +691,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
 
     private static readonly string _QueryState_Info = """
 {
-  "summary": "Query state (MySQL stores only)",
+  "summary": "Query state (MySQL JSON queries or Redis with search enabled)",
   "description": "",
   "tags": [
     "State"

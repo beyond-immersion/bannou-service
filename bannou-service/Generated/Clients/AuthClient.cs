@@ -643,10 +643,10 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                         throw new ApiException("Invalid or expired Steam ticket", status_, responseText_, headers_, null);
                     }
                     else
-                    if (status_ == 503)
+                    if (status_ == 500)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Steam API unavailable", status_, responseText_, headers_, null);
+                        throw new ApiException("Steam API unavailable or internal error", status_, responseText_, headers_, null);
                     }
                     else
                     {

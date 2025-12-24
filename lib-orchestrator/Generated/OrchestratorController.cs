@@ -41,7 +41,7 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>- Dapr Placement service
     /// </remarks>
 
-    /// <returns>Infrastructure health status</returns>
+    /// <returns>Infrastructure health status (check response body for component health)</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InfrastructureHealthResponse>> GetInfrastructureHealthAsync(InfrastructureHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
@@ -476,7 +476,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     /// <br/>- RabbitMQ (direct connection via RabbitMQ.Client)
     /// <br/>- Dapr Placement service
     /// </remarks>
-    /// <returns>Infrastructure health status</returns>
+    /// <returns>Infrastructure health status (check response body for component health)</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/health/infrastructure")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InfrastructureHealthResponse>> GetInfrastructureHealth([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] InfrastructureHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))

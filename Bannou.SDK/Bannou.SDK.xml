@@ -8091,7 +8091,7 @@
         <member name="M:BeyondImmersion.BannouService.State.IStateClient.QueryStateAsync(BeyondImmersion.BannouService.State.QueryStateRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
             <summary>
-            Query state (MySQL stores only)
+            Query state (MySQL JSON queries or Redis with search enabled)
             </summary>
             <returns>Query results</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
@@ -8154,7 +8154,7 @@
         <member name="M:BeyondImmersion.BannouService.State.StateClient.QueryStateAsync(BeyondImmersion.BannouService.State.QueryStateRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
             <summary>
-            Query state (MySQL stores only)
+            Query state (MySQL JSON queries or Redis with search enabled)
             </summary>
             <returns>Query results</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
@@ -8267,17 +8267,49 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.StoreName">
             <summary>
-            Name of the state store (must be MySQL backend)
+            Name of the state store (MySQL or Redis with search enabled)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.Filter">
             <summary>
-            JSON filter expression
+            Filter expression. Format depends on backend:
+            <br/>
+            <br/>**MySQL JSON queries** - structured conditions:
+            <br/>```json
+            <br/>{
+            <br/>  "conditions": [
+            <br/>    { "path": "$.name", "operator": "equals", "value": "John" },
+            <br/>    { "path": "$.age", "operator": "gte", "value": 18 }
+            <br/>  ]
+            <br/>}
+            <br/>```
+            <br/>
+            <br/>**MySQL simple equality** - flat object format:
+            <br/>```json
+            <br/>{ "$.name": "John", "$.status": "active" }
+            <br/>```
+            <br/>
+            <br/>**Redis search** - use indexName and query properties instead
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.IndexName">
+            <summary>
+            Redis search index name. Defaults to "{storeName}-idx".
+            <br/>Only used for Redis stores with search enabled.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.Query">
+            <summary>
+            RedisSearch query string (e.g., "@name:John", "@age:[18 +inf]", "*").
+            <br/>Defaults to "*" (match all). Only used for Redis stores with search enabled.
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.Sort">
             <summary>
-            Sort order
+            Sort order (first field only is used)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.Page">
@@ -8287,17 +8319,37 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.PageSize">
             <summary>
-            Items per page
+            Items per page (max 1000)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.State.SortField.Field">
             <summary>
-            Field name to sort by
+            Field name to sort by (JSON path for MySQL, field name for Redis)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.State.SortField.Order">
             <summary>
             Sort direction
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.QueryCondition">
+            <summary>
+            A single query condition for MySQL JSON queries
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.QueryCondition.Path">
+            <summary>
+            JSON path to query (e.g., "$.name", "$.address.city", "$.tags[0]")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.QueryCondition.Value">
+            <summary>
+            Value to compare against. Not required for exists/notExists operators.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.State.QueryOperator">
+            <summary>
+            Comparison operator for query conditions
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.State.QueryStateResponse.Results">
@@ -8781,7 +8833,7 @@
             <br/>- RabbitMQ (direct connection via RabbitMQ.Client)
             <br/>- Dapr Placement service
             </remarks>
-            <returns>Infrastructure health status</returns>
+            <returns>Infrastructure health status (check response body for component health)</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient.GetServicesHealthAsync(BeyondImmersion.BannouService.Orchestrator.ServiceHealthRequest,System.Threading.CancellationToken)">
@@ -9157,7 +9209,7 @@
             <br/>- RabbitMQ (direct connection via RabbitMQ.Client)
             <br/>- Dapr Placement service
             </remarks>
-            <returns>Infrastructure health status</returns>
+            <returns>Infrastructure health status (check response body for component health)</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Orchestrator.OrchestratorClient.GetServicesHealthAsync(BeyondImmersion.BannouService.Orchestrator.ServiceHealthRequest,System.Threading.CancellationToken)">

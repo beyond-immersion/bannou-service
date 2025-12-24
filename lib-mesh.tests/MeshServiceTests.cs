@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Mesh.Services;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
+using Yarp.ReverseProxy.Forwarder;
 
 namespace BeyondImmersion.BannouService.Mesh.Tests;
 
@@ -1025,5 +1026,305 @@ public class MeshRedisManagerTests
             // Clean up
             Environment.SetEnvironmentVariable("MESH_REDIS_CONNECTION_STRING", originalValue);
         }
+    }
+}
+
+/// <summary>
+/// Tests for MeshInvocationClient - the YARP-based service invocation client
+/// that replaces DaprClient.InvokeMethodAsync for service-to-service communication.
+/// </summary>
+public class MeshInvocationClientTests : IDisposable
+{
+    private readonly Mock<IMeshClient> _mockMeshClient;
+    private readonly Mock<IHttpForwarder> _mockForwarder;
+    private readonly Mock<ILogger<MeshInvocationClient>> _mockLogger;
+    private MeshInvocationClient? _client;
+
+    public MeshInvocationClientTests()
+    {
+        _mockMeshClient = new Mock<IMeshClient>();
+        _mockForwarder = new Mock<IHttpForwarder>();
+        _mockLogger = new Mock<ILogger<MeshInvocationClient>>();
+    }
+
+    public void Dispose()
+    {
+        _client?.Dispose();
+    }
+
+    private MeshInvocationClient CreateClient()
+    {
+        _client = new MeshInvocationClient(
+            _mockMeshClient.Object,
+            _mockForwarder.Object,
+            _mockLogger.Object);
+        return _client;
+    }
+
+    #region Constructor Tests
+
+    [Fact]
+    public void Constructor_WithValidParameters_ShouldNotThrow()
+    {
+        // Act & Assert
+        var client = CreateClient();
+        Assert.NotNull(client);
+    }
+
+    [Fact]
+    public void Constructor_WithNullMeshClient_ShouldThrowArgumentNullException()
+    {
+        // Act & Assert
+        var exception = Assert.Throws<ArgumentNullException>(() => new MeshInvocationClient(
+            null!,
+            _mockForwarder.Object,
+            _mockLogger.Object));
+
+        Assert.Equal("meshClient", exception.ParamName);
+    }
+
+    [Fact]
+    public void Constructor_WithNullForwarder_ShouldThrowArgumentNullException()
+    {
+        // Act & Assert
+        var exception = Assert.Throws<ArgumentNullException>(() => new MeshInvocationClient(
+            _mockMeshClient.Object,
+            null!,
+            _mockLogger.Object));
+
+        Assert.Equal("forwarder", exception.ParamName);
+    }
+
+    [Fact]
+    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
+    {
+        // Act & Assert
+        var exception = Assert.Throws<ArgumentNullException>(() => new MeshInvocationClient(
+            _mockMeshClient.Object,
+            _mockForwarder.Object,
+            null!));
+
+        Assert.Equal("logger", exception.ParamName);
+    }
+
+    #endregion
+
+    #region CreateInvokeMethodRequest Tests
+
+    [Fact]
+    public void CreateInvokeMethodRequest_WithValidParameters_ShouldCreateRequest()
+    {
+        // Arrange
+        var client = CreateClient();
+
+        // Act
+        var request = client.CreateInvokeMethodRequest(HttpMethod.Get, "bannou", "auth/status");
+
+        // Assert
+        Assert.NotNull(request);
+        Assert.Equal(HttpMethod.Get, request.Method);
+        Assert.True(request.Options.TryGetValue(new HttpRequestOptionsKey<string>("mesh-app-id"), out var appId));
+        Assert.Equal("bannou", appId);
+        Assert.True(request.Options.TryGetValue(new HttpRequestOptionsKey<string>("mesh-method"), out var method));
+        Assert.Equal("auth/status", method);
+    }
+
+    [Fact]
+    public void CreateInvokeMethodRequest_WithBody_ShouldSerializeRequestBody()
+    {
+        // Arrange
+        var client = CreateClient();
+        var requestBody = new TestRequest { Name = "TestValue", Count = 42 };
+
+        // Act
+        var request = client.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", "test/endpoint", requestBody);
+
+        // Assert
+        Assert.NotNull(request);
+        Assert.NotNull(request.Content);
+        Assert.Equal("application/json", request.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
+    public void CreateInvokeMethodRequest_WithNullHttpMethod_ShouldThrowArgumentNullException()
+    {
+        // Arrange
+        var client = CreateClient();
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            client.CreateInvokeMethodRequest(null!, "bannou", "test/endpoint"));
+    }
+
+    [Fact]
+    public void CreateInvokeMethodRequest_WithNullAppId_ShouldThrowArgumentNullException()
+    {
+        // Arrange
+        var client = CreateClient();
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            client.CreateInvokeMethodRequest(HttpMethod.Get, null!, "test/endpoint"));
+    }
+
+    [Fact]
+    public void CreateInvokeMethodRequest_WithNullMethodName_ShouldThrowArgumentNullException()
+    {
+        // Arrange
+        var client = CreateClient();
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            client.CreateInvokeMethodRequest(HttpMethod.Get, "bannou", null!));
+    }
+
+    #endregion
+
+    #region InvokeMethodWithResponseAsync Tests
+
+    [Fact]
+    public async Task InvokeMethodWithResponseAsync_WithoutMeshAppId_ShouldThrowArgumentException()
+    {
+        // Arrange
+        var client = CreateClient();
+        var request = new HttpRequestMessage(HttpMethod.Get, "http://example.com/test");
+        // Note: Not setting mesh-app-id option
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            client.InvokeMethodWithResponseAsync(request, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task InvokeMethodWithResponseAsync_WhenNoEndpointsAvailable_ShouldThrowMeshInvocationException()
+    {
+        // Arrange
+        var client = CreateClient();
+
+        _mockMeshClient
+            .Setup(x => x.GetRouteAsync(It.IsAny<GetRouteRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("No endpoints available", 503, null, new Dictionary<string, IEnumerable<string>>(), null));
+
+        var request = client.CreateInvokeMethodRequest(HttpMethod.Get, "non-existent-app", "test/endpoint");
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<MeshInvocationException>(() =>
+            client.InvokeMethodWithResponseAsync(request, CancellationToken.None));
+
+        Assert.Equal("non-existent-app", exception.AppId);
+        Assert.Equal(503, exception.StatusCode);
+    }
+
+    #endregion
+
+    #region IsServiceAvailableAsync Tests
+
+    [Fact]
+    public async Task IsServiceAvailableAsync_WhenEndpointExists_ShouldReturnTrue()
+    {
+        // Arrange
+        var client = CreateClient();
+
+        _mockMeshClient
+            .Setup(x => x.GetRouteAsync(It.IsAny<GetRouteRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetRouteResponse
+            {
+                Endpoint = new MeshEndpoint { AppId = "bannou", Host = "localhost", Port = 8080 }
+            });
+
+        // Act
+        var result = await client.IsServiceAvailableAsync("bannou", CancellationToken.None);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task IsServiceAvailableAsync_WhenNoEndpoints_ShouldReturnFalse()
+    {
+        // Arrange
+        var client = CreateClient();
+
+        _mockMeshClient
+            .Setup(x => x.GetRouteAsync(It.IsAny<GetRouteRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404, null, new Dictionary<string, IEnumerable<string>>(), null));
+
+        // Act
+        var result = await client.IsServiceAvailableAsync("non-existent", CancellationToken.None);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task IsServiceAvailableAsync_WithNullAppId_ShouldThrowArgumentNullException()
+    {
+        // Arrange
+        var client = CreateClient();
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            client.IsServiceAvailableAsync(null!, CancellationToken.None));
+    }
+
+    #endregion
+
+    #region MeshInvocationException Tests
+
+    [Fact]
+    public void MeshInvocationException_ShouldFormatMessageCorrectly()
+    {
+        // Act
+        var exception = new MeshInvocationException("test-app", "test/method", "Test error");
+
+        // Assert
+        Assert.Equal("test-app", exception.AppId);
+        Assert.Equal("test/method", exception.MethodName);
+        Assert.Contains("test-app", exception.Message);
+        Assert.Contains("test/method", exception.Message);
+        Assert.Contains("Test error", exception.Message);
+    }
+
+    [Fact]
+    public void MeshInvocationException_NoEndpointsAvailable_ShouldHave503StatusCode()
+    {
+        // Act
+        var exception = MeshInvocationException.NoEndpointsAvailable("test-app", "test/method");
+
+        // Assert
+        Assert.Equal(503, exception.StatusCode);
+        Assert.Contains("No healthy endpoints", exception.Message);
+    }
+
+    [Fact]
+    public void MeshInvocationException_HttpError_ShouldIncludeStatusCodeAndBody()
+    {
+        // Act
+        var exception = MeshInvocationException.HttpError("test-app", "test/method", 404, "Not found response body");
+
+        // Assert
+        Assert.Equal(404, exception.StatusCode);
+        Assert.Contains("404", exception.Message);
+        Assert.Contains("Not found response body", exception.Message);
+    }
+
+    #endregion
+
+    /// <summary>
+    /// Simple test request class for serialization tests.
+    /// </summary>
+    private class TestRequest
+    {
+        public string? Name { get; set; }
+        public int Count { get; set; }
+    }
+
+    /// <summary>
+    /// Simple test response class for deserialization tests.
+    /// </summary>
+    private class TestResponse
+    {
+        public string? Result { get; set; }
+        public bool Success { get; set; }
     }
 }

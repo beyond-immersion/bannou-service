@@ -182,7 +182,7 @@ paths:
             schema:
               $ref: '#/components/schemas/RegisterEndpointRequest'
       responses:
-        '200':
+        '201':
           description: Endpoint registered successfully
           content:
             application/json:
@@ -255,7 +255,7 @@ paths:
             schema:
               $ref: '#/components/schemas/DeregisterEndpointRequest'
       responses:
-        '200':
+        '204':
           description: Endpoint deregistered successfully
         '404':
           description: Endpoint not found
@@ -347,8 +347,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetRouteResponse'
-        '503':
-          description: No healthy endpoints available
+        '404':
+          description: No healthy endpoints available for the requested app-id
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetRouteRequest\"\
         ,\n  \"$defs\": {\n    \"GetRouteRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request to get

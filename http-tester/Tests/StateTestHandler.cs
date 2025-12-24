@@ -36,6 +36,13 @@ public class StateTestHandler : IServiceTestHandler
 
             // ETag Concurrency Tests
             new ServiceTest(TestETagConcurrency, "ETagConcurrency", "State", "Test ETag-based optimistic concurrency"),
+
+            // Query State Tests
+            new ServiceTest(TestQueryStateNonExistentStore, "QueryStateNoStore", "State", "Test querying state from non-existent store"),
+            new ServiceTest(TestQueryStateMySqlBackend, "QueryStateMySql", "State", "Test querying state from MySQL backend"),
+            new ServiceTest(TestQueryStateRedisWithSearch, "QueryStateRedisSearch", "State", "Test querying state from Redis with search enabled"),
+            new ServiceTest(TestQueryStateRedisWithoutSearch, "QueryStateRedisNoSearch", "State", "Test querying state from Redis without search returns 400"),
+            new ServiceTest(TestQueryStateWithPagination, "QueryStatePagination", "State", "Test querying state with pagination"),
         };
     }
 
@@ -596,6 +603,291 @@ public class StateTestHandler : IServiceTestHandler
         catch (Exception ex)
         {
             return TestResult.Failed($"ETagConcurrency test failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test querying state from a non-existent store returns 404.
+    /// </summary>
+    private static async Task<TestResult> TestQueryStateNonExistentStore(ITestClient client, string[] args)
+    {
+        try
+        {
+            var stateClient = Program.ServiceProvider?.GetRequiredService<IStateClient>();
+            if (stateClient == null)
+            {
+                return TestResult.Failed("State client not available");
+            }
+
+            var request = new QueryStateRequest
+            {
+                StoreName = "non-existent-store-12345",
+                Page = 0,
+                PageSize = 10
+            };
+
+            try
+            {
+                var response = await stateClient.QueryStateAsync(request);
+                return TestResult.Failed("QueryState should have returned 404 for non-existent store");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                return TestResult.Successful("QueryState correctly returned 404 for non-existent store");
+            }
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"QueryState non-existent store test failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test querying state from MySQL backend.
+    /// </summary>
+    private static async Task<TestResult> TestQueryStateMySqlBackend(ITestClient client, string[] args)
+    {
+        try
+        {
+            var stateClient = Program.ServiceProvider?.GetRequiredService<IStateClient>();
+            if (stateClient == null)
+            {
+                return TestResult.Failed("State client not available");
+            }
+
+            // Find a MySQL store
+            var listResponse = await stateClient.ListStoresAsync(new ListStoresRequest { BackendFilter = ListStoresRequestBackendFilter.Mysql });
+            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
+            {
+                return TestResult.Successful("No MySQL stores configured, skipping MySQL query test");
+            }
+
+            var storeName = listResponse.Stores.First().Name;
+
+            // Save some test data
+            var testPrefix = $"query-test-{Guid.NewGuid()}";
+            for (var i = 0; i < 3; i++)
+            {
+                await stateClient.SaveStateAsync(new SaveStateRequest
+                {
+                    StoreName = storeName,
+                    Key = $"{testPrefix}-{i}",
+                    Value = new { name = $"Item {i}", index = i }
+                });
+            }
+
+            // Query the store
+            var queryRequest = new QueryStateRequest
+            {
+                StoreName = storeName,
+                Page = 0,
+                PageSize = 10
+            };
+
+            var queryResponse = await stateClient.QueryStateAsync(queryRequest);
+
+            // Clean up test data
+            for (var i = 0; i < 3; i++)
+            {
+                await stateClient.DeleteStateAsync(new DeleteStateRequest
+                {
+                    StoreName = storeName,
+                    Key = $"{testPrefix}-{i}"
+                });
+            }
+
+            if (queryResponse == null)
+            {
+                return TestResult.Failed("QueryState returned null for MySQL store");
+            }
+
+            return TestResult.Successful($"QueryState MySQL returned {queryResponse.Results?.Count ?? 0} results, total: {queryResponse.TotalCount}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"QueryState MySQL test failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test querying state from Redis with search enabled.
+    /// </summary>
+    private static async Task<TestResult> TestQueryStateRedisWithSearch(ITestClient client, string[] args)
+    {
+        try
+        {
+            var stateClient = Program.ServiceProvider?.GetRequiredService<IStateClient>();
+            if (stateClient == null)
+            {
+                return TestResult.Failed("State client not available");
+            }
+
+            // Find a Redis store - we'll check if search is supported by attempting a query
+            var listResponse = await stateClient.ListStoresAsync(new ListStoresRequest { BackendFilter = ListStoresRequestBackendFilter.Redis });
+            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
+            {
+                return TestResult.Successful("No Redis stores configured, skipping Redis search test");
+            }
+
+            // Try each Redis store to find one with search enabled
+            foreach (var store in listResponse.Stores)
+            {
+                var queryRequest = new QueryStateRequest
+                {
+                    StoreName = store.Name,
+                    Query = "*", // Match all
+                    Page = 0,
+                    PageSize = 10
+                };
+
+                try
+                {
+                    var queryResponse = await stateClient.QueryStateAsync(queryRequest);
+                    return TestResult.Successful($"QueryState Redis search on '{store.Name}' returned {queryResponse?.Results?.Count ?? 0} results");
+                }
+                catch (ApiException ex) when (ex.StatusCode == 400)
+                {
+                    // This store doesn't have search enabled, try next
+                    continue;
+                }
+            }
+
+            return TestResult.Successful("No Redis stores with search enabled found, skipping Redis search test");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"QueryState Redis search test failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test querying state from Redis without search returns 400.
+    /// </summary>
+    private static async Task<TestResult> TestQueryStateRedisWithoutSearch(ITestClient client, string[] args)
+    {
+        try
+        {
+            var stateClient = Program.ServiceProvider?.GetRequiredService<IStateClient>();
+            if (stateClient == null)
+            {
+                return TestResult.Failed("State client not available");
+            }
+
+            // Find a Redis store and attempt a query - if search is not enabled, should get 400
+            var listResponse = await stateClient.ListStoresAsync(new ListStoresRequest { BackendFilter = ListStoresRequestBackendFilter.Redis });
+            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
+            {
+                return TestResult.Successful("No Redis stores configured, skipping Redis no-search test");
+            }
+
+            // Try stores until we find one that returns 400 (no search) or we run out
+            foreach (var store in listResponse.Stores)
+            {
+                var queryRequest = new QueryStateRequest
+                {
+                    StoreName = store.Name,
+                    Query = "*",
+                    Page = 0,
+                    PageSize = 10
+                };
+
+                try
+                {
+                    await stateClient.QueryStateAsync(queryRequest);
+                    // If we got here, this store has search enabled, try next
+                    continue;
+                }
+                catch (ApiException ex) when (ex.StatusCode == 400)
+                {
+                    return TestResult.Successful($"QueryState correctly returned 400 for Redis store '{store.Name}' without search");
+                }
+            }
+
+            return TestResult.Successful("All Redis stores have search enabled, skipping no-search test");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"QueryState Redis no-search test failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test querying state with pagination parameters.
+    /// </summary>
+    private static async Task<TestResult> TestQueryStateWithPagination(ITestClient client, string[] args)
+    {
+        try
+        {
+            var stateClient = Program.ServiceProvider?.GetRequiredService<IStateClient>();
+            if (stateClient == null)
+            {
+                return TestResult.Failed("State client not available");
+            }
+
+            // Find a MySQL store for pagination test
+            var listResponse = await stateClient.ListStoresAsync(new ListStoresRequest { BackendFilter = ListStoresRequestBackendFilter.Mysql });
+            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
+            {
+                return TestResult.Successful("No MySQL stores configured, skipping pagination test");
+            }
+
+            var storeName = listResponse.Stores.First().Name;
+
+            // Save test data
+            var testPrefix = $"page-test-{Guid.NewGuid()}";
+            for (var i = 0; i < 5; i++)
+            {
+                await stateClient.SaveStateAsync(new SaveStateRequest
+                {
+                    StoreName = storeName,
+                    Key = $"{testPrefix}-{i}",
+                    Value = new { name = $"Page Item {i}", index = i }
+                });
+            }
+
+            // Query first page
+            var page1Request = new QueryStateRequest
+            {
+                StoreName = storeName,
+                Page = 0,
+                PageSize = 2
+            };
+
+            var page1Response = await stateClient.QueryStateAsync(page1Request);
+
+            // Query second page
+            var page2Request = new QueryStateRequest
+            {
+                StoreName = storeName,
+                Page = 1,
+                PageSize = 2
+            };
+
+            var page2Response = await stateClient.QueryStateAsync(page2Request);
+
+            // Clean up test data
+            for (var i = 0; i < 5; i++)
+            {
+                await stateClient.DeleteStateAsync(new DeleteStateRequest
+                {
+                    StoreName = storeName,
+                    Key = $"{testPrefix}-{i}"
+                });
+            }
+
+            if (page1Response == null || page2Response == null)
+            {
+                return TestResult.Failed("QueryState pagination returned null");
+            }
+
+            var page1Count = page1Response.Results?.Count ?? 0;
+            var page2Count = page2Response.Results?.Count ?? 0;
+
+            return TestResult.Successful($"QueryState pagination: page1={page1Count} items, page2={page2Count} items, total={page1Response.TotalCount}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"QueryState pagination test failed: {ex.Message}");
         }
     }
 }

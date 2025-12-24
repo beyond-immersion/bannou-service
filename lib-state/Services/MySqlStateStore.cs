@@ -12,10 +12,10 @@ namespace BeyondImmersion.BannouService.State.Services;
 
 /// <summary>
 /// MySQL-backed state store for durable/queryable data.
-/// Uses EF Core for query support.
+/// Uses EF Core for query support and raw SQL for efficient JSON queries.
 /// </summary>
 /// <typeparam name="TValue">Value type stored.</typeparam>
-public sealed class MySqlStateStore<TValue> : IQueryableStateStore<TValue>
+public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     where TValue : class
 {
     private readonly StateDbContext _context;
@@ -343,4 +343,359 @@ public sealed class MySqlStateStore<TValue> : IQueryableStateStore<TValue>
 
         return count;
     }
+
+    #region IJsonQueryableStateStore Implementation
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<JsonQueryResult<TValue>>> JsonQueryAsync(
+        IReadOnlyList<JsonQueryCondition> conditions,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(conditions);
+
+        var (whereClauses, parameters) = BuildWhereClause(conditions);
+
+        var sql = $@"
+            SELECT `Key`, `ValueJson`
+            FROM `state_entries`
+            WHERE `StoreName` = @p0
+            {(whereClauses.Length > 0 ? $"AND {whereClauses}" : "")}";
+
+        var allParams = new List<object?> { _storeName };
+        allParams.AddRange(parameters);
+
+        var entries = await _context.StateEntries
+            .FromSqlRaw(sql, allParams.ToArray())
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        var results = new List<JsonQueryResult<TValue>>();
+        foreach (var entry in entries)
+        {
+            var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+            if (value != null)
+            {
+                results.Add(new JsonQueryResult<TValue>(entry.Key, value));
+            }
+        }
+
+        _logger.LogDebug("JSON query on store '{Store}' with {ConditionCount} conditions returned {Count} results",
+            _storeName, conditions.Count, results.Count);
+
+        return results;
+    }
+
+    /// <inheritdoc/>
+    public async Task<JsonPagedResult<TValue>> JsonQueryPagedAsync(
+        IReadOnlyList<JsonQueryCondition>? conditions,
+        int offset,
+        int limit,
+        JsonSortSpec? sortBy = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (offset < 0) throw new ArgumentOutOfRangeException(nameof(offset));
+        if (limit <= 0) throw new ArgumentOutOfRangeException(nameof(limit));
+
+        var (whereClauses, parameters) = BuildWhereClause(conditions ?? Array.Empty<JsonQueryCondition>());
+
+        // Build ORDER BY clause
+        var orderBy = "ORDER BY `UpdatedAt` DESC"; // Default ordering
+        if (sortBy != null)
+        {
+            var sortPath = EscapeJsonPath(sortBy.Path);
+            var direction = sortBy.Descending ? "DESC" : "ASC";
+            orderBy = $"ORDER BY JSON_UNQUOTE(JSON_EXTRACT(`ValueJson`, '{sortPath}')) {direction}";
+        }
+
+        // Count query - EF Core 8 SqlQueryRaw<T> requires column named 'Value'
+        var countSql = $@"
+            SELECT COUNT(*) AS Value
+            FROM `state_entries`
+            WHERE `StoreName` = @p0
+            {(whereClauses.Length > 0 ? $"AND {whereClauses}" : "")}";
+
+        var allParams = new List<object?> { _storeName };
+        allParams.AddRange(parameters);
+
+        var totalCount = await _context.Database
+            .SqlQueryRaw<long>(countSql, allParams.Where(p => p != null).ToArray()!)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        // Data query with pagination
+        var dataSql = $@"
+            SELECT `StoreName`, `Key`, `ValueJson`, `ETag`, `CreatedAt`, `UpdatedAt`, `Version`
+            FROM `state_entries`
+            WHERE `StoreName` = @p0
+            {(whereClauses.Length > 0 ? $"AND {whereClauses}" : "")}
+            {orderBy}
+            LIMIT @pLimit OFFSET @pOffset";
+
+        var dataParams = new List<object?> { _storeName };
+        dataParams.AddRange(parameters);
+
+        // Replace placeholder parameter names
+        var paramIndex = dataParams.Count;
+        dataSql = dataSql.Replace("@pLimit", $"@p{paramIndex}");
+        dataParams.Add(limit);
+        paramIndex++;
+        dataSql = dataSql.Replace("@pOffset", $"@p{paramIndex}");
+        dataParams.Add(offset);
+
+        var entries = await _context.StateEntries
+            .FromSqlRaw(dataSql, dataParams.ToArray())
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        var results = new List<JsonQueryResult<TValue>>();
+        foreach (var entry in entries)
+        {
+            var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+            if (value != null)
+            {
+                results.Add(new JsonQueryResult<TValue>(entry.Key, value));
+            }
+        }
+
+        _logger.LogDebug("JSON paged query on store '{Store}' returned {Count}/{Total} results (offset: {Offset}, limit: {Limit})",
+            _storeName, results.Count, totalCount, offset, limit);
+
+        return new JsonPagedResult<TValue>(results, totalCount, offset, limit);
+    }
+
+    /// <inheritdoc/>
+    public async Task<long> JsonCountAsync(
+        IReadOnlyList<JsonQueryCondition>? conditions,
+        CancellationToken cancellationToken = default)
+    {
+        var (whereClauses, parameters) = BuildWhereClause(conditions ?? Array.Empty<JsonQueryCondition>());
+
+        // EF Core 8 SqlQueryRaw<T> requires column named 'Value'
+        var sql = $@"
+            SELECT COUNT(*) AS Value
+            FROM `state_entries`
+            WHERE `StoreName` = @p0
+            {(whereClauses.Length > 0 ? $"AND {whereClauses}" : "")}";
+
+        var allParams = new List<object?> { _storeName };
+        allParams.AddRange(parameters);
+
+        var count = await _context.Database
+            .SqlQueryRaw<long>(sql, allParams.Where(p => p != null).ToArray()!)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return count;
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<object?>> JsonDistinctAsync(
+        string path,
+        IReadOnlyList<JsonQueryCondition>? conditions = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+
+        var (whereClauses, parameters) = BuildWhereClause(conditions ?? Array.Empty<JsonQueryCondition>());
+        var escapedPath = EscapeJsonPath(path);
+
+        // EF Core 8 SqlQueryRaw<T> requires column named 'Value'
+        var sql = $@"
+            SELECT DISTINCT JSON_UNQUOTE(JSON_EXTRACT(`ValueJson`, '{escapedPath}')) AS Value
+            FROM `state_entries`
+            WHERE `StoreName` = @p0
+            AND JSON_EXTRACT(`ValueJson`, '{escapedPath}') IS NOT NULL
+            {(whereClauses.Length > 0 ? $"AND {whereClauses}" : "")}";
+
+        var allParams = new List<object?> { _storeName };
+        allParams.AddRange(parameters);
+
+        var results = await _context.Database
+            .SqlQueryRaw<string?>(sql, allParams.Where(p => p != null).ToArray()!)
+            .ToListAsync(cancellationToken);
+
+        _logger.LogDebug("JSON distinct query on store '{Store}' path '{Path}' returned {Count} values",
+            _storeName, path, results.Count);
+
+        return results.Cast<object?>().ToList();
+    }
+
+    /// <inheritdoc/>
+    public async Task<object?> JsonAggregateAsync(
+        string path,
+        JsonAggregation aggregation,
+        IReadOnlyList<JsonQueryCondition>? conditions = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+
+        var (whereClauses, parameters) = BuildWhereClause(conditions ?? Array.Empty<JsonQueryCondition>());
+        var escapedPath = EscapeJsonPath(path);
+
+        var aggFunc = aggregation switch
+        {
+            JsonAggregation.Count => "COUNT",
+            JsonAggregation.Sum => "SUM",
+            JsonAggregation.Avg => "AVG",
+            JsonAggregation.Min => "MIN",
+            JsonAggregation.Max => "MAX",
+            _ => throw new ArgumentOutOfRangeException(nameof(aggregation))
+        };
+
+        var extractExpr = aggregation == JsonAggregation.Count
+            ? $"JSON_EXTRACT(`ValueJson`, '{escapedPath}')"
+            : $"CAST(JSON_EXTRACT(`ValueJson`, '{escapedPath}') AS DECIMAL(20,6))";
+
+        // EF Core 8 SqlQueryRaw<T> requires column named 'Value'
+        var sql = $@"
+            SELECT {aggFunc}({extractExpr}) AS Value
+            FROM `state_entries`
+            WHERE `StoreName` = @p0
+            {(whereClauses.Length > 0 ? $"AND {whereClauses}" : "")}";
+
+        var allParams = new List<object?> { _storeName };
+        allParams.AddRange(parameters);
+
+        var result = await _context.Database
+            .SqlQueryRaw<decimal?>(sql, allParams.Where(p => p != null).ToArray()!)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        _logger.LogDebug("JSON {Aggregation} on store '{Store}' path '{Path}' = {Result}",
+            aggregation, _storeName, path, result);
+
+        return result;
+    }
+
+    #endregion
+
+    #region SQL Builder Helpers
+
+    /// <summary>
+    /// Builds WHERE clause conditions from JSON query conditions.
+    /// </summary>
+    private (string WhereClause, List<object?> Parameters) BuildWhereClause(
+        IReadOnlyList<JsonQueryCondition> conditions)
+    {
+        if (conditions.Count == 0)
+        {
+            return (string.Empty, new List<object?>());
+        }
+
+        var clauses = new List<string>();
+        var parameters = new List<object?>();
+        var paramIndex = 1; // Start at 1 since p0 is StoreName
+
+        foreach (var condition in conditions)
+        {
+            var escapedPath = EscapeJsonPath(condition.Path);
+            var clause = BuildConditionClause(condition, escapedPath, ref paramIndex, parameters);
+            if (!string.IsNullOrEmpty(clause))
+            {
+                clauses.Add(clause);
+            }
+        }
+
+        return (string.Join(" AND ", clauses), parameters);
+    }
+
+    /// <summary>
+    /// Builds a single condition clause.
+    /// </summary>
+    private static string BuildConditionClause(
+        JsonQueryCondition condition,
+        string escapedPath,
+        ref int paramIndex,
+        List<object?> parameters)
+    {
+        var jsonExtract = $"JSON_EXTRACT(`ValueJson`, '{escapedPath}')";
+        var jsonUnquote = $"JSON_UNQUOTE({jsonExtract})";
+
+        switch (condition.Operator)
+        {
+            case JsonOperator.Equals:
+                parameters.Add(SerializeValue(condition.Value));
+                return $"{jsonUnquote} = @p{paramIndex++}";
+
+            case JsonOperator.NotEquals:
+                parameters.Add(SerializeValue(condition.Value));
+                return $"{jsonUnquote} != @p{paramIndex++}";
+
+            case JsonOperator.GreaterThan:
+                parameters.Add(condition.Value);
+                return $"CAST({jsonExtract} AS DECIMAL(20,6)) > @p{paramIndex++}";
+
+            case JsonOperator.GreaterThanOrEqual:
+                parameters.Add(condition.Value);
+                return $"CAST({jsonExtract} AS DECIMAL(20,6)) >= @p{paramIndex++}";
+
+            case JsonOperator.LessThan:
+                parameters.Add(condition.Value);
+                return $"CAST({jsonExtract} AS DECIMAL(20,6)) < @p{paramIndex++}";
+
+            case JsonOperator.LessThanOrEqual:
+                parameters.Add(condition.Value);
+                return $"CAST({jsonExtract} AS DECIMAL(20,6)) <= @p{paramIndex++}";
+
+            case JsonOperator.Contains:
+                parameters.Add($"%{condition.Value}%");
+                return $"{jsonUnquote} LIKE @p{paramIndex++}";
+
+            case JsonOperator.StartsWith:
+                parameters.Add($"{condition.Value}%");
+                return $"{jsonUnquote} LIKE @p{paramIndex++}";
+
+            case JsonOperator.EndsWith:
+                parameters.Add($"%{condition.Value}");
+                return $"{jsonUnquote} LIKE @p{paramIndex++}";
+
+            case JsonOperator.In:
+                // For array containment: JSON_CONTAINS(ValueJson, '"value"', '$.path')
+                var jsonValue = BannouJson.Serialize(condition.Value);
+                parameters.Add(jsonValue);
+                return $"JSON_CONTAINS(`ValueJson`, @p{paramIndex++}, '{escapedPath}')";
+
+            case JsonOperator.Exists:
+                return $"JSON_CONTAINS_PATH(`ValueJson`, 'one', '{escapedPath}')";
+
+            case JsonOperator.NotExists:
+                return $"NOT JSON_CONTAINS_PATH(`ValueJson`, 'one', '{escapedPath}')";
+
+            case JsonOperator.FullText:
+                // Full-text search requires a FULLTEXT index on the column
+                // This is a simplified implementation using LIKE
+                parameters.Add($"%{condition.Value}%");
+                return $"{jsonUnquote} LIKE @p{paramIndex++}";
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(condition.Operator));
+        }
+    }
+
+    /// <summary>
+    /// Escapes a JSON path for use in SQL.
+    /// </summary>
+    private static string EscapeJsonPath(string path)
+    {
+        // Ensure path starts with $
+        if (!path.StartsWith("$"))
+        {
+            path = "$." + path;
+        }
+        // Escape single quotes
+        return path.Replace("'", "''");
+    }
+
+    /// <summary>
+    /// Serializes a value for SQL parameter.
+    /// </summary>
+    private static object? SerializeValue(object? value)
+    {
+        return value switch
+        {
+            null => null,
+            string s => s,
+            bool b => b.ToString().ToLowerInvariant(),
+            _ => value.ToString()
+        };
+    }
+
+    #endregion
 }

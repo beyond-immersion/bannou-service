@@ -29,6 +29,33 @@ public interface IStateStoreFactory
         where TValue : class;
 
     /// <summary>
+    /// Get JSON queryable store with efficient MySQL JSON functions (MySQL only).
+    /// </summary>
+    /// <typeparam name="TValue">Value type to store.</typeparam>
+    /// <param name="storeName">Name of the configured store.</param>
+    /// <returns>JSON queryable state store instance.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if store is not configured or is not MySQL.</exception>
+    IJsonQueryableStateStore<TValue> GetJsonQueryableStore<TValue>(string storeName)
+        where TValue : class;
+
+    /// <summary>
+    /// Get searchable store (Redis with RedisSearch enabled only).
+    /// </summary>
+    /// <typeparam name="TValue">Value type to store.</typeparam>
+    /// <param name="storeName">Name of the configured store.</param>
+    /// <returns>Searchable state store instance.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if store is not configured, not Redis, or search not enabled.</exception>
+    ISearchableStateStore<TValue> GetSearchableStore<TValue>(string storeName)
+        where TValue : class;
+
+    /// <summary>
+    /// Check if store supports full-text search.
+    /// </summary>
+    /// <param name="storeName">Name of the store to check.</param>
+    /// <returns>True if the store supports search operations.</returns>
+    bool SupportsSearch(string storeName);
+
+    /// <summary>
     /// Check if store is configured.
     /// </summary>
     /// <param name="storeName">Name of the store to check.</param>

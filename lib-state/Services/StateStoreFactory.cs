@@ -32,6 +32,12 @@ public class StoreConfiguration
     /// Table name (MySQL only, defaults to store name).
     /// </summary>
     public string? TableName { get; set; }
+
+    /// <summary>
+    /// Enable full-text search via RedisSearch (Redis 8+ only).
+    /// When enabled, documents are stored as JSON for field-level indexing.
+    /// </summary>
+    public bool EnableSearch { get; set; }
 }
 
 /// <summary>
@@ -161,6 +167,17 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                     ? TimeSpan.FromSeconds(storeConfig.DefaultTtlSeconds.Value)
                     : (TimeSpan?)null;
 
+                // Use searchable store if search is enabled
+                if (storeConfig.EnableSearch)
+                {
+                    var searchLogger = _loggerFactory.CreateLogger<RedisSearchStateStore<TValue>>();
+                    return new RedisSearchStateStore<TValue>(
+                        _redis.GetDatabase(),
+                        keyPrefix,
+                        defaultTtl,
+                        searchLogger);
+                }
+
                 var redisLogger = _loggerFactory.CreateLogger<RedisStateStore<TValue>>();
                 return new RedisStateStore<TValue>(
                     _redis.GetDatabase(),
@@ -205,6 +222,72 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
 
         var store = GetStore<TValue>(storeName);
         return (IQueryableStateStore<TValue>)store;
+    }
+
+    /// <inheritdoc/>
+    public IJsonQueryableStateStore<TValue> GetJsonQueryableStore<TValue>(string storeName)
+        where TValue : class
+    {
+        ArgumentNullException.ThrowIfNull(storeName);
+
+        if (!HasStore(storeName))
+        {
+            throw new InvalidOperationException($"Store '{storeName}' is not configured");
+        }
+
+        var storeConfig = _configuration.Stores[storeName];
+        if (storeConfig.Backend != StateBackend.MySql)
+        {
+            throw new InvalidOperationException(
+                $"Store '{storeName}' uses {storeConfig.Backend} backend which does not support JSON queries. " +
+                "Only MySQL stores support efficient JSON path queries.");
+        }
+
+        var store = GetStore<TValue>(storeName);
+        return (IJsonQueryableStateStore<TValue>)store;
+    }
+
+    /// <inheritdoc/>
+    public ISearchableStateStore<TValue> GetSearchableStore<TValue>(string storeName)
+        where TValue : class
+    {
+        ArgumentNullException.ThrowIfNull(storeName);
+
+        if (!HasStore(storeName))
+        {
+            throw new InvalidOperationException($"Store '{storeName}' is not configured");
+        }
+
+        var storeConfig = _configuration.Stores[storeName];
+        if (storeConfig.Backend != StateBackend.Redis)
+        {
+            throw new InvalidOperationException(
+                $"Store '{storeName}' uses {storeConfig.Backend} backend which does not support search. " +
+                "Only Redis stores with EnableSearch=true support full-text search.");
+        }
+
+        if (!storeConfig.EnableSearch)
+        {
+            throw new InvalidOperationException(
+                $"Store '{storeName}' does not have search enabled. " +
+                "Set EnableSearch=true in the store configuration to use full-text search.");
+        }
+
+        var store = GetStore<TValue>(storeName);
+        return (ISearchableStateStore<TValue>)store;
+    }
+
+    /// <inheritdoc/>
+    public bool SupportsSearch(string storeName)
+    {
+        ArgumentNullException.ThrowIfNull(storeName);
+
+        if (!_configuration.Stores.TryGetValue(storeName, out var config))
+        {
+            return false;
+        }
+
+        return config.Backend == StateBackend.Redis && config.EnableSearch;
     }
 
     /// <inheritdoc/>

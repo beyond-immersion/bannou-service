@@ -60,7 +60,7 @@ public partial interface IStateClient : BeyondImmersion.BannouService.ServiceCli
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Query state (MySQL stores only)
+    /// Query state (MySQL JSON queries or Redis with search enabled)
     /// </summary>
     /// <returns>Query results</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
@@ -381,7 +381,7 @@ public partial class StateClient : BeyondImmersion.BannouService.ServiceClients.
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Query state (MySQL stores only)
+    /// Query state (MySQL JSON queries or Redis with search enabled)
     /// </summary>
     /// <returns>Query results</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
@@ -438,6 +438,18 @@ public partial class StateClient : BeyondImmersion.BannouService.ServiceClients.
                             throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 400)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Query not supported (Redis store without search enabled)", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Store not found", status_, responseText_, headers_, null);
                     }
                     else
                     {

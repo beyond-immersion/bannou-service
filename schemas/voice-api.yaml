@@ -196,7 +196,7 @@ paths:
           description: Voice room not found
         '409':
           description: Room full or already joined
-        '503':
+        '500':
           description: Voice tier unavailable (P2P full, scaled tier disabled)
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/JoinVoiceRoomRequest\"\

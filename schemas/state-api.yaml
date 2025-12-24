@@ -131,7 +131,7 @@ paths:
   /state/query:
     post:
       operationId: queryState
-      summary: Query state (MySQL stores only)
+      summary: Query state (MySQL JSON queries or Redis with search enabled)
       tags:
       - State
       requestBody:
@@ -147,21 +147,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/QueryStateResponse'
+        '400':
+          description: Query not supported (Redis store without search enabled)
+        '404':
+          description: Store not found
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/QueryStateRequest\"\
         ,\n  \"$defs\": {\n    \"QueryStateRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"storeName\"\
-        ,\n        \"filter\"\n      ],\n      \"properties\": {\n        \"storeName\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"Name of the state store (must be MySQL backend)\"\n        },\n        \"filter\"\
-        : {\n          \"type\": \"object\",\n          \"description\": \"JSON filter expression\"\n        },\n        \"\
-        sort\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/SortField\"\n \
-        \         },\n          \"description\": \"Sort order\"\n        },\n        \"page\": {\n          \"type\": \"integer\"\
-        ,\n          \"default\": 0,\n          \"description\": \"Page number (0-indexed)\"\n        },\n        \"pageSize\"\
-        : {\n          \"type\": \"integer\",\n          \"default\": 100,\n          \"description\": \"Items per page\"\n\
-        \        }\n      }\n    },\n    \"SortField\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"\
-        field\": {\n          \"type\": \"string\",\n          \"description\": \"Field name to sort by\"\n        },\n  \
-        \      \"order\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"asc\",\n            \"\
-        desc\"\n          ],\n          \"default\": \"asc\",\n          \"description\": \"Sort direction\"\n        }\n\
-        \      }\n    }\n  }\n}"
+        \n      ],\n      \"properties\": {\n        \"storeName\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Name of the state store (MySQL or Redis with search enabled)\"\n        },\n        \"filter\": {\n          \"\
+        type\": \"object\",\n          \"nullable\": true,\n          \"description\": \"Filter expression. Format depends
+        on backend:\\n\\n**MySQL JSON queries** - structured conditions:\\n```json\\n{\\n  \\\"conditions\\\": [\\n    { \\\
+        \"path\\\": \\\"$.name\\\", \\\"operator\\\": \\\"equals\\\", \\\"value\\\": \\\"John\\\" },\\n    { \\\"path\\\"\
+        : \\\"$.age\\\", \\\"operator\\\": \\\"gte\\\", \\\"value\\\": 18 }\\n  ]\\n}\\n```\\n\\n**MySQL simple equality**
+        - flat object format:\\n```json\\n{ \\\"$.name\\\": \\\"John\\\", \\\"$.status\\\": \\\"active\\\" }\\n```\\n\\n**Redis
+        search** - use indexName and query properties instead\\n\"\n        },\n        \"indexName\": {\n          \"type\"\
+        : \"string\",\n          \"nullable\": true,\n          \"description\": \"Redis search index name. Defaults to \\\
+        \"{storeName}-idx\\\".\\nOnly used for Redis stores with search enabled.\\n\"\n        },\n        \"query\": {\n\
+        \          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"RedisSearch query string
+        (e.g., \\\"@name:John\\\", \\\"@age:[18 +inf]\\\", \\\"*\\\").\\nDefaults to \\\"*\\\" (match all). Only used for
+        Redis stores with search enabled.\\n\"\n        },\n        \"sort\": {\n          \"type\": \"array\",\n        \
+        \  \"items\": {\n            \"$ref\": \"#/$defs/SortField\"\n          },\n          \"description\": \"Sort order
+        (first field only is used)\"\n        },\n        \"page\": {\n          \"type\": \"integer\",\n          \"default\"\
+        : 0,\n          \"description\": \"Page number (0-indexed)\"\n        },\n        \"pageSize\": {\n          \"type\"\
+        : \"integer\",\n          \"default\": 100,\n          \"description\": \"Items per page (max 1000)\"\n        }\n\
+        \      }\n    },\n    \"SortField\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"field\": {\n\
+        \          \"type\": \"string\",\n          \"description\": \"Field name to sort by (JSON path for MySQL, field name
+        for Redis)\"\n        },\n        \"order\": {\n          \"type\": \"string\",\n          \"enum\": [\n         \
+        \   \"asc\",\n            \"desc\"\n          ],\n          \"default\": \"asc\",\n          \"description\": \"Sort
+        direction\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/QueryStateResponse\"\
         ,\n  \"$defs\": {\n    \"QueryStateResponse\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"\
         results\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"object\"\n         \
@@ -170,8 +184,8 @@ paths:
         \          \"type\": \"integer\",\n          \"description\": \"Current page number\"\n        },\n        \"pageSize\"\
         : {\n          \"type\": \"integer\",\n          \"description\": \"Items per page\"\n        }\n      }\n    }\n\
         \  }\n}"
-      x-endpoint-info-json: "{\n  \"summary\": \"Query state (MySQL stores only)\",\n  \"description\": \"\",\n  \"tags\"\
-        : [\n    \"State\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"queryState\"\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Query state (MySQL JSON queries or Redis with search enabled)\",\n  \"description\"\
+        : \"\",\n  \"tags\": [\n    \"State\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"queryState\"\n}"
   /state/bulk-get:
     post:
       operationId: bulkGetState
@@ -366,19 +380,49 @@ components:
       type: object
       required:
       - storeName
-      - filter
       properties:
         storeName:
           type: string
-          description: Name of the state store (must be MySQL backend)
+          description: Name of the state store (MySQL or Redis with search enabled)
         filter:
           type: object
-          description: JSON filter expression
+          nullable: true
+          description: |
+            Filter expression. Format depends on backend:
+
+            **MySQL JSON queries** - structured conditions:
+            ```json
+            {
+              "conditions": [
+                { "path": "$.name", "operator": "equals", "value": "John" },
+                { "path": "$.age", "operator": "gte", "value": 18 }
+              ]
+            }
+            ```
+
+            **MySQL simple equality** - flat object format:
+            ```json
+            { "$.name": "John", "$.status": "active" }
+            ```
+
+            **Redis search** - use indexName and query properties instead
+        indexName:
+          type: string
+          nullable: true
+          description: |
+            Redis search index name. Defaults to "{storeName}-idx".
+            Only used for Redis stores with search enabled.
+        query:
+          type: string
+          nullable: true
+          description: |
+            RedisSearch query string (e.g., "@name:John", "@age:[18 +inf]", "*").
+            Defaults to "*" (match all). Only used for Redis stores with search enabled.
         sort:
           type: array
           items:
             $ref: '#/components/schemas/SortField'
-          description: Sort order
+          description: Sort order (first field only is used)
         page:
           type: integer
           default: 0
@@ -386,14 +430,14 @@ components:
         pageSize:
           type: integer
           default: 100
-          description: Items per page
+          description: Items per page (max 1000)
 
     SortField:
       type: object
       properties:
         field:
           type: string
-          description: Field name to sort by
+          description: Field name to sort by (JSON path for MySQL, field name for Redis)
         order:
           type: string
           enum:
@@ -401,6 +445,39 @@ components:
           - desc
           default: asc
           description: Sort direction
+
+    QueryCondition:
+      type: object
+      description: A single query condition for MySQL JSON queries
+      required:
+      - path
+      properties:
+        path:
+          type: string
+          description: JSON path to query (e.g., "$.name", "$.address.city", "$.tags[0]")
+        operator:
+          $ref: '#/components/schemas/QueryOperator'
+        value:
+          description: Value to compare against. Not required for exists/notExists operators.
+
+    QueryOperator:
+      type: string
+      description: Comparison operator for query conditions
+      enum:
+      - equals
+      - notEquals
+      - greaterThan
+      - greaterThanOrEqual
+      - lessThan
+      - lessThanOrEqual
+      - contains
+      - startsWith
+      - endsWith
+      - in
+      - exists
+      - notExists
+      - fullText
+      default: equals
 
     QueryStateResponse:
       type: object

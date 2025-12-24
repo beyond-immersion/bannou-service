@@ -1,7 +1,7 @@
 #nullable enable
 
-using System.Text.Json.Serialization;
 using BeyondImmersion.BannouService.Configuration;
+using System.Text.Json.Serialization;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 

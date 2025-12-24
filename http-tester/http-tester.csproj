@@ -38,6 +38,9 @@
     <ProjectReference Include="..\lib-testing\lib-testing.csproj" />
     <ProjectReference Include="..\lib-website\lib-website.csproj" />
     <ProjectReference Include="..\lib-orchestrator\lib-orchestrator.csproj" />
+    <ProjectReference Include="..\lib-mesh\lib-mesh.csproj" />
+    <ProjectReference Include="..\lib-state\lib-state.csproj" />
+    <ProjectReference Include="..\lib-messaging\lib-messaging.csproj" />
   </ItemGroup>
 
 </Project>

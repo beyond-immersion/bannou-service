@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Yarp.ReverseProxy.Forwarder;
 
 namespace BeyondImmersion.BannouService.Mesh;
 
@@ -36,6 +37,20 @@ public class MeshServicePlugin : BaseBannouPlugin
         // Register MeshRedisManager as Singleton (direct Redis connection, NOT Dapr)
         // This avoids circular dependencies since Mesh IS the service discovery layer
         services.AddSingleton<IMeshRedisManager, MeshRedisManager>();
+
+        // Register YARP HTTP Forwarder for service invocation
+        services.AddHttpForwarder();
+
+        // Register the mesh invocation client for service-to-service calls
+        // This replaces DaprClient.InvokeMethodAsync for inter-service communication
+        services.AddSingleton<IMeshInvocationClient>(sp =>
+        {
+            var meshClient = sp.GetRequiredService<IMeshClient>();
+            var forwarder = sp.GetRequiredService<IHttpForwarder>();
+            var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
+            var httpClientFactory = sp.GetService<IHttpClientFactory>();
+            return new MeshInvocationClient(meshClient, forwarder, logger, httpClientFactory);
+        });
 
         Logger?.LogDebug("Service dependencies configured");
     }

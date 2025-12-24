@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Mesh;
+using BeyondImmersion.BannouService.Mesh.Services;
 using BeyondImmersion.BannouService.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -28,11 +29,16 @@ public class MeshTestHandler : IServiceTestHandler
             new ServiceTest(TestGetMappings, "GetMappings", "Mesh", "Test getting service-to-app-id mappings"),
             new ServiceTest(TestGetMappingsWithFilter, "GetMappingsFilter", "Mesh", "Test getting mappings with filter"),
             new ServiceTest(TestGetRoute, "GetRoute", "Mesh", "Test getting optimal route for app-id"),
-            new ServiceTest(TestGetRouteNoEndpoints, "GetRouteNoEndpoints", "Mesh", "Test route for non-existent app-id returns 503"),
+            new ServiceTest(TestGetRouteNoEndpoints, "GetRouteNoEndpoints", "Mesh", "Test route for non-existent app-id returns 404"),
 
             // Registration Lifecycle Tests
             new ServiceTest(TestRegisterAndDeregister, "RegisterDeregister", "Mesh", "Test endpoint registration and deregistration lifecycle"),
             new ServiceTest(TestHeartbeat, "Heartbeat", "Mesh", "Test heartbeat updates endpoint status"),
+
+            // Mesh Invocation Client Tests (replacement for Dapr InvokeMethodAsync)
+            new ServiceTest(TestInvocationClientAvailable, "InvocationClientDI", "Mesh", "Test IMeshInvocationClient is available via DI"),
+            new ServiceTest(TestInvocationCreateRequest, "InvocationCreateRequest", "Mesh", "Test CreateInvokeMethodRequest works correctly"),
+            new ServiceTest(TestInvocationServiceAvailability, "InvocationServiceCheck", "Mesh", "Test IsServiceAvailableAsync for registered endpoints"),
         };
     }
 
@@ -312,9 +318,9 @@ public class MeshTestHandler : IServiceTestHandler
                 return TestResult.Successful($"GetRoute: selected {endpoint?.Host}:{endpoint?.Port} " +
                     $"(status: {endpoint?.Status}, load: {endpoint?.LoadPercent}%)");
             }
-            catch (ApiException ex) when (ex.StatusCode == 503)
+            catch (ApiException ex) when (ex.StatusCode == 404)
             {
-                return TestResult.Successful("GetRoute returned 503 (no healthy endpoints available - expected during test startup)");
+                return TestResult.Successful("GetRoute returned 404 (no healthy endpoints available - expected during test startup)");
             }
         }
         catch (Exception ex)
@@ -324,7 +330,7 @@ public class MeshTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Test route for non-existent app-id returns 503.
+    /// Test route for non-existent app-id returns 404.
     /// </summary>
     private static async Task<TestResult> TestGetRouteNoEndpoints(ITestClient client, string[] args)
     {
@@ -341,11 +347,11 @@ public class MeshTestHandler : IServiceTestHandler
             try
             {
                 var response = await meshClient.GetRouteAsync(request);
-                return TestResult.Failed("GetRoute should have returned 503 for non-existent app-id");
+                return TestResult.Failed("GetRoute should have returned 404 for non-existent app-id");
             }
-            catch (ApiException ex) when (ex.StatusCode == 503)
+            catch (ApiException ex) when (ex.StatusCode == 404)
             {
-                return TestResult.Successful("GetRoute correctly returned 503 for non-existent app-id");
+                return TestResult.Successful("GetRoute correctly returned 404 for non-existent app-id");
             }
         }
         catch (Exception ex)
@@ -387,17 +393,9 @@ public class MeshTestHandler : IServiceTestHandler
                 return TestResult.Failed("RegisterEndpoint failed");
             }
 
-            // Deregister endpoint
+            // Deregister endpoint (returns 204 NoContent on success)
             var deregisterRequest = new DeregisterEndpointRequest { InstanceId = instanceId };
-
-            try
-            {
-                await meshClient.DeregisterEndpointAsync(deregisterRequest);
-            }
-            catch (ApiException ex) when (ex.StatusCode == 200)
-            {
-                // Success with no content
-            }
+            await meshClient.DeregisterEndpointAsync(deregisterRequest);
 
             return TestResult.Successful($"Registration lifecycle complete: registered and deregistered instance {instanceId}");
         }
@@ -464,6 +462,162 @@ public class MeshTestHandler : IServiceTestHandler
         catch (Exception ex)
         {
             return TestResult.Failed($"Heartbeat test failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test that IMeshInvocationClient is available via DI.
+    /// This is the Dapr replacement client for service-to-service communication.
+    /// </summary>
+    private static async Task<TestResult> TestInvocationClientAvailable(ITestClient client, string[] args)
+    {
+        try
+        {
+            var invocationClient = Program.ServiceProvider?.GetRequiredService<IMeshInvocationClient>();
+            if (invocationClient == null)
+            {
+                return TestResult.Failed("IMeshInvocationClient not registered in DI");
+            }
+
+            return TestResult.Successful("IMeshInvocationClient is available via DI (Dapr replacement ready)");
+        }
+        catch (InvalidOperationException ex)
+        {
+            return TestResult.Failed($"IMeshInvocationClient not registered: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"InvocationClient DI test failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test CreateInvokeMethodRequest creates properly configured HTTP requests.
+    /// This method is equivalent to DaprClient.CreateInvokeMethodRequest.
+    /// </summary>
+    private static async Task<TestResult> TestInvocationCreateRequest(ITestClient client, string[] args)
+    {
+        try
+        {
+            var invocationClient = Program.ServiceProvider?.GetRequiredService<IMeshInvocationClient>();
+            if (invocationClient == null)
+            {
+                return TestResult.Failed("IMeshInvocationClient not available");
+            }
+
+            // Test GET request creation
+            var getRequest = invocationClient.CreateInvokeMethodRequest(HttpMethod.Get, "bannou", "auth/status");
+            if (getRequest == null)
+            {
+                return TestResult.Failed("CreateInvokeMethodRequest returned null for GET");
+            }
+            if (getRequest.Method != HttpMethod.Get)
+            {
+                return TestResult.Failed($"Expected GET method, got {getRequest.Method}");
+            }
+
+            // Test POST request creation with typed body
+            var postRequest = invocationClient.CreateInvokeMethodRequest(
+                HttpMethod.Post,
+                "bannou",
+                "testing/echo",
+                new { Message = "test", Value = 42 });
+            if (postRequest == null)
+            {
+                return TestResult.Failed("CreateInvokeMethodRequest returned null for POST");
+            }
+            if (postRequest.Content == null)
+            {
+                return TestResult.Failed("POST request missing content body");
+            }
+            if (postRequest.Content.Headers.ContentType?.MediaType != "application/json")
+            {
+                return TestResult.Failed($"Expected application/json content type, got {postRequest.Content.Headers.ContentType?.MediaType}");
+            }
+
+            return TestResult.Successful("CreateInvokeMethodRequest creates properly configured requests (GET, POST with JSON body)");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"InvocationCreateRequest test failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test IsServiceAvailableAsync checks endpoint availability correctly.
+    /// This is useful for health checks before invoking services.
+    /// </summary>
+    private static async Task<TestResult> TestInvocationServiceAvailability(ITestClient client, string[] args)
+    {
+        try
+        {
+            var invocationClient = Program.ServiceProvider?.GetRequiredService<IMeshInvocationClient>();
+            if (invocationClient == null)
+            {
+                return TestResult.Failed("IMeshInvocationClient not available");
+            }
+
+            // First register an endpoint so we have something to find
+            var meshClient = Program.ServiceProvider?.GetRequiredService<IMeshClient>();
+            if (meshClient == null)
+            {
+                return TestResult.Failed("IMeshClient not available");
+            }
+
+            var testInstanceId = Guid.NewGuid();
+            var testAppId = $"invocation-test-{Guid.NewGuid():N}";
+
+            // Register a test endpoint
+            var registerResponse = await meshClient.RegisterEndpointAsync(new RegisterEndpointRequest
+            {
+                InstanceId = testInstanceId,
+                AppId = testAppId,
+                Host = "test-host.local",
+                Port = 8080,
+                Services = new List<string> { "testing" }
+            });
+
+            if (registerResponse == null || !registerResponse.Success)
+            {
+                return TestResult.Failed("Failed to register test endpoint");
+            }
+
+            try
+            {
+                // Check that the registered endpoint is available
+                var isAvailable = await invocationClient.IsServiceAvailableAsync(testAppId, CancellationToken.None);
+                if (!isAvailable)
+                {
+                    return TestResult.Failed($"IsServiceAvailableAsync returned false for registered app-id {testAppId}");
+                }
+
+                // Check that a non-existent app-id returns false
+                var nonExistentAvailable = await invocationClient.IsServiceAvailableAsync(
+                    $"definitely-does-not-exist-{Guid.NewGuid():N}",
+                    CancellationToken.None);
+                if (nonExistentAvailable)
+                {
+                    return TestResult.Failed("IsServiceAvailableAsync returned true for non-existent app-id");
+                }
+
+                return TestResult.Successful($"IsServiceAvailableAsync correctly reports availability (registered={isAvailable}, non-existent={nonExistentAvailable})");
+            }
+            finally
+            {
+                // Clean up: deregister the test endpoint
+                try
+                {
+                    await meshClient.DeregisterEndpointAsync(new DeregisterEndpointRequest { InstanceId = testInstanceId });
+                }
+                catch
+                {
+                    // Ignore cleanup errors
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"InvocationServiceAvailability test failed: {ex.Message}");
         }
     }
 }

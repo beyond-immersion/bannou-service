@@ -44,7 +44,7 @@ public partial interface IOrchestratorClient : BeyondImmersion.BannouService.Ser
     /// <br/>- RabbitMQ (direct connection via RabbitMQ.Client)
     /// <br/>- Dapr Placement service
     /// </remarks>
-    /// <returns>Infrastructure health status</returns>
+    /// <returns>Infrastructure health status (check response body for component health)</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<InfrastructureHealthResponse> GetInfrastructureHealthAsync(InfrastructureHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
@@ -456,7 +456,7 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
     /// <br/>- RabbitMQ (direct connection via RabbitMQ.Client)
     /// <br/>- Dapr Placement service
     /// </remarks>
-    /// <returns>Infrastructure health status</returns>
+    /// <returns>Infrastructure health status (check response body for component health)</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<InfrastructureHealthResponse> GetInfrastructureHealthAsync(InfrastructureHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
@@ -511,16 +511,6 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
                             throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
-                    }
-                    else
-                    if (status_ == 503)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<InfrastructureHealthResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<InfrastructureHealthResponse>("One or more infrastructure components unavailable", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                     }
                     else
                     {

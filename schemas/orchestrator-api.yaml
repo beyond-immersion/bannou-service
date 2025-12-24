@@ -53,13 +53,7 @@ paths:
               $ref: '#/components/schemas/InfrastructureHealthRequest'
       responses:
         '200':
-          description: Infrastructure health status
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InfrastructureHealthResponse'
-        '503':
-          description: One or more infrastructure components unavailable
+          description: Infrastructure health status (check response body for component health)
           content:
             application/json:
               schema:

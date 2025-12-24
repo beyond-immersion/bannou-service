@@ -1,10 +1,12 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 
 [assembly: InternalsVisibleTo("lib-state.tests")]
 
@@ -206,19 +208,22 @@ public partial class StateService : IStateService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Check if store supports queries (MySQL only)
             var backend = _stateStoreFactory.GetBackendType(body.StoreName);
-            if (backend != Services.StateBackend.MySql)
+
+            // Route to appropriate backend
+            if (backend == Services.StateBackend.MySql)
             {
-                _logger.LogWarning("Query not supported for backend {Backend} on store {StoreName}", backend, body.StoreName);
+                return await QueryMySqlAsync(body, cancellationToken);
+            }
+            else if (_stateStoreFactory.SupportsSearch(body.StoreName))
+            {
+                return await QueryRedisSearchAsync(body, cancellationToken);
+            }
+            else
+            {
+                _logger.LogWarning("Query not supported for Redis store {StoreName} without search enabled", body.StoreName);
                 return (StatusCodes.BadRequest, null);
             }
-
-            // QueryState requires LINQ expression building from JSON filter
-            // This is a complex feature that requires runtime expression compilation
-            // For now, return NotImplemented as the JSON filter → LINQ translation is non-trivial
-            _logger.LogWarning("QueryState JSON filter parsing not yet implemented");
-            return (StatusCodes.InternalServerError, null);
         }
         catch (Exception ex)
         {
@@ -235,6 +240,276 @@ public partial class StateService : IStateService
                 cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
+    }
+
+    /// <summary>
+    /// Execute query against MySQL backend using JSON path conditions.
+    /// </summary>
+    private async Task<(StatusCodes, QueryStateResponse?)> QueryMySqlAsync(
+        QueryStateRequest body,
+        CancellationToken cancellationToken)
+    {
+        var store = _stateStoreFactory.GetJsonQueryableStore<object>(body.StoreName);
+
+        // Parse filter into JSON query conditions (null filter = no conditions)
+        var conditions = body.Filter != null ? ParseJsonFilter(body.Filter) : Array.Empty<JsonQueryCondition>();
+
+        // Parse sort specification
+        JsonSortSpec? sortSpec = null;
+        if (body.Sort?.Count > 0)
+        {
+            var firstSort = body.Sort.First();
+            sortSpec = new JsonSortSpec
+            {
+                Path = firstSort.Field ?? "$.id",
+                Descending = firstSort.Order == SortFieldOrder.Desc
+            };
+        }
+
+        // Calculate offset from page (Page and PageSize have defaults in schema)
+        var page = body.Page;
+        var pageSize = body.PageSize > 0 ? body.PageSize : 100;
+        var offset = page * pageSize;
+
+        // Execute query
+        var result = await store.JsonQueryPagedAsync(
+            conditions,
+            offset,
+            pageSize,
+            sortSpec,
+            cancellationToken);
+
+        // Convert results to response format
+        var results = result.Items.Select(item => item.Value).ToList();
+
+        _logger.LogDebug("MySQL query on store {StoreName} returned {Count}/{Total} results",
+            body.StoreName, results.Count, result.TotalCount);
+
+        return (StatusCodes.OK, new QueryStateResponse
+        {
+            Results = results,
+            TotalCount = (int)result.TotalCount,
+            Page = page,
+            PageSize = pageSize
+        });
+    }
+
+    /// <summary>
+    /// Execute query against Redis backend using RedisSearch.
+    /// </summary>
+    private async Task<(StatusCodes, QueryStateResponse?)> QueryRedisSearchAsync(
+        QueryStateRequest body,
+        CancellationToken cancellationToken)
+    {
+        var store = _stateStoreFactory.GetSearchableStore<object>(body.StoreName);
+
+        // Use explicit properties if provided, otherwise parse from filter
+        var indexName = body.IndexName ?? $"{body.StoreName}-idx";
+        var searchQuery = body.Query ?? "*";
+
+        // If query not explicitly set, try parsing from filter for backwards compatibility
+        if (string.IsNullOrEmpty(body.Query) && body.Filter != null)
+        {
+            var (parsedIndex, parsedQuery) = ParseRedisSearchFilter(body.Filter, body.StoreName);
+            indexName = body.IndexName ?? parsedIndex;
+            searchQuery = parsedQuery;
+        }
+
+        // Parse sort specification
+        string? sortBy = null;
+        var sortDescending = false;
+        if (body.Sort?.Count > 0)
+        {
+            var firstSort = body.Sort.First();
+            sortBy = firstSort.Field;
+            sortDescending = firstSort.Order == SortFieldOrder.Desc;
+        }
+
+        // Calculate offset from page (Page and PageSize have defaults in schema)
+        var page = body.Page;
+        var pageSize = body.PageSize > 0 ? body.PageSize : 100;
+        var offset = page * pageSize;
+
+        // Execute search
+        var options = new SearchQueryOptions
+        {
+            Offset = offset,
+            Limit = pageSize,
+            SortBy = sortBy,
+            SortDescending = sortDescending,
+            WithScores = true
+        };
+
+        var result = await store.SearchAsync(indexName, searchQuery, options, cancellationToken);
+
+        // Convert results to response format
+        var results = result.Items.Select(item => item.Value).ToList();
+
+        _logger.LogDebug("Redis search on store {StoreName} index {IndexName} returned {Count}/{Total} results",
+            body.StoreName, indexName, results.Count, result.TotalCount);
+
+        return (StatusCodes.OK, new QueryStateResponse
+        {
+            Results = results,
+            TotalCount = (int)result.TotalCount,
+            Page = page,
+            PageSize = pageSize
+        });
+    }
+
+    /// <summary>
+    /// Parse JSON filter into MySQL JSON query conditions.
+    /// Supports filter format: { "conditions": [{ "path": "$.name", "operator": "equals", "value": "John" }] }
+    /// </summary>
+    private static IReadOnlyList<JsonQueryCondition> ParseJsonFilter(object filter)
+    {
+        var conditions = new List<JsonQueryCondition>();
+
+        if (filter == null)
+        {
+            return conditions;
+        }
+
+        // Handle JsonElement from System.Text.Json
+        if (filter is JsonElement jsonElement)
+        {
+            // Check for "conditions" array format
+            if (jsonElement.TryGetProperty("conditions", out var conditionsArray) &&
+                conditionsArray.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var conditionElement in conditionsArray.EnumerateArray())
+                {
+                    var condition = ParseConditionElement(conditionElement);
+                    if (condition != null)
+                    {
+                        conditions.Add(condition);
+                    }
+                }
+            }
+            // Also support flat object format: { "$.name": "John" } for simple equality
+            else if (jsonElement.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var property in jsonElement.EnumerateObject())
+                {
+                    // Skip special properties
+                    if (property.Name is "conditions" or "query" or "indexName")
+                    {
+                        continue;
+                    }
+
+                    conditions.Add(new JsonQueryCondition
+                    {
+                        Path = property.Name.StartsWith("$") ? property.Name : $"$.{property.Name}",
+                        Operator = JsonOperator.Equals,
+                        Value = GetJsonValue(property.Value)
+                    });
+                }
+            }
+        }
+
+        return conditions;
+    }
+
+    /// <summary>
+    /// Parse a single condition from JSON element.
+    /// </summary>
+    private static JsonQueryCondition? ParseConditionElement(JsonElement element)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        string? path = null;
+        var op = JsonOperator.Equals;
+        object? value = null;
+
+        if (element.TryGetProperty("path", out var pathProp))
+        {
+            path = pathProp.GetString();
+        }
+
+        if (element.TryGetProperty("operator", out var opProp))
+        {
+            var opStr = opProp.GetString()?.ToLowerInvariant();
+            op = opStr switch
+            {
+                "equals" or "eq" or "=" => JsonOperator.Equals,
+                "notequals" or "neq" or "ne" or "!=" => JsonOperator.NotEquals,
+                "greaterthan" or "gt" or ">" => JsonOperator.GreaterThan,
+                "greaterthanorequal" or "gte" or ">=" => JsonOperator.GreaterThanOrEqual,
+                "lessthan" or "lt" or "<" => JsonOperator.LessThan,
+                "lessthanorequal" or "lte" or "<=" => JsonOperator.LessThanOrEqual,
+                "contains" or "like" => JsonOperator.Contains,
+                "startswith" => JsonOperator.StartsWith,
+                "endswith" => JsonOperator.EndsWith,
+                "in" => JsonOperator.In,
+                "exists" => JsonOperator.Exists,
+                "notexists" => JsonOperator.NotExists,
+                "fulltext" or "search" => JsonOperator.FullText,
+                _ => JsonOperator.Equals
+            };
+        }
+
+        if (element.TryGetProperty("value", out var valueProp))
+        {
+            value = GetJsonValue(valueProp);
+        }
+
+        if (string.IsNullOrEmpty(path))
+        {
+            return null;
+        }
+
+        return new JsonQueryCondition
+        {
+            Path = path.StartsWith("$") ? path : $"$.{path}",
+            Operator = op,
+            Value = value
+        };
+    }
+
+    /// <summary>
+    /// Extract value from JsonElement.
+    /// </summary>
+    private static object? GetJsonValue(JsonElement element)
+    {
+        return element.ValueKind switch
+        {
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.Number when element.TryGetInt64(out var l) => l,
+            JsonValueKind.Number => element.GetDouble(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Null => null,
+            _ => element.GetRawText()
+        };
+    }
+
+    /// <summary>
+    /// Parse filter for Redis search.
+    /// Supports: { "indexName": "idx", "query": "@name:John" }
+    /// Or simple: { "query": "*" } with default index name.
+    /// </summary>
+    private static (string IndexName, string Query) ParseRedisSearchFilter(object filter, string storeName)
+    {
+        var indexName = $"{storeName}-idx"; // Default index name
+        var query = "*"; // Default to match all
+
+        if (filter is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
+        {
+            if (jsonElement.TryGetProperty("indexName", out var idxProp))
+            {
+                indexName = idxProp.GetString() ?? indexName;
+            }
+
+            if (jsonElement.TryGetProperty("query", out var queryProp))
+            {
+                query = queryProp.GetString() ?? "*";
+            }
+        }
+
+        return (indexName, query);
     }
 
     /// <inheritdoc />

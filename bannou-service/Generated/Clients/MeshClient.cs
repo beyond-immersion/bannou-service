@@ -414,7 +414,7 @@ public partial class MeshClient : BeyondImmersion.BannouService.ServiceClients.D
                     ProcessResponse(client_, response_);
 
                     var status_ = (int)response_.StatusCode;
-                    if (status_ == 200)
+                    if (status_ == 201)
                     {
                         var objectResponse_ = await ReadObjectResponseAsync<RegisterEndpointResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
@@ -503,7 +503,7 @@ public partial class MeshClient : BeyondImmersion.BannouService.ServiceClients.D
                     ProcessResponse(client_, response_);
 
                     var status_ = (int)response_.StatusCode;
-                    if (status_ == 200)
+                    if (status_ == 204)
                     {
                         return;
                     }
@@ -688,10 +688,10 @@ public partial class MeshClient : BeyondImmersion.BannouService.ServiceClients.D
                         return objectResponse_.Object;
                     }
                     else
-                    if (status_ == 503)
+                    if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("No healthy endpoints available", status_, responseText_, headers_, null);
+                        throw new ApiException("No healthy endpoints available for the requested app-id", status_, responseText_, headers_, null);
                     }
                     else
                     {

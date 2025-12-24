@@ -313,9 +313,9 @@ public class MessagingServiceTests
 
         var mockHandle = new Mock<IAsyncDisposable>();
         _mockMessageSubscriber
-            .Setup(x => x.SubscribeDynamicAsync(
+            .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
-                It.IsAny<Func<object, CancellationToken, Task>>(),
+                It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -340,9 +340,9 @@ public class MessagingServiceTests
         };
 
         _mockMessageSubscriber
-            .Setup(x => x.SubscribeDynamicAsync(
+            .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
-                It.IsAny<Func<object, CancellationToken, Task>>(),
+                It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Cannot create subscription"));
 
@@ -386,9 +386,9 @@ public class MessagingServiceTests
 
         var mockHandle = new Mock<IAsyncDisposable>();
         _mockMessageSubscriber
-            .Setup(x => x.SubscribeDynamicAsync(
+            .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
-                It.IsAny<Func<object, CancellationToken, Task>>(),
+                It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -418,9 +418,9 @@ public class MessagingServiceTests
 
         var mockHandle = new Mock<IAsyncDisposable>();
         _mockMessageSubscriber
-            .Setup(x => x.SubscribeDynamicAsync(
+            .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
-                It.IsAny<Func<object, CancellationToken, Task>>(),
+                It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -478,9 +478,9 @@ public class MessagingServiceTests
             .ThrowsAsync(new InvalidOperationException("Dispose failed"));
 
         _mockMessageSubscriber
-            .Setup(x => x.SubscribeDynamicAsync(
+            .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
-                It.IsAny<Func<object, CancellationToken, Task>>(),
+                It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -541,9 +541,9 @@ public class MessagingServiceTests
         // Arrange - Create subscriptions first
         var mockHandle = new Mock<IAsyncDisposable>();
         _mockMessageSubscriber
-            .Setup(x => x.SubscribeDynamicAsync(
+            .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
-                It.IsAny<Func<object, CancellationToken, Task>>(),
+                It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -578,9 +578,9 @@ public class MessagingServiceTests
         // Arrange - Create subscriptions with different topic prefixes
         var mockHandle = new Mock<IAsyncDisposable>();
         _mockMessageSubscriber
-            .Setup(x => x.SubscribeDynamicAsync(
+            .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
-                It.IsAny<Func<object, CancellationToken, Task>>(),
+                It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -620,9 +620,9 @@ public class MessagingServiceTests
         // Arrange - Create multiple subscriptions to the same topic
         var mockHandle = new Mock<IAsyncDisposable>();
         _mockMessageSubscriber
-            .Setup(x => x.SubscribeDynamicAsync(
+            .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
-                It.IsAny<Func<object, CancellationToken, Task>>(),
+                It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -657,9 +657,9 @@ public class MessagingServiceTests
         // Arrange - Create subscription
         var mockHandle = new Mock<IAsyncDisposable>();
         _mockMessageSubscriber
-            .Setup(x => x.SubscribeDynamicAsync(
+            .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
-                It.IsAny<Func<object, CancellationToken, Task>>(),
+                It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
@@ -691,9 +691,9 @@ public class MessagingServiceTests
 
         var handleIndex = 0;
         _mockMessageSubscriber
-            .Setup(x => x.SubscribeDynamicAsync(
+            .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
-                It.IsAny<Func<object, CancellationToken, Task>>(),
+                It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => handleIndex++ == 0 ? mockHandle1.Object : mockHandle2.Object);
 
@@ -740,9 +740,9 @@ public class MessagingServiceTests
 
         var handleIndex = 0;
         _mockMessageSubscriber
-            .Setup(x => x.SubscribeDynamicAsync(
+            .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
                 It.IsAny<string>(),
-                It.IsAny<Func<object, CancellationToken, Task>>(),
+                It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => handleIndex++ == 0 ? mockHandle1.Object : mockHandle2.Object);
 
