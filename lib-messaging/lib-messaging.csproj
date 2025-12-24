@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>BeyondImmersion.BannouService.Messaging</RootNamespace>
+    <ServiceLib>messaging</ServiceLib>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="lib-messaging.tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../bannou-service/bannou-service.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Only packages NOT provided by bannou-service - Dapr.Client, NSwag, etc. come transitively -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    <!-- MassTransit for RabbitMQ messaging (replaces Dapr pub/sub) -->
+    <PackageReference Include="MassTransit" Version="8.4.1" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.4.1" />
+  </ItemGroup>
+
+  <Import Project="../ServiceLib.targets" />
+
+</Project>

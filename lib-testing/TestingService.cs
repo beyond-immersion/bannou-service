@@ -44,7 +44,7 @@ public partial class TestingService : ITestingService
     /// <summary>
     /// Simple test method to verify service is working.
     /// </summary>
-    public Task<(StatusCodes, TestResponse?)> RunTestAsync(string testName, CancellationToken cancellationToken = default)
+    public async Task<(StatusCodes, TestResponse?)> RunTestAsync(string testName, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -58,19 +58,29 @@ public partial class TestingService : ITestingService
                 Timestamp = DateTime.UtcNow
             };
 
-            return Task.FromResult<(StatusCodes, TestResponse?)>((StatusCodes.OK, response));
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error running test: {TestName}", testName);
-            return Task.FromResult<(StatusCodes, TestResponse?)>((StatusCodes.InternalServerError, null));
+            await _errorEventEmitter.TryPublishAsync(
+                "testing",
+                "RunTest",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "testing",
+                endpoint: "post:/testing/run",
+                details: new { TestName = testName },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Test method to verify configuration is working.
     /// </summary>
-    public Task<(StatusCodes, ConfigTestResponse?)> TestConfigurationAsync(CancellationToken cancellationToken = default)
+    public async Task<(StatusCodes, ConfigTestResponse?)> TestConfigurationAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -83,12 +93,22 @@ public partial class TestingService : ITestingService
                 Timestamp = DateTime.UtcNow
             };
 
-            return Task.FromResult<(StatusCodes, ConfigTestResponse?)>((StatusCodes.OK, response));
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error testing configuration");
-            return Task.FromResult<(StatusCodes, ConfigTestResponse?)>((StatusCodes.InternalServerError, null));
+            await _errorEventEmitter.TryPublishAsync(
+                "testing",
+                "TestConfiguration",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "testing",
+                endpoint: "post:/testing/config",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -96,7 +116,7 @@ public partial class TestingService : ITestingService
     /// Test method to validate dependency injection health and null safety patterns.
     /// This test validates the fixes for null-forgiving operators and constructor issues.
     /// </summary>
-    public Task<(StatusCodes, DependencyTestResponse?)> TestDependencyInjectionHealthAsync(CancellationToken cancellationToken = default)
+    public async Task<(StatusCodes, DependencyTestResponse?)> TestDependencyInjectionHealthAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -147,12 +167,22 @@ public partial class TestingService : ITestingService
                 Timestamp = DateTime.UtcNow
             };
 
-            return Task.FromResult<(StatusCodes, DependencyTestResponse?)>((StatusCodes.OK, response));
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error testing dependency injection health");
-            return Task.FromResult<(StatusCodes, DependencyTestResponse?)>((StatusCodes.InternalServerError, null));
+            await _errorEventEmitter.TryPublishAsync(
+                "testing",
+                "TestDependencyInjectionHealth",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "testing",
+                endpoint: "post:/testing/dependency-health",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -165,7 +195,7 @@ public partial class TestingService : ITestingService
     /// <param name="request">Optional ping request with client timestamp and sequence</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Ping response with timing information</returns>
-    public Task<(StatusCodes, PingResponse?)> PingAsync(
+    public async Task<(StatusCodes, PingResponse?)> PingAsync(
         PingRequest? request,
         CancellationToken cancellationToken = default)
     {
@@ -186,12 +216,22 @@ public partial class TestingService : ITestingService
             var processingTime = DateTimeOffset.UtcNow - serverReceiveTime;
             response.ServerProcessingTimeMs = processingTime.TotalMilliseconds;
 
-            return Task.FromResult<(StatusCodes, PingResponse?)>((StatusCodes.OK, response));
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing ping request");
-            return Task.FromResult<(StatusCodes, PingResponse?)>((StatusCodes.InternalServerError, null));
+            await _errorEventEmitter.TryPublishAsync(
+                "testing",
+                "Ping",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "testing",
+                endpoint: "post:/testing/ping",
+                details: new { Sequence = request?.Sequence },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 

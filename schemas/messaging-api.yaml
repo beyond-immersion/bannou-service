@@ -1,0 +1,290 @@
+openapi: 3.0.0
+info:
+  title: Bannou Messaging Service API
+  description: |
+    Native RabbitMQ pub/sub messaging without Dapr CloudEvents overhead.
+
+    **INTERNAL SERVICE API**: This API has NO x-permissions because these endpoints
+    are NOT exposed to WebSocket clients. Service-to-service calls within the cluster
+    are always permitted (per TENETS Tenet 13).
+
+    **POST-Only API Pattern**: All endpoints use POST with request bodies for
+    consistency with WebSocket routing architecture.
+
+    See docs/planning/UPCOMING_PROPOSED_-_DAPR_REPLACEMENT_PLUGIN.md for design rationale.
+  version: 1.0.0
+servers:
+- url: http://localhost:3500/v1.0/invoke/bannou/method
+  description: Dapr sidecar endpoint
+
+paths:
+  /messaging/publish:
+    post:
+      operationId: publishEvent
+      summary: Publish an event to a topic
+      tags:
+      - Messaging
+      # No x-permissions - internal service API only
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishEventRequest'
+      responses:
+        '200':
+          description: Event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishEventResponse'
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/PublishEventRequest\"\
+        ,\n  \"$defs\": {\n    \"PublishEventRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        topic\",\n        \"payload\"\n      ],\n      \"properties\": {\n        \"topic\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"Topic/routing key for the event\"\n        },\n        \"payload\": {\n          \"\
+        type\": \"object\",\n          \"description\": \"Event payload (any JSON)\"\n        },\n        \"options\": {\n\
+        \          \"$ref\": \"#/$defs/PublishOptions\"\n        }\n      }\n    },\n    \"PublishOptions\": {\n      \"type\"\
+        : \"object\",\n      \"properties\": {\n        \"exchange\": {\n          \"type\": \"string\",\n          \"default\"\
+        : \"bannou\"\n        },\n        \"persistent\": {\n          \"type\": \"boolean\",\n          \"default\": true\n\
+        \        },\n        \"priority\": {\n          \"type\": \"integer\",\n          \"minimum\": 0,\n          \"maximum\"\
+        : 9\n        },\n        \"correlationId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n \
+        \       }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/PublishEventResponse\"\
+        ,\n  \"$defs\": {\n    \"PublishEventResponse\": {\n      \"type\": \"object\",\n      \"properties\": {\n       \
+        \ \"success\": {\n          \"type\": \"boolean\"\n        },\n        \"messageId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Publish an event to a topic\",\n  \"description\": \"\",\n  \"tags\": [\n\
+        \    \"Messaging\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"publishEvent\"\n}"
+  /messaging/subscribe:
+    post:
+      operationId: createSubscription
+      summary: Create a dynamic subscription to a topic
+      tags:
+      - Messaging
+      # No x-permissions - internal service API only
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubscriptionRequest'
+      responses:
+        '200':
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateSubscriptionResponse'
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateSubscriptionRequest\"\
+        ,\n  \"$defs\": {\n    \"CreateSubscriptionRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n    \
+        \    \"topic\",\n        \"callbackUrl\"\n      ],\n      \"properties\": {\n        \"topic\": {\n          \"type\"\
+        : \"string\"\n        },\n        \"callbackUrl\": {\n          \"type\": \"string\",\n          \"format\": \"uri\"\
+        ,\n          \"description\": \"HTTP endpoint to receive events\"\n        },\n        \"options\": {\n          \"\
+        $ref\": \"#/$defs/SubscriptionOptions\"\n        }\n      }\n    },\n    \"SubscriptionOptions\": {\n      \"type\"\
+        : \"object\",\n      \"properties\": {\n        \"durable\": {\n          \"type\": \"boolean\",\n          \"default\"\
+        : false\n        },\n        \"exclusive\": {\n          \"type\": \"boolean\",\n          \"default\": false\n  \
+        \      },\n        \"autoAck\": {\n          \"type\": \"boolean\",\n          \"default\": true\n        },\n   \
+        \     \"prefetchCount\": {\n          \"type\": \"integer\",\n          \"default\": 10\n        }\n      }\n    }\n\
+        \  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateSubscriptionResponse\"\
+        ,\n  \"$defs\": {\n    \"CreateSubscriptionResponse\": {\n      \"type\": \"object\",\n      \"properties\": {\n \
+        \       \"subscriptionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n     \
+        \   \"queueName\": {\n          \"type\": \"string\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Create a dynamic subscription to a topic\",\n  \"description\": \"\",\n \
+        \ \"tags\": [\n    \"Messaging\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"createSubscription\"\n}"
+  /messaging/unsubscribe:
+    post:
+      operationId: removeSubscription
+      summary: Remove a dynamic subscription
+      tags:
+      - Messaging
+      # No x-permissions - internal service API only
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveSubscriptionRequest'
+      responses:
+        '200':
+          description: Subscription removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveSubscriptionResponse'
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RemoveSubscriptionRequest\"\
+        ,\n  \"$defs\": {\n    \"RemoveSubscriptionRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n    \
+        \    \"subscriptionId\"\n      ],\n      \"properties\": {\n        \"subscriptionId\": {\n          \"type\": \"\
+        string\",\n          \"format\": \"uuid\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RemoveSubscriptionResponse\"\
+        ,\n  \"$defs\": {\n    \"RemoveSubscriptionResponse\": {\n      \"type\": \"object\",\n      \"properties\": {\n \
+        \       \"success\": {\n          \"type\": \"boolean\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Remove a dynamic subscription\",\n  \"description\": \"\",\n  \"tags\": [\n\
+        \    \"Messaging\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"removeSubscription\"\n}"
+  /messaging/list-topics:
+    post:
+      operationId: listTopics
+      summary: List all known topics
+      tags:
+      - Messaging
+      # No x-permissions - internal service API only
+      # POST-only pattern per TENETS Tenet 1 (enables zero-copy WebSocket routing)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListTopicsRequest'
+      responses:
+        '200':
+          description: List of topics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTopicsResponse'
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListTopicsRequest\"\
+        ,\n  \"$defs\": {\n    \"ListTopicsRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Optional filters
+        for topic listing (empty object returns all)\",\n      \"properties\": {\n        \"exchangeFilter\": {\n        \
+        \  \"type\": \"string\",\n          \"description\": \"Filter topics by exchange name prefix\"\n        },\n     \
+        \   \"includeEmpty\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\"\
+        : \"Include topics with no messages\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListTopicsResponse\"\
+        ,\n  \"$defs\": {\n    \"ListTopicsResponse\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"\
+        topics\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/TopicInfo\"\n\
+        \          }\n        }\n      }\n    },\n    \"TopicInfo\": {\n      \"type\": \"object\",\n      \"properties\"\
+        : {\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"messageCount\": {\n          \"type\"\
+        : \"integer\"\n        },\n        \"consumerCount\": {\n          \"type\": \"integer\"\n        }\n      }\n   \
+        \ }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"List all known topics\",\n  \"description\": \"\",\n  \"tags\": [\n    \"\
+        Messaging\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"listTopics\"\n}"
+components:
+  schemas:
+    PublishEventRequest:
+      type: object
+      required:
+      - topic
+      - payload
+      properties:
+        topic:
+          type: string
+          description: Topic/routing key for the event
+        payload:
+          type: object
+          description: Event payload (any JSON)
+        options:
+          $ref: '#/components/schemas/PublishOptions'
+
+    PublishOptions:
+      type: object
+      properties:
+        exchange:
+          type: string
+          default: bannou
+        persistent:
+          type: boolean
+          default: true
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 9
+        correlationId:
+          type: string
+          format: uuid
+
+    PublishEventResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        messageId:
+          type: string
+          format: uuid
+
+    CreateSubscriptionRequest:
+      type: object
+      required:
+      - topic
+      - callbackUrl
+      properties:
+        topic:
+          type: string
+        callbackUrl:
+          type: string
+          format: uri
+          description: HTTP endpoint to receive events
+        options:
+          $ref: '#/components/schemas/SubscriptionOptions'
+
+    SubscriptionOptions:
+      type: object
+      properties:
+        durable:
+          type: boolean
+          default: false
+        exclusive:
+          type: boolean
+          default: false
+        autoAck:
+          type: boolean
+          default: true
+        prefetchCount:
+          type: integer
+          default: 10
+
+    CreateSubscriptionResponse:
+      type: object
+      properties:
+        subscriptionId:
+          type: string
+          format: uuid
+        queueName:
+          type: string
+
+    RemoveSubscriptionRequest:
+      type: object
+      required:
+      - subscriptionId
+      properties:
+        subscriptionId:
+          type: string
+          format: uuid
+
+    RemoveSubscriptionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+
+    ListTopicsRequest:
+      type: object
+      description: Optional filters for topic listing (empty object returns all)
+      properties:
+        exchangeFilter:
+          type: string
+          description: Filter topics by exchange name prefix
+        includeEmpty:
+          type: boolean
+          default: true
+          description: Include topics with no messages
+
+    ListTopicsResponse:
+      type: object
+      properties:
+        topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopicInfo'
+
+    TopicInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        messageCount:
+          type: integer
+        consumerCount:
+          type: integer

@@ -189,6 +189,12 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting capabilities for session {SessionId}", body.SessionId);
+            await PublishErrorEventAsync(
+                "GetCapabilities",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.SessionId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -238,6 +244,12 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating API access for session {SessionId}", body.SessionId);
+            await PublishErrorEventAsync(
+                "ValidateApiAccess",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.SessionId, body.ServiceId, body.Method });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -575,6 +587,12 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating session state for {SessionId}", body.SessionId);
+            await PublishErrorEventAsync(
+                "UpdateSessionState",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.SessionId, body.ServiceId, body.NewState });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -628,6 +646,12 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating session role for {SessionId}", body.SessionId);
+            await PublishErrorEventAsync(
+                "UpdateSessionRole",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.SessionId, body.NewRole });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -712,6 +736,12 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error clearing session state for {SessionId}", body.SessionId);
+            await PublishErrorEventAsync(
+                "ClearSessionState",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.SessionId, body.ServiceId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -786,6 +816,12 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting session info for {SessionId}", body.SessionId);
+            await PublishErrorEventAsync(
+                "GetSessionInfo",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.SessionId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1154,6 +1190,12 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting registered services");
+            await PublishErrorEventAsync(
+                "GetRegisteredServices",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: null);
             return (StatusCodes.InternalServerError, null);
         }
     }

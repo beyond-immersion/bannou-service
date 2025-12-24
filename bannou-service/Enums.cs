@@ -104,6 +104,10 @@ public enum StatusCodes
     /// </summary>
     MessageTooLarge = 413,
     /// <summary>
+    /// Too many requests - rate limited or pool exhausted (429).
+    /// </summary>
+    TooManyRequests = 429,
+    /// <summary>
     /// Internal server error (500).
     /// </summary>
     InternalServerError = 500

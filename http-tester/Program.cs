@@ -205,6 +205,8 @@ public class Program
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Species.ISpeciesClient, BeyondImmersion.BannouService.Species.SpeciesClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient, BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Website.IWebsiteClient, BeyondImmersion.BannouService.Website.WebsiteClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Messaging.IMessagingClient, BeyondImmersion.BannouService.Messaging.MessagingClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.State.IStateClient, BeyondImmersion.BannouService.State.StateClient>();
             // Note: TestingTestHandler uses direct HTTP calls, not a generated client
 
             // Build the service provider
@@ -653,7 +655,9 @@ public class Program
             new ServicedataTestHandler(),
             new SpeciesTestHandler(),
             new SubscriptionsTestHandler(),
-            new TestingTestHandler()
+            new TestingTestHandler(),
+            new MessagingTestHandler(),
+            new StateTestHandler()
         };
 
         // Filter test handlers by plugin if specified

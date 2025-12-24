@@ -678,4 +678,165 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
             return 0;
         }
     }
+
+    #region Generic Storage Methods for Processing Pools
+
+    /// <summary>
+    /// Get a list of items from Redis.
+    /// </summary>
+    public async Task<List<T>?> GetListAsync<T>(string key) where T : class
+    {
+        if (_database == null)
+        {
+            _logger.LogWarning("Redis database not initialized. Cannot get list.");
+            return null;
+        }
+
+        try
+        {
+            var value = await _database.StringGetAsync(key);
+            if (value.IsNullOrEmpty)
+            {
+                return null;
+            }
+
+            return BannouJson.Deserialize<List<T>>(value.ToString());
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogError(ex, "Failed to get list from key {Key}", key);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Set a list of items in Redis.
+    /// </summary>
+    public async Task SetListAsync<T>(string key, List<T> items) where T : class
+    {
+        if (_database == null)
+        {
+            _logger.LogWarning("Redis database not initialized. Cannot set list.");
+            return;
+        }
+
+        try
+        {
+            var json = BannouJson.Serialize(items);
+            await _database.StringSetAsync(key, json);
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogError(ex, "Failed to set list at key {Key}", key);
+        }
+    }
+
+    /// <summary>
+    /// Get a hash (dictionary) from Redis.
+    /// </summary>
+    public async Task<Dictionary<string, T>?> GetHashAsync<T>(string key) where T : class
+    {
+        if (_database == null)
+        {
+            _logger.LogWarning("Redis database not initialized. Cannot get hash.");
+            return null;
+        }
+
+        try
+        {
+            var value = await _database.StringGetAsync(key);
+            if (value.IsNullOrEmpty)
+            {
+                return null;
+            }
+
+            return BannouJson.Deserialize<Dictionary<string, T>>(value.ToString());
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogError(ex, "Failed to get hash from key {Key}", key);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Set a hash (dictionary) in Redis.
+    /// </summary>
+    public async Task SetHashAsync<T>(string key, Dictionary<string, T> hash) where T : class
+    {
+        if (_database == null)
+        {
+            _logger.LogWarning("Redis database not initialized. Cannot set hash.");
+            return;
+        }
+
+        try
+        {
+            var json = BannouJson.Serialize(hash);
+            await _database.StringSetAsync(key, json);
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogError(ex, "Failed to set hash at key {Key}", key);
+        }
+    }
+
+    /// <summary>
+    /// Get a single value from Redis.
+    /// </summary>
+    public async Task<T?> GetValueAsync<T>(string key) where T : class
+    {
+        if (_database == null)
+        {
+            _logger.LogWarning("Redis database not initialized. Cannot get value.");
+            return null;
+        }
+
+        try
+        {
+            var value = await _database.StringGetAsync(key);
+            if (value.IsNullOrEmpty)
+            {
+                return null;
+            }
+
+            return BannouJson.Deserialize<T>(value.ToString());
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogError(ex, "Failed to get value from key {Key}", key);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Set a single value in Redis.
+    /// </summary>
+    public async Task SetValueAsync<T>(string key, T value, TimeSpan? ttl = null) where T : class
+    {
+        if (_database == null)
+        {
+            _logger.LogWarning("Redis database not initialized. Cannot set value.");
+            return;
+        }
+
+        try
+        {
+            var json = BannouJson.Serialize(value);
+            if (ttl.HasValue)
+            {
+                await _database.StringSetAsync(key, json, ttl.Value);
+            }
+            else
+            {
+                await _database.StringSetAsync(key, json);
+            }
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogError(ex, "Failed to set value at key {Key}", key);
+        }
+    }
+
+    #endregion
 }

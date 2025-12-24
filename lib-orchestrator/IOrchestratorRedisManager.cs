@@ -105,6 +105,59 @@ public interface IOrchestratorRedisManager : IAsyncDisposable, IDisposable
     /// </summary>
     /// <returns>The new version number.</returns>
     Task<int> ClearCurrentConfigurationAsync();
+
+    #region Generic Storage Methods for Processing Pools
+
+    /// <summary>
+    /// Get a list of items from Redis.
+    /// </summary>
+    /// <typeparam name="T">Type of items in the list.</typeparam>
+    /// <param name="key">Redis key.</param>
+    /// <returns>List of items, or null if key doesn't exist.</returns>
+    Task<List<T>?> GetListAsync<T>(string key) where T : class;
+
+    /// <summary>
+    /// Set a list of items in Redis.
+    /// </summary>
+    /// <typeparam name="T">Type of items in the list.</typeparam>
+    /// <param name="key">Redis key.</param>
+    /// <param name="items">Items to store.</param>
+    Task SetListAsync<T>(string key, List<T> items) where T : class;
+
+    /// <summary>
+    /// Get a hash (dictionary) from Redis.
+    /// </summary>
+    /// <typeparam name="T">Type of values in the hash.</typeparam>
+    /// <param name="key">Redis key.</param>
+    /// <returns>Dictionary of key-value pairs, or null if key doesn't exist.</returns>
+    Task<Dictionary<string, T>?> GetHashAsync<T>(string key) where T : class;
+
+    /// <summary>
+    /// Set a hash (dictionary) in Redis.
+    /// </summary>
+    /// <typeparam name="T">Type of values in the hash.</typeparam>
+    /// <param name="key">Redis key.</param>
+    /// <param name="hash">Dictionary to store.</param>
+    Task SetHashAsync<T>(string key, Dictionary<string, T> hash) where T : class;
+
+    /// <summary>
+    /// Get a single value from Redis.
+    /// </summary>
+    /// <typeparam name="T">Type of the value.</typeparam>
+    /// <param name="key">Redis key.</param>
+    /// <returns>Value, or null if key doesn't exist.</returns>
+    Task<T?> GetValueAsync<T>(string key) where T : class;
+
+    /// <summary>
+    /// Set a single value in Redis.
+    /// </summary>
+    /// <typeparam name="T">Type of the value.</typeparam>
+    /// <param name="key">Redis key.</param>
+    /// <param name="value">Value to store.</param>
+    /// <param name="ttl">Optional TTL for the key.</param>
+    Task SetValueAsync<T>(string key, T value, TimeSpan? ttl = null) where T : class;
+
+    #endregion
 }
 
 /// <summary>

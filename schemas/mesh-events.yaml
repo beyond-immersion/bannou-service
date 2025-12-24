@@ -1,0 +1,199 @@
+openapi: 3.0.3
+info:
+  title: Mesh Service Events
+  description: |
+    Event models for Mesh service RabbitMQ pub/sub.
+    Mesh publishes endpoint lifecycle events and subscribes to heartbeats.
+  version: 1.0.0
+
+# Event subscriptions - mesh listens to service heartbeats for health updates
+x-event-subscriptions:
+  - topic: bannou-service-heartbeats
+    event: ServiceHeartbeatEvent
+    handler: HandleServiceHeartbeat
+  - topic: bannou-full-service-mappings
+    event: FullServiceMappingsEvent
+    handler: HandleServiceMappings
+
+paths: {}
+
+components:
+  schemas:
+    # =========================================================================
+    # Mesh-Published Events
+    # =========================================================================
+    MeshEndpointRegisteredEvent:
+      type: object
+      description: |
+        Published when a new endpoint is registered in the service mesh.
+        Consumers can use this to update local routing caches.
+      required:
+        - eventId
+        - timestamp
+        - instanceId
+        - appId
+        - host
+        - port
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the endpoint was registered
+        instanceId:
+          type: string
+          format: uuid
+          description: Instance ID of the registered endpoint
+        appId:
+          type: string
+          description: App-id of the registered endpoint
+        host:
+          type: string
+          description: Host address of the endpoint
+        port:
+          type: integer
+          description: Port of the endpoint
+        services:
+          type: array
+          items:
+            type: string
+          description: Services available on this endpoint
+
+    MeshEndpointDeregisteredEvent:
+      type: object
+      description: |
+        Published when an endpoint is removed from the service mesh.
+        Either via explicit deregistration or TTL expiration.
+      required:
+        - eventId
+        - timestamp
+        - instanceId
+        - appId
+        - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the endpoint was deregistered
+        instanceId:
+          type: string
+          format: uuid
+          description: Instance ID that was deregistered
+        appId:
+          type: string
+          description: App-id that was deregistered
+        reason:
+          type: string
+          enum:
+            - Graceful
+            - TtlExpired
+            - HealthCheckFailed
+            - CircuitBreakerTripped
+          description: Why the endpoint was removed
+
+    MeshEndpointStatusChangedEvent:
+      type: object
+      description: |
+        Published when an endpoint's health status changes.
+        Used for real-time health monitoring.
+      required:
+        - eventId
+        - timestamp
+        - instanceId
+        - appId
+        - previousStatus
+        - newStatus
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the status changed
+        instanceId:
+          type: string
+          format: uuid
+          description: Instance ID with status change
+        appId:
+          type: string
+          description: App-id with status change
+        previousStatus:
+          type: string
+          enum: [Healthy, Degraded, Unavailable, ShuttingDown]
+        newStatus:
+          type: string
+          enum: [Healthy, Degraded, Unavailable, ShuttingDown]
+        reason:
+          type: string
+          description: Human-readable reason for status change
+
+    MeshRoutingTableUpdatedEvent:
+      type: object
+      description: |
+        Published when the routing table changes.
+        Contains the full routing table for atomic updates.
+        Similar pattern to FullServiceMappingsEvent.
+      required:
+        - eventId
+        - timestamp
+        - version
+        - endpoints
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the routing table was updated
+        version:
+          type: integer
+          format: int64
+          description: Monotonically increasing version for ordering
+        endpoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/MeshEndpointSummary'
+          description: All registered endpoints
+        removedInstanceIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Instance IDs removed in this update
+
+    MeshEndpointSummary:
+      type: object
+      description: Lightweight endpoint info for routing table events
+      required:
+        - instanceId
+        - appId
+        - host
+        - port
+        - status
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+        appId:
+          type: string
+        host:
+          type: string
+        port:
+          type: integer
+        status:
+          type: string
+          enum: [Healthy, Degraded, Unavailable, ShuttingDown]
+        loadPercent:
+          type: number
+          format: float

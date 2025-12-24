@@ -37,10 +37,13 @@
     <ItemGroup>
       <Compile Include="../bannou-service/Generated/CommonClientEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Clients/RealmClient.cs" />
+      <Compile Include="../bannou-service/Generated/Clients/AssetClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/AccountsClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/VoiceClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/SubscriptionsClient.cs" />
+      <Compile Include="../bannou-service/Generated/Clients/MessagingClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/GameSessionClient.cs" />
+      <Compile Include="../bannou-service/Generated/Clients/MeshClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/DocumentationClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/ConnectClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/SpeciesClient.cs" />
@@ -49,6 +52,7 @@
       <Compile Include="../bannou-service/Generated/Clients/RelationshipTypeClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/PermissionsClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/WebsiteClient.cs" />
+      <Compile Include="../bannou-service/Generated/Clients/StateClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/AuthClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/OrchestratorClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/LocationClient.cs" />
@@ -58,9 +62,13 @@
       <Compile Include="../bannou-service/Generated/Models/AuthModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/RelationshipTypeModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/CharacterModels.cs" />
+      <Compile Include="../bannou-service/Generated/Models/AssetModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/ServicedataModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/RelationshipModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/PermissionsModels.cs" />
+      <Compile Include="../bannou-service/Generated/Models/MeshModels.cs" />
+      <Compile Include="../bannou-service/Generated/Models/MessagingModels.cs" />
+      <Compile Include="../bannou-service/Generated/Models/StateModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/SubscriptionsModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/BehaviorModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/AccountsModels.cs" />
@@ -75,16 +83,20 @@
       <Compile Include="../bannou-service/Generated/Events/DocumentationLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/SpeciesEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/RelationshipLifecycleEvents.cs" />
+      <Compile Include="../bannou-service/Generated/Events/MeshEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/RelationshipTypeEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/LocationEventsModels.cs" />
+      <Compile Include="../bannou-service/Generated/Events/AssetEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/CharacterLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/GameSessionEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/RealmEventsModels.cs" />
+      <Compile Include="../bannou-service/Generated/Events/StateEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/LocationLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/RelationshipTypeLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/AccountsEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/SubscriptionsEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/VoiceEventsModels.cs" />
+      <Compile Include="../bannou-service/Generated/Events/MessagingEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/AccountsLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/AuthEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/SpeciesLifecycleEvents.cs" />
@@ -94,6 +106,7 @@
       <Compile Include="../bannou-service/Generated/Events/RealmLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/RelationshipEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/CommonEventsModels.cs" />
+      <Compile Include="../lib-asset/Generated/AssetClientEventsModels.cs" />
       <Compile Include="../lib-game-session/Generated/GameSessionClientEventsModels.cs" />
       <Compile Include="../lib-voice/Generated/VoiceClientEventsModels.cs" />
     </ItemGroup>

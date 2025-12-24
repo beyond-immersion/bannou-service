@@ -190,6 +190,31 @@ public class PresetLoader
                     }
                 }
 
+                // CRITICAL: Translate services list to proper service enable/disable environment variables
+                // Without this, deployed containers have all services enabled by default (including
+                // services like Asset that require infrastructure like MinIO that won't be available).
+                // Set SERVICES_ENABLED=false so only explicitly listed services are enabled.
+                if (node.Services != null && node.Services.Count > 0)
+                {
+                    // Only set if not already explicitly configured
+                    if (!mergedEnv.ContainsKey("SERVICES_ENABLED"))
+                    {
+                        mergedEnv["SERVICES_ENABLED"] = "false";
+                    }
+
+                    // Enable each service listed in the preset
+                    foreach (var serviceName in node.Services)
+                    {
+                        // Convert service name to environment variable format
+                        // e.g., "auth" -> "AUTH_SERVICE_ENABLED", "game-session" -> "GAME_SESSION_SERVICE_ENABLED"
+                        var envVarName = serviceName.ToUpperInvariant().Replace("-", "_") + "_SERVICE_ENABLED";
+                        if (!mergedEnv.ContainsKey(envVarName))
+                        {
+                            mergedEnv[envVarName] = "true";
+                        }
+                    }
+                }
+
                 topologyNode.Environment = mergedEnv;
                 topology.Nodes.Add(topologyNode);
             }

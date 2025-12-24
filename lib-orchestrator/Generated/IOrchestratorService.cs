@@ -95,4 +95,29 @@ public partial interface IOrchestratorService : IDaprService
     /// </summary>
     Task<(StatusCodes, ConfigVersionResponse?)> GetConfigVersionAsync(GetConfigVersionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+    /// <summary>
+    /// AcquireProcessor operation
+    /// </summary>
+    Task<(StatusCodes, AcquireProcessorResponse?)> AcquireProcessorAsync(AcquireProcessorRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
+    /// ReleaseProcessor operation
+    /// </summary>
+    Task<(StatusCodes, ReleaseProcessorResponse?)> ReleaseProcessorAsync(ReleaseProcessorRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
+    /// GetPoolStatus operation
+    /// </summary>
+    Task<(StatusCodes, PoolStatusResponse?)> GetPoolStatusAsync(GetPoolStatusRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
+    /// ScalePool operation
+    /// </summary>
+    Task<(StatusCodes, ScalePoolResponse?)> ScalePoolAsync(ScalePoolRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
+    /// CleanupPool operation
+    /// </summary>
+    Task<(StatusCodes, CleanupPoolResponse?)> CleanupPoolAsync(CleanupPoolRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

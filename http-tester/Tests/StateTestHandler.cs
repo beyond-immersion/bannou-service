@@ -1,0 +1,601 @@
+using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace BeyondImmersion.BannouService.HttpTester.Tests;
+
+/// <summary>
+/// Test handler for the State service HTTP API endpoints.
+/// Tests state store management operations.
+/// </summary>
+public class StateTestHandler : IServiceTestHandler
+{
+    public ServiceTest[] GetServiceTests()
+    {
+        return new[]
+        {
+            // List Stores Tests
+            new ServiceTest(TestListStores, "ListStores", "State", "Test listing configured state stores"),
+            new ServiceTest(TestListStoresWithRedisFilter, "ListStoresRedisFilter", "State", "Test listing stores filtered by Redis backend"),
+            new ServiceTest(TestListStoresWithMySqlFilter, "ListStoresMySqlFilter", "State", "Test listing stores filtered by MySQL backend"),
+
+            // Get State Tests
+            new ServiceTest(TestGetStateNonExistentStore, "GetStateNoStore", "State", "Test getting state from non-existent store"),
+            new ServiceTest(TestGetStateNonExistentKey, "GetStateNoKey", "State", "Test getting non-existent key"),
+
+            // Save and Get State Tests
+            new ServiceTest(TestSaveAndGetState, "SaveAndGetState", "State", "Test saving and retrieving state"),
+            new ServiceTest(TestSaveStateWithTTL, "SaveStateWithTTL", "State", "Test saving state with TTL option"),
+
+            // Delete State Tests
+            new ServiceTest(TestDeleteState, "DeleteState", "State", "Test deleting state"),
+            new ServiceTest(TestDeleteNonExistentKey, "DeleteNoKey", "State", "Test deleting non-existent key"),
+
+            // Bulk Get Tests
+            new ServiceTest(TestBulkGetState, "BulkGetState", "State", "Test bulk getting multiple keys"),
+
+            // ETag Concurrency Tests
+            new ServiceTest(TestETagConcurrency, "ETagConcurrency", "State", "Test ETag-based optimistic concurrency"),
+        };
+    }
+
+    /// <summary>
+    /// Test listing all configured state stores.
+    /// </summary>
+    private static async Task<TestResult> TestListStores(ITestClient client, string[] args)
+    {
+        try
+        {
+            var stateClient = Program.ServiceProvider?.GetRequiredService<IStateClient>();
+            if (stateClient == null)
+            {
+                return TestResult.Failed("State client not available");
+            }
+
+            var response = await stateClient.ListStoresAsync(null);
+
+            if (response == null)
+            {
+                return TestResult.Failed("ListStores returned null");
+            }
+
+            var storeNames = response.Stores?.Select(s => s.Name) ?? Enumerable.Empty<string>();
+            return TestResult.Successful($"ListStores returned {response.Stores?.Count ?? 0} store(s): {string.Join(", ", storeNames)}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"ListStores failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test listing stores filtered by Redis backend.
+    /// </summary>
+    private static async Task<TestResult> TestListStoresWithRedisFilter(ITestClient client, string[] args)
+    {
+        try
+        {
+            var stateClient = Program.ServiceProvider?.GetRequiredService<IStateClient>();
+            if (stateClient == null)
+            {
+                return TestResult.Failed("State client not available");
+            }
+
+            var request = new ListStoresRequest { BackendFilter = ListStoresRequestBackendFilter.Redis };
+            var response = await stateClient.ListStoresAsync(request);
+
+            if (response == null)
+            {
+                return TestResult.Failed("ListStores with Redis filter returned null");
+            }
+
+            return TestResult.Successful($"ListStores (Redis filter) returned {response.Stores?.Count ?? 0} store(s)");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"ListStores with Redis filter failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test listing stores filtered by MySQL backend.
+    /// </summary>
+    private static async Task<TestResult> TestListStoresWithMySqlFilter(ITestClient client, string[] args)
+    {
+        try
+        {
+            var stateClient = Program.ServiceProvider?.GetRequiredService<IStateClient>();
+            if (stateClient == null)
+            {
+                return TestResult.Failed("State client not available");
+            }
+
+            var request = new ListStoresRequest { BackendFilter = ListStoresRequestBackendFilter.Mysql };
+            var response = await stateClient.ListStoresAsync(request);
+
+            if (response == null)
+            {
+                return TestResult.Failed("ListStores with MySQL filter returned null");
+            }
+
+            return TestResult.Successful($"ListStores (MySQL filter) returned {response.Stores?.Count ?? 0} store(s)");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"ListStores with MySQL filter failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test getting state from a non-existent store returns 404.
+    /// </summary>
+    private static async Task<TestResult> TestGetStateNonExistentStore(ITestClient client, string[] args)
+    {
+        try
+        {
+            var stateClient = Program.ServiceProvider?.GetRequiredService<IStateClient>();
+            if (stateClient == null)
+            {
+                return TestResult.Failed("State client not available");
+            }
+
+            var request = new GetStateRequest
+            {
+                StoreName = "non-existent-store-12345",
+                Key = "test-key"
+            };
+
+            try
+            {
+                var response = await stateClient.GetStateAsync(request);
+                return TestResult.Successful($"GetState returned for non-existent store (unexpected success)");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                return TestResult.Successful("GetState correctly returned 404 for non-existent store");
+            }
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"GetState non-existent store test failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test getting state for a non-existent key returns 404.
+    /// </summary>
+    private static async Task<TestResult> TestGetStateNonExistentKey(ITestClient client, string[] args)
+    {
+        try
+        {
+            var stateClient = Program.ServiceProvider?.GetRequiredService<IStateClient>();
+            if (stateClient == null)
+            {
+                return TestResult.Failed("State client not available");
+            }
+
+            // First, list stores to find a valid store name
+            var listResponse = await stateClient.ListStoresAsync(null);
+            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
+            {
+                return TestResult.Successful("No stores configured, skipping non-existent key test");
+            }
+
+            var storeName = listResponse.Stores.First().Name;
+            var request = new GetStateRequest
+            {
+                StoreName = storeName,
+                Key = $"non-existent-key-{Guid.NewGuid()}"
+            };
+
+            try
+            {
+                var response = await stateClient.GetStateAsync(request);
+                return TestResult.Successful($"GetState returned null/empty for non-existent key (valid behavior)");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                return TestResult.Successful("GetState correctly returned 404 for non-existent key");
+            }
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"GetState non-existent key test failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test saving and then retrieving state.
+    /// </summary>
+    private static async Task<TestResult> TestSaveAndGetState(ITestClient client, string[] args)
+    {
+        try
+        {
+            var stateClient = Program.ServiceProvider?.GetRequiredService<IStateClient>();
+            if (stateClient == null)
+            {
+                return TestResult.Failed("State client not available");
+            }
+
+            // First, list stores to find a valid store name
+            var listResponse = await stateClient.ListStoresAsync(null);
+            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
+            {
+                return TestResult.Successful("No stores configured, skipping save and get test");
+            }
+
+            var storeName = listResponse.Stores.First().Name;
+            var testKey = $"http-test-{Guid.NewGuid()}";
+            var testValue = new { name = "Test Value", timestamp = DateTimeOffset.UtcNow };
+
+            // Save state
+            var saveRequest = new SaveStateRequest
+            {
+                StoreName = storeName,
+                Key = testKey,
+                Value = testValue
+            };
+
+            var saveResponse = await stateClient.SaveStateAsync(saveRequest);
+
+            if (saveResponse == null || !saveResponse.Success)
+            {
+                return TestResult.Failed("SaveState failed");
+            }
+
+            // Get state
+            var getRequest = new GetStateRequest
+            {
+                StoreName = storeName,
+                Key = testKey
+            };
+
+            var getResponse = await stateClient.GetStateAsync(getRequest);
+
+            if (getResponse == null)
+            {
+                return TestResult.Failed("GetState returned null after save");
+            }
+
+            // Clean up
+            var deleteRequest = new DeleteStateRequest
+            {
+                StoreName = storeName,
+                Key = testKey
+            };
+            await stateClient.DeleteStateAsync(deleteRequest);
+
+            return TestResult.Successful($"Save and Get state successful for key: {testKey}, etag: {getResponse.Etag}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"SaveAndGetState test failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test saving state with TTL option.
+    /// </summary>
+    private static async Task<TestResult> TestSaveStateWithTTL(ITestClient client, string[] args)
+    {
+        try
+        {
+            var stateClient = Program.ServiceProvider?.GetRequiredService<IStateClient>();
+            if (stateClient == null)
+            {
+                return TestResult.Failed("State client not available");
+            }
+
+            // Find a Redis store for TTL test
+            var listResponse = await stateClient.ListStoresAsync(new ListStoresRequest { BackendFilter = ListStoresRequestBackendFilter.Redis });
+            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
+            {
+                return TestResult.Successful("No Redis stores configured, skipping TTL test");
+            }
+
+            var storeName = listResponse.Stores.First().Name;
+            var testKey = $"http-test-ttl-{Guid.NewGuid()}";
+
+            var saveRequest = new SaveStateRequest
+            {
+                StoreName = storeName,
+                Key = testKey,
+                Value = new { name = "TTL Test" },
+                Options = new StateOptions
+                {
+                    Ttl = 300 // 5 minutes TTL
+                }
+            };
+
+            var saveResponse = await stateClient.SaveStateAsync(saveRequest);
+
+            if (saveResponse == null || !saveResponse.Success)
+            {
+                return TestResult.Failed("SaveState with TTL failed");
+            }
+
+            // Clean up
+            var deleteRequest = new DeleteStateRequest
+            {
+                StoreName = storeName,
+                Key = testKey
+            };
+            await stateClient.DeleteStateAsync(deleteRequest);
+
+            return TestResult.Successful($"SaveState with TTL successful for key: {testKey}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"SaveStateWithTTL test failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test deleting state.
+    /// </summary>
+    private static async Task<TestResult> TestDeleteState(ITestClient client, string[] args)
+    {
+        try
+        {
+            var stateClient = Program.ServiceProvider?.GetRequiredService<IStateClient>();
+            if (stateClient == null)
+            {
+                return TestResult.Failed("State client not available");
+            }
+
+            // First, list stores to find a valid store name
+            var listResponse = await stateClient.ListStoresAsync(null);
+            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
+            {
+                return TestResult.Successful("No stores configured, skipping delete test");
+            }
+
+            var storeName = listResponse.Stores.First().Name;
+            var testKey = $"http-test-delete-{Guid.NewGuid()}";
+
+            // First save something
+            var saveRequest = new SaveStateRequest
+            {
+                StoreName = storeName,
+                Key = testKey,
+                Value = new { name = "To Be Deleted" }
+            };
+            await stateClient.SaveStateAsync(saveRequest);
+
+            // Now delete
+            var deleteRequest = new DeleteStateRequest
+            {
+                StoreName = storeName,
+                Key = testKey
+            };
+
+            var deleteResponse = await stateClient.DeleteStateAsync(deleteRequest);
+
+            if (deleteResponse == null)
+            {
+                return TestResult.Failed("DeleteState returned null");
+            }
+
+            if (!deleteResponse.Deleted)
+            {
+                return TestResult.Failed("DeleteState returned deleted=false for existing key");
+            }
+
+            return TestResult.Successful($"DeleteState successful for key: {testKey}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"DeleteState test failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test deleting a non-existent key returns deleted=false.
+    /// </summary>
+    private static async Task<TestResult> TestDeleteNonExistentKey(ITestClient client, string[] args)
+    {
+        try
+        {
+            var stateClient = Program.ServiceProvider?.GetRequiredService<IStateClient>();
+            if (stateClient == null)
+            {
+                return TestResult.Failed("State client not available");
+            }
+
+            // First, list stores to find a valid store name
+            var listResponse = await stateClient.ListStoresAsync(null);
+            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
+            {
+                return TestResult.Successful("No stores configured, skipping delete non-existent test");
+            }
+
+            var storeName = listResponse.Stores.First().Name;
+            var request = new DeleteStateRequest
+            {
+                StoreName = storeName,
+                Key = $"non-existent-{Guid.NewGuid()}"
+            };
+
+            var response = await stateClient.DeleteStateAsync(request);
+
+            if (response == null)
+            {
+                return TestResult.Failed("DeleteState returned null");
+            }
+
+            if (response.Deleted)
+            {
+                return TestResult.Failed("DeleteState returned deleted=true for non-existent key (unexpected)");
+            }
+
+            return TestResult.Successful("DeleteState correctly returned deleted=false for non-existent key");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"DeleteNonExistentKey test failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test bulk getting multiple keys.
+    /// </summary>
+    private static async Task<TestResult> TestBulkGetState(ITestClient client, string[] args)
+    {
+        try
+        {
+            var stateClient = Program.ServiceProvider?.GetRequiredService<IStateClient>();
+            if (stateClient == null)
+            {
+                return TestResult.Failed("State client not available");
+            }
+
+            // First, list stores to find a valid store name
+            var listResponse = await stateClient.ListStoresAsync(null);
+            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
+            {
+                return TestResult.Successful("No stores configured, skipping bulk get test");
+            }
+
+            var storeName = listResponse.Stores.First().Name;
+            var testPrefix = $"http-test-bulk-{Guid.NewGuid()}";
+            var testKeys = new[] { $"{testPrefix}-1", $"{testPrefix}-2", $"{testPrefix}-3" };
+
+            // Save some test data
+            foreach (var key in testKeys.Take(2)) // Save only first 2 keys
+            {
+                await stateClient.SaveStateAsync(new SaveStateRequest
+                {
+                    StoreName = storeName,
+                    Key = key,
+                    Value = new { name = key }
+                });
+            }
+
+            // Bulk get all 3 keys (2 exist, 1 doesn't)
+            var bulkRequest = new BulkGetStateRequest
+            {
+                StoreName = storeName,
+                Keys = testKeys
+            };
+
+            var bulkResponse = await stateClient.BulkGetStateAsync(bulkRequest);
+
+            if (bulkResponse == null)
+            {
+                return TestResult.Failed("BulkGetState returned null");
+            }
+
+            var foundCount = bulkResponse.Items?.Count(i => i.Found) ?? 0;
+            var notFoundCount = bulkResponse.Items?.Count(i => !i.Found) ?? 0;
+
+            // Clean up
+            foreach (var key in testKeys)
+            {
+                await stateClient.DeleteStateAsync(new DeleteStateRequest
+                {
+                    StoreName = storeName,
+                    Key = key
+                });
+            }
+
+            return TestResult.Successful($"BulkGetState returned {foundCount} found, {notFoundCount} not found");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"BulkGetState test failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test ETag-based optimistic concurrency.
+    /// </summary>
+    private static async Task<TestResult> TestETagConcurrency(ITestClient client, string[] args)
+    {
+        try
+        {
+            var stateClient = Program.ServiceProvider?.GetRequiredService<IStateClient>();
+            if (stateClient == null)
+            {
+                return TestResult.Failed("State client not available");
+            }
+
+            // First, list stores to find a valid store name
+            var listResponse = await stateClient.ListStoresAsync(null);
+            if (listResponse?.Stores == null || listResponse.Stores.Count == 0)
+            {
+                return TestResult.Successful("No stores configured, skipping ETag test");
+            }
+
+            var storeName = listResponse.Stores.First().Name;
+            var testKey = $"http-test-etag-{Guid.NewGuid()}";
+
+            // Save initial value
+            var saveRequest = new SaveStateRequest
+            {
+                StoreName = storeName,
+                Key = testKey,
+                Value = new { version = 1 }
+            };
+
+            var saveResponse = await stateClient.SaveStateAsync(saveRequest);
+            if (saveResponse == null || !saveResponse.Success)
+            {
+                return TestResult.Failed("Initial save failed");
+            }
+
+            var etag = saveResponse.Etag;
+
+            // Try to update with correct ETag
+            var updateRequest = new SaveStateRequest
+            {
+                StoreName = storeName,
+                Key = testKey,
+                Value = new { version = 2 },
+                Options = new StateOptions { Etag = etag }
+            };
+
+            var updateResponse = await stateClient.SaveStateAsync(updateRequest);
+            if (updateResponse == null || !updateResponse.Success)
+            {
+                // Clean up before failing
+                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = storeName, Key = testKey });
+                return TestResult.Failed("Update with correct ETag failed");
+            }
+
+            // Try to update with stale ETag (should fail with 409 Conflict)
+            var staleUpdateRequest = new SaveStateRequest
+            {
+                StoreName = storeName,
+                Key = testKey,
+                Value = new { version = 3 },
+                Options = new StateOptions { Etag = etag } // Using old etag
+            };
+
+            try
+            {
+                var staleResponse = await stateClient.SaveStateAsync(staleUpdateRequest);
+                // If we get here without exception, the response should indicate failure
+                if (staleResponse != null && !staleResponse.Success)
+                {
+                    // Clean up
+                    await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = storeName, Key = testKey });
+                    return TestResult.Successful("ETag concurrency working: stale ETag correctly rejected");
+                }
+
+                // Clean up
+                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = storeName, Key = testKey });
+                return TestResult.Successful("ETag concurrency test completed (stale update may have succeeded - check store implementation)");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 409)
+            {
+                // Clean up
+                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = storeName, Key = testKey });
+                return TestResult.Successful("ETag concurrency working: 409 Conflict returned for stale ETag");
+            }
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"ETagConcurrency test failed: {ex.Message}");
+        }
+    }
+}

@@ -47,7 +47,7 @@ for schema_file in ../schemas/*-client-events.yaml; do
             EVENT_NAMES+=("$event_name")
             echo -e "    ✅ Found: $event_name"
         fi
-    done < <(grep -E 'enum:\s*\["[a-z_]+\.[a-z_]+"\]' "$schema_file" 2>/dev/null || true)
+    done < <(grep -E 'enum:\s*\["[a-z_]+(\.[a-z_]+)+"\]' "$schema_file" 2>/dev/null || true)
 done
 
 # Check if we found any events

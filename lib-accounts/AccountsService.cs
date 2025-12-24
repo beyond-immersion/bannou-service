@@ -178,6 +178,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing accounts");
+            await PublishErrorEventAsync(
+                "ListAccounts",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.Page, body.PageSize });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -309,6 +315,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating account");
+            await PublishErrorEventAsync(
+                "CreateAccount",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.Email });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -404,6 +416,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving account: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "GetAccount",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -487,6 +505,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating account: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "UpdateAccount",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -554,6 +578,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving account by email: {Email}", body.Email);
+            await PublishErrorEventAsync(
+                "GetAccountByEmail",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.Email });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -591,6 +621,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting auth methods: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "GetAuthMethods",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -677,6 +713,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error adding auth method: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "AddAuthMethod",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.AccountId, body.Provider });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -761,6 +803,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting account by provider: {Provider}", body.Provider);
+            await PublishErrorEventAsync(
+                "GetAccountByProvider",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.Provider, body.ExternalId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -849,6 +897,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating profile: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "UpdateProfile",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -904,6 +958,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting account: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "DeleteAccount",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -970,6 +1030,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing auth method: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "RemoveAuthMethod",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.AccountId, body.MethodId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1014,6 +1080,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating password hash: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "UpdatePasswordHash",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1060,6 +1132,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating verification status: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "UpdateVerificationStatus",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
     }

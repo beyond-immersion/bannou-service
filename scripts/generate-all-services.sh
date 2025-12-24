@@ -88,6 +88,16 @@ else
 fi
 echo ""
 
+# Generate event subscription registry (for NativeEventConsumerBackend deserialization)
+echo -e "${BLUE}📋 Generating event subscription registry...${NC}"
+if ./generate-event-subscription-registry.sh; then
+    echo -e "${GREEN}✅ Event subscription registry generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate event subscription registry${NC}"
+    exit 1
+fi
+echo ""
+
 # Embed meta schemas into API schemas for companion endpoint generation
 echo -e "${BLUE}📋 Embedding meta schemas into API schemas...${NC}"
 if python3 "$SCRIPT_DIR/embed-meta-schemas.py"; then

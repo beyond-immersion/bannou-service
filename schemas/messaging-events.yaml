@@ -1,0 +1,111 @@
+openapi: 3.0.3
+info:
+  title: Messaging Service Events
+  description: |
+    Event models for Messaging service pub/sub.
+    Contains internal tracking events for message debugging and monitoring.
+  version: 1.0.0
+  x-event-subscriptions: []
+  # No subscriptions - this service provides the messaging infrastructure itself
+  x-event-publications:
+    # Internal tracking events for debugging/monitoring
+    - topic: messaging.published
+      event: MessagePublishedEvent
+      description: Internal event for message tracking/debugging (optional, enable via config)
+    - topic: messaging.subscription.created
+      event: SubscriptionCreatedEvent
+      description: Published when a dynamic subscription is created
+    - topic: messaging.subscription.removed
+      event: SubscriptionRemovedEvent
+      description: Published when a subscription is removed
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    MessagePublishedEvent:
+      type: object
+      description: Internal event for message tracking/debugging
+      required:
+        - eventId
+        - timestamp
+        - topic
+        - messageId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this tracking event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the message was published
+        topic:
+          type: string
+          description: Topic the message was published to
+        messageId:
+          type: string
+          format: uuid
+          description: ID of the published message
+        sourceService:
+          type: string
+          description: Service that published the message
+        payloadSizeBytes:
+          type: integer
+          description: Size of the message payload in bytes
+
+    SubscriptionCreatedEvent:
+      type: object
+      description: Published when a dynamic subscription is created
+      required:
+        - eventId
+        - timestamp
+        - subscriptionId
+        - topic
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the subscription was created
+        subscriptionId:
+          type: string
+          format: uuid
+          description: ID of the created subscription
+        topic:
+          type: string
+          description: Topic being subscribed to
+        subscriberAppId:
+          type: string
+          description: App ID of the subscribing service
+
+    SubscriptionRemovedEvent:
+      type: object
+      description: Published when a subscription is removed
+      required:
+        - eventId
+        - timestamp
+        - subscriptionId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the subscription was removed
+        subscriptionId:
+          type: string
+          format: uuid
+          description: ID of the removed subscription
+        reason:
+          $ref: '#/components/schemas/SubscriptionRemovedReason'
+
+    SubscriptionRemovedReason:
+      type: string
+      enum: [explicit, timeout, error]
+      description: Reason the subscription was removed

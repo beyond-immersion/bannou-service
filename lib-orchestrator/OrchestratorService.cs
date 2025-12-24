@@ -565,10 +565,18 @@ public partial class OrchestratorService : IOrchestratorService
                     }
                 }
 
+                // CRITICAL: Disable all services by default, then enable only the specified ones
+                // Without this, deployed containers have all services enabled by default (including
+                // services like Asset that require infrastructure like MinIO that won't be available)
+                if (!environment.ContainsKey("SERVICES_ENABLED"))
+                {
+                    environment["SERVICES_ENABLED"] = "false";
+                }
+
                 // Build service enable flags for this node
                 foreach (var serviceName in node.Services)
                 {
-                    var serviceEnvKey = $"{serviceName.ToUpperInvariant()}_SERVICE_ENABLED";
+                    var serviceEnvKey = $"{serviceName.ToUpperInvariant().Replace("-", "_")}_SERVICE_ENABLED";
                     environment[serviceEnvKey] = "true";
                 }
 
@@ -1499,7 +1507,23 @@ public partial class OrchestratorService : IOrchestratorService
                                 // Convert IDictionary to Dictionary for the orchestrator method
                                 var nodeEnvironment = change.Environment != null
                                     ? new Dictionary<string, string>(change.Environment)
-                                    : null;
+                                    : new Dictionary<string, string>();
+
+                                // CRITICAL: Disable all services by default, then enable only the specified ones
+                                if (!nodeEnvironment.ContainsKey("SERVICES_ENABLED"))
+                                {
+                                    nodeEnvironment["SERVICES_ENABLED"] = "false";
+                                }
+
+                                // Enable each service listed in the change
+                                foreach (var svc in change.Services)
+                                {
+                                    var envKey = $"{svc.ToUpperInvariant().Replace("-", "_")}_SERVICE_ENABLED";
+                                    if (!nodeEnvironment.ContainsKey(envKey))
+                                    {
+                                        nodeEnvironment[envKey] = "true";
+                                    }
+                                }
 
                                 foreach (var serviceName in change.Services)
                                 {
@@ -2095,4 +2119,543 @@ public partial class OrchestratorService : IOrchestratorService
             return (false, $"Failed to reset to default topology: {ex.Message}", tornDownServices);
         }
     }
+
+    #region Processing Pool Management
+
+    // Redis key patterns for processing pool
+    private const string POOL_INSTANCES_KEY = "processing-pool:{0}:instances";
+    private const string POOL_AVAILABLE_KEY = "processing-pool:{0}:available";
+    private const string POOL_LEASES_KEY = "processing-pool:{0}:leases";
+    private const string POOL_METRICS_KEY = "processing-pool:{0}:metrics";
+    private const string POOL_CONFIG_KEY = "processing-pool:{0}:config";
+
+    /// <summary>
+    /// Acquires a processor from the pool for processing work.
+    /// </summary>
+    /// <param name="body">Request containing pool type and priority.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Processor information including app-id and lease.</returns>
+    public async Task<(StatusCodes, AcquireProcessorResponse?)> AcquireProcessorAsync(
+        AcquireProcessorRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(body);
+
+            if (string.IsNullOrEmpty(body.Pool_type))
+            {
+                _logger.LogWarning("AcquireProcessor: Missing pool_type");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.Pool_type);
+            var leasesKey = string.Format(POOL_LEASES_KEY, body.Pool_type);
+
+            // Try to get an available processor from the pool
+            var availableProcessors = await _redisManager.GetListAsync<ProcessorInstance>(availableKey);
+
+            if (availableProcessors == null || availableProcessors.Count == 0)
+            {
+                _logger.LogInformation("AcquireProcessor: No available processors in pool {PoolType}", body.Pool_type);
+
+                // Return 429 Too Many Requests to indicate pool is busy
+                return (StatusCodes.TooManyRequests, null);
+            }
+
+            // Pop the first available processor
+            var processor = availableProcessors[0];
+            availableProcessors.RemoveAt(0);
+            await _redisManager.SetListAsync(availableKey, availableProcessors);
+
+            // Create a lease for this processor
+            var leaseId = Guid.NewGuid();
+            var timeoutSeconds = body.Timeout_seconds > 0 ? body.Timeout_seconds : 300;
+            var expiresAt = DateTimeOffset.UtcNow.AddSeconds(timeoutSeconds);
+
+            var lease = new ProcessorLease
+            {
+                LeaseId = leaseId,
+                ProcessorId = processor.ProcessorId,
+                AppId = processor.AppId,
+                PoolType = body.Pool_type,
+                AcquiredAt = DateTimeOffset.UtcNow,
+                ExpiresAt = expiresAt,
+                Priority = body.Priority,
+                Metadata = body.Metadata
+            };
+
+            // Store the lease
+            var leases = await _redisManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
+            leases[leaseId.ToString()] = lease;
+            await _redisManager.SetHashAsync(leasesKey, leases);
+
+            _logger.LogInformation(
+                "AcquireProcessor: Acquired processor {ProcessorId} from pool {PoolType} with lease {LeaseId}, expires at {ExpiresAt}",
+                processor.ProcessorId, body.Pool_type, leaseId, expiresAt);
+
+            return (StatusCodes.OK, new AcquireProcessorResponse
+            {
+                Processor_id = processor.ProcessorId,
+                App_id = processor.AppId,
+                Lease_id = leaseId,
+                Expires_at = expiresAt
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "AcquireProcessor: Error acquiring processor from pool {PoolType}", body?.Pool_type);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Releases a processor back to the pool.
+    /// </summary>
+    /// <param name="body">Request containing lease ID and completion status.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Release confirmation.</returns>
+    public async Task<(StatusCodes, ReleaseProcessorResponse?)> ReleaseProcessorAsync(
+        ReleaseProcessorRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(body);
+
+            if (body.Lease_id == Guid.Empty)
+            {
+                _logger.LogWarning("ReleaseProcessor: Missing or invalid lease_id");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Find the lease across all pool types
+            ProcessorLease? lease = null;
+            string? poolType = null;
+
+            // We need to search all pools for the lease
+            var poolTypes = await GetKnownPoolTypesAsync();
+
+            foreach (var pt in poolTypes)
+            {
+                var leasesKey = string.Format(POOL_LEASES_KEY, pt);
+                var leases = await _redisManager.GetHashAsync<ProcessorLease>(leasesKey);
+
+                if (leases != null && leases.TryGetValue(body.Lease_id.ToString(), out var foundLease))
+                {
+                    lease = foundLease;
+                    poolType = pt;
+                    break;
+                }
+            }
+
+            if (lease == null || poolType == null)
+            {
+                _logger.LogWarning("ReleaseProcessor: Lease {LeaseId} not found", body.Lease_id);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Remove the lease
+            var leasesKeyToUpdate = string.Format(POOL_LEASES_KEY, poolType);
+            var currentLeases = await _redisManager.GetHashAsync<ProcessorLease>(leasesKeyToUpdate) ?? new Dictionary<string, ProcessorLease>();
+            currentLeases.Remove(body.Lease_id.ToString());
+            await _redisManager.SetHashAsync(leasesKeyToUpdate, currentLeases);
+
+            // Return processor to available pool
+            var availableKey = string.Format(POOL_AVAILABLE_KEY, poolType);
+            var availableProcessors = await _redisManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+
+            availableProcessors.Add(new ProcessorInstance
+            {
+                ProcessorId = lease.ProcessorId,
+                AppId = lease.AppId,
+                PoolType = poolType,
+                Status = "available",
+                LastUpdated = DateTimeOffset.UtcNow
+            });
+
+            await _redisManager.SetListAsync(availableKey, availableProcessors);
+
+            // Update metrics
+            await UpdatePoolMetricsAsync(poolType, body.Success);
+
+            _logger.LogInformation(
+                "ReleaseProcessor: Released processor {ProcessorId} back to pool {PoolType}, success={Success}",
+                lease.ProcessorId, poolType, body.Success);
+
+            return (StatusCodes.OK, new ReleaseProcessorResponse
+            {
+                Released = true,
+                Processor_id = lease.ProcessorId
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "ReleaseProcessor: Error releasing processor with lease {LeaseId}", body?.Lease_id);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Gets the current status of a processing pool.
+    /// </summary>
+    /// <param name="body">Request containing pool type.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Pool status including instance counts and metrics.</returns>
+    public async Task<(StatusCodes, PoolStatusResponse?)> GetPoolStatusAsync(
+        GetPoolStatusRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(body);
+
+            if (string.IsNullOrEmpty(body.Pool_type))
+            {
+                _logger.LogWarning("GetPoolStatus: Missing pool_type");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var instancesKey = string.Format(POOL_INSTANCES_KEY, body.Pool_type);
+            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.Pool_type);
+            var leasesKey = string.Format(POOL_LEASES_KEY, body.Pool_type);
+            var configKey = string.Format(POOL_CONFIG_KEY, body.Pool_type);
+            var metricsKey = string.Format(POOL_METRICS_KEY, body.Pool_type);
+
+            var allInstances = await _redisManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
+            var availableInstances = await _redisManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+            var leases = await _redisManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
+            var config = await _redisManager.GetValueAsync<PoolConfiguration>(configKey);
+
+            var response = new PoolStatusResponse
+            {
+                Pool_type = body.Pool_type,
+                Total_instances = allInstances.Count,
+                Available_instances = availableInstances.Count,
+                Busy_instances = leases.Count,
+                Queue_depth = 0, // We don't have a queue yet
+                Min_instances = config?.MinInstances ?? 1,
+                Max_instances = config?.MaxInstances ?? 5
+            };
+
+            // Include metrics if requested
+            if (body.Include_metrics)
+            {
+                var metrics = await _redisManager.GetValueAsync<PoolMetricsData>(metricsKey);
+                if (metrics != null)
+                {
+                    response.Recent_metrics = new PoolMetrics
+                    {
+                        Jobs_completed_1h = metrics.JobsCompleted1h,
+                        Jobs_failed_1h = metrics.JobsFailed1h,
+                        Avg_processing_time_ms = metrics.AvgProcessingTimeMs,
+                        Last_scale_event = metrics.LastScaleEvent
+                    };
+                }
+            }
+
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetPoolStatus: Error getting status for pool {PoolType}", body?.Pool_type);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Scales a processing pool to a target number of instances.
+    /// </summary>
+    /// <param name="body">Request containing pool type and target instances.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Scaling result including previous and current instance counts.</returns>
+    public async Task<(StatusCodes, ScalePoolResponse?)> ScalePoolAsync(
+        ScalePoolRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(body);
+
+            if (string.IsNullOrEmpty(body.Pool_type))
+            {
+                _logger.LogWarning("ScalePool: Missing pool_type");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            if (body.Target_instances < 0)
+            {
+                _logger.LogWarning("ScalePool: Invalid target_instances {Target}", body.Target_instances);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var instancesKey = string.Format(POOL_INSTANCES_KEY, body.Pool_type);
+            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.Pool_type);
+            var leasesKey = string.Format(POOL_LEASES_KEY, body.Pool_type);
+            var metricsKey = string.Format(POOL_METRICS_KEY, body.Pool_type);
+
+            var currentInstances = await _redisManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
+            var availableInstances = await _redisManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+            var leases = await _redisManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
+
+            var previousCount = currentInstances.Count;
+            var scaledUp = 0;
+            var scaledDown = 0;
+
+            if (body.Target_instances > previousCount)
+            {
+                // Scale up - add new instances
+                scaledUp = body.Target_instances - previousCount;
+
+                for (int i = 0; i < scaledUp; i++)
+                {
+                    var processorId = $"{body.Pool_type}-{Guid.NewGuid():N}";
+                    var appId = $"bannou-processor-{body.Pool_type}-{currentInstances.Count + 1}";
+
+                    var newInstance = new ProcessorInstance
+                    {
+                        ProcessorId = processorId,
+                        AppId = appId,
+                        PoolType = body.Pool_type,
+                        Status = "available",
+                        CreatedAt = DateTimeOffset.UtcNow,
+                        LastUpdated = DateTimeOffset.UtcNow
+                    };
+
+                    currentInstances.Add(newInstance);
+                    availableInstances.Add(newInstance);
+                }
+
+                _logger.LogInformation("ScalePool: Scaled up pool {PoolType} by {Count} instances", body.Pool_type, scaledUp);
+            }
+            else if (body.Target_instances < previousCount)
+            {
+                // Scale down - remove instances (prefer idle ones)
+                var toRemove = previousCount - body.Target_instances;
+
+                // Can only remove available instances (unless force)
+                var maxRemovable = body.Force ? previousCount : availableInstances.Count;
+                scaledDown = Math.Min(toRemove, maxRemovable);
+
+                if (scaledDown > 0)
+                {
+                    // Remove from available first
+                    var removedIds = new HashSet<string>();
+                    for (int i = 0; i < Math.Min(scaledDown, availableInstances.Count); i++)
+                    {
+                        removedIds.Add(availableInstances[i].ProcessorId);
+                    }
+
+                    availableInstances.RemoveAll(p => removedIds.Contains(p.ProcessorId));
+                    currentInstances.RemoveAll(p => removedIds.Contains(p.ProcessorId));
+
+                    // If force and still need to remove more, remove busy instances
+                    if (body.Force && removedIds.Count < scaledDown)
+                    {
+                        var busyToRemove = scaledDown - removedIds.Count;
+                        var busyInstances = currentInstances.Take(busyToRemove).ToList();
+                        foreach (var instance in busyInstances)
+                        {
+                            removedIds.Add(instance.ProcessorId);
+                            // Also release their leases
+                            var leaseToRemove = leases.FirstOrDefault(l => l.Value.ProcessorId == instance.ProcessorId);
+                            if (leaseToRemove.Key != null)
+                            {
+                                leases.Remove(leaseToRemove.Key);
+                            }
+                        }
+
+                        currentInstances.RemoveAll(p => removedIds.Contains(p.ProcessorId));
+                    }
+                }
+
+                _logger.LogInformation("ScalePool: Scaled down pool {PoolType} by {Count} instances", body.Pool_type, scaledDown);
+            }
+
+            // Save updated state
+            await _redisManager.SetListAsync(instancesKey, currentInstances);
+            await _redisManager.SetListAsync(availableKey, availableInstances);
+            await _redisManager.SetHashAsync(leasesKey, leases);
+
+            // Update metrics with scale event
+            var metrics = await _redisManager.GetValueAsync<PoolMetricsData>(metricsKey) ?? new PoolMetricsData();
+            metrics.LastScaleEvent = DateTimeOffset.UtcNow;
+            await _redisManager.SetValueAsync(metricsKey, metrics);
+
+            return (StatusCodes.OK, new ScalePoolResponse
+            {
+                Pool_type = body.Pool_type,
+                Previous_instances = previousCount,
+                Current_instances = currentInstances.Count,
+                Scaled_up = scaledUp,
+                Scaled_down = scaledDown
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "ScalePool: Error scaling pool {PoolType}", body?.Pool_type);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Cleans up idle processors from a pool, optionally preserving minimum instances.
+    /// </summary>
+    /// <param name="body">Request containing pool type and preservation preference.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Cleanup result including removed instance count.</returns>
+    public async Task<(StatusCodes, CleanupPoolResponse?)> CleanupPoolAsync(
+        CleanupPoolRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(body);
+
+            if (string.IsNullOrEmpty(body.Pool_type))
+            {
+                _logger.LogWarning("CleanupPool: Missing pool_type");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var instancesKey = string.Format(POOL_INSTANCES_KEY, body.Pool_type);
+            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.Pool_type);
+            var configKey = string.Format(POOL_CONFIG_KEY, body.Pool_type);
+
+            var currentInstances = await _redisManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
+            var availableInstances = await _redisManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+            var config = await _redisManager.GetValueAsync<PoolConfiguration>(configKey);
+
+            var minInstances = config?.MinInstances ?? 1;
+            var targetCount = body.Preserve_minimum ? minInstances : 0;
+
+            var toRemove = availableInstances.Count - targetCount;
+            if (toRemove <= 0)
+            {
+                return (StatusCodes.OK, new CleanupPoolResponse
+                {
+                    Pool_type = body.Pool_type,
+                    Instances_removed = 0,
+                    Current_instances = currentInstances.Count,
+                    Message = "No idle instances to remove"
+                });
+            }
+
+            // Remove idle instances
+            var removedIds = availableInstances
+                .Take(toRemove)
+                .Select(p => p.ProcessorId)
+                .ToHashSet();
+
+            availableInstances.RemoveAll(p => removedIds.Contains(p.ProcessorId));
+            currentInstances.RemoveAll(p => removedIds.Contains(p.ProcessorId));
+
+            await _redisManager.SetListAsync(instancesKey, currentInstances);
+            await _redisManager.SetListAsync(availableKey, availableInstances);
+
+            _logger.LogInformation(
+                "CleanupPool: Removed {Count} idle instances from pool {PoolType}, {Remaining} instances remaining",
+                removedIds.Count, body.Pool_type, currentInstances.Count);
+
+            return (StatusCodes.OK, new CleanupPoolResponse
+            {
+                Pool_type = body.Pool_type,
+                Instances_removed = removedIds.Count,
+                Current_instances = currentInstances.Count,
+                Message = $"Cleaned up {removedIds.Count} idle processor(s)"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "CleanupPool: Error cleaning up pool {PoolType}", body?.Pool_type);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Gets a list of known pool types from Redis.
+    /// </summary>
+    private Task<List<string>> GetKnownPoolTypesAsync()
+    {
+        // For now, we'll use a hardcoded list of known pool types
+        // In a full implementation, we'd scan Redis keys or maintain a registry
+        return Task.FromResult(new List<string> { "asset-processor", "texture-processor", "model-processor", "audio-processor" });
+    }
+
+    /// <summary>
+    /// Updates pool metrics after a job completes.
+    /// </summary>
+    private async Task UpdatePoolMetricsAsync(string poolType, bool success)
+    {
+        var metricsKey = string.Format(POOL_METRICS_KEY, poolType);
+        var metrics = await _redisManager.GetValueAsync<PoolMetricsData>(metricsKey) ?? new PoolMetricsData();
+
+        if (success)
+        {
+            metrics.JobsCompleted1h++;
+        }
+        else
+        {
+            metrics.JobsFailed1h++;
+        }
+
+        await _redisManager.SetValueAsync(metricsKey, metrics);
+    }
+
+    #endregion
+
+    #region Processing Pool Internal Models
+
+    /// <summary>
+    /// Represents a processor instance in the pool.
+    /// </summary>
+    internal sealed class ProcessorInstance
+    {
+        public string ProcessorId { get; set; } = string.Empty;
+        public string AppId { get; set; } = string.Empty;
+        public string PoolType { get; set; } = string.Empty;
+        public string Status { get; set; } = "available";
+        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset LastUpdated { get; set; }
+    }
+
+    /// <summary>
+    /// Represents an active lease for a processor.
+    /// </summary>
+    internal sealed class ProcessorLease
+    {
+        public Guid LeaseId { get; set; }
+        public string ProcessorId { get; set; } = string.Empty;
+        public string AppId { get; set; } = string.Empty;
+        public string PoolType { get; set; } = string.Empty;
+        public DateTimeOffset AcquiredAt { get; set; }
+        public DateTimeOffset ExpiresAt { get; set; }
+        public int Priority { get; set; }
+        public object? Metadata { get; set; }
+    }
+
+    /// <summary>
+    /// Pool configuration stored in Redis.
+    /// </summary>
+    internal sealed class PoolConfiguration
+    {
+        public string PoolType { get; set; } = string.Empty;
+        public int MinInstances { get; set; } = 1;
+        public int MaxInstances { get; set; } = 5;
+        public double ScaleUpThreshold { get; set; } = 0.8;
+        public double ScaleDownThreshold { get; set; } = 0.2;
+    }
+
+    /// <summary>
+    /// Pool metrics data stored in Redis.
+    /// </summary>
+    internal sealed class PoolMetricsData
+    {
+        public int JobsCompleted1h { get; set; }
+        public int JobsFailed1h { get; set; }
+        public int AvgProcessingTimeMs { get; set; }
+        public DateTimeOffset LastScaleEvent { get; set; }
+    }
+
+    #endregion
 }

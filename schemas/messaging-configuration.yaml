@@ -1,0 +1,98 @@
+openapi: 3.0.3
+info:
+  title: Messaging Service Configuration
+  description: "Configuration schema for Messaging service.\nProperties are bound to environment variables with BANNOU_ prefix."
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # RabbitMQ Connection Settings
+    RabbitMQHost:
+      type: string
+      description: RabbitMQ server hostname
+      env: MESSAGING_RABBITMQ_HOST
+      default: "rabbitmq"
+    RabbitMQPort:
+      type: integer
+      description: RabbitMQ server port
+      env: MESSAGING_RABBITMQ_PORT
+      default: 5672
+    RabbitMQUsername:
+      type: string
+      description: RabbitMQ username
+      env: MESSAGING_RABBITMQ_USERNAME
+      default: "guest"
+    RabbitMQPassword:
+      type: string
+      description: RabbitMQ password
+      env: MESSAGING_RABBITMQ_PASSWORD
+      default: "guest"
+    RabbitMQVirtualHost:
+      type: string
+      description: RabbitMQ virtual host
+      env: MESSAGING_RABBITMQ_VHOST
+      default: "/"
+    DefaultExchange:
+      type: string
+      description: Default exchange name for publishing
+      env: MESSAGING_DEFAULT_EXCHANGE
+      default: "bannou"
+    EnablePublisherConfirms:
+      type: boolean
+      description: Enable RabbitMQ publisher confirms for reliability
+      env: MESSAGING_ENABLE_CONFIRMS
+      default: true
+    ConnectionRetryCount:
+      type: integer
+      description: Number of connection retry attempts
+      env: MESSAGING_CONNECTION_RETRY_COUNT
+      default: 5
+    ConnectionRetryDelayMs:
+      type: integer
+      description: Delay between connection retry attempts in milliseconds
+      env: MESSAGING_CONNECTION_RETRY_DELAY_MS
+      default: 1000
+
+    # Subscription Settings
+    DefaultPrefetchCount:
+      type: integer
+      description: Default prefetch count for subscriptions
+      env: MESSAGING_DEFAULT_PREFETCH_COUNT
+      default: 10
+    DefaultAutoAck:
+      type: boolean
+      description: Default auto-acknowledge setting for subscriptions
+      env: MESSAGING_DEFAULT_AUTO_ACK
+      default: false
+    DeadLetterExchange:
+      type: string
+      description: Dead letter exchange name for failed messages
+      env: MESSAGING_DEAD_LETTER_EXCHANGE
+      default: "bannou-dlx"
+    RetryMaxAttempts:
+      type: integer
+      description: Maximum retry attempts before dead-lettering
+      env: MESSAGING_RETRY_MAX_ATTEMPTS
+      default: 3
+    RetryDelayMs:
+      type: integer
+      description: Delay between retry attempts in milliseconds
+      env: MESSAGING_RETRY_DELAY_MS
+      default: 5000
+
+    # Feature Flags
+    UseMassTransit:
+      type: boolean
+      description: Use MassTransit wrapper (true) or direct RabbitMQ.Client (false)
+      env: MESSAGING_USE_MASSTRANSIT
+      default: true
+    EnableMetrics:
+      type: boolean
+      description: Enable message bus metrics collection
+      env: MESSAGING_ENABLE_METRICS
+      default: true
+    EnableTracing:
+      type: boolean
+      description: Enable distributed tracing for messages
+      env: MESSAGING_ENABLE_TRACING
+      default: true

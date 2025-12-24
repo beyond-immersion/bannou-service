@@ -1,0 +1,121 @@
+# State Service Configuration Schema
+# Defines connection settings for Redis and MySQL state stores
+type: object
+properties:
+  # Named state store configurations
+  Stores:
+    type: object
+    description: Named state store configurations mapping store names to their settings
+    additionalProperties:
+      $ref: '#/definitions/StoreConfig'
+
+  # Redis connection settings
+  Redis:
+    type: object
+    description: Redis connection settings (shared by all Redis-backed stores)
+    properties:
+      ConnectionString:
+        type: string
+        default: redis:6379
+        description: Redis connection string (host:port format)
+      Password:
+        type: string
+        description: Redis password (optional)
+      Ssl:
+        type: boolean
+        default: false
+        description: Enable SSL/TLS connection
+      DatabaseIndex:
+        type: integer
+        default: 0
+        description: Redis database index (0-15)
+      ConnectTimeout:
+        type: integer
+        default: 5000
+        description: Connection timeout in milliseconds
+      SyncTimeout:
+        type: integer
+        default: 5000
+        description: Synchronous operation timeout in milliseconds
+      AbortOnConnectFail:
+        type: boolean
+        default: false
+        description: Whether to abort on initial connection failure
+
+  # MySQL connection settings
+  MySql:
+    type: object
+    description: MySQL connection settings (shared by all MySQL-backed stores)
+    properties:
+      ConnectionString:
+        type: string
+        description: MySQL connection string
+      MaxPoolSize:
+        type: integer
+        default: 100
+        description: Maximum connection pool size
+      MinPoolSize:
+        type: integer
+        default: 5
+        description: Minimum connection pool size
+      ConnectionTimeout:
+        type: integer
+        default: 30
+        description: Connection timeout in seconds
+      CommandTimeout:
+        type: integer
+        default: 30
+        description: Command execution timeout in seconds
+
+  # Default options applied to all stores
+  Defaults:
+    type: object
+    properties:
+      Consistency:
+        type: string
+        enum:
+          - strong
+          - eventual
+        default: strong
+        description: Default consistency level for state operations
+      DefaultTtl:
+        type: integer
+        description: Default TTL in seconds for Redis stores (0 = no expiry)
+      EnableMetrics:
+        type: boolean
+        default: true
+        description: Enable metrics collection for state operations
+      EnableTracing:
+        type: boolean
+        default: true
+        description: Enable distributed tracing for state operations
+      PublishStateChanges:
+        type: boolean
+        default: false
+        description: Publish state change events (for debugging/auditing)
+
+definitions:
+  StoreConfig:
+    type: object
+    required:
+      - backend
+    properties:
+      backend:
+        type: string
+        enum:
+          - redis
+          - mysql
+        description: Backend type for this store
+      keyPrefix:
+        type: string
+        description: Optional key prefix for namespacing in Redis
+      defaultTtl:
+        type: integer
+        description: Default TTL in seconds for this store (Redis only)
+      tableName:
+        type: string
+        description: MySQL table name (MySQL only, defaults to store name)
+      readonly:
+        type: boolean
+        default: false
+        description: Whether this store is read-only

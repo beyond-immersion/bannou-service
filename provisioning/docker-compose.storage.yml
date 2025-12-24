@@ -36,8 +36,8 @@ services:
     image: quay.io/minio/minio:latest
     container_name: bannou-minio
     ports:
-      - "9000:9000"   # S3 API endpoint
-      - "9001:9001"   # Web console
+      - "9010:9000"   # S3 API endpoint (9010 to avoid conflicts with http-tester)
+      - "9011:9001"   # Web console
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
