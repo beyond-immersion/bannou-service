@@ -329,24 +329,30 @@ public partial class AssetService : IAssetService
             var isLargeFile = assetRef.Size > (_configuration.LargeFileThresholdMb * 1024L * 1024L);
             var requiresProcessing = isLargeFile && RequiresProcessing(session.ContentType);
 
-            var assetMetadata = new AssetMetadata
+            // Create internal record with storage details (for bundle creation and internal ops)
+            var internalRecord = new InternalAssetRecord
             {
-                Asset_id = assetId,
-                Content_hash = contentHash,
+                AssetId = assetId,
+                ContentHash = contentHash,
                 Filename = session.Filename,
-                Content_type = session.ContentType,
+                ContentType = session.ContentType,
                 Size = assetRef.Size,
-                Asset_type = session.Metadata?.Asset_type ?? AssetType.Other,
-                Realm = session.Metadata?.Realm ?? Realm.Shared,
+                AssetType = session.Metadata?.Asset_type ?? AssetType.Other,
+                Realm = session.Metadata?.Realm ?? Asset.Realm.Shared,
                 Tags = session.Metadata?.Tags ?? new List<string>(),
-                Processing_status = requiresProcessing ? ProcessingStatus.Pending : ProcessingStatus.Complete,
-                Is_archived = false, // New assets are always in standard storage
-                Created_at = now,
-                Updated_at = now
+                ProcessingStatus = requiresProcessing ? ProcessingStatus.Pending : ProcessingStatus.Complete,
+                StorageKey = finalKey,
+                Bucket = _configuration.StorageBucket,
+                CreatedAt = now,
+                UpdatedAt = now
             };
 
-            // Store asset metadata
-            await _daprClient.SaveStateAsync(STATE_STORE, $"{ASSET_PREFIX}{assetId}", assetMetadata, cancellationToken: cancellationToken).ConfigureAwait(false);
+            // Store internal asset record (includes storage details for bundle creation)
+            await _daprClient.SaveStateAsync(STATE_STORE, $"{ASSET_PREFIX}{assetId}", internalRecord, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            // Convert to public metadata for return value and events
+            var assetMetadata = internalRecord.ToPublicMetadata();
+            assetMetadata.Is_archived = false; // New assets are always in standard storage
 
             // Store index entries for search
             await IndexAssetAsync(assetMetadata, cancellationToken).ConfigureAwait(false);
@@ -411,19 +417,15 @@ public partial class AssetService : IAssetService
 
         try
         {
-            // Retrieve asset metadata
-            var metadata = await _daprClient.GetStateAsync<AssetMetadata>(
+            // Retrieve internal asset record (includes storage details)
+            var internalRecord = await _daprClient.GetStateAsync<InternalAssetRecord>(
                 STATE_STORE, $"{ASSET_PREFIX}{body.Asset_id}", cancellationToken: cancellationToken).ConfigureAwait(false);
 
-            if (metadata == null)
+            if (internalRecord == null)
             {
                 _logger.LogWarning("GetAsset: Asset not found {AssetId}", body.Asset_id);
                 return (StatusCodes.NotFound, null);
             }
-
-            // Determine storage key
-            var extension = Path.GetExtension(metadata.Filename);
-            var storageKey = $"assets/{metadata.Asset_type.ToString().ToLowerInvariant()}/{body.Asset_id}{extension}";
 
             // Resolve version
             string? versionId = null;
@@ -432,23 +434,26 @@ public partial class AssetService : IAssetService
                 versionId = body.Version;
             }
 
-            // Generate download URL
+            // Generate download URL using stored storage key
             var expiration = TimeSpan.FromSeconds(_configuration.DownloadTokenTtlSeconds);
             var downloadResult = await _storageProvider.GenerateDownloadUrlAsync(
-                _configuration.StorageBucket,
-                storageKey,
+                internalRecord.Bucket,
+                internalRecord.StorageKey,
                 versionId,
                 expiration).ConfigureAwait(false);
 
+            // Convert to public metadata
+            var metadata = internalRecord.ToPublicMetadata();
+
             var response = new AssetWithDownloadUrl
             {
-                Asset_id = metadata.Asset_id,
+                Asset_id = internalRecord.AssetId,
                 Version_id = versionId ?? "latest",
                 Download_url = new Uri(downloadResult.DownloadUrl),
                 Expires_at = downloadResult.ExpiresAt,
-                Size = metadata.Size,
-                Content_hash = metadata.Content_hash,
-                Content_type = metadata.Content_type,
+                Size = internalRecord.Size,
+                Content_hash = internalRecord.ContentHash,
+                Content_type = internalRecord.ContentType,
                 Metadata = metadata
             };
 
@@ -480,24 +485,20 @@ public partial class AssetService : IAssetService
 
         try
         {
-            // Retrieve asset metadata to verify it exists
-            var metadata = await _daprClient.GetStateAsync<AssetMetadata>(
+            // Retrieve internal asset record to verify it exists and get storage details
+            var internalRecord = await _daprClient.GetStateAsync<InternalAssetRecord>(
                 STATE_STORE, $"{ASSET_PREFIX}{body.Asset_id}", cancellationToken: cancellationToken).ConfigureAwait(false);
 
-            if (metadata == null)
+            if (internalRecord == null)
             {
                 _logger.LogWarning("ListAssetVersions: Asset not found {AssetId}", body.Asset_id);
                 return (StatusCodes.NotFound, null);
             }
 
-            // Determine storage key prefix
-            var extension = Path.GetExtension(metadata.Filename);
-            var storageKeyPrefix = $"assets/{metadata.Asset_type.ToString().ToLowerInvariant()}/{body.Asset_id}{extension}";
-
-            // List versions from storage
+            // List versions from storage using stored key
             var storageVersions = await _storageProvider.ListVersionsAsync(
-                _configuration.StorageBucket,
-                storageKeyPrefix).ConfigureAwait(false);
+                internalRecord.Bucket,
+                internalRecord.StorageKey).ConfigureAwait(false);
 
             // Apply pagination
             var total = storageVersions.Count;
@@ -618,10 +619,23 @@ public partial class AssetService : IAssetService
 
             return (StatusCodes.OK, response);
         }
-        catch (Grpc.Core.RpcException ex) when (ex.StatusCode == Grpc.Core.StatusCode.Unimplemented)
+        catch (Grpc.Core.RpcException ex)
         {
-            // Query API not supported - fall back to index-based search
-            _logger.LogWarning("QueryStateAsync not available (Redis Stack not configured?), falling back to index-based search");
+            // Dapr QueryStateAsync is known to be unreliable/discontinued (GitHub issue #991)
+            // Fall back to index-based search for any gRPC errors
+            _logger.LogWarning(ex, "QueryStateAsync failed (Dapr query API issue), falling back to index-based search");
+            return await SearchAssetsIndexFallbackAsync(body, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Dapr.DaprException ex) when (
+            ex.Message.Contains("invalid output") ||
+            ex.Message.Contains("query failed") ||
+            ex.Message.Contains("Query state operation failed") ||
+            (ex.InnerException?.Message?.Contains("invalid output") ?? false) ||
+            (ex.InnerException?.Message?.Contains("query failed") ?? false))
+        {
+            // Dapr query API returns "invalid output" error with certain Redis configurations
+            // The error message may be in the outer DaprException or inner RpcException
+            _logger.LogWarning(ex, "Dapr query returned error, falling back to index-based search");
             return await SearchAssetsIndexFallbackAsync(body, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
@@ -658,21 +672,21 @@ public partial class AssetService : IAssetService
         {
             foreach (var assetId in assetIds)
             {
-                var metadata = await _daprClient.GetStateAsync<AssetMetadata>(
+                var internalRecord = await _daprClient.GetStateAsync<InternalAssetRecord>(
                     STATE_STORE, $"{ASSET_PREFIX}{assetId}", cancellationToken: cancellationToken).ConfigureAwait(false);
 
-                if (metadata != null)
+                if (internalRecord != null)
                 {
                     // Apply filters
-                    var matchesRealm = metadata.Realm == body.Realm;
+                    var matchesRealm = internalRecord.Realm == body.Realm;
                     var matchesTags = body.Tags == null || body.Tags.Count == 0 ||
-                        (metadata.Tags != null && body.Tags.All(t => metadata.Tags.Contains(t)));
+                        (internalRecord.Tags != null && body.Tags.All(t => internalRecord.Tags.Contains(t)));
                     var matchesContentType = string.IsNullOrEmpty(body.Content_type) ||
-                        metadata.Content_type == body.Content_type;
+                        internalRecord.ContentType == body.Content_type;
 
                     if (matchesRealm && matchesTags && matchesContentType)
                     {
-                        matchingAssets.Add(metadata);
+                        matchingAssets.Add(internalRecord.ToPublicMetadata());
                     }
                 }
             }

@@ -389,13 +389,13 @@ public class AssetServiceTests
         };
 
         _mockDaprClient
-            .Setup(d => d.GetStateAsync<AssetMetadata>(
+            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<ConsistencyMode?>(),
                 It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((AssetMetadata)null!);
+            .ReturnsAsync((InternalAssetRecord?)null);
 
         // Act
         var (status, result) = await service.GetAssetAsync(request, CancellationToken.None);
@@ -415,15 +415,20 @@ public class AssetServiceTests
         var assetId = "test-asset-123";
         var request = new GetAssetRequest { Asset_id = assetId };
 
-        var metadata = new AssetMetadata
+        var internalRecord = new InternalAssetRecord
         {
-            Asset_id = assetId,
+            AssetId = assetId,
             Filename = "test.png",
-            Content_type = "image/png",
+            ContentType = "image/png",
+            ContentHash = "abc123",
             Size = 1024,
-            Asset_type = AssetType.Texture,
+            AssetType = AssetType.Texture,
             Realm = Realm.Arcadia,
-            Is_archived = false
+            StorageKey = $"assets/texture/{assetId}.png",
+            Bucket = "test-bucket",
+            ProcessingStatus = ProcessingStatus.Complete,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
 
         var downloadResult = new PreSignedDownloadResult(
@@ -435,13 +440,13 @@ public class AssetServiceTests
             ContentType: "image/png");
 
         _mockDaprClient
-            .Setup(d => d.GetStateAsync<AssetMetadata>(
+            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
                 It.IsAny<string>(),
                 It.Is<string>(k => k.Contains(assetId)),
                 It.IsAny<ConsistencyMode?>(),
                 It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(metadata);
+            .ReturnsAsync(internalRecord);
 
         _mockStorageProvider
             .Setup(s => s.GenerateDownloadUrlAsync(
@@ -478,13 +483,13 @@ public class AssetServiceTests
         };
 
         _mockDaprClient
-            .Setup(d => d.GetStateAsync<AssetMetadata>(
+            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<ConsistencyMode?>(),
                 It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((AssetMetadata)null!);
+            .ReturnsAsync((InternalAssetRecord?)null);
 
         // Act
         var (status, result) = await service.ListAssetVersionsAsync(request, CancellationToken.None);
@@ -508,11 +513,20 @@ public class AssetServiceTests
             Offset = 0
         };
 
-        var metadata = new AssetMetadata
+        var internalRecord = new InternalAssetRecord
         {
-            Asset_id = assetId,
+            AssetId = assetId,
             Filename = "test.png",
-            Asset_type = AssetType.Texture
+            ContentType = "image/png",
+            ContentHash = "abc123",
+            Size = 1024,
+            AssetType = AssetType.Texture,
+            Realm = Realm.Arcadia,
+            StorageKey = $"assets/texture/{assetId}.png",
+            Bucket = "test-bucket",
+            ProcessingStatus = ProcessingStatus.Complete,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
 
         var versions = new List<ObjectVersionInfo>
@@ -522,13 +536,13 @@ public class AssetServiceTests
         };
 
         _mockDaprClient
-            .Setup(d => d.GetStateAsync<AssetMetadata>(
+            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<ConsistencyMode?>(),
                 It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(metadata);
+            .ReturnsAsync(internalRecord);
 
         _mockStorageProvider
             .Setup(s => s.ListVersionsAsync(It.IsAny<string>(), It.IsAny<string>()))
@@ -609,26 +623,50 @@ public class AssetServiceTests
 
         var assetIds = new List<string> { "asset-1", "asset-2", "asset-3" };
 
-        var asset1 = new AssetMetadata
+        var asset1 = new InternalAssetRecord
         {
-            Asset_id = "asset-1",
-            Asset_type = AssetType.Texture,
+            AssetId = "asset-1",
+            AssetType = AssetType.Texture,
             Realm = Realm.Arcadia,
-            Content_type = "image/png"
+            ContentType = "image/png",
+            ContentHash = "hash1",
+            Filename = "asset1.png",
+            Size = 1024,
+            StorageKey = "assets/texture/asset-1.png",
+            Bucket = "test-bucket",
+            ProcessingStatus = ProcessingStatus.Complete,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
-        var asset2 = new AssetMetadata
+        var asset2 = new InternalAssetRecord
         {
-            Asset_id = "asset-2",
-            Asset_type = AssetType.Texture,
+            AssetId = "asset-2",
+            AssetType = AssetType.Texture,
             Realm = Realm.Arcadia,
-            Content_type = "image/jpeg" // Different content type
+            ContentType = "image/jpeg", // Different content type
+            ContentHash = "hash2",
+            Filename = "asset2.jpg",
+            Size = 1024,
+            StorageKey = "assets/texture/asset-2.jpg",
+            Bucket = "test-bucket",
+            ProcessingStatus = ProcessingStatus.Complete,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
-        var asset3 = new AssetMetadata
+        var asset3 = new InternalAssetRecord
         {
-            Asset_id = "asset-3",
-            Asset_type = AssetType.Texture,
+            AssetId = "asset-3",
+            AssetType = AssetType.Texture,
             Realm = Realm.Omega, // Different realm
-            Content_type = "image/png"
+            ContentType = "image/png",
+            ContentHash = "hash3",
+            Filename = "asset3.png",
+            Size = 1024,
+            StorageKey = "assets/texture/asset-3.png",
+            Bucket = "test-bucket",
+            ProcessingStatus = ProcessingStatus.Complete,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
 
         // Setup QueryStateAsync to throw (forcing fallback)
@@ -651,7 +689,7 @@ public class AssetServiceTests
             .ReturnsAsync(assetIds);
 
         _mockDaprClient
-            .Setup(d => d.GetStateAsync<AssetMetadata>(
+            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
                 It.IsAny<string>(),
                 It.Is<string>(k => k.Contains("asset-1")),
                 It.IsAny<ConsistencyMode?>(),
@@ -660,7 +698,7 @@ public class AssetServiceTests
             .ReturnsAsync(asset1);
 
         _mockDaprClient
-            .Setup(d => d.GetStateAsync<AssetMetadata>(
+            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
                 It.IsAny<string>(),
                 It.Is<string>(k => k.Contains("asset-2")),
                 It.IsAny<ConsistencyMode?>(),
@@ -669,7 +707,7 @@ public class AssetServiceTests
             .ReturnsAsync(asset2);
 
         _mockDaprClient
-            .Setup(d => d.GetStateAsync<AssetMetadata>(
+            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
                 It.IsAny<string>(),
                 It.Is<string>(k => k.Contains("asset-3")),
                 It.IsAny<ConsistencyMode?>(),
@@ -704,19 +742,37 @@ public class AssetServiceTests
 
         var assetIds = new List<string> { "asset-1", "asset-2" };
 
-        var asset1 = new AssetMetadata
+        var asset1 = new InternalAssetRecord
         {
-            Asset_id = "asset-1",
-            Asset_type = AssetType.Texture,
+            AssetId = "asset-1",
+            AssetType = AssetType.Texture,
             Realm = Realm.Arcadia,
-            Tags = new List<string> { "character", "sword", "warrior" } // Has both required tags
+            Tags = new List<string> { "character", "sword", "warrior" }, // Has both required tags
+            ContentType = "image/png",
+            ContentHash = "hash1",
+            Filename = "asset1.png",
+            Size = 1024,
+            StorageKey = "assets/texture/asset-1.png",
+            Bucket = "test-bucket",
+            ProcessingStatus = ProcessingStatus.Complete,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
-        var asset2 = new AssetMetadata
+        var asset2 = new InternalAssetRecord
         {
-            Asset_id = "asset-2",
-            Asset_type = AssetType.Texture,
+            AssetId = "asset-2",
+            AssetType = AssetType.Texture,
             Realm = Realm.Arcadia,
-            Tags = new List<string> { "character" } // Missing "sword" tag
+            Tags = new List<string> { "character" }, // Missing "sword" tag
+            ContentType = "image/png",
+            ContentHash = "hash2",
+            Filename = "asset2.png",
+            Size = 1024,
+            StorageKey = "assets/texture/asset-2.png",
+            Bucket = "test-bucket",
+            ProcessingStatus = ProcessingStatus.Complete,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
 
         // Setup QueryStateAsync to throw (forcing fallback)
@@ -738,7 +794,7 @@ public class AssetServiceTests
             .ReturnsAsync(assetIds);
 
         _mockDaprClient
-            .Setup(d => d.GetStateAsync<AssetMetadata>(
+            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
                 It.IsAny<string>(),
                 It.Is<string>(k => k.Contains("asset-1")),
                 It.IsAny<ConsistencyMode?>(),
@@ -747,7 +803,7 @@ public class AssetServiceTests
             .ReturnsAsync(asset1);
 
         _mockDaprClient
-            .Setup(d => d.GetStateAsync<AssetMetadata>(
+            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
                 It.IsAny<string>(),
                 It.Is<string>(k => k.Contains("asset-2")),
                 It.IsAny<ConsistencyMode?>(),

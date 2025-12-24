@@ -4,12 +4,11 @@
 # All service names configurable via environment variables
 
 # Service configuration (all configurable via ENV)
+# All state stores consolidated to bannou-redis (Redis 8 includes RediSearch built-in)
 RABBITMQ_HOST="${RABBITMQ_HOST:-rabbitmq}"
 RABBITMQ_PORT="${RABBITMQ_PORT:-5672}"
 REDIS_HOST="${REDIS_HOST:-bannou-redis}"
 REDIS_PORT="${REDIS_PORT:-6379}"
-AUTH_REDIS_HOST="${AUTH_REDIS_HOST:-auth-redis}"
-AUTH_REDIS_PORT="${AUTH_REDIS_PORT:-6379}"
 MYSQL_HOST="${MYSQL_HOST:-account-db}"
 MYSQL_PORT="${MYSQL_PORT:-3306}"
 
@@ -56,11 +55,8 @@ echo "Infrastructure wait script starting (${TOTAL_TIMEOUT}s total timeout)..."
 # Wait for RabbitMQ (pub/sub) - required
 wait_for_service "$RABBITMQ_HOST" "$RABBITMQ_PORT" "RabbitMQ"
 
-# Wait for Redis (statestore) - optional
+# Wait for Redis (statestore) - required for all state stores
 wait_for_service "$REDIS_HOST" "$REDIS_PORT" "Redis"
-
-# Wait for Auth Redis (permissions-store) - optional
-wait_for_service "$AUTH_REDIS_HOST" "$AUTH_REDIS_PORT" "Auth-Redis"
 
 # Wait for MySQL (accounts-statestore) - optional
 wait_for_service "$MYSQL_HOST" "$MYSQL_PORT" "MySQL"

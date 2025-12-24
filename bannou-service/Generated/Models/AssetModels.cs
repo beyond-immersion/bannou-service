@@ -616,10 +616,12 @@ public partial class AssetSearchRequest
     public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("asset_type")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public AssetType Asset_type { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public Realm Realm { get; set; } = default!;
 

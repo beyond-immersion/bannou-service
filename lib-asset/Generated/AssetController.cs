@@ -53,7 +53,7 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.ID
     /// <br/>and emits completion events via WebSocket.
     /// </remarks>
 
-    /// <returns>Upload completed, processing started</returns>
+    /// <returns>Asset created, processing started</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AssetMetadata>> CompleteUploadAsync(CompleteUploadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
@@ -215,7 +215,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <br/>Triggers the asset processing pipeline (texture conversion, model validation, etc.)
     /// <br/>and emits completion events via WebSocket.
     /// </remarks>
-    /// <returns>Upload completed, processing started</returns>
+    /// <returns>Asset created, processing started</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("assets/upload/complete")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AssetMetadata>> CompleteUpload([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CompleteUploadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
@@ -1107,6 +1107,10 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
   "$defs": {
     "AssetSearchRequest": {
       "type": "object",
+      "required": [
+        "asset_type",
+        "realm"
+      ],
       "properties": {
         "tags": {
           "type": "array",

@@ -2431,7 +2431,7 @@
             <br/>Triggers the asset processing pipeline (texture conversion, model validation, etc.)
             <br/>and emits completion events via WebSocket.
             </remarks>
-            <returns>Upload completed, processing started</returns>
+            <returns>Asset created, processing started</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Asset.IAssetClient.GetAssetAsync(BeyondImmersion.BannouService.Asset.GetAssetRequest,System.Threading.CancellationToken)">
@@ -2544,7 +2544,7 @@
             <br/>Triggers the asset processing pipeline (texture conversion, model validation, etc.)
             <br/>and emits completion events via WebSocket.
             </remarks>
-            <returns>Upload completed, processing started</returns>
+            <returns>Asset created, processing started</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.GetAssetAsync(BeyondImmersion.BannouService.Asset.GetAssetRequest,System.Threading.CancellationToken)">

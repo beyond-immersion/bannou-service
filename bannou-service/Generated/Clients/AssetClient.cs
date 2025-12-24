@@ -55,7 +55,7 @@ public partial interface IAssetClient : BeyondImmersion.BannouService.ServiceCli
     /// <br/>Triggers the asset processing pipeline (texture conversion, model validation, etc.)
     /// <br/>and emits completion events via WebSocket.
     /// </remarks>
-    /// <returns>Upload completed, processing started</returns>
+    /// <returns>Asset created, processing started</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<AssetMetadata> CompleteUploadAsync(CompleteUploadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
@@ -294,7 +294,7 @@ public partial class AssetClient : BeyondImmersion.BannouService.ServiceClients.
     /// <br/>Triggers the asset processing pipeline (texture conversion, model validation, etc.)
     /// <br/>and emits completion events via WebSocket.
     /// </remarks>
-    /// <returns>Upload completed, processing started</returns>
+    /// <returns>Asset created, processing started</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<AssetMetadata> CompleteUploadAsync(CompleteUploadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
@@ -341,7 +341,7 @@ public partial class AssetClient : BeyondImmersion.BannouService.ServiceClients.
                     ProcessResponse(client_, response_);
 
                     var status_ = (int)response_.StatusCode;
-                    if (status_ == 200)
+                    if (status_ == 201)
                     {
                         var objectResponse_ = await ReadObjectResponseAsync<AssetMetadata>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
@@ -1006,7 +1006,7 @@ public partial class AssetClient : BeyondImmersion.BannouService.ServiceClients.
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -1018,7 +1018,7 @@ public partial class AssetClient : BeyondImmersion.BannouService.ServiceClients.
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

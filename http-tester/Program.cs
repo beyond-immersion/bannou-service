@@ -651,12 +651,15 @@ public class Program
         var testHandlers = new List<IServiceTestHandler>
         {
             new AccountTestHandler(),
+            new AssetTestHandler(),
             new AuthTestHandler(),
             new CharacterTestHandler(),
             new ConnectTestHandler(),
             new DocumentationTestHandler(),
             new GameSessionTestHandler(),
             new LocationTestHandler(),
+            new MeshTestHandler(),
+            new MessagingTestHandler(),
             new OrchestratorTestHandler(),
             new PermissionsTestHandler(),
             new RealmTestHandler(),
@@ -664,11 +667,9 @@ public class Program
             new RelationshipTypeTestHandler(),
             new ServicedataTestHandler(),
             new SpeciesTestHandler(),
-            new SubscriptionsTestHandler(),
-            new TestingTestHandler(),
-            new MessagingTestHandler(),
             new StateTestHandler(),
-            new MeshTestHandler()
+            new SubscriptionsTestHandler(),
+            new TestingTestHandler()
         };
 
         // Filter test handlers by plugin if specified

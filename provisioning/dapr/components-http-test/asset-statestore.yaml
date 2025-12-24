@@ -15,8 +15,7 @@ spec:
       value: "false"
     - name: ttlInSeconds
       value: "0"
-    # Query indexes for efficient asset search via QueryStateAsync
-    # Redis 8 includes RediSearch built-in
+    # Query indexes for asset search via QueryStateAsync
     - name: queryIndexes
       value: |
         [

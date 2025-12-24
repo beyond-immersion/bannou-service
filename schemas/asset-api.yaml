@@ -123,8 +123,8 @@ paths:
             schema:
               $ref: '#/components/schemas/CompleteUploadRequest'
       responses:
-        '200':
-          description: Upload completed, processing started
+        '201':
+          description: Asset created, processing started
           content:
             application/json:
               schema:
@@ -319,18 +319,18 @@ paths:
   # ==========================================================================
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AssetSearchRequest\"\
-        ,\n  \"$defs\": {\n    \"AssetSearchRequest\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"\
-        tags\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n\
-        \        },\n        \"asset_type\": {\n          \"$ref\": \"#/$defs/AssetType\"\n        },\n        \"realm\":
-        {\n          \"$ref\": \"#/$defs/Realm\"\n        },\n        \"content_type\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"MIME content type filter\"\n        },\n        \"limit\": {\n          \"type\":
-        \"integer\",\n          \"default\": 50\n        },\n        \"offset\": {\n          \"type\": \"integer\",\n   \
-        \       \"default\": 0\n        }\n      }\n    },\n    \"AssetType\": {\n      \"type\": \"string\",\n      \"enum\"\
-        : [\n        \"texture\",\n        \"model\",\n        \"audio\",\n        \"behavior\",\n        \"bundle\",\n  \
-        \      \"prefab\",\n        \"other\"\n      ],\n      \"description\": \"Type classification for assets\"\n    },\n\
-        \    \"Realm\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"omega\",\n        \"arcadia\",\n    \
-        \    \"fantasia\",\n        \"shared\"\n      ],\n      \"description\": \"Game realm the asset belongs to\"\n   \
-        \ }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"AssetSearchRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"asset_type\"\
+        ,\n        \"realm\"\n      ],\n      \"properties\": {\n        \"tags\": {\n          \"type\": \"array\",\n   \
+        \       \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"asset_type\": {\n     \
+        \     \"$ref\": \"#/$defs/AssetType\"\n        },\n        \"realm\": {\n          \"$ref\": \"#/$defs/Realm\"\n \
+        \       },\n        \"content_type\": {\n          \"type\": \"string\",\n          \"description\": \"MIME content
+        type filter\"\n        },\n        \"limit\": {\n          \"type\": \"integer\",\n          \"default\": 50\n   \
+        \     },\n        \"offset\": {\n          \"type\": \"integer\",\n          \"default\": 0\n        }\n      }\n\
+        \    },\n    \"AssetType\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"texture\",\n        \"model\"\
+        ,\n        \"audio\",\n        \"behavior\",\n        \"bundle\",\n        \"prefab\",\n        \"other\"\n      ],\n\
+        \      \"description\": \"Type classification for assets\"\n    },\n    \"Realm\": {\n      \"type\": \"string\",\n\
+        \      \"enum\": [\n        \"omega\",\n        \"arcadia\",\n        \"fantasia\",\n        \"shared\"\n      ],\n\
+        \      \"description\": \"Game realm the asset belongs to\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AssetSearchResult\"\
         ,\n  \"$defs\": {\n    \"AssetSearchResult\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"\
         assets\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/AssetMetadata\"\
@@ -844,6 +844,9 @@ components:
 
     AssetSearchRequest:
       type: object
+      required:
+      - asset_type
+      - realm
       properties:
         tags:
           type: array

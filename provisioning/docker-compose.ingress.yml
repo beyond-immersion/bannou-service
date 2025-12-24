@@ -42,7 +42,7 @@ services:
 
   # Redis for OpenResty routing state and service heartbeats
   routing-redis:
-    image: redis:7-alpine
+    image: redis:latest
     command: redis-server --appendonly yes
     volumes:
       - routing-redis-data:/data

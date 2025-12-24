@@ -1,12 +1,7 @@
-# Storage Services - MinIO S3-Compatible Object Storage + Redis Stack
+# Storage Services - MinIO S3-Compatible Object Storage
 # Include with: docker compose -f docker-compose.yml -f docker-compose.storage.yml up
 # Provides asset storage for the Asset Management Plugin
-#
-# Licensing Note (Tenet 18 Compliance):
-# - Redis Stack (redis/redis-stack) is tri-licensed: RSALv2, SSPLv1, or AGPLv3
-# - Per Tenet 18 "Infrastructure Container Exception": AGPL is acceptable for
-#   infrastructure containers that communicate via network protocols
-# - We communicate via Dapr state store abstraction, not linked code
+# Asset metadata stored in bannou-redis (Redis 8 includes RediSearch built-in)
 
 services:
   # Extend bannou service with MinIO credentials
@@ -15,21 +10,6 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
       MINIO_ENDPOINT: minio:9000
-
-  # Redis Stack for asset metadata with RediSearch query support
-  # Enables Dapr QueryStateAsync for efficient asset filtering
-  asset-redis:
-    image: redis/redis-stack:latest
-    ports:
-      - "6381:6379"   # Different port than bannou-redis
-      - "8001:8001"   # RedisInsight web UI
-    volumes:
-      - asset-redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
 
   # MinIO S3-compatible object storage
   minio:
@@ -74,4 +54,3 @@ services:
 
 volumes:
   minio-data:
-  asset-redis-data:

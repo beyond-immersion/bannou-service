@@ -1,10 +1,10 @@
 # Service Dependencies - WSL2 Compatible
 # Database and caching services using default bridge network
-# All services reachable by service name (bannou-redis, account-db, auth-redis)
+# All services reachable by service name (bannou-redis, account-db)
 
 services:
 
-  # Redis for general Bannou state/caching
+  # Redis 8 for general Bannou state/caching
   bannou-redis:
     image: redis:latest
     ports:
@@ -37,19 +37,6 @@ services:
       retries: 10
       start_period: 30s
 
-  # Redis for auth service sessions
-  auth-redis:
-    image: redis:latest
-    command: redis-server --databases 16 --appendonly yes
-    volumes:
-      - auth-redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
 volumes:
   bannou-redis-data:
   account-data:
-  auth-redis-data:
