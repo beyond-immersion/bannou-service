@@ -1,0 +1,77 @@
+# Storage Services - MinIO S3-Compatible Object Storage + Redis Stack
+# Include with: docker compose -f docker-compose.yml -f docker-compose.storage.yml up
+# Provides asset storage for the Asset Management Plugin
+#
+# Licensing Note (Tenet 18 Compliance):
+# - Redis Stack (redis/redis-stack) is tri-licensed: RSALv2, SSPLv1, or AGPLv3
+# - Per Tenet 18 "Infrastructure Container Exception": AGPL is acceptable for
+#   infrastructure containers that communicate via network protocols
+# - We communicate via Dapr state store abstraction, not linked code
+
+services:
+  # Extend bannou service with MinIO credentials
+  bannou:
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_ENDPOINT: minio:9000
+
+  # Redis Stack for asset metadata with RediSearch query support
+  # Enables Dapr QueryStateAsync for efficient asset filtering
+  asset-redis:
+    image: redis/redis-stack:latest
+    ports:
+      - "6381:6379"   # Different port than bannou-redis
+      - "8001:8001"   # RedisInsight web UI
+    volumes:
+      - asset-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # MinIO S3-compatible object storage
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: bannou-minio
+    ports:
+      - "9000:9000"   # S3 API endpoint
+      - "9001:9001"   # Web console
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      # Webhook notification for asset upload events
+      MINIO_NOTIFY_WEBHOOK_ENABLE_BANNOU: "on"
+      MINIO_NOTIFY_WEBHOOK_ENDPOINT_BANNOU: "http://bannou:80/webhooks/minio"
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MinIO initialization - creates bucket and configures versioning
+  minio-init:
+    image: minio/mc
+    container_name: bannou-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 $${MINIO_ROOT_USER:-minioadmin} $${MINIO_ROOT_PASSWORD:-minioadmin};
+      mc mb --ignore-existing local/bannou-assets;
+      mc version enable local/bannou-assets;
+      mc event add local/bannou-assets arn:minio:sqs::bannou:webhook --event put --ignore-existing;
+      exit 0;
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+
+volumes:
+  minio-data:
+  asset-redis-data:

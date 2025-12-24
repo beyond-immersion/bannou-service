@@ -1,0 +1,388 @@
+openapi: 3.0.3
+info:
+  title: Asset Service Events
+  description: |
+    Event models for Asset service RabbitMQ pub/sub via Dapr.
+    Contains asset-specific service-to-service events for upload tracking,
+    processing coordination, and asset lifecycle management.
+  version: 1.0.0
+  x-event-subscriptions:
+    # MinIO webhook notifications (processed internally, not via pub/sub)
+    # No external subscriptions initially - Asset service is primarily a publisher
+    []
+  x-event-publications:
+    # Upload lifecycle events
+    - topic: asset.upload.requested
+      event: AssetUploadRequestedEvent
+      description: Published when a new upload is initiated
+    - topic: asset.upload.completed
+      event: AssetUploadCompletedEvent
+      description: Published when an upload is completed and validated
+    # Processing events
+    - topic: asset.processing.queued
+      event: AssetProcessingQueuedEvent
+      description: Published when an asset is queued for processing
+    - topic: asset.processing.completed
+      event: AssetProcessingCompletedEvent
+      description: Published when asset processing completes (success or failure)
+    # Asset ready events
+    - topic: asset.ready
+      event: AssetReadyEvent
+      description: Published when an asset is fully processed and available
+    # Bundle events
+    - topic: asset.bundle.created
+      event: BundleCreatedEvent
+      description: Published when a bundle is successfully created
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    # ==========================================================================
+    # Upload Events
+    # ==========================================================================
+
+    AssetUploadRequestedEvent:
+      type: object
+      description: Event published when a new upload is initiated via requestUpload API
+      required:
+        - eventId
+        - timestamp
+        - uploadId
+        - sessionId
+        - filename
+        - size
+        - contentType
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        uploadId:
+          type: string
+          format: uuid
+          description: Upload session identifier
+        sessionId:
+          type: string
+          description: WebSocket session ID of the requester
+        accountId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Account ID of the requester
+        filename:
+          type: string
+          description: Original filename
+        size:
+          type: integer
+          format: int64
+          description: Expected file size in bytes
+        contentType:
+          type: string
+          description: MIME content type
+        assetType:
+          $ref: '#/components/schemas/AssetTypeEnum'
+        realm:
+          $ref: '#/components/schemas/RealmEnum'
+        isMultipart:
+          type: boolean
+          default: false
+          description: Whether this is a multipart upload
+
+    AssetUploadCompletedEvent:
+      type: object
+      description: Event published when an upload is completed and file is stored
+      required:
+        - eventId
+        - timestamp
+        - assetId
+        - uploadId
+        - sessionId
+        - bucket
+        - key
+        - size
+        - contentHash
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        assetId:
+          type: string
+          description: Assigned asset identifier
+        uploadId:
+          type: string
+          format: uuid
+          description: Upload session identifier
+        sessionId:
+          type: string
+          description: WebSocket session ID of the requester
+        accountId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Account ID of the requester
+        bucket:
+          type: string
+          description: Storage bucket name
+        key:
+          type: string
+          description: Storage object key
+        size:
+          type: integer
+          format: int64
+          description: Actual file size in bytes
+        contentHash:
+          type: string
+          description: SHA256 hash of the file contents
+        contentType:
+          type: string
+          description: MIME content type
+
+    # ==========================================================================
+    # Processing Events
+    # ==========================================================================
+
+    AssetProcessingQueuedEvent:
+      type: object
+      description: Event published when an asset is queued for processing
+      required:
+        - eventId
+        - timestamp
+        - assetId
+        - processingType
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        assetId:
+          type: string
+          description: Asset identifier
+        processingType:
+          $ref: '#/components/schemas/ProcessingTypeEnum'
+        priority:
+          type: integer
+          default: 5
+          description: Processing priority (1=highest, 10=lowest)
+        processorAppId:
+          type: string
+          nullable: true
+          description: Assigned processor app-id (if delegated to pool)
+        estimatedDurationMs:
+          type: integer
+          nullable: true
+          description: Estimated processing duration
+
+    AssetProcessingCompletedEvent:
+      type: object
+      description: Event published when asset processing completes
+      required:
+        - eventId
+        - timestamp
+        - assetId
+        - processingType
+        - success
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        assetId:
+          type: string
+          description: Asset identifier
+        processingType:
+          $ref: '#/components/schemas/ProcessingTypeEnum'
+        success:
+          type: boolean
+          description: Whether processing completed successfully
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error message on failure
+        outputs:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ProcessingOutput'
+        durationMs:
+          type: integer
+          nullable: true
+          description: Actual processing duration in milliseconds
+
+    # ==========================================================================
+    # Asset Ready Events
+    # ==========================================================================
+
+    AssetReadyEvent:
+      type: object
+      description: Event published when an asset is fully processed and available
+      required:
+        - eventId
+        - timestamp
+        - assetId
+        - bucket
+        - key
+        - contentHash
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        assetId:
+          type: string
+          description: Asset identifier
+        versionId:
+          type: string
+          nullable: true
+          description: Version ID in storage
+        bucket:
+          type: string
+          description: Storage bucket name
+        key:
+          type: string
+          description: Storage object key
+        contentHash:
+          type: string
+          description: SHA256 hash of the file contents
+        size:
+          type: integer
+          format: int64
+          description: File size in bytes
+        contentType:
+          type: string
+          description: MIME content type
+        assetType:
+          $ref: '#/components/schemas/AssetTypeEnum'
+        realm:
+          $ref: '#/components/schemas/RealmEnum'
+
+    # ==========================================================================
+    # Bundle Events
+    # ==========================================================================
+
+    BundleCreatedEvent:
+      type: object
+      description: Event published when a bundle is successfully created
+      required:
+        - eventId
+        - timestamp
+        - bundleId
+        - version
+        - bucket
+        - key
+        - assetCount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        bundleId:
+          type: string
+          description: Bundle identifier
+        version:
+          type: string
+          description: Bundle version string
+        bucket:
+          type: string
+          description: Storage bucket name
+        key:
+          type: string
+          description: Storage object key
+        size:
+          type: integer
+          format: int64
+          description: Bundle file size in bytes
+        assetCount:
+          type: integer
+          description: Number of assets in the bundle
+        compression:
+          $ref: '#/components/schemas/CompressionTypeEnum'
+        createdBy:
+          type: string
+          format: uuid
+          nullable: true
+          description: Account ID that created the bundle
+
+    # ==========================================================================
+    # Supporting Types
+    # ==========================================================================
+
+    AssetTypeEnum:
+      type: string
+      enum:
+        - texture
+        - model
+        - audio
+        - behavior
+        - bundle
+        - prefab
+        - other
+      nullable: true
+
+    RealmEnum:
+      type: string
+      enum:
+        - omega
+        - arcadia
+        - fantasia
+        - shared
+      nullable: true
+
+    ProcessingTypeEnum:
+      type: string
+      enum:
+        - mipmaps
+        - lod_generation
+        - transcode
+        - compression
+        - validation
+        - behavior_compile
+      description: Type of processing being performed
+
+    CompressionTypeEnum:
+      type: string
+      enum:
+        - lz4
+        - lzma
+        - none
+      nullable: true
+
+    ProcessingOutput:
+      type: object
+      description: Information about a generated derivative asset
+      properties:
+        outputType:
+          type: string
+          description: Type of output (e.g., "mipmap_level_1", "lod_2")
+        key:
+          type: string
+          description: Storage key for the output
+        size:
+          type: integer
+          format: int64
+          description: Size of the output in bytes

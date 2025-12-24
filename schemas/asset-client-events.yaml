@@ -1,0 +1,420 @@
+openapi: 3.0.3
+info:
+  title: Asset Client Events API
+  description: |
+    Server-to-client push events for the Asset service.
+    These events notify clients of upload completions, processing results,
+    bundle validations, and asset availability delivered via WebSocket.
+
+    All events inherit from BaseClientEvent (common-client-events.yaml) and use
+    the "asset.{event_type}" naming convention.
+
+    Event delivery: Published to RabbitMQ channel `CONNECT_{sessionId}`, forwarded
+    to client's WebSocket connection with Event flag (0x10).
+  version: 1.0.0
+  contact:
+    name: Bannou Development Team
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    # ============================================
+    # Upload Events
+    # ============================================
+
+    AssetUploadCompleteEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent when an asset upload has completed (success or failure).
+        Correlates with the upload_id from requestUpload response.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - upload_id
+        - success
+      properties:
+        event_name:
+          type: string
+          enum: ["asset.upload.complete"]
+          description: Fixed event type identifier
+        upload_id:
+          type: string
+          format: uuid
+          description: Correlates with the upload request
+        success:
+          type: boolean
+          description: Whether the upload completed successfully
+        asset_id:
+          type: string
+          nullable: true
+          description: Asset ID assigned on success
+        content_hash:
+          type: string
+          nullable: true
+          description: SHA256 hash of uploaded content
+        size:
+          type: integer
+          format: int64
+          nullable: true
+          description: File size in bytes
+        error_code:
+          $ref: '#/components/schemas/UploadErrorCode'
+        error_message:
+          type: string
+          nullable: true
+          description: Human-readable error description
+
+    # ============================================
+    # Processing Events
+    # ============================================
+
+    AssetProcessingCompleteEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent when asset processing (e.g., texture mipmaps, model LODs) completes.
+        May include information about generated derivative assets.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - asset_id
+        - success
+      properties:
+        event_name:
+          type: string
+          enum: ["asset.processing.complete"]
+          description: Fixed event type identifier
+        asset_id:
+          type: string
+          description: ID of the asset that was processed
+        success:
+          type: boolean
+          description: Whether processing completed successfully
+        processing_type:
+          $ref: '#/components/schemas/ProcessingType'
+        outputs:
+          type: array
+          nullable: true
+          description: Generated derivative assets (mipmaps, LODs, etc.)
+          items:
+            $ref: '#/components/schemas/ProcessingOutput'
+        error_code:
+          $ref: '#/components/schemas/ProcessingErrorCode'
+        error_message:
+          type: string
+          nullable: true
+          description: Human-readable error description
+
+    AssetProcessingFailedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent when asset processing fails. Includes retry information.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - asset_id
+        - error_code
+      properties:
+        event_name:
+          type: string
+          enum: ["asset.processing.failed"]
+          description: Fixed event type identifier
+        asset_id:
+          type: string
+          description: ID of the asset that failed processing
+        error_code:
+          $ref: '#/components/schemas/ProcessingErrorCode'
+        error_message:
+          type: string
+          nullable: true
+          description: Human-readable error description
+        retry_available:
+          type: boolean
+          default: true
+          description: Whether the operation can be retried
+        retry_after_ms:
+          type: integer
+          nullable: true
+          description: Suggested retry delay in milliseconds
+
+    # ============================================
+    # Bundle Events
+    # ============================================
+
+    BundleValidationCompleteEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent when a bundle upload has been validated and processed.
+        Includes information about registered assets and any skipped duplicates.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - upload_id
+        - success
+      properties:
+        event_name:
+          type: string
+          enum: ["asset.bundle.validation.complete"]
+          description: Fixed event type identifier
+        upload_id:
+          type: string
+          format: uuid
+          description: Correlates with the bundle upload request
+        success:
+          type: boolean
+          description: Whether validation passed
+        bundle_id:
+          type: string
+          nullable: true
+          description: Assigned bundle ID on success
+        assets_registered:
+          type: integer
+          nullable: true
+          description: Number of assets extracted and registered
+        duplicates_skipped:
+          type: integer
+          nullable: true
+          description: Assets with matching hash already in storage
+        warnings:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ValidationWarning'
+
+    BundleValidationFailedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent when bundle validation fails. Includes detailed error information.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - upload_id
+        - errors
+      properties:
+        event_name:
+          type: string
+          enum: ["asset.bundle.validation.failed"]
+          description: Fixed event type identifier
+        upload_id:
+          type: string
+          format: uuid
+          description: Correlates with the bundle upload request
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+
+    BundleCreationCompleteEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent when bundle creation from asset_ids completes.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - bundle_id
+        - success
+      properties:
+        event_name:
+          type: string
+          enum: ["asset.bundle.creation.complete"]
+          description: Fixed event type identifier
+        bundle_id:
+          type: string
+          description: ID of the created bundle
+        success:
+          type: boolean
+          description: Whether creation completed successfully
+        download_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Pre-signed download URL (on success)
+        size:
+          type: integer
+          format: int64
+          nullable: true
+          description: Bundle file size in bytes
+        asset_count:
+          type: integer
+          nullable: true
+          description: Number of assets in the bundle
+        error_code:
+          type: string
+          nullable: true
+          description: Error code on failure
+        error_message:
+          type: string
+          nullable: true
+          description: Human-readable error description
+
+    # ============================================
+    # Asset Ready Event
+    # ============================================
+
+    AssetReadyEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Final notification that an asset is ready for use.
+        Sent after upload and any required processing completes.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - asset_id
+      properties:
+        event_name:
+          type: string
+          enum: ["asset.ready"]
+          description: Fixed event type identifier
+        asset_id:
+          type: string
+          description: ID of the asset that is now ready
+        version_id:
+          type: string
+          nullable: true
+          description: Version ID of this asset
+        content_hash:
+          type: string
+          nullable: true
+          description: SHA256 hash of the asset
+        size:
+          type: integer
+          format: int64
+          nullable: true
+          description: File size in bytes
+        content_type:
+          type: string
+          nullable: true
+          description: MIME content type
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Asset metadata
+
+    # ============================================
+    # Supporting Types
+    # ============================================
+
+    UploadErrorCode:
+      type: string
+      nullable: true
+      enum:
+        - VALIDATION_FAILED
+        - HASH_MISMATCH
+        - SIZE_EXCEEDED
+        - STORAGE_ERROR
+        - TIMEOUT
+      description: Error codes for upload failures
+
+    ProcessingType:
+      type: string
+      nullable: true
+      enum:
+        - mipmaps
+        - lod_generation
+        - transcode
+        - compression
+        - validation
+        - behavior_compile
+      description: Type of processing performed
+
+    ProcessingErrorCode:
+      type: string
+      nullable: true
+      enum:
+        - PROCESSING_FAILED
+        - INVALID_FORMAT
+        - RESOURCE_EXHAUSTED
+        - TIMEOUT
+        - PROCESSOR_UNAVAILABLE
+      description: Error codes for processing failures
+
+    ProcessingOutput:
+      type: object
+      description: Information about a generated derivative asset
+      properties:
+        output_type:
+          type: string
+          description: Type of output (e.g., "mipmap_level_1", "lod_2")
+        asset_id:
+          type: string
+          description: ID of the generated asset
+        size:
+          type: integer
+          format: int64
+          description: Size of the generated asset
+
+    ValidationWarning:
+      type: object
+      description: Non-fatal warning from bundle validation
+      properties:
+        code:
+          type: string
+          description: Warning code
+        message:
+          type: string
+          description: Warning message
+        asset_path:
+          type: string
+          nullable: true
+          description: Path within bundle where warning occurred
+
+    ValidationError:
+      type: object
+      description: Fatal error from bundle validation
+      required:
+        - code
+        - message
+      properties:
+        code:
+          $ref: '#/components/schemas/ValidationErrorCode'
+        message:
+          type: string
+          description: Error message
+        asset_path:
+          type: string
+          nullable: true
+          description: Path within bundle where error occurred
+
+    ValidationErrorCode:
+      type: string
+      enum:
+        - INVALID_ARCHIVE
+        - MISSING_MANIFEST
+        - INVALID_MANIFEST
+        - HASH_MISMATCH
+        - PATH_TRAVERSAL
+        - SIZE_EXCEEDED
+        - DUPLICATE_ASSET_ID
+        - MISSING_DEPENDENCY
+      description: Error codes for bundle validation failures
