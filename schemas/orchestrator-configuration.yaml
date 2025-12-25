@@ -46,6 +46,46 @@ x-service-configuration:
       description: Docker host for direct Docker API access
       env: ORCHESTRATOR_DOCKER_HOST
       default: "unix:///var/run/docker.sock"
+    DockerNetwork:
+      type: string
+      description: Docker network name for deployed containers
+      env: ORCHESTRATOR_DOCKER_NETWORK
+      default: "bannou_default"
+    DaprComponentsHostPath:
+      type: string
+      description: Host path for Dapr components (mounted into containers)
+      env: ORCHESTRATOR_DAPR_COMPONENTS_HOST_PATH
+      default: "/app/provisioning/dapr/components"
+    DaprComponentsContainerPath:
+      type: string
+      description: Container path for mounted Dapr components
+      env: ORCHESTRATOR_DAPR_COMPONENTS_CONTAINER_PATH
+      default: "/tmp/dapr-components"
+    DaprImage:
+      type: string
+      description: Docker image for Dapr sidecar containers
+      env: ORCHESTRATOR_DAPR_IMAGE
+      default: "daprio/daprd:1.16.3"
+    PlacementHost:
+      type: string
+      description: Dapr placement service host:port
+      env: ORCHESTRATOR_PLACEMENT_HOST
+      default: "placement:50006"
+    CertificatesHostPath:
+      type: string
+      description: Host path for TLS certificates
+      env: ORCHESTRATOR_CERTIFICATES_HOST_PATH
+      default: "/app/provisioning/certificates"
+    PresetsHostPath:
+      type: string
+      description: Host path for orchestrator deployment presets
+      env: ORCHESTRATOR_PRESETS_HOST_PATH
+      default: "/app/provisioning/orchestrator/presets"
+    LogsVolumeName:
+      type: string
+      description: Docker volume name for logs
+      env: ORCHESTRATOR_LOGS_VOLUME
+      default: "logs-data"
 
     # Kubernetes Configuration
     KubernetesNamespace:
@@ -54,14 +94,12 @@ x-service-configuration:
       env: ORCHESTRATOR_KUBERNETES_NAMESPACE
       default: "default"
 
-    # Infrastructure Connection Strings
+    # Infrastructure Connection Strings (Tenet 21 - no insecure defaults)
     RedisConnectionString:
       type: string
-      description: Redis connection string for orchestrator state
+      description: Redis connection string for orchestrator state (required, no default)
       env: ORCHESTRATOR_REDIS_CONNECTION_STRING
-      default: "localhost:6379"
     RabbitMqConnectionString:
       type: string
-      description: RabbitMQ connection string for orchestrator messaging
+      description: RabbitMQ connection string for orchestrator messaging (required, no default)
       env: ORCHESTRATOR_RABBITMQ_CONNECTION_STRING
-      default: "amqp://guest:guest@localhost:5672/"

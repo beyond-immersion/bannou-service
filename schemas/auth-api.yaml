@@ -27,7 +27,7 @@ paths:
       - Authentication
       x-permissions:
       - role: anonymous
-        states: {}    # Allow re-login when already authenticated
+        states: {}
       requestBody:
         required: true
         content:

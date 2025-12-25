@@ -41,16 +41,16 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
     // Use centralized BannouJson for consistent serialization/deserialization
 
     /// <summary>
-    /// Creates OrchestratorRedisManager with connection string read directly from environment.
-    /// This avoids DI lifetime conflicts with scoped configuration classes.
+    /// Creates OrchestratorRedisManager with configuration injected via DI.
     /// </summary>
-    public OrchestratorRedisManager(ILogger<OrchestratorRedisManager> logger)
+    /// <param name="config">Orchestrator service configuration.</param>
+    /// <param name="logger">Logger instance.</param>
+    public OrchestratorRedisManager(OrchestratorServiceConfiguration config, ILogger<OrchestratorRedisManager> logger)
     {
         _logger = logger;
-        // Read connection string directly from environment to avoid DI lifetime conflicts
-        _connectionString = Environment.GetEnvironmentVariable("BANNOU_RedisConnectionString")
-            ?? Environment.GetEnvironmentVariable("RedisConnectionString")
-            ?? "redis:6379";
+        _connectionString = config.RedisConnectionString
+            ?? throw new InvalidOperationException(
+                "ORCHESTRATOR_REDIS_CONNECTION_STRING is required for orchestrator service.");
     }
 
     /// <summary>

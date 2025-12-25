@@ -1,7 +1,7 @@
-using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
+using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.RelationshipType;
 
@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.RelationshipType;
 /// Configuration class for RelationshipType service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(RelationshipTypeService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(RelationshipTypeService))]
 public class RelationshipTypeServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
@@ -17,7 +17,7 @@ public class RelationshipTypeServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// Enable/disable Relationship Type service
-    /// Environment variable: ENABLED or BANNOU_ENABLED
+    /// Environment variable: ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

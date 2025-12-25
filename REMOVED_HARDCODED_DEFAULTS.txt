@@ -1,0 +1,165 @@
+# Removed Hardcoded Configuration Defaults
+# Generated from git diff master -- investigating missing configuration values
+
+================================================================================
+ORCHESTRATOR SERVICE - lib-orchestrator/Generated/OrchestratorServiceConfiguration.cs
+================================================================================
+
+Line ~56 -> RedisConnectionString
+OLD: "localhost:6379"
+NEW: string.Empty (now required, no default)
+
+Line ~62 -> RabbitMqConnectionString
+OLD: "amqp://guest:guest@localhost:5672/"
+NEW: string.Empty (now required, no default)
+
+================================================================================
+ORCHESTRATOR SERVICE - lib-orchestrator/Backends/DockerComposeOrchestrator.cs
+================================================================================
+
+Line ~95 -> _configuredDockerNetwork (via Environment.GetEnvironmentVariable)
+OLD: "bannou_default"
+NEW: config.DockerNetwork ?? "bannou_default" (still has fallback, but from config)
+
+Line ~96 -> _daprComponentsHostPath
+OLD: "/app/provisioning/dapr/components"
+NEW: config.DaprComponentsHostPath ?? "/app/provisioning/dapr/components" (still has fallback)
+
+Line ~99 -> _daprComponentsContainerPath
+OLD: "/tmp/dapr-components"
+NEW: config.DaprComponentsContainerPath ?? "/tmp/dapr-components" (still has fallback)
+
+Line ~101 -> _daprImage
+OLD: "daprio/daprd:1.16.3"
+NEW: config.DaprImage ?? "daprio/daprd:1.16.3" (still has fallback)
+
+Line ~103 -> _placementHost
+OLD: "placement:50006"
+NEW: config.PlacementHost ?? "placement:50006" (still has fallback)
+
+Line ~105 -> _certificatesHostPath
+OLD: "/app/provisioning/certificates"
+NEW: config.CertificatesHostPath ?? "/app/provisioning/certificates" (still has fallback)
+
+Line ~107 -> _presetsHostPath
+OLD: "/app/provisioning/orchestrator/presets"
+NEW: config.PresetsHostPath ?? "/app/provisioning/orchestrator/presets" (still has fallback)
+
+Line ~109 -> _logsVolumeName
+OLD: "logs-data"
+NEW: config.LogsVolumeName ?? "logs-data" (still has fallback)
+
+================================================================================
+ORCHESTRATOR SERVICE - lib-orchestrator/OrchestratorRedisManager.cs
+================================================================================
+
+Line ~26 -> _connectionString (via Environment.GetEnvironmentVariable)
+OLD: Environment.GetEnvironmentVariable("BANNOU_RedisConnectionString") ?? Environment.GetEnvironmentVariable("RedisConnectionString") ?? "redis:6379"
+NEW: config.RedisConnectionString ?? throw new InvalidOperationException(...) (now required)
+
+================================================================================
+ORCHESTRATOR SERVICE - lib-orchestrator/PresetLoader.cs
+================================================================================
+
+Line ~24 -> presetsDirectory parameter
+OLD: Optional with GetDefaultPresetsDirectory() fallback checking:
+     - BANNOU_PRESETS_DIR env var
+     - ./provisioning/orchestrator/presets (relative)
+     - /app/provisioning/orchestrator/presets (container path)
+NEW: Required parameter from OrchestratorServiceConfiguration (now throws if null)
+
+================================================================================
+CONNECT SERVICE - lib-connect/ClientEvents/ClientEventRabbitMQSubscriber.cs
+================================================================================
+
+Line ~64 -> _connectionString
+OLD: Environment.GetEnvironmentVariable("BANNOU_RabbitMqConnectionString") ?? Environment.GetEnvironmentVariable("RabbitMqConnectionString") ?? "amqp://guest:guest@rabbitmq:5672"
+NEW: Required constructor parameter from ConnectServiceConfiguration.RabbitMqConnectionString
+
+================================================================================
+CONNECT SERVICE - lib-connect/Protocol/GuidGenerator.cs (and bannou-service/Protocol/GuidGenerator.cs)
+================================================================================
+
+Line ~10-40 -> GetSharedServerSalt() method (ENTIRE METHOD REMOVED)
+OLD: Cached server salt from Environment.GetEnvironmentVariable("BANNOU_SERVER_SALT") or auto-generated
+NEW: Method removed - must be provided via ConnectServiceConfiguration.ServerSalt
+
+================================================================================
+VOICE SERVICE - lib-voice/Generated/VoiceServiceConfiguration.cs
+================================================================================
+
+Line ~68 -> KamailioRpcPort
+OLD: 5060
+NEW: 5080 (corrected - 5060 is SIP port, 5080 is JSON-RPC port)
+
+================================================================================
+VOICE SERVICE - lib-voice/VoiceServicePlugin.cs
+================================================================================
+
+Line ~X -> KamailioClient host parameter
+OLD: Environment.GetEnvironmentVariable("BANNOU_KAMAILIOHOST") ?? Environment.GetEnvironmentVariable("KAMAILIOHOST") ?? "localhost"
+NEW: config.KamailioHost (still defaults to "localhost" in configuration class)
+
+Line ~X -> KamailioClient port parameter
+OLD: int.TryParse(portStr, out var p) && p > 0 ? p : 5080
+NEW: config.KamailioRpcPort (defaults to 5080 in configuration class)
+
+Line ~X -> RtpEngineClient host parameter
+OLD: Environment.GetEnvironmentVariable("BANNOU_RTPENGINEHOST") ?? Environment.GetEnvironmentVariable("RTPENGINEHOST") ?? "localhost"
+NEW: config.RtpEngineHost (still defaults to "localhost" in configuration class)
+
+Line ~X -> RtpEngineClient port parameter
+OLD: int.TryParse(portStr, out var p) && p > 0 ? p : 22222
+NEW: config.RtpEnginePort (defaults to 22222 in configuration class)
+
+================================================================================
+SERVICE HEARTBEAT MANAGER - bannou-service/Services/ServiceHeartbeatManager.cs
+================================================================================
+
+Line ~92 -> AppId
+OLD: Environment.GetEnvironmentVariable("DAPR_APP_ID") ?? Environment.GetEnvironmentVariable("APP_ID") ?? "bannou"
+NEW: configuration.DaprAppId ?? Environment.GetEnvironmentVariable("DAPR_APP_ID") ?? "bannou" (Tenet 21 exception preserved)
+
+Line ~115 -> HeartbeatIntervalSeconds
+OLD: int.TryParse(Environment.GetEnvironmentVariable("HEARTBEAT_INTERVAL_SECONDS"), out var interval) ? interval : 30
+NEW: configuration.HeartbeatIntervalSeconds > 0 ? configuration.HeartbeatIntervalSeconds : 30
+
+Line ~120 -> PermissionHeartbeatEnabled
+OLD: bool.TryParse(Environment.GetEnvironmentVariable("PERMISSION_HEARTBEAT_ENABLED"), out var permEnabled) or default true
+NEW: configuration.PermissionHeartbeatEnabled (defaults to true in AppConfiguration)
+
+================================================================================
+ALL PERMISSION REGISTRATION CLASSES - lib-*/Generated/*PermissionRegistration.cs
+================================================================================
+
+Line ~42 -> AppId field in ServiceManifest
+OLD: Environment.GetEnvironmentVariable("DAPR_APP_ID") ?? "bannou"
+NEW: Uses AppConstants.DEFAULT_APP_NAME constant (still "bannou")
+
+================================================================================
+SUMMARY OF CRITICAL CHANGES THAT MAY CAUSE ISSUES
+================================================================================
+
+1. **ORCHESTRATOR RedisConnectionString** - NOW REQUIRED (was "localhost:6379")
+   - Environment: ORCHESTRATOR_REDIS_CONNECTION_STRING
+   - Impact: Orchestrator will throw on startup if not set
+
+2. **ORCHESTRATOR RabbitMqConnectionString** - NOW REQUIRED (was "amqp://guest:guest@localhost:5672/")
+   - Environment: ORCHESTRATOR_RABBITMQ_CONNECTION_STRING
+   - Impact: Orchestrator will throw on startup if not set
+
+3. **CONNECT RabbitMqConnectionString** - NOW REQUIRED (was "amqp://guest:guest@rabbitmq:5672")
+   - Environment: CONNECT_RABBITMQ_CONNECTION_STRING
+   - Impact: ClientEventRabbitMQSubscriber constructor throws if not provided
+
+4. **CONNECT ServerSalt** - NOW REQUIRED (was auto-generated or from BANNOU_SERVER_SALT)
+   - Environment: CONNECT_SERVER_SALT
+   - Impact: GuidGenerator no longer auto-generates - must be explicitly configured
+
+5. **Voice KamailioRpcPort** - CHANGED DEFAULT (was 5060, now 5080)
+   - Environment: VOICE_KAMAILIO_RPC_PORT
+   - Impact: If using old default, port is now wrong (5060 is SIP, 5080 is JSON-RPC)
+
+6. **PresetLoader presetsDirectory** - NOW REQUIRED (was multi-fallback)
+   - Source: OrchestratorServiceConfiguration.PresetsHostPath
+   - Impact: Orchestrator throws if preset directory not configured

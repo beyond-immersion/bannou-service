@@ -627,13 +627,6 @@
             Provides client-salted GUIDs to prevent cross-session exploitation.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Connect.Protocol.GuidGenerator.GetSharedServerSalt">
-            <summary>
-            Gets the shared server salt for GUID generation.
-            Uses BANNOU_SERVER_SALT environment variable if set, otherwise generates once per process.
-            All services must use the same salt for shortcuts to work correctly.
-            </summary>
-        </member>
         <member name="M:BeyondImmersion.BannouService.Connect.Protocol.GuidGenerator.GenerateServiceGuid(System.String,System.String,System.String,System.String)">
             <summary>
             Generates a client-salted GUID for a service endpoint.

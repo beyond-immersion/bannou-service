@@ -159,6 +159,7 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
             var baseUrl = serviceClient.TestGetBaseUrl();
             Console.WriteLine($"Generated base URL: {baseUrl}");
 
+            // DAPR_HTTP_ENDPOINT is a legitimate Tenet 21 exception - Dapr bootstrap variable
             string daprEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT") ?? "localhost:3500";
             if (!baseUrl.Contains(daprEndpoint))
                 return Task.FromResult(new TestResult(false, $"Expected Dapr sidecar URL {daprEndpoint}, got: {baseUrl}"));

@@ -366,7 +366,10 @@ public class PortainerOrchestrator : IContainerOrchestrator
             var envList = new List<string>
             {
                 $"{serviceName.ToUpperInvariant()}_SERVICE_ENABLED=true",
-                $"DAPR_APP_ID={appId}"
+                $"DAPR_APP_ID={appId}",
+                // Required for proper service operation - not forwarded from orchestrator ENV
+                "DAEMON_MODE=true",
+                "HEARTBEAT_ENABLED=true"
             };
 
             if (environment != null)

@@ -77,25 +77,30 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         DaprClient daprClient,
         ILogger<ServiceHeartbeatManager> logger,
         PluginLoader pluginLoader,
-        IServiceAppMappingResolver mappingResolver)
+        IServiceAppMappingResolver mappingResolver,
+        AppConfiguration configuration)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _pluginLoader = pluginLoader ?? throw new ArgumentNullException(nameof(pluginLoader));
         _mappingResolver = mappingResolver ?? throw new ArgumentNullException(nameof(mappingResolver));
+        ArgumentNullException.ThrowIfNull(configuration);
         _httpClient = new HttpClient();
 
         // Subscribe to mapping changes to suppress/resume heartbeats for services routed elsewhere
         _mappingResolver.MappingChanged += OnMappingChanged;
 
-        // Resolve app-id from environment
-        AppId = Environment.GetEnvironmentVariable("DAPR_APP_ID")
+        // Resolve app-id from configuration, falling back to env vars for Dapr bootstrap
+        // DAPR_APP_ID is a legitimate Tenet 21 exception - it's a Dapr bootstrap variable
+        // that must be read before configuration is available in some contexts.
+        AppId = configuration.DaprAppId
+            ?? Environment.GetEnvironmentVariable("DAPR_APP_ID")
             ?? Environment.GetEnvironmentVariable("APP_ID")
             ?? AppConstants.DEFAULT_APP_NAME;
 
         // Get Dapr HTTP endpoint for standalone container architecture
-        // DAPR_HTTP_ENDPOINT takes precedence (e.g., "http://bannou-dapr:3500")
-        // Falls back to localhost with DAPR_HTTP_PORT for sidecar mode
+        // DAPR_HTTP_ENDPOINT and DAPR_HTTP_PORT are legitimate Tenet 21 exceptions -
+        // they're Dapr bootstrap variables needed for Dapr client communication.
         var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT");
         if (!string.IsNullOrEmpty(daprHttpEndpoint))
         {
@@ -110,17 +115,11 @@ public class ServiceHeartbeatManager : IAsyncDisposable
             _daprHttpEndpoint = $"http://localhost:{daprHttpPort}";
         }
 
-        // Get configurable heartbeat interval (default 30 seconds)
-        var intervalStr = Environment.GetEnvironmentVariable("HEARTBEAT_INTERVAL_SECONDS");
-        HeartbeatIntervalSeconds = int.TryParse(intervalStr, out var interval) && interval > 0
-            ? interval
+        // Get heartbeat settings from configuration (Tenet 21 compliant)
+        HeartbeatIntervalSeconds = configuration.HeartbeatIntervalSeconds > 0
+            ? configuration.HeartbeatIntervalSeconds
             : 30;
-
-        // Get permission heartbeat setting (default true - re-register permissions on each heartbeat)
-        var permHeartbeatStr = Environment.GetEnvironmentVariable("PERMISSION_HEARTBEAT_ENABLED");
-        PermissionHeartbeatEnabled = string.IsNullOrEmpty(permHeartbeatStr) ||
-            !bool.TryParse(permHeartbeatStr, out var permEnabled) ||
-            permEnabled;
+        PermissionHeartbeatEnabled = configuration.PermissionHeartbeatEnabled;
 
         _logger.LogInformation(
             "ServiceHeartbeatManager initialized: InstanceId={InstanceId}, AppId={AppId}, Interval={Interval}s, PermissionHeartbeat={PermEnabled}",

@@ -140,7 +140,7 @@ namespace BeyondImmersion.BannouService.{service_pascal};
 /// Configuration class for {service_pascal} service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof({service_pascal}Service), envPrefix: \"BANNOU_\")]
+[ServiceConfiguration(typeof({service_pascal}Service))]
 public class {service_pascal}ServiceConfiguration : IServiceConfiguration
 {{
     /// <inheritdoc />
@@ -151,14 +151,14 @@ public class {service_pascal}ServiceConfiguration : IServiceConfiguration
         for prop in config_properties:
             print(f'''    /// <summary>
     /// {prop['description']}
-    /// Environment variable: {prop['env_var']} or BANNOU_{prop['env_var']}
+    /// Environment variable: {prop['env_var']}
     /// </summary>
     public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
 ''')
     else:
         print(f'''    /// <summary>
     /// Default configuration property - can be removed if not needed.
-    /// Environment variable: {service_name.upper()}_ENABLED or BANNOU_{service_name.upper()}_ENABLED
+    /// Environment variable: {service_name.upper()}_ENABLED
     /// </summary>
     public bool Enabled {{ get; set; }} = true;
 ''')

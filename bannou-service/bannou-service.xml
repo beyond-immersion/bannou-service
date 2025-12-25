@@ -44,11 +44,55 @@
         <member name="F:BeyondImmersion.BannouService.AppConstants.DEFAULT_APP_NAME">
             <summary>
             Default application name for service routing ("bannou" - omnipotent routing).
+            Used when no specific app-id is configured for distributed deployment.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.AppConstants.ORCHESTRATOR_SERVICE_NAME">
             <summary>
             Logical service name for the orchestrator control plane.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.AppConstants.PUBSUB_NAME">
+            <summary>
+            Default Dapr pub/sub component name used by all services.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.AppConstants.DEFAULT_REDIS_PORT">
+            <summary>
+            Default Redis port.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.AppConstants.DEFAULT_RABBITMQ_PORT">
+            <summary>
+            Default RabbitMQ AMQP port.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.AppConstants.DEFAULT_DAPR_HTTP_PORT">
+            <summary>
+            Default Dapr HTTP sidecar port.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.AppConstants.DEFAULT_DAPR_GRPC_PORT">
+            <summary>
+            Default Dapr gRPC sidecar port.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.AppConstants.ENV_DAPR_APP_ID">
+            <summary>
+            Environment variable for Dapr app ID. Used by PermissionRegistration and
+            ServiceHeartbeatManager. This is a Tenet 21 exception - needed before DI is available.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.AppConstants.ENV_DAPR_HTTP_ENDPOINT">
+            <summary>
+            Environment variable for Dapr HTTP endpoint. This is a Tenet 21 exception -
+            needed to bootstrap DaprClient before configuration system initializes.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.AppConstants.ENV_DAPR_GRPC_ENDPOINT">
+            <summary>
+            Environment variable for Dapr gRPC endpoint. This is a Tenet 21 exception -
+            needed to bootstrap DaprClient before configuration system initializes.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Attributes.BaseServiceAttribute">
@@ -806,6 +850,25 @@
             This ensures newly deployed containers have correct routing information.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.HeartbeatIntervalSeconds">
+            <summary>
+            Interval in seconds between service heartbeats.
+            Environment variable: HEARTBEAT_INTERVAL_SECONDS or BANNOU_HEARTBEAT_INTERVAL_SECONDS
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.PermissionHeartbeatEnabled">
+            <summary>
+            Whether to re-register permissions on each heartbeat.
+            Environment variable: PERMISSION_HEARTBEAT_ENABLED or BANNOU_PERMISSION_HEARTBEAT_ENABLED
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.DaprAppId">
+            <summary>
+            The Dapr App ID for this service instance.
+            Environment variable: DAPR_APP_ID (or APP_ID for backwards compatibility)
+            Note: DAPR_APP_ID is a bootstrap variable read during Dapr client initialization.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Configuration.BannouJson">
              <summary>
              Static helper for JSON serialization/deserialization that always uses Bannou's
@@ -958,6 +1021,9 @@
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.BuildConfiguration(System.Type,System.String[],System.String)">
             <summary>
             Builds the service configuration from available Config.json, ENVs, and command line switches.
+            Environment variables are read with the service-specific prefix (e.g., ASSET_, CONNECT_) and
+            keys are normalized from UPPER_SNAKE_CASE to PascalCase to match C# property naming.
+            Example: ASSET_STORAGE_ACCESS_KEY -> StorageAccessKey
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.CreateAllSwitchMappings">
@@ -978,6 +1044,18 @@
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.CreateSwitchFromName(System.String)">
             <summary>
             Create a deterministic command switch (ie: --some-switch ) from the given property name.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.NormalizeEnvVarKey(System.String)">
+            <summary>
+            Normalizes an environment variable key from UPPER_SNAKE_CASE to PascalCase.
+            Example: STORAGE_ACCESS_KEY -> StorageAccessKey
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.GetNormalizedEnvVars(System.String)">
+            <summary>
+            Reads environment variables with the given prefix and returns them with normalized keys.
+            Keys are converted from UPPER_SNAKE_CASE to PascalCase to match C# property naming.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Controllers.Filters.HeaderArrayActionFilter">
@@ -15636,6 +15714,12 @@
             service resolution -> initialization -> startup -> running.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Plugins.PluginLoader.ValidEnvironmentPrefixes">
+            <summary>
+            Valid environment variable prefixes based on discovered plugins.
+            Used by OrchestratorService to filter which ENV vars to forward to deployed containers.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.#ctor(Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Plugins.PluginLoader})">
             <inheritdoc/>
         </member>
@@ -15668,6 +15752,12 @@
             </summary>
             <param name="serviceName">Name of the service (e.g., "auth", "accounts")</param>
             <returns>True if service should be enabled, false if disabled</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.PopulateValidEnvironmentPrefixes">
+            <summary>
+            Populate the static set of valid environment variable prefixes based on discovered plugins.
+            This allows the orchestrator to whitelist which ENVs to forward to deployed containers.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.DiscoverTypesForRegistration">
             <summary>
@@ -15911,13 +16001,7 @@
             Shared GUID generation utilities for client-server security.
             Provides client-salted GUIDs to prevent cross-session exploitation.
             This is the shared version - all services should use this for consistency.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Protocol.GuidGenerator.GetSharedServerSalt">
-            <summary>
-            Gets the shared server salt for GUID generation.
-            Uses BANNOU_SERVER_SALT environment variable if set, otherwise generates once per process.
-            All services must use the same salt for shortcuts to work correctly.
+            Server salt should come from service configuration (Tenet 21).
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Protocol.GuidGenerator.GenerateServiceGuid(System.String,System.String,System.String,System.String)">
@@ -16557,7 +16641,7 @@
             The topic name for heartbeat events.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.#ctor(Dapr.Client.DaprClient,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Services.ServiceHeartbeatManager},BeyondImmersion.BannouService.Plugins.PluginLoader,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver)">
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.#ctor(Dapr.Client.DaprClient,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Services.ServiceHeartbeatManager},BeyondImmersion.BannouService.Plugins.PluginLoader,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,BeyondImmersion.BannouService.Configuration.AppConfiguration)">
             <inheritdoc/>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.PublishStartupHeartbeatAsync(System.Threading.CancellationToken)">

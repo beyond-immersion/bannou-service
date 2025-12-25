@@ -42,7 +42,8 @@ public class ConnectServiceTests
             .Returns(Mock.Of<ILogger>());
         _configuration = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0"
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt
         };
         _mockAuthClient = new Mock<IAuthClient>();
         _mockDaprClient = new Mock<DaprClient>();

@@ -57,6 +57,18 @@ x-service-configuration:
     JwtPublicKey:
       type: string
       description: RSA public key for JWT validation (PEM format)
+    RabbitMqConnectionString:
+      type: string
+      description: RabbitMQ connection string for client event subscriptions (Tenet 21 - no default, required)
+      env: CONNECT_RABBITMQ_CONNECTION_STRING
+    ServerSalt:
+      type: string
+      description: Server salt for client GUID generation. Must be shared across all Connect instances.
+      env: CONNECT_SERVER_SALT
+    ConnectUrl:
+      type: string
+      description: WebSocket URL returned to clients for reconnection
+      env: CONNECT_URL
 
 # Note: Event subscriptions are handled manually in ConnectEventsController.cs
 # because they require specialized CloudEvents parsing and custom service method calls.

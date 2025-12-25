@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using Microsoft.Extensions.Configuration;
 using Xunit.Abstractions;
@@ -18,10 +19,18 @@ public class Configuration : IClassFixture<CollectionFixture>
     [DaprService("ConfigTests.test")]
     private class Service_Required : IDaprService { }
 
+    [DaprService("game-session")]
+    private class Service_HyphenatedName : IDaprService { }
+
+    [DaprService("relationship-type")]
+    private class Service_MultiHyphenatedName : IDaprService { }
+
     private abstract class ConfigBase : IServiceConfiguration
     {
+        // Note: Force_Service_ID uses legacy underscore naming from interface
+        // New tests should use PascalCase properties (Property, TestValue, etc.)
         public string? Force_Service_ID { get; set; }
-        public bool? Service_Disabled { get; set; }
+        public string? ForceServiceId { get; set; } // PascalCase version for normalization tests
     }
 
     private class Configuration_Invalid
@@ -64,6 +73,20 @@ public class Configuration : IClassFixture<CollectionFixture>
     {
         [ConfigRequired(AllowEmptyStrings = false)]
         public string? Property { get; set; }
+    }
+
+    [ServiceConfiguration(typeof(Service_HyphenatedName))]
+    private class Configuration_HyphenatedService : ConfigBase
+    {
+        public string? ServerSalt { get; set; }
+        public int MaxPlayersPerSession { get; set; }
+    }
+
+    [ServiceConfiguration(typeof(Service_MultiHyphenatedName))]
+    private class Configuration_MultiHyphenatedService : ConfigBase
+    {
+        public string? TypeName { get; set; }
+        public bool Enabled { get; set; }
     }
 
     private Configuration(CollectionFixture collectionContext) => TestCollectionContext = collectionContext;
@@ -303,7 +326,7 @@ public class Configuration : IClassFixture<CollectionFixture>
                         typeof(Configuration_NoAttribute));
         Assert.NotNull(config);
         Assert.Null(config.Property);
-        Assert.Null(config.Force_Service_ID);
+        Assert.Null(config.ForceServiceId);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
         try
@@ -314,7 +337,8 @@ public class Configuration : IClassFixture<CollectionFixture>
                             typeof(Configuration_NoAttribute));
             Assert.NotNull(config);
             Assert.Equal("Test", config.Property);
-            Assert.Equal(serviceID, config.Force_Service_ID);
+            // FORCE_SERVICE_ID normalizes to ForceServiceId (PascalCase)
+            Assert.Equal(serviceID, config.ForceServiceId);
         }
         finally
         {
@@ -346,7 +370,7 @@ public class Configuration : IClassFixture<CollectionFixture>
 
         Configuration_NoAttribute config = IServiceConfiguration.BuildConfiguration<Configuration_NoAttribute>();
         Assert.Null(config.Property);
-        Assert.Null(config.Force_Service_ID);
+        Assert.Null(config.ForceServiceId);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
         try
@@ -355,7 +379,8 @@ public class Configuration : IClassFixture<CollectionFixture>
             Environment.SetEnvironmentVariable("FORCE_SERVICE_ID", serviceID);
             config = IServiceConfiguration.BuildConfiguration<Configuration_NoAttribute>();
             Assert.Equal("Test", config.Property);
-            Assert.Equal(serviceID, config.Force_Service_ID);
+            // FORCE_SERVICE_ID normalizes to ForceServiceId (PascalCase)
+            Assert.Equal(serviceID, config.ForceServiceId);
         }
         finally
         {
@@ -387,7 +412,7 @@ public class Configuration : IClassFixture<CollectionFixture>
                         typeof(Configuration_Attribute_NoService));
         Assert.NotNull(config);
         Assert.Null(config.Property);
-        Assert.Null(config.Force_Service_ID);
+        Assert.Null(config.ForceServiceId);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
         try
@@ -398,7 +423,8 @@ public class Configuration : IClassFixture<CollectionFixture>
                             typeof(Configuration_Attribute_NoService));
             Assert.NotNull(config);
             Assert.Equal("Test", config.Property);
-            Assert.Equal(serviceID, config.Force_Service_ID);
+            // FORCE_SERVICE_ID normalizes to ForceServiceId (PascalCase)
+            Assert.Equal(serviceID, config.ForceServiceId);
         }
         finally
         {
@@ -415,7 +441,7 @@ public class Configuration : IClassFixture<CollectionFixture>
 
         Configuration_Attribute_NoService config = IServiceConfiguration.BuildConfiguration<Configuration_Attribute_NoService>();
         Assert.Null(config.Property);
-        Assert.Null(config.Force_Service_ID);
+        Assert.Null(config.ForceServiceId);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
         try
@@ -424,7 +450,8 @@ public class Configuration : IClassFixture<CollectionFixture>
             Environment.SetEnvironmentVariable("FORCE_SERVICE_ID", serviceID);
             config = IServiceConfiguration.BuildConfiguration<Configuration_Attribute_NoService>();
             Assert.Equal("Test", config.Property);
-            Assert.Equal(serviceID, config.Force_Service_ID);
+            // FORCE_SERVICE_ID normalizes to ForceServiceId (PascalCase)
+            Assert.Equal(serviceID, config.ForceServiceId);
         }
         finally
         {
@@ -443,7 +470,7 @@ public class Configuration : IClassFixture<CollectionFixture>
                         typeof(Configuration_Attribute_TestService));
         Assert.NotNull(config);
         Assert.Null(config.Property);
-        Assert.Null(config.Force_Service_ID);
+        Assert.Null(config.ForceServiceId);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
         try
@@ -454,7 +481,8 @@ public class Configuration : IClassFixture<CollectionFixture>
                             typeof(Configuration_Attribute_TestService));
             Assert.NotNull(config);
             Assert.Equal("Test", config.Property);
-            Assert.Equal(serviceID, config.Force_Service_ID);
+            // FORCE_SERVICE_ID normalizes to ForceServiceId (PascalCase)
+            Assert.Equal(serviceID, config.ForceServiceId);
         }
         finally
         {
@@ -486,7 +514,7 @@ public class Configuration : IClassFixture<CollectionFixture>
 
         Configuration_Attribute_TestService config = IServiceConfiguration.BuildConfiguration<Configuration_Attribute_TestService>();
         Assert.Null(config.Property);
-        Assert.Null(config.Force_Service_ID);
+        Assert.Null(config.ForceServiceId);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
         try
@@ -496,7 +524,8 @@ public class Configuration : IClassFixture<CollectionFixture>
 
             config = IServiceConfiguration.BuildConfiguration<Configuration_Attribute_TestService>();
             Assert.Equal("Test", config.Property);
-            Assert.Equal(serviceID, config.Force_Service_ID);
+            // FORCE_SERVICE_ID normalizes to ForceServiceId (PascalCase)
+            Assert.Equal(serviceID, config.ForceServiceId);
         }
         finally
         {
@@ -530,7 +559,7 @@ public class Configuration : IClassFixture<CollectionFixture>
                         typeof(Configuration_Attribute_TestService_WithPrefix), envPrefix: "test_");
         Assert.NotNull(config);
         Assert.Null(config.Property);
-        Assert.Null(config.Force_Service_ID);
+        Assert.Null(config.ForceServiceId);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
         try
@@ -541,7 +570,7 @@ public class Configuration : IClassFixture<CollectionFixture>
                             typeof(Configuration_Attribute_TestService_WithPrefix), envPrefix: "test_");
             Assert.NotNull(config);
             Assert.Null(config.Property);
-            Assert.Null(config.Force_Service_ID);
+            Assert.Null(config.ForceServiceId);
         }
         finally
         {
@@ -557,7 +586,8 @@ public class Configuration : IClassFixture<CollectionFixture>
                             typeof(Configuration_Attribute_TestService_WithPrefix), envPrefix: "test_");
             Assert.NotNull(config);
             Assert.Equal("Test", config.Property);
-            Assert.Equal(serviceID, config.Force_Service_ID);
+            // TEST_FORCE_SERVICE_ID normalizes to ForceServiceId (PascalCase)
+            Assert.Equal(serviceID, config.ForceServiceId);
         }
         finally
         {
@@ -576,7 +606,7 @@ public class Configuration : IClassFixture<CollectionFixture>
 
         Configuration_Attribute_TestService_WithPrefix config = IServiceConfiguration.BuildConfiguration<Configuration_Attribute_TestService_WithPrefix>();
         Assert.Null(config.Property);
-        Assert.Null(config.Force_Service_ID);
+        Assert.Null(config.ForceServiceId);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
         try
@@ -585,7 +615,7 @@ public class Configuration : IClassFixture<CollectionFixture>
             Environment.SetEnvironmentVariable("FORCE_SERVICE_ID", serviceID);
             config = IServiceConfiguration.BuildConfiguration<Configuration_Attribute_TestService_WithPrefix>();
             Assert.Null(config.Property);
-            Assert.Null(config.Force_Service_ID);
+            Assert.Null(config.ForceServiceId);
         }
         finally
         {
@@ -599,7 +629,8 @@ public class Configuration : IClassFixture<CollectionFixture>
             Environment.SetEnvironmentVariable("TEST_FORCE_SERVICE_ID", serviceID);
             config = IServiceConfiguration.BuildConfiguration<Configuration_Attribute_TestService_WithPrefix>();
             Assert.Equal("Test", config.Property);
-            Assert.Equal(serviceID, config.Force_Service_ID);
+            // TEST_FORCE_SERVICE_ID normalizes to ForceServiceId (PascalCase)
+            Assert.Equal(serviceID, config.ForceServiceId);
         }
         finally
         {
@@ -611,10 +642,11 @@ public class Configuration : IClassFixture<CollectionFixture>
     [Fact]
     public void Configuration_ForService_WithBannouPrefix_Generic()
     {
+        // Clear any existing env vars - use UPPER_SNAKE_CASE format for normalization
         Environment.SetEnvironmentVariable("PROPERTY", null);
-        Environment.SetEnvironmentVariable("JWTSECRET", null);
+        Environment.SetEnvironmentVariable("JWT_SECRET", null);
         Environment.SetEnvironmentVariable("BANNOU_PROPERTY", null);
-        Environment.SetEnvironmentVariable("BANNOU_JWTSECRET", null);
+        Environment.SetEnvironmentVariable("BANNOU_JWT_SECRET", null);
 
         Configuration_Attribute_BannouPrefix config = IServiceConfiguration.BuildConfiguration<Configuration_Attribute_BannouPrefix>();
         Assert.Null(config.Property);
@@ -623,8 +655,9 @@ public class Configuration : IClassFixture<CollectionFixture>
         var testSecret = "bannou-test-jwt-secret";
         try
         {
+            // Set env vars WITHOUT prefix - should not be picked up
             Environment.SetEnvironmentVariable("PROPERTY", "Test");
-            Environment.SetEnvironmentVariable("JWTSECRET", testSecret);
+            Environment.SetEnvironmentVariable("JWT_SECRET", testSecret);
             config = IServiceConfiguration.BuildConfiguration<Configuration_Attribute_BannouPrefix>();
             Assert.Null(config.Property);
             Assert.Null(config.JwtSecret);
@@ -632,13 +665,15 @@ public class Configuration : IClassFixture<CollectionFixture>
         finally
         {
             Environment.SetEnvironmentVariable("PROPERTY", null);
-            Environment.SetEnvironmentVariable("JWTSECRET", null);
+            Environment.SetEnvironmentVariable("JWT_SECRET", null);
         }
 
         try
         {
+            // Set env vars WITH prefix - should be picked up
+            // BANNOU_JWT_SECRET -> strip prefix -> JWT_SECRET -> normalize -> JwtSecret
             Environment.SetEnvironmentVariable("BANNOU_PROPERTY", "Test");
-            Environment.SetEnvironmentVariable("BANNOU_JWTSECRET", testSecret);
+            Environment.SetEnvironmentVariable("BANNOU_JWT_SECRET", testSecret);
             config = IServiceConfiguration.BuildConfiguration<Configuration_Attribute_BannouPrefix>();
             Assert.Equal("Test", config.Property);
             Assert.Equal(testSecret, config.JwtSecret);
@@ -646,7 +681,232 @@ public class Configuration : IClassFixture<CollectionFixture>
         finally
         {
             Environment.SetEnvironmentVariable("BANNOU_PROPERTY", null);
-            Environment.SetEnvironmentVariable("BANNOU_JWTSECRET", null);
+            Environment.SetEnvironmentVariable("BANNOU_JWT_SECRET", null);
         }
     }
+
+    #region Environment Variable Key Normalization Tests
+
+    [Theory]
+    [InlineData("STORAGE_ACCESS_KEY", "StorageAccessKey")]
+    [InlineData("REDIS_CONNECTION_STRING", "RedisConnectionString")]
+    [InlineData("SERVER_SALT", "ServerSalt")]
+    [InlineData("MAX_PLAYERS_PER_SESSION", "MaxPlayersPerSession")]
+    [InlineData("ENABLED", "Enabled")]
+    [InlineData("JWT_SECRET", "JwtSecret")]
+    [InlineData("SINGLE", "Single")]
+    [InlineData("", "")]
+    public void NormalizeEnvVarKey_ConvertsUpperSnakeCaseToPascalCase(string input, string expected)
+    {
+        var result = IServiceConfiguration.NormalizeEnvVarKey(input);
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData("FORCE_SERVICE_ID", "ForceServiceId")]
+    [InlineData("DEFAULT_CONSISTENCY", "DefaultConsistency")]
+    [InlineData("ENABLE_METRICS", "EnableMetrics")]
+    public void NormalizeEnvVarKey_HandlesCommonPatterns(string input, string expected)
+    {
+        var result = IServiceConfiguration.NormalizeEnvVarKey(input);
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public void GetNormalizedEnvVars_FiltersAndNormalizesWithPrefix()
+    {
+        // Arrange - set up env vars with TEST_ prefix
+        Environment.SetEnvironmentVariable("TEST_STORAGE_ACCESS_KEY", "test-key");
+        Environment.SetEnvironmentVariable("TEST_MAX_SIZE", "100");
+        Environment.SetEnvironmentVariable("OTHER_VALUE", "should-be-ignored");
+
+        try
+        {
+            // Act
+            var result = IServiceConfiguration.GetNormalizedEnvVars("TEST_");
+
+            // Assert
+            Assert.True(result.ContainsKey("StorageAccessKey"));
+            Assert.Equal("test-key", result["StorageAccessKey"]);
+            Assert.True(result.ContainsKey("MaxSize"));
+            Assert.Equal("100", result["MaxSize"]);
+            Assert.False(result.ContainsKey("OtherValue"));
+            Assert.False(result.ContainsKey("OTHER_VALUE"));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("TEST_STORAGE_ACCESS_KEY", null);
+            Environment.SetEnvironmentVariable("TEST_MAX_SIZE", null);
+            Environment.SetEnvironmentVariable("OTHER_VALUE", null);
+        }
+    }
+
+    [Fact]
+    public void GetNormalizedEnvVars_CaseInsensitivePrefixMatching()
+    {
+        // Arrange
+        Environment.SetEnvironmentVariable("test_property", "lowercase-prefix");
+
+        try
+        {
+            // Act - prefix matching should be case-insensitive
+            var result = IServiceConfiguration.GetNormalizedEnvVars("TEST_");
+
+            // Assert
+            Assert.True(result.ContainsKey("Property"));
+            Assert.Equal("lowercase-prefix", result["Property"]);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("test_property", null);
+        }
+    }
+
+    #endregion
+
+    #region Hyphenated Service Name Prefix Tests
+
+    [Fact]
+    public void ServiceConfigurationAttribute_RemovesHyphensFromPrefix()
+    {
+        // Arrange & Act - get the attribute from our test configuration
+        var configType = typeof(Configuration_HyphenatedService);
+        var attr = configType.GetCustomAttributes(typeof(ServiceConfigurationAttribute), false)
+            .Cast<ServiceConfigurationAttribute>()
+            .FirstOrDefault();
+
+        // Assert - prefix should be "GAMESESSION_" not "GAME-SESSION_"
+        Assert.NotNull(attr);
+        Assert.Equal("GAMESESSION_", attr.EnvPrefix);
+    }
+
+    [Fact]
+    public void ServiceConfigurationAttribute_RemovesMultipleHyphensFromPrefix()
+    {
+        // Arrange & Act
+        var configType = typeof(Configuration_MultiHyphenatedService);
+        var attr = configType.GetCustomAttributes(typeof(ServiceConfigurationAttribute), false)
+            .Cast<ServiceConfigurationAttribute>()
+            .FirstOrDefault();
+
+        // Assert - prefix should be "RELATIONSHIPTYPE_" not "RELATIONSHIP-TYPE_"
+        Assert.NotNull(attr);
+        Assert.Equal("RELATIONSHIPTYPE_", attr.EnvPrefix);
+    }
+
+    [Fact]
+    public void Configuration_HyphenatedService_BindsWithNormalizedPrefix()
+    {
+        // Arrange - use GAMESESSION_ prefix (hyphen removed)
+        Environment.SetEnvironmentVariable("GAMESESSION_SERVER_SALT", "test-salt-value");
+        Environment.SetEnvironmentVariable("GAMESESSION_MAX_PLAYERS_PER_SESSION", "32");
+
+        try
+        {
+            // Act
+            var config = IServiceConfiguration.BuildConfiguration<Configuration_HyphenatedService>();
+
+            // Assert
+            Assert.Equal("test-salt-value", config.ServerSalt);
+            Assert.Equal(32, config.MaxPlayersPerSession);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("GAMESESSION_SERVER_SALT", null);
+            Environment.SetEnvironmentVariable("GAMESESSION_MAX_PLAYERS_PER_SESSION", null);
+        }
+    }
+
+    [Fact]
+    public void Configuration_HyphenatedService_IgnoresHyphenatedPrefix()
+    {
+        // Arrange - use incorrect GAME-SESSION_ prefix (with hyphen)
+        Environment.SetEnvironmentVariable("GAME-SESSION_SERVER_SALT", "wrong-prefix");
+        Environment.SetEnvironmentVariable("GAMESESSION_SERVER_SALT", null);
+
+        try
+        {
+            // Act
+            var config = IServiceConfiguration.BuildConfiguration<Configuration_HyphenatedService>();
+
+            // Assert - should NOT bind because prefix doesn't match
+            Assert.Null(config.ServerSalt);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("GAME-SESSION_SERVER_SALT", null);
+        }
+    }
+
+    [Fact]
+    public void Configuration_MultiHyphenatedService_BindsCorrectly()
+    {
+        // Arrange - use RELATIONSHIPTYPE_ prefix
+        Environment.SetEnvironmentVariable("RELATIONSHIPTYPE_TYPE_NAME", "test-type");
+        Environment.SetEnvironmentVariable("RELATIONSHIPTYPE_ENABLED", "true");
+
+        try
+        {
+            // Act
+            var config = IServiceConfiguration.BuildConfiguration<Configuration_MultiHyphenatedService>();
+
+            // Assert
+            Assert.Equal("test-type", config.TypeName);
+            Assert.True(config.Enabled);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("RELATIONSHIPTYPE_TYPE_NAME", null);
+            Environment.SetEnvironmentVariable("RELATIONSHIPTYPE_ENABLED", null);
+        }
+    }
+
+    #endregion
+
+    #region End-to-End Configuration Binding Tests
+
+    [Fact]
+    public void Configuration_UpperSnakeCaseEnvVars_BindToPascalCaseProperties()
+    {
+        // Arrange - simulate real-world env var naming
+        Environment.SetEnvironmentVariable("GAMESESSION_SERVER_SALT", "production-salt");
+        Environment.SetEnvironmentVariable("GAMESESSION_MAX_PLAYERS_PER_SESSION", "64");
+
+        try
+        {
+            // Act
+            var config = IServiceConfiguration.BuildConfiguration<Configuration_HyphenatedService>();
+
+            // Assert - UPPER_SNAKE_CASE binds to PascalCase properties
+            Assert.Equal("production-salt", config.ServerSalt);
+            Assert.Equal(64, config.MaxPlayersPerSession);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("GAMESESSION_SERVER_SALT", null);
+            Environment.SetEnvironmentVariable("GAMESESSION_MAX_PLAYERS_PER_SESSION", null);
+        }
+    }
+
+    [Fact]
+    public void Configuration_PropertyNameAsEnvVar_AlsoBinds()
+    {
+        // Arrange - use property name directly (no underscores)
+        Environment.SetEnvironmentVariable("GAMESESSION_SERVERSALT", "direct-property-name");
+
+        try
+        {
+            // Act
+            var config = IServiceConfiguration.BuildConfiguration<Configuration_HyphenatedService>();
+
+            // Assert - single-word env var normalizes to matching property
+            Assert.Equal("direct-property-name", config.ServerSalt);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("GAMESESSION_SERVERSALT", null);
+        }
+    }
+
+    #endregion
 }

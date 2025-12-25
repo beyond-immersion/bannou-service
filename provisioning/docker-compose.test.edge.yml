@@ -13,7 +13,7 @@ services:
       # IMPORTANT: this must be a host path visible to the Docker daemon, not the in-container mount.
       # Use the same host path we mount below so dynamically deployed sidecars see valid components.
       # Note: Default path is relative to THIS compose file (in provisioning/), so ./dapr/ not ./provisioning/dapr/
-      - BANNOU_DaprComponentsHostPath=${DAPR_COMPONENTS_HOST_PATH:-./dapr/components-http-test}
+      - ORCHESTRATOR_DAPR_COMPONENTS_HOST_PATH=${DAPR_COMPONENTS_HOST_PATH:-./dapr/components-http-test}
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"  # Docker socket for orchestrator deployment
       # Mount the same components directory that the edge tests use so orchestrator deployments succeed

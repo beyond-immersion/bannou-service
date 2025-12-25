@@ -992,40 +992,37 @@ public class MeshConfigurationTests
 public class MeshRedisManagerTests
 {
     private readonly Mock<ILogger<MeshRedisManager>> _mockLogger;
+    private readonly MeshServiceConfiguration _testConfig;
 
     public MeshRedisManagerTests()
     {
         _mockLogger = new Mock<ILogger<MeshRedisManager>>();
+        _testConfig = new MeshServiceConfiguration
+        {
+            RedisConnectionString = "localhost:6379"
+        };
     }
 
     [Fact]
-    public void Constructor_ShouldNotThrow()
+    public void Constructor_ShouldNotThrow_WithValidConfiguration()
     {
-        // Act & Assert - just verify it can be constructed
-        var manager = new MeshRedisManager(_mockLogger.Object);
+        // Act & Assert - verify it can be constructed with valid configuration
+        var manager = new MeshRedisManager(_testConfig, _mockLogger.Object);
         Assert.NotNull(manager);
     }
 
     [Fact]
-    public void Constructor_ShouldUseEnvironmentVariables()
+    public void Constructor_ShouldThrow_WhenConfigurationMissingConnectionString()
     {
-        // Arrange - Set environment variable
-        var originalValue = Environment.GetEnvironmentVariable("MESH_REDIS_CONNECTION_STRING");
-        try
+        // Arrange - configuration with empty connection string
+        var configWithoutConnection = new MeshServiceConfiguration
         {
-            Environment.SetEnvironmentVariable("MESH_REDIS_CONNECTION_STRING", "test-redis:6379");
+            RedisConnectionString = string.Empty
+        };
 
-            // Act
-            var manager = new MeshRedisManager(_mockLogger.Object);
-
-            // Assert
-            Assert.NotNull(manager);
-        }
-        finally
-        {
-            // Clean up
-            Environment.SetEnvironmentVariable("MESH_REDIS_CONNECTION_STRING", originalValue);
-        }
+        // Act & Assert - should throw because connection string is required
+        Assert.Throws<InvalidOperationException>(() =>
+            new MeshRedisManager(configWithoutConnection, _mockLogger.Object));
     }
 }
 

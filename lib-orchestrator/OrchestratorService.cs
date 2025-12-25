@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
+using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using LibOrchestrator;
@@ -77,8 +78,9 @@ public partial class OrchestratorService : IOrchestratorService
         _backendDetector = backendDetector ?? throw new ArgumentNullException(nameof(backendDetector));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
 
-        // Create preset loader
-        _presetLoader = new PresetLoader(_loggerFactory.CreateLogger<PresetLoader>());
+        // Create preset loader with configured presets directory
+        var presetsPath = configuration.PresetsHostPath ?? "/app/provisioning/orchestrator/presets";
+        _presetLoader = new PresetLoader(_loggerFactory.CreateLogger<PresetLoader>(), presetsPath);
 
         // Register event handlers via partial class (OrchestratorServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
@@ -537,8 +539,31 @@ public partial class OrchestratorService : IOrchestratorService
                     continue; // Skip this node
                 }
 
-                // Start with preset environment (lowest priority)
+                // Build environment with proper layering (lowest to highest priority):
+                // 1. Orchestrator's own environment (foundation)
+                // 2. Preset environment
+                // 3. Node-specific environment
+                // 4. Request body environment (highest priority)
                 var environment = new Dictionary<string, string>();
+
+                // Layer 1: Forward orchestrator's own environment as foundation
+                // This ensures deployed containers inherit all service configuration
+                // (AUTH_*, STATE_*, CONNECT_*, etc.) without needing to duplicate in presets
+                foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
+                {
+                    var key = entry.Key?.ToString();
+                    var value = entry.Value?.ToString();
+                    if (string.IsNullOrEmpty(key) || value == null)
+                        continue;
+
+                    // Only forward vars with valid service prefixes (whitelist approach)
+                    if (!IsAllowedEnvironmentVariable(key))
+                        continue;
+
+                    environment[key] = value;
+                }
+
+                // Layer 2: Preset environment (overrides orchestrator's environment)
                 if (presetEnvironment != null)
                 {
                     foreach (var kvp in presetEnvironment)
@@ -547,7 +572,7 @@ public partial class OrchestratorService : IOrchestratorService
                     }
                 }
 
-                // Add node-specific environment (higher priority, overrides preset)
+                // Layer 3: Node-specific environment (overrides preset)
                 if (node.Environment != null)
                 {
                     foreach (var kvp in node.Environment)
@@ -556,7 +581,7 @@ public partial class OrchestratorService : IOrchestratorService
                     }
                 }
 
-                // Add request environment (highest priority, overrides node and preset)
+                // Layer 4: Request body environment (highest priority, overrides all)
                 if (body.Environment != null)
                 {
                     foreach (var kvp in body.Environment)
@@ -566,19 +591,20 @@ public partial class OrchestratorService : IOrchestratorService
                 }
 
                 // CRITICAL: Disable all services by default, then enable only the specified ones
-                // Without this, deployed containers have all services enabled by default (including
-                // services like Asset that require infrastructure like MinIO that won't be available)
-                if (!environment.ContainsKey("SERVICES_ENABLED"))
-                {
-                    environment["SERVICES_ENABLED"] = "false";
-                }
+                // This MUST override any forwarded SERVICES_ENABLED=true from the orchestrator's environment
+                // Without this, deployed containers would run ALL services (including orchestrator itself!)
+                environment["SERVICES_ENABLED"] = "false";
 
-                // Build service enable flags for this node
+                // Build service enable flags for this node's specified services only
                 foreach (var serviceName in node.Services)
                 {
                     var serviceEnvKey = $"{serviceName.ToUpperInvariant().Replace("-", "_")}_SERVICE_ENABLED";
                     environment[serviceEnvKey] = "true";
                 }
+
+                _logger.LogDebug(
+                    "Node {NodeName} service configuration: SERVICES_ENABLED=false, enabled services: {Services}",
+                    node.Name, string.Join(", ", node.Services));
 
                 // Deploy via container orchestrator
                 var deployResult = await orchestrator.DeployServiceAsync(
@@ -1362,6 +1388,47 @@ public partial class OrchestratorService : IOrchestratorService
             _logger.LogError(ex, "Error executing Clean operation");
             return (StatusCodes.InternalServerError, null);
         }
+    }
+
+    /// <summary>
+    /// Determines if an environment variable should be forwarded to deployed containers.
+    /// Uses a whitelist approach based on discovered plugin prefixes.
+    /// </summary>
+    /// <remarks>
+    /// Only forwards environment variables with prefixes matching:
+    /// - Core infrastructure: BANNOU_, ACCOUNT_, HEARTBEAT_, SERVICES_, OPENRESTY_, ASPNETCORE_ENVIRONMENT
+    /// - Plugin prefixes: AUTH_, CONNECT_, STATE_, MESH_, etc. (derived from discovered plugins)
+    ///
+    /// EXCLUDES: *_SERVICE_ENABLED and *_SERVICE_DISABLED flags - these are controlled
+    /// entirely by the deployment logic based on the preset's services list.
+    /// </remarks>
+    private static bool IsAllowedEnvironmentVariable(string key)
+    {
+        // NEVER forward service enable/disable flags - these are set by deployment logic
+        // based on the preset's services list, not inherited from orchestrator
+        if (key.EndsWith("_SERVICE_ENABLED", StringComparison.OrdinalIgnoreCase) ||
+            key.EndsWith("_SERVICE_DISABLED", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // NEVER forward DAPR_APP_ID - each deployed container gets its own app-id
+        // set explicitly by the deployment logic
+        if (key.Equals("DAPR_APP_ID", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var validPrefixes = PluginLoader.ValidEnvironmentPrefixes;
+
+        // Check if the key starts with any valid prefix
+        foreach (var prefix in validPrefixes)
+        {
+            if (key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>

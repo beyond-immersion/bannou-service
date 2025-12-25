@@ -26,26 +26,30 @@ public class StateServicePlugin : BaseBannouPlugin
     {
         Logger?.LogDebug("Configuring state service dependencies");
 
-        // Build state store factory configuration from environment
-        var factoryConfig = BuildFactoryConfiguration();
-
-        // Register the state store factory as singleton
-        services.AddSingleton(factoryConfig);
+        // Register the state store factory configuration via DI factory - allows access to StateServiceConfiguration
+        services.AddSingleton(sp =>
+        {
+            var stateConfig = sp.GetRequiredService<StateServiceConfiguration>();
+            return BuildFactoryConfiguration(stateConfig);
+        });
         services.AddSingleton<IStateStoreFactory, StateStoreFactory>();
 
-        Logger?.LogDebug("State service dependencies configured with {StoreCount} stores", factoryConfig.Stores.Count);
+        Logger?.LogDebug("State service dependencies configured");
     }
 
     /// <summary>
-    /// Build StateStoreFactoryConfiguration from environment variables.
+    /// Build StateStoreFactoryConfiguration from StateServiceConfiguration (Tenet 21 compliant).
+    /// Configuration is injected via DI factory pattern.
     /// </summary>
-    private static StateStoreFactoryConfiguration BuildFactoryConfiguration()
+    private static StateStoreFactoryConfiguration BuildFactoryConfiguration(StateServiceConfiguration stateConfig)
     {
         var config = new StateStoreFactoryConfiguration
         {
-            // Connection strings from environment
-            RedisConnectionString = Environment.GetEnvironmentVariable("STATE_REDIS_CONNECTION") ?? "bannou-redis:6379",
-            MySqlConnectionString = Environment.GetEnvironmentVariable("STATE_MYSQL_CONNECTION")
+            // Connection strings from injected configuration (Tenet 21 - no hardcoded defaults for connection strings)
+            RedisConnectionString = !string.IsNullOrEmpty(stateConfig.RedisConnectionString)
+                ? stateConfig.RedisConnectionString
+                : "localhost:6379",
+            MySqlConnectionString = stateConfig.MySqlConnectionString
         };
 
         // Add default store mappings based on Dapr component naming conventions

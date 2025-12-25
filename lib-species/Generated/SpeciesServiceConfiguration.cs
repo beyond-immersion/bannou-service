@@ -1,7 +1,7 @@
-using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
+using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.Species;
 
@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.Species;
 /// Configuration class for Species service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(SpeciesService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(SpeciesService))]
 public class SpeciesServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
@@ -17,7 +17,7 @@ public class SpeciesServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// Enable/disable Species service
-    /// Environment variable: ENABLED or BANNOU_ENABLED
+    /// Environment variable: ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

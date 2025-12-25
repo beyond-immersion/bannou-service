@@ -51,21 +51,19 @@ public class ClientEventRabbitMQSubscriber : IAsyncDisposable
     /// <summary>
     /// Creates a new ClientEventRabbitMQSubscriber.
     /// </summary>
+    /// <param name="connectionString">RabbitMQ connection string from configuration.</param>
     /// <param name="logger">Logger for connection operations.</param>
     /// <param name="eventHandler">Callback to handle received events (sessionId, eventPayload).</param>
     /// <param name="instanceId">Unique identifier for this Connect instance (for queue naming).</param>
     public ClientEventRabbitMQSubscriber(
+        string connectionString,
         ILogger<ClientEventRabbitMQSubscriber> logger,
         Func<string, byte[], Task> eventHandler,
         string? instanceId = null)
     {
+        _connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _eventHandler = eventHandler ?? throw new ArgumentNullException(nameof(eventHandler));
-
-        // Read connection string directly from environment (same as Orchestrator)
-        _connectionString = Environment.GetEnvironmentVariable("BANNOU_RabbitMqConnectionString")
-            ?? Environment.GetEnvironmentVariable("RabbitMqConnectionString")
-            ?? "amqp://guest:guest@rabbitmq:5672";
 
         // Create unique queue prefix for this instance
         _queuePrefix = $"connect-session-{instanceId ?? Guid.NewGuid().ToString("N")[..8]}";

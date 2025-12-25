@@ -28,6 +28,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     private const string SESSION_KEY_PREFIX = "session:";
     private const string SESSION_LIST_KEY = "session-list";
 
+    private const string TEST_SERVER_SALT = "test-server-salt-2025";
+
     public GameSessionServiceTests()
     {
         _mockDaprClient = new Mock<DaprClient>();
@@ -35,6 +37,17 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+    }
+
+    /// <summary>
+    /// Override to provide test configuration with required ServerSalt.
+    /// </summary>
+    protected override GameSessionServiceConfiguration CreateConfiguration()
+    {
+        return new GameSessionServiceConfiguration
+        {
+            ServerSalt = TEST_SERVER_SALT
+        };
     }
 
     private GameSessionService CreateService()
@@ -734,9 +747,9 @@ public class GameSessionConfigurationTests
     [Fact]
     public void Configuration_ShouldBindFromEnvironmentVariables()
     {
-        // Arrange
-        Environment.SetEnvironmentVariable("BANNOU_MAXPLAYERSPERSESSION", "8");
-        Environment.SetEnvironmentVariable("BANNOU_DEFAULTSESSIONTIMEOUT", "3600");
+        // Arrange - Use GAMESESSION_ prefix (derived from DaprService("game-session"))
+        Environment.SetEnvironmentVariable("GAMESESSION_MAXPLAYERSPERSESSION", "8");
+        Environment.SetEnvironmentVariable("GAMESESSION_DEFAULTSESSIONTIMEOUTSECONDS", "3600");
 
         // Act
         var config = IServiceConfiguration.BuildConfiguration<GameSessionServiceConfiguration>();
@@ -745,7 +758,7 @@ public class GameSessionConfigurationTests
         Assert.NotNull(config);
 
         // Cleanup
-        Environment.SetEnvironmentVariable("BANNOU_MAXPLAYERSPERSESSION", null);
-        Environment.SetEnvironmentVariable("BANNOU_DEFAULTSESSIONTIMEOUT", null);
+        Environment.SetEnvironmentVariable("GAMESESSION_MAXPLAYERSPERSESSION", null);
+        Environment.SetEnvironmentVariable("GAMESESSION_DEFAULTSESSIONTIMEOUTSECONDS", null);
     }
 }

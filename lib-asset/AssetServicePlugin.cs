@@ -3,13 +3,14 @@ using BeyondImmersion.BannouService.Asset.Events;
 using BeyondImmersion.BannouService.Asset.Metrics;
 using BeyondImmersion.BannouService.Asset.Processing;
 using BeyondImmersion.BannouService.Asset.Storage;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Minio;
 
 namespace BeyondImmersion.BannouService.Asset;
@@ -39,60 +40,32 @@ public class AssetServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register AssetServiceConfiguration here
 
-        // Register MinIO configuration options from environment/configuration
+        // Register MinIO configuration options from AssetServiceConfiguration (Tenet 21)
         services.AddOptions<MinioStorageOptions>()
-            .Configure<IConfiguration>((options, config) =>
+            .Configure<AssetServiceConfiguration>((options, config) =>
             {
-                // Bind from configuration section if available
-                config.GetSection("Minio").Bind(options);
-
-                // Override with environment variables (BANNOU_ prefix takes precedence)
-                var endpoint = Environment.GetEnvironmentVariable("BANNOU_MINIO_ENDPOINT")
-                    ?? Environment.GetEnvironmentVariable("MINIO_ENDPOINT");
-                if (!string.IsNullOrEmpty(endpoint))
-                    options.Endpoint = endpoint;
-
-                var accessKey = Environment.GetEnvironmentVariable("BANNOU_MINIO_ACCESS_KEY")
-                    ?? Environment.GetEnvironmentVariable("MINIO_ACCESS_KEY")
-                    ?? Environment.GetEnvironmentVariable("MINIO_ROOT_USER");
-                if (!string.IsNullOrEmpty(accessKey))
-                    options.AccessKey = accessKey;
-
-                var secretKey = Environment.GetEnvironmentVariable("BANNOU_MINIO_SECRET_KEY")
-                    ?? Environment.GetEnvironmentVariable("MINIO_SECRET_KEY")
-                    ?? Environment.GetEnvironmentVariable("MINIO_ROOT_PASSWORD");
-                if (!string.IsNullOrEmpty(secretKey))
-                    options.SecretKey = secretKey;
-
-                var useSSL = Environment.GetEnvironmentVariable("BANNOU_MINIO_USE_SSL")
-                    ?? Environment.GetEnvironmentVariable("MINIO_USE_SSL");
-                if (!string.IsNullOrEmpty(useSSL))
-                    options.UseSSL = useSSL.Equals("true", StringComparison.OrdinalIgnoreCase);
-
-                var bucket = Environment.GetEnvironmentVariable("BANNOU_MINIO_DEFAULT_BUCKET")
-                    ?? Environment.GetEnvironmentVariable("MINIO_DEFAULT_BUCKET");
-                if (!string.IsNullOrEmpty(bucket))
-                    options.DefaultBucket = bucket;
-
-                var region = Environment.GetEnvironmentVariable("BANNOU_MINIO_REGION")
-                    ?? Environment.GetEnvironmentVariable("MINIO_REGION");
-                if (!string.IsNullOrEmpty(region))
-                    options.Region = region;
+                // Map from AssetServiceConfiguration to MinioStorageOptions
+                options.Endpoint = config.StorageEndpoint;
+                options.AccessKey = config.StorageAccessKey;
+                options.SecretKey = config.StorageSecretKey;
+                options.UseSSL = config.StorageUseSsl;
+                options.DefaultBucket = config.StorageBucket;
+                options.Region = config.StorageRegion;
             });
 
         // Register IMinioClient using the configured options
         services.AddSingleton<IMinioClient>(sp =>
         {
-            var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<MinioStorageOptions>>().Value;
+            var options = sp.GetRequiredService<IOptions<MinioStorageOptions>>().Value;
             var logger = sp.GetService<ILogger<MinioStorageProvider>>();
 
-            // Validate credentials are configured
+            // Validate credentials are configured (Tenet 21 - fail-fast for required config)
             if (string.IsNullOrEmpty(options.AccessKey) || string.IsNullOrEmpty(options.SecretKey))
             {
-                logger?.LogError(
-                    "MinIO credentials not configured. Set MINIO_ROOT_USER/MINIO_ROOT_PASSWORD or BANNOU_MINIO_ACCESS_KEY/BANNOU_MINIO_SECRET_KEY environment variables.");
-                throw new InvalidOperationException(
-                    "MinIO credentials not configured. Set MINIO_ROOT_USER/MINIO_ROOT_PASSWORD environment variables.");
+                var message = "MinIO credentials not configured. " +
+                    "Set ASSET_STORAGE_ACCESS_KEY and ASSET_STORAGE_SECRET_KEY environment variables.";
+                logger?.LogError(message);
+                throw new InvalidOperationException(message);
             }
 
             logger?.LogInformation("Configuring MinIO client: Endpoint={Endpoint}, UseSSL={UseSSL}, Bucket={Bucket}",
@@ -131,9 +104,10 @@ public class AssetServicePlugin : BaseBannouPlugin
         services.AddSingleton<AssetProcessorRegistry>();
 
         // Register processing worker as hosted service based on processing mode
-        var processingMode = Environment.GetEnvironmentVariable("ASSET_PROCESSING_MODE")
-            ?? Environment.GetEnvironmentVariable("BANNOU_ASSET_PROCESSING_MODE")
-            ?? "both";
+        // Tenet 21 Exception: Read environment variable directly during ConfigureServices because
+        // configuration binding (AssetServiceConfiguration) isn't available until service provider is built.
+        // Uses canonical ASSET_PROCESSING_MODE variable name defined in asset-configuration.yaml.
+        var processingMode = Environment.GetEnvironmentVariable("ASSET_PROCESSING_MODE") ?? "both";
 
         if (processingMode.Equals("worker", StringComparison.OrdinalIgnoreCase) ||
             processingMode.Equals("both", StringComparison.OrdinalIgnoreCase))

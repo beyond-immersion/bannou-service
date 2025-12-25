@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
@@ -38,7 +39,8 @@ public static class TestingPermissionRegistration
             Timestamp = DateTimeOffset.UtcNow,
             ServiceId = ServiceId,
             Version = ServiceVersion,
-            AppId = Environment.GetEnvironmentVariable("DAPR_APP_ID") ?? "bannou",
+            // DAPR_APP_ID is a legitimate Tenet 21 exception - Dapr bootstrap variable
+            AppId = Environment.GetEnvironmentVariable("DAPR_APP_ID") ?? AppConstants.DEFAULT_APP_NAME,
             Endpoints = GetEndpoints()
         };
     }

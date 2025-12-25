@@ -9,6 +9,11 @@
 # NOTE: The main node is NOT included here - orchestrator never deploys itself.
 # Presets only define ADDITIONAL nodes to deploy alongside the main orchestrator node.
 #
+# Environment Inheritance:
+# Deployed containers inherit ALL environment variables from the orchestrator,
+# so there's no need to duplicate AUTH_*, STATE_*, etc. configuration here.
+# Only specify overrides or node-specific configuration.
+#
 # When deployed, ServiceMappingEvents are published:
 # - accounts -> bannou-auth
 # - auth -> bannou-auth
@@ -29,8 +34,7 @@ topology:
         - auth
       replicas: 1
       environment:
-        ASPNETCORE_ENVIRONMENT: Development
-        # This node only handles auth
+        # Node-specific marker
         BANNOU_IS_AUTH_NODE: "true"
 
   infrastructure:
@@ -45,18 +49,11 @@ topology:
       version: "3.12-management"
 
 environment:
-  # Moderate logging for test visibility
+  # Only override logging if different from main node
+  # All other configuration (AUTH_*, STATE_*, ACCOUNT_*, etc.) is
+  # inherited from orchestrator's environment automatically
   APP_LOGGING_LEVEL: Debug
-  WEB_HOST_LOGGING_LEVEL: Warning
   BANNOU_APP_LOGGING_LEVEL: Debug
-  BANNOU_WEB_HOST_LOGGING_LEVEL: Warning
-
-  # Admin configuration
-  BANNOU_AdminEmailDomain: "@admin.test.local"
-
-  # Test credentials
-  Admin_Username: admin@admin.test.local
-  Admin_Password: admin-test-password-2025
 
 requiredBackends:
   - docker-compose

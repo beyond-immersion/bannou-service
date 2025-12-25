@@ -51,6 +51,7 @@ public partial class ConnectService : IConnectService
     private ClientEventRabbitMQSubscriber? _clientEventSubscriber;
     private readonly ILoggerFactory _loggerFactory;
     private readonly ClientEventQueueManager? _clientEventQueueManager;
+    private readonly string? _rabbitMqConnectionString;
 
     // Session to service GUID mappings (in-memory for low-latency lookups, persisted via ISessionManager)
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>> _sessionServiceMappings;
@@ -88,8 +89,17 @@ public partial class ConnectService : IConnectService
         _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
         _connectionManager = new WebSocketConnectionManager();
 
-        // Use shared server salt for GUID generation (ensures shortcuts work across services)
-        _serverSalt = GuidGenerator.GetSharedServerSalt();
+        // Store configuration values for later use
+        _rabbitMqConnectionString = configuration.RabbitMqConnectionString;
+
+        // Server salt from configuration - REQUIRED (fail-fast for production safety)
+        // All service instances must share the same salt for session shortcuts to work correctly
+        if (string.IsNullOrEmpty(configuration.ServerSalt))
+        {
+            throw new InvalidOperationException(
+                "CONNECT_SERVERSALT is required. All service instances must share the same salt for session shortcuts to work correctly.");
+        }
+        _serverSalt = configuration.ServerSalt;
 
         // Generate unique instance ID for distributed deployment
         _instanceId = Environment.MachineName + "-" + Guid.NewGuid().ToString("N")[..8];
@@ -1324,22 +1334,30 @@ public partial class ConnectService : IConnectService
 
         // Initialize direct RabbitMQ subscriber for session-specific client events
         // TENET exception: Dapr doesn't support dynamic runtime subscriptions
-        _logger.LogInformation("Initializing client event RabbitMQ subscriber");
-        var subscriberLogger = _loggerFactory.CreateLogger<ClientEventRabbitMQSubscriber>();
-        _clientEventSubscriber = new ClientEventRabbitMQSubscriber(
-            subscriberLogger,
-            HandleClientEventAsync,
-            _instanceId);
-
-        var subscriberInitialized = await _clientEventSubscriber.InitializeAsync(cancellationToken);
-        if (subscriberInitialized)
+        if (string.IsNullOrEmpty(_rabbitMqConnectionString))
         {
-            _logger.LogInformation("Client event RabbitMQ subscriber initialized successfully");
+            _logger.LogWarning("CONNECT_RABBITMQ_CONNECTION_STRING not configured - client events will not be delivered");
         }
         else
         {
-            _logger.LogWarning("Failed to initialize RabbitMQ subscriber - client events will not be delivered");
-            _clientEventSubscriber = null;
+            _logger.LogInformation("Initializing client event RabbitMQ subscriber");
+            var subscriberLogger = _loggerFactory.CreateLogger<ClientEventRabbitMQSubscriber>();
+            _clientEventSubscriber = new ClientEventRabbitMQSubscriber(
+                _rabbitMqConnectionString,
+                subscriberLogger,
+                HandleClientEventAsync,
+                _instanceId);
+
+            var subscriberInitialized = await _clientEventSubscriber.InitializeAsync(cancellationToken);
+            if (subscriberInitialized)
+            {
+                _logger.LogInformation("Client event RabbitMQ subscriber initialized successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to initialize RabbitMQ subscriber - client events will not be delivered");
+                _clientEventSubscriber = null;
+            }
         }
     }
 

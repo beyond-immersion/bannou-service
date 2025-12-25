@@ -59,6 +59,11 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
 
         EnvPrefix = envPrefix;
         if (ServiceAttribute != null && envPrefix == null)
-            EnvPrefix = $"{ServiceAttribute.Name.ToUpper()}_";
+        {
+            // Convert service name to env prefix: "game-session" -> "GAMESESSION_"
+            // Hyphens are removed (not converted to underscores) to match property naming conventions
+            var normalizedName = ServiceAttribute.Name.Replace("-", "").ToUpper();
+            EnvPrefix = $"{normalizedName}_";
+        }
     }
 }

@@ -6,6 +6,7 @@
 
 #nullable enable
 
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
@@ -39,7 +40,7 @@ public static class GameSessionPermissionRegistration
             Timestamp = DateTimeOffset.UtcNow,
             ServiceId = ServiceId,
             Version = ServiceVersion,
-            AppId = Environment.GetEnvironmentVariable("DAPR_APP_ID") ?? "bannou",
+            AppId = AppConstants.DEFAULT_APP_NAME,
             Endpoints = GetEndpoints()
         };
     }

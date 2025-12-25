@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Orchestrator;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Microsoft.Extensions.Logging;
@@ -81,7 +82,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     private Dictionary<string, string>? _discoveredInfrastructureHosts;
     private bool _infrastructureDiscoveryAttempted;
 
-    public DockerComposeOrchestrator(ILogger<DockerComposeOrchestrator> logger)
+    public DockerComposeOrchestrator(OrchestratorServiceConfiguration config, ILogger<DockerComposeOrchestrator> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
@@ -90,26 +91,15 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         // Windows: npipe://./pipe/docker_engine
         _client = new DockerClientConfiguration().CreateClient();
 
-        // Read configuration from environment variables
-        // These are required for deploying containers with Dapr sidecars
-        _configuredDockerNetwork = Environment.GetEnvironmentVariable("BANNOU_DockerNetwork")
-            ?? "bannou_default";
-        _daprComponentsHostPath = Environment.GetEnvironmentVariable("BANNOU_DaprComponentsHostPath")
-            ?? "/app/provisioning/dapr/components";
-        // Container-visible path for the mounted components directory (RW mount expected)
-        _daprComponentsContainerPath = Environment.GetEnvironmentVariable("BANNOU_DaprComponentsContainerPath")
-            ?? "/tmp/dapr-components";
-        _daprImage = Environment.GetEnvironmentVariable("BANNOU_DaprImage")
-            ?? "daprio/daprd:1.16.3";
-        _placementHost = Environment.GetEnvironmentVariable("BANNOU_PlacementHost")
-            ?? "placement:50006";
-        _certificatesHostPath = Environment.GetEnvironmentVariable("BANNOU_CertificatesHostPath")
-            ?? "/app/provisioning/certificates";
-        _presetsHostPath = Environment.GetEnvironmentVariable("BANNOU_PresetsHostPath")
-            ?? "/app/provisioning/orchestrator/presets";
-        _logsVolumeName = Environment.GetEnvironmentVariable("BANNOU_LogsVolume")
-            ?? "logs-data";
-        // Note: No custom Dapr config needed - mDNS (default) works for standalone containers on bridge network
+        // Read configuration from injected configuration class (Tenet 21 compliant)
+        _configuredDockerNetwork = config.DockerNetwork ?? "bannou_default";
+        _daprComponentsHostPath = config.DaprComponentsHostPath ?? "/app/provisioning/dapr/components";
+        _daprComponentsContainerPath = config.DaprComponentsContainerPath ?? "/tmp/dapr-components";
+        _daprImage = config.DaprImage ?? "daprio/daprd:1.16.3";
+        _placementHost = config.PlacementHost ?? "placement:50006";
+        _certificatesHostPath = config.CertificatesHostPath ?? "/app/provisioning/certificates";
+        _presetsHostPath = config.PresetsHostPath ?? "/app/provisioning/orchestrator/presets";
+        _logsVolumeName = config.LogsVolumeName ?? "logs-data";
 
         _logger.LogInformation(
         "DockerComposeOrchestrator configured: Network={Network}, DaprComponents={Components}, DaprImage={Image}, Placement={Placement}",
@@ -891,7 +881,10 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 $"DAPR_APP_ID={appId}",
                 // Tell deployed container to query this orchestrator for initial service mappings
                 // This ensures new containers have correct routing info before participating in network
-                $"BANNOU_MappingSourceAppId={orchestratorAppId}"
+                $"BANNOU_MappingSourceAppId={orchestratorAppId}",
+                // Required for proper service operation - not forwarded from orchestrator ENV
+                "DAEMON_MODE=true",
+                "HEARTBEAT_ENABLED=true"
             };
 
             if (certificatesPath != null)

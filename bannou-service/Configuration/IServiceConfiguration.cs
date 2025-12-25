@@ -125,15 +125,39 @@ public interface IServiceConfiguration
 
     /// <summary>
     /// Builds the service configuration from available Config.json, ENVs, and command line switches.
+    /// Environment variables are read with the service-specific prefix (e.g., ASSET_, CONNECT_) and
+    /// keys are normalized from UPPER_SNAKE_CASE to PascalCase to match C# property naming.
+    /// Example: ASSET_STORAGE_ACCESS_KEY -> StorageAccessKey
     /// </summary>
     public static IServiceConfiguration? BuildConfiguration(Type configurationType, string[]? args = null, string? envPrefix = null)
     {
         if (!typeof(IServiceConfiguration).IsAssignableFrom(configurationType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IServiceConfiguration)}");
 
+        // Load .env file first for local development support (same as BuildConfigurationRoot)
+        try
+        {
+            if (File.Exists("../.env"))
+            {
+                Env.Load("../.env");
+            }
+            else if (File.Exists(".env"))
+            {
+                Env.Load();
+            }
+        }
+        catch (Exception)
+        {
+            // .env file is optional, ignore if not present
+        }
+
+        // Use normalized env vars to support UPPER_SNAKE_CASE -> PascalCase mapping
+        // Example: ASSET_STORAGE_ACCESS_KEY (with ASSET_ prefix) -> StorageAccessKey
+        var normalizedEnvVars = GetNormalizedEnvVars(envPrefix);
+
         IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
             .AddJsonFile("Config.json", true)
-            .AddEnvironmentVariables(envPrefix)
+            .AddInMemoryCollection(normalizedEnvVars)
             .AddCommandLine(args ?? Environment.GetCommandLineArgs(), CreateSwitchMappings(configurationType));
 
         return configurationBuilder.Build()
@@ -189,5 +213,64 @@ public interface IServiceConfiguration
         propertyName = propertyName.Replace('_', '-');
         propertyName = "--" + propertyName;
         return propertyName;
+    }
+
+    /// <summary>
+    /// Normalizes an environment variable key from UPPER_SNAKE_CASE to PascalCase.
+    /// Example: STORAGE_ACCESS_KEY -> StorageAccessKey
+    /// </summary>
+    public static string NormalizeEnvVarKey(string envVarKey)
+    {
+        if (string.IsNullOrEmpty(envVarKey))
+            return envVarKey;
+
+        // Split by underscore and convert each part to title case
+        var parts = envVarKey.Split('_');
+        var result = new System.Text.StringBuilder();
+
+        foreach (var part in parts)
+        {
+            if (string.IsNullOrEmpty(part))
+                continue;
+
+            // First letter uppercase, rest lowercase
+            result.Append(char.ToUpperInvariant(part[0]));
+            if (part.Length > 1)
+                result.Append(part.Substring(1).ToLowerInvariant());
+        }
+
+        return result.ToString();
+    }
+
+    /// <summary>
+    /// Reads environment variables with the given prefix and returns them with normalized keys.
+    /// Keys are converted from UPPER_SNAKE_CASE to PascalCase to match C# property naming.
+    /// </summary>
+    public static IDictionary<string, string?> GetNormalizedEnvVars(string? envPrefix)
+    {
+        var result = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        var prefix = envPrefix ?? string.Empty;
+
+        foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
+        {
+            var key = entry.Key?.ToString();
+            if (key == null)
+                continue;
+
+            // Check if key starts with prefix (case-insensitive)
+            if (!string.IsNullOrEmpty(prefix) &&
+                !key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            // Strip prefix and normalize key
+            var strippedKey = string.IsNullOrEmpty(prefix) ? key : key.Substring(prefix.Length);
+            var normalizedKey = NormalizeEnvVarKey(strippedKey);
+
+            // Only add if we got a valid normalized key
+            if (!string.IsNullOrEmpty(normalizedKey))
+                result[normalizedKey] = entry.Value?.ToString();
+        }
+
+        return result;
     }
 }

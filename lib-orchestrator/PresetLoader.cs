@@ -17,45 +17,15 @@ public class PresetLoader
     /// Initializes a new instance of the PresetLoader.
     /// </summary>
     /// <param name="logger">Logger instance.</param>
-    /// <param name="presetsDirectory">Directory containing preset YAML files.</param>
-    public PresetLoader(ILogger<PresetLoader> logger, string? presetsDirectory = null)
+    /// <param name="presetsDirectory">Directory containing preset YAML files. Required - from OrchestratorServiceConfiguration.</param>
+    public PresetLoader(ILogger<PresetLoader> logger, string presetsDirectory)
     {
-        _logger = logger;
-        _presetsDirectory = presetsDirectory ?? GetDefaultPresetsDirectory();
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _presetsDirectory = presetsDirectory ?? throw new ArgumentNullException(nameof(presetsDirectory));
         _deserializer = new DeserializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .IgnoreUnmatchedProperties()
             .Build();
-    }
-
-    /// <summary>
-    /// Gets the default presets directory path.
-    /// </summary>
-    private static string GetDefaultPresetsDirectory()
-    {
-        // Check environment variable first
-        var envPath = Environment.GetEnvironmentVariable("BANNOU_PRESETS_DIR");
-        if (!string.IsNullOrEmpty(envPath) && Directory.Exists(envPath))
-        {
-            return envPath;
-        }
-
-        // Check relative to working directory
-        var relativePath = Path.Combine("provisioning", "orchestrator", "presets");
-        if (Directory.Exists(relativePath))
-        {
-            return relativePath;
-        }
-
-        // Check common container paths
-        var containerPath = "/app/provisioning/orchestrator/presets";
-        if (Directory.Exists(containerPath))
-        {
-            return containerPath;
-        }
-
-        // Fallback to relative path even if it doesn't exist
-        return relativePath;
     }
 
     /// <summary>

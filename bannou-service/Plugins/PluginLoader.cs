@@ -40,6 +40,16 @@ public class PluginLoader
     private readonly List<(Type interfaceType, Type implementationType, ServiceLifetime lifetime)> _serviceTypesToRegister = new();
     private readonly List<(Type configurationType, ServiceLifetime lifetime)> _configurationTypesToRegister = new();
 
+    // Static set of valid environment variable prefixes for forwarding to deployed containers
+    // Populated during plugin discovery and accessible by OrchestratorService
+    private static readonly HashSet<string> _validEnvironmentPrefixes = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Valid environment variable prefixes based on discovered plugins.
+    /// Used by OrchestratorService to filter which ENV vars to forward to deployed containers.
+    /// </summary>
+    public static IReadOnlySet<string> ValidEnvironmentPrefixes => _validEnvironmentPrefixes;
+
     /// <inheritdoc/>
     public PluginLoader(ILogger<PluginLoader> logger)
     {
@@ -118,6 +128,9 @@ public class PluginLoader
         // STAGE 2: Discover types for DI registration from ALL assemblies
         DiscoverTypesForRegistration();
 
+        // STAGE 3: Build valid environment variable prefixes for orchestrator forwarding
+        PopulateValidEnvironmentPrefixes();
+
         var discoveredSummary = string.Join(", ", _allPlugins.Select(p => $"{p.DisplayName} v{p.Version}"));
         var enabledSummary = string.Join(", ", _enabledPlugins.Select(p => $"{p.DisplayName} v{p.Version}"));
 
@@ -172,6 +185,45 @@ public class PluginLoader
 
             return isEnabled;
         }
+    }
+
+    /// <summary>
+    /// Populate the static set of valid environment variable prefixes based on discovered plugins.
+    /// This allows the orchestrator to whitelist which ENVs to forward to deployed containers.
+    /// </summary>
+    private void PopulateValidEnvironmentPrefixes()
+    {
+        _validEnvironmentPrefixes.Clear();
+
+        // Only BANNOU_ prefix for shared configuration
+        // All other configuration uses plugin-derived {SERVICE}_ prefixes
+        _validEnvironmentPrefixes.Add("BANNOU_");
+
+        // Add prefix for each discovered plugin
+        // e.g., "auth" → "AUTH_", "game-session" → "GAMESESSION_" and "GAME_SESSION_"
+        foreach (var plugin in _allPlugins)
+        {
+            var pluginName = plugin.PluginName;
+            if (string.IsNullOrWhiteSpace(pluginName))
+                continue;
+
+            // Primary prefix: uppercase with underscores replaced for hyphens, plus trailing underscore
+            // e.g., "game-session" → "GAME_SESSION_"
+            var primaryPrefix = pluginName.ToUpperInvariant().Replace('-', '_') + "_";
+            _validEnvironmentPrefixes.Add(primaryPrefix);
+
+            // Secondary prefix: hyphens removed (no underscore replacement)
+            // e.g., "game-session" → "GAMESESSION_"
+            var secondaryPrefix = pluginName.ToUpperInvariant().Replace("-", "") + "_";
+            if (primaryPrefix != secondaryPrefix)
+            {
+                _validEnvironmentPrefixes.Add(secondaryPrefix);
+            }
+        }
+
+        _logger.LogInformation(
+            "Valid environment prefixes for orchestrator forwarding: {Prefixes}",
+            string.Join(", ", _validEnvironmentPrefixes.OrderBy(p => p)));
     }
 
     /// <summary>

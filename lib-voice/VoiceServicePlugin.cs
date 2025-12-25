@@ -43,32 +43,24 @@ public class VoiceServicePlugin : BaseBannouPlugin
         // Singleton for consistency with P2P services and to maintain state across requests
         services.AddSingleton<IScaledTierCoordinator, ScaledTierCoordinator>();
 
-        // Register Kamailio and RTPEngine clients with environment-driven settings
+        // Register Kamailio and RTPEngine clients with configuration-driven settings
         // These are singleton because they manage long-lived connections
-        // Note: Read env vars directly to avoid Scoped/Singleton lifetime conflict
+        // Configuration is available via DI factory - VoiceServiceConfiguration is registered by PluginLoader
         services.AddSingleton<IKamailioClient>(sp =>
         {
+            var config = sp.GetRequiredService<VoiceServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<KamailioClient>>();
             var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient("Kamailio");
-            var host = Environment.GetEnvironmentVariable("BANNOU_KAMAILIOHOST")
-                ?? Environment.GetEnvironmentVariable("KAMAILIOHOST")
-                ?? "localhost";
-            var portStr = Environment.GetEnvironmentVariable("BANNOU_KAMAILIORPCPORT")
-                ?? Environment.GetEnvironmentVariable("KAMAILIORPCPORT");
-            var port = int.TryParse(portStr, out var p) && p > 0 ? p : 5080;
-            return new KamailioClient(httpClient, host, port, logger);
+            // Configuration has sensible defaults - use directly
+            return new KamailioClient(httpClient, config.KamailioHost, config.KamailioRpcPort, logger);
         });
 
         services.AddSingleton<IRtpEngineClient>(sp =>
         {
+            var config = sp.GetRequiredService<VoiceServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<RtpEngineClient>>();
-            var host = Environment.GetEnvironmentVariable("BANNOU_RTPENGINEHOST")
-                ?? Environment.GetEnvironmentVariable("RTPENGINEHOST")
-                ?? "localhost";
-            var portStr = Environment.GetEnvironmentVariable("BANNOU_RTPENGINEPORT")
-                ?? Environment.GetEnvironmentVariable("RTPENGINEPORT");
-            var port = int.TryParse(portStr, out var p) && p > 0 ? p : 22222;
-            return new RtpEngineClient(host, port, logger);
+            // Configuration has sensible defaults - use directly
+            return new RtpEngineClient(config.RtpEngineHost, config.RtpEnginePort, logger);
         });
         Logger?.LogDebug("Registered Voice scaled tier services (ScaledTierCoordinator, KamailioClient, RtpEngineClient)");
 

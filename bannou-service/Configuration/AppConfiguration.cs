@@ -102,4 +102,23 @@ public class AppConfiguration : BaseServiceConfiguration
     /// This ensures newly deployed containers have correct routing information.
     /// </summary>
     public string? MappingSourceAppId { get; set; }
+
+    /// <summary>
+    /// Interval in seconds between service heartbeats.
+    /// Environment variable: HEARTBEAT_INTERVAL_SECONDS or BANNOU_HEARTBEAT_INTERVAL_SECONDS
+    /// </summary>
+    public int HeartbeatIntervalSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Whether to re-register permissions on each heartbeat.
+    /// Environment variable: PERMISSION_HEARTBEAT_ENABLED or BANNOU_PERMISSION_HEARTBEAT_ENABLED
+    /// </summary>
+    public bool PermissionHeartbeatEnabled { get; set; } = true;
+
+    /// <summary>
+    /// The Dapr App ID for this service instance.
+    /// Environment variable: DAPR_APP_ID (or APP_ID for backwards compatibility)
+    /// Note: DAPR_APP_ID is a bootstrap variable read during Dapr client initialization.
+    /// </summary>
+    public string? DaprAppId { get; set; }
 }

@@ -108,11 +108,12 @@ public class AuthServiceTests
 
         try
         {
-            // Set environment variables with BANNOU_ prefix
-            Environment.SetEnvironmentVariable("BANNOU_JWTSECRET", testSecret);
-            Environment.SetEnvironmentVariable("BANNOU_JWTISSUER", testIssuer);
-            Environment.SetEnvironmentVariable("BANNOU_JWTAUDIENCE", testAudience);
-            Environment.SetEnvironmentVariable("BANNOU_JWTEXPIRATIONMINUTES", testExpiration.ToString());
+            // Set environment variables with AUTH_ prefix and UPPER_SNAKE_CASE format
+            // The normalization converts AUTH_JWT_SECRET -> JwtSecret
+            Environment.SetEnvironmentVariable("AUTH_JWT_SECRET", testSecret);
+            Environment.SetEnvironmentVariable("AUTH_JWT_ISSUER", testIssuer);
+            Environment.SetEnvironmentVariable("AUTH_JWT_AUDIENCE", testAudience);
+            Environment.SetEnvironmentVariable("AUTH_JWT_EXPIRATION_MINUTES", testExpiration.ToString());
 
             // Act - Build configuration using the same method as dependency injection
             var config = BeyondImmersion.BannouService.Configuration.IServiceConfiguration.BuildConfiguration<AuthServiceConfiguration>();
@@ -127,10 +128,10 @@ public class AuthServiceTests
         finally
         {
             // Clean up environment variables
-            Environment.SetEnvironmentVariable("BANNOU_JWTSECRET", null);
-            Environment.SetEnvironmentVariable("BANNOU_JWTISSUER", null);
-            Environment.SetEnvironmentVariable("BANNOU_JWTAUDIENCE", null);
-            Environment.SetEnvironmentVariable("BANNOU_JWTEXPIRATIONMINUTES", null);
+            Environment.SetEnvironmentVariable("AUTH_JWT_SECRET", null);
+            Environment.SetEnvironmentVariable("AUTH_JWT_ISSUER", null);
+            Environment.SetEnvironmentVariable("AUTH_JWT_AUDIENCE", null);
+            Environment.SetEnvironmentVariable("AUTH_JWT_EXPIRATION_MINUTES", null);
         }
     }
 

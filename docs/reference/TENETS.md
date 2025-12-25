@@ -1273,6 +1273,87 @@ public void BannouJson_Options_SerializesEnumsAsPascalCase()
 
 ---
 
+## Tenet 21: Configuration-First Development (MANDATORY)
+
+**Rule**: All runtime configuration MUST be defined in service configuration schemas and accessed through generated configuration classes. Direct `Environment.GetEnvironmentVariable` calls are forbidden except for documented exceptions.
+
+### Requirements
+
+1. **Define in Schema**: All configuration goes in `schemas/{service}-configuration.yaml`
+2. **Use Injected Configuration**: Access via `{Service}ServiceConfiguration` class
+3. **Fail-Fast Required Config**: Required values without defaults MUST throw at startup
+4. **No Hardcoded Credentials**: Never fall back to hardcoded credentials or connection strings
+5. **Use AppConstants**: Shared defaults use `AppConstants` constants, not hardcoded strings
+
+### Allowed Exceptions (4 Categories)
+
+Document with code comments explaining the exception:
+
+1. **Assembly Loading Control**: `SERVICES_ENABLED`, `*_SERVICE_ENABLED/DISABLED` in `PluginLoader.cs`/`IDaprService.cs`
+   - Required before DI container is available to determine which plugins to load
+
+2. **Dapr Bootstrap Variables**: `DAPR_GRPC_ENDPOINT`, `DAPR_HTTP_ENDPOINT`, `DAPR_HTTP_PORT`, `DAPR_APP_ID`
+   - Needed to create DaprClient and configure Dapr communication before configuration system initializes
+   - Used in `Program.cs`, `ServiceHeartbeatManager.cs`, and permission registration code
+
+3. **ConfigureServices Bootstrap**: Reading config before service provider is built
+   - Example: `ASSET_PROCESSING_MODE` in `AssetServicePlugin.cs` to conditionally register hosted services
+   - Cannot use injected configuration because the service provider doesn't exist yet
+   - Must use canonical env var names defined in the service's configuration schema
+
+4. **Test Harness Control**: `DAEMON_MODE`, `PLUGIN` in test projects
+   - Test infrastructure, not production code
+   - Tests specifically testing configuration-binding may use `SetEnvironmentVariable`
+
+### Required Pattern
+
+```csharp
+// CORRECT: Use injected configuration with fail-fast
+public class MyService
+{
+    public MyService(MyServiceConfiguration config)
+    {
+        _connectionString = config.ConnectionString
+            ?? throw new InvalidOperationException("SERVICE_CONNECTION_STRING required");
+    }
+}
+```
+
+### Forbidden Patterns
+
+```csharp
+// WRONG: Direct environment variable access
+var conn = Environment.GetEnvironmentVariable("MY_CONNECTION_STRING");
+
+// WRONG: Hidden credential fallback (masks configuration issues)
+var conn = Environment.GetEnvironmentVariable("RABBITMQ")
+    ?? "amqp://guest:guest@localhost:5672";  // NO!
+
+// WRONG: Hardcoded default bypassing configuration system
+private const string DEFAULT_REDIS = "localhost:6379";  // Should be in config
+```
+
+### Configuration Schema Pattern
+
+```yaml
+# schemas/{service}-configuration.yaml
+x-service-configuration:
+  properties:
+    ConnectionString:
+      type: string
+      description: Database connection string
+      env: SERVICE_CONNECTION_STRING
+      # NO default for required production values
+
+    CacheTtlSeconds:
+      type: integer
+      description: Cache TTL in seconds
+      env: SERVICE_CACHE_TTL_SECONDS
+      default: 300  # Safe default for optional settings
+```
+
+---
+
 ## Quick Reference: Common Violations
 
 | Violation | Tenet | Fix |
@@ -1294,6 +1375,9 @@ public void BannouJson_Options_SerializesEnumsAsPascalCase()
 | GPL library in NuGet package | 18 | Use MIT/BSD alternative |
 | Missing XML documentation | 19 | Add `<summary>`, `<param>`, `<returns>` |
 | Direct `JsonSerializer` usage | 20 | Use `BannouJson.Serialize/Deserialize` |
+| Direct `Environment.GetEnvironmentVariable` | 21 | Use service configuration class |
+| Hardcoded credential fallback | 21 | Remove default, require configuration |
+| Hardcoded connection string default | 21 | Define in schema, inject config |
 
 ---
 

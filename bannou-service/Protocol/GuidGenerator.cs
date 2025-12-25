@@ -8,41 +8,10 @@ namespace BeyondImmersion.BannouService.Protocol;
 /// Shared GUID generation utilities for client-server security.
 /// Provides client-salted GUIDs to prevent cross-session exploitation.
 /// This is the shared version - all services should use this for consistency.
+/// Server salt should come from service configuration (Tenet 21).
 /// </summary>
 public static class GuidGenerator
 {
-    private static string? _cachedServerSalt;
-    private static readonly object _saltLock = new();
-
-    /// <summary>
-    /// Gets the shared server salt for GUID generation.
-    /// Uses BANNOU_SERVER_SALT environment variable if set, otherwise generates once per process.
-    /// All services must use the same salt for shortcuts to work correctly.
-    /// </summary>
-    public static string GetSharedServerSalt()
-    {
-        if (_cachedServerSalt != null)
-            return _cachedServerSalt;
-
-        lock (_saltLock)
-        {
-            if (_cachedServerSalt != null)
-                return _cachedServerSalt;
-
-            // Try environment variable first (allows shared salt across services)
-            var envSalt = Environment.GetEnvironmentVariable("BANNOU_SERVER_SALT");
-            if (!string.IsNullOrEmpty(envSalt))
-            {
-                _cachedServerSalt = envSalt;
-                return _cachedServerSalt;
-            }
-
-            // Generate new salt (will be unique per process - fine for development)
-            _cachedServerSalt = GenerateServerSalt();
-            return _cachedServerSalt;
-        }
-    }
-
     /// <summary>
     /// Generates a client-salted GUID for a service endpoint.
     /// Each client gets unique GUIDs for identical services, preventing security exploits.

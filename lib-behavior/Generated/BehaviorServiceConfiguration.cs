@@ -1,7 +1,7 @@
-using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
+using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.Behavior;
 
@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.Behavior;
 /// Configuration class for Behavior service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(BehaviorService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(BehaviorService))]
 public class BehaviorServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
@@ -17,7 +17,7 @@ public class BehaviorServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// Enable/disable Behavior service
-    /// Environment variable: ENABLED or BANNOU_ENABLED
+    /// Environment variable: ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

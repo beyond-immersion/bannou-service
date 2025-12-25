@@ -29,18 +29,21 @@ public class MeshRedisManager : IMeshRedisManager
     private const string ENDPOINT_INDEX_KEY = "mesh:endpoint-index";
 
     /// <summary>
-    /// Creates MeshRedisManager with connection string read directly from environment.
-    /// This avoids DI lifetime conflicts with scoped configuration classes.
+    /// Creates MeshRedisManager with configuration injected via DI.
     /// </summary>
+    /// <param name="config">Mesh service configuration.</param>
     /// <param name="logger">Logger instance.</param>
-    public MeshRedisManager(ILogger<MeshRedisManager> logger)
+    public MeshRedisManager(MeshServiceConfiguration config, ILogger<MeshRedisManager> logger)
     {
         _logger = logger;
-        // Read connection string directly from environment to avoid DI lifetime conflicts
-        _connectionString = Environment.GetEnvironmentVariable("MESH_REDIS_CONNECTION_STRING")
-            ?? Environment.GetEnvironmentVariable("BANNOU_RedisConnectionString")
-            ?? Environment.GetEnvironmentVariable("RedisConnectionString")
-            ?? "bannou-redis:6379";
+
+        if (string.IsNullOrEmpty(config.RedisConnectionString))
+        {
+            throw new InvalidOperationException(
+                "MESH_REDIS_CONNECTION_STRING is required for mesh service.");
+        }
+
+        _connectionString = config.RedisConnectionString;
     }
 
     /// <inheritdoc/>

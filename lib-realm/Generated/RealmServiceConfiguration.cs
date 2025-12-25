@@ -1,7 +1,7 @@
-using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
+using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.Realm;
 
@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.Realm;
 /// Configuration class for Realm service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(RealmService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(RealmService))]
 public class RealmServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
@@ -17,7 +17,7 @@ public class RealmServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// Enable/disable Realm service
-    /// Environment variable: ENABLED or BANNOU_ENABLED
+    /// Environment variable: ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

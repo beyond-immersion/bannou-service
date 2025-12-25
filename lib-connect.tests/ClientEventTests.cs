@@ -344,6 +344,8 @@ public class ClientEventTests
 
     #region ClientEventRabbitMQSubscriber Tests
 
+    private const string TestConnectionString = "amqp://guest:guest@localhost:5672/";
+
     [Fact]
     public void RabbitMQSubscriber_Constructor_WithValidParameters_ShouldNotThrow()
     {
@@ -353,8 +355,20 @@ public class ClientEventTests
 
         // Act & Assert
         var exception = Record.Exception(() =>
-            new ClientEventRabbitMQSubscriber(mockLogger.Object, handler));
+            new ClientEventRabbitMQSubscriber(TestConnectionString, mockLogger.Object, handler));
         Assert.Null(exception);
+    }
+
+    [Fact]
+    public void RabbitMQSubscriber_Constructor_WithNullConnectionString_ShouldThrow()
+    {
+        // Arrange
+        var mockLogger = new Mock<ILogger<ClientEventRabbitMQSubscriber>>();
+        Func<string, byte[], Task> handler = (sessionId, payload) => Task.CompletedTask;
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new ClientEventRabbitMQSubscriber(null!, mockLogger.Object, handler));
     }
 
     [Fact]
@@ -365,7 +379,7 @@ public class ClientEventTests
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new ClientEventRabbitMQSubscriber(null!, handler));
+            new ClientEventRabbitMQSubscriber(TestConnectionString, null!, handler));
     }
 
     [Fact]
@@ -376,7 +390,7 @@ public class ClientEventTests
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new ClientEventRabbitMQSubscriber(mockLogger.Object, null!));
+            new ClientEventRabbitMQSubscriber(TestConnectionString, mockLogger.Object, null!));
     }
 
     [Fact]
@@ -385,7 +399,7 @@ public class ClientEventTests
         // Arrange
         var mockLogger = new Mock<ILogger<ClientEventRabbitMQSubscriber>>();
         Func<string, byte[], Task> handler = (sessionId, payload) => Task.CompletedTask;
-        var subscriber = new ClientEventRabbitMQSubscriber(mockLogger.Object, handler);
+        var subscriber = new ClientEventRabbitMQSubscriber(TestConnectionString, mockLogger.Object, handler);
 
         // Act
         var count = subscriber.ActiveSubscriptionCount;
@@ -400,7 +414,7 @@ public class ClientEventTests
         // Arrange
         var mockLogger = new Mock<ILogger<ClientEventRabbitMQSubscriber>>();
         Func<string, byte[], Task> handler = (sessionId, payload) => Task.CompletedTask;
-        var subscriber = new ClientEventRabbitMQSubscriber(mockLogger.Object, handler);
+        var subscriber = new ClientEventRabbitMQSubscriber(TestConnectionString, mockLogger.Object, handler);
 
         // Act
         var result = subscriber.IsSessionSubscribed("non-existent-session");
@@ -415,7 +429,7 @@ public class ClientEventTests
         // Arrange
         var mockLogger = new Mock<ILogger<ClientEventRabbitMQSubscriber>>();
         Func<string, byte[], Task> handler = (sessionId, payload) => Task.CompletedTask;
-        var subscriber = new ClientEventRabbitMQSubscriber(mockLogger.Object, handler);
+        var subscriber = new ClientEventRabbitMQSubscriber(TestConnectionString, mockLogger.Object, handler);
 
         // Act - try to subscribe without initializing connection
         var result = await subscriber.SubscribeToSessionAsync("test-session");
@@ -430,7 +444,7 @@ public class ClientEventTests
         // Arrange
         var mockLogger = new Mock<ILogger<ClientEventRabbitMQSubscriber>>();
         Func<string, byte[], Task> handler = (sessionId, payload) => Task.CompletedTask;
-        var subscriber = new ClientEventRabbitMQSubscriber(mockLogger.Object, handler);
+        var subscriber = new ClientEventRabbitMQSubscriber(TestConnectionString, mockLogger.Object, handler);
 
         // Act
         var result = await subscriber.SubscribeToSessionAsync(null!);
@@ -445,7 +459,7 @@ public class ClientEventTests
         // Arrange
         var mockLogger = new Mock<ILogger<ClientEventRabbitMQSubscriber>>();
         Func<string, byte[], Task> handler = (sessionId, payload) => Task.CompletedTask;
-        var subscriber = new ClientEventRabbitMQSubscriber(mockLogger.Object, handler);
+        var subscriber = new ClientEventRabbitMQSubscriber(TestConnectionString, mockLogger.Object, handler);
 
         // Act
         var result = await subscriber.SubscribeToSessionAsync("");
@@ -460,7 +474,7 @@ public class ClientEventTests
         // Arrange
         var mockLogger = new Mock<ILogger<ClientEventRabbitMQSubscriber>>();
         Func<string, byte[], Task> handler = (sessionId, payload) => Task.CompletedTask;
-        var subscriber = new ClientEventRabbitMQSubscriber(mockLogger.Object, handler);
+        var subscriber = new ClientEventRabbitMQSubscriber(TestConnectionString, mockLogger.Object, handler);
 
         // Act & Assert - should not throw
         var exception = await Record.ExceptionAsync(() =>
@@ -474,7 +488,7 @@ public class ClientEventTests
         // Arrange
         var mockLogger = new Mock<ILogger<ClientEventRabbitMQSubscriber>>();
         Func<string, byte[], Task> handler = (sessionId, payload) => Task.CompletedTask;
-        var subscriber = new ClientEventRabbitMQSubscriber(mockLogger.Object, handler);
+        var subscriber = new ClientEventRabbitMQSubscriber(TestConnectionString, mockLogger.Object, handler);
 
         // Act & Assert - should dispose cleanly without throwing
         var exception = await Record.ExceptionAsync(async () =>

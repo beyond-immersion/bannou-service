@@ -49,6 +49,12 @@ x-service-configuration:
       env: ASSET_STORAGE_FORCE_PATH_STYLE
       default: true
 
+    StorageUseSsl:
+      type: boolean
+      description: Use SSL/TLS for storage connections
+      env: ASSET_STORAGE_USE_SSL
+      default: false
+
     # Pre-signed URL Configuration
     TokenTtlSeconds:
       type: integer

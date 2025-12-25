@@ -71,9 +71,10 @@ public partial class GameSessionService : IGameSessionService
     private static readonly ConcurrentDictionary<Guid, HashSet<string>> _accountSubscriptions = new();
 
     /// <summary>
-    /// Server salt for GUID generation. Uses shared salt from environment or generates once per process.
+    /// Server salt for GUID generation. Comes from configuration, with fallback to random generation for development.
+    /// Instance-based to support configuration injection (Tenet 21).
     /// </summary>
-    private static readonly string _serverSalt = GuidGenerator.GetSharedServerSalt();
+    private readonly string _serverSalt;
 
     /// <summary>
     /// Creates a new GameSessionService instance.
@@ -105,6 +106,14 @@ public partial class GameSessionService : IGameSessionService
         _voiceClient = voiceClient; // Nullable - voice service may be disabled (Tenet 5)
         _permissionsClient = permissionsClient; // Nullable - permissions service may not be loaded (Tenet 5)
         _subscriptionsClient = subscriptionsClient; // Nullable - subscriptions service may not be loaded (Tenet 5)
+
+        // Server salt from configuration - REQUIRED (fail-fast for production safety)
+        if (string.IsNullOrEmpty(configuration.ServerSalt))
+        {
+            throw new InvalidOperationException(
+                "GAMESESSION_SERVERSALT is required. All service instances must share the same salt for session shortcuts to work correctly.");
+        }
+        _serverSalt = configuration.ServerSalt;
 
         // Register event handlers via partial class (GameSessionServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));

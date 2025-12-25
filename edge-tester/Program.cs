@@ -196,26 +196,25 @@ public class Program
             return false;
         }
 
-        // Phase 2: Wait for Dapr sidecar to be ready by making a warmup registration attempt
-        // The registration endpoint calls AccountsClient through Dapr, so this actually exercises
-        // the full Dapr dependency chain. We expect 200 (created) or 409 (conflict) when working,
-        // but 500/502/503 when Dapr isn't ready yet. Login with empty credentials doesn't work
-        // because validation fails before Dapr is touched.
+        // Phase 2: Wait for Dapr sidecar to be ready by making a warmup login attempt
+        // The login endpoint calls AccountsClient through Dapr to look up the account, so this
+        // exercises the full Dapr dependency chain. We use a non-existent account to get 401,
+        // which avoids publishing any events (unlike registration which publishes account.created).
+        // We expect 401 (not found) when working, but 500/502/503 when Dapr isn't ready yet.
         Console.WriteLine($"⏳ Verifying Dapr sidecar readiness...");
-        var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+        var loginUrl = $"http://{openrestyHost}:{openrestyPort}/auth/login";
         delayMs = initialDelayMs;
 
         while (stopwatch.Elapsed.TotalSeconds < maxWaitSeconds)
         {
             try
             {
-                // Make a registration request with a unique warmup username - this will exercise Dapr
-                var warmupUsername = $"warmup_{Guid.NewGuid():N}@test.local";
+                // Make a login request with a non-existent account - exercises Dapr without publishing events
                 var warmupContent = new StringContent(
-                    $"{{\"username\":\"{warmupUsername}\",\"password\":\"warmup-password-123\"}}",
+                    "{\"username\":\"dapr-warmup-nonexistent@test.local\",\"password\":\"warmup-password-123\"}",
                     Encoding.UTF8,
                     "application/json");
-                var warmupResponse = await HttpClient.PostAsync(registerUrl, warmupContent);
+                var warmupResponse = await HttpClient.PostAsync(loginUrl, warmupContent);
 
                 // 500/502/503 typically indicates Dapr sidecar isn't ready
                 if (warmupResponse.StatusCode == System.Net.HttpStatusCode.InternalServerError ||
@@ -228,7 +227,7 @@ public class Program
                     continue;
                 }
 
-                // 200 OK or 409 Conflict means the service chain is fully working
+                // 401 Unauthorized (account not found) or 400 Bad Request means Dapr invocation worked
                 Console.WriteLine($"✅ Dapr sidecar ready after {stopwatch.Elapsed.TotalSeconds:F1}s (warmup returned {warmupResponse.StatusCode})");
 
                 // Phase 3 (Permission Registration) is now handled via WebSocket capability manifest
@@ -281,8 +280,8 @@ public class Program
         // Anonymous-only endpoints (like /auth/register) are not available to authenticated users.
         var expectedPaths = customExpectedPaths ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "/auth/login",        // Auth service - user role, default state
-            "/sessions"           // GameSession service - user role, default state (POST:/sessions)
+            "/auth/validate",       // Auth service - user role, default state
+            "/auth/sessions/list"   // Auth service - user role, default state
         };
 
         Console.WriteLine($"⏳ Waiting for capability manifest to include expected APIs (timeout: {timeout.TotalSeconds}s)...");

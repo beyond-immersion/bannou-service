@@ -409,7 +409,10 @@ public class KubernetesOrchestrator : IContainerOrchestrator
             var envVars = new List<V1EnvVar>
             {
                 new() { Name = $"{serviceName.ToUpperInvariant()}_SERVICE_ENABLED", Value = "true" },
-                new() { Name = "DAPR_APP_ID", Value = appId }
+                new() { Name = "DAPR_APP_ID", Value = appId },
+                // Required for proper service operation - not forwarded from orchestrator ENV
+                new() { Name = "DAEMON_MODE", Value = "true" },
+                new() { Name = "HEARTBEAT_ENABLED", Value = "true" }
             };
 
             if (environment != null)

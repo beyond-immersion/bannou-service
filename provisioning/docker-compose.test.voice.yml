@@ -9,7 +9,7 @@ services:
     env_file: ../.env.test.voice
     environment:
       # Pass the Dapr components host path for orchestrator dynamic deployments
-      - BANNOU_DaprComponentsHostPath=${DAPR_COMPONENTS_HOST_PATH:-./dapr/components-http-test}
+      - ORCHESTRATOR_DAPR_COMPONENTS_HOST_PATH=${DAPR_COMPONENTS_HOST_PATH:-./dapr/components-http-test}
 
   # Kamailio SIP Proxy (bridge networking for testing)
   # Handles SIP registration, routing, and RTPEngine integration

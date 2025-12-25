@@ -87,15 +87,17 @@ public class Services : IClassFixture<CollectionFixture>
     [ServiceConfiguration(typeof(Service_MultipleRequired))]
     private class Configuration_MultipleRequired_A : BaseServiceConfiguration
     {
+        // PropertyA binds from PROPERTY_A env var (normalized to PascalCase)
         [ConfigRequired(AllowEmptyStrings = false)]
-        public string? Property_A { get; set; }
+        public string? PropertyA { get; set; }
     }
 
     [ServiceConfiguration(typeof(Service_MultipleRequired))]
     private class Configuration_MultipleRequired_B : BaseServiceConfiguration
     {
+        // PropertyB binds from PROPERTY_B env var (normalized to PascalCase)
         [ConfigRequired(AllowEmptyStrings = false)]
-        public string? Property_B { get; set; }
+        public string? PropertyB { get; set; }
     }
 
     public Services(CollectionFixture collectionContext, ITestOutputHelper output)

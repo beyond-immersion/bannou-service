@@ -1,7 +1,7 @@
-using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
+using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.Servicedata;
 
@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.Servicedata;
 /// Configuration class for Servicedata service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(ServicedataService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(ServicedataService))]
 public class ServicedataServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
@@ -17,7 +17,7 @@ public class ServicedataServiceConfiguration : IServiceConfiguration
 
     /// <summary>
     /// Dapr state store name for service data
-    /// Environment variable: SERVICEDATA_STATE_STORE_NAME or BANNOU_SERVICEDATA_STATE_STORE_NAME
+    /// Environment variable: SERVICEDATA_STATE_STORE_NAME
     /// </summary>
     public string StateStoreName { get; set; } = "servicedata-statestore";
 
