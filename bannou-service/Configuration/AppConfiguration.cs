@@ -121,4 +121,23 @@ public class AppConfiguration : BaseServiceConfiguration
     /// Note: DAPR_APP_ID is a bootstrap variable read during Dapr client initialization.
     /// </summary>
     public string? DaprAppId { get; set; }
+
+    /// <summary>
+    /// JWT secret key for token signing and validation.
+    /// Environment variable: BANNOU_JWTSECRET
+    /// REQUIRED - application will fail to start if not configured.
+    /// </summary>
+    public string? JwtSecret { get; set; }
+
+    /// <summary>
+    /// JWT issuer for token validation.
+    /// Environment variable: BANNOU_JWTISSUER
+    /// </summary>
+    public string JwtIssuer { get; set; } = "bannou-auth";
+
+    /// <summary>
+    /// JWT audience for token validation.
+    /// Environment variable: BANNOU_JWTAUDIENCE
+    /// </summary>
+    public string JwtAudience { get; set; } = "bannou-api";
 }

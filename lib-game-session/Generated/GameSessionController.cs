@@ -541,6 +541,11 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
           "type": "boolean",
           "default": false
         },
+        "ownerId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Account ID of the session owner. If not provided, defaults to caller's account."
+        },
         "gameSettings": {
           "type": "object",
           "additionalProperties": true
@@ -908,13 +913,19 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "JoinGameSessionRequest": {
       "type": "object",
       "required": [
-        "sessionId"
+        "sessionId",
+        "accountId"
       ],
       "properties": {
         "sessionId": {
           "type": "string",
           "format": "uuid",
           "description": "ID of the game session to join"
+        },
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Account ID of the player joining. Provided by shortcut system or authenticated caller."
         },
         "password": {
           "type": "string",
@@ -1113,13 +1124,19 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       "type": "object",
       "description": "Request to leave a game session",
       "required": [
-        "sessionId"
+        "sessionId",
+        "accountId"
       ],
       "properties": {
         "sessionId": {
           "type": "string",
           "format": "uuid",
           "description": "ID of the game session to leave"
+        },
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Account ID of the player leaving. Provided by shortcut system or authenticated caller."
         }
       }
     }

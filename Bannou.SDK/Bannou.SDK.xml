@@ -4413,9 +4413,24 @@
             ID of the game session to leave
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.LeaveGameSessionRequest.AccountId">
+            <summary>
+            Account ID of the player leaving. Provided by shortcut system or authenticated caller.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest.OwnerId">
+            <summary>
+            Account ID of the session owner. If not provided, defaults to caller's account.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest.SessionId">
             <summary>
             ID of the game session to join
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest.AccountId">
+            <summary>
+            Account ID of the player joining. Provided by shortcut system or authenticated caller.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest.Password">

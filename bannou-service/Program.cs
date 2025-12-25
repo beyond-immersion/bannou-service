@@ -154,28 +154,32 @@ public static class Program
             _ = webAppBuilder.Services.AddAuthentication("Bearer")
                 .AddJwtBearer("Bearer", options =>
                 {
-                    // Basic JWT bearer configuration - not used for validation, just to prevent Forbid() errors
+                    // JWT bearer configuration with full validation enabled
                     options.RequireHttpsMetadata = false; // Allow HTTP for development
                     options.SaveToken = false; // We don't need to save tokens
                     options.IncludeErrorDetails = true; // Include error details for debugging
 
-                    // Set actual JWT secret to prevent validation errors in CI
-                    var jwtSecret = webAppBuilder.Configuration["BANNOU_JWTSECRET"]
-                        ?? webAppBuilder.Configuration["AUTH_JWT_SECRET"]
-                        ?? webAppBuilder.Configuration["JWTSECRET"]
-                        ?? "default-fallback-secret-key-for-development";
+                    // JWT secret is REQUIRED - no fallback to prevent accidental insecure deployments
+                    if (string.IsNullOrEmpty(Configuration.JwtSecret))
+                    {
+                        throw new InvalidOperationException(
+                            "JWT secret not configured. Set BANNOU_JWTSECRET environment variable.");
+                    }
 
-                    var key = System.Text.Encoding.ASCII.GetBytes(jwtSecret);
+                    var key = System.Text.Encoding.ASCII.GetBytes(Configuration.JwtSecret);
 
                     options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                     {
-                        ValidateIssuer = false,
-                        ValidateAudience = false,
-                        ValidateLifetime = false,
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
+                        ValidIssuer = Configuration.JwtIssuer,
+                        ValidAudience = Configuration.JwtAudience,
                         IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(key),
-                        RequireExpirationTime = false,
-                        RequireSignedTokens = true
+                        RequireExpirationTime = true,
+                        RequireSignedTokens = true,
+                        ClockSkew = TimeSpan.FromMinutes(5)
                     };
                 });
 
@@ -614,7 +618,12 @@ public static class Program
                 assembly = Assembly.LoadFile(assemblyPath);
                 return true;
             }
-            catch (BadImageFormatException) { }
+            catch (BadImageFormatException ex)
+            {
+                Logger.Log(LogLevel.Warning, ex,
+                    "Assembly at '{Path}' is not a valid .NET assembly (corrupted or architecture mismatch)",
+                    assemblyPath);
+            }
             catch (Exception exc)
             {
                 Logger.Log(LogLevel.Error, exc, $"Failed to load assembly at path: {assemblyPath}.");

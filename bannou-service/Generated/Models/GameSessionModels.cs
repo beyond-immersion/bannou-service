@@ -100,6 +100,13 @@ public partial class LeaveGameSessionRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid SessionId { get; set; } = default!;
 
+    /// <summary>
+    /// Account ID of the player leaving. Provided by shortcut system or authenticated caller.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid AccountId { get; set; } = default!;
+
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
@@ -130,6 +137,12 @@ public partial class CreateGameSessionRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("isPrivate")]
     public bool IsPrivate { get; set; } = false;
+
+    /// <summary>
+    /// Account ID of the session owner. If not provided, defaults to caller's account.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    public System.Guid OwnerId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("gameSettings")]
     public object GameSettings { get; set; } = default!;
@@ -231,6 +244,13 @@ public partial class JoinGameSessionRequest
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Account ID of the player joining. Provided by shortcut system or authenticated caller.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
     /// Password for private sessions

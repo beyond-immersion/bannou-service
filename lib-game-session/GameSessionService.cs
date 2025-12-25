@@ -203,7 +203,7 @@ public partial class GameSessionService : IGameSessionService
                 SessionName = body.SessionName,
                 MaxPlayers = body.MaxPlayers,
                 IsPrivate = body.IsPrivate,
-                Owner = Guid.Empty, // TODO: Get from auth context when available
+                Owner = body.OwnerId,
                 Status = GameSessionResponseStatus.Waiting,
                 CurrentPlayers = 0,
                 Players = new List<GamePlayer>(),
@@ -371,8 +371,8 @@ public partial class GameSessionService : IGameSessionService
                 });
             }
 
-            // TODO: Get actual account ID from auth context
-            var accountId = Guid.NewGuid();
+            // AccountId comes from the request body (populated by shortcut system)
+            var accountId = body.AccountId;
 
             // Check if player already in session
             if (model.Players.Any(p => p.AccountId == accountId))
@@ -647,110 +647,115 @@ public partial class GameSessionService : IGameSessionService
                 return (StatusCodes.NotFound, null);
             }
 
-            // TODO: Get actual account ID from auth context
-            // For now, remove the first player as a demo
-            if (model.Players.Count > 0)
-            {
-                var leavingPlayer = model.Players[0];
-                model.Players.RemoveAt(0);
-                model.CurrentPlayers = model.Players.Count;
+            // AccountId comes from the request body (populated by shortcut system)
+            var accountId = body.AccountId;
 
-                // Leave voice room if voice is enabled and player has a voice session
-                if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null
-                    && !string.IsNullOrEmpty(leavingPlayer.VoiceSessionId))
+            // Find the player in the session
+            var leavingPlayer = model.Players.FirstOrDefault(p => p.AccountId == accountId);
+            if (leavingPlayer == null)
+            {
+                _logger.LogWarning("Player {AccountId} not found in session {SessionId}", accountId, sessionId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            model.Players.Remove(leavingPlayer);
+            model.CurrentPlayers = model.Players.Count;
+
+            // Leave voice room if voice is enabled and player has a voice session
+            if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null
+                && !string.IsNullOrEmpty(leavingPlayer.VoiceSessionId))
+            {
+                try
+                {
+                    _logger.LogDebug("Player {AccountId} leaving voice room {VoiceRoomId} with voice session {VoiceSessionId}",
+                        leavingPlayer.AccountId, model.VoiceRoomId, leavingPlayer.VoiceSessionId);
+
+                    await _voiceClient.LeaveVoiceRoomAsync(new LeaveVoiceRoomRequest
+                    {
+                        RoomId = model.VoiceRoomId.Value,
+                        SessionId = leavingPlayer.VoiceSessionId
+                    }, cancellationToken);
+
+                    _logger.LogInformation("Player {AccountId} left voice room {VoiceRoomId}",
+                        leavingPlayer.AccountId, model.VoiceRoomId);
+                }
+                catch (Exception ex)
+                {
+                    // Voice leave failure is non-fatal
+                    _logger.LogWarning(ex, "Failed to leave voice room for player {AccountId}",
+                        leavingPlayer.AccountId);
+                }
+            }
+
+            // Update status
+            if (model.CurrentPlayers == 0)
+            {
+                model.Status = GameSessionResponseStatus.Finished;
+
+                // Delete voice room when session ends
+                if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null)
                 {
                     try
                     {
-                        _logger.LogDebug("Player {AccountId} leaving voice room {VoiceRoomId} with voice session {VoiceSessionId}",
-                            leavingPlayer.AccountId, model.VoiceRoomId, leavingPlayer.VoiceSessionId);
+                        _logger.LogDebug("Deleting voice room {VoiceRoomId} as session {SessionId} has ended",
+                            model.VoiceRoomId, sessionId);
 
-                        await _voiceClient.LeaveVoiceRoomAsync(new LeaveVoiceRoomRequest
+                        await _voiceClient.DeleteVoiceRoomAsync(new DeleteVoiceRoomRequest
                         {
                             RoomId = model.VoiceRoomId.Value,
-                            SessionId = leavingPlayer.VoiceSessionId
+                            Reason = "session_ended"
                         }, cancellationToken);
 
-                        _logger.LogInformation("Player {AccountId} left voice room {VoiceRoomId}",
-                            leavingPlayer.AccountId, model.VoiceRoomId);
+                        _logger.LogInformation("Voice room {VoiceRoomId} deleted for ended session {SessionId}",
+                            model.VoiceRoomId, sessionId);
                     }
                     catch (Exception ex)
                     {
-                        // Voice leave failure is non-fatal
-                        _logger.LogWarning(ex, "Failed to leave voice room for player {AccountId}",
-                            leavingPlayer.AccountId);
+                        _logger.LogWarning(ex, "Failed to delete voice room {VoiceRoomId} for session {SessionId}",
+                            model.VoiceRoomId, sessionId);
                     }
                 }
-
-                // Update status
-                if (model.CurrentPlayers == 0)
-                {
-                    model.Status = GameSessionResponseStatus.Finished;
-
-                    // Delete voice room when session ends
-                    if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null)
-                    {
-                        try
-                        {
-                            _logger.LogDebug("Deleting voice room {VoiceRoomId} as session {SessionId} has ended",
-                                model.VoiceRoomId, sessionId);
-
-                            await _voiceClient.DeleteVoiceRoomAsync(new DeleteVoiceRoomRequest
-                            {
-                                RoomId = model.VoiceRoomId.Value,
-                                Reason = "session_ended"
-                            }, cancellationToken);
-
-                            _logger.LogInformation("Voice room {VoiceRoomId} deleted for ended session {SessionId}",
-                                model.VoiceRoomId, sessionId);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogWarning(ex, "Failed to delete voice room {VoiceRoomId} for session {SessionId}",
-                                model.VoiceRoomId, sessionId);
-                        }
-                    }
-                }
-                else if (model.Status == GameSessionResponseStatus.Full)
-                {
-                    model.Status = GameSessionResponseStatus.Active;
-                }
-
-                // Save updated session
-                await _daprClient.SaveStateAsync(
-                    STATE_STORE,
-                    SESSION_KEY_PREFIX + sessionId,
-                    model,
-                    cancellationToken: cancellationToken);
-
-                // Publish event
-                await _daprClient.PublishEventAsync(
-                    PUBSUB_NAME,
-                    PLAYER_LEFT_TOPIC,
-                    new { SessionId = sessionId, AccountId = leavingPlayer.AccountId.ToString() },
-                    cancellationToken);
-
-                // Clear game-session:in_game state to remove leave/chat/action endpoint access (Tenet 10)
-                var clientSessionId = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Session-Id"].FirstOrDefault();
-                if (_permissionsClient != null && !string.IsNullOrEmpty(clientSessionId))
-                {
-                    try
-                    {
-                        await _permissionsClient.ClearSessionStateAsync(new ClearSessionStateRequest
-                        {
-                            SessionId = clientSessionId,
-                            ServiceId = "game-session"
-                        }, cancellationToken);
-                        _logger.LogDebug("Cleared game-session:in_game state for session {SessionId}", clientSessionId);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Log but don't fail - the leave succeeded, state cleanup is secondary
-                        _logger.LogWarning(ex, "Failed to clear game-session:in_game state for session {SessionId}", clientSessionId);
-                    }
-                }
-
-                _logger.LogInformation("Player left game session {SessionId}", sessionId);
             }
+            else if (model.Status == GameSessionResponseStatus.Full)
+            {
+                model.Status = GameSessionResponseStatus.Active;
+            }
+
+            // Save updated session
+            await _daprClient.SaveStateAsync(
+                STATE_STORE,
+                SESSION_KEY_PREFIX + sessionId,
+                model,
+                cancellationToken: cancellationToken);
+
+            // Publish event
+            await _daprClient.PublishEventAsync(
+                PUBSUB_NAME,
+                PLAYER_LEFT_TOPIC,
+                new { SessionId = sessionId, AccountId = leavingPlayer.AccountId.ToString() },
+                cancellationToken);
+
+            // Clear game-session:in_game state to remove leave/chat/action endpoint access (Tenet 10)
+            var clientSessionId = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Session-Id"].FirstOrDefault();
+            if (_permissionsClient != null && !string.IsNullOrEmpty(clientSessionId))
+            {
+                try
+                {
+                    await _permissionsClient.ClearSessionStateAsync(new ClearSessionStateRequest
+                    {
+                        SessionId = clientSessionId,
+                        ServiceId = "game-session"
+                    }, cancellationToken);
+                    _logger.LogDebug("Cleared game-session:in_game state for session {SessionId}", clientSessionId);
+                }
+                catch (Exception ex)
+                {
+                    // Log but don't fail - the leave succeeded, state cleanup is secondary
+                    _logger.LogWarning(ex, "Failed to clear game-session:in_game state for session {SessionId}", clientSessionId);
+                }
+            }
+
+            _logger.LogInformation("Player left game session {SessionId}", sessionId);
 
             return (StatusCodes.OK, null);
         }
@@ -1115,11 +1120,11 @@ public partial class GameSessionService : IGameSessionService
                 "game-session/sessions/join",
                 _serverSalt);
 
-            // Create the pre-bound payload
+            // Create the pre-bound payload with accountId included
             var boundPayload = new JoinGameSessionRequest
             {
-                SessionId = lobbySessionId
-                // Note: accountId comes from the session context, not the payload
+                SessionId = lobbySessionId,
+                AccountId = accountId
             };
 
             var shortcutEvent = new

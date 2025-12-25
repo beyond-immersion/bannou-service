@@ -869,6 +869,25 @@
             Note: DAPR_APP_ID is a bootstrap variable read during Dapr client initialization.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.JwtSecret">
+            <summary>
+            JWT secret key for token signing and validation.
+            Environment variable: BANNOU_JWTSECRET
+            REQUIRED - application will fail to start if not configured.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.JwtIssuer">
+            <summary>
+            JWT issuer for token validation.
+            Environment variable: BANNOU_JWTISSUER
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.JwtAudience">
+            <summary>
+            JWT audience for token validation.
+            Environment variable: BANNOU_JWTAUDIENCE
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Configuration.BannouJson">
              <summary>
              Static helper for JSON serialization/deserialization that always uses Bannou's
@@ -7428,9 +7447,24 @@
             ID of the game session to leave
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.LeaveGameSessionRequest.AccountId">
+            <summary>
+            Account ID of the player leaving. Provided by shortcut system or authenticated caller.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest.OwnerId">
+            <summary>
+            Account ID of the session owner. If not provided, defaults to caller's account.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest.SessionId">
             <summary>
             ID of the game session to join
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest.AccountId">
+            <summary>
+            Account ID of the player joining. Provided by shortcut system or authenticated caller.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionRequest.Password">

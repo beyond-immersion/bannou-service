@@ -110,8 +110,9 @@ paths:
         \   },\n        \"maxPlayers\": {\n          \"type\": \"integer\",\n          \"minimum\": 1,\n          \"maximum\"\
         : 100\n        },\n        \"sessionName\": {\n          \"type\": \"string\",\n          \"maxLength\": 100\n   \
         \     },\n        \"isPrivate\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        },\n \
-        \       \"gameSettings\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true\n        }\n\
-        \      }\n    }\n  }\n}"
+        \       \"ownerId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Account ID of the session owner. If not provided, defaults to caller's account.\"\n        },\n        \"gameSettings\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GameSessionResponse\"\
         ,\n  \"$defs\": {\n    \"GameSessionResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         sessionId\",\n        \"gameType\",\n        \"status\",\n        \"createdAt\"\n      ],\n      \"properties\": {\n\
@@ -231,12 +232,14 @@ paths:
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/JoinGameSessionRequest\"\
         ,\n  \"$defs\": {\n    \"JoinGameSessionRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
-        \ \"sessionId\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n  \
-        \        \"format\": \"uuid\",\n          \"description\": \"ID of the game session to join\"\n        },\n      \
-        \  \"password\": {\n          \"type\": \"string\",\n          \"description\": \"Password for private sessions\"\n\
-        \        },\n        \"characterData\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
-        \          \"description\": \"Game-specific character data\"\n        },\n        \"voiceEndpoint\": {\n         \
-        \ \"$ref\": \"#/$defs/VoiceSipEndpoint\",\n          \"description\": \"Client's SIP endpoint for voice communication
+        \ \"sessionId\",\n        \"accountId\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"ID of the game session to join\"\
+        \n        },\n        \"accountId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n       \
+        \   \"description\": \"Account ID of the player joining. Provided by shortcut system or authenticated caller.\"\n\
+        \        },\n        \"password\": {\n          \"type\": \"string\",\n          \"description\": \"Password for private
+        sessions\"\n        },\n        \"characterData\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : true,\n          \"description\": \"Game-specific character data\"\n        },\n        \"voiceEndpoint\": {\n \
+        \         \"$ref\": \"#/$defs/VoiceSipEndpoint\",\n          \"description\": \"Client's SIP endpoint for voice communication
         (optional)\"\n        }\n      }\n    },\n    \"VoiceSipEndpoint\": {\n      \"type\": \"object\",\n      \"description\"\
         : \"Client's SIP/WebRTC endpoint for voice communication\",\n      \"required\": [\n        \"sdpOffer\"\n      ],\n\
         \      \"properties\": {\n        \"sdpOffer\": {\n          \"type\": \"string\",\n          \"description\": \"\
@@ -297,9 +300,11 @@ paths:
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/LeaveGameSessionRequest\"\
         ,\n  \"$defs\": {\n    \"LeaveGameSessionRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request
-        to leave a game session\",\n      \"required\": [\n        \"sessionId\"\n      ],\n      \"properties\": {\n    \
-        \    \"sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
-        : \"ID of the game session to leave\"\n        }\n      }\n    }\n  }\n}"
+        to leave a game session\",\n      \"required\": [\n        \"sessionId\",\n        \"accountId\"\n      ],\n     \
+        \ \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n\
+        \          \"description\": \"ID of the game session to leave\"\n        },\n        \"accountId\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Account ID of the player leaving.
+        Provided by shortcut system or authenticated caller.\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n  \"summary\": \"Leave a game session\",\n  \"description\": \"\",\n  \"tags\": [\n    \"\
         Game Sessions\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"leaveGameSession\"\n}"
@@ -457,11 +462,16 @@ components:
       description: Request to leave a game session
       required:
       - sessionId
+      - accountId
       properties:
         sessionId:
           type: string
           format: uuid
           description: ID of the game session to leave
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID of the player leaving. Provided by shortcut system or authenticated caller.
 
     CreateGameSessionRequest:
       type: object
@@ -482,6 +492,10 @@ components:
         isPrivate:
           type: boolean
           default: false
+        ownerId:
+          type: string
+          format: uuid
+          description: Account ID of the session owner. If not provided, defaults to caller's account.
         gameSettings:
           type: object
           additionalProperties: true
@@ -540,11 +554,16 @@ components:
       type: object
       required:
       - sessionId
+      - accountId
       properties:
         sessionId:
           type: string
           format: uuid
           description: ID of the game session to join
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID of the player joining. Provided by shortcut system or authenticated caller.
         password:
           type: string
           description: Password for private sessions

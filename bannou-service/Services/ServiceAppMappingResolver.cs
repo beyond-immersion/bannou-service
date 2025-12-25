@@ -191,6 +191,9 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
             return false;
         }
 
+        // Declare outside lock so we can notify after releasing lock
+        List<ServiceMappingChangedEventArgs> changedServices;
+
         // Version check with lock to prevent race conditions
         lock (_versionLock)
         {
@@ -204,7 +207,7 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
 
             // Collect changes for event notification
             var previousMappings = _serviceMappings.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-            var changedServices = new List<ServiceMappingChangedEventArgs>();
+            changedServices = new List<ServiceMappingChangedEventArgs>();
 
             // Find services that were removed
             foreach (var oldMapping in previousMappings)
@@ -251,14 +254,14 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
             _logger.LogInformation(
                 "Applied full mappings v{Version}: {Count} services ({ChangedCount} changes)",
                 version, mappings.Count, changedServices.Count);
-
-            // Notify listeners of changes (outside the lock would be better, but okay for now)
-            foreach (var change in changedServices)
-            {
-                MappingChanged?.Invoke(this, change);
-            }
-
-            return true;
         }
+
+        // Notify listeners of changes OUTSIDE the lock to prevent deadlocks
+        foreach (var change in changedServices)
+        {
+            MappingChanged?.Invoke(this, change);
+        }
+
+        return true;
     }
 }

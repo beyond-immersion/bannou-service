@@ -604,7 +604,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var sessionId = Guid.NewGuid();
         var clientSessionId = "test-client-session-456";
         var accountId = Guid.NewGuid();
-        var request = new LeaveGameSessionRequest { SessionId = sessionId };
+        var request = new LeaveGameSessionRequest { SessionId = sessionId, AccountId = accountId };
 
         // Setup HTTP context with session ID header
         var httpContext = new DefaultHttpContext();

@@ -91,8 +91,15 @@ public abstract class DaprServiceClientBase : IDaprClient
     {
         get
         {
-            // Get Dapr HTTP endpoint from environment (for container environments) or default to localhost
-            var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT") ?? "http://localhost:3500";
+            // Get Dapr HTTP endpoint from environment (for container environments)
+            // Match ServiceHeartbeatManager pattern: check DAPR_HTTP_ENDPOINT first, then DAPR_HTTP_PORT
+            var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT");
+            if (string.IsNullOrEmpty(daprHttpEndpoint))
+            {
+                var portStr = Environment.GetEnvironmentVariable("DAPR_HTTP_PORT");
+                var port = int.TryParse(portStr, out var p) && p > 0 ? p : 3500;
+                daprHttpEndpoint = $"http://localhost:{port}";
+            }
 
             // If full dependencies available, use dynamic resolution
             if (_appMappingResolver != null && _serviceName != null)

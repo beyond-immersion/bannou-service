@@ -37,7 +37,14 @@ public interface IServiceAttribute
                     }
                 }
             }
-            catch { }
+            catch (ReflectionTypeLoadException ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Failed to load types from assembly {assembly.FullName}");
+            }
+            catch (Exception ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Error scanning assembly {assembly.FullName}");
+            }
         }
 
         return results;
@@ -72,7 +79,14 @@ public interface IServiceAttribute
                     }
                 }
             }
-            catch { }
+            catch (ReflectionTypeLoadException ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Failed to load types from assembly {assembly.FullName}");
+            }
+            catch (Exception ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Error scanning assembly {assembly.FullName}");
+            }
         }
 
         return results;
@@ -110,7 +124,14 @@ public interface IServiceAttribute
                         results.Add((classType, propInfo.Item1, propInfo.Item2));
                 }
             }
-            catch { }
+            catch (ReflectionTypeLoadException ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Failed to load types from assembly {assembly.FullName}");
+            }
+            catch (Exception ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Error scanning assembly {assembly.FullName}");
+            }
         }
 
         return results;
@@ -147,7 +168,14 @@ public interface IServiceAttribute
                         results.Add((classType, propInfo.Item1, propInfo.Item2));
                 }
             }
-            catch { }
+            catch (ReflectionTypeLoadException ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Failed to load types from assembly {assembly.FullName}");
+            }
+            catch (Exception ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Error scanning assembly {assembly.FullName}");
+            }
         }
 
         return results;
@@ -185,7 +213,14 @@ public interface IServiceAttribute
                         results.Add((classType, fieldInfo.Item1, fieldInfo.Item2));
                 }
             }
-            catch { }
+            catch (ReflectionTypeLoadException ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Failed to load types from assembly {assembly.FullName}");
+            }
+            catch (Exception ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Error scanning assembly {assembly.FullName}");
+            }
         }
 
         return results;
@@ -222,7 +257,14 @@ public interface IServiceAttribute
                         results.Add((classType, fieldInfo.Item1, fieldInfo.Item2));
                 }
             }
-            catch { }
+            catch (ReflectionTypeLoadException ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Failed to load types from assembly {assembly.FullName}");
+            }
+            catch (Exception ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Error scanning assembly {assembly.FullName}");
+            }
         }
 
         return results;
@@ -260,7 +302,14 @@ public interface IServiceAttribute
                         results.Add((classType, methodInfo.Item1, methodInfo.Item2));
                 }
             }
-            catch { }
+            catch (ReflectionTypeLoadException ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Failed to load types from assembly {assembly.FullName}");
+            }
+            catch (Exception ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Error scanning assembly {assembly.FullName}");
+            }
         }
 
         return results;
@@ -297,7 +346,14 @@ public interface IServiceAttribute
                         results.Add((classType, methodInfo.Item1, methodInfo.Item2));
                 }
             }
-            catch { }
+            catch (ReflectionTypeLoadException ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Failed to load types from assembly {assembly.FullName}");
+            }
+            catch (Exception ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Error scanning assembly {assembly.FullName}");
+            }
         }
 
         return results;
@@ -311,10 +367,7 @@ public interface IServiceAttribute
         List<(PropertyInfo, IServiceAttribute)> results = new();
         PropertyInfo[] retrievedProps = classType.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
         if (retrievedProps == null || retrievedProps.Length == 0)
-        {
-            Program.Logger.Log(LogLevel.Error, "!@");
             return results;
-        }
 
         foreach (PropertyInfo propInfo in retrievedProps)
         {
@@ -322,18 +375,15 @@ public interface IServiceAttribute
             {
                 var attrs = propInfo.GetCustomAttributes(attributeType, inherit: true);
                 if (attrs == null || !attrs.Any())
-                {
-                    Program.Logger.Log(LogLevel.Error, "!!@");
                     continue;
-                }
 
                 foreach (var attr in attrs)
-                {
-                    Program.Logger.Log(LogLevel.Error, "!!!@");
                     results.Add((propInfo, (IServiceAttribute)attr));
-                }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Error getting attributes for property {propInfo.Name} on type {classType.FullName}");
+            }
         }
 
         return results;
@@ -361,7 +411,10 @@ public interface IServiceAttribute
                 foreach (T attr in attrs)
                     results.Add((propInfo, attr));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Error getting attributes for property {propInfo.Name} on type {classType.FullName}");
+            }
         }
 
         return results;
@@ -389,7 +442,10 @@ public interface IServiceAttribute
                 foreach (T attr in attrs)
                     results.Add((fieldInfo, attr));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Error getting attributes for field {fieldInfo.Name} on type {classType.FullName}");
+            }
         }
 
         return results;
@@ -416,7 +472,10 @@ public interface IServiceAttribute
                 foreach (var attr in attrs)
                     results.Add((fieldInfo, (IServiceAttribute)attr));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Error getting attributes for field {fieldInfo.Name} on type {classType.FullName}");
+            }
         }
 
         return results;
@@ -446,7 +505,10 @@ public interface IServiceAttribute
                 foreach (var attr in attrs)
                     results.Add((methodInfo, (IServiceAttribute)attr));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Error getting attributes for method {methodInfo.Name} on type {classType.FullName}");
+            }
         }
 
         return results;
@@ -474,7 +536,10 @@ public interface IServiceAttribute
                 foreach (T attr in attrs)
                     results.Add((methodInfo, attr));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, $"Error getting attributes for method {methodInfo.Name} on type {classType.FullName}");
+            }
         }
 
         return results;
