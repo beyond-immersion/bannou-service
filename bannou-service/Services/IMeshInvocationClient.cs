@@ -1,6 +1,6 @@
 #nullable enable
 
-namespace BeyondImmersion.BannouService.Mesh.Services;
+namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
 /// Client for invoking methods on other services via the mesh.

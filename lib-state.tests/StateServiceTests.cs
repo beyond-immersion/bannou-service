@@ -2,7 +2,6 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.BannouService.State.Services;
 
 namespace BeyondImmersion.BannouService.State.Tests;
 
@@ -201,7 +200,7 @@ public class StateServiceTests
 
         _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
         _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
-        _mockStateStore.Setup(s => s.SaveAsync("test-key", It.IsAny<object>(), It.IsAny<Services.StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockStateStore.Setup(s => s.SaveAsync("test-key", It.IsAny<object>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedEtag);
 
         // Act
@@ -307,11 +306,11 @@ public class StateServiceTests
             }
         };
 
-        Services.StateOptions? capturedOptions = null;
+        StateOptions? capturedOptions = null;
         _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
         _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
-        _mockStateStore.Setup(s => s.SaveAsync("test-key", It.IsAny<object>(), It.IsAny<Services.StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, object, Services.StateOptions?, CancellationToken>((_, _, opts, _) => capturedOptions = opts)
+        _mockStateStore.Setup(s => s.SaveAsync("test-key", It.IsAny<object>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, StateOptions?, CancellationToken>((_, _, opts, _) => capturedOptions = opts)
             .ReturnsAsync("etag");
 
         // Act
@@ -319,8 +318,8 @@ public class StateServiceTests
 
         // Assert
         Assert.NotNull(capturedOptions);
-        Assert.Equal(TimeSpan.FromSeconds(300), capturedOptions.Ttl);
-        Assert.Equal(Services.StateConsistency.Eventual, capturedOptions.Consistency);
+        Assert.Equal(300, capturedOptions.Ttl);
+        Assert.Equal(StateOptionsConsistency.Eventual, capturedOptions.Consistency);
     }
 
     [Fact]
@@ -337,7 +336,7 @@ public class StateServiceTests
 
         _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
         _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
-        _mockStateStore.Setup(s => s.SaveAsync("test-key", It.IsAny<object>(), It.IsAny<Services.StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockStateStore.Setup(s => s.SaveAsync("test-key", It.IsAny<object>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Save failed"));
         _mockErrorEventEmitter.Setup(e => e.TryPublishAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
@@ -478,7 +477,7 @@ public class StateServiceTests
         var request = new QueryStateRequest { StoreName = "redis-store", Filter = new { } };
 
         _mockStateStoreFactory.Setup(f => f.HasStore("redis-store")).Returns(true);
-        _mockStateStoreFactory.Setup(f => f.GetBackendType("redis-store")).Returns(Services.StateBackend.Redis);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("redis-store")).Returns(StateBackend.Redis);
         _mockStateStoreFactory.Setup(f => f.SupportsSearch("redis-store")).Returns(false);
 
         // Act
@@ -508,7 +507,7 @@ public class StateServiceTests
             Limit: 10);
 
         _mockStateStoreFactory.Setup(f => f.HasStore("mysql-store")).Returns(true);
-        _mockStateStoreFactory.Setup(f => f.GetBackendType("mysql-store")).Returns(Services.StateBackend.MySql);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("mysql-store")).Returns(StateBackend.MySql);
         _mockStateStoreFactory.Setup(f => f.GetJsonQueryableStore<object>("mysql-store")).Returns(mockJsonStore.Object);
         mockJsonStore.Setup(s => s.JsonQueryPagedAsync(
             It.IsAny<IReadOnlyList<JsonQueryCondition>?>(),
@@ -547,7 +546,7 @@ public class StateServiceTests
         JsonSortSpec? capturedSort = null;
 
         _mockStateStoreFactory.Setup(f => f.HasStore("mysql-store")).Returns(true);
-        _mockStateStoreFactory.Setup(f => f.GetBackendType("mysql-store")).Returns(Services.StateBackend.MySql);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("mysql-store")).Returns(StateBackend.MySql);
         _mockStateStoreFactory.Setup(f => f.GetJsonQueryableStore<object>("mysql-store")).Returns(mockJsonStore.Object);
         mockJsonStore.Setup(s => s.JsonQueryPagedAsync(
             It.IsAny<IReadOnlyList<JsonQueryCondition>?>(),
@@ -595,7 +594,7 @@ public class StateServiceTests
             Limit: 10);
 
         _mockStateStoreFactory.Setup(f => f.HasStore("redis-search-store")).Returns(true);
-        _mockStateStoreFactory.Setup(f => f.GetBackendType("redis-search-store")).Returns(Services.StateBackend.Redis);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("redis-search-store")).Returns(StateBackend.Redis);
         _mockStateStoreFactory.Setup(f => f.SupportsSearch("redis-search-store")).Returns(true);
         _mockStateStoreFactory.Setup(f => f.GetSearchableStore<object>("redis-search-store")).Returns(mockSearchStore.Object);
         mockSearchStore.Setup(s => s.SearchAsync(
@@ -633,7 +632,7 @@ public class StateServiceTests
         string? capturedIndexName = null;
 
         _mockStateStoreFactory.Setup(f => f.HasStore("redis-search-store")).Returns(true);
-        _mockStateStoreFactory.Setup(f => f.GetBackendType("redis-search-store")).Returns(Services.StateBackend.Redis);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("redis-search-store")).Returns(StateBackend.Redis);
         _mockStateStoreFactory.Setup(f => f.SupportsSearch("redis-search-store")).Returns(true);
         _mockStateStoreFactory.Setup(f => f.GetSearchableStore<object>("redis-search-store")).Returns(mockSearchStore.Object);
         mockSearchStore.Setup(s => s.SearchAsync(
@@ -672,7 +671,7 @@ public class StateServiceTests
         string? capturedIndexName = null;
 
         _mockStateStoreFactory.Setup(f => f.HasStore("my-store")).Returns(true);
-        _mockStateStoreFactory.Setup(f => f.GetBackendType("my-store")).Returns(Services.StateBackend.Redis);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("my-store")).Returns(StateBackend.Redis);
         _mockStateStoreFactory.Setup(f => f.SupportsSearch("my-store")).Returns(true);
         _mockStateStoreFactory.Setup(f => f.GetSearchableStore<object>("my-store")).Returns(mockSearchStore.Object);
         mockSearchStore.Setup(s => s.SearchAsync(
@@ -854,8 +853,8 @@ public class StateServiceTests
         var storeNames = new[] { "redis-store", "mysql-store" };
 
         _mockStateStoreFactory.Setup(f => f.GetStoreNames()).Returns(storeNames);
-        _mockStateStoreFactory.Setup(f => f.GetBackendType("redis-store")).Returns(Services.StateBackend.Redis);
-        _mockStateStoreFactory.Setup(f => f.GetBackendType("mysql-store")).Returns(Services.StateBackend.MySql);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("redis-store")).Returns(StateBackend.Redis);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("mysql-store")).Returns(StateBackend.MySql);
 
         // Act
         var (status, response) = await service.ListStoresAsync(null, CancellationToken.None);
@@ -877,9 +876,9 @@ public class StateServiceTests
         var service = CreateService();
         var request = new ListStoresRequest { BackendFilter = ListStoresRequestBackendFilter.Redis };
 
-        _mockStateStoreFactory.Setup(f => f.GetStoreNames(Services.StateBackend.Redis))
+        _mockStateStoreFactory.Setup(f => f.GetStoreNames(StateBackend.Redis))
             .Returns(new[] { "redis-store-1", "redis-store-2" });
-        _mockStateStoreFactory.Setup(f => f.GetBackendType(It.IsAny<string>())).Returns(Services.StateBackend.Redis);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType(It.IsAny<string>())).Returns(StateBackend.Redis);
 
         // Act
         var (status, response) = await service.ListStoresAsync(request, CancellationToken.None);
@@ -898,9 +897,9 @@ public class StateServiceTests
         var service = CreateService();
         var request = new ListStoresRequest { BackendFilter = ListStoresRequestBackendFilter.Mysql };
 
-        _mockStateStoreFactory.Setup(f => f.GetStoreNames(Services.StateBackend.MySql))
+        _mockStateStoreFactory.Setup(f => f.GetStoreNames(StateBackend.MySql))
             .Returns(new[] { "mysql-store" });
-        _mockStateStoreFactory.Setup(f => f.GetBackendType(It.IsAny<string>())).Returns(Services.StateBackend.MySql);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType(It.IsAny<string>())).Returns(StateBackend.MySql);
 
         // Act
         var (status, response) = await service.ListStoresAsync(request, CancellationToken.None);

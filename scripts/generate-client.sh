@@ -140,14 +140,13 @@ if [ -z "$DOTNET_ROOT" ]; then
     fi
 fi
 
-# Generate service client using NSwag (DaprServiceClientBase pattern)
+# Generate service client using NSwag (IMeshInvocationClient pattern)
 echo -e "${YELLOW}🔄 Running NSwag client generation...${NC}"
 
 "$NSWAG_EXE" openapi2csclient \
     "/input:$FILTERED_SCHEMA_FILE" \
     "/output:$OUTPUT_FILE" \
     "/namespace:BeyondImmersion.BannouService.$SERVICE_PASCAL" \
-    "/clientBaseClass:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase" \
     "/className:${SERVICE_PASCAL}Client" \
     "/generateClientClasses:true" \
     "/generateClientInterfaces:true" \

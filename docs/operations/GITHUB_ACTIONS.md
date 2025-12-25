@@ -56,7 +56,7 @@ The main pipeline (`ci.integration.yml`) runs a sequential testing progression:
 **2. Infrastructure Tests**
 - Starts Docker Compose stack
 - Validates container health
-- Tests Dapr component configuration
+- Tests infrastructure configuration (Redis, RabbitMQ, MySQL)
 - Verifies basic connectivity
 
 **3. HTTP Integration Tests**

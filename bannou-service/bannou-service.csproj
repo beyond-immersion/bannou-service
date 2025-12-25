@@ -60,6 +60,7 @@
     <AdditionalFiles Include="../schemas/*.yaml" />
   </ItemGroup>
 
+
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Debug'">
     <Exec Command="dotnet format --no-restore" />
   </Target>

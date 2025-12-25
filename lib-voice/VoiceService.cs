@@ -3,11 +3,11 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Voice.Clients;
 using BeyondImmersion.BannouService.Voice.Services;
-using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
@@ -26,7 +26,8 @@ namespace BeyondImmersion.BannouService.Voice;
 [DaprService("voice", typeof(IVoiceService), lifetime: ServiceLifetime.Scoped)]
 public partial class VoiceService : IVoiceService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<VoiceService> _logger;
     private readonly VoiceServiceConfiguration _configuration;
     private readonly IErrorEventEmitter _errorEventEmitter;
@@ -43,17 +44,20 @@ public partial class VoiceService : IVoiceService
     /// <summary>
     /// Initializes a new instance of the VoiceService.
     /// </summary>
-    /// <param name="daprClient">Dapr client for state and pub/sub operations.</param>
+    /// <param name="stateStoreFactory">State store factory for state operations.</param>
+    /// <param name="messageBus">Message bus for event publishing.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Voice service configuration.</param>
     /// <param name="errorEventEmitter">Error event emitter for unexpected failures.</param>
     /// <param name="endpointRegistry">SIP endpoint registry for participant tracking.</param>
     /// <param name="p2pCoordinator">P2P coordinator for mesh topology management.</param>
     /// <param name="scaledTierCoordinator">Scaled tier coordinator for SFU-based conferencing.</param>
+    /// <param name="eventConsumer">Event consumer for registering event handlers.</param>
     /// <param name="clientEventPublisher">Optional client event publisher for WebSocket push events. May be null if Connect service is not loaded.</param>
     /// <param name="permissionsClient">Optional permissions client for setting voice:ringing state. May be null if Permissions service is not loaded.</param>
     public VoiceService(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         ILogger<VoiceService> logger,
         VoiceServiceConfiguration configuration,
         IErrorEventEmitter errorEventEmitter,
@@ -64,7 +68,8 @@ public partial class VoiceService : IVoiceService
         IClientEventPublisher? clientEventPublisher = null,
         IPermissionsClient? permissionsClient = null)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
@@ -89,12 +94,10 @@ public partial class VoiceService : IVoiceService
         try
         {
             // Check if room already exists for this session
-            var existingRoomId = await _daprClient.GetStateAsync<Guid?>(
-                STATE_STORE,
-                $"{SESSION_ROOM_KEY_PREFIX}{body.SessionId}",
-                cancellationToken: cancellationToken);
+            var stringStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            var existingRoomIdStr = await stringStore.GetAsync($"{SESSION_ROOM_KEY_PREFIX}{body.SessionId}", cancellationToken);
 
-            if (existingRoomId.HasValue)
+            if (!string.IsNullOrEmpty(existingRoomIdStr) && Guid.TryParse(existingRoomIdStr, out _))
             {
                 _logger.LogWarning("Voice room already exists for session {SessionId}", body.SessionId);
                 return (StatusCodes.Conflict, null);
@@ -116,10 +119,11 @@ public partial class VoiceService : IVoiceService
             };
 
             // Save room data
-            await _daprClient.SaveStateAsync(STATE_STORE, $"{ROOM_KEY_PREFIX}{roomId}", roomData, cancellationToken: cancellationToken);
+            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(STATE_STORE);
+            await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{roomId}", roomData, cancellationToken: cancellationToken);
 
-            // Save session -> room mapping
-            await _daprClient.SaveStateAsync(STATE_STORE, $"{SESSION_ROOM_KEY_PREFIX}{body.SessionId}", roomId, cancellationToken: cancellationToken);
+            // Save session -> room mapping (store Guid as string since IStateStore requires reference types)
+            await stringStore.SaveAsync($"{SESSION_ROOM_KEY_PREFIX}{body.SessionId}", roomId.ToString(), cancellationToken: cancellationToken);
 
             _logger.LogInformation("Created voice room {RoomId} for session {SessionId}", roomId, body.SessionId);
 
@@ -161,10 +165,8 @@ public partial class VoiceService : IVoiceService
 
         try
         {
-            var roomData = await _daprClient.GetStateAsync<VoiceRoomData>(
-                STATE_STORE,
-                $"{ROOM_KEY_PREFIX}{body.RoomId}",
-                cancellationToken: cancellationToken);
+            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(STATE_STORE);
+            var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
             if (roomData == null)
             {
@@ -215,10 +217,8 @@ public partial class VoiceService : IVoiceService
         try
         {
             // Get room data
-            var roomData = await _daprClient.GetStateAsync<VoiceRoomData>(
-                STATE_STORE,
-                $"{ROOM_KEY_PREFIX}{body.RoomId}",
-                cancellationToken: cancellationToken);
+            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(STATE_STORE);
+            var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
             if (roomData == null)
             {
@@ -251,10 +251,12 @@ public partial class VoiceService : IVoiceService
                     if (upgradeResult)
                     {
                         // Reload room data after upgrade
-                        roomData = await _daprClient.GetStateAsync<VoiceRoomData>(
-                            STATE_STORE,
-                            $"{ROOM_KEY_PREFIX}{body.RoomId}",
-                            cancellationToken: cancellationToken);
+                        roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
+                        if (roomData == null)
+                        {
+                            _logger.LogError("Room data disappeared after tier upgrade for room {RoomId}", body.RoomId);
+                            return (StatusCodes.InternalServerError, null);
+                        }
                         isScaledTier = true;
                     }
                     else
@@ -446,10 +448,8 @@ public partial class VoiceService : IVoiceService
         try
         {
             // Get room data
-            var roomData = await _daprClient.GetStateAsync<VoiceRoomData>(
-                STATE_STORE,
-                $"{ROOM_KEY_PREFIX}{body.RoomId}",
-                cancellationToken: cancellationToken);
+            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(STATE_STORE);
+            var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
             if (roomData == null)
             {
@@ -472,10 +472,11 @@ public partial class VoiceService : IVoiceService
             }
 
             // Delete room data
-            await _daprClient.DeleteStateAsync(STATE_STORE, $"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken: cancellationToken);
+            await roomStore.DeleteAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
             // Delete session -> room mapping
-            await _daprClient.DeleteStateAsync(STATE_STORE, $"{SESSION_ROOM_KEY_PREFIX}{roomData.SessionId}", cancellationToken: cancellationToken);
+            var stringStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            await stringStore.DeleteAsync($"{SESSION_ROOM_KEY_PREFIX}{roomData.SessionId}", cancellationToken);
 
             // Notify all participants that room is closed
             await NotifyRoomClosedAsync(body.RoomId, participants, body.Reason ?? "session_ended", cancellationToken);
@@ -928,7 +929,8 @@ public partial class VoiceService : IVoiceService
                 RtpServerUri = rtpServerUri
             };
 
-            await _daprClient.SaveStateAsync(STATE_STORE, $"{ROOM_KEY_PREFIX}{roomId}", updatedRoomData, cancellationToken: cancellationToken);
+            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(STATE_STORE);
+            await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{roomId}", updatedRoomData, cancellationToken: cancellationToken);
 
             // Notify all current participants about the tier upgrade
             await NotifyTierUpgradeAsync(roomId, rtpServerUri, cancellationToken);
@@ -992,7 +994,7 @@ public partial class VoiceService : IVoiceService
     public async Task RegisterServicePermissionsAsync()
     {
         _logger.LogInformation("Registering Voice service permissions...");
-        await VoicePermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+        await VoicePermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
     }
 
     #endregion

@@ -1,6 +1,6 @@
-using Dapr.Client;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Connect.ClientEvents;
 
@@ -10,7 +10,7 @@ namespace BeyondImmersion.BannouService.Connect.ClientEvents;
 /// <remarks>
 /// <para>
 /// When a client disconnects but the session is still valid (within the 5-minute
-/// reconnection window), events are queued in Redis via Dapr state store.
+/// reconnection window), events are queued in Redis via state store.
 /// </para>
 /// <para>
 /// When the client reconnects, queued events are delivered before normal
@@ -19,13 +19,8 @@ namespace BeyondImmersion.BannouService.Connect.ClientEvents;
 /// </remarks>
 public class ClientEventQueueManager
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStore<List<QueuedEvent>> _stateStore;
     private readonly ILogger<ClientEventQueueManager> _logger;
-
-    /// <summary>
-    /// State store name for Connect service session data.
-    /// </summary>
-    private const string STATE_STORE = "connect-statestore";
 
     /// <summary>
     /// Key prefix for event queues.
@@ -38,13 +33,19 @@ public class ClientEventQueueManager
     private const int MAX_QUEUED_EVENTS = 100;
 
     /// <summary>
+    /// TTL for queued events (matches reconnection window).
+    /// </summary>
+    private static readonly TimeSpan EVENT_QUEUE_TTL = TimeSpan.FromMinutes(5);
+
+    /// <summary>
     /// Creates a new ClientEventQueueManager.
     /// </summary>
-    /// <param name="daprClient">Dapr client for state management.</param>
+    /// <param name="stateStoreFactory">State store factory for state management.</param>
     /// <param name="logger">Logger for queue operations.</param>
-    public ClientEventQueueManager(DaprClient daprClient, ILogger<ClientEventQueueManager> logger)
+    public ClientEventQueueManager(IStateStoreFactory stateStoreFactory, ILogger<ClientEventQueueManager> logger)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        ArgumentNullException.ThrowIfNull(stateStoreFactory);
+        _stateStore = stateStoreFactory.GetStore<List<QueuedEvent>>("connect-statestore");
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -70,8 +71,7 @@ public class ClientEventQueueManager
             var key = $"{EVENT_QUEUE_PREFIX}{sessionId}";
 
             // Get existing queue
-            var existingQueue = await _daprClient.GetStateAsync<List<QueuedEvent>>(
-                STATE_STORE, key, cancellationToken: cancellationToken);
+            var existingQueue = await _stateStore.GetAsync(key, cancellationToken);
 
             var queue = existingQueue ?? new List<QueuedEvent>();
 
@@ -94,16 +94,7 @@ public class ClientEventQueueManager
             });
 
             // Save queue (with TTL matching reconnection window)
-            await _daprClient.SaveStateAsync(
-                STATE_STORE,
-                key,
-                queue,
-                metadata: new Dictionary<string, string>
-                {
-                    // TTL of 5 minutes (matches reconnection window)
-                    ["ttlInSeconds"] = "300"
-                },
-                cancellationToken: cancellationToken);
+            await _stateStore.SaveAsync(key, queue, new StateOptions { Ttl = (int)EVENT_QUEUE_TTL.TotalSeconds }, cancellationToken);
 
             _logger.LogDebug(
                 "Queued event for disconnected session {SessionId} (queue size: {QueueSize})",
@@ -139,9 +130,8 @@ public class ClientEventQueueManager
         {
             var key = $"{EVENT_QUEUE_PREFIX}{sessionId}";
 
-            // Get and delete the queue atomically
-            var queue = await _daprClient.GetStateAsync<List<QueuedEvent>>(
-                STATE_STORE, key, cancellationToken: cancellationToken);
+            // Get and delete the queue
+            var queue = await _stateStore.GetAsync(key, cancellationToken);
 
             if (queue == null || queue.Count == 0)
             {
@@ -149,7 +139,7 @@ public class ClientEventQueueManager
             }
 
             // Delete the queue
-            await _daprClient.DeleteStateAsync(STATE_STORE, key, cancellationToken: cancellationToken);
+            await _stateStore.DeleteAsync(key, cancellationToken);
 
             _logger.LogInformation(
                 "Dequeued {Count} events for reconnecting session {SessionId}",
@@ -188,8 +178,7 @@ public class ClientEventQueueManager
         try
         {
             var key = $"{EVENT_QUEUE_PREFIX}{sessionId}";
-            var queue = await _daprClient.GetStateAsync<List<QueuedEvent>>(
-                STATE_STORE, key, cancellationToken: cancellationToken);
+            var queue = await _stateStore.GetAsync(key, cancellationToken);
 
             return queue?.Count ?? 0;
         }
@@ -214,7 +203,7 @@ public class ClientEventQueueManager
         try
         {
             var key = $"{EVENT_QUEUE_PREFIX}{sessionId}";
-            await _daprClient.DeleteStateAsync(STATE_STORE, key, cancellationToken: cancellationToken);
+            await _stateStore.DeleteAsync(key, cancellationToken);
 
             _logger.LogDebug("Cleared event queue for session {SessionId}", sessionId);
         }
@@ -227,7 +216,7 @@ public class ClientEventQueueManager
     /// <summary>
     /// Internal model for queued events.
     /// </summary>
-    private class QueuedEvent
+    public class QueuedEvent
     {
         /// <summary>
         /// Base64-encoded event payload.

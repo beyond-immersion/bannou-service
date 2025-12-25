@@ -61,22 +61,49 @@ public partial class PublishEventRequest
 
 }
 
+/// <summary>
+/// Options for publishing messages to RabbitMQ
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PublishOptions
 {
 
+    /// <summary>
+    /// Exchange name for routing
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("exchange")]
     public string Exchange { get; set; } = "bannou";
 
+    /// <summary>
+    /// Whether the message should be persisted to disk
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("persistent")]
     public bool Persistent { get; set; } = true;
 
+    /// <summary>
+    /// Message priority (0-9)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("priority")]
     [System.ComponentModel.DataAnnotations.Range(0, 9)]
-    public int Priority { get; set; } = default!;
+    public int Priority { get; set; } = 0;
 
+    /// <summary>
+    /// Correlation ID for request/response patterns
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("correlationId")]
-    public System.Guid CorrelationId { get; set; } = default!;
+    public System.Guid? CorrelationId { get; set; } = default!;
+
+    /// <summary>
+    /// Message expiration time (ISO 8601 duration format)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiration")]
+    public System.TimeSpan? Expiration { get; set; } = default!;
+
+    /// <summary>
+    /// Custom headers to include with the message
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("headers")]
+    public object? Headers { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -139,21 +166,48 @@ public partial class CreateSubscriptionRequest
 
 }
 
+/// <summary>
+/// Options for subscribing to RabbitMQ topics
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SubscriptionOptions
 {
 
+    /// <summary>
+    /// Whether the queue should survive broker restarts
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("durable")]
-    public bool Durable { get; set; } = false;
+    public bool Durable { get; set; } = true;
 
+    /// <summary>
+    /// Whether only this connection can consume from the queue
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("exclusive")]
     public bool Exclusive { get; set; } = false;
 
+    /// <summary>
+    /// Whether messages should be auto-acknowledged
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autoAck")]
-    public bool AutoAck { get; set; } = true;
+    public bool AutoAck { get; set; } = false;
 
+    /// <summary>
+    /// Number of messages to prefetch
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("prefetchCount")]
     public int PrefetchCount { get; set; } = 10;
+
+    /// <summary>
+    /// Whether to use dead letter exchange for failed messages
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("useDeadLetter")]
+    public bool UseDeadLetter { get; set; } = true;
+
+    /// <summary>
+    /// Name of the consumer group for load balancing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("consumerGroup")]
+    public string? ConsumerGroup { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

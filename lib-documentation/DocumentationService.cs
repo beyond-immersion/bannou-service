@@ -2,8 +2,9 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Documentation.Services;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -13,20 +14,20 @@ using System.Threading.Tasks;
 namespace BeyondImmersion.BannouService.Documentation;
 
 /// <summary>
-/// Dapr-first implementation for Documentation service following schema-first architecture.
-/// Uses Dapr state management for persistence.
+/// State-store implementation for Documentation service following schema-first architecture.
+/// Uses IStateStoreFactory for persistence.
 /// </summary>
 [DaprService("documentation", typeof(IDocumentationService), lifetime: ServiceLifetime.Scoped)]
 public partial class DocumentationService : IDocumentationService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<DocumentationService> _logger;
     private readonly DocumentationServiceConfiguration _configuration;
     private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly ISearchIndexService _searchIndexService;
 
     private const string STATE_STORE = "documentation-statestore";
-    private const string PUBSUB_NAME = "bannou-pubsub";
 
     // Event topics following Tenet 16: {entity}.{action} pattern
     private const string DOCUMENT_CREATED_TOPIC = "document.created";
@@ -43,14 +44,16 @@ public partial class DocumentationService : IDocumentationService
     /// Creates a new instance of the DocumentationService.
     /// </summary>
     public DocumentationService(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         ILogger<DocumentationService> logger,
         DocumentationServiceConfiguration configuration,
         IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer,
         ISearchIndexService searchIndexService)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
@@ -68,7 +71,7 @@ public partial class DocumentationService : IDocumentationService
     public async Task RegisterServicePermissionsAsync()
     {
         _logger.LogInformation("Registering Documentation service permissions...");
-        await DocumentationPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+        await DocumentationPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
     }
 
     /// <inheritdoc />
@@ -80,16 +83,18 @@ public partial class DocumentationService : IDocumentationService
         {
             // Look up document ID from slug index
             var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{slug}";
-            var documentId = await _daprClient.GetStateAsync<Guid?>(STATE_STORE, slugKey, cancellationToken: cancellationToken);
-            if (!documentId.HasValue)
+            var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            var documentIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
+            if (string.IsNullOrEmpty(documentIdStr) || !Guid.TryParse(documentIdStr, out var documentId))
             {
                 _logger.LogDebug("Document with slug {Slug} not found in namespace {Namespace}", slug, namespaceId);
                 return (StatusCodes.NotFound, null);
             }
 
             // Fetch document content
-            var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId.Value}";
-            var storedDoc = await _daprClient.GetStateAsync<StoredDocument>(STATE_STORE, docKey, cancellationToken: cancellationToken);
+            var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+            var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
             if (storedDoc == null)
             {
                 _logger.LogWarning("Document {DocumentId} found in slug index but not in store for namespace {Namespace}", documentId, namespaceId);
@@ -174,10 +179,11 @@ public partial class DocumentationService : IDocumentationService
 
             // Build response with document results
             var results = new List<DocumentResult>();
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
             foreach (var result in searchResults)
             {
                 var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{result.DocumentId}";
-                var doc = await _daprClient.GetStateAsync<StoredDocument>(STATE_STORE, docKey, cancellationToken: cancellationToken);
+                var doc = await docStore.GetAsync(docKey, cancellationToken);
 
                 if (doc != null)
                 {
@@ -239,6 +245,8 @@ public partial class DocumentationService : IDocumentationService
 
             var namespaceId = body.Namespace;
             Guid documentId;
+            var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
 
             // Resolve document ID from slug if provided
             if (body.DocumentId != Guid.Empty)
@@ -249,18 +257,17 @@ public partial class DocumentationService : IDocumentationService
             {
                 // Use slug (already validated as non-empty above)
                 var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{body.Slug}";
-                var resolvedId = await _daprClient.GetStateAsync<Guid?>(STATE_STORE, slugKey, cancellationToken: cancellationToken);
-                if (!resolvedId.HasValue)
+                var resolvedIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
+                if (string.IsNullOrEmpty(resolvedIdStr) || !Guid.TryParse(resolvedIdStr, out documentId))
                 {
                     _logger.LogDebug("Document with slug {Slug} not found in namespace {Namespace}", body.Slug, namespaceId);
                     return (StatusCodes.NotFound, null);
                 }
-                documentId = resolvedId.Value;
             }
 
             // Fetch document from state store
             var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-            var storedDoc = await _daprClient.GetStateAsync<StoredDocument>(STATE_STORE, docKey, cancellationToken: cancellationToken);
+            var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
             if (storedDoc == null)
             {
                 _logger.LogDebug("Document {DocumentId} not found in namespace {Namespace}", documentId, namespaceId);
@@ -351,10 +358,11 @@ public partial class DocumentationService : IDocumentationService
 
             // Build response with document results
             var results = new List<DocumentResult>();
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
             foreach (var result in searchResults)
             {
                 var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{result.DocumentId}";
-                var doc = await _daprClient.GetStateAsync<StoredDocument>(STATE_STORE, docKey, cancellationToken: cancellationToken);
+                var doc = await docStore.GetAsync(docKey, cancellationToken);
 
                 if (doc != null)
                 {
@@ -425,10 +433,11 @@ public partial class DocumentationService : IDocumentationService
 
             // Fetch document summaries
             var documents = new List<DocumentSummary>();
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
             foreach (var docId in docIds)
             {
                 var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
-                var doc = await _daprClient.GetStateAsync<StoredDocument>(STATE_STORE, docKey, cancellationToken: cancellationToken);
+                var doc = await docStore.GetAsync(docKey, cancellationToken);
 
                 if (doc != null)
                 {
@@ -492,10 +501,11 @@ public partial class DocumentationService : IDocumentationService
 
             // Fetch document summaries and build topic suggestions
             var suggestions = new List<TopicSuggestion>();
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
             foreach (var docId in relatedIds)
             {
                 var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
-                var doc = await _daprClient.GetStateAsync<StoredDocument>(STATE_STORE, docKey, cancellationToken: cancellationToken);
+                var doc = await docStore.GetAsync(docKey, cancellationToken);
 
                 if (doc != null)
                 {
@@ -554,11 +564,13 @@ public partial class DocumentationService : IDocumentationService
 
             var namespaceId = body.Namespace;
             var slug = body.Slug;
+            var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
 
             // Check if slug already exists in this namespace
             var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{slug}";
-            var existingDocId = await _daprClient.GetStateAsync<Guid?>(STATE_STORE, slugKey, cancellationToken: cancellationToken);
-            if (existingDocId.HasValue)
+            var existingDocIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
+            if (!string.IsNullOrEmpty(existingDocIdStr))
             {
                 _logger.LogWarning("Document with slug {Slug} already exists in namespace {Namespace}", slug, namespaceId);
                 return (StatusCodes.Conflict, null);
@@ -588,10 +600,10 @@ public partial class DocumentationService : IDocumentationService
 
             // Save document to state store
             var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-            await _daprClient.SaveStateAsync(STATE_STORE, docKey, storedDoc, cancellationToken: cancellationToken);
+            await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
 
             // Create slug index entry
-            await _daprClient.SaveStateAsync(STATE_STORE, slugKey, documentId, cancellationToken: cancellationToken);
+            await slugStore.SaveAsync(slugKey, documentId.ToString(), cancellationToken: cancellationToken);
 
             // Add to namespace document list
             await AddDocumentToNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
@@ -642,9 +654,12 @@ public partial class DocumentationService : IDocumentationService
                 return (StatusCodes.BadRequest, null);
             }
 
+            var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+
             // Fetch existing document
             var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-            var storedDoc = await _daprClient.GetStateAsync<StoredDocument>(STATE_STORE, docKey, cancellationToken: cancellationToken);
+            var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
             if (storedDoc == null)
             {
                 _logger.LogDebug("Document {DocumentId} not found in namespace {Namespace}", documentId, namespaceId);
@@ -660,8 +675,8 @@ public partial class DocumentationService : IDocumentationService
             {
                 // Check new slug doesn't conflict
                 var newSlugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{body.Slug}";
-                var conflictId = await _daprClient.GetStateAsync<Guid?>(STATE_STORE, newSlugKey, cancellationToken: cancellationToken);
-                if (conflictId.HasValue && conflictId.Value != documentId)
+                var conflictIdStr = await slugStore.GetAsync(newSlugKey, cancellationToken);
+                if (!string.IsNullOrEmpty(conflictIdStr) && Guid.TryParse(conflictIdStr, out var conflictId) && conflictId != documentId)
                 {
                     _logger.LogWarning("Slug {Slug} already exists in namespace {Namespace}", body.Slug, namespaceId);
                     return (StatusCodes.Conflict, null);
@@ -722,18 +737,18 @@ public partial class DocumentationService : IDocumentationService
             storedDoc.UpdatedAt = now;
 
             // Save updated document
-            await _daprClient.SaveStateAsync(STATE_STORE, docKey, storedDoc, cancellationToken: cancellationToken);
+            await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
 
             // Update slug index if changed
             if (changedFields.Contains("slug"))
             {
                 // Remove old slug index
                 var oldSlugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{oldSlug}";
-                await _daprClient.DeleteStateAsync(STATE_STORE, oldSlugKey, cancellationToken: cancellationToken);
+                await slugStore.DeleteAsync(oldSlugKey, cancellationToken);
 
                 // Add new slug index
                 var newSlugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{storedDoc.Slug}";
-                await _daprClient.SaveStateAsync(STATE_STORE, newSlugKey, documentId, cancellationToken: cancellationToken);
+                await slugStore.SaveAsync(newSlugKey, documentId.ToString(), cancellationToken: cancellationToken);
             }
 
             // Update search index
@@ -788,6 +803,9 @@ public partial class DocumentationService : IDocumentationService
 
             var namespaceId = body.Namespace;
             Guid documentId;
+            var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(STATE_STORE);
 
             // Resolve document ID from slug if provided
             if (body.DocumentId != Guid.Empty)
@@ -798,18 +816,17 @@ public partial class DocumentationService : IDocumentationService
             {
                 // Use slug (already validated as non-empty above)
                 var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{body.Slug}";
-                var resolvedId = await _daprClient.GetStateAsync<Guid?>(STATE_STORE, slugKey, cancellationToken: cancellationToken);
-                if (!resolvedId.HasValue)
+                var resolvedIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
+                if (string.IsNullOrEmpty(resolvedIdStr) || !Guid.TryParse(resolvedIdStr, out documentId))
                 {
                     _logger.LogDebug("Document with slug {Slug} not found in namespace {Namespace}", body.Slug, namespaceId);
                     return (StatusCodes.NotFound, null);
                 }
-                documentId = resolvedId.Value;
             }
 
             // Fetch existing document
             var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-            var storedDoc = await _daprClient.GetStateAsync<StoredDocument>(STATE_STORE, docKey, cancellationToken: cancellationToken);
+            var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
             if (storedDoc == null)
             {
                 _logger.LogDebug("Document {DocumentId} not found in namespace {Namespace}", documentId, namespaceId);
@@ -830,17 +847,17 @@ public partial class DocumentationService : IDocumentationService
 
             // Save to trashcan
             var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{documentId}";
-            await _daprClient.SaveStateAsync(STATE_STORE, trashKey, trashedDoc, cancellationToken: cancellationToken);
+            await trashStore.SaveAsync(trashKey, trashedDoc, cancellationToken: cancellationToken);
 
             // Add to trashcan index
             await AddDocumentToTrashcanIndexAsync(namespaceId, documentId, cancellationToken);
 
             // Remove from main storage
-            await _daprClient.DeleteStateAsync(STATE_STORE, docKey, cancellationToken: cancellationToken);
+            await docStore.DeleteAsync(docKey, cancellationToken);
 
             // Remove slug index
             var slugKey2 = $"{SLUG_INDEX_PREFIX}{namespaceId}:{storedDoc.Slug}";
-            await _daprClient.DeleteStateAsync(STATE_STORE, slugKey2, cancellationToken: cancellationToken);
+            await slugStore.DeleteAsync(slugKey2, cancellationToken);
 
             // Remove from namespace document list
             await RemoveDocumentFromNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
@@ -877,10 +894,13 @@ public partial class DocumentationService : IDocumentationService
         {
             var namespaceId = body.Namespace;
             var documentId = body.DocumentId;
+            var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(STATE_STORE);
 
             // Fetch from trashcan
             var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{documentId}";
-            var trashedDoc = await _daprClient.GetStateAsync<TrashedDocument>(STATE_STORE, trashKey, cancellationToken: cancellationToken);
+            var trashedDoc = await trashStore.GetAsync(trashKey, cancellationToken);
             if (trashedDoc == null)
             {
                 _logger.LogDebug("Document {DocumentId} not found in trashcan for namespace {Namespace}", documentId, namespaceId);
@@ -892,14 +912,14 @@ public partial class DocumentationService : IDocumentationService
             {
                 _logger.LogDebug("Document {DocumentId} has expired and cannot be recovered", documentId);
                 // Cleanup expired item
-                await _daprClient.DeleteStateAsync(STATE_STORE, trashKey, cancellationToken: cancellationToken);
+                await trashStore.DeleteAsync(trashKey, cancellationToken);
                 return (StatusCodes.NotFound, null);
             }
 
             // Check if slug is still available
             var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{trashedDoc.Document.Slug}";
-            var existingSlugId = await _daprClient.GetStateAsync<Guid?>(STATE_STORE, slugKey, cancellationToken: cancellationToken);
-            if (existingSlugId.HasValue)
+            var existingSlugIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
+            if (!string.IsNullOrEmpty(existingSlugIdStr))
             {
                 _logger.LogWarning("Cannot recover document {DocumentId}: slug {Slug} is already in use", documentId, trashedDoc.Document.Slug);
                 return (StatusCodes.Conflict, null);
@@ -911,10 +931,10 @@ public partial class DocumentationService : IDocumentationService
 
             // Restore to main storage
             var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-            await _daprClient.SaveStateAsync(STATE_STORE, docKey, storedDoc, cancellationToken: cancellationToken);
+            await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
 
             // Restore slug index
-            await _daprClient.SaveStateAsync(STATE_STORE, slugKey, documentId, cancellationToken: cancellationToken);
+            await slugStore.SaveAsync(slugKey, documentId.ToString(), cancellationToken: cancellationToken);
 
             // Add back to namespace document list
             await AddDocumentToNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
@@ -930,7 +950,7 @@ public partial class DocumentationService : IDocumentationService
                 storedDoc.Tags);
 
             // Remove from trashcan
-            await _daprClient.DeleteStateAsync(STATE_STORE, trashKey, cancellationToken: cancellationToken);
+            await trashStore.DeleteAsync(trashKey, cancellationToken);
 
             // Remove from trashcan index
             await RemoveDocumentFromTrashcanIndexAsync(namespaceId, documentId, cancellationToken);
@@ -961,13 +981,14 @@ public partial class DocumentationService : IDocumentationService
             var succeeded = new List<Guid>();
             var failed = new List<BulkOperationFailure>();
             var now = DateTimeOffset.UtcNow;
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
 
             foreach (var documentId in body.DocumentIds)
             {
                 try
                 {
                     var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-                    var storedDoc = await _daprClient.GetStateAsync<StoredDocument>(STATE_STORE, docKey, cancellationToken: cancellationToken);
+                    var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
 
                     if (storedDoc == null)
                     {
@@ -1007,7 +1028,7 @@ public partial class DocumentationService : IDocumentationService
                     if (changedFields.Count > 0)
                     {
                         storedDoc.UpdatedAt = now;
-                        await _daprClient.SaveStateAsync(STATE_STORE, docKey, storedDoc, cancellationToken: cancellationToken);
+                        await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
 
                         // Update search index
                         _searchIndexService.IndexDocument(
@@ -1060,13 +1081,16 @@ public partial class DocumentationService : IDocumentationService
             var now = DateTimeOffset.UtcNow;
             var trashcanTtl = TimeSpan.FromDays(_configuration.TrashcanTtlDays);
             var expiresAt = now.Add(trashcanTtl);
+            var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(STATE_STORE);
 
             foreach (var documentId in body.DocumentIds)
             {
                 try
                 {
                     var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-                    var storedDoc = await _daprClient.GetStateAsync<StoredDocument>(STATE_STORE, docKey, cancellationToken: cancellationToken);
+                    var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
 
                     if (storedDoc == null)
                     {
@@ -1083,17 +1107,17 @@ public partial class DocumentationService : IDocumentationService
                     };
 
                     var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{documentId}";
-                    await _daprClient.SaveStateAsync(STATE_STORE, trashKey, trashedDoc, cancellationToken: cancellationToken);
+                    await trashStore.SaveAsync(trashKey, trashedDoc, cancellationToken: cancellationToken);
 
                     // Add to trashcan index
                     await AddDocumentToTrashcanIndexAsync(namespaceId, documentId, cancellationToken);
 
                     // Remove from main storage
-                    await _daprClient.DeleteStateAsync(STATE_STORE, docKey, cancellationToken: cancellationToken);
+                    await docStore.DeleteAsync(docKey, cancellationToken);
 
                     // Remove slug index
                     var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{storedDoc.Slug}";
-                    await _daprClient.DeleteStateAsync(STATE_STORE, slugKey, cancellationToken: cancellationToken);
+                    await slugStore.DeleteAsync(slugKey, cancellationToken);
 
                     // Remove from namespace document list
                     await RemoveDocumentFromNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
@@ -1149,15 +1173,18 @@ public partial class DocumentationService : IDocumentationService
                 return (StatusCodes.BadRequest, null);
             }
 
+            var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+
             foreach (var importDoc in body.Documents)
             {
                 try
                 {
                     // Check if slug exists
                     var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{importDoc.Slug}";
-                    var existingDocId = await _daprClient.GetStateAsync<Guid?>(STATE_STORE, slugKey, cancellationToken: cancellationToken);
+                    var existingDocIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
 
-                    if (existingDocId.HasValue)
+                    if (!string.IsNullOrEmpty(existingDocIdStr) && Guid.TryParse(existingDocIdStr, out var existingDocId))
                     {
                         // Handle conflict based on policy
                         switch (body.OnConflict)
@@ -1172,8 +1199,8 @@ public partial class DocumentationService : IDocumentationService
 
                             case ImportDocumentationRequestOnConflict.Update:
                                 // Update existing document
-                                var existingDocKey = $"{DOC_KEY_PREFIX}{namespaceId}:{existingDocId.Value}";
-                                var existingDoc = await _daprClient.GetStateAsync<StoredDocument>(STATE_STORE, existingDocKey, cancellationToken: cancellationToken);
+                                var existingDocKey = $"{DOC_KEY_PREFIX}{namespaceId}:{existingDocId}";
+                                var existingDoc = await docStore.GetAsync(existingDocKey, cancellationToken);
                                 if (existingDoc != null)
                                 {
                                     existingDoc.Title = importDoc.Title;
@@ -1185,9 +1212,9 @@ public partial class DocumentationService : IDocumentationService
                                     existingDoc.Metadata = importDoc.Metadata;
                                     existingDoc.UpdatedAt = now;
 
-                                    await _daprClient.SaveStateAsync(STATE_STORE, existingDocKey, existingDoc, cancellationToken: cancellationToken);
+                                    await docStore.SaveAsync(existingDocKey, existingDoc, cancellationToken: cancellationToken);
 
-                                    _searchIndexService.IndexDocument(namespaceId, existingDocId.Value, existingDoc.Title, existingDoc.Slug, existingDoc.Content, existingDoc.Category, existingDoc.Tags);
+                                    _searchIndexService.IndexDocument(namespaceId, existingDocId, existingDoc.Title, existingDoc.Slug, existingDoc.Content, existingDoc.Category, existingDoc.Tags);
                                     await PublishDocumentUpdatedEventAsync(existingDoc, new[] { "title", "category", "content", "summary", "tags" }, cancellationToken);
                                     updated++;
                                 }
@@ -1215,8 +1242,8 @@ public partial class DocumentationService : IDocumentationService
                     };
 
                     var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-                    await _daprClient.SaveStateAsync(STATE_STORE, docKey, storedDoc, cancellationToken: cancellationToken);
-                    await _daprClient.SaveStateAsync(STATE_STORE, slugKey, documentId, cancellationToken: cancellationToken);
+                    await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
+                    await slugStore.SaveAsync(slugKey, documentId.ToString(), cancellationToken: cancellationToken);
                     await AddDocumentToNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
 
                     _searchIndexService.IndexDocument(namespaceId, documentId, storedDoc.Title, storedDoc.Slug, storedDoc.Content, storedDoc.Category, storedDoc.Tags);
@@ -1258,10 +1285,12 @@ public partial class DocumentationService : IDocumentationService
             var namespaceId = body.Namespace;
             var page = body.Page;
             var pageSize = body.PageSize;
+            var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(STATE_STORE);
 
             // Get trashcan items from namespace trashcan list
             var trashListKey = $"ns-trash:{namespaceId}";
-            var trashedDocIds = await _daprClient.GetStateAsync<List<Guid>>(STATE_STORE, trashListKey, cancellationToken: cancellationToken) ?? [];
+            var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken) ?? [];
 
             var items = new List<TrashcanItem>();
             var now = DateTimeOffset.UtcNow;
@@ -1271,7 +1300,7 @@ public partial class DocumentationService : IDocumentationService
             foreach (var docId in trashedDocIds)
             {
                 var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{docId}";
-                var trashedDoc = await _daprClient.GetStateAsync<TrashedDocument>(STATE_STORE, trashKey, cancellationToken: cancellationToken);
+                var trashedDoc = await trashStore.GetAsync(trashKey, cancellationToken);
 
                 if (trashedDoc == null)
                 {
@@ -1283,7 +1312,7 @@ public partial class DocumentationService : IDocumentationService
                 if (trashedDoc.ExpiresAt < now)
                 {
                     expiredIds.Add(docId);
-                    await _daprClient.DeleteStateAsync(STATE_STORE, trashKey, cancellationToken: cancellationToken);
+                    await trashStore.DeleteAsync(trashKey, cancellationToken);
                     continue;
                 }
 
@@ -1302,7 +1331,7 @@ public partial class DocumentationService : IDocumentationService
             if (expiredIds.Count > 0)
             {
                 trashedDocIds.RemoveAll(id => expiredIds.Contains(id));
-                await _daprClient.SaveStateAsync(STATE_STORE, trashListKey, trashedDocIds, cancellationToken: cancellationToken);
+                await guidListStore.SaveAsync(trashListKey, trashedDocIds, cancellationToken: cancellationToken);
             }
 
             // Apply pagination
@@ -1336,10 +1365,12 @@ public partial class DocumentationService : IDocumentationService
         {
             var namespaceId = body.Namespace;
             var purgedCount = 0;
+            var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(STATE_STORE);
 
             // Get trashcan list
             var trashListKey = $"ns-trash:{namespaceId}";
-            var trashedDocIds = await _daprClient.GetStateAsync<List<Guid>>(STATE_STORE, trashListKey, cancellationToken: cancellationToken) ?? [];
+            var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken) ?? [];
 
             // Determine which documents to purge
             IEnumerable<Guid> docsToPurge;
@@ -1358,7 +1389,7 @@ public partial class DocumentationService : IDocumentationService
             foreach (var docId in docsToPurge)
             {
                 var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{docId}";
-                await _daprClient.DeleteStateAsync(STATE_STORE, trashKey, cancellationToken: cancellationToken);
+                await trashStore.DeleteAsync(trashKey, cancellationToken);
                 trashedDocIds.Remove(docId);
                 purgedCount++;
             }
@@ -1368,11 +1399,11 @@ public partial class DocumentationService : IDocumentationService
             {
                 if (trashedDocIds.Count > 0)
                 {
-                    await _daprClient.SaveStateAsync(STATE_STORE, trashListKey, trashedDocIds, cancellationToken: cancellationToken);
+                    await guidListStore.SaveAsync(trashListKey, trashedDocIds, cancellationToken: cancellationToken);
                 }
                 else
                 {
-                    await _daprClient.DeleteStateAsync(STATE_STORE, trashListKey, cancellationToken: cancellationToken);
+                    await guidListStore.DeleteAsync(trashListKey, cancellationToken);
                 }
             }
 
@@ -1398,13 +1429,15 @@ public partial class DocumentationService : IDocumentationService
         try
         {
             var namespaceId = body.Namespace;
+            var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
 
             // Get stats from search index
             var searchStats = _searchIndexService.GetNamespaceStats(namespaceId);
 
             // Get trashcan count
             var trashListKey = $"ns-trash:{namespaceId}";
-            var trashedDocIds = await _daprClient.GetStateAsync<List<Guid>>(STATE_STORE, trashListKey, cancellationToken: cancellationToken) ?? [];
+            var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken) ?? [];
 
             // Calculate total content size (approximate from document count)
             // In production, this could be tracked more precisely
@@ -1413,7 +1446,7 @@ public partial class DocumentationService : IDocumentationService
             // Find last updated document
             var lastUpdated = DateTimeOffset.MinValue;
             var docListKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
-            var docIds = await _daprClient.GetStateAsync<List<Guid>>(STATE_STORE, docListKey, cancellationToken: cancellationToken) ?? [];
+            var docIds = await guidListStore.GetAsync(docListKey, cancellationToken) ?? [];
 
             if (docIds.Count > 0)
             {
@@ -1421,7 +1454,7 @@ public partial class DocumentationService : IDocumentationService
                 foreach (var docId in docIds.Take(10))
                 {
                     var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
-                    var doc = await _daprClient.GetStateAsync<StoredDocument>(STATE_STORE, docKey, cancellationToken: cancellationToken);
+                    var doc = await docStore.GetAsync(docKey, cancellationToken);
                     if (doc != null && doc.UpdatedAt > lastUpdated)
                     {
                         lastUpdated = doc.UpdatedAt;
@@ -1462,13 +1495,14 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task AddDocumentToNamespaceIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
+        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
         var indexKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
-        var docIds = await _daprClient.GetStateAsync<List<Guid>>(STATE_STORE, indexKey, cancellationToken: cancellationToken) ?? [];
+        var docIds = await guidListStore.GetAsync(indexKey, cancellationToken) ?? [];
 
         if (!docIds.Contains(documentId))
         {
             docIds.Add(documentId);
-            await _daprClient.SaveStateAsync(STATE_STORE, indexKey, docIds, cancellationToken: cancellationToken);
+            await guidListStore.SaveAsync(indexKey, docIds, cancellationToken: cancellationToken);
         }
     }
 
@@ -1477,12 +1511,13 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task RemoveDocumentFromNamespaceIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
+        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
         var indexKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
-        var docIds = await _daprClient.GetStateAsync<List<Guid>>(STATE_STORE, indexKey, cancellationToken: cancellationToken);
+        var docIds = await guidListStore.GetAsync(indexKey, cancellationToken);
 
         if (docIds != null && docIds.Remove(documentId))
         {
-            await _daprClient.SaveStateAsync(STATE_STORE, indexKey, docIds, cancellationToken: cancellationToken);
+            await guidListStore.SaveAsync(indexKey, docIds, cancellationToken: cancellationToken);
         }
     }
 
@@ -1491,13 +1526,14 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task AddDocumentToTrashcanIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
+        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
         var trashListKey = $"ns-trash:{namespaceId}";
-        var trashedDocIds = await _daprClient.GetStateAsync<List<Guid>>(STATE_STORE, trashListKey, cancellationToken: cancellationToken) ?? [];
+        var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken) ?? [];
 
         if (!trashedDocIds.Contains(documentId))
         {
             trashedDocIds.Add(documentId);
-            await _daprClient.SaveStateAsync(STATE_STORE, trashListKey, trashedDocIds, cancellationToken: cancellationToken);
+            await guidListStore.SaveAsync(trashListKey, trashedDocIds, cancellationToken: cancellationToken);
         }
     }
 
@@ -1506,18 +1542,19 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task RemoveDocumentFromTrashcanIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
+        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
         var trashListKey = $"ns-trash:{namespaceId}";
-        var trashedDocIds = await _daprClient.GetStateAsync<List<Guid>>(STATE_STORE, trashListKey, cancellationToken: cancellationToken);
+        var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken);
 
         if (trashedDocIds != null && trashedDocIds.Remove(documentId))
         {
             if (trashedDocIds.Count > 0)
             {
-                await _daprClient.SaveStateAsync(STATE_STORE, trashListKey, trashedDocIds, cancellationToken: cancellationToken);
+                await guidListStore.SaveAsync(trashListKey, trashedDocIds, cancellationToken: cancellationToken);
             }
             else
             {
-                await _daprClient.DeleteStateAsync(STATE_STORE, trashListKey, cancellationToken: cancellationToken);
+                await guidListStore.DeleteAsync(trashListKey, cancellationToken);
             }
         }
     }
@@ -1605,11 +1642,12 @@ public partial class DocumentationService : IDocumentationService
     {
         var summaries = new List<DocumentSummary>();
         var maxRelated = depth == RelatedDepth.Extended ? 10 : 5;
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
 
         foreach (var relatedId in relatedIds.Take(maxRelated))
         {
             var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{relatedId}";
-            var doc = await _daprClient.GetStateAsync<StoredDocument>(STATE_STORE, docKey, cancellationToken: cancellationToken);
+            var doc = await docStore.GetAsync(docKey, cancellationToken);
 
             if (doc != null)
             {
@@ -1634,7 +1672,7 @@ public partial class DocumentationService : IDocumentationService
     #region Event Publishing
 
     /// <summary>
-    /// Publishes DocumentCreatedEvent to RabbitMQ via Dapr.
+    /// Publishes DocumentCreatedEvent to RabbitMQ via IMessageBus.
     /// </summary>
     private async Task PublishDocumentCreatedEventAsync(StoredDocument doc, CancellationToken cancellationToken)
     {
@@ -1654,7 +1692,7 @@ public partial class DocumentationService : IDocumentationService
                 UpdatedAt = doc.UpdatedAt
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, DOCUMENT_CREATED_TOPIC, eventModel, cancellationToken);
+            await _messageBus.PublishAsync(DOCUMENT_CREATED_TOPIC, eventModel);
             _logger.LogDebug("Published DocumentCreatedEvent for document {DocumentId}", doc.DocumentId);
         }
         catch (Exception ex)
@@ -1665,7 +1703,7 @@ public partial class DocumentationService : IDocumentationService
     }
 
     /// <summary>
-    /// Publishes DocumentUpdatedEvent to RabbitMQ via Dapr.
+    /// Publishes DocumentUpdatedEvent to RabbitMQ via IMessageBus.
     /// </summary>
     private async Task PublishDocumentUpdatedEventAsync(StoredDocument doc, IEnumerable<string> changedFields, CancellationToken cancellationToken)
     {
@@ -1686,7 +1724,7 @@ public partial class DocumentationService : IDocumentationService
                 ChangedFields = changedFields.ToList()
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, DOCUMENT_UPDATED_TOPIC, eventModel, cancellationToken);
+            await _messageBus.PublishAsync(DOCUMENT_UPDATED_TOPIC, eventModel);
             _logger.LogDebug("Published DocumentUpdatedEvent for document {DocumentId}", doc.DocumentId);
         }
         catch (Exception ex)
@@ -1697,7 +1735,7 @@ public partial class DocumentationService : IDocumentationService
     }
 
     /// <summary>
-    /// Publishes DocumentDeletedEvent to RabbitMQ via Dapr.
+    /// Publishes DocumentDeletedEvent to RabbitMQ via IMessageBus.
     /// </summary>
     private async Task PublishDocumentDeletedEventAsync(StoredDocument doc, string? reason, CancellationToken cancellationToken)
     {
@@ -1718,7 +1756,7 @@ public partial class DocumentationService : IDocumentationService
                 DeletedReason = reason
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, DOCUMENT_DELETED_TOPIC, eventModel, cancellationToken);
+            await _messageBus.PublishAsync(DOCUMENT_DELETED_TOPIC, eventModel);
             _logger.LogDebug("Published DocumentDeletedEvent for document {DocumentId}", doc.DocumentId);
         }
         catch (Exception ex)
@@ -1753,7 +1791,7 @@ public partial class DocumentationService : IDocumentationService
                 RelevanceScore = relevanceScore
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, "documentation.queried", eventModel);
+            await _messageBus.PublishAsync("documentation.queried", eventModel);
             _logger.LogDebug("Published DocumentationQueriedEvent for query '{Query}'", query);
         }
         catch (Exception ex)
@@ -1784,7 +1822,7 @@ public partial class DocumentationService : IDocumentationService
                 ResultCount = resultCount
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, "documentation.searched", eventModel);
+            await _messageBus.PublishAsync("documentation.searched", eventModel);
             _logger.LogDebug("Published DocumentationSearchedEvent for term '{Term}'", searchTerm);
         }
         catch (Exception ex)

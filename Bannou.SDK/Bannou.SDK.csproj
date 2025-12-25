@@ -112,12 +112,11 @@
     </ItemGroup>
   </Target>
 
-  <!-- Service Client Infrastructure (for Dapr service-to-service calls) -->
+  <!-- Service Client Infrastructure (for mesh service-to-service calls) -->
   <ItemGroup>
-    <Compile Include="../bannou-service/ServiceClients/IDaprClient.cs" Condition="Exists('../bannou-service/ServiceClients/IDaprClient.cs')" />
     <Compile Include="../bannou-service/ServiceClients/IServiceClient.cs" Condition="Exists('../bannou-service/ServiceClients/IServiceClient.cs')" />
-    <Compile Include="../bannou-service/ServiceClients/DaprServiceClientBase.cs" Condition="Exists('../bannou-service/ServiceClients/DaprServiceClientBase.cs')" />
     <Compile Include="../bannou-service/Services/IServiceAppMappingResolver.cs" Condition="Exists('../bannou-service/Services/IServiceAppMappingResolver.cs')" />
+    <Compile Include="../bannou-service/Services/IMeshInvocationClient.cs" Condition="Exists('../bannou-service/Services/IMeshInvocationClient.cs')" />
     <Compile Include="../bannou-service/ApiException.cs" Condition="Exists('../bannou-service/ApiException.cs')" />
     <Compile Include="../bannou-service/Configuration/BannouJson.cs" Condition="Exists('../bannou-service/Configuration/BannouJson.cs')" />
   </ItemGroup>

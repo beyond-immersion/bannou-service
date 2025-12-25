@@ -1,7 +1,9 @@
 using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.Subscriptions;
-using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -16,7 +18,7 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 /// </summary>
 public class TokenService : ITokenService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ISubscriptionsClient _subscriptionsClient;
     private readonly ISessionService _sessionService;
     private readonly AuthServiceConfiguration _configuration;
@@ -27,13 +29,13 @@ public class TokenService : ITokenService
     /// Initializes a new instance of TokenService.
     /// </summary>
     public TokenService(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
         ISubscriptionsClient subscriptionsClient,
         ISessionService sessionService,
         AuthServiceConfiguration configuration,
         ILogger<TokenService> logger)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _subscriptionsClient = subscriptionsClient ?? throw new ArgumentNullException(nameof(subscriptionsClient));
         _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -148,12 +150,12 @@ public class TokenService : ITokenService
     public async Task StoreRefreshTokenAsync(string accountId, string refreshToken, CancellationToken cancellationToken = default)
     {
         var redisKey = $"refresh_token:{refreshToken}";
-        await _daprClient.SaveStateAsync(
-            REDIS_STATE_STORE,
+        var stringStore = _stateStoreFactory.GetStore<string>(REDIS_STATE_STORE);
+        await stringStore.SaveAsync(
             redisKey,
             accountId,
-            metadata: new Dictionary<string, string> { { "ttl", "604800" } }, // 7 days
-            cancellationToken: cancellationToken);
+            new StateOptions { Ttl = (int)TimeSpan.FromDays(7).TotalSeconds }, // 7 days
+            cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -162,7 +164,8 @@ public class TokenService : ITokenService
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
-            return await _daprClient.GetStateAsync<string>(REDIS_STATE_STORE, redisKey, cancellationToken: cancellationToken);
+            var stringStore = _stateStoreFactory.GetStore<string>(REDIS_STATE_STORE);
+            return await stringStore.GetAsync(redisKey, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -177,7 +180,8 @@ public class TokenService : ITokenService
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
-            await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, redisKey, cancellationToken: cancellationToken);
+            var stringStore = _stateStoreFactory.GetStore<string>(REDIS_STATE_STORE);
+            await stringStore.DeleteAsync(redisKey, cancellationToken);
         }
         catch (Exception ex)
         {

@@ -13,7 +13,7 @@ public class ServiceErrorPublisher : EventPublisherBase
 
     /// <inheritdoc/>
     public ServiceErrorPublisher(DaprClient daprClient, ILogger<ServiceErrorPublisher> logger)
-        : base(daprClient, logger)
+        : base((IMessageBus)daprClient, logger)
     {
     }
 

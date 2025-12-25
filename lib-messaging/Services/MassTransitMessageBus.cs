@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.BannouService.Services;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 
@@ -82,9 +83,9 @@ public sealed class MassTransitMessageBus : IMessageBus
                     context.Headers.Set("x-priority", options.Priority);
                 }
 
-                if (options?.Headers != null)
+                if (options?.Headers is IDictionary<string, object> headers)
                 {
-                    foreach (var header in options.Headers)
+                    foreach (var header in headers)
                     {
                         context.Headers.Set(header.Key, header.Value);
                     }

@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
+// Note: IMessageBus and IMessageSubscriber interfaces are in BeyondImmersion.BannouService.Services
+// Implementations (MassTransitMessageBus, MassTransitMessageSubscriber) are in this plugin
+
 namespace BeyondImmersion.BannouService.Messaging;
 
 /// <summary>
@@ -60,12 +63,10 @@ public class MessagingServicePlugin : BaseBannouPlugin
 
         // Register NativeEventConsumerBackend as IHostedService
         // This bridges RabbitMQ subscriptions to existing IEventConsumer fan-out
-        // Only register if feature flag is enabled (native mode vs Dapr mode)
-        if (config?.UseMassTransit == true)
-        {
-            services.AddHostedService<NativeEventConsumerBackend>();
-            Logger?.LogInformation("Registered NativeEventConsumerBackend for native messaging mode");
-        }
+        // MANDATORY: This is always registered as messaging is required infrastructure
+        // (lib-messaging cannot be disabled - see PluginLoader.RequiredInfrastructurePlugins)
+        services.AddHostedService<NativeEventConsumerBackend>();
+        Logger?.LogInformation("Registered NativeEventConsumerBackend - messaging is required infrastructure");
 
         Logger?.LogDebug("Messaging service dependencies configured");
     }

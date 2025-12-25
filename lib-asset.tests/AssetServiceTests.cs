@@ -3,17 +3,24 @@ using BeyondImmersion.BannouService.Asset.Bundles;
 using BeyondImmersion.BannouService.Asset.Events;
 using BeyondImmersion.BannouService.Asset.Models;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
-using Dapr.Client;
 using StorageModels = BeyondImmersion.BannouService.Storage;
 
 namespace BeyondImmersion.BannouService.Asset.Tests;
 
 public class AssetServiceTests
 {
-    private Mock<DaprClient> _mockDaprClient = null!;
+    private const string STATE_STORE = "asset-statestore";
+
+    private Mock<IStateStoreFactory> _mockStateStoreFactory = null!;
+    private Mock<IStateStore<InternalAssetRecord>> _mockAssetStore = null!;
+    private Mock<IStateStore<List<string>>> _mockIndexStore = null!;
+    private Mock<IStateStore<BundleMetadata>> _mockBundleStore = null!;
+    private Mock<IStateStore<UploadSession>> _mockUploadSessionStore = null!;
+    private Mock<IMessageBus> _mockMessageBus = null!;
     private Mock<ILogger<AssetService>> _mockLogger = null!;
     private AssetServiceConfiguration _configuration = null!;
     private Mock<IErrorEventEmitter> _mockErrorEventEmitter = null!;
@@ -25,7 +32,12 @@ public class AssetServiceTests
 
     public AssetServiceTests()
     {
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockAssetStore = new Mock<IStateStore<InternalAssetRecord>>();
+        _mockIndexStore = new Mock<IStateStore<List<string>>>();
+        _mockBundleStore = new Mock<IStateStore<BundleMetadata>>();
+        _mockUploadSessionStore = new Mock<IStateStore<UploadSession>>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<AssetService>>();
         _configuration = new AssetServiceConfiguration();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
@@ -34,6 +46,13 @@ public class AssetServiceTests
         _mockOrchestratorClient = new Mock<IOrchestratorClient>();
         _bundleConverter = new BundleConverter(new Mock<ILogger<BundleConverter>>().Object);
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup state store factory to return typed stores
+        _mockStateStoreFactory.Setup(f => f.GetStore<InternalAssetRecord>(STATE_STORE)).Returns(_mockAssetStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE)).Returns(_mockIndexStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<BundleMetadata>(STATE_STORE)).Returns(_mockBundleStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<UploadSession>(STATE_STORE)).Returns(_mockUploadSessionStore.Object);
+        _mockStateStoreFactory.Setup(f => f.SupportsSearch(STATE_STORE)).Returns(false);
     }
 
     [Fact]
@@ -41,7 +60,8 @@ public class AssetServiceTests
     {
         // Arrange & Act
         var service = new AssetService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             _mockErrorEventEmitter.Object,
@@ -56,10 +76,28 @@ public class AssetServiceTests
     }
 
     [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrowArgumentNullException()
+    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AssetService(
+            null!,
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            _configuration,
+            _mockErrorEventEmitter.Object,
+            _mockAssetEventEmitter.Object,
+            _mockStorageProvider.Object,
+            _mockOrchestratorClient.Object,
+            _bundleConverter,
+            _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new AssetService(
+            _mockStateStoreFactory.Object,
             null!,
             _mockLogger.Object,
             _configuration,
@@ -76,7 +114,8 @@ public class AssetServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AssetService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             null!,
             _configuration,
             _mockErrorEventEmitter.Object,
@@ -92,7 +131,8 @@ public class AssetServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AssetService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             null!,
             _mockErrorEventEmitter.Object,
@@ -108,7 +148,8 @@ public class AssetServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AssetService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             null!,
@@ -124,7 +165,8 @@ public class AssetServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AssetService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             _mockErrorEventEmitter.Object,
@@ -140,7 +182,8 @@ public class AssetServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AssetService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             _mockErrorEventEmitter.Object,
@@ -156,7 +199,8 @@ public class AssetServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AssetService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             _mockErrorEventEmitter.Object,
@@ -172,7 +216,8 @@ public class AssetServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AssetService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             _mockErrorEventEmitter.Object,
@@ -188,7 +233,8 @@ public class AssetServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AssetService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             _mockErrorEventEmitter.Object,
@@ -388,12 +434,9 @@ public class AssetServiceTests
             Asset_id = "non-existent-asset"
         };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
+        _mockAssetStore
+            .Setup(s => s.GetAsync(
                 It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((InternalAssetRecord?)null);
 
@@ -439,12 +482,9 @@ public class AssetServiceTests
             ContentLength: 1024,
             ContentType: "image/png");
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
-                It.IsAny<string>(),
+        _mockAssetStore
+            .Setup(s => s.GetAsync(
                 It.Is<string>(k => k.Contains(assetId)),
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(internalRecord);
 
@@ -482,12 +522,9 @@ public class AssetServiceTests
             Offset = 0
         };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
+        _mockAssetStore
+            .Setup(s => s.GetAsync(
                 It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((InternalAssetRecord?)null);
 
@@ -535,12 +572,9 @@ public class AssetServiceTests
             new ObjectVersionInfo("v1", false, DateTime.UtcNow.AddDays(-1), 1024, "etag1", false, "GLACIER")
         };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
+        _mockAssetStore
+            .Setup(s => s.GetAsync(
                 It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(internalRecord);
 
@@ -579,23 +613,12 @@ public class AssetServiceTests
         };
 
         // Setup for fallback search (index key returns null/empty)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
+        // SupportsSearch returns false in constructor, so fallback is used
+        _mockIndexStore
+            .Setup(s => s.GetAsync(
                 It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>)null!);
-
-        // Setup QueryStateAsync to throw (forcing fallback)
-        _mockDaprClient
-            .Setup(d => d.QueryStateAsync<AssetMetadata>(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Grpc.Core.RpcException(new Grpc.Core.Status(Grpc.Core.StatusCode.Unimplemented, "Query not supported")));
+            .ReturnsAsync((List<string>?)null);
 
         // Act
         var (status, result) = await service.SearchAssetsAsync(request, CancellationToken.None);
@@ -669,49 +692,28 @@ public class AssetServiceTests
             UpdatedAt = DateTimeOffset.UtcNow
         };
 
-        // Setup QueryStateAsync to throw (forcing fallback)
-        _mockDaprClient
-            .Setup(d => d.QueryStateAsync<AssetMetadata>(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Grpc.Core.RpcException(new Grpc.Core.Status(Grpc.Core.StatusCode.Unimplemented, "Query not supported")));
-
-        // Setup for fallback search
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                It.IsAny<string>(),
+        // Setup for fallback search (SupportsSearch returns false)
+        _mockIndexStore
+            .Setup(s => s.GetAsync(
                 It.Is<string>(k => k.Contains("type:")),
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(assetIds);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
-                It.IsAny<string>(),
+        _mockAssetStore
+            .Setup(s => s.GetAsync(
                 It.Is<string>(k => k.Contains("asset-1")),
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(asset1);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
-                It.IsAny<string>(),
+        _mockAssetStore
+            .Setup(s => s.GetAsync(
                 It.Is<string>(k => k.Contains("asset-2")),
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(asset2);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
-                It.IsAny<string>(),
+        _mockAssetStore
+            .Setup(s => s.GetAsync(
                 It.Is<string>(k => k.Contains("asset-3")),
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(asset3);
 
@@ -775,39 +777,22 @@ public class AssetServiceTests
             UpdatedAt = DateTimeOffset.UtcNow
         };
 
-        // Setup QueryStateAsync to throw (forcing fallback)
-        _mockDaprClient
-            .Setup(d => d.QueryStateAsync<AssetMetadata>(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Grpc.Core.RpcException(new Grpc.Core.Status(Grpc.Core.StatusCode.Unimplemented, "Query not supported")));
-
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                It.IsAny<string>(),
+        // Setup for fallback search (SupportsSearch returns false)
+        _mockIndexStore
+            .Setup(s => s.GetAsync(
                 It.Is<string>(k => k.Contains("type:")),
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(assetIds);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
-                It.IsAny<string>(),
+        _mockAssetStore
+            .Setup(s => s.GetAsync(
                 It.Is<string>(k => k.Contains("asset-1")),
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(asset1);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<InternalAssetRecord>(
-                It.IsAny<string>(),
+        _mockAssetStore
+            .Setup(s => s.GetAsync(
                 It.Is<string>(k => k.Contains("asset-2")),
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(asset2);
 
@@ -875,14 +860,11 @@ public class AssetServiceTests
         var service = CreateService();
         var request = new GetBundleRequest { Bundle_id = "non-existent" };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<BundleMetadata>(
+        _mockBundleStore
+            .Setup(s => s.GetAsync(
                 It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((BundleMetadata)null!);
+            .ReturnsAsync((BundleMetadata?)null);
 
         // Act
         var (status, result) = await service.GetBundleAsync(request, CancellationToken.None);
@@ -899,7 +881,8 @@ public class AssetServiceTests
     private AssetService CreateService()
     {
         return new AssetService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             _mockErrorEventEmitter.Object,

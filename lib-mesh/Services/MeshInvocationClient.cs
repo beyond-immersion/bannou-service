@@ -1,6 +1,7 @@
 #nullable enable
 
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Http.Headers;

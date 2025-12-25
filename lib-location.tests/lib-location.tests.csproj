@@ -28,7 +28,9 @@
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-location -->
     <ProjectReference Include="../lib-location/lib-location.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
     <ProjectReference Include="../lib-testing/lib-testing.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
   </ItemGroup>
 
 </Project>

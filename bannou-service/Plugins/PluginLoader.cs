@@ -20,6 +20,18 @@ public class PluginLoader
 {
     private readonly ILogger<PluginLoader> _logger;
 
+    /// <summary>
+    /// Required infrastructure plugins that MUST be loaded and enabled.
+    /// These plugins provide core functionality (messaging, state, mesh) and
+    /// cannot be disabled. Startup will fail if any of these plugins fail to load or initialize.
+    /// </summary>
+    private static readonly HashSet<string> RequiredInfrastructurePlugins = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "messaging",  // lib-messaging: IMessageBus for pub/sub events
+        "state",      // lib-state: IStateStore for state management
+        "mesh"        // lib-mesh: IMeshInvocationClient for service-to-service calls
+    };
+
     // All discovered plugins (enabled and disabled)
     private readonly List<IBannouPlugin> _allPlugins = new();
 
@@ -125,10 +137,39 @@ public class PluginLoader
             }
         }
 
-        // STAGE 2: Discover types for DI registration from ALL assemblies
+        // STAGE 2: Validate required infrastructure plugins are present
+        var missingInfrastructure = RequiredInfrastructurePlugins
+            .Where(required => !_enabledPlugins.Any(p => p.PluginName.Equals(required, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+        if (missingInfrastructure.Count > 0)
+        {
+            var missing = string.Join(", ", missingInfrastructure);
+            _logger.LogCritical(
+                "STARTUP FAILURE: Required infrastructure plugins are missing: [{MissingPlugins}]. " +
+                "These plugins (lib-messaging, lib-state, lib-mesh) are MANDATORY and must be present for the application to function.",
+                missing);
+            return null; // Indicate fatal failure
+        }
+
+        // STAGE 3: Sort enabled plugins so infrastructure loads FIRST
+        // This ensures IMessageBus, IStateStore, and IMeshInvocationClient are available
+        // before other services try to use them
+        var sortedPlugins = _enabledPlugins
+            .OrderByDescending(p => RequiredInfrastructurePlugins.Contains(p.PluginName))
+            .ThenBy(p => p.PluginName)
+            .ToList();
+        _enabledPlugins.Clear();
+        _enabledPlugins.AddRange(sortedPlugins);
+
+        _logger.LogInformation(
+            "Infrastructure plugins validated. Loading order: [{LoadOrder}]",
+            string.Join(" -> ", _enabledPlugins.Select(p => p.PluginName)));
+
+        // STAGE 4: Discover types for DI registration from ALL assemblies
         DiscoverTypesForRegistration();
 
-        // STAGE 3: Build valid environment variable prefixes for orchestrator forwarding
+        // STAGE 5: Build valid environment variable prefixes for orchestrator forwarding
         PopulateValidEnvironmentPrefixes();
 
         var discoveredSummary = string.Join(", ", _allPlugins.Select(p => $"{p.DisplayName} v{p.Version}"));
@@ -146,6 +187,9 @@ public class PluginLoader
     /// Two modes:
     /// - SERVICES_ENABLED=true: All services enabled by default, use {SERVICE}_SERVICE_DISABLED to disable individual services
     /// - SERVICES_ENABLED=false: All services disabled by default, use {SERVICE}_SERVICE_ENABLED to enable individual services
+    ///
+    /// IMPORTANT: Required infrastructure plugins (messaging, state, mesh) are ALWAYS enabled.
+    /// These cannot be disabled via environment variables as they provide core functionality.
     /// </summary>
     /// <param name="serviceName">Name of the service (e.g., "auth", "accounts")</param>
     /// <returns>True if service should be enabled, false if disabled</returns>
@@ -153,6 +197,15 @@ public class PluginLoader
     {
         if (string.IsNullOrWhiteSpace(serviceName))
             return Program.Configuration.Services_Enabled;
+
+        // Required infrastructure plugins are ALWAYS enabled - they cannot be disabled
+        if (RequiredInfrastructurePlugins.Contains(serviceName))
+        {
+            _logger.LogInformation(
+                "Infrastructure plugin '{ServiceName}' is REQUIRED and cannot be disabled",
+                serviceName);
+            return true;
+        }
 
         // Check SERVICES_ENABLED environment variable directly
         var servicesEnabledEnv = Environment.GetEnvironmentVariable("SERVICES_ENABLED");
@@ -787,30 +840,71 @@ public class PluginLoader
     }
 
     /// <summary>
+    /// Check if a plugin is a required infrastructure plugin.
+    /// </summary>
+    /// <param name="pluginName">Name of the plugin to check</param>
+    /// <returns>True if the plugin is required infrastructure</returns>
+    public static bool IsRequiredInfrastructure(string pluginName)
+        => RequiredInfrastructurePlugins.Contains(pluginName);
+
+    /// <summary>
     /// Initialize enabled plugins and their resolved services.
     /// This follows the proper lifecycle: plugins first, then services.
+    /// Infrastructure plugins (messaging, state, mesh) are initialized first and
+    /// their failure causes immediate startup failure.
     /// </summary>
     /// <returns>True if all plugins and services initialized successfully</returns>
     public async Task<bool> InitializeAsync()
     {
         _logger.LogInformation("🚀 Initializing {EnabledCount} enabled plugins", _enabledPlugins.Count);
 
-        // STAGE 1: Initialize enabled plugins
+        // STAGE 1: Initialize enabled plugins (infrastructure first due to sorting)
         foreach (var plugin in _enabledPlugins)
         {
+            var isInfrastructure = RequiredInfrastructurePlugins.Contains(plugin.PluginName);
+            var pluginType = isInfrastructure ? "INFRASTRUCTURE" : "service";
+
             try
             {
-                _logger.LogDebug("Initializing plugin: {PluginName}", plugin.PluginName);
+                _logger.LogDebug("Initializing {PluginType} plugin: {PluginName}",
+                    pluginType, plugin.PluginName);
+
                 var success = await plugin.InitializeAsync();
                 if (!success)
                 {
-                    _logger.LogError("Plugin initialization failed: {PluginName}", plugin.PluginName);
+                    if (isInfrastructure)
+                    {
+                        _logger.LogCritical(
+                            "STARTUP FAILURE: Infrastructure plugin '{PluginName}' failed to initialize. " +
+                            "This is a required plugin and the application cannot function without it.",
+                            plugin.PluginName);
+                    }
+                    else
+                    {
+                        _logger.LogError("Plugin initialization failed: {PluginName}", plugin.PluginName);
+                    }
                     return false;
+                }
+
+                if (isInfrastructure)
+                {
+                    _logger.LogInformation("✅ Infrastructure plugin '{PluginName}' initialized successfully",
+                        plugin.PluginName);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception during plugin initialization: {PluginName}", plugin.PluginName);
+                if (isInfrastructure)
+                {
+                    _logger.LogCritical(ex,
+                        "STARTUP FAILURE: Infrastructure plugin '{PluginName}' threw exception during initialization. " +
+                        "This is a required plugin and the application cannot function without it.",
+                        plugin.PluginName);
+                }
+                else
+                {
+                    _logger.LogError(ex, "Exception during plugin initialization: {PluginName}", plugin.PluginName);
+                }
                 return false;
             }
         }

@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

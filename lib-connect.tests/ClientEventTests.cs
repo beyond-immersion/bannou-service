@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Connect.ClientEvents;
-using Dapr.Client;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -13,13 +14,20 @@ namespace BeyondImmersion.BannouService.Connect.Tests;
 /// </summary>
 public class ClientEventTests
 {
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<List<ClientEventQueueManager.QueuedEvent>>> _mockStateStore;
     private readonly Mock<ILogger<ClientEventQueueManager>> _mockLogger;
 
     public ClientEventTests()
     {
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockStateStore = new Mock<IStateStore<List<ClientEventQueueManager.QueuedEvent>>>();
         _mockLogger = new Mock<ILogger<ClientEventQueueManager>>();
+
+        // Setup factory to return the mock state store
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<List<ClientEventQueueManager.QueuedEvent>>("connect-statestore"))
+            .Returns(_mockStateStore.Object);
     }
 
     #region ClientEventQueueManager Tests
@@ -29,12 +37,12 @@ public class ClientEventTests
     {
         // Arrange & Act & Assert
         var exception = Record.Exception(() =>
-            new ClientEventQueueManager(_mockDaprClient.Object, _mockLogger.Object));
+            new ClientEventQueueManager(_mockStateStoreFactory.Object, _mockLogger.Object));
         Assert.Null(exception);
     }
 
     [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrow()
+    public void Constructor_WithNullStateStoreFactory_ShouldThrow()
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
@@ -46,14 +54,14 @@ public class ClientEventTests
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new ClientEventQueueManager(_mockDaprClient.Object, null!));
+            new ClientEventQueueManager(_mockStateStoreFactory.Object, null!));
     }
 
     [Fact]
     public async Task QueueEventAsync_WithNullSessionId_ShouldReturnFalse()
     {
         // Arrange
-        var manager = new ClientEventQueueManager(_mockDaprClient.Object, _mockLogger.Object);
+        var manager = new ClientEventQueueManager(_mockStateStoreFactory.Object, _mockLogger.Object);
         var payload = new byte[] { 1, 2, 3, 4 };
 
         // Act
@@ -67,7 +75,7 @@ public class ClientEventTests
     public async Task QueueEventAsync_WithEmptySessionId_ShouldReturnFalse()
     {
         // Arrange
-        var manager = new ClientEventQueueManager(_mockDaprClient.Object, _mockLogger.Object);
+        var manager = new ClientEventQueueManager(_mockStateStoreFactory.Object, _mockLogger.Object);
         var payload = new byte[] { 1, 2, 3, 4 };
 
         // Act
@@ -81,29 +89,24 @@ public class ClientEventTests
     public async Task QueueEventAsync_WithValidInput_ShouldSaveToStateStore()
     {
         // Arrange
-        var manager = new ClientEventQueueManager(_mockDaprClient.Object, _mockLogger.Object);
+        var manager = new ClientEventQueueManager(_mockStateStoreFactory.Object, _mockLogger.Object);
         var sessionId = "test-session-123";
         var payload = new byte[] { 1, 2, 3, 4 };
 
-        _mockDaprClient.Setup(x => x.GetStateAsync<List<object>?>(
+        _mockStateStore.Setup(x => x.GetAsync(
             It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<ConsistencyMode?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<object>?)null);
+            .ReturnsAsync((List<ClientEventQueueManager.QueuedEvent>?)null);
 
         // Act
         var result = await manager.QueueEventAsync(sessionId, payload);
 
         // Assert
         Assert.True(result);
-        _mockDaprClient.Verify(x => x.SaveStateAsync(
-            "connect-statestore",
+        _mockStateStore.Verify(x => x.SaveAsync(
             $"event-queue:{sessionId}",
-            It.IsAny<object>(),
-            It.IsAny<StateOptions?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>>(),
+            It.IsAny<List<ClientEventQueueManager.QueuedEvent>>(),
+            It.IsAny<StateOptions>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -111,7 +114,7 @@ public class ClientEventTests
     public async Task DequeueEventsAsync_WithNullSessionId_ShouldReturnEmptyList()
     {
         // Arrange
-        var manager = new ClientEventQueueManager(_mockDaprClient.Object, _mockLogger.Object);
+        var manager = new ClientEventQueueManager(_mockStateStoreFactory.Object, _mockLogger.Object);
 
         // Act
         var result = await manager.DequeueEventsAsync(null!);
@@ -124,7 +127,7 @@ public class ClientEventTests
     public async Task DequeueEventsAsync_WithEmptySessionId_ShouldReturnEmptyList()
     {
         // Arrange
-        var manager = new ClientEventQueueManager(_mockDaprClient.Object, _mockLogger.Object);
+        var manager = new ClientEventQueueManager(_mockStateStoreFactory.Object, _mockLogger.Object);
 
         // Act
         var result = await manager.DequeueEventsAsync("");
@@ -137,16 +140,13 @@ public class ClientEventTests
     public async Task DequeueEventsAsync_WithNoQueuedEvents_ShouldReturnEmptyList()
     {
         // Arrange
-        var manager = new ClientEventQueueManager(_mockDaprClient.Object, _mockLogger.Object);
+        var manager = new ClientEventQueueManager(_mockStateStoreFactory.Object, _mockLogger.Object);
         var sessionId = "test-session";
 
-        _mockDaprClient.Setup(x => x.GetStateAsync<List<object>?>(
+        _mockStateStore.Setup(x => x.GetAsync(
             It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<ConsistencyMode?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<object>?)null);
+            .ReturnsAsync((List<ClientEventQueueManager.QueuedEvent>?)null);
 
         // Act
         var result = await manager.DequeueEventsAsync(sessionId);
@@ -159,7 +159,7 @@ public class ClientEventTests
     public async Task GetQueuedEventCountAsync_WithNullSessionId_ShouldReturnZero()
     {
         // Arrange
-        var manager = new ClientEventQueueManager(_mockDaprClient.Object, _mockLogger.Object);
+        var manager = new ClientEventQueueManager(_mockStateStoreFactory.Object, _mockLogger.Object);
 
         // Act
         var result = await manager.GetQueuedEventCountAsync(null!);
@@ -172,7 +172,7 @@ public class ClientEventTests
     public async Task GetQueuedEventCountAsync_WithEmptySessionId_ShouldReturnZero()
     {
         // Arrange
-        var manager = new ClientEventQueueManager(_mockDaprClient.Object, _mockLogger.Object);
+        var manager = new ClientEventQueueManager(_mockStateStoreFactory.Object, _mockLogger.Object);
 
         // Act
         var result = await manager.GetQueuedEventCountAsync("");
@@ -185,7 +185,7 @@ public class ClientEventTests
     public async Task ClearQueueAsync_WithNullSessionId_ShouldNotThrow()
     {
         // Arrange
-        var manager = new ClientEventQueueManager(_mockDaprClient.Object, _mockLogger.Object);
+        var manager = new ClientEventQueueManager(_mockStateStoreFactory.Object, _mockLogger.Object);
 
         // Act & Assert - should not throw
         var exception = await Record.ExceptionAsync(() => manager.ClearQueueAsync(null!));
@@ -196,18 +196,15 @@ public class ClientEventTests
     public async Task ClearQueueAsync_WithValidSessionId_ShouldDeleteFromStateStore()
     {
         // Arrange
-        var manager = new ClientEventQueueManager(_mockDaprClient.Object, _mockLogger.Object);
+        var manager = new ClientEventQueueManager(_mockStateStoreFactory.Object, _mockLogger.Object);
         var sessionId = "test-session-456";
 
         // Act
         await manager.ClearQueueAsync(sessionId);
 
         // Assert
-        _mockDaprClient.Verify(x => x.DeleteStateAsync(
-            "connect-statestore",
+        _mockStateStore.Verify(x => x.DeleteAsync(
             $"event-queue:{sessionId}",
-            It.IsAny<StateOptions?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

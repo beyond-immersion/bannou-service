@@ -202,23 +202,42 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
     },
     "PublishOptions": {
       "type": "object",
+      "description": "Options for publishing messages to RabbitMQ",
       "properties": {
         "exchange": {
           "type": "string",
-          "default": "bannou"
+          "default": "bannou",
+          "description": "Exchange name for routing"
         },
         "persistent": {
           "type": "boolean",
-          "default": true
+          "default": true,
+          "description": "Whether the message should be persisted to disk"
         },
         "priority": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 9
+          "maximum": 9,
+          "default": 0,
+          "description": "Message priority (0-9)"
         },
         "correlationId": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "nullable": true,
+          "description": "Correlation ID for request/response patterns"
+        },
+        "expiration": {
+          "type": "string",
+          "format": "duration",
+          "nullable": true,
+          "description": "Message expiration time (ISO 8601 duration format)"
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": true,
+          "nullable": true,
+          "description": "Custom headers to include with the message"
         }
       }
     }
@@ -330,22 +349,37 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
     },
     "SubscriptionOptions": {
       "type": "object",
+      "description": "Options for subscribing to RabbitMQ topics",
       "properties": {
         "durable": {
           "type": "boolean",
-          "default": false
+          "default": true,
+          "description": "Whether the queue should survive broker restarts"
         },
         "exclusive": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "Whether only this connection can consume from the queue"
         },
         "autoAck": {
           "type": "boolean",
-          "default": true
+          "default": false,
+          "description": "Whether messages should be auto-acknowledged"
         },
         "prefetchCount": {
           "type": "integer",
-          "default": 10
+          "default": 10,
+          "description": "Number of messages to prefetch"
+        },
+        "useDeadLetter": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to use dead letter exchange for failed messages"
+        },
+        "consumerGroup": {
+          "type": "string",
+          "nullable": true,
+          "description": "Name of the consumer group for load balancing"
         }
       }
     }

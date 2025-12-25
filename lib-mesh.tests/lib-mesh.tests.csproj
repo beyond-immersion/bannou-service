@@ -28,6 +28,7 @@
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-mesh -->
     <ProjectReference Include="../lib-mesh/lib-mesh.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
   </ItemGroup>
 
 </Project>

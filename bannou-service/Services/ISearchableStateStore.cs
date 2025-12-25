@@ -1,6 +1,6 @@
 #nullable enable
 
-namespace BeyondImmersion.BannouService.State.Services;
+namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
 /// Search result from full-text search operations.
@@ -166,6 +166,47 @@ public record SearchQueryOptions
 }
 
 /// <summary>
+/// Information about a search index.
+/// </summary>
+public record SearchIndexInfo
+{
+    /// <summary>
+    /// Name of the index.
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
+    /// Number of documents in the index.
+    /// </summary>
+    public long DocumentCount { get; init; }
+
+    /// <summary>
+    /// Number of terms in the index.
+    /// </summary>
+    public long TermCount { get; init; }
+
+    /// <summary>
+    /// Total memory used by the index in bytes.
+    /// </summary>
+    public long MemoryUsageBytes { get; init; }
+
+    /// <summary>
+    /// Whether the index is currently being built.
+    /// </summary>
+    public bool IsIndexing { get; init; }
+
+    /// <summary>
+    /// Percentage of indexing complete (0-100).
+    /// </summary>
+    public double IndexingProgress { get; init; }
+
+    /// <summary>
+    /// Schema fields in this index.
+    /// </summary>
+    public IReadOnlyList<string> Fields { get; init; } = Array.Empty<string>();
+}
+
+/// <summary>
 /// Searchable state store - extends IStateStore with full-text search capabilities.
 /// Implemented by Redis stores using RedisSearch (FT.* commands).
 /// </summary>
@@ -246,45 +287,4 @@ public interface ISearchableStateStore<TValue> : IStateStore<TValue>
     /// <returns>List of index names.</returns>
     Task<IReadOnlyList<string>> ListIndexesAsync(
         CancellationToken cancellationToken = default);
-}
-
-/// <summary>
-/// Information about a search index.
-/// </summary>
-public record SearchIndexInfo
-{
-    /// <summary>
-    /// Name of the index.
-    /// </summary>
-    public required string Name { get; init; }
-
-    /// <summary>
-    /// Number of documents in the index.
-    /// </summary>
-    public long DocumentCount { get; init; }
-
-    /// <summary>
-    /// Number of terms in the index.
-    /// </summary>
-    public long TermCount { get; init; }
-
-    /// <summary>
-    /// Total memory used by the index in bytes.
-    /// </summary>
-    public long MemoryUsageBytes { get; init; }
-
-    /// <summary>
-    /// Whether the index is currently being built.
-    /// </summary>
-    public bool IsIndexing { get; init; }
-
-    /// <summary>
-    /// Percentage of indexing complete (0-100).
-    /// </summary>
-    public double IndexingProgress { get; init; }
-
-    /// <summary>
-    /// Schema fields in this index.
-    /// </summary>
-    public IReadOnlyList<string> Fields { get; init; } = Array.Empty<string>();
 }

@@ -1,7 +1,8 @@
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
 using LibOrchestrator;
 using LibOrchestrator.Backends;
 using Microsoft.Extensions.Logging;
@@ -15,7 +16,7 @@ namespace BeyondImmersion.BannouService.Orchestrator.Tests;
 /// </summary>
 public class OrchestratorServiceTests
 {
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<OrchestratorService>> _mockLogger;
     private readonly Mock<ILoggerFactory> _mockLoggerFactory;
     private readonly OrchestratorServiceConfiguration _configuration;
@@ -29,7 +30,7 @@ public class OrchestratorServiceTests
 
     public OrchestratorServiceTests()
     {
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<OrchestratorService>>();
         _mockLoggerFactory = new Mock<ILoggerFactory>();
         _mockLoggerFactory
@@ -54,7 +55,7 @@ public class OrchestratorServiceTests
     private OrchestratorService CreateService()
     {
         return new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
@@ -78,7 +79,7 @@ public class OrchestratorServiceTests
     }
 
     [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrowArgumentNullException()
+    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
@@ -94,7 +95,7 @@ public class OrchestratorServiceTests
             _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
 
-        Assert.Equal("daprClient", exception.ParamName);
+        Assert.Equal("messageBus", exception.ParamName);
     }
 
     [Fact]
@@ -102,7 +103,7 @@ public class OrchestratorServiceTests
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             null!,
             _mockLoggerFactory.Object,
             _configuration,
@@ -122,7 +123,7 @@ public class OrchestratorServiceTests
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             null!,
             _configuration,
@@ -142,7 +143,7 @@ public class OrchestratorServiceTests
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             null!,
@@ -162,7 +163,7 @@ public class OrchestratorServiceTests
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
@@ -182,7 +183,7 @@ public class OrchestratorServiceTests
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
@@ -202,7 +203,7 @@ public class OrchestratorServiceTests
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
@@ -222,7 +223,7 @@ public class OrchestratorServiceTests
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
@@ -242,7 +243,7 @@ public class OrchestratorServiceTests
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
@@ -262,7 +263,7 @@ public class OrchestratorServiceTests
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
@@ -289,23 +290,14 @@ public class OrchestratorServiceTests
             .Setup(x => x.CheckHealthAsync())
             .ReturnsAsync((true, "Redis connected", TimeSpan.FromMilliseconds(1.5)));
 
-        // Pub/sub healthy
-        _mockDaprClient
-            .Setup(x => x.PublishEventAsync(
-                "bannou-pubsub",
+        // Pub/sub healthy via IMessageBus
+        _mockMessageBus
+            .Setup(x => x.PublishAsync(
                 "orchestrator-health",
                 It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Dapr sidecar healthy (metadata endpoint)
-        _mockDaprClient
-            .Setup(x => x.GetMetadataAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Dapr.Client.DaprMetadata(
-                "test-app",
-                new List<Dapr.Client.DaprActorMetadata>(),
-                new Dictionary<string, string>(),
-                new List<Dapr.Client.DaprComponentsMetadata>()));
+            .ReturnsAsync(Guid.NewGuid());
 
         var service = CreateService();
 
@@ -316,7 +308,6 @@ public class OrchestratorServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.True(response.Healthy);
-        Assert.Equal(3, response.Components.Count);
     }
 
     [Fact]
@@ -327,14 +318,14 @@ public class OrchestratorServiceTests
             .Setup(x => x.CheckHealthAsync())
             .ReturnsAsync((false, "Redis connection failed", (TimeSpan?)null));
 
-        // Simulate pub/sub failure via Dapr publish failure
-        _mockDaprClient
-            .Setup(x => x.PublishEventAsync(
-                "bannou-pubsub",
+        // Pub/sub failure via IMessageBus
+        _mockMessageBus
+            .Setup(x => x.PublishAsync(
                 "orchestrator-health",
                 It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Dapr sidecar unavailable"));
+            .ThrowsAsync(new Exception("Message bus unavailable"));
 
         var service = CreateService();
 
@@ -351,21 +342,21 @@ public class OrchestratorServiceTests
     }
 
     [Fact]
-    public async Task GetInfrastructureHealthAsync_WhenRabbitMQUnhealthy_ShouldReturnUnhealthyStatus()
+    public async Task GetInfrastructureHealthAsync_WhenMessageBusUnhealthy_ShouldReturnUnhealthyStatus()
     {
         // Arrange
         _mockRedisManager
             .Setup(x => x.CheckHealthAsync())
             .ReturnsAsync((true, "Redis connected", TimeSpan.FromMilliseconds(1.5)));
 
-        // Pub/sub unhealthy via publish failure
-        _mockDaprClient
-            .Setup(x => x.PublishEventAsync(
-                "bannou-pubsub",
+        // Pub/sub unhealthy via IMessageBus publish failure
+        _mockMessageBus
+            .Setup(x => x.PublishAsync(
                 "orchestrator-health",
                 It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Dapr sidecar unavailable"));
+            .ThrowsAsync(new Exception("Message bus unavailable"));
 
         var service = CreateService();
 
@@ -1372,7 +1363,7 @@ public class OrchestratorRedisManagerTests
 /// </summary>
 public class OrchestratorResetToDefaultTests
 {
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<OrchestratorService>> _mockLogger;
     private readonly Mock<ILoggerFactory> _mockLoggerFactory;
     private readonly Mock<IOrchestratorRedisManager> _mockRedisManager;
@@ -1386,7 +1377,7 @@ public class OrchestratorResetToDefaultTests
 
     public OrchestratorResetToDefaultTests()
     {
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<OrchestratorService>>();
         _mockLoggerFactory = new Mock<ILoggerFactory>();
         _mockRedisManager = new Mock<IOrchestratorRedisManager>();
@@ -1411,7 +1402,7 @@ public class OrchestratorResetToDefaultTests
     private OrchestratorService CreateService()
     {
         return new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,

@@ -1,6 +1,6 @@
 #nullable enable
 
-namespace BeyondImmersion.BannouService.State.Services;
+namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
 /// Query condition for JSON path queries.
@@ -49,12 +49,12 @@ public enum JsonOperator
     GreaterThanOrEqual,
 
     /// <summary>
-    /// Less than (<).
+    /// Less than (&lt;).
     /// </summary>
     LessThan,
 
     /// <summary>
-    /// Less than or equal (<=).
+    /// Less than or equal (&lt;=).
     /// </summary>
     LessThanOrEqual,
 
@@ -133,6 +133,37 @@ public record JsonPagedResult<TValue>(
 }
 
 /// <summary>
+/// Aggregation functions for JSON queries.
+/// </summary>
+public enum JsonAggregation
+{
+    /// <summary>
+    /// Count of values.
+    /// </summary>
+    Count,
+
+    /// <summary>
+    /// Sum of numeric values.
+    /// </summary>
+    Sum,
+
+    /// <summary>
+    /// Average of numeric values.
+    /// </summary>
+    Avg,
+
+    /// <summary>
+    /// Minimum value.
+    /// </summary>
+    Min,
+
+    /// <summary>
+    /// Maximum value.
+    /// </summary>
+    Max
+}
+
+/// <summary>
 /// JSON queryable state store - extends IQueryableStateStore with efficient MySQL JSON functions.
 /// Uses server-side JSON_EXTRACT, JSON_CONTAINS, etc. instead of loading all data into memory.
 /// </summary>
@@ -202,35 +233,4 @@ public interface IJsonQueryableStateStore<TValue> : IQueryableStateStore<TValue>
         JsonAggregation aggregation,
         IReadOnlyList<JsonQueryCondition>? conditions = null,
         CancellationToken cancellationToken = default);
-}
-
-/// <summary>
-/// Aggregation functions for JSON queries.
-/// </summary>
-public enum JsonAggregation
-{
-    /// <summary>
-    /// Count of values.
-    /// </summary>
-    Count,
-
-    /// <summary>
-    /// Sum of numeric values.
-    /// </summary>
-    Sum,
-
-    /// <summary>
-    /// Average of numeric values.
-    /// </summary>
-    Avg,
-
-    /// <summary>
-    /// Minimum value.
-    /// </summary>
-    Min,
-
-    /// <summary>
-    /// Maximum value.
-    /// </summary>
-    Max
 }

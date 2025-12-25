@@ -68,25 +68,15 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
 
         try
         {
-            // Map API options to internal PublishOptions (Services.PublishOptions)
-            Services.PublishOptions? options = body.Options != null
-                ? new Services.PublishOptions
-                {
-                    Exchange = body.Options.Exchange,
-                    Persistent = body.Options.Persistent,
-                    Priority = (byte)body.Options.Priority,
-                    CorrelationId = body.Options.CorrelationId != Guid.Empty ? body.Options.CorrelationId : null
-                }
-                : null;
-
             // Wrap payload in GenericMessageEnvelope - MassTransit requires concrete types
             var envelope = new Services.GenericMessageEnvelope(body.Topic, body.Payload);
 
             // Publish via IMessageBus using the envelope
+            // API options and interface options use the same generated PublishOptions type
             var messageId = await _messageBus.PublishAsync(
                 body.Topic,
                 envelope,
-                options,
+                body.Options,
                 cancellationToken);
 
             _logger.LogDebug("Published event {MessageId} to topic {Topic}", messageId, body.Topic);

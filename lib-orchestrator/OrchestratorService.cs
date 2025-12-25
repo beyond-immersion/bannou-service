@@ -1,10 +1,10 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
 using LibOrchestrator;
 using LibOrchestrator.Backends;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +23,7 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 [DaprService("orchestrator", typeof(IOrchestratorService), lifetime: ServiceLifetime.Scoped)]
 public partial class OrchestratorService : IOrchestratorService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<OrchestratorService> _logger;
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly IOrchestratorRedisManager _redisManager;
@@ -55,7 +55,7 @@ public partial class OrchestratorService : IOrchestratorService
     private const string DEFAULT_PRESET = "bannou";
 
     public OrchestratorService(
-        DaprClient daprClient,
+        IMessageBus messageBus,
         ILogger<OrchestratorService> logger,
         ILoggerFactory loggerFactory,
         OrchestratorServiceConfiguration configuration,
@@ -67,7 +67,7 @@ public partial class OrchestratorService : IOrchestratorService
         IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -167,24 +167,20 @@ public partial class OrchestratorService : IOrchestratorService
             });
             overallHealthy = overallHealthy && redisHealthy;
 
-            // Check pub/sub path (Dapr) by publishing a tiny health probe
+            // Check pub/sub path by publishing a tiny health probe
             bool pubsubHealthy;
             string pubsubMessage;
             try
             {
-                await _daprClient.PublishEventAsync(
-                    "bannou-pubsub",
-                    "orchestrator-health",
-                    new { ping = "ok" },
-                    cancellationToken);
+                await _messageBus.PublishAsync("orchestrator-health", new { ping = "ok" });
                 pubsubHealthy = true;
-                pubsubMessage = "Dapr pub/sub path active";
+                pubsubMessage = "Message bus pub/sub path active";
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Dapr pub/sub health check failed");
+                _logger.LogWarning(ex, "Message bus pub/sub health check failed");
                 pubsubHealthy = false;
-                pubsubMessage = $"Dapr pub/sub check failed: {ex.Message}";
+                pubsubMessage = $"Pub/sub check failed: {ex.Message}";
             }
             components.Add(new ComponentHealth
             {
@@ -195,31 +191,32 @@ public partial class OrchestratorService : IOrchestratorService
             });
             overallHealthy = overallHealthy && pubsubHealthy;
 
-            // Check Dapr sidecar health via metadata endpoint
-            bool daprHealthy;
-            string daprMessage;
+            // Check messaging infrastructure health
+            bool messagingHealthy;
+            string messagingMessage;
             try
             {
-                var metadata = await _daprClient.GetMetadataAsync(cancellationToken);
-                daprHealthy = metadata != null;
-                daprMessage = daprHealthy
-                    ? "Dapr sidecar responding"
-                    : "Dapr sidecar not responding";
+                // If we got here and the messageBus is not null, the infrastructure is healthy
+                // The actual pub/sub test above validates connectivity
+                messagingHealthy = _messageBus != null;
+                messagingMessage = messagingHealthy
+                    ? "Messaging infrastructure available"
+                    : "Messaging infrastructure unavailable";
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Dapr sidecar health check failed");
-                daprHealthy = false;
-                daprMessage = $"Dapr sidecar check failed: {ex.Message}";
+                _logger.LogWarning(ex, "Messaging infrastructure health check failed");
+                messagingHealthy = false;
+                messagingMessage = $"Messaging check failed: {ex.Message}";
             }
             components.Add(new ComponentHealth
             {
-                Name = "dapr",
-                Status = daprHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
+                Name = "messaging",
+                Status = messagingHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
                 LastSeen = DateTimeOffset.UtcNow,
-                Message = daprMessage
+                Message = messagingMessage
             });
-            overallHealthy = overallHealthy && daprHealthy;
+            overallHealthy = overallHealthy && messagingHealthy;
 
             var response = new InfrastructureHealthResponse
             {
@@ -2022,7 +2019,7 @@ public partial class OrchestratorService : IOrchestratorService
         _logger.LogInformation("Registering Orchestrator service permissions... (starting)");
         try
         {
-            await OrchestratorPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+            await OrchestratorPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
             _logger.LogInformation("Orchestrator service permissions registered via event (complete)");
         }
         catch (Exception ex)

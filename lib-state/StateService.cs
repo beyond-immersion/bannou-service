@@ -101,20 +101,6 @@ public partial class StateService : IStateService
 
             var store = _stateStoreFactory.GetStore<object>(body.StoreName);
 
-            // Map request options to service-layer StateOptions
-            Services.StateOptions? options = null;
-            if (body.Options != null)
-            {
-                options = new Services.StateOptions
-                {
-                    Ttl = body.Options.Ttl.HasValue ? TimeSpan.FromSeconds(body.Options.Ttl.Value) : null,
-                    Etag = body.Options.Etag,
-                    Consistency = body.Options.Consistency == StateOptionsConsistency.Eventual
-                        ? Services.StateConsistency.Eventual
-                        : Services.StateConsistency.Strong
-                };
-            }
-
             // If ETag is provided, use optimistic concurrency
             if (!string.IsNullOrEmpty(body.Options?.Etag))
             {
@@ -128,8 +114,8 @@ public partial class StateService : IStateService
                 return (StatusCodes.OK, new SaveStateResponse { Success = true });
             }
 
-            // Standard save
-            var newEtag = await store.SaveAsync(body.Key, body.Value, options, cancellationToken);
+            // Standard save - pass options directly (generated StateOptions type)
+            var newEtag = await store.SaveAsync(body.Key, body.Value, body.Options, cancellationToken);
 
             _logger.LogDebug("Saved state to store {StoreName} with key {Key}", body.StoreName, body.Key);
             return (StatusCodes.OK, new SaveStateResponse
@@ -211,7 +197,7 @@ public partial class StateService : IStateService
             var backend = _stateStoreFactory.GetBackendType(body.StoreName);
 
             // Route to appropriate backend
-            if (backend == Services.StateBackend.MySql)
+            if (backend == StateBackend.MySql)
             {
                 return await QueryMySqlAsync(body, cancellationToken);
             }
@@ -591,8 +577,8 @@ public partial class StateService : IStateService
             if (body?.BackendFilter != null)
             {
                 var backend = body.BackendFilter == ListStoresRequestBackendFilter.Redis
-                    ? Services.StateBackend.Redis
-                    : Services.StateBackend.MySql;
+                    ? StateBackend.Redis
+                    : StateBackend.MySql;
                 storeNames = _stateStoreFactory.GetStoreNames(backend);
             }
             else
@@ -607,7 +593,7 @@ public partial class StateService : IStateService
                 return new StoreInfo
                 {
                     Name = name,
-                    Backend = backend == Services.StateBackend.Redis
+                    Backend = backend == StateBackend.Redis
                         ? StoreInfoBackend.Redis
                         : StoreInfoBackend.Mysql,
                     KeyCount = null // Key counts require backend-specific queries, skip for now

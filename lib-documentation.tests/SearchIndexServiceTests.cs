@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Documentation;
 using BeyondImmersion.BannouService.Documentation.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -12,20 +13,28 @@ namespace BeyondImmersion.BannouService.Documentation.Tests;
 /// </summary>
 public class SearchIndexServiceTests
 {
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<List<Guid>>> _mockGuidListStore;
     private readonly Mock<ILogger<SearchIndexService>> _mockLogger;
     private readonly DocumentationServiceConfiguration _configuration;
     private readonly SearchIndexService _service;
 
     private const string TEST_NAMESPACE = "test-namespace";
+    private const string STATE_STORE = "documentation-statestore";
 
     public SearchIndexServiceTests()
     {
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockGuidListStore = new Mock<IStateStore<List<Guid>>>();
         _mockLogger = new Mock<ILogger<SearchIndexService>>();
         _configuration = new DocumentationServiceConfiguration();
+
+        // Setup factory to return typed stores
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(STATE_STORE))
+            .Returns(_mockGuidListStore.Object);
+
         _service = new SearchIndexService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
             _mockLogger.Object,
             _configuration);
     }
@@ -37,7 +46,7 @@ public class SearchIndexServiceTests
     {
         // Arrange & Act
         var service = new SearchIndexService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
             _mockLogger.Object,
             _configuration);
 
@@ -46,7 +55,7 @@ public class SearchIndexServiceTests
     }
 
     [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrowArgumentNullException()
+    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new SearchIndexService(
@@ -60,7 +69,7 @@ public class SearchIndexServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new SearchIndexService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
             null!,
             _configuration));
     }
@@ -70,7 +79,7 @@ public class SearchIndexServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new SearchIndexService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
             _mockLogger.Object,
             null!));
     }
@@ -671,6 +680,42 @@ public class SearchIndexServiceTests
         // Assert
         Assert.Equal(2, statsA.TotalDocuments);
         Assert.Equal(1, statsB.TotalDocuments);
+    }
+
+    #endregion
+
+    #region RebuildIndexAsync Tests
+
+    [Fact]
+    public async Task RebuildIndexAsync_WithNoDocuments_ShouldReturnZero()
+    {
+        // Arrange
+        _mockGuidListStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k == $"ns-docs:{TEST_NAMESPACE}"),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<Guid>?)null);
+
+        // Act
+        var count = await _service.RebuildIndexAsync(TEST_NAMESPACE);
+
+        // Assert
+        Assert.Equal(0, count);
+    }
+
+    [Fact]
+    public async Task RebuildIndexAsync_WithEmptyDocumentList_ShouldReturnZero()
+    {
+        // Arrange
+        _mockGuidListStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k == $"ns-docs:{TEST_NAMESPACE}"),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid>());
+
+        // Act
+        var count = await _service.RebuildIndexAsync(TEST_NAMESPACE);
+
+        // Assert
+        Assert.Equal(0, count);
     }
 
     #endregion

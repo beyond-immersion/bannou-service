@@ -136,7 +136,7 @@ public class MessagingServiceTests
             .Setup(x => x.PublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<object>(),
-                It.IsAny<Services.PublishOptions?>(),
+                It.IsAny<PublishOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedMessageId);
 
@@ -169,14 +169,14 @@ public class MessagingServiceTests
             }
         };
 
-        Services.PublishOptions? capturedOptions = null;
+        PublishOptions? capturedOptions = null;
         _mockMessageBus
             .Setup(x => x.PublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<object>(),
-                It.IsAny<Services.PublishOptions?>(),
+                It.IsAny<PublishOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, Services.PublishOptions?, CancellationToken>((t, p, o, ct) => capturedOptions = o)
+            .Callback<string, object, PublishOptions?, CancellationToken>((t, p, o, ct) => capturedOptions = o)
             .ReturnsAsync(expectedMessageId);
 
         // Act
@@ -187,7 +187,7 @@ public class MessagingServiceTests
         Assert.NotNull(capturedOptions);
         Assert.Equal("custom-exchange", capturedOptions.Exchange);
         Assert.True(capturedOptions.Persistent);
-        Assert.Equal((byte)5, capturedOptions.Priority);
+        Assert.Equal(5, capturedOptions.Priority);
         Assert.Equal(correlationId, capturedOptions.CorrelationId);
     }
 
@@ -205,7 +205,7 @@ public class MessagingServiceTests
             .Setup(x => x.PublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<object>(),
-                It.IsAny<Services.PublishOptions?>(),
+                It.IsAny<PublishOptions?>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("RabbitMQ connection failed"));
 
@@ -245,14 +245,14 @@ public class MessagingServiceTests
             Options = null!
         };
 
-        Services.PublishOptions? capturedOptions = null;
+        PublishOptions? capturedOptions = null;
         _mockMessageBus
             .Setup(x => x.PublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<object>(),
-                It.IsAny<Services.PublishOptions?>(),
+                It.IsAny<PublishOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, Services.PublishOptions?, CancellationToken>((t, p, o, ct) => capturedOptions = o)
+            .Callback<string, object, PublishOptions?, CancellationToken>((t, p, o, ct) => capturedOptions = o)
             .ReturnsAsync(expectedMessageId);
 
         // Act
@@ -278,14 +278,14 @@ public class MessagingServiceTests
             }
         };
 
-        Services.PublishOptions? capturedOptions = null;
+        PublishOptions? capturedOptions = null;
         _mockMessageBus
             .Setup(x => x.PublishAsync(
                 It.IsAny<string>(),
                 It.IsAny<object>(),
-                It.IsAny<Services.PublishOptions?>(),
+                It.IsAny<PublishOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, object, Services.PublishOptions?, CancellationToken>((t, p, o, ct) => capturedOptions = o)
+            .Callback<string, object, PublishOptions?, CancellationToken>((t, p, o, ct) => capturedOptions = o)
             .ReturnsAsync(expectedMessageId);
 
         // Act

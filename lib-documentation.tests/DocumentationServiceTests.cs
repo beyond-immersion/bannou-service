@@ -2,8 +2,9 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Documentation;
 using BeyondImmersion.BannouService.Documentation.Services;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -15,7 +16,9 @@ namespace BeyondImmersion.BannouService.Documentation.Tests;
 /// </summary>
 public class DocumentationServiceTests
 {
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<DocumentationService>> _mockLogger;
     private readonly DocumentationServiceConfiguration _configuration;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
@@ -24,18 +27,26 @@ public class DocumentationServiceTests
     private readonly DocumentationService _service;
 
     private const string TEST_NAMESPACE = "test-namespace";
+    private const string STATE_STORE = "documentation-statestore";
 
     public DocumentationServiceTests()
     {
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockStringStore = new Mock<IStateStore<string>>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<DocumentationService>>();
         _configuration = new DocumentationServiceConfiguration();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockSearchIndexService = new Mock<ISearchIndexService>();
 
+        // Setup factory to return typed stores
+        _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
+            .Returns(_mockStringStore.Object);
+
         _service = new DocumentationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             _mockErrorEventEmitter.Object,
@@ -50,7 +61,8 @@ public class DocumentationServiceTests
     {
         // Arrange & Act
         var service = new DocumentationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             _mockErrorEventEmitter.Object,
@@ -62,11 +74,12 @@ public class DocumentationServiceTests
     }
 
     [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrowArgumentNullException()
+    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new DocumentationService(
             null!,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             _mockErrorEventEmitter.Object,
@@ -79,7 +92,8 @@ public class DocumentationServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new DocumentationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             null!,
             _configuration,
             _mockErrorEventEmitter.Object,
@@ -92,7 +106,8 @@ public class DocumentationServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new DocumentationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             null!,
             _mockErrorEventEmitter.Object,
@@ -105,7 +120,8 @@ public class DocumentationServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new DocumentationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             null!,
@@ -118,7 +134,8 @@ public class DocumentationServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new DocumentationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             _mockErrorEventEmitter.Object,
@@ -131,7 +148,8 @@ public class DocumentationServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new DocumentationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             _mockErrorEventEmitter.Object,
@@ -444,10 +462,10 @@ public class DocumentationServiceTests
             Category = DocumentCategory.GettingStarted
         };
 
-        // Mock - slug already exists
-        _mockDaprClient.Setup(x => x.GetStateAsync<Guid?>(
-            It.IsAny<string>(), It.Is<string>(k => k.Contains("slug-idx")), null, null, default))
-            .ReturnsAsync(existingDocId);
+        // Mock - slug already exists (stored as string representation of Guid)
+        _mockStringStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains("slug-idx")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingDocId.ToString());
 
         // Act
         var (status, response) = await _service.CreateDocumentAsync(request);

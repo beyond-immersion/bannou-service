@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../lib-game-session/lib-game-session.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
   </ItemGroup>
 
 </Project>

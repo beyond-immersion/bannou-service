@@ -1,7 +1,7 @@
 # Bannou Service Development Tenets
 
-> **Version**: 2.1
-> **Last Updated**: 2025-12-23
+> **Version**: 3.0
+> **Last Updated**: 2025-12-25
 > **Scope**: All Bannou microservices and related infrastructure
 
 This document establishes the mandatory tenets for developing high-quality Bannou services. All service implementations, tests, and infrastructure MUST adhere to these tenets. Tenets must not be changed or added without EXPLICIT approval, without exception.
@@ -40,7 +40,7 @@ lib-{service}/
 │   ├── {Service}Controller.cs      # HTTP controller
 │   ├── {Service}ServiceConfiguration.cs  # Configuration class
 │   ├── {Service}PermissionRegistration.cs
-│   └── {Service}EventsController.cs     # Dapr event handlers
+│   └── {Service}EventsController.cs     # Event subscription handlers
 ├── {Service}Service.cs             # MANUAL - business logic only
 ├── {Service}ServiceEvents.cs       # MANUAL - event handler implementations
 └── Services/                       # MANUAL - optional helper services
@@ -142,17 +142,17 @@ var authEvent = new SessionInvalidatedEvent { ... };
 
 ## Tenet 3: Event Consumer Fan-Out (MANDATORY)
 
-**Rule**: Services that subscribe to Dapr pub/sub events MUST use the `IEventConsumer` infrastructure to enable multi-plugin event handling.
+**Rule**: Services that subscribe to pub/sub events MUST use the `IEventConsumer` infrastructure to enable multi-plugin event handling.
 
 ### The Problem
 
-Dapr's `[Topic]` attribute allows only ONE endpoint per app-id to receive events. When multiple plugins need the same event (e.g., Auth, Permissions, and GameSession all need `session.connected`), only one randomly "wins."
+RabbitMQ queue binding allows only ONE consumer per queue to receive events. When multiple plugins need the same event (e.g., Auth, Permissions, and GameSession all need `session.connected`), only one randomly "wins."
 
 ### The Solution: Application-Level Fan-Out
 
 `IEventConsumer` provides fan-out within the bannou process:
 
-1. **Generated Controllers** receive Dapr events and dispatch via `IEventConsumer.DispatchAsync()`
+1. **Generated Controllers** receive events from lib-messaging and dispatch via `IEventConsumer.DispatchAsync()`
 2. **Services register handlers** in their `{Service}ServiceEvents.cs` partial class
 3. **All registered handlers** receive every event, isolated from each other's failures
 
@@ -174,7 +174,7 @@ info:
 ```
 
 **Field Definitions**:
-- `topic`: The Dapr pub/sub topic name
+- `topic`: The RabbitMQ routing key / topic name
 - `event`: The event model class name (must exist in an events schema)
 - `handler`: The handler method name (without `Async` suffix)
 
@@ -182,20 +182,22 @@ info:
 
 Running `make generate` produces:
 
-- `Generated/{Service}EventsController.cs` - Dapr topic handlers (always regenerated)
+- `Generated/{Service}EventsController.cs` - Event subscription handlers (always regenerated)
 - `{Service}ServiceEvents.cs` - Handler registrations (generated once, then manual)
 
 ### Service Constructor Pattern
 
 ```csharp
 public MyService(
-    DaprClient daprClient,
+    IStateStoreFactory stateStoreFactory,
+    IMessageBus messageBus,
     ILogger<MyService> logger,
     MyServiceConfiguration configuration,
     IErrorEventEmitter errorEventEmitter,
     IEventConsumer eventConsumer)  // Required for event handling
 {
-    _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+    _stateStore = stateStoreFactory.Create<MyModel>("my-service");
+    _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
     _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
@@ -245,36 +247,117 @@ public partial class MyService
 
 ---
 
-## Tenet 4: Dapr-First Infrastructure (MANDATORY)
+## Tenet 4: Infrastructure Libs Pattern (MANDATORY)
 
-**Rule**: Services MUST use Dapr abstractions for all infrastructure concerns. No direct database/cache/queue access except Orchestrator.
+**Rule**: Services MUST use the three infrastructure libs (`lib-messaging`, `lib-mesh`, `lib-state`) for all infrastructure concerns. Direct database/cache/queue access is forbidden unless there is an EXCEPTIONALLY good reason documented with explicit approval.
 
-### State Management
+### The Three Infrastructure Libs
+
+| Lib | Purpose | Replaces |
+|-----|---------|----------|
+| **lib-state** | State management (Redis/MySQL) | Direct Redis/MySQL connections |
+| **lib-messaging** | Event pub/sub (RabbitMQ) | Direct RabbitMQ channel access |
+| **lib-mesh** | Service invocation (YARP) | Direct HTTP client calls |
+
+### State Management (lib-state)
 
 ```csharp
-// REQUIRED: Use DaprClient for state operations
-await _daprClient.SaveStateAsync("service-statestore", key, value);
-var data = await _daprClient.GetStateAsync<T>("service-statestore", key);
+// REQUIRED: Use IStateStore<T> for state operations
+public class MyService : IMyService
+{
+    private readonly IStateStore<MyModel> _stateStore;
+
+    public MyService(IStateStoreFactory stateStoreFactory)
+    {
+        _stateStore = stateStoreFactory.Create<MyModel>("my-service");
+    }
+
+    public async Task SaveAsync(string key, MyModel value, CancellationToken ct)
+    {
+        await _stateStore.SaveAsync(key, value, cancellationToken: ct);
+    }
+
+    public async Task<MyModel?> GetAsync(string key, CancellationToken ct)
+    {
+        return await _stateStore.GetAsync(key, ct);
+    }
+}
 
 // FORBIDDEN: Direct Redis/MySQL access
 var connection = new MySqlConnection(connectionString); // NO!
+var redis = ConnectionMultiplexer.Connect(...); // NO!
 ```
 
-### Pub/Sub Events
+**State Store Options**:
+```csharp
+// TTL for ephemeral data
+await _stateStore.SaveAsync(key, value, new StateOptions { Ttl = TimeSpan.FromMinutes(30) });
+
+// Optimistic concurrency with ETags
+var (value, etag) = await _stateStore.GetWithETagAsync(key, ct);
+var saved = await _stateStore.TrySaveAsync(key, modifiedValue, etag, ct);
+if (!saved) return (StatusCodes.Conflict, null); // Concurrent modification
+```
+
+### Pub/Sub Events (lib-messaging)
 
 ```csharp
-// REQUIRED: Dapr pub/sub for event publishing
-await _daprClient.PublishEventAsync("bannou-pubsub", "entity.action", eventModel);
+// REQUIRED: Use IMessageBus for event publishing
+public class MyService : IMyService
+{
+    private readonly IMessageBus _messageBus;
+
+    public MyService(IMessageBus messageBus)
+    {
+        _messageBus = messageBus;
+    }
+
+    public async Task PublishEventAsync(MyEvent evt, CancellationToken ct)
+    {
+        await _messageBus.PublishAsync("entity.action", evt, cancellationToken: ct);
+    }
+}
 
 // FORBIDDEN: Direct RabbitMQ access
 channel.BasicPublish(...); // NO!
 ```
 
-### Service Invocation
+**Subscription via IMessageSubscriber**:
+```csharp
+// Static subscription (survives restarts)
+await _messageSubscriber.SubscribeAsync<MyEvent>(
+    "entity.action",
+    async (evt, ct) => await HandleEventAsync(evt, ct));
+
+// Dynamic subscription (per-session, disposable)
+var subscription = await _messageSubscriber.SubscribeDynamicAsync<MyEvent>(
+    "session.events",
+    async (evt, ct) => await HandleSessionEventAsync(evt, ct));
+// Later: await subscription.DisposeAsync();
+```
+
+### Service Invocation (lib-mesh)
 
 ```csharp
-// REQUIRED: Use generated service clients
-var (statusCode, result) = await _accountsClient.GetAccountAsync(request, ct);
+// REQUIRED: Use IMeshInvocationClient for service-to-service calls
+public class MyService : IMyService
+{
+    private readonly IMeshInvocationClient _meshClient;
+
+    public MyService(IMeshInvocationClient meshClient)
+    {
+        _meshClient = meshClient;
+    }
+
+    public async Task<AccountResponse> GetAccountAsync(string accountId, CancellationToken ct)
+    {
+        return await _meshClient.InvokeMethodAsync<GetAccountRequest, AccountResponse>(
+            "accounts",
+            "get-account",
+            new GetAccountRequest { AccountId = accountId },
+            ct);
+    }
+}
 
 // FORBIDDEN: Manual HTTP construction
 var response = await httpClient.PostAsync("http://accounts/api/..."); // NO!
@@ -282,7 +365,7 @@ var response = await httpClient.PostAsync("http://accounts/api/..."); // NO!
 
 ### Generated Client Registration
 
-NSwag-generated clients are automatically registered as Singletons during plugin initialization. Inject them via constructor:
+NSwag-generated clients are automatically registered as Singletons during plugin initialization. These clients use `IMeshInvocationClient` internally:
 
 ```csharp
 public class MyService : IMyService
@@ -298,26 +381,24 @@ public class MyService : IMyService
 }
 ```
 
-Generated clients automatically use `ServiceAppMappingResolver` for routing, supporting both monolith ("bannou") and distributed deployment topologies.
+Generated clients automatically use mesh service resolution for routing, supporting both monolith ("bannou") and distributed deployment topologies.
 
-### Exceptions: Orchestrator, Connect, and Voice Services
+### Why Infrastructure Libs?
 
-**Orchestrator** uses direct Redis/RabbitMQ connections to avoid Dapr chicken-and-egg startup dependency.
-
-**Connect** uses direct RabbitMQ connections **only** for dynamic per-session channel subscriptions (Dapr cannot create/destroy subscriptions at runtime). Connect still uses Dapr for state management, publishing events, and service invocation.
-
-**Voice** uses direct infrastructure connections for real-time media control (RTPEngine UDP, Kamailio HTTP). Voice still uses Dapr for state management, publishing events, and service invocation.
-
-These are the **only** exceptions to the Dapr-first rule.
+1. **Consistent Serialization**: All libs use `BannouJson` for JSON handling
+2. **Unified Error Handling**: Standard exception types across all infrastructure
+3. **Testability**: Interfaces enable mocking without infrastructure dependencies
+4. **Portability**: Backend can change without service code changes
+5. **Performance**: Optimized implementations with connection pooling and caching
 
 ### State Store Naming Convention
 
-See [Generated State Store Reference](../GENERATED-STATE-STORES.md) for the complete, auto-maintained list.
-
 | Pattern | Backend | Purpose |
 |---------|---------|---------|
-| `{service}-statestore` | Redis | Service-specific ephemeral state |
-| `mysql-{service}-statestore` | MySQL | Persistent queryable data |
+| `{service}` prefix | Redis | Service-specific ephemeral state (sessions, cache) |
+| `{service}` prefix | MySQL | Persistent queryable data (accounts, entities) |
+
+Backend selection is handled by `IStateStoreFactory` based on service configuration.
 
 ---
 
@@ -355,8 +436,8 @@ EventName:
 | `character.realm.joined` | Hierarchical action |
 
 **Infrastructure Events**: Use `bannou-` prefix for system-level events:
-- `bannou-full-service-mappings` - Service routing updates
-- `bannou-service-heartbeats` - Health monitoring
+- `bannou.full-service-mappings` - Service routing updates
+- `bannou.service-heartbeats` - Health monitoring
 
 ### Lifecycle Events (x-lifecycle)
 
@@ -469,15 +550,12 @@ lib-{service}/
 ### Service Class Pattern
 
 ```csharp
-[DaprService("service-name", typeof(IServiceNameService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("service-name", typeof(IServiceNameService), lifetime: ServiceLifetime.Scoped)]
 public partial class ServiceNameService : IServiceNameService
 {
-    // Constants for Dapr components
-    private const string STATE_STORE = "service-statestore";
-    private const string PUBSUB_NAME = "bannou-pubsub";
-
     // Required dependencies (always available)
-    private readonly DaprClient _daprClient;
+    private readonly IStateStore<ServiceModel> _stateStore;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<ServiceNameService> _logger;
     private readonly ServiceNameServiceConfiguration _configuration;
     private readonly IErrorEventEmitter _errorEventEmitter;
@@ -486,14 +564,16 @@ public partial class ServiceNameService : IServiceNameService
     private readonly IAuthClient? _authClient;
 
     public ServiceNameService(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         ILogger<ServiceNameService> logger,
         ServiceNameServiceConfiguration configuration,
         IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer,
         IAuthClient? authClient = null)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStore = stateStoreFactory.Create<ServiceModel>("service-name");
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
@@ -520,10 +600,12 @@ public partial class ServiceNameService : IServiceNameService
 
 | Dependency | Purpose |
 |------------|---------|
-| `DaprClient` | State stores, pub/sub, service invocation |
+| `IStateStoreFactory` | Create typed state stores (Redis/MySQL) |
+| `IMessageBus` | Publish events to RabbitMQ |
+| `IMessageSubscriber` | Subscribe to RabbitMQ topics |
+| `IMeshInvocationClient` | Service-to-service invocation |
 | `ILogger<T>` | Structured logging |
 | `{Service}ServiceConfiguration` | Generated configuration class |
-| `IServiceAppMappingResolver` | Service-to-app-id resolution |
 | `IErrorEventEmitter` | Emit `ServiceErrorEvent` for unexpected failures |
 | `IEventConsumer` | Register event handlers for pub/sub fan-out |
 
@@ -566,12 +648,12 @@ lib-{service}/
 
 **Rule**: Wrap all external calls in try-catch, use specific exception types where available.
 
-### Pattern for Dapr State Operations
+### Pattern for State Operations
 
 ```csharp
 try
 {
-    var data = await _daprClient.GetStateAsync<T>(STATE_STORE, key, cancellationToken: ct);
+    var data = await _stateStore.GetAsync(key, ct);
     if (data == null)
         return (StatusCodes.NotFound, null);
     return (StatusCodes.OK, data);
@@ -716,8 +798,8 @@ Tuple pattern enables clean status code propagation without throwing exceptions 
 
 ### Requirements
 
-1. **No in-memory state** that isn't reconstructible from Dapr state stores
-2. **Use atomic Dapr operations** for state that requires consistency
+1. **No in-memory state** that isn't reconstructible from lib-state stores
+2. **Use atomic state operations** for state that requires consistency
 3. **Use ConcurrentDictionary** for local caches, never plain Dictionary
 4. **Use IDistributedLockProvider** for cross-instance coordination
 
@@ -727,8 +809,8 @@ Tuple pattern enables clean status code propagation without throwing exceptions 
 // Thread-safe local cache (acceptable for non-critical data)
 private readonly ConcurrentDictionary<string, CachedItem> _cache = new();
 
-// Dapr state for authoritative state
-await _daprClient.SaveStateAsync(store, key, value);
+// lib-state for authoritative state
+await _stateStore.SaveAsync(key, value);
 ```
 
 ### Forbidden Patterns
@@ -750,14 +832,12 @@ For cross-instance coordination, use `IDistributedLockProvider`:
 public class PermissionsService : IPermissionsService
 {
     private readonly IDistributedLockProvider _lockProvider;
-    private const string LOCK_STORE = "permissions-statestore";
 
     public async Task<(StatusCodes, Response?)> UpdateAsync(Request body, CancellationToken ct)
     {
         var lockOwnerId = Guid.NewGuid().ToString();
 
         await using var lockResponse = await _lockProvider.LockAsync(
-            storeName: LOCK_STORE,
             resourceId: $"permission-update:{body.EntityId}",
             lockOwner: lockOwnerId,
             expiryInSeconds: 30,
@@ -776,7 +856,6 @@ public class PermissionsService : IPermissionsService
 **API Reference**:
 ```csharp
 Task<ILockResponse> LockAsync(
-    string storeName,       // Dapr state store name
     string resourceId,      // Resource to lock (e.g., "permission-update:abc123")
     string lockOwner,       // Unique owner ID (typically new Guid)
     int expiryInSeconds,    // Lock TTL
@@ -790,12 +869,12 @@ public interface ILockResponse : IAsyncDisposable
 
 ### Optimistic Concurrency with ETags
 
-For state operations that need consistency without locking, use Dapr's optimistic concurrency:
+For state operations that need consistency without locking, use lib-state's optimistic concurrency:
 
 ```csharp
-var (value, etag) = await _daprClient.GetStateAndETagAsync<Model>(STATE_STORE, key, ct);
+var (value, etag) = await _stateStore.GetWithETagAsync(key, ct);
 // Modify value...
-var saved = await _daprClient.TrySaveStateAsync(STATE_STORE, key, modifiedValue, etag, ct);
+var saved = await _stateStore.TrySaveAsync(key, modifiedValue, etag, ct);
 if (!saved) return (StatusCodes.Conflict, null);  // Concurrent modification
 ```
 
@@ -837,7 +916,7 @@ _serverSalt = GuidGenerator.GenerateServerSalt();  // BREAKS CROSS-INSTANCE OPER
 ### Required Log Points
 
 1. **Operation Entry** (Debug): Log input parameters
-2. **External Calls** (Debug): Log before Dapr/service calls
+2. **External Calls** (Debug): Log before infrastructure/service calls
 3. **Expected Outcomes** (Debug): Resource not found, validation failures
 4. **Business Decisions** (Information): Significant state changes
 5. **Security Events** (Warning): Auth failures, permission denials
@@ -947,7 +1026,7 @@ Test business logic with mocked dependencies.
 
 ### Tier 2 - HTTP Integration Tests (`http-tester/Tests/`)
 
-Test actual service-to-service calls via Dapr, verify generated code works.
+Test actual service-to-service calls via lib-mesh, verify generated code works.
 
 ### Tier 3 - Edge/WebSocket Tests (`edge-tester/Tests/`)
 
@@ -967,7 +1046,7 @@ Test client perspective through Connect service and binary protocol.
 - Change `Times.Never` to `Times.AtLeastOnce` to make tests pass
 - Remove assertions that "inconveniently" fail
 - Weaken test conditions to accommodate wrong behavior
-- Add HTTP fallbacks to bypass Dapr pub/sub issues
+- Add HTTP fallbacks to bypass pub/sub issues
 - Claim success when tests fail
 
 ### Retries vs Fallbacks
@@ -979,10 +1058,10 @@ Test client perspective through Connect service and binary protocol.
 ```csharp
 // BAD: Fallback to different mechanism
 try {
-    await daprClient.PublishEventAsync("bannou-pubsub", "entity.action", event);
+    await _messageBus.PublishAsync("entity.action", evt);
 }
 catch {
-    await httpClient.PostAsync("http://127.0.0.1:3500/...");  // MASKS THE REAL ISSUE
+    await httpClient.PostAsync("http://rabbitmq/...");  // MASKS THE REAL ISSUE
 }
 ```
 
@@ -1066,7 +1145,7 @@ private static string BuildCompositeKey(...)
 
 ### Application-Level Referential Integrity
 
-Since Dapr state stores cannot enforce foreign key constraints, implement validation in service logic and subscribe to `entity.deleted` events for cascade handling.
+Since lib-state stores cannot enforce foreign key constraints at the application level, implement validation in service logic and subscribe to `entity.deleted` events for cascade handling.
 
 ---
 
@@ -1285,23 +1364,19 @@ public void BannouJson_Options_SerializesEnumsAsPascalCase()
 4. **No Hardcoded Credentials**: Never fall back to hardcoded credentials or connection strings
 5. **Use AppConstants**: Shared defaults use `AppConstants` constants, not hardcoded strings
 
-### Allowed Exceptions (4 Categories)
+### Allowed Exceptions (3 Categories)
 
 Document with code comments explaining the exception:
 
-1. **Assembly Loading Control**: `SERVICES_ENABLED`, `*_SERVICE_ENABLED/DISABLED` in `PluginLoader.cs`/`IDaprService.cs`
+1. **Assembly Loading Control**: `SERVICES_ENABLED`, `*_SERVICE_ENABLED/DISABLED` in `PluginLoader.cs`/`IBannouService.cs`
    - Required before DI container is available to determine which plugins to load
 
-2. **Dapr Bootstrap Variables**: `DAPR_GRPC_ENDPOINT`, `DAPR_HTTP_ENDPOINT`, `DAPR_HTTP_PORT`, `DAPR_APP_ID`
-   - Needed to create DaprClient and configure Dapr communication before configuration system initializes
-   - Used in `Program.cs`, `ServiceHeartbeatManager.cs`, and permission registration code
-
-3. **ConfigureServices Bootstrap**: Reading config before service provider is built
+2. **ConfigureServices Bootstrap**: Reading config before service provider is built
    - Example: `ASSET_PROCESSING_MODE` in `AssetServicePlugin.cs` to conditionally register hosted services
    - Cannot use injected configuration because the service provider doesn't exist yet
    - Must use canonical env var names defined in the service's configuration schema
 
-4. **Test Harness Control**: `DAEMON_MODE`, `PLUGIN` in test projects
+3. **Test Harness Control**: `DAEMON_MODE`, `PLUGIN` in test projects
    - Test infrastructure, not production code
    - Tests specifically testing configuration-binding may use `SetEnvironmentVariable`
 
@@ -1360,8 +1435,10 @@ x-service-configuration:
 |-----------|-------|-----|
 | Editing Generated/ files | 1, 2 | Edit schema, regenerate |
 | Wrong env var format (`JWTSECRET`) | 2 | Use `{SERVICE}_{PROPERTY}` pattern |
-| Direct database access | 4 | Use DaprClient |
-| Missing event publication | 5 | Add PublishEventAsync |
+| Direct database access | 4 | Use IStateStore via lib-state |
+| Direct RabbitMQ access | 4 | Use IMessageBus via lib-messaging |
+| Direct HTTP service calls | 4 | Use IMeshInvocationClient via lib-mesh |
+| Missing event publication | 5 | Use IMessageBus.PublishAsync |
 | Service class missing `partial` | 6 | Add `partial` keyword |
 | Missing event consumer registration | 3 | Add RegisterEventConsumers call |
 | Plain Dictionary for cache | 9 | Use ConcurrentDictionary |

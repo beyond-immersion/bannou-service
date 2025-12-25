@@ -5,9 +5,11 @@ using BeyondImmersion.BannouService.Asset.Models;
 using BeyondImmersion.BannouService.Asset.Storage;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
@@ -27,7 +29,8 @@ namespace BeyondImmersion.BannouService.Asset;
 [DaprServiceAttribute("asset", typeof(IAssetService), lifetime: ServiceLifetime.Scoped)]
 public partial class AssetService : IAssetService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<AssetService> _logger;
     private readonly AssetServiceConfiguration _configuration;
     private readonly IErrorEventEmitter _errorEventEmitter;
@@ -41,12 +44,12 @@ public partial class AssetService : IAssetService
     private const string ASSET_PREFIX = "asset:";
     private const string ASSET_INDEX_PREFIX = "asset-index:";
     private const string BUNDLE_PREFIX = "bundle:";
-    private const string PUBSUB_NAME = "bannou-pubsub";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AssetService"/> class.
     /// </summary>
-    /// <param name="daprClient">Dapr client for state and pub/sub operations.</param>
+    /// <param name="stateStoreFactory">State store factory for state operations.</param>
+    /// <param name="messageBus">Message bus for pub/sub operations.</param>
     /// <param name="logger">Logger for structured logging.</param>
     /// <param name="configuration">Service configuration.</param>
     /// <param name="errorEventEmitter">Error event emitter for unexpected failures.</param>
@@ -56,7 +59,8 @@ public partial class AssetService : IAssetService
     /// <param name="bundleConverter">Bundle format converter (.bannou ↔ .zip).</param>
     /// <param name="eventConsumer">Event consumer for pub/sub event handling.</param>
     public AssetService(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         ILogger<AssetService> logger,
         AssetServiceConfiguration configuration,
         IErrorEventEmitter errorEventEmitter,
@@ -66,7 +70,8 @@ public partial class AssetService : IAssetService
         BundleConverter bundleConverter,
         IEventConsumer eventConsumer)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
@@ -174,7 +179,8 @@ public partial class AssetService : IAssetService
                     ExpiresAt = multipartResult.ExpiresAt
                 };
 
-                await _daprClient.SaveStateAsync(STATE_STORE, $"{UPLOAD_SESSION_PREFIX}{uploadId:N}", session, cancellationToken: cancellationToken).ConfigureAwait(false);
+                var sessionStore = _stateStoreFactory.GetStore<UploadSession>(STATE_STORE);
+                await sessionStore.SaveAsync($"{UPLOAD_SESSION_PREFIX}{uploadId:N}", session, cancellationToken: cancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -217,7 +223,8 @@ public partial class AssetService : IAssetService
                     ExpiresAt = uploadResult.ExpiresAt
                 };
 
-                await _daprClient.SaveStateAsync(STATE_STORE, $"{UPLOAD_SESSION_PREFIX}{uploadId:N}", session, cancellationToken: cancellationToken).ConfigureAwait(false);
+                var sessionStore = _stateStoreFactory.GetStore<UploadSession>(STATE_STORE);
+                await sessionStore.SaveAsync($"{UPLOAD_SESSION_PREFIX}{uploadId:N}", session, cancellationToken: cancellationToken).ConfigureAwait(false);
             }
 
             _logger.LogInformation("RequestUpload: Created upload session {UploadId}, multipart={IsMultipart}",
@@ -252,8 +259,8 @@ public partial class AssetService : IAssetService
         try
         {
             // Retrieve upload session
-            var session = await _daprClient.GetStateAsync<UploadSession>(
-                STATE_STORE, $"{UPLOAD_SESSION_PREFIX}{body.Upload_id:N}", cancellationToken: cancellationToken).ConfigureAwait(false);
+            var sessionStore = _stateStoreFactory.GetStore<UploadSession>(STATE_STORE);
+            var session = await sessionStore.GetAsync($"{UPLOAD_SESSION_PREFIX}{body.Upload_id:N}", cancellationToken).ConfigureAwait(false);
 
             if (session == null)
             {
@@ -265,7 +272,7 @@ public partial class AssetService : IAssetService
             if (DateTimeOffset.UtcNow > session.ExpiresAt)
             {
                 _logger.LogWarning("CompleteUpload: Upload session expired {UploadId}", body.Upload_id);
-                await _daprClient.DeleteStateAsync(STATE_STORE, $"{UPLOAD_SESSION_PREFIX}{body.Upload_id:N}", cancellationToken: cancellationToken).ConfigureAwait(false);
+                await sessionStore.DeleteAsync($"{UPLOAD_SESSION_PREFIX}{body.Upload_id:N}", cancellationToken).ConfigureAwait(false);
                 return (StatusCodes.BadRequest, null); // Session expired
             }
 
@@ -348,7 +355,8 @@ public partial class AssetService : IAssetService
             };
 
             // Store internal asset record (includes storage details for bundle creation)
-            await _daprClient.SaveStateAsync(STATE_STORE, $"{ASSET_PREFIX}{assetId}", internalRecord, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(STATE_STORE);
+            await assetStore.SaveAsync($"{ASSET_PREFIX}{assetId}", internalRecord, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             // Convert to public metadata for return value and events
             var assetMetadata = internalRecord.ToPublicMetadata();
@@ -358,14 +366,13 @@ public partial class AssetService : IAssetService
             await IndexAssetAsync(assetMetadata, cancellationToken).ConfigureAwait(false);
 
             // Delete upload session
-            await _daprClient.DeleteStateAsync(STATE_STORE, $"{UPLOAD_SESSION_PREFIX}{body.Upload_id:N}", cancellationToken: cancellationToken).ConfigureAwait(false);
+            await sessionStore.DeleteAsync($"{UPLOAD_SESSION_PREFIX}{body.Upload_id:N}", cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("CompleteUpload: Asset created {AssetId}, finalKey={FinalKey}, requiresProcessing={RequiresProcessing}",
                 assetId, finalKey, requiresProcessing);
 
             // Publish asset.upload.completed event
-            await _daprClient.PublishEventAsync(
-                PUBSUB_NAME,
+            await _messageBus.PublishAsync(
                 "asset.upload.completed",
                 new BeyondImmersion.BannouService.Events.AssetUploadCompletedEvent
                 {
@@ -380,8 +387,7 @@ public partial class AssetService : IAssetService
                     Size = assetRef.Size,
                     ContentHash = contentHash,
                     ContentType = session.ContentType
-                },
-                cancellationToken).ConfigureAwait(false);
+                }).ConfigureAwait(false);
 
             // If the file requires processing, delegate to the processing pool
             if (requiresProcessing)
@@ -418,8 +424,8 @@ public partial class AssetService : IAssetService
         try
         {
             // Retrieve internal asset record (includes storage details)
-            var internalRecord = await _daprClient.GetStateAsync<InternalAssetRecord>(
-                STATE_STORE, $"{ASSET_PREFIX}{body.Asset_id}", cancellationToken: cancellationToken).ConfigureAwait(false);
+            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(STATE_STORE);
+            var internalRecord = await assetStore.GetAsync($"{ASSET_PREFIX}{body.Asset_id}", cancellationToken).ConfigureAwait(false);
 
             if (internalRecord == null)
             {
@@ -486,8 +492,8 @@ public partial class AssetService : IAssetService
         try
         {
             // Retrieve internal asset record to verify it exists and get storage details
-            var internalRecord = await _daprClient.GetStateAsync<InternalAssetRecord>(
-                STATE_STORE, $"{ASSET_PREFIX}{body.Asset_id}", cancellationToken: cancellationToken).ConfigureAwait(false);
+            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(STATE_STORE);
+            var internalRecord = await assetStore.GetAsync($"{ASSET_PREFIX}{body.Asset_id}", cancellationToken).ConfigureAwait(false);
 
             if (internalRecord == null)
             {
@@ -543,7 +549,7 @@ public partial class AssetService : IAssetService
 
     /// <summary>
     /// Implementation of SearchAssets operation.
-    /// Searches assets by tags, type, realm, and content type using Dapr QueryStateAsync.
+    /// Searches assets by tags, type, realm, and content type using RedisSearch.
     /// Requires Redis Stack with RediSearch module for query support.
     /// </summary>
     public async Task<(StatusCodes, AssetSearchResult?)> SearchAssetsAsync(AssetSearchRequest body, CancellationToken cancellationToken)
@@ -555,48 +561,50 @@ public partial class AssetService : IAssetService
 
         try
         {
-            // Build Dapr query filter using the query API
-            // Query API uses JSON filter syntax: https://docs.dapr.io/developing-applications/building-blocks/state-management/howto-state-query-api/
-            var filters = new List<object>();
-
-            // Required: asset_type filter
-            filters.Add(new { EQ = new Dictionary<string, string> { { "asset_type", body.Asset_type.ToString() } } });
-
-            // Required: realm filter
-            filters.Add(new { EQ = new Dictionary<string, string> { { "realm", body.Realm.ToString() } } });
-
-            // Optional: content_type filter
-            if (!string.IsNullOrEmpty(body.Content_type))
+            // Check if search is supported for this store
+            if (!_stateStoreFactory.SupportsSearch(STATE_STORE))
             {
-                filters.Add(new { EQ = new Dictionary<string, string> { { "content_type", body.Content_type } } });
+                _logger.LogDebug("Search not supported for store {Store}, using index fallback", STATE_STORE);
+                return await SearchAssetsIndexFallbackAsync(body, cancellationToken).ConfigureAwait(false);
             }
 
-            // Build the query object
-            var query = new
+            var searchStore = _stateStoreFactory.GetSearchableStore<AssetMetadata>(STATE_STORE);
+
+            // Build RedisSearch query
+            // Format: @asset_type:{type} @realm:{realm} [@content_type:{content_type}]
+            var queryParts = new List<string>
             {
-                filter = new { AND = filters },
-                sort = new[] { new { key = "created_at", order = "DESC" } },
-                page = new { limit = body.Limit + body.Offset } // Get enough to paginate
+                $"@asset_type:{{{body.Asset_type}}}",
+                $"@realm:{{{body.Realm}}}"
             };
 
-            var queryJson = BeyondImmersion.BannouService.Configuration.BannouJson.Serialize(query);
+            if (!string.IsNullOrEmpty(body.Content_type))
+            {
+                // Escape special characters in content type
+                var escapedContentType = body.Content_type.Replace("/", "\\/");
+                queryParts.Add($"@content_type:{{{escapedContentType}}}");
+            }
 
-            _logger.LogDebug("Executing asset search query: {Query}", queryJson);
+            var query = string.Join(" ", queryParts);
 
-            // Execute the query via Dapr QueryStateAsync
-            var queryResult = await _daprClient.QueryStateAsync<AssetMetadata>(
-                STATE_STORE,
-                queryJson,
-                metadata: new Dictionary<string, string>
+            _logger.LogDebug("Executing asset search query: {Query}", query);
+
+            // Execute the search
+            var searchResult = await searchStore.SearchAsync(
+                "assetMetadataIndex",
+                query,
+                new SearchQueryOptions
                 {
-                    { "contentType", "application/json" },
-                    { "queryIndexName", "assetMetadataIndex" }
+                    Offset = 0, // Get all matching to filter tags in-memory
+                    Limit = body.Limit + body.Offset + 1000, // Get enough to paginate after tag filter
+                    SortBy = "created_at",
+                    SortDescending = true
                 },
-                cancellationToken: cancellationToken).ConfigureAwait(false);
+                cancellationToken).ConfigureAwait(false);
 
             // Filter by tags in-memory (tags are arrays, complex for Redis query)
-            var matchingAssets = queryResult.Results
-                .Select(r => r.Data)
+            var matchingAssets = searchResult.Items
+                .Select(r => r.Value)
                 .Where(m => m != null)
                 .Where(m => body.Tags == null || body.Tags.Count == 0 ||
                     (m!.Tags != null && body.Tags.All(t => m.Tags.Contains(t))))
@@ -619,23 +627,10 @@ public partial class AssetService : IAssetService
 
             return (StatusCodes.OK, response);
         }
-        catch (Grpc.Core.RpcException ex)
+        catch (InvalidOperationException ex) when (ex.Message.Contains("search") || ex.Message.Contains("Search"))
         {
-            // Dapr QueryStateAsync is known to be unreliable/discontinued (GitHub issue #991)
-            // Fall back to index-based search for any gRPC errors
-            _logger.LogWarning(ex, "QueryStateAsync failed (Dapr query API issue), falling back to index-based search");
-            return await SearchAssetsIndexFallbackAsync(body, cancellationToken).ConfigureAwait(false);
-        }
-        catch (Dapr.DaprException ex) when (
-            ex.Message.Contains("invalid output") ||
-            ex.Message.Contains("query failed") ||
-            ex.Message.Contains("Query state operation failed") ||
-            (ex.InnerException?.Message?.Contains("invalid output") ?? false) ||
-            (ex.InnerException?.Message?.Contains("query failed") ?? false))
-        {
-            // Dapr query API returns "invalid output" error with certain Redis configurations
-            // The error message may be in the outer DaprException or inner RpcException
-            _logger.LogWarning(ex, "Dapr query returned error, falling back to index-based search");
+            // Search not available, fall back to index-based search
+            _logger.LogWarning(ex, "Search store not available, falling back to index-based search");
             return await SearchAssetsIndexFallbackAsync(body, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
@@ -655,8 +650,8 @@ public partial class AssetService : IAssetService
     }
 
     /// <summary>
-    /// Fallback search using index keys when QueryStateAsync is not available.
-    /// Used when Redis Stack is not configured or query API is unavailable.
+    /// Fallback search using index keys when RedisSearch is not available.
+    /// Used when Redis Stack is not configured or search module is unavailable.
     /// </summary>
     private async Task<(StatusCodes, AssetSearchResult?)> SearchAssetsIndexFallbackAsync(
         AssetSearchRequest body,
@@ -665,15 +660,17 @@ public partial class AssetService : IAssetService
         var matchingAssets = new List<AssetMetadata>();
 
         // Search by asset type index
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(STATE_STORE);
+
         var indexKey = $"{ASSET_INDEX_PREFIX}type:{body.Asset_type.ToString().ToLowerInvariant()}";
-        var assetIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, indexKey, cancellationToken: cancellationToken).ConfigureAwait(false);
+        var assetIds = await indexStore.GetAsync(indexKey, cancellationToken).ConfigureAwait(false);
 
         if (assetIds != null)
         {
             foreach (var assetId in assetIds)
             {
-                var internalRecord = await _daprClient.GetStateAsync<InternalAssetRecord>(
-                    STATE_STORE, $"{ASSET_PREFIX}{assetId}", cancellationToken: cancellationToken).ConfigureAwait(false);
+                var internalRecord = await assetStore.GetAsync($"{ASSET_PREFIX}{assetId}", cancellationToken).ConfigureAwait(false);
 
                 if (internalRecord != null)
                 {
@@ -737,11 +734,11 @@ public partial class AssetService : IAssetService
             }
 
             // Check if bundle already exists
+            var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(STATE_STORE);
+            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(STATE_STORE);
+
             var bundleKey = $"{BUNDLE_PREFIX}{body.Bundle_id}";
-            var existingBundle = await _daprClient.GetStateAsync<BundleMetadata>(
-                STATE_STORE,
-                bundleKey,
-                cancellationToken: cancellationToken);
+            var existingBundle = await bundleStore.GetAsync(bundleKey, cancellationToken);
 
             if (existingBundle != null)
             {
@@ -756,10 +753,7 @@ public partial class AssetService : IAssetService
             foreach (var assetId in body.Asset_ids)
             {
                 var assetKey = $"{ASSET_PREFIX}{assetId}";
-                var assetRecord = await _daprClient.GetStateAsync<InternalAssetRecord>(
-                    STATE_STORE,
-                    assetKey,
-                    cancellationToken: cancellationToken);
+                var assetRecord = await assetStore.GetAsync(assetKey, cancellationToken);
 
                 if (assetRecord == null)
                 {
@@ -792,19 +786,12 @@ public partial class AssetService : IAssetService
                 };
 
                 // Store job state
+                var jobStore = _stateStoreFactory.GetStore<BundleCreationJob>(STATE_STORE);
                 var jobKey = $"bundle-job:{jobId}";
-                await _daprClient.SaveStateAsync(
-                    STATE_STORE,
-                    jobKey,
-                    job,
-                    cancellationToken: cancellationToken);
+                await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken);
 
                 // Publish job event for processing pool
-                await _daprClient.PublishEventAsync(
-                    PUBSUB_NAME,
-                    "asset.bundle.create",
-                    job,
-                    cancellationToken);
+                await _messageBus.PublishAsync("asset.bundle.create", job);
 
                 _logger.LogInformation(
                     "CreateBundle: Queued bundle creation job {JobId} for bundle {BundleId}",
@@ -872,11 +859,7 @@ public partial class AssetService : IAssetService
                 Status = BundleStatus.Ready
             };
 
-            await _daprClient.SaveStateAsync(
-                STATE_STORE,
-                bundleKey,
-                bundleMetadata,
-                cancellationToken: cancellationToken);
+            await bundleStore.SaveAsync(bundleKey, bundleMetadata, cancellationToken: cancellationToken);
 
             _logger.LogInformation(
                 "CreateBundle: Created bundle {BundleId} with {AssetCount} assets ({Size} bytes)",
@@ -885,8 +868,7 @@ public partial class AssetService : IAssetService
                 bundleStream.Length);
 
             // Publish asset.bundle.created event
-            await _daprClient.PublishEventAsync(
-                PUBSUB_NAME,
+            await _messageBus.PublishAsync(
                 "asset.bundle.created",
                 new BeyondImmersion.BannouService.Events.BundleCreatedEvent
                 {
@@ -900,8 +882,7 @@ public partial class AssetService : IAssetService
                     AssetCount = body.Asset_ids.Count,
                     Compression = null, // TODO: Map compression type when implemented
                     CreatedBy = null // TODO: Get from context when auth is integrated
-                },
-                cancellationToken).ConfigureAwait(false);
+                }).ConfigureAwait(false);
 
             return (StatusCodes.OK, new CreateBundleResponse
             {
@@ -943,11 +924,9 @@ public partial class AssetService : IAssetService
             }
 
             // Look up bundle metadata
+            var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(STATE_STORE);
             var bundleKey = $"{BUNDLE_PREFIX}{body.Bundle_id}";
-            var bundleMetadata = await _daprClient.GetStateAsync<BundleMetadata>(
-                STATE_STORE,
-                bundleKey,
-                cancellationToken: cancellationToken);
+            var bundleMetadata = await bundleStore.GetAsync(bundleKey, cancellationToken);
 
             if (bundleMetadata == null)
             {
@@ -1030,10 +1009,10 @@ public partial class AssetService : IAssetService
             var tokenTtl = TimeSpan.FromSeconds(_configuration.TokenTtlSeconds);
 
             // Store download token
-            await _daprClient.SaveStateAsync(
-                STATE_STORE,
+            var tokenStore = _stateStoreFactory.GetStore<BundleDownloadToken>(STATE_STORE);
+            await tokenStore.SaveAsync(
                 $"bundle-download:{downloadToken}",
-                new
+                new BundleDownloadToken
                 {
                     BundleId = body.Bundle_id,
                     Format = body.Format,
@@ -1041,11 +1020,8 @@ public partial class AssetService : IAssetService
                     CreatedAt = DateTimeOffset.UtcNow,
                     ExpiresAt = DateTimeOffset.UtcNow.Add(tokenTtl)
                 },
-                metadata: new Dictionary<string, string>
-                {
-                    { "ttlInSeconds", _configuration.TokenTtlSeconds.ToString() }
-                },
-                cancellationToken: cancellationToken);
+                new StateOptions { Ttl = (int)tokenTtl.TotalSeconds },
+                cancellationToken);
 
             // Generate pre-signed download URL
             var downloadResult = await _storageProvider.GenerateDownloadUrlAsync(
@@ -1125,10 +1101,8 @@ public partial class AssetService : IAssetService
             }
 
             // Check if bundle already exists
-            var existingBundle = await _daprClient.GetStateAsync<BundleMetadata>(
-                STATE_STORE,
-                $"{BUNDLE_PREFIX}{body.Manifest_preview.Bundle_id}",
-                cancellationToken: cancellationToken);
+            var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(STATE_STORE);
+            var existingBundle = await bundleStore.GetAsync($"{BUNDLE_PREFIX}{body.Manifest_preview.Bundle_id}", cancellationToken);
 
             if (existingBundle != null)
             {
@@ -1179,15 +1153,12 @@ public partial class AssetService : IAssetService
                 ExpiresAt = DateTimeOffset.UtcNow.Add(tokenTtl)
             };
 
-            await _daprClient.SaveStateAsync(
-                STATE_STORE,
+            var bundleUploadStore = _stateStoreFactory.GetStore<BundleUploadSession>(STATE_STORE);
+            await bundleUploadStore.SaveAsync(
                 $"bundle-upload:{uploadId}",
                 uploadSession,
-                metadata: new Dictionary<string, string>
-                {
-                    { "ttlInSeconds", _configuration.TokenTtlSeconds.ToString() }
-                },
-                cancellationToken: cancellationToken);
+                new StateOptions { Ttl = (int)tokenTtl.TotalSeconds },
+                cancellationToken);
 
             _logger.LogInformation(
                 "RequestBundleUpload: Generated upload URL for bundle {BundleId}, uploadId={UploadId}",
@@ -1284,13 +1255,12 @@ public partial class AssetService : IAssetService
         CancellationToken cancellationToken,
         int maxRetries = 5)
     {
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+
         for (var attempt = 0; attempt < maxRetries; attempt++)
         {
             // Get current state with ETag for optimistic concurrency
-            var (index, etag) = await _daprClient.GetStateAndETagAsync<List<string>>(
-                STATE_STORE,
-                indexKey,
-                cancellationToken: cancellationToken).ConfigureAwait(false);
+            var (index, etag) = await indexStore.GetWithETagAsync(indexKey, cancellationToken).ConfigureAwait(false);
 
             index ??= new List<string>();
 
@@ -1304,15 +1274,15 @@ public partial class AssetService : IAssetService
             index.Add(assetId);
 
             // Try to save with ETag (fails if state changed since read)
-            var saved = await _daprClient.TrySaveStateAsync(
-                STATE_STORE,
-                indexKey,
-                index,
-                etag,
-                cancellationToken: cancellationToken).ConfigureAwait(false);
+            var saved = etag == null || await indexStore.TrySaveAsync(indexKey, index, etag, cancellationToken).ConfigureAwait(false); // No ETag means new entry, just save it
 
-            if (saved)
+            if (saved || etag == null)
             {
+                if (etag == null)
+                {
+                    // First time creating this index
+                    await indexStore.SaveAsync(indexKey, index, cancellationToken: cancellationToken).ConfigureAwait(false);
+                }
                 return; // Success
             }
 
@@ -1402,6 +1372,7 @@ public partial class AssetService : IAssetService
         CancellationToken cancellationToken)
     {
         var poolType = GetProcessorPoolType(metadata.Content_type);
+        var assetStore = _stateStoreFactory.GetStore<AssetMetadata>(STATE_STORE);
 
         try
         {
@@ -1422,7 +1393,7 @@ public partial class AssetService : IAssetService
 
             // Update asset metadata to Processing status
             metadata.Processing_status = ProcessingStatus.Processing;
-            await _daprClient.SaveStateAsync(STATE_STORE, $"{ASSET_PREFIX}{assetId}", metadata, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await assetStore.SaveAsync($"{ASSET_PREFIX}{assetId}", metadata, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation(
                 "DelegateToProcessingPool: Acquired processor {ProcessorId} from pool {PoolType} for asset {AssetId}, lease expires at {ExpiresAt}",
@@ -1440,11 +1411,7 @@ public partial class AssetService : IAssetService
                 ExpiresAt = processorResponse.Expires_at
             };
 
-            await _daprClient.PublishEventAsync(
-                PUBSUB_NAME,
-                $"asset.processing.job.{poolType}",
-                processingJob,
-                cancellationToken).ConfigureAwait(false);
+            await _messageBus.PublishAsync($"asset.processing.job.{poolType}", processingJob).ConfigureAwait(false);
         }
         catch (ApiException ex) when (ex.StatusCode == 429)
         {
@@ -1465,11 +1432,7 @@ public partial class AssetService : IAssetService
                 RetryDelaySeconds = 30
             };
 
-            await _daprClient.PublishEventAsync(
-                PUBSUB_NAME,
-                "asset.processing.retry",
-                retryEvent,
-                cancellationToken).ConfigureAwait(false);
+            await _messageBus.PublishAsync("asset.processing.retry", retryEvent).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -1479,7 +1442,7 @@ public partial class AssetService : IAssetService
 
             // Mark as failed
             metadata.Processing_status = ProcessingStatus.Failed;
-            await _daprClient.SaveStateAsync(STATE_STORE, $"{ASSET_PREFIX}{assetId}", metadata, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await assetStore.SaveAsync($"{ASSET_PREFIX}{assetId}", metadata, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -1601,4 +1564,16 @@ public sealed class AssetProcessingRetryEvent
     public int RetryCount { get; set; }
     public int MaxRetries { get; set; } = 5;
     public int RetryDelaySeconds { get; set; } = 30;
+}
+
+/// <summary>
+/// Internal model for bundle download tokens stored in state.
+/// </summary>
+internal sealed class BundleDownloadToken
+{
+    public string BundleId { get; set; } = string.Empty;
+    public BundleFormat Format { get; set; }
+    public string Path { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset ExpiresAt { get; set; }
 }

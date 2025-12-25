@@ -1,6 +1,8 @@
 #nullable enable
 
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
@@ -98,7 +100,8 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
         var json = BannouJson.Serialize(value);
-        var ttl = options?.Ttl ?? _defaultTtl;
+        // Convert int? TTL (seconds) to TimeSpan?
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
 
         // Use transaction for atomicity
         var transaction = _database.CreateTransaction();

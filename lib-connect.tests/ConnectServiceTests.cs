@@ -3,8 +3,8 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -27,8 +27,9 @@ public class ConnectServiceTests
     private readonly Mock<ILoggerFactory> _mockLoggerFactory;
     private readonly ConnectServiceConfiguration _configuration;
     private readonly Mock<IAuthClient> _mockAuthClient;
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IMeshInvocationClient> _mockMeshClient;
     private readonly Mock<IServiceAppMappingResolver> _mockAppMappingResolver;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly string _testServerSalt = "test-server-salt-2025";
@@ -46,8 +47,9 @@ public class ConnectServiceTests
             ServerSalt = _testServerSalt
         };
         _mockAuthClient = new Mock<IAuthClient>();
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockMeshClient = new Mock<IMeshInvocationClient>();
         _mockAppMappingResolver = new Mock<IServiceAppMappingResolver>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockEventConsumer = new Mock<IEventConsumer>();
     }
@@ -458,11 +460,11 @@ public class ConnectServiceTests
         Assert.Equal("processed", resultDict["status"].ToString());
         Assert.Equal("new-service-123", resultDict["serviceId"].ToString());
 
-        // Verify that PublishEventAsync was called for permission recompilation
-        _mockDaprClient.Verify(x => x.PublishEventAsync(
-            "bannou-pubsub",
+        // Verify that PublishAsync was called for permission recompilation via IMessageBus
+        _mockMessageBus.Verify(x => x.PublishAsync(
             "bannou-permission-recompile",
             It.IsAny<PermissionRecompileEvent>(),
+            It.IsAny<PublishOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -573,7 +575,8 @@ public class ConnectServiceTests
     {
         return new ConnectService(
             _mockAuthClient.Object,
-            _mockDaprClient.Object,
+            _mockMeshClient.Object,
+            _mockMessageBus.Object,
             _mockAppMappingResolver.Object,
             _configuration,
             _mockLogger.Object,

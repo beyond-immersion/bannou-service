@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect.ClientEvents;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using Dapr;
@@ -39,7 +40,8 @@ public partial class ConnectService : IConnectService
     private static readonly MediaTypeHeaderValue s_jsonContentType = new("application/json") { CharSet = "utf-8" };
 
     private readonly IAuthClient _authClient;
-    private readonly DaprClient _daprClient;
+    private readonly IMeshInvocationClient _meshClient;
+    private readonly IMessageBus _messageBus;
     private readonly HttpClient _httpClient;
     private readonly IServiceAppMappingResolver _appMappingResolver;
     private readonly ILogger<ConnectService> _logger;
@@ -60,7 +62,8 @@ public partial class ConnectService : IConnectService
 
     public ConnectService(
         IAuthClient authClient,
-        DaprClient daprClient,
+        IMeshInvocationClient meshClient,
+        IMessageBus messageBus,
         IServiceAppMappingResolver appMappingResolver,
         ConnectServiceConfiguration configuration,
         ILogger<ConnectService> logger,
@@ -71,7 +74,8 @@ public partial class ConnectService : IConnectService
         ClientEventQueueManager? clientEventQueueManager = null)
     {
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _meshClient = meshClient ?? throw new ArgumentNullException(nameof(meshClient));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _httpClient = new HttpClient
         {
             // Set timeout to 120 seconds to ensure Connect service doesn't hang indefinitely
@@ -195,8 +199,8 @@ public partial class ConnectService : IConnectService
                     body.Method == InternalProxyRequestMethod.DELETE)
                 {
                     // For GET/DELETE, no body
-                    var request = _daprClient.CreateInvokeMethodRequest(httpMethod, appId, endpoint);
-                    httpResponse = await _daprClient.InvokeMethodWithResponseAsync(request, cancellationToken);
+                    var request = _meshClient.CreateInvokeMethodRequest(httpMethod, appId, endpoint);
+                    httpResponse = await _meshClient.InvokeMethodWithResponseAsync(request, cancellationToken);
                 }
                 else
                 {
@@ -205,12 +209,12 @@ public partial class ConnectService : IConnectService
 
                     var content = jsonBody != null ?
                         new StringContent(jsonBody, Encoding.UTF8, "application/json") : null;
-                    var request = _daprClient.CreateInvokeMethodRequest(httpMethod, appId, endpoint);
+                    var request = _meshClient.CreateInvokeMethodRequest(httpMethod, appId, endpoint);
                     if (content != null)
                     {
                         request.Content = content;
                     }
-                    httpResponse = await _daprClient.InvokeMethodWithResponseAsync(request, cancellationToken);
+                    httpResponse = await _meshClient.InvokeMethodWithResponseAsync(request, cancellationToken);
                 }
 
                 // Read response
@@ -334,7 +338,9 @@ public partial class ConnectService : IConnectService
                 _logger.LogDebug("Validating JWT token, TokenLength: {TokenLength}", token.Length);
 
                 // Use auth service to validate token with header-based authorization
-                var validationResponse = await _authClient
+                // Cast to concrete type to access fluent WithAuthorization method
+                var authClient = (AuthClient)_authClient;
+                var validationResponse = await authClient
                     .WithAuthorization(token)
                     .ValidateTokenAsync(cancellationToken);
 
@@ -545,7 +551,7 @@ public partial class ConnectService : IConnectService
                         ConnectInstanceId = Guid.TryParse(_instanceId.Split('-').LastOrDefault(), out var instanceGuid)
                             ? instanceGuid : (Guid?)null
                     };
-                    await _daprClient.PublishEventAsync("bannou-pubsub", "session.connected", sessionConnectedEvent, cancellationToken);
+                    await _messageBus.PublishAsync("session.connected", sessionConnectedEvent, cancellationToken: cancellationToken);
                     _logger.LogInformation("Published session.connected event for session {SessionId}", sessionId);
 
                     // If this is a reconnection, publish session.reconnected event so services can re-publish shortcuts
@@ -566,7 +572,7 @@ public partial class ConnectService : IConnectService
                                 ["connect_instance_id"] = _instanceId
                             }
                         };
-                        await _daprClient.PublishEventAsync("bannou-pubsub", "session.reconnected", sessionReconnectedEvent, cancellationToken);
+                        await _messageBus.PublishAsync("session.reconnected", sessionReconnectedEvent, cancellationToken: cancellationToken);
                         _logger.LogInformation("Published session.reconnected event for session {SessionId} - services should re-publish shortcuts", sessionId);
                     }
                 }
@@ -681,7 +687,7 @@ public partial class ConnectService : IConnectService
                     Reconnectable = !isForcedDisconnect,
                     Reason = isForcedDisconnect ? "forced_disconnect" : "graceful_disconnect"
                 };
-                await _daprClient.PublishEventAsync("bannou-pubsub", "session.disconnected", sessionDisconnectedEvent);
+                await _messageBus.PublishAsync("session.disconnected", sessionDisconnectedEvent);
                 _logger.LogInformation("Published session.disconnected event for session {SessionId}, reconnectable: {Reconnectable}",
                     sessionId, !isForcedDisconnect);
             }
@@ -1436,8 +1442,7 @@ public partial class ConnectService : IConnectService
 
             // Notify permission service that a new service was registered
             // This will trigger permission recompilation for all sessions
-            await _daprClient.PublishEventAsync(
-                "bannou-pubsub",
+            await _messageBus.PublishAsync(
                 "bannou-permission-recompile",
                 new PermissionRecompileEvent
                 {
@@ -2247,7 +2252,7 @@ public partial class ConnectService : IConnectService
         _logger.LogInformation("Registering Connect service permissions... (starting)");
         try
         {
-            await ConnectPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+            await ConnectPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
             _logger.LogInformation("Connect service permissions registered via event (complete)");
         }
         catch (Exception ex)

@@ -1,6 +1,8 @@
 #nullable enable
 
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using NRedisStack;
 using NRedisStack.RedisStackCommands;
@@ -138,7 +140,8 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
         var json = BannouJson.Serialize(value);
-        var ttl = options?.Ttl ?? _defaultTtl;
+        // Convert int? TTL (seconds) to TimeSpan?
+        var ttl = options?.Ttl != null ? TimeSpan.FromSeconds(options.Ttl.Value) : _defaultTtl;
 
         // Store as JSON document for search indexing
         await _jsonCommands.SetAsync(fullKey, "$", json);

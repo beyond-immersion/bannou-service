@@ -1,7 +1,7 @@
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Mesh.Services;
-using BeyondImmersion.BannouService.Messaging.Services;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using Yarp.ReverseProxy.Forwarder;
 

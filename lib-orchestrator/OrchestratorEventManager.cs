@@ -1,21 +1,20 @@
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
-using Dapr.Client;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace LibOrchestrator;
 
 /// <summary>
-/// Dapr-based event manager for orchestrator events.
+/// Event manager for orchestrator events using native messaging infrastructure.
 /// </summary>
 public class OrchestratorEventManager : IOrchestratorEventManager
 {
     private readonly ILogger<OrchestratorEventManager> _logger;
-    private readonly DaprClient _daprClient;
+    private readonly IMessageBus _messageBus;
 
     public event Action<ServiceHeartbeatEvent>? HeartbeatReceived;
 
-    private const string PUBSUB_NAME = "bannou-pubsub";
     private const string HEARTBEAT_TOPIC = "bannou-service-heartbeats";
     private const string FULL_MAPPINGS_TOPIC = "bannou-full-service-mappings";
     private const string RESTART_TOPIC = "bannou-service-restart";
@@ -23,10 +22,10 @@ public class OrchestratorEventManager : IOrchestratorEventManager
 
     public OrchestratorEventManager(
         ILogger<OrchestratorEventManager> logger,
-        DaprClient daprClient)
+        IMessageBus messageBus)
     {
         _logger = logger;
-        _daprClient = daprClient;
+        _messageBus = messageBus;
     }
 
     public void ReceiveHeartbeat(ServiceHeartbeatEvent heartbeat)
@@ -43,19 +42,19 @@ public class OrchestratorEventManager : IOrchestratorEventManager
 
     public async Task PublishServiceRestartEventAsync(ServiceRestartEvent restartEvent)
     {
-        await _daprClient.PublishEventAsync(PUBSUB_NAME, RESTART_TOPIC, restartEvent);
+        await _messageBus.PublishAsync(RESTART_TOPIC, restartEvent);
         _logger.LogInformation("Published service restart event for {Service}", restartEvent.ServiceName);
     }
 
     public async Task PublishDeploymentEventAsync(DeploymentEvent deploymentEvent)
     {
-        await _daprClient.PublishEventAsync(PUBSUB_NAME, DEPLOYMENT_TOPIC, deploymentEvent);
+        await _messageBus.PublishAsync(DEPLOYMENT_TOPIC, deploymentEvent);
         _logger.LogInformation("Published deployment event: {Action} ({DeploymentId})", deploymentEvent.Action, deploymentEvent.DeploymentId);
     }
 
     public async Task PublishFullMappingsAsync(FullServiceMappingsEvent mappingsEvent)
     {
-        await _daprClient.PublishEventAsync(PUBSUB_NAME, FULL_MAPPINGS_TOPIC, mappingsEvent);
+        await _messageBus.PublishAsync(FULL_MAPPINGS_TOPIC, mappingsEvent);
         _logger.LogInformation(
             "Published full service mappings v{Version} with {Count} services",
             mappingsEvent.Version,

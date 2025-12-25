@@ -1,8 +1,8 @@
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -17,21 +17,21 @@ public partial class TestingService : ITestingService
 {
     private readonly ILogger<TestingService> _logger;
     private readonly TestingServiceConfiguration _configuration;
-    private readonly DaprClient _daprClient;
+    private readonly IMessageBus _messageBus;
     private readonly IClientEventPublisher _clientEventPublisher;
     private readonly IErrorEventEmitter _errorEventEmitter;
 
     public TestingService(
         ILogger<TestingService> logger,
         TestingServiceConfiguration configuration,
-        DaprClient daprClient,
+        IMessageBus messageBus,
         IClientEventPublisher clientEventPublisher,
         IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
 
@@ -327,7 +327,7 @@ public partial class TestingService : ITestingService
     public async Task RegisterServicePermissionsAsync()
     {
         _logger.LogInformation("Registering Testing service permissions...");
-        await TestingPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+        await TestingPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
     }
 
     #endregion

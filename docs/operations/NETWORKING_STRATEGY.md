@@ -18,8 +18,7 @@ Previous docker-compose networking setup failed on WSL2/Windows due to:
    - Service name resolution works out of the box
 
 2. **Service-to-Service Communication**
-   - Containers use service names: `bannou`, `rabbitmq`, `placement`, `account-db`
-   - Dapr sidecars share network stack: `network_mode: service:bannou`
+   - Containers use service names: `bannou`, `rabbitmq`, `account-db`
    - All bindings to `0.0.0.0` (not `127.0.0.1`)
 
 3. **No depends_on Blocks**
@@ -34,36 +33,30 @@ Previous docker-compose networking setup failed on WSL2/Windows due to:
 
 **Services:**
 - `bannou` (TESTING service only)
-- `bannou-dapr` (sidecar, network_mode: service:bannou)
-- `placement` (Dapr coordination)
-- `bannou-infra-tester` (curl container, network_mode: service:bannou)
+- `bannou-infra-tester` (curl container)
 
 **Network:**
 - All on default bridge (implicit)
-- Tester shares network with bannou (can curl localhost:80)
+- Tester can reach bannou by service name
 
 **Communication:**
-- Tester → Bannou: `curl http://127.0.0.1:80/health` (shared network stack)
-- Dapr → Placement: `placement:50006` (service name)
+- Tester → Bannou: `curl http://bannou:80/health` (service name)
 
 ### Layer 2: HTTP Integration Tests (Service-to-Service)
 **Purpose:** Test service-to-service communication within datacenter
 
 **Services:**
 - `bannou` (all services enabled)
-- `bannou-dapr` (sidecar, network_mode: service:bannou)
-- `placement`
 - `rabbitmq`
 - `account-db`, `bannou-redis`, `auth-redis` (from services.yml)
 - `bannou-http-tester` (http-tester service)
-- `bannou-http-tester-dapr` (sidecar, network_mode: service:bannou-http-tester)
 
 **Network:**
 - All on default bridge (implicit)
 - Each service reachable by name
 
 **Communication:**
-- HTTP Tester Dapr → Bannou Dapr: `http://bannou:80/accounts/...` (via service name)
+- HTTP Tester → Bannou: `http://bannou:80/accounts/...` (via service name)
 - Bannou → RabbitMQ: `rabbitmq:5672` (service name)
 - Bannou → MySQL: `account-db:3306` (service name)
 - Bannou → Redis: `bannou-redis:6379` (service name)
@@ -73,8 +66,6 @@ Previous docker-compose networking setup failed on WSL2/Windows due to:
 
 **Services:**
 - `bannou` (all services enabled)
-- `bannou-dapr` (sidecar, network_mode: service:bannou)
-- `placement`
 - `rabbitmq`
 - `account-db`, `bannou-redis`, `auth-redis`
 - `routing-redis` (for NGINX routing state)
@@ -82,7 +73,7 @@ Previous docker-compose networking setup failed on WSL2/Windows due to:
 - `bannou-edge-tester` (external network ONLY)
 
 **Networks:**
-- **internal** (default): bannou, placement, rabbitmq, databases, routing-redis, openresty
+- **internal** (default): bannou, rabbitmq, databases, routing-redis, openresty
 - **external**: openresty, bannou-edge-tester
 
 **Communication:**
@@ -94,25 +85,9 @@ Previous docker-compose networking setup failed on WSL2/Windows due to:
 
 ### Bannou Service
 ```yaml
-environment:
-  # Dapr endpoints - use 127.0.0.1 since dapr sidecar shares network stack
-  - DAPR_HTTP_ENDPOINT=http://127.0.0.1:3500
-  - DAPR_GRPC_ENDPOINT=http://127.0.0.1:50001
-
 healthcheck:
-  # Use 127.0.0.1 for internal health check
-  test: ["CMD", "curl", "--fail", "http://127.0.0.1:80/health"]
-```
-
-### Dapr Sidecar
-```yaml
-bannou-dapr:
-  network_mode: service:bannou  # Share network stack with bannou
-  command:
-    - --app-id=bannou
-    - --app-port=80              # Bannou listens on 0.0.0.0:80
-    - --dapr-http-port=3500      # Dapr listens on 0.0.0.0:3500
-    - --placement-host-address=placement:50006  # Use service name
+  # Use service name for internal health check
+  test: ["CMD", "curl", "--fail", "http://bannou:80/health"]
 ```
 
 ### Database/Infrastructure Services
@@ -158,7 +133,7 @@ bannou-edge-tester:
 # wait-for-health.sh - used by infra tester
 
 echo "Waiting for bannou health endpoint..."
-until curl -f http://127.0.0.1:80/health; do
+until curl -f http://bannou:80/health; do
   echo "Bannou not ready, retrying in 2s..."
   sleep 2
 done
@@ -170,15 +145,9 @@ echo "Bannou is healthy!"
 #!/bin/sh
 # wait-for-services.sh - used by http tester
 
-# Wait for Dapr sidecar
-until curl -f http://127.0.0.1:3500/v1.0/healthz; do
-  echo "Dapr not ready, retrying..."
-  sleep 2
-done
-
-# Verify can reach bannou via Dapr service invocation
-until curl -f http://127.0.0.1:3500/v1.0/invoke/bannou/method/health; do
-  echo "Cannot reach bannou via Dapr, retrying..."
+# Wait for bannou service
+until curl -f http://bannou:80/health; do
+  echo "Bannou not ready, retrying..."
   sleep 2
 done
 
@@ -215,7 +184,6 @@ echo "OpenResty is ready!"
 4. **Update environment variables**
    - Database hosts: `account-db`, `bannou-redis`, `auth-redis`
    - RabbitMQ host: `rabbitmq`
-   - Placement: `placement:50006`
 
 5. **Configure dual-network for OpenResty**
    - Internal (default) network for backend services
@@ -223,7 +191,7 @@ echo "OpenResty is ready!"
 
 6. **Add wait scripts to testers**
    - Infrastructure: wait for bannou health
-   - HTTP: wait for Dapr + bannou
+   - HTTP: wait for bannou
    - Edge: wait for OpenResty
 
 ## Testing Validation
@@ -255,9 +223,6 @@ make test-all
 
 **Issue:** Container can't resolve service name
 - **Solution:** Ensure both containers on same network (or no network specified = default)
-
-**Issue:** Dapr can't reach bannou
-- **Solution:** Verify `network_mode: service:bannou` and `--app-port=80` match bannou's listen port
 
 **Issue:** Edge tester can't reach OpenResty
 - **Solution:** Verify OpenResty on `external` network and edge tester ONLY on `external` network
@@ -295,7 +260,7 @@ docs/HOST-NETWORKING.md                              → Removed (obsolete worka
 
 ### Current File Structure
 ```
-provisioning/docker-compose.yml                     → Base services (bannou, dapr, placement, rabbitmq)
+provisioning/docker-compose.yml                     → Base services (bannou, rabbitmq)
 provisioning/docker-compose.services.yml            → Service dependencies (MySQL, Redis)
 provisioning/docker-compose.ingress.yml             → OpenResty edge proxy (dual network)
 provisioning/docker-compose.test.yml                → Shared test configuration

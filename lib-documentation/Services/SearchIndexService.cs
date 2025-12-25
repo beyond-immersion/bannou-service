@@ -1,4 +1,5 @@
-using Dapr.Client;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
@@ -12,7 +13,7 @@ namespace BeyondImmersion.BannouService.Documentation.Services;
 /// </summary>
 public partial class SearchIndexService : ISearchIndexService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<SearchIndexService> _logger;
     private readonly DocumentationServiceConfiguration _configuration;
 
@@ -27,15 +28,15 @@ public partial class SearchIndexService : ISearchIndexService
     /// <summary>
     /// Creates a new instance of the SearchIndexService.
     /// </summary>
-    /// <param name="daprClient">The Dapr client for state operations.</param>
+    /// <param name="stateStoreFactory">The state store factory for state operations.</param>
     /// <param name="logger">The logger instance.</param>
     /// <param name="configuration">The service configuration.</param>
     public SearchIndexService(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
         ILogger<SearchIndexService> logger,
         DocumentationServiceConfiguration configuration)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
@@ -53,7 +54,8 @@ public partial class SearchIndexService : ISearchIndexService
 
         // Load document list from state store
         var docListKey = $"ns-docs:{namespaceId}";
-        var documentIds = await _daprClient.GetStateAsync<List<Guid>>(STATE_STORE, docListKey, cancellationToken: cancellationToken);
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var documentIds = await listStore.GetAsync(docListKey, cancellationToken);
 
         if (documentIds == null || documentIds.Count == 0)
         {
@@ -62,12 +64,13 @@ public partial class SearchIndexService : ISearchIndexService
         }
 
         var indexedCount = 0;
+        var docStore = _stateStoreFactory.GetStore<DocumentIndexData>(STATE_STORE);
         foreach (var docId in documentIds)
         {
             try
             {
                 var docKey = $"doc:{namespaceId}:{docId}";
-                var doc = await _daprClient.GetStateAsync<DocumentIndexData>(STATE_STORE, docKey, cancellationToken: cancellationToken);
+                var doc = await docStore.GetAsync(docKey, cancellationToken);
 
                 if (doc != null)
                 {

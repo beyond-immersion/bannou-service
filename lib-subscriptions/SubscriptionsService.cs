@@ -1,9 +1,10 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Servicedata;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
@@ -20,30 +21,32 @@ namespace BeyondImmersion.BannouService.Subscriptions;
 [DaprService("subscriptions", typeof(ISubscriptionsService), lifetime: ServiceLifetime.Singleton)]
 public partial class SubscriptionsService : ISubscriptionsService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<SubscriptionsService> _logger;
     private readonly SubscriptionsServiceConfiguration _configuration;
     private readonly IServicedataClient _servicedataClient;
     private readonly IErrorEventEmitter _errorEventEmitter;
 
-    // Key patterns for Dapr state store
+    // Key patterns for state store
     private const string SUBSCRIPTION_KEY_PREFIX = "subscription:";
     private const string ACCOUNT_SUBSCRIPTIONS_PREFIX = "account-subscriptions:";
     private const string SERVICE_SUBSCRIPTIONS_PREFIX = "service-subscriptions:";
 
-    // Pub/sub configuration
-    private const string PUBSUB_NAME = "bannou-pubsub";
+    // Event topics
     private const string SUBSCRIPTION_UPDATED_TOPIC = "subscription.updated";
 
     public SubscriptionsService(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         ILogger<SubscriptionsService> logger,
         SubscriptionsServiceConfiguration configuration,
         IServicedataClient servicedataClient,
         IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _servicedataClient = servicedataClient ?? throw new ArgumentNullException(nameof(servicedataClient));
@@ -68,22 +71,18 @@ public partial class SubscriptionsService : ISubscriptionsService
 
         try
         {
-            var subscriptionIds = await _daprClient.GetStateAsync<List<string>>(
-                StateStoreName,
-                $"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{body.AccountId}",
-                cancellationToken: cancellationToken);
+            var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
+            var subscriptionIds = await listStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{body.AccountId}", cancellationToken);
 
             var subscriptions = new List<SubscriptionInfo>();
             var now = DateTimeOffset.UtcNow;
+            var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
 
             if (subscriptionIds != null)
             {
                 foreach (var subscriptionId in subscriptionIds)
                 {
-                    var model = await _daprClient.GetStateAsync<SubscriptionDataModel>(
-                        StateStoreName,
-                        $"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}",
-                        cancellationToken: cancellationToken);
+                    var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}", cancellationToken);
 
                     if (model != null)
                     {
@@ -130,23 +129,19 @@ public partial class SubscriptionsService : ISubscriptionsService
 
         try
         {
-            var subscriptionIds = await _daprClient.GetStateAsync<List<string>>(
-                StateStoreName,
-                $"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{body.AccountId}",
-                cancellationToken: cancellationToken);
+            var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
+            var subscriptionIds = await listStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{body.AccountId}", cancellationToken);
 
             var authorizations = new List<string>();
             var subscriptions = new List<SubscriptionInfo>();
             var now = DateTimeOffset.UtcNow;
+            var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
 
             if (subscriptionIds != null)
             {
                 foreach (var subscriptionId in subscriptionIds)
                 {
-                    var model = await _daprClient.GetStateAsync<SubscriptionDataModel>(
-                        StateStoreName,
-                        $"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}",
-                        cancellationToken: cancellationToken);
+                    var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}", cancellationToken);
 
                     if (model != null && model.IsActive)
                     {
@@ -193,10 +188,8 @@ public partial class SubscriptionsService : ISubscriptionsService
 
         try
         {
-            var model = await _daprClient.GetStateAsync<SubscriptionDataModel>(
-                StateStoreName,
-                $"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}",
-                cancellationToken: cancellationToken);
+            var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
+            var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", cancellationToken);
 
             if (model == null)
             {
@@ -245,17 +238,13 @@ public partial class SubscriptionsService : ISubscriptionsService
             }
 
             // Check for existing active subscription
-            var existingSubscriptionIds = await _daprClient.GetStateAsync<List<string>>(
-                StateStoreName,
-                $"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{body.AccountId}",
-                cancellationToken: cancellationToken) ?? new List<string>();
+            var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
+            var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
+            var existingSubscriptionIds = await listStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{body.AccountId}", cancellationToken) ?? new List<string>();
 
             foreach (var existingId in existingSubscriptionIds)
             {
-                var existing = await _daprClient.GetStateAsync<SubscriptionDataModel>(
-                    StateStoreName,
-                    $"{SUBSCRIPTION_KEY_PREFIX}{existingId}",
-                    cancellationToken: cancellationToken);
+                var existing = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{existingId}", cancellationToken);
 
                 if (existing != null &&
                     existing.ServiceId == body.ServiceId.ToString() &&
@@ -300,11 +289,7 @@ public partial class SubscriptionsService : ISubscriptionsService
             };
 
             // Save subscription
-            await _daprClient.SaveStateAsync(
-                StateStoreName,
-                $"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}",
-                model,
-                cancellationToken: cancellationToken);
+            await modelStore.SaveAsync($"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}", model, cancellationToken: cancellationToken);
 
             // Add to account index
             await AddToAccountIndexAsync(body.AccountId.ToString(), subscriptionId.ToString(), cancellationToken);
@@ -337,10 +322,8 @@ public partial class SubscriptionsService : ISubscriptionsService
 
         try
         {
-            var model = await _daprClient.GetStateAsync<SubscriptionDataModel>(
-                StateStoreName,
-                $"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}",
-                cancellationToken: cancellationToken);
+            var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
+            var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", cancellationToken);
 
             if (model == null)
             {
@@ -364,11 +347,7 @@ public partial class SubscriptionsService : ISubscriptionsService
             model.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
             // Save updated subscription
-            await _daprClient.SaveStateAsync(
-                StateStoreName,
-                $"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}",
-                model,
-                cancellationToken: cancellationToken);
+            await modelStore.SaveAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", model, cancellationToken: cancellationToken);
 
             // Publish subscription.updated event
             await PublishSubscriptionUpdatedEventAsync(model, "updated", cancellationToken);
@@ -393,10 +372,8 @@ public partial class SubscriptionsService : ISubscriptionsService
 
         try
         {
-            var model = await _daprClient.GetStateAsync<SubscriptionDataModel>(
-                StateStoreName,
-                $"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}",
-                cancellationToken: cancellationToken);
+            var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
+            var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", cancellationToken);
 
             if (model == null)
             {
@@ -412,11 +389,7 @@ public partial class SubscriptionsService : ISubscriptionsService
             model.UpdatedAtUnix = now.ToUnixTimeSeconds();
 
             // Save updated subscription
-            await _daprClient.SaveStateAsync(
-                StateStoreName,
-                $"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}",
-                model,
-                cancellationToken: cancellationToken);
+            await modelStore.SaveAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", model, cancellationToken: cancellationToken);
 
             // Publish subscription.updated event
             await PublishSubscriptionUpdatedEventAsync(model, "cancelled", cancellationToken);
@@ -443,10 +416,8 @@ public partial class SubscriptionsService : ISubscriptionsService
 
         try
         {
-            var model = await _daprClient.GetStateAsync<SubscriptionDataModel>(
-                StateStoreName,
-                $"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}",
-                cancellationToken: cancellationToken);
+            var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
+            var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", cancellationToken);
 
             if (model == null)
             {
@@ -484,11 +455,7 @@ public partial class SubscriptionsService : ISubscriptionsService
             model.UpdatedAtUnix = now.ToUnixTimeSeconds();
 
             // Save updated subscription
-            await _daprClient.SaveStateAsync(
-                StateStoreName,
-                $"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}",
-                model,
-                cancellationToken: cancellationToken);
+            await modelStore.SaveAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", model, cancellationToken: cancellationToken);
 
             // Publish subscription.updated event
             await PublishSubscriptionUpdatedEventAsync(model, "renewed", cancellationToken);
@@ -516,10 +483,8 @@ public partial class SubscriptionsService : ISubscriptionsService
 
         try
         {
-            var model = await _daprClient.GetStateAsync<SubscriptionDataModel>(
-                StateStoreName,
-                $"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}",
-                cancellationToken: cancellationToken);
+            var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
+            var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}", cancellationToken);
 
             if (model == null || !model.IsActive)
             {
@@ -529,11 +494,7 @@ public partial class SubscriptionsService : ISubscriptionsService
             model.IsActive = false;
             model.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-            await _daprClient.SaveStateAsync(
-                StateStoreName,
-                $"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}",
-                model,
-                cancellationToken: cancellationToken);
+            await modelStore.SaveAsync($"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}", model, cancellationToken: cancellationToken);
 
             await PublishSubscriptionUpdatedEventAsync(model, "expired", cancellationToken);
 
@@ -555,37 +516,25 @@ public partial class SubscriptionsService : ISubscriptionsService
 
     private async Task AddToAccountIndexAsync(string accountId, string subscriptionId, CancellationToken cancellationToken)
     {
-        var subscriptionIds = await _daprClient.GetStateAsync<List<string>>(
-            StateStoreName,
-            $"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{accountId}",
-            cancellationToken: cancellationToken) ?? new List<string>();
+        var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
+        var subscriptionIds = await listStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{accountId}", cancellationToken) ?? new List<string>();
 
         if (!subscriptionIds.Contains(subscriptionId))
         {
             subscriptionIds.Add(subscriptionId);
-            await _daprClient.SaveStateAsync(
-                StateStoreName,
-                $"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{accountId}",
-                subscriptionIds,
-                cancellationToken: cancellationToken);
+            await listStore.SaveAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{accountId}", subscriptionIds, cancellationToken: cancellationToken);
         }
     }
 
     private async Task AddToServiceIndexAsync(string serviceId, string subscriptionId, CancellationToken cancellationToken)
     {
-        var subscriptionIds = await _daprClient.GetStateAsync<List<string>>(
-            StateStoreName,
-            $"{SERVICE_SUBSCRIPTIONS_PREFIX}{serviceId}",
-            cancellationToken: cancellationToken) ?? new List<string>();
+        var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
+        var subscriptionIds = await listStore.GetAsync($"{SERVICE_SUBSCRIPTIONS_PREFIX}{serviceId}", cancellationToken) ?? new List<string>();
 
         if (!subscriptionIds.Contains(subscriptionId))
         {
             subscriptionIds.Add(subscriptionId);
-            await _daprClient.SaveStateAsync(
-                StateStoreName,
-                $"{SERVICE_SUBSCRIPTIONS_PREFIX}{serviceId}",
-                subscriptionIds,
-                cancellationToken: cancellationToken);
+            await listStore.SaveAsync($"{SERVICE_SUBSCRIPTIONS_PREFIX}{serviceId}", subscriptionIds, cancellationToken: cancellationToken);
         }
     }
 
@@ -608,11 +557,7 @@ public partial class SubscriptionsService : ISubscriptionsService
                 : null
         };
 
-        await _daprClient.PublishEventAsync(
-            PUBSUB_NAME,
-            SUBSCRIPTION_UPDATED_TOPIC,
-            eventData,
-            cancellationToken);
+        await _messageBus.PublishAsync(SUBSCRIPTION_UPDATED_TOPIC, eventData);
 
         _logger.LogDebug("Published subscription.updated event for {SubscriptionId} with action {Action}",
             model.SubscriptionId, action);
@@ -667,7 +612,7 @@ public partial class SubscriptionsService : ISubscriptionsService
     public async Task RegisterServicePermissionsAsync()
     {
         _logger.LogInformation("Registering Subscriptions service permissions...");
-        await SubscriptionsPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+        await SubscriptionsPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
     }
 
     #endregion

@@ -5,11 +5,12 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth.Services;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.Subscriptions;
-using Dapr;
-using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -34,7 +35,8 @@ public partial class AuthService : IAuthService
 {
     private readonly IAccountsClient _accountsClient;
     private readonly ISubscriptionsClient _subscriptionsClient;
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<AuthService> _logger;
     private readonly AuthServiceConfiguration _configuration;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -46,7 +48,6 @@ public partial class AuthService : IAuthService
     private readonly IErrorEventEmitter _errorEventEmitter;
 
     private const string REDIS_STATE_STORE = "auth-statestore";
-    private const string PUBSUB_NAME = "bannou-pubsub";
     private const string SESSION_INVALIDATED_TOPIC = "session.invalidated";
     private const string SESSION_UPDATED_TOPIC = "session.updated";
 
@@ -62,7 +63,8 @@ public partial class AuthService : IAuthService
     public AuthService(
         IAccountsClient accountsClient,
         ISubscriptionsClient subscriptionsClient,
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         AuthServiceConfiguration configuration,
         ILogger<AuthService> logger,
         IHttpClientFactory httpClientFactory,
@@ -74,7 +76,8 @@ public partial class AuthService : IAuthService
     {
         _accountsClient = accountsClient ?? throw new ArgumentNullException(nameof(accountsClient));
         _subscriptionsClient = subscriptionsClient ?? throw new ArgumentNullException(nameof(subscriptionsClient));
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
@@ -610,20 +613,19 @@ public partial class AuthService : IAuthService
                 {
                     // Get session keys from index to delete all sessions
                     var indexKey = $"account-sessions:{validateResponse.AccountId}";
-                    var sessionKeys = await _daprClient.GetStateAsync<List<string>>(
-                        REDIS_STATE_STORE,
-                        indexKey,
-                        cancellationToken: cancellationToken);
+                    var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
+                    var sessionKeys = await sessionIndexStore.GetAsync(indexKey, cancellationToken);
 
                     if (sessionKeys != null && sessionKeys.Count > 0)
                     {
                         // Delete all sessions
+                        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
                         var deleteTasks = sessionKeys.Select(key =>
-                            _daprClient.DeleteStateAsync(REDIS_STATE_STORE, $"session:{key}", cancellationToken: cancellationToken));
+                            sessionStore.DeleteAsync($"session:{key}", cancellationToken));
                         await Task.WhenAll(deleteTasks);
 
                         // Remove the account sessions index
-                        await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, indexKey, cancellationToken: cancellationToken);
+                        await sessionIndexStore.DeleteAsync(indexKey, cancellationToken);
 
                         invalidatedSessions.AddRange(sessionKeys);
 
@@ -639,10 +641,8 @@ public partial class AuthService : IAuthService
             else
             {
                 // Logout current session only
-                await _daprClient.DeleteStateAsync(
-                    REDIS_STATE_STORE,
-                    $"session:{sessionKey}",
-                    cancellationToken: cancellationToken);
+                var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+                await sessionStore.DeleteAsync($"session:{sessionKey}", cancellationToken);
 
                 // Remove session from account index
                 await RemoveSessionFromAccountIndexAsync(validateResponse.AccountId.ToString(), sessionKey, cancellationToken);
@@ -692,16 +692,11 @@ public partial class AuthService : IAuthService
             }
 
             // Get session data to find account ID for index cleanup
-            var sessionData = await _daprClient.GetStateAsync<SessionDataModel>(
-                REDIS_STATE_STORE,
-                $"session:{sessionKey}",
-                cancellationToken: cancellationToken);
+            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+            var sessionData = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
 
             // Remove the session data from Redis
-            await _daprClient.DeleteStateAsync(
-                REDIS_STATE_STORE,
-                $"session:{sessionKey}",
-                cancellationToken: cancellationToken);
+            await sessionStore.DeleteAsync($"session:{sessionKey}", cancellationToken);
 
             // Remove session from account index if we found the session data
             if (sessionData != null)
@@ -766,12 +761,12 @@ public partial class AuthService : IAuthService
                 };
 
                 // Store reset token in Redis with TTL
-                await _daprClient.SaveStateAsync(
-                    REDIS_STATE_STORE,
+                var resetStore = _stateStoreFactory.GetStore<PasswordResetData>(REDIS_STATE_STORE);
+                await resetStore.SaveAsync(
                     $"password-reset:{resetToken}",
                     resetData,
-                    metadata: new Dictionary<string, string> { { "ttl", (resetTokenTtlMinutes * 60).ToString() } },
-                    cancellationToken: cancellationToken);
+                    new StateOptions { Ttl = resetTokenTtlMinutes * 60 },
+                    cancellationToken);
 
                 // Send password reset email (mock implementation logs to console)
                 await SendPasswordResetEmailAsync(account.Email, resetToken, resetTokenTtlMinutes, cancellationToken);
@@ -848,10 +843,8 @@ public partial class AuthService : IAuthService
             }
 
             // Look up the reset token in Redis
-            var resetData = await _daprClient.GetStateAsync<PasswordResetData>(
-                REDIS_STATE_STORE,
-                $"password-reset:{body.Token}",
-                cancellationToken: cancellationToken);
+            var resetStore = _stateStoreFactory.GetStore<PasswordResetData>(REDIS_STATE_STORE);
+            var resetData = await resetStore.GetAsync($"password-reset:{body.Token}", cancellationToken);
 
             if (resetData == null)
             {
@@ -864,7 +857,7 @@ public partial class AuthService : IAuthService
             {
                 _logger.LogWarning("Password reset token has expired");
                 // Clean up expired token
-                await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, $"password-reset:{body.Token}", cancellationToken: cancellationToken);
+                await resetStore.DeleteAsync($"password-reset:{body.Token}", cancellationToken);
                 return (StatusCodes.BadRequest, new { Error = "Reset token has expired" });
             }
 
@@ -879,7 +872,7 @@ public partial class AuthService : IAuthService
             }, cancellationToken);
 
             // Remove the used token
-            await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, $"password-reset:{body.Token}", cancellationToken: cancellationToken);
+            await resetStore.DeleteAsync($"password-reset:{body.Token}", cancellationToken);
 
             _logger.LogInformation("Password reset successful for account {AccountId}", resetData.AccountId);
             return (StatusCodes.OK, new { Message = "Password reset successful" });
@@ -992,27 +985,12 @@ public partial class AuthService : IAuthService
 
                 _logger.LogDebug("Validating session from JWT, SessionKey: {SessionKey}", sessionKey);
 
-                // Fetch raw state for debugging (helps diagnose serialization issues)
-                var rawStateKey = $"session:{sessionKey}";
-                try
-                {
-                    var jsonElementData = await _daprClient.GetStateAsync<System.Text.Json.JsonElement>(
-                        REDIS_STATE_STORE,
-                        rawStateKey,
-                        cancellationToken: cancellationToken);
-                    _logger.LogDebug("Raw session state for SessionKey {SessionKey}: Kind={Kind}, Data={Raw}",
-                        sessionKey, jsonElementData.ValueKind, jsonElementData.GetRawText());
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to fetch raw session state for debugging, SessionKey: {SessionKey}", sessionKey);
-                }
+                // Debug logging for session lookup
+                _logger.LogDebug("Looking up session state for SessionKey: {SessionKey}", sessionKey);
 
                 // Lookup session data from Redis
-                var sessionData = await _daprClient.GetStateAsync<SessionDataModel>(
-                    REDIS_STATE_STORE,
-                    $"session:{sessionKey}",
-                    cancellationToken: cancellationToken);
+                var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+                var sessionData = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
 
                 if (sessionData == null)
                 {
@@ -1188,18 +1166,15 @@ public partial class AuthService : IAuthService
         _logger.LogDebug("Saving session for AccountId {AccountId}, SessionKey: {SessionKey}, ExpiresAt: {ExpiresAt}",
             account.AccountId, sessionKey, sessionData.ExpiresAt);
 
-        await _daprClient.SaveStateAsync(
-            REDIS_STATE_STORE,
+        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+        await sessionStore.SaveAsync(
             $"session:{sessionKey}",
             sessionData,
-            metadata: new Dictionary<string, string> { { "ttl", (_configuration.JwtExpirationMinutes * 60).ToString() } },
-            cancellationToken: cancellationToken);
+            new StateOptions { Ttl = _configuration.JwtExpirationMinutes * 60 },
+            cancellationToken);
 
         // Verify round-trip for debugging serialization issues
-        var verifyData = await _daprClient.GetStateAsync<SessionDataModel>(
-            REDIS_STATE_STORE,
-            $"session:{sessionKey}",
-            cancellationToken: cancellationToken);
+        var verifyData = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
         _logger.LogDebug("Session round-trip verification for SessionKey {SessionKey}: Success={Success}, ExpiresAtUnix={ExpiresAtUnix}",
             sessionKey, verifyData != null, verifyData?.ExpiresAtUnix ?? -1);
 
@@ -1285,12 +1260,12 @@ public partial class AuthService : IAuthService
     private async Task StoreRefreshTokenAsync(string accountId, string refreshToken, CancellationToken cancellationToken)
     {
         var redisKey = $"refresh_token:{refreshToken}";
-        await _daprClient.SaveStateAsync(
-            REDIS_STATE_STORE,
+        var refreshStore = _stateStoreFactory.GetStore<StringWrapper>(REDIS_STATE_STORE);
+        await refreshStore.SaveAsync(
             redisKey,
-            accountId,
-            metadata: new Dictionary<string, string> { { "ttl", "604800" } }, // 7 days
-            cancellationToken: cancellationToken);
+            new StringWrapper { Value = accountId },
+            new StateOptions { Ttl = (int)TimeSpan.FromDays(7).TotalSeconds }, // 7 days
+            cancellationToken);
     }
 
     private async Task<string?> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)
@@ -1298,8 +1273,9 @@ public partial class AuthService : IAuthService
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
-            var accountId = await _daprClient.GetStateAsync<string>(REDIS_STATE_STORE, redisKey, cancellationToken: cancellationToken);
-            return accountId;
+            var refreshStore = _stateStoreFactory.GetStore<StringWrapper>(REDIS_STATE_STORE);
+            var wrapper = await refreshStore.GetAsync(redisKey, cancellationToken);
+            return wrapper?.Value;
         }
         catch (Exception ex)
         {
@@ -1313,7 +1289,8 @@ public partial class AuthService : IAuthService
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
-            await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, redisKey, cancellationToken: cancellationToken);
+            var refreshStore = _stateStoreFactory.GetStore<StringWrapper>(REDIS_STATE_STORE);
+            await refreshStore.DeleteAsync(redisKey, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -1329,15 +1306,13 @@ public partial class AuthService : IAuthService
         try
         {
             // Use the reverse index to find the session key
-            var sessionKey = await _daprClient.GetStateAsync<string>(
-                REDIS_STATE_STORE,
-                $"session-id-index:{sessionId}",
-                cancellationToken: cancellationToken);
+            var indexStore = _stateStoreFactory.GetStore<StringWrapper>(REDIS_STATE_STORE);
+            var wrapper = await indexStore.GetAsync($"session-id-index:{sessionId}", cancellationToken);
 
-            if (!string.IsNullOrEmpty(sessionKey))
+            if (wrapper != null && !string.IsNullOrEmpty(wrapper.Value))
             {
-                _logger.LogDebug("Found session key {SessionKey} for session ID {SessionId}", sessionKey, sessionId);
-                return sessionKey;
+                _logger.LogDebug("Found session key {SessionKey} for session ID {SessionId}", wrapper.Value, sessionId);
+                return wrapper.Value;
             }
 
             _logger.LogWarning("No session key found in reverse index for session ID: {SessionId}", sessionId);
@@ -1357,12 +1332,12 @@ public partial class AuthService : IAuthService
     {
         try
         {
-            await _daprClient.SaveStateAsync(
-                REDIS_STATE_STORE,
+            var indexStore = _stateStoreFactory.GetStore<StringWrapper>(REDIS_STATE_STORE);
+            await indexStore.SaveAsync(
                 $"session-id-index:{sessionId}",
-                sessionKey,
-                metadata: new Dictionary<string, string> { { "ttl", ttlSeconds.ToString() } },
-                cancellationToken: cancellationToken);
+                new StringWrapper { Value = sessionKey },
+                new StateOptions { Ttl = ttlSeconds },
+                cancellationToken);
 
             _logger.LogDebug("Added reverse index for session ID {SessionId} -> session key {SessionKey}", sessionId, sessionKey);
         }
@@ -1380,10 +1355,8 @@ public partial class AuthService : IAuthService
     {
         try
         {
-            await _daprClient.DeleteStateAsync(
-                REDIS_STATE_STORE,
-                $"session-id-index:{sessionId}",
-                cancellationToken: cancellationToken);
+            var indexStore = _stateStoreFactory.GetStore<StringWrapper>(REDIS_STATE_STORE);
+            await indexStore.DeleteAsync($"session-id-index:{sessionId}", cancellationToken);
 
             _logger.LogDebug("Removed reverse index for session ID {SessionId}", sessionId);
         }
@@ -1422,12 +1395,10 @@ public partial class AuthService : IAuthService
         try
         {
             var indexKey = $"account-sessions:{accountId}";
+            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
 
             // Get existing session list
-            var existingSessions = await _daprClient.GetStateAsync<List<string>>(
-                REDIS_STATE_STORE,
-                indexKey,
-                cancellationToken: cancellationToken) ?? new List<string>();
+            var existingSessions = await sessionIndexStore.GetAsync(indexKey, cancellationToken) ?? new List<string>();
 
             // Add new session if not already present
             if (!existingSessions.Contains(sessionKey))
@@ -1435,13 +1406,12 @@ public partial class AuthService : IAuthService
                 existingSessions.Add(sessionKey);
 
                 // Save updated list with TTL slightly longer than session TTL to handle clock skew
-                var accountIndexTtl = (_configuration.JwtExpirationMinutes * 60) + 300; // +5 minutes buffer
-                await _daprClient.SaveStateAsync(
-                    REDIS_STATE_STORE,
+                var accountIndexTtlSeconds = (_configuration.JwtExpirationMinutes * 60) + 300; // +5 minutes buffer
+                await sessionIndexStore.SaveAsync(
                     indexKey,
                     existingSessions,
-                    metadata: new Dictionary<string, string> { { "ttl", accountIndexTtl.ToString() } },
-                    cancellationToken: cancellationToken);
+                    new StateOptions { Ttl = accountIndexTtlSeconds },
+                    cancellationToken);
 
                 _logger.LogDebug("Added session to account index, AccountId: {AccountId}, SessionKey: {SessionKey}, TotalSessions: {Count}",
                     accountId, sessionKey, existingSessions.Count);
@@ -1462,12 +1432,10 @@ public partial class AuthService : IAuthService
         try
         {
             var indexKey = $"account-sessions:{accountId}";
+            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
 
             // Get existing session list
-            var existingSessions = await _daprClient.GetStateAsync<List<string>>(
-                REDIS_STATE_STORE,
-                indexKey,
-                cancellationToken: cancellationToken);
+            var existingSessions = await sessionIndexStore.GetAsync(indexKey, cancellationToken);
 
             if (existingSessions != null && existingSessions.Contains(sessionKey))
             {
@@ -1476,18 +1444,17 @@ public partial class AuthService : IAuthService
                 if (existingSessions.Count > 0)
                 {
                     // Save updated list
-                    var accountIndexTtl = (_configuration.JwtExpirationMinutes * 60) + 300; // +5 minutes buffer
-                    await _daprClient.SaveStateAsync(
-                        REDIS_STATE_STORE,
+                    var accountIndexTtlSeconds = (_configuration.JwtExpirationMinutes * 60) + 300; // +5 minutes buffer
+                    await sessionIndexStore.SaveAsync(
                         indexKey,
                         existingSessions,
-                        metadata: new Dictionary<string, string> { { "ttl", accountIndexTtl.ToString() } },
-                        cancellationToken: cancellationToken);
+                        new StateOptions { Ttl = accountIndexTtlSeconds },
+                        cancellationToken);
                 }
                 else
                 {
                     // Remove empty index
-                    await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, indexKey, cancellationToken: cancellationToken);
+                    await sessionIndexStore.DeleteAsync(indexKey, cancellationToken);
                 }
 
                 _logger.LogDebug("Removed session {SessionKey} from account index for account {AccountId}", sessionKey, accountId);
@@ -1508,12 +1475,11 @@ public partial class AuthService : IAuthService
         try
         {
             var indexKey = $"account-sessions:{accountId}";
+            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
+            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
 
             // Get session keys from account index
-            var sessionKeys = await _daprClient.GetStateAsync<List<string>>(
-                REDIS_STATE_STORE,
-                indexKey,
-                cancellationToken: cancellationToken);
+            var sessionKeys = await sessionIndexStore.GetAsync(indexKey, cancellationToken);
 
             if (sessionKeys == null || sessionKeys.Count == 0)
             {
@@ -1526,10 +1492,7 @@ public partial class AuthService : IAuthService
             {
                 try
                 {
-                    var sessionData = await _daprClient.GetStateAsync<SessionDataModel>(
-                        REDIS_STATE_STORE,
-                        $"session:{key}",
-                        cancellationToken: cancellationToken);
+                    var sessionData = await sessionStore.GetAsync($"session:{key}", cancellationToken);
 
                     return new { SessionKey = key, SessionData = (SessionDataModel?)sessionData };
                 }
@@ -2059,14 +2022,13 @@ public partial class AuthService : IAuthService
     {
         var providerName = providerOverride ?? provider.ToString().ToLower();
         var oauthLinkKey = $"oauth-link:{providerName}:{userInfo.ProviderId}";
+        var oauthLinkStore = _stateStoreFactory.GetStore<GuidWrapper>(REDIS_STATE_STORE);
 
         try
         {
             // Check if we have an existing link for this OAuth identity
-            var existingAccountId = await _daprClient.GetStateAsync<Guid?>(
-                REDIS_STATE_STORE,
-                oauthLinkKey,
-                cancellationToken: cancellationToken);
+            var wrapper = await oauthLinkStore.GetAsync(oauthLinkKey, cancellationToken);
+            var existingAccountId = wrapper?.Value;
 
             if (existingAccountId.HasValue && existingAccountId.Value != Guid.Empty)
             {
@@ -2084,7 +2046,7 @@ public partial class AuthService : IAuthService
                 {
                     // Account was deleted, remove stale link
                     _logger.LogWarning("Linked account {AccountId} not found, removing stale OAuth link", existingAccountId.Value);
-                    await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, oauthLinkKey, cancellationToken: cancellationToken);
+                    await oauthLinkStore.DeleteAsync(oauthLinkKey, cancellationToken);
                 }
             }
 
@@ -2135,10 +2097,9 @@ public partial class AuthService : IAuthService
             }
 
             // Store the OAuth link
-            await _daprClient.SaveStateAsync(
-                REDIS_STATE_STORE,
+            await oauthLinkStore.SaveAsync(
                 oauthLinkKey,
-                newAccount.AccountId,
+                new GuidWrapper { Value = newAccount.AccountId },
                 cancellationToken: cancellationToken);
 
             _logger.LogInformation("Created new account {AccountId} and linked to {Provider} user {ProviderId}",
@@ -2307,11 +2268,10 @@ public partial class AuthService : IAuthService
         {
             // Get session keys directly from the account index
             var indexKey = $"account-sessions:{accountId}";
+            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
+            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
 
-            var sessionKeys = await _daprClient.GetStateAsync<List<string>>(
-                REDIS_STATE_STORE,
-                indexKey,
-                cancellationToken: CancellationToken.None);
+            var sessionKeys = await sessionIndexStore.GetAsync(indexKey, CancellationToken.None);
 
             if (sessionKeys == null || !sessionKeys.Any())
             {
@@ -2327,7 +2287,7 @@ public partial class AuthService : IAuthService
                 try
                 {
                     // Delete the session data
-                    await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, $"session:{sessionKey}");
+                    await sessionStore.DeleteAsync($"session:{sessionKey}", CancellationToken.None);
                     _logger.LogDebug("Deleted session {SessionKey} for account {AccountId}", sessionKey, accountId);
                 }
                 catch (Exception ex)
@@ -2338,7 +2298,7 @@ public partial class AuthService : IAuthService
             }
 
             // Remove the account-to-sessions index
-            await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, indexKey);
+            await sessionIndexStore.DeleteAsync(indexKey, CancellationToken.None);
 
             _logger.LogInformation("Invalidated {SessionCount} sessions for account {AccountId}",
                 sessionKeys.Count, accountId);
@@ -2370,7 +2330,7 @@ public partial class AuthService : IAuthService
                 DisconnectClients = true
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, SESSION_INVALIDATED_TOPIC, eventModel);
+            await _messageBus.PublishAsync(SESSION_INVALIDATED_TOPIC, eventModel);
             _logger.LogInformation("Published SessionInvalidatedEvent for account {AccountId}: {SessionCount} sessions, reason: {Reason}",
                 accountId, sessionIds.Count, reason);
         }
@@ -2392,10 +2352,10 @@ public partial class AuthService : IAuthService
             _logger.LogInformation("Propagating role changes for account {AccountId}: {Roles}",
                 accountId, string.Join(", ", newRoles));
 
-            var sessionKeys = await _daprClient.GetStateAsync<List<string>>(
-                REDIS_STATE_STORE,
-                $"account-sessions:{accountId}",
-                cancellationToken: cancellationToken);
+            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
+            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+
+            var sessionKeys = await sessionIndexStore.GetAsync($"account-sessions:{accountId}", cancellationToken);
 
             if (sessionKeys == null || !sessionKeys.Any())
             {
@@ -2407,20 +2367,13 @@ public partial class AuthService : IAuthService
             {
                 try
                 {
-                    var session = await _daprClient.GetStateAsync<SessionDataModel>(
-                        REDIS_STATE_STORE,
-                        $"session:{sessionKey}",
-                        cancellationToken: cancellationToken);
+                    var session = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
 
                     if (session != null)
                     {
                         session.Roles = newRoles;
 
-                        await _daprClient.SaveStateAsync(
-                            REDIS_STATE_STORE,
-                            $"session:{sessionKey}",
-                            session,
-                            cancellationToken: cancellationToken);
+                        await sessionStore.SaveAsync($"session:{sessionKey}", session, cancellationToken: cancellationToken);
 
                         // Publish session.updated event for Permissions service
                         await PublishSessionUpdatedEventAsync(
@@ -2471,10 +2424,10 @@ public partial class AuthService : IAuthService
                 authorizations = subscriptionsResponse.Authorizations.ToList();
             }
 
-            var sessionKeys = await _daprClient.GetStateAsync<List<string>>(
-                REDIS_STATE_STORE,
-                $"account-sessions:{accountId}",
-                cancellationToken: cancellationToken);
+            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
+            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+
+            var sessionKeys = await sessionIndexStore.GetAsync($"account-sessions:{accountId}", cancellationToken);
 
             if (sessionKeys == null || !sessionKeys.Any())
             {
@@ -2486,20 +2439,13 @@ public partial class AuthService : IAuthService
             {
                 try
                 {
-                    var session = await _daprClient.GetStateAsync<SessionDataModel>(
-                        REDIS_STATE_STORE,
-                        $"session:{sessionKey}",
-                        cancellationToken: cancellationToken);
+                    var session = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
 
                     if (session != null)
                     {
                         session.Authorizations = authorizations;
 
-                        await _daprClient.SaveStateAsync(
-                            REDIS_STATE_STORE,
-                            $"session:{sessionKey}",
-                            session,
-                            cancellationToken: cancellationToken);
+                        await sessionStore.SaveAsync($"session:{sessionKey}", session, cancellationToken: cancellationToken);
 
                         // Publish session.updated event for Permissions service
                         await PublishSessionUpdatedEventAsync(
@@ -2553,7 +2499,7 @@ public partial class AuthService : IAuthService
                 Reason = reason
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, SESSION_UPDATED_TOPIC, eventModel, cancellationToken);
+            await _messageBus.PublishAsync(SESSION_UPDATED_TOPIC, eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published SessionUpdatedEvent for session {SessionId}, reason: {Reason}",
                 sessionId, reason);
         }
@@ -2575,7 +2521,7 @@ public partial class AuthService : IAuthService
     public async Task RegisterServicePermissionsAsync()
     {
         _logger.LogInformation("Registering Auth service permissions...");
-        await AuthPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+        await AuthPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
     }
 
     #endregion
@@ -2603,4 +2549,20 @@ public partial class AuthService : IAuthService
     }
 
     #endregion
+}
+
+/// <summary>
+/// Wrapper class for storing string values in IStateStore (since value types need a class wrapper).
+/// </summary>
+internal class StringWrapper
+{
+    public string Value { get; set; } = "";
+}
+
+/// <summary>
+/// Wrapper class for storing Guid? values in IStateStore (since value types need a class wrapper).
+/// </summary>
+internal class GuidWrapper
+{
+    public Guid? Value { get; set; }
 }

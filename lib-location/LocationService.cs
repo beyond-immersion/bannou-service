@@ -1,13 +1,13 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 
 [assembly: InternalsVisibleTo("lib-location.tests")]
 
@@ -21,14 +21,14 @@ namespace BeyondImmersion.BannouService.Location;
 [DaprService("location", typeof(ILocationService), lifetime: ServiceLifetime.Scoped)]
 public partial class LocationService : ILocationService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<LocationService> _logger;
     private readonly LocationServiceConfiguration _configuration;
     private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly IRealmClient _realmClient;
 
     private const string STATE_STORE = "location-statestore";
-    private const string PUBSUB_NAME = "bannou-pubsub";
     private const string LOCATION_KEY_PREFIX = "location:";
     private const string CODE_INDEX_PREFIX = "code-index:";
     private const string REALM_INDEX_PREFIX = "realm-index:";
@@ -36,14 +36,16 @@ public partial class LocationService : ILocationService
     private const string ROOT_LOCATIONS_PREFIX = "root-locations:";
 
     public LocationService(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         ILogger<LocationService> logger,
         LocationServiceConfiguration configuration,
         IErrorEventEmitter errorEventEmitter,
         IRealmClient realmClient,
         IEventConsumer eventConsumer)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
@@ -74,7 +76,7 @@ public partial class LocationService : ILocationService
             _logger.LogDebug("Getting location by ID: {LocationId}", body.LocationId);
 
             var locationKey = BuildLocationKey(body.LocationId.ToString());
-            var model = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, locationKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
             {
@@ -103,7 +105,7 @@ public partial class LocationService : ILocationService
 
             var code = body.Code.ToUpperInvariant();
             var codeIndexKey = BuildCodeIndexKey(body.RealmId.ToString(), code);
-            var locationId = await _daprClient.GetStateAsync<string>(STATE_STORE, codeIndexKey, cancellationToken: cancellationToken);
+            var locationId = await _stateStoreFactory.GetStore<string>(STATE_STORE).GetAsync(codeIndexKey, cancellationToken);
 
             if (string.IsNullOrEmpty(locationId))
             {
@@ -111,7 +113,7 @@ public partial class LocationService : ILocationService
             }
 
             var locationKey = BuildLocationKey(locationId);
-            var model = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, locationKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
             {
@@ -147,7 +149,7 @@ public partial class LocationService : ILocationService
             }
 
             var realmIndexKey = BuildRealmIndexKey(body.RealmId.Value.ToString());
-            var locationIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, realmIndexKey, cancellationToken: cancellationToken) ?? new List<string>();
+            var locationIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(realmIndexKey, cancellationToken) ?? new List<string>();
             var allLocations = await LoadLocationsByIdsAsync(locationIds, cancellationToken);
 
             // Apply filters
@@ -204,7 +206,7 @@ public partial class LocationService : ILocationService
             _logger.LogDebug("Listing locations by realm: {RealmId}", body.RealmId);
 
             var realmIndexKey = BuildRealmIndexKey(body.RealmId.ToString());
-            var locationIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, realmIndexKey, cancellationToken: cancellationToken) ?? new List<string>();
+            var locationIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(realmIndexKey, cancellationToken) ?? new List<string>();
 
             if (locationIds.Count == 0)
             {
@@ -274,7 +276,7 @@ public partial class LocationService : ILocationService
 
             // First get the parent location to determine the realm
             var parentKey = BuildLocationKey(body.ParentLocationId.ToString());
-            var parentModel = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, parentKey, cancellationToken: cancellationToken);
+            var parentModel = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(parentKey, cancellationToken);
 
             if (parentModel == null)
             {
@@ -282,7 +284,7 @@ public partial class LocationService : ILocationService
             }
 
             var parentIndexKey = BuildParentIndexKey(parentModel.RealmId, body.ParentLocationId.ToString());
-            var childIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, parentIndexKey, cancellationToken: cancellationToken) ?? new List<string>();
+            var childIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(parentIndexKey, cancellationToken) ?? new List<string>();
 
             if (childIds.Count == 0)
             {
@@ -351,7 +353,7 @@ public partial class LocationService : ILocationService
             _logger.LogDebug("Listing root locations for realm: {RealmId}", body.RealmId);
 
             var rootKey = BuildRootLocationsKey(body.RealmId.ToString());
-            var rootIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, rootKey, cancellationToken: cancellationToken) ?? new List<string>();
+            var rootIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(rootKey, cancellationToken) ?? new List<string>();
 
             if (rootIds.Count == 0)
             {
@@ -420,7 +422,7 @@ public partial class LocationService : ILocationService
             _logger.LogDebug("Getting ancestors for location: {LocationId}", body.LocationId);
 
             var locationKey = BuildLocationKey(body.LocationId.ToString());
-            var model = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, locationKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
             {
@@ -435,7 +437,7 @@ public partial class LocationService : ILocationService
             while (!string.IsNullOrEmpty(currentParentId) && depth < maxDepth)
             {
                 var parentKey = BuildLocationKey(currentParentId);
-                var parentModel = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, parentKey, cancellationToken: cancellationToken);
+                var parentModel = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(parentKey, cancellationToken);
 
                 if (parentModel == null)
                 {
@@ -474,7 +476,7 @@ public partial class LocationService : ILocationService
             _logger.LogDebug("Getting descendants for location: {LocationId}, maxDepth: {MaxDepth}", body.LocationId, body.MaxDepth);
 
             var locationKey = BuildLocationKey(body.LocationId.ToString());
-            var model = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, locationKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
             {
@@ -539,7 +541,7 @@ public partial class LocationService : ILocationService
             _logger.LogDebug("Checking if location exists: {LocationId}", body.LocationId);
 
             var locationKey = BuildLocationKey(body.LocationId.ToString());
-            var model = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, locationKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
             {
@@ -593,7 +595,7 @@ public partial class LocationService : ILocationService
             // Check for duplicate code in realm
             var code = body.Code.ToUpperInvariant();
             var codeIndexKey = BuildCodeIndexKey(body.RealmId.ToString(), code);
-            var existingId = await _daprClient.GetStateAsync<string>(STATE_STORE, codeIndexKey, cancellationToken: cancellationToken);
+            var existingId = await _stateStoreFactory.GetStore<string>(STATE_STORE).GetAsync(codeIndexKey, cancellationToken);
 
             if (!string.IsNullOrEmpty(existingId))
             {
@@ -606,7 +608,7 @@ public partial class LocationService : ILocationService
             if (body.ParentLocationId.HasValue)
             {
                 var parentKey = BuildLocationKey(body.ParentLocationId.Value.ToString());
-                var parentModel = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, parentKey, cancellationToken: cancellationToken);
+                var parentModel = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(parentKey, cancellationToken);
 
                 if (parentModel == null)
                 {
@@ -646,10 +648,10 @@ public partial class LocationService : ILocationService
 
             // Save the model
             var locationKey = BuildLocationKey(locationId.ToString());
-            await _daprClient.SaveStateAsync(STATE_STORE, locationKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
 
             // Update code index
-            await _daprClient.SaveStateAsync(STATE_STORE, codeIndexKey, locationId.ToString(), cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<string>(STATE_STORE).SaveAsync(codeIndexKey, locationId.ToString(), cancellationToken: cancellationToken);
 
             // Update realm index
             await AddToRealmIndexAsync(body.RealmId.ToString(), locationId.ToString(), cancellationToken);
@@ -689,7 +691,7 @@ public partial class LocationService : ILocationService
             _logger.LogDebug("Updating location: {LocationId}", body.LocationId);
 
             var locationKey = BuildLocationKey(body.LocationId.ToString());
-            var model = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, locationKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
             {
@@ -728,7 +730,7 @@ public partial class LocationService : ILocationService
                 model.UpdatedAt = DateTimeOffset.UtcNow;
 
                 // Save updated model
-                await _daprClient.SaveStateAsync(STATE_STORE, locationKey, model, cancellationToken: cancellationToken);
+                await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
 
                 // Publish event
                 await PublishLocationUpdatedEventAsync(model, changedFields, cancellationToken);
@@ -756,7 +758,7 @@ public partial class LocationService : ILocationService
             _logger.LogDebug("Setting parent for location: {LocationId} to {ParentLocationId}", body.LocationId, body.ParentLocationId);
 
             var locationKey = BuildLocationKey(body.LocationId.ToString());
-            var model = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, locationKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
             {
@@ -765,7 +767,7 @@ public partial class LocationService : ILocationService
 
             // Get new parent
             var newParentKey = BuildLocationKey(body.ParentLocationId.ToString());
-            var newParentModel = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, newParentKey, cancellationToken: cancellationToken);
+            var newParentModel = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(newParentKey, cancellationToken);
 
             if (newParentModel == null)
             {
@@ -796,7 +798,7 @@ public partial class LocationService : ILocationService
             model.Depth = newDepth;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _daprClient.SaveStateAsync(STATE_STORE, locationKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
 
             // Update indexes
             if (string.IsNullOrEmpty(oldParentId))
@@ -842,7 +844,7 @@ public partial class LocationService : ILocationService
             _logger.LogDebug("Removing parent from location: {LocationId}", body.LocationId);
 
             var locationKey = BuildLocationKey(body.LocationId.ToString());
-            var model = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, locationKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
             {
@@ -863,7 +865,7 @@ public partial class LocationService : ILocationService
             model.Depth = 0;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _daprClient.SaveStateAsync(STATE_STORE, locationKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
 
             // Update indexes
             await RemoveFromParentIndexAsync(model.RealmId, oldParentId, body.LocationId.ToString(), cancellationToken);
@@ -901,7 +903,7 @@ public partial class LocationService : ILocationService
             _logger.LogDebug("Deleting location: {LocationId}", body.LocationId);
 
             var locationKey = BuildLocationKey(body.LocationId.ToString());
-            var model = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, locationKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
             {
@@ -910,7 +912,7 @@ public partial class LocationService : ILocationService
 
             // Check for children
             var parentIndexKey = BuildParentIndexKey(model.RealmId, body.LocationId.ToString());
-            var childIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, parentIndexKey, cancellationToken: cancellationToken) ?? new List<string>();
+            var childIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(parentIndexKey, cancellationToken) ?? new List<string>();
 
             if (childIds.Count > 0)
             {
@@ -919,11 +921,11 @@ public partial class LocationService : ILocationService
             }
 
             // Delete the location
-            await _daprClient.DeleteStateAsync(STATE_STORE, locationKey, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).DeleteAsync(locationKey, cancellationToken);
 
             // Clean up code index
             var codeIndexKey = BuildCodeIndexKey(model.RealmId, model.Code);
-            await _daprClient.DeleteStateAsync(STATE_STORE, codeIndexKey, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<string>(STATE_STORE).DeleteAsync(codeIndexKey, cancellationToken);
 
             // Remove from realm index
             await RemoveFromRealmIndexAsync(model.RealmId, body.LocationId.ToString(), cancellationToken);
@@ -963,7 +965,7 @@ public partial class LocationService : ILocationService
             _logger.LogDebug("Deprecating location: {LocationId}", body.LocationId);
 
             var locationKey = BuildLocationKey(body.LocationId.ToString());
-            var model = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, locationKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
             {
@@ -980,7 +982,7 @@ public partial class LocationService : ILocationService
             model.DeprecationReason = body.Reason;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _daprClient.SaveStateAsync(STATE_STORE, locationKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
 
             // Publish event with changed fields
             var changedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" };
@@ -1008,7 +1010,7 @@ public partial class LocationService : ILocationService
             _logger.LogDebug("Undeprecating location: {LocationId}", body.LocationId);
 
             var locationKey = BuildLocationKey(body.LocationId.ToString());
-            var model = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, locationKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(locationKey, cancellationToken);
 
             if (model == null)
             {
@@ -1025,7 +1027,7 @@ public partial class LocationService : ILocationService
             model.DeprecationReason = null;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _daprClient.SaveStateAsync(STATE_STORE, locationKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
 
             // Publish event with changed fields
             var changedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" };
@@ -1088,7 +1090,7 @@ public partial class LocationService : ILocationService
                 }
 
                 var codeIndexKey = BuildCodeIndexKey(realmId, code);
-                var existingId = await _daprClient.GetStateAsync<string>(STATE_STORE, codeIndexKey, cancellationToken: cancellationToken);
+                var existingId = await _stateStoreFactory.GetStore<string>(STATE_STORE).GetAsync(codeIndexKey, cancellationToken);
 
                 var compositeKey = $"{seedLocation.RealmCode}:{code}";
 
@@ -1099,7 +1101,7 @@ public partial class LocationService : ILocationService
                     if (body.UpdateExisting)
                     {
                         var locationKey = BuildLocationKey(existingId);
-                        var existingModel = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, locationKey, cancellationToken: cancellationToken);
+                        var existingModel = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(locationKey, cancellationToken);
 
                         if (existingModel != null)
                         {
@@ -1109,7 +1111,7 @@ public partial class LocationService : ILocationService
                             if (seedLocation.Metadata != null) existingModel.Metadata = seedLocation.Metadata;
                             existingModel.UpdatedAt = DateTimeOffset.UtcNow;
 
-                            await _daprClient.SaveStateAsync(STATE_STORE, locationKey, existingModel, cancellationToken: cancellationToken);
+                            await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).SaveAsync(locationKey, existingModel, cancellationToken: cancellationToken);
                             updated++;
                             _logger.LogDebug("Updated existing location: {Code}", code);
                         }
@@ -1219,7 +1221,7 @@ public partial class LocationService : ILocationService
         foreach (var id in locationIds)
         {
             var key = BuildLocationKey(id);
-            var model = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, key, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(key, cancellationToken);
             if (model != null)
             {
                 results.Add(model);
@@ -1231,63 +1233,63 @@ public partial class LocationService : ILocationService
     private async Task AddToRealmIndexAsync(string realmId, string locationId, CancellationToken cancellationToken)
     {
         var realmIndexKey = BuildRealmIndexKey(realmId);
-        var locationIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, realmIndexKey, cancellationToken: cancellationToken) ?? new List<string>();
+        var locationIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(realmIndexKey, cancellationToken) ?? new List<string>();
         if (!locationIds.Contains(locationId))
         {
             locationIds.Add(locationId);
-            await _daprClient.SaveStateAsync(STATE_STORE, realmIndexKey, locationIds, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).SaveAsync(realmIndexKey, locationIds, cancellationToken: cancellationToken);
         }
     }
 
     private async Task RemoveFromRealmIndexAsync(string realmId, string locationId, CancellationToken cancellationToken)
     {
         var realmIndexKey = BuildRealmIndexKey(realmId);
-        var locationIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, realmIndexKey, cancellationToken: cancellationToken) ?? new List<string>();
+        var locationIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(realmIndexKey, cancellationToken) ?? new List<string>();
         if (locationIds.Remove(locationId))
         {
-            await _daprClient.SaveStateAsync(STATE_STORE, realmIndexKey, locationIds, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).SaveAsync(realmIndexKey, locationIds, cancellationToken: cancellationToken);
         }
     }
 
     private async Task AddToParentIndexAsync(string realmId, string parentId, string locationId, CancellationToken cancellationToken)
     {
         var parentIndexKey = BuildParentIndexKey(realmId, parentId);
-        var childIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, parentIndexKey, cancellationToken: cancellationToken) ?? new List<string>();
+        var childIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(parentIndexKey, cancellationToken) ?? new List<string>();
         if (!childIds.Contains(locationId))
         {
             childIds.Add(locationId);
-            await _daprClient.SaveStateAsync(STATE_STORE, parentIndexKey, childIds, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).SaveAsync(parentIndexKey, childIds, cancellationToken: cancellationToken);
         }
     }
 
     private async Task RemoveFromParentIndexAsync(string realmId, string parentId, string locationId, CancellationToken cancellationToken)
     {
         var parentIndexKey = BuildParentIndexKey(realmId, parentId);
-        var childIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, parentIndexKey, cancellationToken: cancellationToken) ?? new List<string>();
+        var childIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(parentIndexKey, cancellationToken) ?? new List<string>();
         if (childIds.Remove(locationId))
         {
-            await _daprClient.SaveStateAsync(STATE_STORE, parentIndexKey, childIds, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).SaveAsync(parentIndexKey, childIds, cancellationToken: cancellationToken);
         }
     }
 
     private async Task AddToRootLocationsAsync(string realmId, string locationId, CancellationToken cancellationToken)
     {
         var rootKey = BuildRootLocationsKey(realmId);
-        var rootIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, rootKey, cancellationToken: cancellationToken) ?? new List<string>();
+        var rootIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(rootKey, cancellationToken) ?? new List<string>();
         if (!rootIds.Contains(locationId))
         {
             rootIds.Add(locationId);
-            await _daprClient.SaveStateAsync(STATE_STORE, rootKey, rootIds, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).SaveAsync(rootKey, rootIds, cancellationToken: cancellationToken);
         }
     }
 
     private async Task RemoveFromRootLocationsAsync(string realmId, string locationId, CancellationToken cancellationToken)
     {
         var rootKey = BuildRootLocationsKey(realmId);
-        var rootIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, rootKey, cancellationToken: cancellationToken) ?? new List<string>();
+        var rootIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(rootKey, cancellationToken) ?? new List<string>();
         if (rootIds.Remove(locationId))
         {
-            await _daprClient.SaveStateAsync(STATE_STORE, rootKey, rootIds, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).SaveAsync(rootKey, rootIds, cancellationToken: cancellationToken);
         }
     }
 
@@ -1299,12 +1301,12 @@ public partial class LocationService : ILocationService
         }
 
         var parentIndexKey = BuildParentIndexKey(realmId, parentId);
-        var childIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, parentIndexKey, cancellationToken: cancellationToken) ?? new List<string>();
+        var childIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(parentIndexKey, cancellationToken) ?? new List<string>();
 
         foreach (var childId in childIds)
         {
             var childKey = BuildLocationKey(childId);
-            var childModel = await _daprClient.GetStateAsync<LocationModel>(STATE_STORE, childKey, cancellationToken: cancellationToken);
+            var childModel = await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).GetAsync(childKey, cancellationToken);
 
             if (childModel != null)
             {
@@ -1331,7 +1333,7 @@ public partial class LocationService : ILocationService
             descendant.Depth += depthChange;
             descendant.UpdatedAt = DateTimeOffset.UtcNow;
             var key = BuildLocationKey(descendant.LocationId);
-            await _daprClient.SaveStateAsync(STATE_STORE, key, descendant, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<LocationModel>(STATE_STORE).SaveAsync(key, descendant, cancellationToken: cancellationToken);
         }
     }
 
@@ -1378,7 +1380,7 @@ public partial class LocationService : ILocationService
             UpdatedAt = model.UpdatedAt
         };
 
-        await _daprClient.PublishEventAsync(PUBSUB_NAME, "location.created", eventData, cancellationToken);
+        await _messageBus.PublishAsync("location.created", eventData, cancellationToken: cancellationToken);
     }
 
     private async Task PublishLocationUpdatedEventAsync(LocationModel model, IList<string> changedFields, CancellationToken cancellationToken)
@@ -1404,7 +1406,7 @@ public partial class LocationService : ILocationService
             ChangedFields = changedFields.ToList()
         };
 
-        await _daprClient.PublishEventAsync(PUBSUB_NAME, "location.updated", eventData, cancellationToken);
+        await _messageBus.PublishAsync("location.updated", eventData, cancellationToken: cancellationToken);
     }
 
     private async Task PublishLocationDeletedEventAsync(LocationModel model, CancellationToken cancellationToken)
@@ -1427,7 +1429,7 @@ public partial class LocationService : ILocationService
             Metadata = model.Metadata ?? new object()
         };
 
-        await _daprClient.PublishEventAsync(PUBSUB_NAME, "location.deleted", eventData, cancellationToken);
+        await _messageBus.PublishAsync("location.deleted", eventData, cancellationToken: cancellationToken);
     }
 
     #endregion
@@ -1441,7 +1443,7 @@ public partial class LocationService : ILocationService
     public async Task RegisterServicePermissionsAsync()
     {
         _logger.LogInformation("Registering Location service permissions...");
-        await LocationPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+        await LocationPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
     }
 
     #endregion

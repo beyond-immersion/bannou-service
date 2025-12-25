@@ -2,10 +2,11 @@ using BeyondImmersion.Bannou.Voice.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Voice;
 using BeyondImmersion.BannouService.Voice.Services;
-using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -14,7 +15,12 @@ namespace BeyondImmersion.BannouService.Voice.Tests;
 
 public class VoiceServiceTests
 {
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private const string STATE_STORE = "voice-statestore";
+
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<IStateStore<VoiceRoomData>> _mockRoomStore;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<VoiceService>> _mockLogger;
     private readonly Mock<VoiceServiceConfiguration> _mockConfiguration;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
@@ -26,7 +32,10 @@ public class VoiceServiceTests
 
     public VoiceServiceTests()
     {
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockStringStore = new Mock<IStateStore<string>>();
+        _mockRoomStore = new Mock<IStateStore<VoiceRoomData>>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<VoiceService>>();
         _mockConfiguration = new Mock<VoiceServiceConfiguration>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
@@ -35,6 +44,10 @@ public class VoiceServiceTests
         _mockScaledTierCoordinator = new Mock<IScaledTierCoordinator>();
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup state store factory to return typed stores
+        _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE)).Returns(_mockStringStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<VoiceRoomData>(STATE_STORE)).Returns(_mockRoomStore.Object);
 
         // Default P2P max participants
         _mockP2PCoordinator.Setup(p => p.GetP2PMaxParticipants()).Returns(6);
@@ -46,7 +59,8 @@ public class VoiceServiceTests
     private VoiceService CreateService()
     {
         return new VoiceService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
             _mockErrorEventEmitter.Object,
@@ -70,11 +84,12 @@ public class VoiceServiceTests
     }
 
     [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrowArgumentNullException()
+    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new VoiceService(
             null!,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
             _mockErrorEventEmitter.Object,
@@ -90,7 +105,8 @@ public class VoiceServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new VoiceService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             null!,
             _mockConfiguration.Object,
             _mockErrorEventEmitter.Object,
@@ -106,7 +122,8 @@ public class VoiceServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new VoiceService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             null!,
             _mockErrorEventEmitter.Object,
@@ -122,7 +139,8 @@ public class VoiceServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new VoiceService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
             null!,
@@ -138,7 +156,8 @@ public class VoiceServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new VoiceService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
             _mockErrorEventEmitter.Object,
@@ -154,7 +173,8 @@ public class VoiceServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new VoiceService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
             _mockErrorEventEmitter.Object,
@@ -170,7 +190,8 @@ public class VoiceServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new VoiceService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
             _mockErrorEventEmitter.Object,
@@ -186,7 +207,8 @@ public class VoiceServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new VoiceService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
             _mockErrorEventEmitter.Object,
@@ -202,7 +224,8 @@ public class VoiceServiceTests
     {
         // Arrange, Act - IClientEventPublisher is optional per Tenet 5 (context-dependent)
         var service = new VoiceService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
             _mockErrorEventEmitter.Object,
@@ -235,13 +258,10 @@ public class VoiceServiceTests
         };
 
         // No existing room
-        _mockDaprClient.Setup(d => d.GetStateAsync<Guid?>(
-            "voice-statestore",
+        _mockStringStore.Setup(s => s.GetAsync(
             $"voice:session-room:{sessionId}",
-            It.IsAny<ConsistencyMode?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid?)null);
+            .ReturnsAsync((string?)null);
 
         // Act
         var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);
@@ -256,12 +276,10 @@ public class VoiceServiceTests
         Assert.Equal(0, result.CurrentParticipants);
 
         // Verify state was saved
-        _mockDaprClient.Verify(d => d.SaveStateAsync(
-            "voice-statestore",
+        _mockRoomStore.Verify(s => s.SaveAsync(
             It.Is<string>(k => k.StartsWith("voice:room:")),
             It.IsAny<VoiceRoomData>(),
             It.IsAny<StateOptions?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -281,13 +299,10 @@ public class VoiceServiceTests
         };
 
         // Existing room
-        _mockDaprClient.Setup(d => d.GetStateAsync<Guid?>(
-            "voice-statestore",
+        _mockStringStore.Setup(s => s.GetAsync(
             $"voice:session-room:{sessionId}",
-            It.IsAny<ConsistencyMode?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingRoomId);
+            .ReturnsAsync(existingRoomId.ToString());
 
         // Act
         var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);
@@ -311,13 +326,10 @@ public class VoiceServiceTests
             MaxParticipants = 0 // Zero means use default
         };
 
-        _mockDaprClient.Setup(d => d.GetStateAsync<Guid?>(
-            "voice-statestore",
+        _mockStringStore.Setup(s => s.GetAsync(
             $"voice:session-room:{sessionId}",
-            It.IsAny<ConsistencyMode?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid?)null);
+            .ReturnsAsync((string?)null);
 
         _mockP2PCoordinator.Setup(p => p.GetP2PMaxParticipants()).Returns(8);
 
@@ -353,11 +365,8 @@ public class VoiceServiceTests
             CreatedAt = DateTimeOffset.UtcNow
         };
 
-        _mockDaprClient.Setup(d => d.GetStateAsync<VoiceRoomData>(
-            "voice-statestore",
+        _mockRoomStore.Setup(s => s.GetAsync(
             $"voice:room:{roomId}",
-            It.IsAny<ConsistencyMode?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(roomData);
 
@@ -384,11 +393,8 @@ public class VoiceServiceTests
         var roomId = Guid.NewGuid();
         var request = new GetVoiceRoomRequest { RoomId = roomId };
 
-        _mockDaprClient.Setup(d => d.GetStateAsync<VoiceRoomData>(
-            "voice-statestore",
+        _mockRoomStore.Setup(s => s.GetAsync(
             $"voice:room:{roomId}",
-            It.IsAny<ConsistencyMode?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync((VoiceRoomData?)null);
 
@@ -424,11 +430,8 @@ public class VoiceServiceTests
             new() { SessionId = "session-player2", DisplayName = "Player2", JoinedAt = DateTimeOffset.UtcNow }
         };
 
-        _mockDaprClient.Setup(d => d.GetStateAsync<VoiceRoomData>(
-            "voice-statestore",
+        _mockRoomStore.Setup(s => s.GetAsync(
             $"voice:room:{roomId}",
-            It.IsAny<ConsistencyMode?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(roomData);
 
@@ -463,11 +466,8 @@ public class VoiceServiceTests
             SipEndpoint = new SipEndpoint { SdpOffer = "offer", IceCandidates = new List<string>() }
         };
 
-        _mockDaprClient.Setup(d => d.GetStateAsync<VoiceRoomData>(
-            "voice-statestore",
+        _mockRoomStore.Setup(s => s.GetAsync(
             $"voice:room:{roomId}",
-            It.IsAny<ConsistencyMode?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync((VoiceRoomData?)null);
 
@@ -503,11 +503,8 @@ public class VoiceServiceTests
             CreatedAt = DateTimeOffset.UtcNow
         };
 
-        _mockDaprClient.Setup(d => d.GetStateAsync<VoiceRoomData>(
-            "voice-statestore",
+        _mockRoomStore.Setup(s => s.GetAsync(
             $"voice:room:{roomId}",
-            It.IsAny<ConsistencyMode?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(roomData);
 
@@ -560,11 +557,8 @@ public class VoiceServiceTests
             }
         };
 
-        _mockDaprClient.Setup(d => d.GetStateAsync<VoiceRoomData>(
-            "voice-statestore",
+        _mockRoomStore.Setup(s => s.GetAsync(
             $"voice:room:{roomId}",
-            It.IsAny<ConsistencyMode?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(roomData);
 
@@ -631,11 +625,8 @@ public class VoiceServiceTests
             CreatedAt = DateTimeOffset.UtcNow
         };
 
-        _mockDaprClient.Setup(d => d.GetStateAsync<VoiceRoomData>(
-            "voice-statestore",
+        _mockRoomStore.Setup(s => s.GetAsync(
             $"voice:room:{roomId}",
-            It.IsAny<ConsistencyMode?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(roomData);
 
@@ -663,7 +654,8 @@ public class VoiceServiceTests
         // Arrange - joining session should get voice:ringing state when there are existing peers (Tenet 10)
         var mockPermissionsClient = new Mock<BeyondImmersion.BannouService.Permissions.IPermissionsClient>();
         var service = new VoiceService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
             _mockErrorEventEmitter.Object,
@@ -685,10 +677,8 @@ public class VoiceServiceTests
         };
 
         // Room exists in P2P mode
-        _mockDaprClient.Setup(d => d.GetStateAsync<VoiceRoomData>(
-            "voice-statestore", $"voice:room:{roomId}",
-            It.IsAny<ConsistencyMode?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(new VoiceRoomData
             {
@@ -846,11 +836,8 @@ public class VoiceServiceTests
             new() { SessionId = "session-2" }
         };
 
-        _mockDaprClient.Setup(d => d.GetStateAsync<VoiceRoomData>(
-            "voice-statestore",
+        _mockRoomStore.Setup(s => s.GetAsync(
             $"voice:room:{roomId}",
-            It.IsAny<ConsistencyMode?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(roomData);
 
@@ -868,18 +855,12 @@ public class VoiceServiceTests
         Assert.Equal(StatusCodes.OK, status);
 
         // Verify state was deleted
-        _mockDaprClient.Verify(d => d.DeleteStateAsync(
-            "voice-statestore",
+        _mockRoomStore.Verify(s => s.DeleteAsync(
             $"voice:room:{roomId}",
-            It.IsAny<StateOptions?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
-        _mockDaprClient.Verify(d => d.DeleteStateAsync(
-            "voice-statestore",
+        _mockStringStore.Verify(s => s.DeleteAsync(
             $"voice:session-room:{sessionId}",
-            It.IsAny<StateOptions?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify room closed event was published
@@ -897,11 +878,8 @@ public class VoiceServiceTests
         var roomId = Guid.NewGuid();
         var request = new DeleteVoiceRoomRequest { RoomId = roomId };
 
-        _mockDaprClient.Setup(d => d.GetStateAsync<VoiceRoomData>(
-            "voice-statestore",
+        _mockRoomStore.Setup(s => s.GetAsync(
             $"voice:room:{roomId}",
-            It.IsAny<ConsistencyMode?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync((VoiceRoomData?)null);
 
@@ -1042,7 +1020,7 @@ public class VoiceServiceTests
     #region Error Handling Tests
 
     [Fact]
-    public async Task CreateVoiceRoom_WhenDaprThrows_ReturnsInternalServerErrorAndEmitsEvent()
+    public async Task CreateVoiceRoom_WhenStateStoreThrows_ReturnsInternalServerErrorAndEmitsEvent()
     {
         // Arrange
         var service = CreateService();
@@ -1055,13 +1033,10 @@ public class VoiceServiceTests
             MaxParticipants = 6
         };
 
-        _mockDaprClient.Setup(d => d.GetStateAsync<Guid?>(
+        _mockStringStore.Setup(s => s.GetAsync(
             It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<ConsistencyMode?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Dapr connection failed"));
+            .ThrowsAsync(new Exception("State store connection failed"));
 
         // Act
         var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);

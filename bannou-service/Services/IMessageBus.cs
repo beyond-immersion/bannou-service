@@ -1,6 +1,59 @@
 #nullable enable
 
-namespace BeyondImmersion.BannouService.Messaging.Services;
+using BeyondImmersion.BannouService.Messaging;
+
+namespace BeyondImmersion.BannouService.Services;
+
+/// <summary>
+/// Native RabbitMQ message publishing without Dapr CloudEvents overhead.
+/// Replaces DaprClient.PublishEventAsync() with direct RabbitMQ access.
+/// </summary>
+/// <remarks>
+/// <para>
+/// This interface provides the abstraction layer over the messaging backend (MassTransit/RabbitMQ).
+/// Services should depend on this interface rather than concrete implementations.
+/// </para>
+/// <para>
+/// JSON serialization uses BannouJson for consistency with the rest of the codebase.
+/// </para>
+/// <para>
+/// Uses PublishOptions and SubscriptionOptions types from Generated/Models/MessagingModels.cs
+/// </para>
+/// </remarks>
+public interface IMessageBus
+{
+    /// <summary>
+    /// Publish an event to a topic (routing key).
+    /// </summary>
+    /// <typeparam name="TEvent">Event type (serialized to JSON via BannouJson)</typeparam>
+    /// <param name="topic">Topic/routing key (e.g., "session.connected", "account.deleted")</param>
+    /// <param name="eventData">Event payload</param>
+    /// <param name="options">Optional publish settings</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The message ID assigned to this publication</returns>
+    Task<Guid> PublishAsync<TEvent>(
+        string topic,
+        TEvent eventData,
+        PublishOptions? options = null,
+        CancellationToken cancellationToken = default)
+        where TEvent : class;
+
+    /// <summary>
+    /// Publish raw bytes (for binary protocol optimization).
+    /// </summary>
+    /// <param name="topic">Topic/routing key</param>
+    /// <param name="payload">Raw bytes to publish</param>
+    /// <param name="contentType">MIME type of the payload (e.g., "application/octet-stream")</param>
+    /// <param name="options">Optional publish settings</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The message ID assigned to this publication</returns>
+    Task<Guid> PublishRawAsync(
+        string topic,
+        ReadOnlyMemory<byte> payload,
+        string contentType,
+        PublishOptions? options = null,
+        CancellationToken cancellationToken = default);
+}
 
 /// <summary>
 /// Subscribe to RabbitMQ topics without Dapr topic handlers.
@@ -56,41 +109,4 @@ public interface IMessageSubscriber
     /// <param name="topic">Topic/routing key to unsubscribe from</param>
     /// <returns>Task that completes when unsubscription is complete</returns>
     Task UnsubscribeAsync(string topic);
-}
-
-/// <summary>
-/// Options for subscribing to RabbitMQ topics.
-/// </summary>
-public class SubscriptionOptions
-{
-    /// <summary>
-    /// Whether the queue should survive broker restarts. Defaults to true.
-    /// </summary>
-    public bool Durable { get; set; } = true;
-
-    /// <summary>
-    /// Whether only this connection can consume from the queue. Defaults to false.
-    /// </summary>
-    public bool Exclusive { get; set; } = false;
-
-    /// <summary>
-    /// Whether messages should be auto-acknowledged. Defaults to false for reliability.
-    /// When false, messages are acknowledged after successful handler completion.
-    /// </summary>
-    public bool AutoAck { get; set; } = false;
-
-    /// <summary>
-    /// Number of messages to prefetch. Controls throughput vs latency trade-off.
-    /// </summary>
-    public ushort PrefetchCount { get; set; } = 10;
-
-    /// <summary>
-    /// Whether to use dead letter exchange for failed messages. Defaults to true.
-    /// </summary>
-    public bool UseDeadLetter { get; set; } = true;
-
-    /// <summary>
-    /// Name of the consumer group for load balancing. Optional.
-    /// </summary>
-    public string? ConsumerGroup { get; set; }
 }

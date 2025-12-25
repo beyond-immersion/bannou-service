@@ -2,9 +2,12 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameSession;
+using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.Testing;
-using Dapr.Client;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -18,7 +21,10 @@ namespace BeyondImmersion.BannouService.GameSession.Tests;
 /// </summary>
 public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfiguration>
 {
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<GameSessionModel>> _mockGameSessionStore;
+    private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<GameSessionService>> _mockLogger;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
@@ -32,11 +38,18 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
 
     public GameSessionServiceTests()
     {
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockGameSessionStore = new Mock<IStateStore<GameSessionModel>>();
+        _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<GameSessionService>>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup factory to return typed stores
+        _mockStateStoreFactory.Setup(f => f.GetStore<GameSessionModel>(STATE_STORE)).Returns(_mockGameSessionStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE)).Returns(_mockListStore.Object);
     }
 
     /// <summary>
@@ -53,7 +66,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     private GameSessionService CreateService()
     {
         return new GameSessionService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
             _mockErrorEventEmitter.Object,
@@ -74,11 +88,19 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     }
 
     [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrow()
+    public void Constructor_WithNullStateStoreFactory_ShouldThrow()
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(null!, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
+            new GameSessionService(null!, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullMessageBus_ShouldThrow()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new GameSessionService(_mockStateStoreFactory.Object, null!, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -86,7 +108,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(_mockDaprClient.Object, null!, Configuration, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
+            new GameSessionService(_mockStateStoreFactory.Object, _mockMessageBus.Object, null!, Configuration, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -94,7 +116,15 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(_mockDaprClient.Object, _mockLogger.Object, null!, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
+            new GameSessionService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, null!, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullEventConsumer_ShouldThrow()
+    {
+        // Arrange & Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new GameSessionService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object, null!));
     }
 
     #endregion
@@ -115,9 +145,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         };
 
         // Setup empty session list
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, SESSION_LIST_KEY, null, null, default))
+        _mockListStore
+            .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Act
@@ -133,28 +162,24 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         Assert.Equal(GameSessionResponseStatus.Waiting, response.Status);
 
         // Verify state was saved
-        _mockDaprClient.Verify(d => d.SaveStateAsync(
-            STATE_STORE,
+        _mockGameSessionStore.Verify(s => s.SaveAsync(
             It.Is<string>(k => k.StartsWith(SESSION_KEY_PREFIX)),
             It.IsAny<GameSessionModel>(),
             It.IsAny<StateOptions?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify session added to list
-        _mockDaprClient.Verify(d => d.SaveStateAsync(
-            STATE_STORE,
+        _mockListStore.Verify(s => s.SaveAsync(
             SESSION_LIST_KEY,
             It.IsAny<List<string>>(),
             It.IsAny<StateOptions?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify event published
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            "bannou-pubsub",
+        _mockMessageBus.Verify(m => m.PublishAsync(
             "game-session.created",
             It.IsAny<object>(),
+            It.IsAny<PublishOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -171,9 +196,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             IsPrivate = true
         };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, SESSION_LIST_KEY, null, null, default))
+        _mockListStore
+            .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Act
@@ -186,7 +210,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     }
 
     [Fact]
-    public async Task CreateGameSessionAsync_WhenDaprFails_ShouldReturnInternalServerError()
+    public async Task CreateGameSessionAsync_WhenStateStoreFails_ShouldReturnInternalServerError()
     {
         // Arrange
         var service = CreateService();
@@ -197,10 +221,9 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             MaxPlayers = 4
         };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, SESSION_LIST_KEY, null, null, default))
-            .ThrowsAsync(new Exception("Dapr connection failed"));
+        _mockListStore
+            .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("State store connection failed"));
 
         // Act
         var (status, response) = await service.CreateGameSessionAsync(request);
@@ -234,9 +257,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             CreatedAt = DateTimeOffset.UtcNow
         };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<GameSessionModel>(
-                STATE_STORE, SESSION_KEY_PREFIX + sessionId, null, null, default))
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(sessionModel);
 
         // Act
@@ -257,12 +279,9 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var sessionId = Guid.NewGuid();
         var request = new GetGameSessionRequest { SessionId = sessionId };
 
-#pragma warning disable CS8620 // Nullability mismatch in Moq setup - intentionally returning null to simulate not found
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<GameSessionModel>(
-                STATE_STORE, SESSION_KEY_PREFIX + sessionId, null, null, default))
-            .Returns(Task.FromResult<GameSessionModel?>(null));
-#pragma warning restore CS8620
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GameSessionModel?)null);
 
         // Act
         var (status, response) = await service.GetGameSessionAsync(request);
@@ -273,15 +292,14 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     }
 
     [Fact]
-    public async Task GetGameSessionAsync_WhenDaprFails_ShouldReturnInternalServerError()
+    public async Task GetGameSessionAsync_WhenStateStoreFails_ShouldReturnInternalServerError()
     {
         // Arrange
         var service = CreateService();
         var request = new GetGameSessionRequest { SessionId = Guid.NewGuid() };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<GameSessionModel>(
-                STATE_STORE, It.IsAny<string>(), null, null, default))
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("State store unavailable"));
 
         // Act
@@ -303,9 +321,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var service = CreateService();
         var request = new ListGameSessionsRequest();
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, SESSION_LIST_KEY, null, null, default))
+        _mockListStore
+            .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Act
@@ -326,14 +343,12 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var request = new ListGameSessionsRequest();
         var sessionId = "test-session-1";
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, SESSION_LIST_KEY, null, null, default))
+        _mockListStore
+            .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { sessionId });
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<GameSessionModel>(
-                STATE_STORE, SESSION_KEY_PREFIX + sessionId, null, null, default))
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameSessionModel
             {
                 SessionId = sessionId,
@@ -363,14 +378,12 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var service = CreateService();
         var request = new ListGameSessionsRequest();
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, SESSION_LIST_KEY, null, null, default))
+        _mockListStore
+            .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { "active", "finished" });
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<GameSessionModel>(
-                STATE_STORE, SESSION_KEY_PREFIX + "active", null, null, default))
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + "active", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameSessionModel
             {
                 SessionId = "active",
@@ -380,9 +393,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
                 CreatedAt = DateTimeOffset.UtcNow
             });
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<GameSessionModel>(
-                STATE_STORE, SESSION_KEY_PREFIX + "finished", null, null, default))
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + "finished", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameSessionModel
             {
                 SessionId = "finished",
@@ -413,12 +425,9 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var service = CreateService();
         var request = new JoinGameSessionRequest { SessionId = Guid.NewGuid() };
 
-#pragma warning disable CS8620 // Nullability mismatch in Moq setup - intentionally returning null to simulate not found
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<GameSessionModel>(
-                STATE_STORE, It.IsAny<string>(), null, null, default))
-            .Returns(Task.FromResult<GameSessionModel?>(null));
-#pragma warning restore CS8620
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GameSessionModel?)null);
 
         // Act
         var (status, response) = await service.JoinGameSessionAsync(request);
@@ -436,9 +445,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var sessionId = Guid.NewGuid();
         var request = new JoinGameSessionRequest { SessionId = sessionId };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<GameSessionModel>(
-                STATE_STORE, SESSION_KEY_PREFIX + sessionId, null, null, default))
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameSessionModel
             {
                 SessionId = sessionId.ToString(),
@@ -470,9 +478,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var sessionId = Guid.NewGuid();
         var request = new JoinGameSessionRequest { SessionId = sessionId };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<GameSessionModel>(
-                STATE_STORE, SESSION_KEY_PREFIX + sessionId, null, null, default))
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameSessionModel
             {
                 SessionId = sessionId.ToString(),
@@ -500,9 +507,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var sessionId = Guid.NewGuid();
         var request = new JoinGameSessionRequest { SessionId = sessionId };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<GameSessionModel>(
-                STATE_STORE, SESSION_KEY_PREFIX + sessionId, null, null, default))
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameSessionModel
             {
                 SessionId = sessionId.ToString(),
@@ -522,10 +528,10 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         Assert.True(response.Success);
 
         // Verify event published
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            "bannou-pubsub",
+        _mockMessageBus.Verify(m => m.PublishAsync(
             "game-session.player-joined",
             It.IsAny<object>(),
+            It.IsAny<PublishOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -535,7 +541,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Arrange
         var mockPermissionsClient = new Mock<BeyondImmersion.BannouService.Permissions.IPermissionsClient>();
         var service = new GameSessionService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
             _mockErrorEventEmitter.Object,
@@ -553,9 +560,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         httpContext.Request.Headers["X-Bannou-Session-Id"] = clientSessionId;
         _mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<GameSessionModel>(
-                STATE_STORE, SESSION_KEY_PREFIX + sessionId, null, null, default))
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameSessionModel
             {
                 SessionId = sessionId.ToString(),
@@ -592,7 +598,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Arrange
         var mockPermissionsClient = new Mock<BeyondImmersion.BannouService.Permissions.IPermissionsClient>();
         var service = new GameSessionService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
             _mockErrorEventEmitter.Object,
@@ -611,9 +618,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         httpContext.Request.Headers["X-Bannou-Session-Id"] = clientSessionId;
         _mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<GameSessionModel>(
-                STATE_STORE, SESSION_KEY_PREFIX + sessionId, null, null, default))
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameSessionModel
             {
                 SessionId = sessionId.ToString(),
@@ -650,12 +656,9 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         var service = CreateService();
         var request = new LeaveGameSessionRequest { SessionId = Guid.NewGuid() };
 
-#pragma warning disable CS8620 // Nullability mismatch in Moq setup - intentionally returning null to simulate not found
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<GameSessionModel>(
-                STATE_STORE, It.IsAny<string>(), null, null, default))
-            .Returns(Task.FromResult<GameSessionModel?>(null));
-#pragma warning restore CS8620
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GameSessionModel?)null);
 
         // Act
         var (status, response) = await service.LeaveGameSessionAsync(request);
@@ -679,12 +682,9 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             ActionType = GameActionRequestActionType.Move
         };
 
-#pragma warning disable CS8620 // Nullability mismatch in Moq setup - intentionally returning null to simulate not found
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<GameSessionModel>(
-                STATE_STORE, It.IsAny<string>(), null, null, default))
-            .Returns(Task.FromResult<GameSessionModel?>(null));
-#pragma warning restore CS8620
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GameSessionModel?)null);
 
         // Act
         var (status, response) = await service.PerformGameActionAsync(request);
@@ -706,9 +706,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             ActionType = GameActionRequestActionType.Move
         };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<GameSessionModel>(
-                STATE_STORE, SESSION_KEY_PREFIX + sessionId, null, null, default))
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + sessionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameSessionModel
             {
                 SessionId = sessionId.ToString(),

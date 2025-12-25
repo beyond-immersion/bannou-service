@@ -1,7 +1,8 @@
 using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.ServiceClients;
-using Dapr.Client;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -16,7 +17,7 @@ namespace BeyondImmersion.BannouService.Auth.Services;
 /// </summary>
 public class OAuthProviderService : IOAuthProviderService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IAccountsClient _accountsClient;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly AuthServiceConfiguration _configuration;
@@ -35,13 +36,13 @@ public class OAuthProviderService : IOAuthProviderService
     /// Initializes a new instance of OAuthProviderService.
     /// </summary>
     public OAuthProviderService(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
         IAccountsClient accountsClient,
         IHttpClientFactory httpClientFactory,
         AuthServiceConfiguration configuration,
         ILogger<OAuthProviderService> logger)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _accountsClient = accountsClient ?? throw new ArgumentNullException(nameof(accountsClient));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -315,18 +316,17 @@ public class OAuthProviderService : IOAuthProviderService
 
         try
         {
-            // Check existing link
-            var existingAccountId = await _daprClient.GetStateAsync<Guid?>(
-                REDIS_STATE_STORE,
-                oauthLinkKey,
-                cancellationToken: cancellationToken);
+            var linkStore = _stateStoreFactory.GetStore<string>(REDIS_STATE_STORE);
 
-            if (existingAccountId.HasValue && existingAccountId.Value != Guid.Empty)
+            // Check existing link (stored as string since Guid is a value type)
+            var existingAccountIdStr = await linkStore.GetAsync(oauthLinkKey, cancellationToken);
+
+            if (!string.IsNullOrEmpty(existingAccountIdStr) && Guid.TryParse(existingAccountIdStr, out var existingAccountId) && existingAccountId != Guid.Empty)
             {
                 try
                 {
                     var account = await _accountsClient.GetAccountAsync(
-                        new GetAccountRequest { AccountId = existingAccountId.Value },
+                        new GetAccountRequest { AccountId = existingAccountId },
                         cancellationToken);
                     _logger.LogInformation("Found existing account {AccountId} for {Provider} user {ProviderId}",
                         account.AccountId, providerName, userInfo.ProviderId);
@@ -334,8 +334,8 @@ public class OAuthProviderService : IOAuthProviderService
                 }
                 catch (ApiException ex) when (ex.StatusCode == 404)
                 {
-                    _logger.LogWarning("Linked account {AccountId} not found, removing stale OAuth link", existingAccountId.Value);
-                    await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, oauthLinkKey, cancellationToken: cancellationToken);
+                    _logger.LogWarning("Linked account {AccountId} not found, removing stale OAuth link", existingAccountId);
+                    await linkStore.DeleteAsync(oauthLinkKey, cancellationToken);
                 }
             }
 
@@ -384,11 +384,10 @@ public class OAuthProviderService : IOAuthProviderService
                 return null;
             }
 
-            // Store the OAuth link
-            await _daprClient.SaveStateAsync(
-                REDIS_STATE_STORE,
+            // Store the OAuth link (as string since Guid is a value type)
+            await linkStore.SaveAsync(
                 oauthLinkKey,
-                newAccount.AccountId,
+                newAccount.AccountId.ToString(),
                 cancellationToken: cancellationToken);
 
             _logger.LogInformation("Created new account {AccountId} and linked to {Provider} user {ProviderId}",

@@ -8,7 +8,7 @@
 
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
-using Dapr.Client;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Orchestrator;
@@ -433,16 +433,15 @@ public static class OrchestratorPermissionRegistration
 
     /// <summary>
     /// Registers service permissions via event publishing.
-    /// Should only be called after Dapr connectivity is confirmed.
+    /// Should only be called after messaging infrastructure is confirmed.
     /// </summary>
-    public static async Task RegisterViaEventAsync(DaprClient daprClient, ILogger? logger = null)
+    public static async Task RegisterViaEventAsync(IMessageBus messageBus, ILogger? logger = null)
     {
         try
         {
             var registrationEvent = CreateRegistrationEvent();
 
-            await daprClient.PublishEventAsync(
-                "bannou-pubsub",
+            await messageBus.PublishAsync(
                 "permissions.service-registered",
                 registrationEvent);
 

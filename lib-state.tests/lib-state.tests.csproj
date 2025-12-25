@@ -28,6 +28,7 @@
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-state -->
     <ProjectReference Include="../lib-state/lib-state.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
   </ItemGroup>
 
 </Project>

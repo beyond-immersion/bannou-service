@@ -28,7 +28,9 @@
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-realm -->
     <ProjectReference Include="../lib-realm/lib-realm.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
     <ProjectReference Include="../lib-testing/lib-testing.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
   </ItemGroup>
 
 </Project>

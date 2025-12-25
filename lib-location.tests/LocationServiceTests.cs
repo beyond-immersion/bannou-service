@@ -1,10 +1,11 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Location;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
-using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -21,7 +22,11 @@ namespace BeyondImmersion.BannouService.Location.Tests;
 /// </summary>
 public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration>
 {
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<LocationService.LocationModel>> _mockLocationStore;
+    private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<LocationService>> _mockLogger;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IRealmClient> _mockRealmClient;
@@ -37,11 +42,31 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
     public LocationServiceTests()
     {
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockLocationStore = new Mock<IStateStore<LocationService.LocationModel>>();
+        _mockStringStore = new Mock<IStateStore<string>>();
+        _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<LocationService>>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockRealmClient = new Mock<IRealmClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup factory to return typed stores
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<LocationService.LocationModel>(STATE_STORE))
+            .Returns(_mockLocationStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<string>(STATE_STORE))
+            .Returns(_mockStringStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<List<string>>(STATE_STORE))
+            .Returns(_mockListStore.Object);
+
+        // Default message bus behavior
+        _mockMessageBus
+            .Setup(m => m.PublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Guid.NewGuid());
 
         // Default realm validation to pass
         _mockRealmClient
@@ -52,7 +77,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     private LocationService CreateService()
     {
         return new LocationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
             _mockErrorEventEmitter.Object,
@@ -103,9 +129,23 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     }
 
     [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrowArgumentNullException()
+    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() => new LocationService(
+            null!,
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            Configuration,
+            _mockErrorEventEmitter.Object,
+            _mockRealmClient.Object,
+            _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => new LocationService(
+            _mockStateStoreFactory.Object,
             null!,
             _mockLogger.Object,
             Configuration,
@@ -118,7 +158,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() => new LocationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             null!,
             Configuration,
             _mockErrorEventEmitter.Object,
@@ -130,7 +171,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() => new LocationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             null!,
             _mockErrorEventEmitter.Object,
@@ -142,7 +184,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     public void Constructor_WithNullErrorEventEmitter_ShouldThrowArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() => new LocationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
             null!,
@@ -154,12 +197,26 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     public void Constructor_WithNullRealmClient_ShouldThrowArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() => new LocationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
             _mockErrorEventEmitter.Object,
             null!,
             _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => new LocationService(
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            Configuration,
+            _mockErrorEventEmitter.Object,
+            _mockRealmClient.Object,
+            null!));
     }
 
     #endregion
@@ -176,9 +233,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var request = new GetLocationRequest { LocationId = locationId };
         var testModel = CreateTestLocationModel(locationId, realmId, "OMEGA_CITY", "Omega City");
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(testModel);
 
         // Act
@@ -200,9 +256,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var locationId = Guid.NewGuid();
         var request = new GetLocationRequest { LocationId = locationId };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((LocationService.LocationModel?)null);
 
         // Act
@@ -214,17 +269,16 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     }
 
     [Fact]
-    public async Task GetLocationAsync_WhenDaprFails_ShouldReturnInternalServerError()
+    public async Task GetLocationAsync_WhenStoreFails_ShouldReturnInternalServerError()
     {
         // Arrange
         var service = CreateService();
         var locationId = Guid.NewGuid();
         var request = new GetLocationRequest { LocationId = locationId };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}", null, null, default))
-            .ThrowsAsync(new Exception("Dapr connection failed"));
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("State store connection failed"));
 
         // Act
         var (status, response) = await service.GetLocationAsync(request);
@@ -253,15 +307,13 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var testModel = CreateTestLocationModel(locationId, realmId, "OMEGA_CITY", "Omega City");
 
         // Setup code index lookup
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
-                STATE_STORE, $"{CODE_INDEX_PREFIX}{realmId}:OMEGA_CITY", null, null, default))
+        _mockStringStore
+            .Setup(s => s.GetAsync($"{CODE_INDEX_PREFIX}{realmId}:OMEGA_CITY", It.IsAny<CancellationToken>()))
             .ReturnsAsync(locationId.ToString());
 
         // Setup location retrieval
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(testModel);
 
         // Act
@@ -281,10 +333,9 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var realmId = Guid.NewGuid();
         var request = new GetLocationByCodeRequest { RealmId = realmId, Code = "NONEXISTENT" };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
-                STATE_STORE, $"{CODE_INDEX_PREFIX}{realmId}:NONEXISTENT", null, null, default))
-            .Returns(Task.FromResult<string?>(null));
+        _mockStringStore
+            .Setup(s => s.GetAsync($"{CODE_INDEX_PREFIX}{realmId}:NONEXISTENT", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
 
         // Act
         var (status, response) = await service.GetLocationByCodeAsync(request);
@@ -295,16 +346,15 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     }
 
     [Fact]
-    public async Task GetLocationByCodeAsync_WhenDaprFails_ShouldReturnInternalServerError()
+    public async Task GetLocationByCodeAsync_WhenStoreFails_ShouldReturnInternalServerError()
     {
         // Arrange
         var service = CreateService();
         var realmId = Guid.NewGuid();
         var request = new GetLocationByCodeRequest { RealmId = realmId, Code = "TEST" };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
-                STATE_STORE, It.IsAny<string>(), null, null, default))
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("State store unavailable"));
 
         // Act
@@ -334,19 +384,16 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var model2 = CreateTestLocationModel(location2Id, realmId, "LOC2", "Location 2");
 
         // Setup realm index lookup
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, $"{REALM_INDEX_PREFIX}{realmId}", null, null, default))
+        _mockListStore
+            .Setup(s => s.GetAsync($"{REALM_INDEX_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(locationIds);
 
         // Setup location retrieval
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{location1Id}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{location1Id}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model1);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{location2Id}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{location2Id}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model2);
 
         // Act
@@ -366,9 +413,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var realmId = Guid.NewGuid();
         var request = new ListLocationsByRealmRequest { RealmId = realmId };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, $"{REALM_INDEX_PREFIX}{realmId}", null, null, default))
+        _mockListStore
+            .Setup(s => s.GetAsync($"{REALM_INDEX_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<string>?)null);
 
         // Act
@@ -394,9 +440,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var request = new LocationExistsRequest { LocationId = locationId };
         var testModel = CreateTestLocationModel(locationId, realmId, isDeprecated: false);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(testModel);
 
         // Act
@@ -419,9 +464,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var request = new LocationExistsRequest { LocationId = locationId };
         var testModel = CreateTestLocationModel(locationId, realmId, isDeprecated: true);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(testModel);
 
         // Act
@@ -442,9 +486,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var locationId = Guid.NewGuid();
         var request = new LocationExistsRequest { LocationId = locationId };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((LocationService.LocationModel?)null);
 
         // Act
@@ -475,9 +518,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         };
         var testModel = CreateTestLocationModel(locationId, realmId, "TEST", "Original Name");
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(testModel);
 
         // Act
@@ -488,11 +530,11 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         Assert.NotNull(response);
         Assert.Equal("Updated Name", response.Name);
 
-        _mockDaprClient.Verify(d => d.SaveStateAsync(
-            STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}",
-            It.IsAny<LocationService.LocationModel>(), null, null, default), Times.Once);
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            PUBSUB_NAME, "location.updated", It.IsAny<LocationUpdatedEvent>(), default), Times.Once);
+        _mockLocationStore.Verify(s => s.SaveAsync(
+            $"{LOCATION_KEY_PREFIX}{locationId}",
+            It.IsAny<LocationService.LocationModel>(), null, It.IsAny<CancellationToken>()), Times.Once);
+        _mockMessageBus.Verify(m => m.PublishAsync(
+            "location.updated", It.IsAny<LocationUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -503,9 +545,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var locationId = Guid.NewGuid();
         var request = new UpdateLocationRequest { LocationId = locationId, Name = "Updated" };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((LocationService.LocationModel?)null);
 
         // Act
@@ -526,9 +567,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var request = new UpdateLocationRequest { LocationId = locationId };
         var testModel = CreateTestLocationModel(locationId, realmId);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(testModel);
 
         // Act
@@ -536,11 +576,11 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Assert - no changes means no save and no event
         Assert.Equal(StatusCodes.OK, status);
-        _mockDaprClient.Verify(d => d.SaveStateAsync(
-            STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}",
-            It.IsAny<LocationService.LocationModel>(), null, null, default), Times.Never);
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            PUBSUB_NAME, "location.updated", It.IsAny<LocationUpdatedEvent>(), default), Times.Never);
+        _mockLocationStore.Verify(s => s.SaveAsync(
+            $"{LOCATION_KEY_PREFIX}{locationId}",
+            It.IsAny<LocationService.LocationModel>(), null, It.IsAny<CancellationToken>()), Times.Never);
+        _mockMessageBus.Verify(m => m.PublishAsync(
+            "location.updated", It.IsAny<LocationUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -561,9 +601,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         };
         var testModel = CreateTestLocationModel(locationId, realmId, isDeprecated: false);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(testModel);
 
         // Act
@@ -575,8 +614,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         Assert.True(response.IsDeprecated);
         Assert.Equal("No longer in use", response.DeprecationReason);
 
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            PUBSUB_NAME, "location.updated", It.IsAny<LocationUpdatedEvent>(), default), Times.Once);
+        _mockMessageBus.Verify(m => m.PublishAsync(
+            "location.updated", It.IsAny<LocationUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -589,9 +628,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var request = new DeprecateLocationRequest { LocationId = locationId, Reason = "New reason" };
         var testModel = CreateTestLocationModel(locationId, realmId, isDeprecated: true);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(testModel);
 
         // Act
@@ -610,9 +648,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var locationId = Guid.NewGuid();
         var request = new DeprecateLocationRequest { LocationId = locationId, Reason = "Test" };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((LocationService.LocationModel?)null);
 
         // Act
@@ -636,9 +673,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var request = new UndeprecateLocationRequest { LocationId = locationId };
         var testModel = CreateTestLocationModel(locationId, realmId, isDeprecated: true);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(testModel);
 
         // Act
@@ -650,8 +686,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         Assert.False(response.IsDeprecated);
         Assert.Null(response.DeprecationReason);
 
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            PUBSUB_NAME, "location.updated", It.IsAny<LocationUpdatedEvent>(), default), Times.Once);
+        _mockMessageBus.Verify(m => m.PublishAsync(
+            "location.updated", It.IsAny<LocationUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -664,9 +700,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var request = new UndeprecateLocationRequest { LocationId = locationId };
         var testModel = CreateTestLocationModel(locationId, realmId, isDeprecated: false);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(testModel);
 
         // Act
@@ -685,9 +720,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var locationId = Guid.NewGuid();
         var request = new UndeprecateLocationRequest { LocationId = locationId };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{locationId}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((LocationService.LocationModel?)null);
 
         // Act
@@ -715,18 +749,15 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var model1 = CreateTestLocationModel(loc1Id, realmId, "ROOT1", "Root 1", depth: 0);
         var model2 = CreateTestLocationModel(loc2Id, realmId, "ROOT2", "Root 2", depth: 0);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, $"{ROOT_LOCATIONS_PREFIX}{realmId}", null, null, default))
+        _mockListStore
+            .Setup(s => s.GetAsync($"{ROOT_LOCATIONS_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(rootLocationIds);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{loc1Id}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{loc1Id}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model1);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{loc2Id}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{loc2Id}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model2);
 
         // Act
@@ -746,9 +777,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var realmId = Guid.NewGuid();
         var request = new ListRootLocationsRequest { RealmId = realmId };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, $"{ROOT_LOCATIONS_PREFIX}{realmId}", null, null, default))
+        _mockListStore
+            .Setup(s => s.GetAsync($"{ROOT_LOCATIONS_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<string>?)null);
 
         // Act
@@ -781,24 +811,20 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var model2 = CreateTestLocationModel(child2Id, realmId, "CHILD2", "Child 2", parentLocationId: parentId, depth: 1);
 
         // Setup parent location retrieval (needed to get realm)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{parentId}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{parentId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentModel);
 
         // Setup parent index lookup
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, $"{PARENT_INDEX_PREFIX}{realmId}:{parentId}", null, null, default))
+        _mockListStore
+            .Setup(s => s.GetAsync($"{PARENT_INDEX_PREFIX}{realmId}:{parentId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(childIds);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{child1Id}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{child1Id}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model1);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{child2Id}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{child2Id}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model2);
 
         // Act
@@ -822,14 +848,12 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         var parentModel = CreateTestLocationModel(parentId, realmId, "PARENT", "Parent Location");
 
         // Setup parent location retrieval (needed to get realm)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<LocationService.LocationModel>(
-                STATE_STORE, $"{LOCATION_KEY_PREFIX}{parentId}", null, null, default))
+        _mockLocationStore
+            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{parentId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentModel);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, $"{PARENT_INDEX_PREFIX}{realmId}:{parentId}", null, null, default))
+        _mockListStore
+            .Setup(s => s.GetAsync($"{PARENT_INDEX_PREFIX}{realmId}:{parentId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<string>?)null);
 
         // Act

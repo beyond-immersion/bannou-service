@@ -28,6 +28,7 @@
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-asset -->
     <ProjectReference Include="../lib-asset/lib-asset.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
   </ItemGroup>
 
 </Project>

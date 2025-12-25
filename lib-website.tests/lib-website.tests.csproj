@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../lib-website/lib-website.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
   </ItemGroup>
 
 </Project>

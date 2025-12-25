@@ -4,18 +4,6 @@
         <name>Bannou.SDK</name>
     </assembly>
     <members>
-        <member name="T:BeyondImmersion.BannouService.ServiceClients.IDaprClient">
-            <summary>
-            Marker interface for Dapr service clients.
-            Provides explicit identification of client types without relying on naming conventions.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.ServiceClients.IDaprClient.ServiceName">
-            <summary>
-            The name of the service this client communicates with.
-            Should match the service name in the corresponding DaprServiceAttribute.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceClient`1">
             <summary>
             Base interface for all Bannou service clients.
@@ -31,132 +19,6 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase">
-            <summary>
-            Base class for all Dapr-aware service clients.
-            Handles dynamic app-id resolution and Dapr routing.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase._httpClient">
-            <summary>
-            HTTP client for making service requests.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase._appMappingResolver">
-            <summary>
-            Resolver for dynamic service-to-app-id mapping.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase._logger">
-            <summary>
-            Logger for tracing service calls.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase._serviceName">
-            <summary>
-            Name of the target service.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ServiceName">
-            <summary>
-            The name of the service this client communicates with.
-            Should match the service name in the corresponding DaprServiceAttribute.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.#ctor">
-            <summary>
-            Parameterless constructor for NSwag generated clients that handle their own dependency injection.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.#ctor(System.Net.Http.HttpClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger,System.String)">
-            <summary>
-            Full constructor for manual instantiation with all dependencies.
-            </summary>
-            <param name="httpClient">HTTP client for making requests.</param>
-            <param name="appMappingResolver">Resolver for dynamic app-id mapping.</param>
-            <param name="logger">Logger for tracing service calls.</param>
-            <param name="serviceName">Name of the target service.</param>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.BaseUrl">
-             <summary>
-             Gets the base URL for Dapr service invocation with dynamic app-id resolution.
-             For parameterless constructor, falls back to "bannou" app-id.
-             Uses environment variable DAPR_HTTP_ENDPOINT if available for containerized environments.
-             </summary>
-             <remarks>
-             CRITICAL ARCHITECTURAL CONSTRAINT:
-             The app-id used here ("bannou" by default) becomes part of the URL path that Dapr
-             forwards to the target service. Dapr does NOT strip the /v1.0/invoke/{app-id}/method/
-             prefix - it preserves the full path.
-            
-             This means all OpenAPI schemas MUST use the same app-id in their `servers` URL:
-               servers:
-                 - url: http://localhost:3500/v1.0/invoke/bannou/method
-            
-             NSwag generates controller route prefixes from this URL. If the schema uses a different
-             app-id (e.g., "game-session"), the generated controller route won't match the path
-             that clients send, resulting in 404 errors.
-            
-             The ServiceAppMappingResolver can dynamically route to different Dapr sidecars, but
-             the path structure (including app-id) must match what controllers expect.
-            
-             See docs/BANNOU_DESIGN.md "servers URL Constraint" section for full documentation.
-             </remarks>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.PrepareRequest(System.Net.Http.HttpClient,System.Net.Http.HttpRequestMessage,System.String)">
-            <summary>
-            Prepares the HTTP request with proper Dapr headers and custom headers.
-            Works with both full constructor and parameterless constructor.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.PrepareRequest(System.Net.Http.HttpClient,System.Net.Http.HttpRequestMessage,System.Text.StringBuilder)">
-            <summary>
-            Prepares the HTTP request with URL builder for Dapr routing and custom headers.
-            Works with both full constructor and parameterless constructor.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ProcessResponse(System.Net.Http.HttpClient,System.Net.Http.HttpResponseMessage)">
-            <summary>
-            Processes the HTTP response from Dapr service invocation.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase._customHeaders">
-            <summary>
-            Storage for custom headers to be applied to the next request.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase._authorizationHeader">
-            <summary>
-            Authorization header value for the next request.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.SetHeader(System.String,System.String)">
-            <summary>
-            Sets a custom header for the next service request.
-            Headers are applied once and then cleared.
-            Used by generated clients for type-safe fluent API.
-            </summary>
-            <param name="name">Header name (e.g., "X-Custom-Header")</param>
-            <param name="value">Header value</param>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ClearAuthorization">
-            <summary>
-            Clears the Authorization header.
-            Used by generated clients for type-safe fluent API.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ClearHeaders">
-            <summary>
-            Clears all custom headers and authorization for a fresh request.
-            Called automatically after each request.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ExtractAppIdFromUrl(System.String)">
-            <summary>
-            Extracts the Dapr app-id from a Dapr invoke URL.
-            URL pattern: http://localhost:3500/v1.0/invoke/{app-id}/method/...
-            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.ServiceMappingChangedEventArgs">
             <summary>
@@ -232,6 +94,121 @@
         <member name="P:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.CurrentVersion">
             <summary>
             Gets the current version of the service mappings.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Services.IMeshInvocationClient">
+            <summary>
+            Client for invoking methods on other services via the mesh.
+            Replaces DaprClient.InvokeMethodAsync for service-to-service communication.
+            Uses the mesh service for endpoint resolution and YARP for HTTP forwarding.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IMeshInvocationClient.InvokeMethodAsync``2(System.String,System.String,``0,System.Threading.CancellationToken)">
+            <summary>
+            Invoke a method on a remote service and deserialize the response.
+            </summary>
+            <typeparam name="TRequest">Request body type.</typeparam>
+            <typeparam name="TResponse">Response body type.</typeparam>
+            <param name="appId">Target app-id (e.g., "bannou", "auth-service").</param>
+            <param name="methodName">Method path (e.g., "auth/login", "accounts/get").</param>
+            <param name="request">Request body.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Deserialized response.</returns>
+            <exception cref="T:BeyondImmersion.BannouService.Services.MeshInvocationException">Thrown when invocation fails.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IMeshInvocationClient.InvokeMethodAsync``1(System.String,System.String,``0,System.Threading.CancellationToken)">
+            <summary>
+            Invoke a method on a remote service without expecting a response body.
+            </summary>
+            <typeparam name="TRequest">Request body type.</typeparam>
+            <param name="appId">Target app-id.</param>
+            <param name="methodName">Method path.</param>
+            <param name="request">Request body.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <exception cref="T:BeyondImmersion.BannouService.Services.MeshInvocationException">Thrown when invocation fails.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IMeshInvocationClient.InvokeMethodWithResponseAsync(System.Net.Http.HttpRequestMessage,System.Threading.CancellationToken)">
+            <summary>
+            Invoke a method on a remote service with full response details.
+            </summary>
+            <param name="request">The HTTP request message to send.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The HTTP response message.</returns>
+            <exception cref="T:BeyondImmersion.BannouService.Services.MeshInvocationException">Thrown when invocation fails.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IMeshInvocationClient.CreateInvokeMethodRequest(System.Net.Http.HttpMethod,System.String,System.String)">
+            <summary>
+            Create an HTTP request message for invoking a method.
+            The request can be customized before sending via InvokeMethodWithResponseAsync.
+            </summary>
+            <param name="httpMethod">HTTP method to use.</param>
+            <param name="appId">Target app-id.</param>
+            <param name="methodName">Method path.</param>
+            <returns>Configured HTTP request message.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IMeshInvocationClient.CreateInvokeMethodRequest``1(System.Net.Http.HttpMethod,System.String,System.String,``0)">
+            <summary>
+            Create an HTTP request message with a typed body.
+            </summary>
+            <typeparam name="TRequest">Request body type.</typeparam>
+            <param name="httpMethod">HTTP method to use.</param>
+            <param name="appId">Target app-id.</param>
+            <param name="methodName">Method path.</param>
+            <param name="request">Request body to serialize.</param>
+            <returns>Configured HTTP request message with body.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IMeshInvocationClient.InvokeMethodAsync``1(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Invoke a method on a remote service using GET (no request body).
+            </summary>
+            <typeparam name="TResponse">Response body type.</typeparam>
+            <param name="appId">Target app-id.</param>
+            <param name="methodName">Method path.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Deserialized response.</returns>
+            <exception cref="T:BeyondImmersion.BannouService.Services.MeshInvocationException">Thrown when invocation fails.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IMeshInvocationClient.IsServiceAvailableAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Check if a target app-id has any healthy endpoints available.
+            </summary>
+            <param name="appId">Target app-id to check.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if at least one healthy endpoint exists.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Services.MeshInvocationException">
+            <summary>
+            Exception thrown when mesh invocation fails.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.MeshInvocationException.AppId">
+            <summary>
+            The target app-id of the failed invocation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.MeshInvocationException.MethodName">
+            <summary>
+            The method name that was being invoked.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.MeshInvocationException.StatusCode">
+            <summary>
+            HTTP status code if available.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.MeshInvocationException.#ctor(System.String,System.String,System.String,System.Exception,System.Nullable{System.Int32})">
+            <summary>
+            Creates a new MeshInvocationException.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.MeshInvocationException.NoEndpointsAvailable(System.String,System.String)">
+            <summary>
+            Creates a MeshInvocationException for when no endpoints are available.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.MeshInvocationException.HttpError(System.String,System.String,System.Int32,System.String)">
+            <summary>
+            Creates a MeshInvocationException for HTTP errors.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ApiException">
@@ -1105,11 +1082,28 @@
             <param name="body">Optional connection parameters</param>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Connect.ConnectClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Connect.ConnectClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Connect.ConnectClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Connect.ConnectClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Connect.ConnectClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Connect.ConnectClient.WithAuthorization(System.String)">
             <summary>
@@ -1119,6 +1113,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Connect.ConnectClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Connect.ConnectClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Connect.ConnectClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Connect.ConnectClient.ProxyInternalRequestAsync(BeyondImmersion.BannouService.Connect.InternalProxyRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -2085,11 +2095,28 @@
             <returns>Seed operation completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Realm.RealmClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Realm.RealmClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Realm.RealmClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Realm.RealmClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Realm.RealmClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Realm.RealmClient.WithAuthorization(System.String)">
             <summary>
@@ -2099,6 +2126,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Realm.RealmClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Realm.RealmClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Realm.RealmClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Realm.RealmClient.GetRealmAsync(BeyondImmersion.BannouService.Realm.GetRealmRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -2500,11 +2543,28 @@
             <returns>Upload URL generated</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Asset.AssetClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Asset.AssetClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Asset.AssetClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.WithAuthorization(System.String)">
             <summary>
@@ -2514,6 +2574,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.RequestUploadAsync(BeyondImmersion.BannouService.Asset.UploadRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -2947,11 +3023,28 @@
             <returns>Verification status updated successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Accounts.AccountsClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Accounts.AccountsClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Accounts.AccountsClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Accounts.AccountsClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Accounts.AccountsClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Accounts.AccountsClient.WithAuthorization(System.String)">
             <summary>
@@ -2961,6 +3054,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Accounts.AccountsClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Accounts.AccountsClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Accounts.AccountsClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Accounts.AccountsClient.ListAccountsAsync(BeyondImmersion.BannouService.Accounts.ListAccountsRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -3283,11 +3392,28 @@
             <returns>SDP answer processed, peer notified</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Voice.VoiceClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Voice.VoiceClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Voice.VoiceClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.WithAuthorization(System.String)">
             <summary>
@@ -3297,6 +3423,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Voice.VoiceClient.CreateVoiceRoomAsync(BeyondImmersion.BannouService.Voice.CreateVoiceRoomRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -3781,11 +3923,28 @@
             <returns>Subscription renewed successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.WithAuthorization(System.String)">
             <summary>
@@ -3795,6 +3954,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.GetAccountSubscriptionsAsync(BeyondImmersion.BannouService.Subscriptions.GetAccountSubscriptionsRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -4124,11 +4299,28 @@
             <returns>List of topics</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Messaging.MessagingClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Messaging.MessagingClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Messaging.MessagingClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Messaging.MessagingClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Messaging.MessagingClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Messaging.MessagingClient.WithAuthorization(System.String)">
             <summary>
@@ -4138,6 +4330,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Messaging.MessagingClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Messaging.MessagingClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Messaging.MessagingClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Messaging.MessagingClient.PublishEventAsync(BeyondImmersion.BannouService.Messaging.PublishEventRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -4181,9 +4389,79 @@
             Event payload (any JSON)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Messaging.PublishOptions">
+            <summary>
+            Options for publishing messages to RabbitMQ
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.Exchange">
+            <summary>
+            Exchange name for routing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.Persistent">
+            <summary>
+            Whether the message should be persisted to disk
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.Priority">
+            <summary>
+            Message priority (0-9)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.CorrelationId">
+            <summary>
+            Correlation ID for request/response patterns
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.Expiration">
+            <summary>
+            Message expiration time (ISO 8601 duration format)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.Headers">
+            <summary>
+            Custom headers to include with the message
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.CreateSubscriptionRequest.CallbackUrl">
             <summary>
             HTTP endpoint to receive events
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Messaging.SubscriptionOptions">
+            <summary>
+            Options for subscribing to RabbitMQ topics
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Messaging.SubscriptionOptions.Durable">
+            <summary>
+            Whether the queue should survive broker restarts
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Messaging.SubscriptionOptions.Exclusive">
+            <summary>
+            Whether only this connection can consume from the queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Messaging.SubscriptionOptions.AutoAck">
+            <summary>
+            Whether messages should be auto-acknowledged
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Messaging.SubscriptionOptions.PrefetchCount">
+            <summary>
+            Number of messages to prefetch
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Messaging.SubscriptionOptions.UseDeadLetter">
+            <summary>
+            Whether to use dead letter exchange for failed messages
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Messaging.SubscriptionOptions.ConsumerGroup">
+            <summary>
+            Name of the consumer group for load balancing
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Messaging.ListTopicsRequest">
@@ -4282,11 +4560,28 @@
             <returns>Game action performed successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.GameSession.GameSessionClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.GameSession.GameSessionClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.GameSession.GameSessionClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.GameSession.GameSessionClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameSession.GameSessionClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.GameSession.GameSessionClient.WithAuthorization(System.String)">
             <summary>
@@ -4296,6 +4591,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameSession.GameSessionClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameSession.GameSessionClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameSession.GameSessionClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.GameSession.GameSessionClient.ListGameSessionsAsync(BeyondImmersion.BannouService.GameSession.ListGameSessionsRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -4667,11 +4978,28 @@
             <returns>Health status retrieved</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Mesh.MeshClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Mesh.MeshClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Mesh.MeshClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Mesh.MeshClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mesh.MeshClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Mesh.MeshClient.WithAuthorization(System.String)">
             <summary>
@@ -4681,6 +5009,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mesh.MeshClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mesh.MeshClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mesh.MeshClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Mesh.MeshClient.GetEndpointsAsync(BeyondImmersion.BannouService.Mesh.GetEndpointsRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -5268,11 +5612,28 @@
             <returns>Namespace statistics</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Documentation.DocumentationClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Documentation.DocumentationClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Documentation.DocumentationClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.WithAuthorization(System.String)">
             <summary>
@@ -5282,6 +5643,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.ViewDocumentBySlugAsync(System.String,System.String,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -5668,11 +6045,28 @@
             <returns>Seed operation completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Species.SpeciesClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Species.SpeciesClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Species.SpeciesClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Species.SpeciesClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Species.SpeciesClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Species.SpeciesClient.WithAuthorization(System.String)">
             <summary>
@@ -5682,6 +6076,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Species.SpeciesClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Species.SpeciesClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Species.SpeciesClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Species.SpeciesClient.GetSpeciesAsync(BeyondImmersion.BannouService.Species.GetSpeciesRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -6210,11 +6620,28 @@
             <returns>Relationship ended successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Relationship.RelationshipClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Relationship.RelationshipClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Relationship.RelationshipClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Relationship.RelationshipClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Relationship.RelationshipClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Relationship.RelationshipClient.WithAuthorization(System.String)">
             <summary>
@@ -6224,6 +6651,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Relationship.RelationshipClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Relationship.RelationshipClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Relationship.RelationshipClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Relationship.RelationshipClient.CreateRelationshipAsync(BeyondImmersion.BannouService.Relationship.CreateRelationshipRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -6488,11 +6931,28 @@
             <returns>Service deleted successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Servicedata.ServicedataClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Servicedata.ServicedataClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Servicedata.ServicedataClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Servicedata.ServicedataClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Servicedata.ServicedataClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Servicedata.ServicedataClient.WithAuthorization(System.String)">
             <summary>
@@ -6502,6 +6962,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Servicedata.ServicedataClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Servicedata.ServicedataClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Servicedata.ServicedataClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Servicedata.ServicedataClient.ListServicesAsync(BeyondImmersion.BannouService.Servicedata.ListServicesRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -6850,11 +7326,28 @@
             <returns>Seed operation completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient.WithAuthorization(System.String)">
             <summary>
@@ -6864,6 +7357,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient.GetRelationshipTypeAsync(BeyondImmersion.BannouService.RelationshipType.GetRelationshipTypeRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -7403,11 +7912,28 @@
             <returns>List of registered services</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Permissions.PermissionsClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Permissions.PermissionsClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Permissions.PermissionsClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Permissions.PermissionsClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Permissions.PermissionsClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Permissions.PermissionsClient.WithAuthorization(System.String)">
             <summary>
@@ -7417,6 +7943,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Permissions.PermissionsClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Permissions.PermissionsClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Permissions.PermissionsClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Permissions.PermissionsClient.GetCapabilitiesAsync(BeyondImmersion.BannouService.Permissions.CapabilityRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -7882,11 +8424,28 @@
             <returns>Subscription information retrieved</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Website.WebsiteClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Website.WebsiteClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Website.WebsiteClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Website.WebsiteClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Website.WebsiteClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Website.WebsiteClient.WithAuthorization(System.String)">
             <summary>
@@ -7896,6 +8455,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Website.WebsiteClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Website.WebsiteClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Website.WebsiteClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Website.WebsiteClient.GetStatusAsync(System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -8120,11 +8695,28 @@
             <returns>List of stores</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.State.StateClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.State.StateClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.State.StateClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.State.StateClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.State.StateClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.State.StateClient.WithAuthorization(System.String)">
             <summary>
@@ -8134,6 +8726,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.State.StateClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.State.StateClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.State.StateClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.State.StateClient.GetStateAsync(BeyondImmersion.BannouService.State.GetStateRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -8564,11 +9172,28 @@
             <returns>Password reset successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Auth.AuthClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Auth.AuthClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Auth.AuthClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Auth.AuthClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Auth.AuthClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Auth.AuthClient.WithAuthorization(System.String)">
             <summary>
@@ -8578,6 +9203,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Auth.AuthClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Auth.AuthClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Auth.AuthClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Auth.AuthClient.LoginAsync(BeyondImmersion.BannouService.Auth.LoginRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -9191,11 +9832,28 @@
             <returns>Cleanup completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Orchestrator.OrchestratorClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Orchestrator.OrchestratorClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Orchestrator.OrchestratorClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Orchestrator.OrchestratorClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Orchestrator.OrchestratorClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Orchestrator.OrchestratorClient.WithAuthorization(System.String)">
             <summary>
@@ -9205,6 +9863,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Orchestrator.OrchestratorClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Orchestrator.OrchestratorClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Orchestrator.OrchestratorClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Orchestrator.OrchestratorClient.GetInfrastructureHealthAsync(BeyondImmersion.BannouService.Orchestrator.InfrastructureHealthRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -11144,11 +11818,28 @@
             <returns>Seed operation completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Location.LocationClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Location.LocationClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Location.LocationClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Location.LocationClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Location.LocationClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Location.LocationClient.WithAuthorization(System.String)">
             <summary>
@@ -11158,6 +11849,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Location.LocationClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Location.LocationClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Location.LocationClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Location.LocationClient.GetLocationAsync(BeyondImmersion.BannouService.Location.GetLocationRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -11720,11 +12427,28 @@
             <returns>Context variables resolved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Behavior.BehaviorClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.BehaviorClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.BehaviorClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.WithAuthorization(System.String)">
             <summary>
@@ -11734,6 +12458,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.CompileAbmlBehaviorAsync(System.String,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -12175,11 +12915,28 @@
             <returns>Characters retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Character.CharacterClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+        <member name="F:BeyondImmersion.BannouService.Character.CharacterClient.ServiceName">
             <summary>
-            Creates and configures an HttpClient instance for this service client.
-            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            Service name used for app-id resolution. Extracted from class name.
             </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Character.CharacterClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Character.CharacterClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Character.CharacterClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Character.CharacterClient.WithAuthorization(System.String)">
             <summary>
@@ -12189,6 +12946,22 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Character.CharacterClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Character.CharacterClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Character.CharacterClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Character.CharacterClient.CreateCharacterAsync(BeyondImmersion.BannouService.Character.CreateCharacterRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>

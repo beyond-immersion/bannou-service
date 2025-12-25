@@ -1,20 +1,22 @@
-using Dapr.Client;
+using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Connect;
 
 /// <summary>
-/// Dapr-based session management for distributed WebSocket connection state.
-/// Uses Dapr state store and pub/sub components for infrastructure access.
+/// Session management for distributed WebSocket connection state.
+/// Uses Redis state store and message bus for infrastructure access.
 /// </summary>
 public class DaprSessionManager : ISessionManager
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<DaprSessionManager> _logger;
 
-    // Dapr component names (must match component YAML configurations)
+    // State store name (must match Redis configuration)
     private const string STATE_STORE = "connect-statestore";
-    private const string PUBSUB_NAME = "bannou-pubsub";
     private const string SESSION_EVENTS_TOPIC = "connect.session-events";
 
     // Key prefixes - MUST be unique across all services to avoid key collisions
@@ -29,11 +31,15 @@ public class DaprSessionManager : ISessionManager
     private static readonly int HEARTBEAT_TTL_SECONDS = (int)TimeSpan.FromMinutes(5).TotalSeconds;
 
     /// <summary>
-    /// Creates a new DaprSessionManager with the specified Dapr client.
+    /// Creates a new DaprSessionManager with the specified infrastructure services.
     /// </summary>
-    public DaprSessionManager(DaprClient daprClient, ILogger<DaprSessionManager> logger)
+    public DaprSessionManager(
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
+        ILogger<DaprSessionManager> logger)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -48,15 +54,12 @@ public class DaprSessionManager : ISessionManager
         try
         {
             var key = SESSION_MAPPINGS_KEY_PREFIX + sessionId;
-            var ttlSeconds = (int)(ttl?.TotalSeconds ?? SESSION_TTL_SECONDS);
+            var ttlTimeSpan = ttl ?? TimeSpan.FromSeconds(SESSION_TTL_SECONDS);
 
-            await _daprClient.SaveStateAsync(
-                STATE_STORE,
-                key,
-                serviceMappings,
-                metadata: new Dictionary<string, string> { { "ttlInSeconds", ttlSeconds.ToString() } });
+            var store = _stateStoreFactory.GetStore<Dictionary<string, Guid>>(STATE_STORE);
+            await store.SaveAsync(key, serviceMappings, new StateOptions { Ttl = (int)ttlTimeSpan.TotalSeconds });
 
-            _logger.LogDebug("Stored service mappings for session {SessionId} via Dapr", sessionId);
+            _logger.LogDebug("Stored service mappings for session {SessionId}", sessionId);
         }
         catch (Exception ex)
         {
@@ -71,14 +74,15 @@ public class DaprSessionManager : ISessionManager
         try
         {
             var key = SESSION_MAPPINGS_KEY_PREFIX + sessionId;
-            var mappings = await _daprClient.GetStateAsync<Dictionary<string, Guid>>(STATE_STORE, key);
+            var store = _stateStoreFactory.GetStore<Dictionary<string, Guid>>(STATE_STORE);
+            var mappings = await store.GetAsync(key);
 
             if (mappings == null)
             {
                 return null;
             }
 
-            _logger.LogDebug("Retrieved service mappings for session {SessionId} via Dapr", sessionId);
+            _logger.LogDebug("Retrieved service mappings for session {SessionId}", sessionId);
             return mappings;
         }
         catch (Exception ex)
@@ -101,15 +105,12 @@ public class DaprSessionManager : ISessionManager
         try
         {
             var key = SESSION_KEY_PREFIX + sessionId;
-            var ttlSeconds = (int)(ttl?.TotalSeconds ?? SESSION_TTL_SECONDS);
+            var ttlTimeSpan = ttl ?? TimeSpan.FromSeconds(SESSION_TTL_SECONDS);
 
-            await _daprClient.SaveStateAsync(
-                STATE_STORE,
-                key,
-                stateData,
-                metadata: new Dictionary<string, string> { { "ttlInSeconds", ttlSeconds.ToString() } });
+            var store = _stateStoreFactory.GetStore<ConnectionStateData>(STATE_STORE);
+            await store.SaveAsync(key, stateData, new StateOptions { Ttl = (int)ttlTimeSpan.TotalSeconds });
 
-            _logger.LogDebug("Stored connection state for session {SessionId} via Dapr", sessionId);
+            _logger.LogDebug("Stored connection state for session {SessionId}", sessionId);
         }
         catch (Exception ex)
         {
@@ -124,14 +125,15 @@ public class DaprSessionManager : ISessionManager
         try
         {
             var key = SESSION_KEY_PREFIX + sessionId;
-            var stateData = await _daprClient.GetStateAsync<ConnectionStateData>(STATE_STORE, key);
+            var store = _stateStoreFactory.GetStore<ConnectionStateData>(STATE_STORE);
+            var stateData = await store.GetAsync(key);
 
             if (stateData == null)
             {
                 return null;
             }
 
-            _logger.LogDebug("Retrieved connection state for session {SessionId} via Dapr", sessionId);
+            _logger.LogDebug("Retrieved connection state for session {SessionId}", sessionId);
             return stateData;
         }
         catch (Exception ex)
@@ -159,11 +161,8 @@ public class DaprSessionManager : ISessionManager
                 ConnectionCount = 1
             };
 
-            await _daprClient.SaveStateAsync(
-                STATE_STORE,
-                key,
-                heartbeatData,
-                metadata: new Dictionary<string, string> { { "ttlInSeconds", HEARTBEAT_TTL_SECONDS.ToString() } });
+            var store = _stateStoreFactory.GetStore<SessionHeartbeat>(STATE_STORE);
+            await store.SaveAsync(key, heartbeatData, new StateOptions { Ttl = HEARTBEAT_TTL_SECONDS });
 
             _logger.LogDebug("Updated heartbeat for session {SessionId} on instance {InstanceId}",
                 sessionId, instanceId);
@@ -188,13 +187,9 @@ public class DaprSessionManager : ISessionManager
         try
         {
             var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
-            var ttlSeconds = (int)reconnectionWindow.TotalSeconds;
 
-            await _daprClient.SaveStateAsync(
-                STATE_STORE,
-                key,
-                sessionId,
-                metadata: new Dictionary<string, string> { { "ttlInSeconds", ttlSeconds.ToString() } });
+            var store = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            await store.SaveAsync(key, sessionId, new StateOptions { Ttl = (int)reconnectionWindow.TotalSeconds });
 
             _logger.LogDebug("Stored reconnection token for session {SessionId} (window: {Window})",
                 sessionId, reconnectionWindow);
@@ -212,7 +207,8 @@ public class DaprSessionManager : ISessionManager
         try
         {
             var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
-            var sessionId = await _daprClient.GetStateAsync<string>(STATE_STORE, key);
+            var store = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            var sessionId = await store.GetAsync(key);
 
             if (string.IsNullOrEmpty(sessionId))
             {
@@ -235,7 +231,8 @@ public class DaprSessionManager : ISessionManager
         try
         {
             var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
-            await _daprClient.DeleteStateAsync(STATE_STORE, key);
+            var store = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            await store.DeleteAsync(key);
 
             _logger.LogDebug("Removed reconnection token");
         }
@@ -349,16 +346,21 @@ public class DaprSessionManager : ISessionManager
             var mappingsKey = SESSION_MAPPINGS_KEY_PREFIX + sessionId;
             var heartbeatKey = SESSION_HEARTBEAT_KEY_PREFIX + sessionId;
 
+            // Get stores for each type
+            var connectionStore = _stateStoreFactory.GetStore<ConnectionStateData>(STATE_STORE);
+            var mappingsStore = _stateStoreFactory.GetStore<Dictionary<string, Guid>>(STATE_STORE);
+            var heartbeatStore = _stateStoreFactory.GetStore<SessionHeartbeat>(STATE_STORE);
+
             var deleteTasks = new[]
             {
-                _daprClient.DeleteStateAsync(STATE_STORE, sessionKey),
-                _daprClient.DeleteStateAsync(STATE_STORE, mappingsKey),
-                _daprClient.DeleteStateAsync(STATE_STORE, heartbeatKey)
+                connectionStore.DeleteAsync(sessionKey),
+                mappingsStore.DeleteAsync(mappingsKey),
+                heartbeatStore.DeleteAsync(heartbeatKey)
             };
 
             await Task.WhenAll(deleteTasks);
 
-            _logger.LogDebug("Removed session data for {SessionId} via Dapr", sessionId);
+            _logger.LogDebug("Removed session data for {SessionId}", sessionId);
         }
         catch (Exception ex)
         {
@@ -384,7 +386,7 @@ public class DaprSessionManager : ISessionManager
                 Data = eventData
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, SESSION_EVENTS_TOPIC, sessionEvent);
+            await _messageBus.PublishAsync(SESSION_EVENTS_TOPIC, sessionEvent);
 
             _logger.LogDebug("Published session event {EventType} for session {SessionId}",
                 eventType, sessionId);

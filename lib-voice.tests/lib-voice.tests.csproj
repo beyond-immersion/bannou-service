@@ -28,6 +28,7 @@
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-voice -->
     <ProjectReference Include="../lib-voice/lib-voice.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
   </ItemGroup>
 
 </Project>

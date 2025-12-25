@@ -2,12 +2,12 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 
 [assembly: InternalsVisibleTo("lib-realm.tests")]
 
@@ -21,25 +21,27 @@ namespace BeyondImmersion.BannouService.Realm;
 [DaprService("realm", typeof(IRealmService), lifetime: ServiceLifetime.Scoped)]
 public partial class RealmService : IRealmService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<RealmService> _logger;
     private readonly RealmServiceConfiguration _configuration;
     private readonly IErrorEventEmitter _errorEventEmitter;
 
     private const string STATE_STORE = "realm-statestore";
-    private const string PUBSUB_NAME = "bannou-pubsub";
     private const string REALM_KEY_PREFIX = "realm:";
     private const string CODE_INDEX_PREFIX = "code-index:";
     private const string ALL_REALMS_KEY = "all-realms";
 
     public RealmService(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         ILogger<RealmService> logger,
         RealmServiceConfiguration configuration,
         IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
@@ -70,7 +72,7 @@ public partial class RealmService : IRealmService
             _logger.LogDebug("Getting realm by ID: {RealmId}", body.RealmId);
 
             var realmKey = BuildRealmKey(body.RealmId.ToString());
-            var model = await _daprClient.GetStateAsync<RealmModel>(STATE_STORE, realmKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<RealmModel>(STATE_STORE).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
             {
@@ -103,7 +105,7 @@ public partial class RealmService : IRealmService
             _logger.LogDebug("Getting realm by code: {Code}", body.Code);
 
             var codeIndexKey = BuildCodeIndexKey(body.Code);
-            var realmId = await _daprClient.GetStateAsync<string>(STATE_STORE, codeIndexKey, cancellationToken: cancellationToken);
+            var realmId = await _stateStoreFactory.GetStore<string>(STATE_STORE).GetAsync(codeIndexKey, cancellationToken);
 
             if (string.IsNullOrEmpty(realmId))
             {
@@ -112,7 +114,7 @@ public partial class RealmService : IRealmService
             }
 
             var realmKey = BuildRealmKey(realmId);
-            var model = await _daprClient.GetStateAsync<RealmModel>(STATE_STORE, realmKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<RealmModel>(STATE_STORE).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
             {
@@ -145,7 +147,7 @@ public partial class RealmService : IRealmService
             _logger.LogDebug("Listing realms with filters - Category: {Category}, IsActive: {IsActive}, IncludeDeprecated: {IncludeDeprecated}",
                 body.Category, body.IsActive, body.IncludeDeprecated);
 
-            var allRealmIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, ALL_REALMS_KEY, cancellationToken: cancellationToken);
+            var allRealmIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(ALL_REALMS_KEY, cancellationToken);
 
             if (allRealmIds == null || allRealmIds.Count == 0)
             {
@@ -224,7 +226,7 @@ public partial class RealmService : IRealmService
             _logger.LogDebug("Checking if realm exists: {RealmId}", body.RealmId);
 
             var realmKey = BuildRealmKey(body.RealmId.ToString());
-            var model = await _daprClient.GetStateAsync<RealmModel>(STATE_STORE, realmKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<RealmModel>(STATE_STORE).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
             {
@@ -273,7 +275,7 @@ public partial class RealmService : IRealmService
 
             // Check if code already exists
             var codeIndexKey = BuildCodeIndexKey(code);
-            var existingId = await _daprClient.GetStateAsync<string>(STATE_STORE, codeIndexKey, cancellationToken: cancellationToken);
+            var existingId = await _stateStoreFactory.GetStore<string>(STATE_STORE).GetAsync(codeIndexKey, cancellationToken);
 
             if (!string.IsNullOrEmpty(existingId))
             {
@@ -302,17 +304,17 @@ public partial class RealmService : IRealmService
 
             // Save the model
             var realmKey = BuildRealmKey(realmId.ToString());
-            await _daprClient.SaveStateAsync(STATE_STORE, realmKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<RealmModel>(STATE_STORE).SaveAsync(realmKey, model, cancellationToken: cancellationToken);
 
             // Update code index
-            await _daprClient.SaveStateAsync(STATE_STORE, codeIndexKey, realmId.ToString(), cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<string>(STATE_STORE).SaveAsync(codeIndexKey, realmId.ToString(), cancellationToken: cancellationToken);
 
             // Update all-realms list
-            var allRealmIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, ALL_REALMS_KEY, cancellationToken: cancellationToken) ?? new List<string>();
+            var allRealmIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(ALL_REALMS_KEY, cancellationToken) ?? new List<string>();
             if (!allRealmIds.Contains(realmId.ToString()))
             {
                 allRealmIds.Add(realmId.ToString());
-                await _daprClient.SaveStateAsync(STATE_STORE, ALL_REALMS_KEY, allRealmIds, cancellationToken: cancellationToken);
+                await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).SaveAsync(ALL_REALMS_KEY, allRealmIds, cancellationToken: cancellationToken);
             }
 
             // Publish realm created event
@@ -344,7 +346,7 @@ public partial class RealmService : IRealmService
             _logger.LogDebug("Updating realm: {RealmId}", body.RealmId);
 
             var realmKey = BuildRealmKey(body.RealmId.ToString());
-            var model = await _daprClient.GetStateAsync<RealmModel>(STATE_STORE, realmKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<RealmModel>(STATE_STORE).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
             {
@@ -384,7 +386,7 @@ public partial class RealmService : IRealmService
             if (changedFields.Count > 0)
             {
                 model.UpdatedAt = DateTimeOffset.UtcNow;
-                await _daprClient.SaveStateAsync(STATE_STORE, realmKey, model, cancellationToken: cancellationToken);
+                await _stateStoreFactory.GetStore<RealmModel>(STATE_STORE).SaveAsync(realmKey, model, cancellationToken: cancellationToken);
 
                 // Publish realm updated event
                 await PublishRealmUpdatedEventAsync(model, changedFields, cancellationToken);
@@ -416,7 +418,7 @@ public partial class RealmService : IRealmService
             _logger.LogDebug("Deleting realm: {RealmId}", body.RealmId);
 
             var realmKey = BuildRealmKey(body.RealmId.ToString());
-            var model = await _daprClient.GetStateAsync<RealmModel>(STATE_STORE, realmKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<RealmModel>(STATE_STORE).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
             {
@@ -432,17 +434,17 @@ public partial class RealmService : IRealmService
             }
 
             // Delete the model
-            await _daprClient.DeleteStateAsync(STATE_STORE, realmKey, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<RealmModel>(STATE_STORE).DeleteAsync(realmKey, cancellationToken);
 
             // Delete code index
             var codeIndexKey = BuildCodeIndexKey(model.Code);
-            await _daprClient.DeleteStateAsync(STATE_STORE, codeIndexKey, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<string>(STATE_STORE).DeleteAsync(codeIndexKey, cancellationToken);
 
             // Remove from all-realms list
-            var allRealmIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, ALL_REALMS_KEY, cancellationToken: cancellationToken) ?? new List<string>();
+            var allRealmIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(ALL_REALMS_KEY, cancellationToken) ?? new List<string>();
             if (allRealmIds.Remove(body.RealmId.ToString()))
             {
-                await _daprClient.SaveStateAsync(STATE_STORE, ALL_REALMS_KEY, allRealmIds, cancellationToken: cancellationToken);
+                await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).SaveAsync(ALL_REALMS_KEY, allRealmIds, cancellationToken: cancellationToken);
             }
 
             // Publish realm deleted event
@@ -478,7 +480,7 @@ public partial class RealmService : IRealmService
             _logger.LogDebug("Deprecating realm: {RealmId}", body.RealmId);
 
             var realmKey = BuildRealmKey(body.RealmId.ToString());
-            var model = await _daprClient.GetStateAsync<RealmModel>(STATE_STORE, realmKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<RealmModel>(STATE_STORE).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
             {
@@ -497,7 +499,7 @@ public partial class RealmService : IRealmService
             model.DeprecationReason = body.Reason;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _daprClient.SaveStateAsync(STATE_STORE, realmKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<RealmModel>(STATE_STORE).SaveAsync(realmKey, model, cancellationToken: cancellationToken);
 
             // Publish realm updated event with deprecation fields
             await PublishRealmUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
@@ -528,7 +530,7 @@ public partial class RealmService : IRealmService
             _logger.LogDebug("Undeprecating realm: {RealmId}", body.RealmId);
 
             var realmKey = BuildRealmKey(body.RealmId.ToString());
-            var model = await _daprClient.GetStateAsync<RealmModel>(STATE_STORE, realmKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<RealmModel>(STATE_STORE).GetAsync(realmKey, cancellationToken);
 
             if (model == null)
             {
@@ -547,7 +549,7 @@ public partial class RealmService : IRealmService
             model.DeprecationReason = null;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _daprClient.SaveStateAsync(STATE_STORE, realmKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<RealmModel>(STATE_STORE).SaveAsync(realmKey, model, cancellationToken: cancellationToken);
 
             // Publish realm updated event with deprecation fields cleared
             await PublishRealmUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
@@ -593,7 +595,7 @@ public partial class RealmService : IRealmService
                 {
                     var code = seedRealm.Code.ToUpperInvariant();
                     var codeIndexKey = BuildCodeIndexKey(code);
-                    var existingId = await _daprClient.GetStateAsync<string>(STATE_STORE, codeIndexKey, cancellationToken: cancellationToken);
+                    var existingId = await _stateStoreFactory.GetStore<string>(STATE_STORE).GetAsync(codeIndexKey, cancellationToken);
 
                     if (!string.IsNullOrEmpty(existingId))
                     {
@@ -601,7 +603,7 @@ public partial class RealmService : IRealmService
                         {
                             // Update existing
                             var realmKey = BuildRealmKey(existingId);
-                            var existingModel = await _daprClient.GetStateAsync<RealmModel>(STATE_STORE, realmKey, cancellationToken: cancellationToken);
+                            var existingModel = await _stateStoreFactory.GetStore<RealmModel>(STATE_STORE).GetAsync(realmKey, cancellationToken);
 
                             if (existingModel != null)
                             {
@@ -612,7 +614,7 @@ public partial class RealmService : IRealmService
                                 if (seedRealm.Metadata != null) existingModel.Metadata = seedRealm.Metadata;
                                 existingModel.UpdatedAt = DateTimeOffset.UtcNow;
 
-                                await _daprClient.SaveStateAsync(STATE_STORE, realmKey, existingModel, cancellationToken: cancellationToken);
+                                await _stateStoreFactory.GetStore<RealmModel>(STATE_STORE).SaveAsync(realmKey, existingModel, cancellationToken: cancellationToken);
                                 updated++;
                                 _logger.LogDebug("Updated existing realm: {Code}", code);
                             }
@@ -690,25 +692,14 @@ public partial class RealmService : IRealmService
         }
 
         var keys = realmIds.Select(BuildRealmKey).ToList();
-        var bulkResults = await _daprClient.GetBulkStateAsync(STATE_STORE, keys, parallelism: 10, cancellationToken: cancellationToken);
+        var bulkResults = await _stateStoreFactory.GetStore<RealmModel>(STATE_STORE).GetBulkAsync(keys, cancellationToken);
 
         var realmList = new List<RealmModel>();
-        foreach (var result in bulkResults)
+        foreach (var (_, model) in bulkResults)
         {
-            if (!string.IsNullOrEmpty(result.Value))
+            if (model != null)
             {
-                try
-                {
-                    var model = BannouJson.Deserialize<RealmModel>(result.Value);
-                    if (model != null)
-                    {
-                        realmList.Add(model);
-                    }
-                }
-                catch (JsonException ex)
-                {
-                    _logger.LogWarning(ex, "Failed to deserialize realm: {Key}", result.Key);
-                }
+                realmList.Add(model);
             }
         }
 
@@ -756,7 +747,7 @@ public partial class RealmService : IRealmService
                 IsActive = model.IsActive
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, "realm.created", eventModel, cancellationToken);
+            await _messageBus.PublishAsync("realm.created", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published realm.created event for {RealmId}", model.RealmId);
         }
         catch (Exception ex)
@@ -790,7 +781,7 @@ public partial class RealmService : IRealmService
                 ChangedFields = changedFields.ToList()
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, "realm.updated", eventModel, cancellationToken);
+            await _messageBus.PublishAsync("realm.updated", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published realm.updated event for {RealmId} with changed fields: {ChangedFields}",
                 model.RealmId, string.Join(", ", changedFields));
         }
@@ -825,7 +816,7 @@ public partial class RealmService : IRealmService
                 DeletedReason = deletedReason
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, "realm.deleted", eventModel, cancellationToken);
+            await _messageBus.PublishAsync("realm.deleted", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published realm.deleted event for {RealmId}", model.RealmId);
         }
         catch (Exception ex)
@@ -845,7 +836,7 @@ public partial class RealmService : IRealmService
     public async Task RegisterServicePermissionsAsync()
     {
         _logger.LogInformation("Registering Realm service permissions...");
-        await RealmPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+        await RealmPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
     }
 
     #endregion

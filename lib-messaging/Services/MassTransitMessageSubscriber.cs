@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.BannouService.Services;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;

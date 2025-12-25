@@ -29,6 +29,7 @@
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-servicedata -->
     <ProjectReference Include="../lib-servicedata/lib-servicedata.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
   </ItemGroup>
 
 </Project>
