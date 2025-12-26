@@ -8,14 +8,14 @@ using System.Threading.Tasks;
 namespace BeyondImmersion.BannouService;
 
 /// <summary>
-/// Helper class for parsing Dapr pub/sub events with CloudEvents format handling.
-/// Handles both CloudEvents-wrapped events and raw payloads since Dapr's RabbitMQ
-/// component can deliver events in either format depending on timing and configuration.
+/// Helper class for parsing pub/sub events with CloudEvents format handling.
+/// Handles both CloudEvents-wrapped events and raw payloads since RabbitMQ
+/// can deliver events in either format depending on timing and configuration.
 /// </summary>
-public static class DaprEventHelper
+public static class BannouEventHelper
 {
     /// <summary>
-    /// Reads and parses a Dapr pub/sub event from the HTTP request body, returning the unwrapped JSON element.
+    /// Reads and parses a pub/sub event from the HTTP request body, returning the unwrapped JSON element.
     /// Automatically handles both CloudEvents format (with 'data' wrapper) and raw format.
     /// Use this method when you need to manually extract properties from the event.
     /// </summary>
@@ -58,7 +58,7 @@ public static class DaprEventHelper
     }
 
     /// <summary>
-    /// Reads and parses a Dapr pub/sub event from the HTTP request body.
+    /// Reads and parses a pub/sub event from the HTTP request body.
     /// Automatically handles both CloudEvents format (with 'data' wrapper) and raw format.
     /// </summary>
     /// <typeparam name="T">The event model type to deserialize</typeparam>

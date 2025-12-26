@@ -10,7 +10,7 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Test handler for location API endpoints using generated clients.
 /// Tests the location service APIs directly via NSwag-generated LocationClient.
 ///
-/// Note: Location APIs test service-to-service communication via Dapr.
+/// Note: Location APIs test service-to-service communication via mesh.
 /// These tests validate hierarchical location management with real datastores.
 /// </summary>
 public class LocationTestHandler : IServiceTestHandler

@@ -11,7 +11,7 @@ info:
 
     **Pre-signed URL Architecture**: All asset transfers use pre-signed URLs via MinIO/S3.
     WebSocket handles only metadata requests and progress notifications - never raw asset data.
-    This bypasses Dapr's 4MB payload limits entirely.
+    This bypasses payload limits entirely.
 
     **Key Features**:
     - Individual asset upload/download via pre-signed URLs
@@ -22,7 +22,7 @@ info:
 
 servers:
 - url: http://localhost:5012
-  description: Dapr sidecar endpoint
+  description: Bannou service endpoint
 
 paths:
   # ==========================================================================

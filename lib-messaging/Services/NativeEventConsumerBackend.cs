@@ -11,7 +11,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 
 /// <summary>
 /// Native RabbitMQ backend for IEventConsumer fan-out.
-/// Replaces Dapr-generated EventsController files.
+/// Replaces mesh-generated EventsController files.
 /// </summary>
 /// <remarks>
 /// <para>

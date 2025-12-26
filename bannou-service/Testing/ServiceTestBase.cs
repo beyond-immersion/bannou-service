@@ -10,17 +10,17 @@ namespace BeyondImmersion.BannouService.Testing;
 /// <code>
 /// public class MyServiceTests : ServiceTestBase&lt;MyServiceConfiguration&gt;
 /// {
-///     private readonly Mock&lt;DaprClient&gt; _mockDaprClient;
+///     private readonly Mock&lt;mesh client&gt; _mockmesh client;
 ///     private readonly Mock&lt;ILogger&lt;MyService&gt;&gt; _mockLogger;
 ///
 ///     public MyServiceTests()
 ///     {
-///         _mockDaprClient = new Mock&lt;DaprClient&gt;();
+///         _mockmesh client = new Mock&lt;mesh client&gt;();
 ///         _mockLogger = new Mock&lt;ILogger&lt;MyService&gt;&gt;();
 ///     }
 ///
 ///     private MyService CreateService() =&gt; new MyService(
-///         _mockDaprClient.Object,
+///         _mockmesh client.Object,
 ///         _mockLogger.Object,
 ///         Configuration);
 /// }

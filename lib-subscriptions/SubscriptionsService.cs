@@ -18,8 +18,7 @@ namespace BeyondImmersion.BannouService.Subscriptions;
 /// Manages user subscriptions to game services with time-limited access control.
 /// Publishes subscription.updated events for real-time session authorization updates.
 /// </summary>
-[DaprService("subscriptions", typeof(ISubscriptionsService), lifetime: ServiceLifetime.Singleton)]
-[Obsolete]
+[BannouService("subscriptions", typeof(ISubscriptionsService), lifetime: ServiceLifetime.Singleton)]
 public partial class SubscriptionsService : ISubscriptionsService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -36,7 +35,6 @@ public partial class SubscriptionsService : ISubscriptionsService
     // Event topics
     private const string SUBSCRIPTION_UPDATED_TOPIC = "subscription.updated";
 
-    [Obsolete]
     public SubscriptionsService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
@@ -53,7 +51,7 @@ public partial class SubscriptionsService : ISubscriptionsService
 
         // Register event handlers via partial class (SubscriptionsServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     private string StateStoreName => _configuration.StateStoreName ?? "subscriptions-statestore";
@@ -606,7 +604,7 @@ public partial class SubscriptionsService : ISubscriptionsService
 
     /// <summary>
     /// Registers this service's API permissions with the Permissions service on startup.
-    /// Overrides the default IDaprService implementation to use generated permission data.
+    /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()
     {
@@ -642,7 +640,7 @@ public partial class SubscriptionsService : ISubscriptionsService
 }
 
 /// <summary>
-/// Internal storage model using Unix timestamps to avoid Dapr serialization issues.
+/// Internal storage model using Unix timestamps to avoid serialization issues.
 /// Accessible to test project via InternalsVisibleTo attribute.
 /// </summary>
 internal class SubscriptionDataModel

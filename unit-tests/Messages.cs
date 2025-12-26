@@ -113,7 +113,6 @@ public class Messages : IClassFixture<CollectionFixture>
     [HeaderArray(Delimeter = ";;")]
     public Dictionary<string, List<string>>? CustomDelimeterProperty { get; set; }
 
-    [Obsolete]
     public Messages(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
@@ -121,7 +120,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_EnumerableKVPEnumerable()
     {
         var propertyData = GetPropertyData(nameof(EnumerableKVPEnumerableProperty));
@@ -135,7 +133,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_EnumerableKVPArray()
     {
         var propertyData = GetPropertyData(nameof(EnumerableKVPArrayProperty));
@@ -149,7 +146,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_EnumerableKVPList()
     {
         var propertyData = GetPropertyData(nameof(EnumerableKVPListProperty));
@@ -163,7 +159,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_EnumerableKVP()
     {
         var propertyData = GetPropertyData(nameof(EnumerableKVPProperty));
@@ -178,7 +173,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_DictionaryEnumerable()
     {
         var propertyData = GetPropertyData(nameof(DictionaryEnumerableProperty));
@@ -192,7 +186,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_DictionaryArray()
     {
         var propertyData = GetPropertyData(nameof(DictionaryArrayProperty));
@@ -206,7 +199,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_DictionaryList()
     {
         var propertyData = GetPropertyData(nameof(DictionaryListProperty));
@@ -220,7 +212,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_Dictionary()
     {
         var propertyData = GetPropertyData(nameof(DictionaryProperty));
@@ -235,7 +226,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_EnumerableTupleEnumerable()
     {
         var propertyData = GetPropertyData(nameof(EnumerableTupleEnumerableProperty));
@@ -250,7 +240,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_EnumerableTupleArray()
     {
         var propertyData = GetPropertyData(nameof(EnumerableTupleArrayProperty));
@@ -265,7 +254,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_EnumerableTupleList()
     {
         var propertyData = GetPropertyData(nameof(EnumerableTupleListProperty));
@@ -280,7 +268,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_ArrayTupleEnumerable()
     {
         var propertyData = GetPropertyData(nameof(ArrayTupleEnumerableProperty));
@@ -295,7 +282,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_ArrayTupleArray()
     {
         var propertyData = GetPropertyData(nameof(ArrayTupleArrayProperty));
@@ -310,7 +296,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_ArrayTupleList()
     {
         var propertyData = GetPropertyData(nameof(ArrayTupleListProperty));
@@ -325,7 +310,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_ListTupleEnumerable()
     {
         var propertyData = GetPropertyData(nameof(ListTupleEnumerableProperty));
@@ -340,7 +324,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_ListTupleArray()
     {
         var propertyData = GetPropertyData(nameof(ListTupleArrayProperty));
@@ -355,7 +338,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_ListTupleList()
     {
         var propertyData = GetPropertyData(nameof(ListTupleListProperty));
@@ -370,7 +352,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_EnumerableTuple()
     {
         var propertyData = GetPropertyData(nameof(EnumerableTupleProperty));
@@ -385,7 +366,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_ArrayTuple()
     {
         var propertyData = GetPropertyData(nameof(ArrayTupleProperty));
@@ -400,7 +380,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_ListTuple()
     {
         var propertyData = GetPropertyData(nameof(ListTupleProperty));
@@ -415,7 +394,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_Enumerable()
     {
         var propertyData = GetPropertyData(nameof(EnumerableProperty));
@@ -429,7 +407,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_Array()
     {
         var propertyData = GetPropertyData(nameof(ArrayProperty));
@@ -443,7 +420,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_List()
     {
         var propertyData = GetPropertyData(nameof(ListProperty));
@@ -457,7 +433,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void MessageProperties_CustomDelimeter()
     {
         var propertyData = GetPropertyData(nameof(CustomDelimeterProperty));
@@ -482,7 +457,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Messages_SetHeadersToHttpRequest_Derived()
     {
         var testID = Guid.NewGuid().ToString();
@@ -500,7 +474,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Messages_SetHeadersToHttpRequest_Generic()
     {
         var testID = Guid.NewGuid().ToString();
@@ -518,7 +491,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Messages_SetHeadersToHttpRequest_GenericDerived()
     {
         var testID = Guid.NewGuid().ToString();
@@ -536,7 +508,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Messages_SetHeadersToHttpRequest_Additional()
     {
         var testID = Guid.NewGuid().ToString();
@@ -554,7 +525,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Messages_SetHeadersToHttpRequest_DerivedResponse()
     {
         var testID = Guid.NewGuid().ToString();
@@ -572,7 +542,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Messages_GetHeadersFromHttpResponse()
     {
         var testID = Guid.NewGuid().ToString();
@@ -585,7 +554,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Messages_GetHeadersFromHttpResponse_Additional()
     {
         var testID = Guid.NewGuid().ToString();
@@ -598,7 +566,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Messages_SetPropertiesToHeaders()
     {
         var testID = Guid.NewGuid().ToString();
@@ -611,7 +578,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Messages_TransferHeaders()
     {
         var testID = Guid.NewGuid().ToString();
@@ -632,7 +598,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Messages_TransferHeaders_DerivedRequest()
     {
         var testID = Guid.NewGuid().ToString();
@@ -653,7 +618,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Messages_TransferHeaders_DerivedResponse()
     {
         var testID = Guid.NewGuid().ToString();
@@ -674,7 +638,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Messages_TransferHeaders_JsonRequiredProperty()
     {
         var testID = Guid.NewGuid().ToString();
@@ -695,7 +658,6 @@ public class Messages : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Messages_TransferAdditionalHeaders()
     {
         var testID = Guid.NewGuid().ToString();

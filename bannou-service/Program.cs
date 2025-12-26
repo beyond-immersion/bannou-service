@@ -37,21 +37,18 @@ public static class Program
     /// Shared service configuration root.
     /// Includes command line args.
     /// </summary>
-    [Obsolete]
     public static IConfigurationRoot ConfigurationRoot
     {
         get => _configurationRoot ??= IServiceConfiguration.BuildConfigurationRoot(Environment.GetCommandLineArgs());
         internal set => _configurationRoot = value;
     }
 
-    [Obsolete]
     private static AppConfiguration _configuration;
 
     /// <summary>
     /// Service configuration.
     /// Pull from Config.json, ENVs, and command line args.
     /// </summary>
-    [Obsolete]
     public static AppConfiguration Configuration
     {
         get => _configuration ??= IServiceConfiguration.BuildConfiguration<AppConfiguration>(Environment.GetCommandLineArgs());
@@ -64,7 +61,6 @@ public static class Program
     /// Internal service GUID- largely used for administrative network commands.
     /// Randomly generated on service startup.
     /// </summary>
-    [Obsolete]
     public static string ServiceGUID
     {
         get => _serviceGUID ??= Configuration.Force_Service_ID ?? Guid.NewGuid().ToString().ToLower();
@@ -76,7 +72,6 @@ public static class Program
     /// <summary>
     /// Application/global logger.
     /// </summary>
-    [Obsolete]
     public static Microsoft.Extensions.Logging.ILogger Logger
     {
         get => _logger ??= ServiceLogging.CreateApplicationLogger();
@@ -95,7 +90,7 @@ public static class Program
 
     /// <summary>
     /// Mesh invocation client for service-to-service HTTP communication.
-    /// Replaces DaprClient for service invocation.
+    /// Replaces mesh client for service invocation.
     /// </summary>
     public static IMeshInvocationClient? MeshInvocationClient { get; private set; }
 
@@ -104,7 +99,6 @@ public static class Program
     /// </summary>
     public static CancellationTokenSource ShutdownCancellationTokenSource { get; } = new CancellationTokenSource();
 
-    [Obsolete]
     private static async Task<int> Main()
     {
         Logger.Log(LogLevel.Information, null, "Service starting.");
@@ -204,13 +198,13 @@ public static class Program
             webAppBuilder.Services
                 .AddWebSockets((websocketOptions) => { });
 
-            // NOTE: DaprClient is already registered by AddDapr() above with proper serializer config
-            // Do NOT call AddDaprClient() here - it would be ignored due to TryAddSingleton pattern
+            // NOTE: mesh client is already registered by AddBannouServices() above with proper serializer config
+            // Do NOT call Addmesh client() here - it would be ignored due to TryAddSingleton pattern
 
             // Add core service infrastructure (but not clients - PluginLoader handles those)
             webAppBuilder.Services.AddBannouServiceClients();
 
-            // Add client event publisher (for pushing events to WebSocket clients via Dapr pub/sub)
+            // Add client event publisher (for pushing events to WebSocket clients via Bannou pub/sub)
             webAppBuilder.Services.AddClientEventPublisher();
 
             // Configure plugin services (includes centralized client, service, and configuration registration)
@@ -349,9 +343,9 @@ public static class Program
             var webHostTask = webApp.RunAsync(ShutdownCancellationTokenSource.Token);
             await Task.Delay(TimeSpan.FromSeconds(1));
 
-            // Create heartbeat manager for Dapr connectivity check and ongoing health reporting
+            // Create heartbeat manager for mesh connectivity check and ongoing health reporting
             // HEARTBEAT_ENABLED defaults to true - only set to false for minimal infrastructure testing
-            // where Dapr pub/sub components are intentionally not configured
+            // where Bannou pub/sub components are intentionally not configured
             var heartbeatEnabledEnv = Environment.GetEnvironmentVariable("HEARTBEAT_ENABLED");
             var heartbeatEnabled = string.IsNullOrEmpty(heartbeatEnabledEnv) ||
                 !string.Equals(heartbeatEnabledEnv, "false", StringComparison.OrdinalIgnoreCase);
@@ -377,7 +371,7 @@ public static class Program
                 // Publishing a heartbeat proves RabbitMQ pub/sub readiness
                 Logger.Log(LogLevel.Information, null, "Waiting for message bus connectivity via startup heartbeat...");
                 if (!await HeartbeatManager.WaitForConnectivityAsync(
-                    maxRetries: Configuration.Dapr_Readiness_Timeout > 0 ? 30 : 1,
+                    maxRetries: Configuration.Mesh_Readiness_Timeout > 0 ? 30 : 1,
                     retryDelayMs: 2000,
                     ShutdownCancellationTokenSource.Token))
                 {
@@ -412,7 +406,7 @@ public static class Program
                 // Start periodic heartbeats now that we've confirmed connectivity
                 HeartbeatManager.StartPeriodicHeartbeats();
 
-                // Register service permissions now that Dapr pub/sub is confirmed ready
+                // Register service permissions now that Bannou pub/sub is confirmed ready
                 // This ensures permission registration events are delivered to the Permissions service
                 if (PluginLoader != null)
                 {
@@ -427,7 +421,7 @@ public static class Program
             else
             {
                 Logger.Log(LogLevel.Warning, null, "Heartbeat system disabled via HEARTBEAT_ENABLED=false (infrastructure testing mode).");
-                // Do NOT register permissions here: infra profile uses empty Dapr components (no pubsub),
+                // Do NOT register permissions here: infra profile uses empty components (no pubsub),
                 // and permission registration publishes over pubsub. Calling it would fail startup.
             }
 
@@ -480,7 +474,6 @@ public static class Program
     /// <summary>
     /// Load and initialize plugins based on current application configuration.
     /// </summary>
-    [Obsolete]
     private static async Task<bool> LoadPlugins()
     {
         // Enable assembly resolution for plugin dependencies
@@ -503,7 +496,7 @@ public static class Program
             return false;
 
         if (pluginsLoaded == 0)
-            Logger.Log(LogLevel.Warning, null, "No plugins were loaded. Running with existing IDaprService implementations only.");
+            Logger.Log(LogLevel.Warning, null, "No plugins were loaded. Running with existing IBannouService implementations only.");
         else
             Logger.Log(LogLevel.Information, null, $"Successfully loaded {pluginsLoaded} plugins.");
 
@@ -514,7 +507,6 @@ public static class Program
     /// Get the list of requested plugins based on Include_Assemblies configuration.
     /// </summary>
     /// <returns>List of plugin names to load, or null for all plugins</returns>
-    [Obsolete]
     private static IList<string>? GetRequestedPlugins()
     {
         if (string.Equals("none", Configuration.Include_Assemblies, StringComparison.InvariantCultureIgnoreCase))
@@ -541,7 +533,6 @@ public static class Program
     /// <summary>
     /// Include /plugins/ and subdirectories in resolving .dll dependencies.
     /// </summary>
-    [Obsolete]
     private static Assembly? OnAssemblyResolve(object? sender, ResolveEventArgs args)
     {
         if (string.IsNullOrWhiteSpace(args?.Name))
@@ -585,7 +576,6 @@ public static class Program
         return null;
     }
 
-    [Obsolete]
     private static bool TryLoadAssembly(string assemblyPath, out Assembly? assembly)
     {
         if (File.Exists(assemblyPath))
@@ -625,7 +615,6 @@ public static class Program
     /// <param name="webApp">The web application for service resolution</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>True if import succeeded, false otherwise</returns>
-    [Obsolete]
     private static async Task<bool> ImportServiceMappingsFromSourceAsync(
         string sourceAppId,
         WebApplication webApp,
@@ -634,9 +623,9 @@ public static class Program
         const int maxRetries = 3;
         const int retryDelayMs = 1000;
 
-        var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT")
+        var bannouHttpEndpoint = Environment.GetEnvironmentVariable("BANNOU_HTTP_ENDPOINT")
             ?? "http://127.0.0.1:3500";
-        var url = $"{daprHttpEndpoint}/v1.0/invoke/{sourceAppId}/method/orchestrator/service-routing";
+        var url = $"{bannouHttpEndpoint}/v1.0/invoke/{sourceAppId}/method/orchestrator/service-routing";
 
         using var httpClient = new HttpClient();
         httpClient.Timeout = TimeSpan.FromSeconds(10);
@@ -646,7 +635,7 @@ public static class Program
             try
             {
                 using var request = new HttpRequestMessage(HttpMethod.Post, url);
-                request.Headers.Add("dapr-app-id", sourceAppId);
+                request.Headers.Add("bannou-app-id", sourceAppId);
                 request.Content = new StringContent("{}", System.Text.Encoding.UTF8, "application/json");
 
                 var response = await httpClient.SendAsync(request, cancellationToken);
@@ -694,12 +683,11 @@ public static class Program
     }
 
     /// <summary>
-    /// Load persisted service mappings from Dapr state store (Redis).
+    /// Load persisted service mappings from state store (Redis).
     /// Used by orchestrator containers on restart to recover their routing table.
     /// </summary>
     /// <param name="webApp">The web application for service resolution</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    [Obsolete]
     private static async Task LoadPersistedMappingsAsync(
         WebApplication webApp,
         CancellationToken cancellationToken)

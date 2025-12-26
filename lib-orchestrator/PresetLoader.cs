@@ -135,8 +135,8 @@ public class PresetLoader
                     Name = node.Name,
                     Services = node.Services ?? new List<string>(),
                     Replicas = node.Replicas ?? 1,
-                    DaprEnabled = node.DaprEnabled ?? true,
-                    DaprAppId = node.DaprAppId ?? node.Name // Default to node name if not specified
+                    MeshEnabled = node.MeshEnabled ?? true,
+                    AppId = node.AppId ?? node.Name // Default to node name if not specified
                 };
 
                 // Merge node-specific and global environment
@@ -275,14 +275,14 @@ public class PresetNode
     public Dictionary<string, string>? Environment { get; set; }
 
     /// <summary>
-    /// Whether Dapr sidecar is enabled.
+    /// Whether mesh routing is enabled.
     /// </summary>
-    public bool? DaprEnabled { get; set; }
+    public bool? MeshEnabled { get; set; }
 
     /// <summary>
-    /// Override Dapr app-id.
+    /// Override app-id for mesh routing.
     /// </summary>
-    public string? DaprAppId { get; set; }
+    public string? AppId { get; set; }
 }
 
 /// <summary>

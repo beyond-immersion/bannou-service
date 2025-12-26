@@ -3,12 +3,12 @@ info:
   title: Bannou Mesh Service API
   description: |
     Native service mesh plugin providing direct service-to-service invocation
-    without Dapr sidecars. Replaces DaprClient.InvokeMethodAsync with YARP-based
+    natively. Replaces mesh invocation with YARP-based
     HTTP routing and Redis-backed service discovery.
 
     **Architecture Overview**:
     - Service endpoints are registered in Redis with health/load metadata
-    - IMeshClient provides service invocation API (drop-in DaprClient replacement)
+    - IMeshClient provides service invocation API (drop-in mesh client)
     - Load balancing across multiple instances of same app-id
     - Health-aware routing excludes degraded/unavailable instances
 
@@ -20,7 +20,7 @@ info:
   version: 1.0.0
 servers:
 - url: http://localhost:5012
-  description: Dapr sidecar endpoint (during migration)
+  description: Bannou service endpoint (during migration)
 
 paths:
   # =============================================================================
@@ -74,9 +74,9 @@ paths:
         [\n        \"instanceId\",\n        \"appId\",\n        \"host\",\n        \"port\",\n        \"status\"\n      ],\n\
         \      \"properties\": {\n        \"instanceId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\
         ,\n          \"description\": \"Unique identifier for this instance\"\n        },\n        \"appId\": {\n        \
-        \  \"type\": \"string\",\n          \"description\": \"Dapr-compatible app-id (e.g., \\\"bannou\\\", \\\"bannou-npc-01\\\
-        \")\"\n        },\n        \"host\": {\n          \"type\": \"string\",\n          \"description\": \"Hostname or
-        IP address\"\n        },\n        \"port\": {\n          \"type\": \"integer\",\n          \"description\": \"Service
+        \  \"type\": \"string\",\n          \"description\": \"Bannou app-id (e.g., \\\"bannou\\\", \\\"bannou-npc-01\\\"\
+        )\"\n        },\n        \"host\": {\n          \"type\": \"string\",\n          \"description\": \"Hostname or IP
+        address\"\n        },\n        \"port\": {\n          \"type\": \"integer\",\n          \"description\": \"Service
         port (typically 80)\"\n        },\n        \"status\": {\n          \"$ref\": \"#/$defs/EndpointStatus\"\n       \
         \ },\n        \"loadPercent\": {\n          \"type\": \"number\",\n          \"format\": \"float\",\n          \"\
         description\": \"Current load as percentage (0-100)\",\n          \"default\": 0\n        },\n        \"maxConnections\"\
@@ -138,19 +138,19 @@ paths:
         endpoint in the mesh\",\n      \"required\": [\n        \"instanceId\",\n        \"appId\",\n        \"host\",\n \
         \       \"port\",\n        \"status\"\n      ],\n      \"properties\": {\n        \"instanceId\": {\n          \"\
         type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier for this instance\"\
-        \n        },\n        \"appId\": {\n          \"type\": \"string\",\n          \"description\": \"Dapr-compatible
-        app-id (e.g., \\\"bannou\\\", \\\"bannou-npc-01\\\")\"\n        },\n        \"host\": {\n          \"type\": \"string\"\
-        ,\n          \"description\": \"Hostname or IP address\"\n        },\n        \"port\": {\n          \"type\": \"\
-        integer\",\n          \"description\": \"Service port (typically 80)\"\n        },\n        \"status\": {\n      \
-        \    \"$ref\": \"#/$defs/EndpointStatus\"\n        },\n        \"loadPercent\": {\n          \"type\": \"number\"\
-        ,\n          \"format\": \"float\",\n          \"description\": \"Current load as percentage (0-100)\",\n        \
-        \  \"default\": 0\n        },\n        \"maxConnections\": {\n          \"type\": \"integer\",\n          \"description\"\
-        : \"Maximum concurrent connections\"\n        },\n        \"currentConnections\": {\n          \"type\": \"integer\"\
-        ,\n          \"description\": \"Current active connections\"\n        },\n        \"services\": {\n          \"type\"\
-        : \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"\
-        List of service names hosted on this endpoint\"\n        },\n        \"lastSeen\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"date-time\",\n          \"description\": \"Last heartbeat timestamp\"\n        },\n   \
-        \     \"registeredAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        \n        },\n        \"appId\": {\n          \"type\": \"string\",\n          \"description\": \"Bannou app-id (e.g.,
+        \\\"bannou\\\", \\\"bannou-npc-01\\\")\"\n        },\n        \"host\": {\n          \"type\": \"string\",\n     \
+        \     \"description\": \"Hostname or IP address\"\n        },\n        \"port\": {\n          \"type\": \"integer\"\
+        ,\n          \"description\": \"Service port (typically 80)\"\n        },\n        \"status\": {\n          \"$ref\"\
+        : \"#/$defs/EndpointStatus\"\n        },\n        \"loadPercent\": {\n          \"type\": \"number\",\n          \"\
+        format\": \"float\",\n          \"description\": \"Current load as percentage (0-100)\",\n          \"default\": 0\n\
+        \        },\n        \"maxConnections\": {\n          \"type\": \"integer\",\n          \"description\": \"Maximum
+        concurrent connections\"\n        },\n        \"currentConnections\": {\n          \"type\": \"integer\",\n      \
+        \    \"description\": \"Current active connections\"\n        },\n        \"services\": {\n          \"type\": \"\
+        array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"List
+        of service names hosted on this endpoint\"\n        },\n        \"lastSeen\": {\n          \"type\": \"string\",\n\
+        \          \"format\": \"date-time\",\n          \"description\": \"Last heartbeat timestamp\"\n        },\n     \
+        \   \"registeredAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
         : \"When endpoint was first registered\"\n        }\n      }\n    },\n    \"EndpointStatus\": {\n      \"type\": \"\
         string\",\n      \"description\": \"Health status of an endpoint\",\n      \"enum\": [\n        \"Healthy\",\n   \
         \     \"Degraded\",\n        \"Unavailable\",\n        \"ShuttingDown\"\n      ]\n    },\n    \"EndpointSummary\"\
@@ -216,22 +216,22 @@ paths:
         \      \"required\": [\n        \"instanceId\",\n        \"appId\",\n        \"host\",\n        \"port\",\n      \
         \  \"status\"\n      ],\n      \"properties\": {\n        \"instanceId\": {\n          \"type\": \"string\",\n   \
         \       \"format\": \"uuid\",\n          \"description\": \"Unique identifier for this instance\"\n        },\n  \
-        \      \"appId\": {\n          \"type\": \"string\",\n          \"description\": \"Dapr-compatible app-id (e.g., \\\
-        \"bannou\\\", \\\"bannou-npc-01\\\")\"\n        },\n        \"host\": {\n          \"type\": \"string\",\n       \
-        \   \"description\": \"Hostname or IP address\"\n        },\n        \"port\": {\n          \"type\": \"integer\"\
-        ,\n          \"description\": \"Service port (typically 80)\"\n        },\n        \"status\": {\n          \"$ref\"\
-        : \"#/$defs/EndpointStatus\"\n        },\n        \"loadPercent\": {\n          \"type\": \"number\",\n          \"\
-        format\": \"float\",\n          \"description\": \"Current load as percentage (0-100)\",\n          \"default\": 0\n\
-        \        },\n        \"maxConnections\": {\n          \"type\": \"integer\",\n          \"description\": \"Maximum
-        concurrent connections\"\n        },\n        \"currentConnections\": {\n          \"type\": \"integer\",\n      \
-        \    \"description\": \"Current active connections\"\n        },\n        \"services\": {\n          \"type\": \"\
-        array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"List
-        of service names hosted on this endpoint\"\n        },\n        \"lastSeen\": {\n          \"type\": \"string\",\n\
-        \          \"format\": \"date-time\",\n          \"description\": \"Last heartbeat timestamp\"\n        },\n     \
-        \   \"registeredAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
-        : \"When endpoint was first registered\"\n        }\n      }\n    },\n    \"EndpointStatus\": {\n      \"type\": \"\
-        string\",\n      \"description\": \"Health status of an endpoint\",\n      \"enum\": [\n        \"Healthy\",\n   \
-        \     \"Degraded\",\n        \"Unavailable\",\n        \"ShuttingDown\"\n      ]\n    }\n  }\n}"
+        \      \"appId\": {\n          \"type\": \"string\",\n          \"description\": \"Bannou app-id (e.g., \\\"bannou\\\
+        \", \\\"bannou-npc-01\\\")\"\n        },\n        \"host\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Hostname or IP address\"\n        },\n        \"port\": {\n          \"type\": \"integer\",\n          \"description\"\
+        : \"Service port (typically 80)\"\n        },\n        \"status\": {\n          \"$ref\": \"#/$defs/EndpointStatus\"\
+        \n        },\n        \"loadPercent\": {\n          \"type\": \"number\",\n          \"format\": \"float\",\n    \
+        \      \"description\": \"Current load as percentage (0-100)\",\n          \"default\": 0\n        },\n        \"\
+        maxConnections\": {\n          \"type\": \"integer\",\n          \"description\": \"Maximum concurrent connections\"\
+        \n        },\n        \"currentConnections\": {\n          \"type\": \"integer\",\n          \"description\": \"Current
+        active connections\"\n        },\n        \"services\": {\n          \"type\": \"array\",\n          \"items\": {\n\
+        \            \"type\": \"string\"\n          },\n          \"description\": \"List of service names hosted on this
+        endpoint\"\n        },\n        \"lastSeen\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
+        ,\n          \"description\": \"Last heartbeat timestamp\"\n        },\n        \"registeredAt\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When endpoint was first registered\"\
+        \n        }\n      }\n    },\n    \"EndpointStatus\": {\n      \"type\": \"string\",\n      \"description\": \"Health
+        status of an endpoint\",\n      \"enum\": [\n        \"Healthy\",\n        \"Degraded\",\n        \"Unavailable\"\
+        ,\n        \"ShuttingDown\"\n      ]\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Register a service endpoint\",\n  \"description\": \"Registers this instance's
         endpoint in the service mesh.\\nCalled during service startup to announce availability.\\nEndpoint TTL is refreshed
         on each heartbeat.\\n\",\n  \"tags\": [\n    \"Registration\"\n  ],\n  \"deprecated\": false,\n  \"operationId\":
@@ -369,22 +369,22 @@ paths:
         ,\n        \"appId\",\n        \"host\",\n        \"port\",\n        \"status\"\n      ],\n      \"properties\": {\n\
         \        \"instanceId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
         : \"Unique identifier for this instance\"\n        },\n        \"appId\": {\n          \"type\": \"string\",\n   \
-        \       \"description\": \"Dapr-compatible app-id (e.g., \\\"bannou\\\", \\\"bannou-npc-01\\\")\"\n        },\n  \
-        \      \"host\": {\n          \"type\": \"string\",\n          \"description\": \"Hostname or IP address\"\n     \
-        \   },\n        \"port\": {\n          \"type\": \"integer\",\n          \"description\": \"Service port (typically
-        80)\"\n        },\n        \"status\": {\n          \"$ref\": \"#/$defs/EndpointStatus\"\n        },\n        \"loadPercent\"\
-        : {\n          \"type\": \"number\",\n          \"format\": \"float\",\n          \"description\": \"Current load
-        as percentage (0-100)\",\n          \"default\": 0\n        },\n        \"maxConnections\": {\n          \"type\"\
-        : \"integer\",\n          \"description\": \"Maximum concurrent connections\"\n        },\n        \"currentConnections\"\
-        : {\n          \"type\": \"integer\",\n          \"description\": \"Current active connections\"\n        },\n   \
-        \     \"services\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n\
-        \          },\n          \"description\": \"List of service names hosted on this endpoint\"\n        },\n        \"\
-        lastSeen\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"\
-        Last heartbeat timestamp\"\n        },\n        \"registeredAt\": {\n          \"type\": \"string\",\n          \"\
-        format\": \"date-time\",\n          \"description\": \"When endpoint was first registered\"\n        }\n      }\n\
-        \    },\n    \"EndpointStatus\": {\n      \"type\": \"string\",\n      \"description\": \"Health status of an endpoint\"\
-        ,\n      \"enum\": [\n        \"Healthy\",\n        \"Degraded\",\n        \"Unavailable\",\n        \"ShuttingDown\"\
-        \n      ]\n    }\n  }\n}"
+        \       \"description\": \"Bannou app-id (e.g., \\\"bannou\\\", \\\"bannou-npc-01\\\")\"\n        },\n        \"host\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Hostname or IP address\"\n        },\n        \"\
+        port\": {\n          \"type\": \"integer\",\n          \"description\": \"Service port (typically 80)\"\n        },\n\
+        \        \"status\": {\n          \"$ref\": \"#/$defs/EndpointStatus\"\n        },\n        \"loadPercent\": {\n \
+        \         \"type\": \"number\",\n          \"format\": \"float\",\n          \"description\": \"Current load as percentage
+        (0-100)\",\n          \"default\": 0\n        },\n        \"maxConnections\": {\n          \"type\": \"integer\",\n\
+        \          \"description\": \"Maximum concurrent connections\"\n        },\n        \"currentConnections\": {\n  \
+        \        \"type\": \"integer\",\n          \"description\": \"Current active connections\"\n        },\n        \"\
+        services\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n        \
+        \  },\n          \"description\": \"List of service names hosted on this endpoint\"\n        },\n        \"lastSeen\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Last heartbeat
+        timestamp\"\n        },\n        \"registeredAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
+        ,\n          \"description\": \"When endpoint was first registered\"\n        }\n      }\n    },\n    \"EndpointStatus\"\
+        : {\n      \"type\": \"string\",\n      \"description\": \"Health status of an endpoint\",\n      \"enum\": [\n  \
+        \      \"Healthy\",\n        \"Degraded\",\n        \"Unavailable\",\n        \"ShuttingDown\"\n      ]\n    }\n \
+        \ }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get optimal endpoint for routing\",\n  \"description\": \"Returns a single
         endpoint for the specified app-id, selected by the\\nconfigured load balancing algorithm (round-robin, least-connections,
         weighted).\\n\",\n  \"tags\": [\n    \"Routing\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getRoute\"\n\
@@ -489,9 +489,9 @@ paths:
         [\n        \"instanceId\",\n        \"appId\",\n        \"host\",\n        \"port\",\n        \"status\"\n      ],\n\
         \      \"properties\": {\n        \"instanceId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\
         ,\n          \"description\": \"Unique identifier for this instance\"\n        },\n        \"appId\": {\n        \
-        \  \"type\": \"string\",\n          \"description\": \"Dapr-compatible app-id (e.g., \\\"bannou\\\", \\\"bannou-npc-01\\\
-        \")\"\n        },\n        \"host\": {\n          \"type\": \"string\",\n          \"description\": \"Hostname or
-        IP address\"\n        },\n        \"port\": {\n          \"type\": \"integer\",\n          \"description\": \"Service
+        \  \"type\": \"string\",\n          \"description\": \"Bannou app-id (e.g., \\\"bannou\\\", \\\"bannou-npc-01\\\"\
+        )\"\n        },\n        \"host\": {\n          \"type\": \"string\",\n          \"description\": \"Hostname or IP
+        address\"\n        },\n        \"port\": {\n          \"type\": \"integer\",\n          \"description\": \"Service
         port (typically 80)\"\n        },\n        \"status\": {\n          \"$ref\": \"#/$defs/EndpointStatus\"\n       \
         \ },\n        \"loadPercent\": {\n          \"type\": \"number\",\n          \"format\": \"float\",\n          \"\
         description\": \"Current load as percentage (0-100)\",\n          \"default\": 0\n        },\n        \"maxConnections\"\
@@ -528,7 +528,7 @@ components:
           description: Unique identifier for this instance
         appId:
           type: string
-          description: Dapr-compatible app-id (e.g., "bannou", "bannou-npc-01")
+          description: Bannou app-id (e.g., "bannou", "bannou-npc-01")
         host:
           type: string
           description: Hostname or IP address

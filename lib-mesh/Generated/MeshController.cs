@@ -27,7 +27,7 @@ namespace BeyondImmersion.BannouService.Mesh;
 using System = global::System;
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public interface IMeshController : BeyondImmersion.BannouService.Controllers.IDaprController
+public interface IMeshController : BeyondImmersion.BannouService.Controllers.IBannouController
 {
 
     /// <summary>
@@ -413,7 +413,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "appId": {
           "type": "string",
-          "description": "Dapr-compatible app-id (e.g., \"bannou\", \"bannou-npc-01\")"
+          "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
         },
         "host": {
           "type": "string",
@@ -603,7 +603,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "appId": {
           "type": "string",
-          "description": "Dapr-compatible app-id (e.g., \"bannou\", \"bannou-npc-01\")"
+          "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
         },
         "host": {
           "type": "string",
@@ -841,7 +841,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "appId": {
           "type": "string",
-          "description": "Dapr-compatible app-id (e.g., \"bannou\", \"bannou-npc-01\")"
+          "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
         },
         "host": {
           "type": "string",
@@ -1257,7 +1257,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "appId": {
           "type": "string",
-          "description": "Dapr-compatible app-id (e.g., \"bannou\", \"bannou-npc-01\")"
+          "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
         },
         "host": {
           "type": "string",
@@ -1593,7 +1593,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "appId": {
           "type": "string",
-          "description": "Dapr-compatible app-id (e.g., \"bannou\", \"bannou-npc-01\")"
+          "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
         },
         "host": {
           "type": "string",

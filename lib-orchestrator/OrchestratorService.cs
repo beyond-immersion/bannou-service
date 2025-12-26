@@ -18,10 +18,9 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 /// <summary>
 /// Implementation of the Orchestrator service.
 /// This class contains the business logic for all Orchestrator operations.
-/// CRITICAL: Uses direct Redis/RabbitMQ connections (NOT Dapr) to avoid chicken-and-egg dependency.
+/// CRITICAL: Uses direct Redis/RabbitMQ connections (NOT via mesh) to avoid chicken-and-egg dependency.
 /// </summary>
-[DaprService("orchestrator", typeof(IOrchestratorService), lifetime: ServiceLifetime.Scoped)]
-[Obsolete]
+[BannouService("orchestrator", typeof(IOrchestratorService), lifetime: ServiceLifetime.Scoped)]
 public partial class OrchestratorService : IOrchestratorService
 {
     private readonly IMessageBus _messageBus;
@@ -54,7 +53,6 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private const string DEFAULT_PRESET = "bannou";
 
-    [Obsolete]
     public OrchestratorService(
         IMessageBus messageBus,
         ILogger<OrchestratorService> logger,
@@ -83,7 +81,7 @@ public partial class OrchestratorService : IOrchestratorService
 
         // Register event handlers via partial class (OrchestratorServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>
@@ -522,7 +520,7 @@ public partial class OrchestratorService : IOrchestratorService
 
             foreach (var node in nodesToDeploy)
             {
-                var appId = node.DaprAppId ?? node.Name;
+                var appId = node.AppId ?? node.Name;
 
                 // VALIDATION: Reject any node attempting to deploy orchestrator service
                 // Orchestrator cannot deploy itself or another orchestrator - route cannot be overridden
@@ -691,7 +689,7 @@ public partial class OrchestratorService : IOrchestratorService
             }
 
             // Wait for heartbeats from deployed containers before declaring success
-            // This ensures new containers are fully operational (Dapr connected, plugins loaded)
+            // This ensures new containers are fully operational (mesh connected, plugins loaded)
             if (expectedAppIds.Count > 0 && failedServices.Count == 0)
             {
                 _logger.LogInformation(
@@ -804,7 +802,7 @@ public partial class OrchestratorService : IOrchestratorService
                         deploymentConfig.Services[serviceName] = new ServiceDeploymentConfig
                         {
                             Enabled = true,
-                            AppId = node.DaprAppId ?? node.Name,
+                            AppId = node.AppId ?? node.Name,
                             Replicas = 1
                         };
                     }
@@ -952,8 +950,8 @@ public partial class OrchestratorService : IOrchestratorService
                         Name = g.Key,
                         Services = new List<string> { g.Key },
                         Replicas = g.Count(),
-                        DaprEnabled = true,
-                        DaprAppId = g.Key
+                        MeshEnabled = true,
+                        AppId = g.Key
                     })
                     .ToList()
             };
@@ -1408,9 +1406,9 @@ public partial class OrchestratorService : IOrchestratorService
             return false;
         }
 
-        // NEVER forward DAPR_APP_ID - each deployed container gets its own app-id
+        // NEVER forward BANNOU_APP_ID - each deployed container gets its own app-id
         // set explicitly by the deployment logic
-        if (key.Equals("DAPR_APP_ID", StringComparison.OrdinalIgnoreCase))
+        if (key.Equals("BANNOU_APP_ID", StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
@@ -1785,7 +1783,7 @@ public partial class OrchestratorService : IOrchestratorService
 
     /// <summary>
     /// Implementation of RequestContainerRestart operation.
-    /// Restarts a specific container by Dapr app name.
+    /// Restarts a specific container by Bannou app name.
     /// </summary>
     public async Task<(StatusCodes, ContainerRestartResponse?)> RequestContainerRestartAsync(
         ContainerRestartRequestBody body,
@@ -1823,7 +1821,7 @@ public partial class OrchestratorService : IOrchestratorService
 
     /// <summary>
     /// Implementation of GetContainerStatus operation.
-    /// Gets the status of a specific container by Dapr app name.
+    /// Gets the status of a specific container by Bannou app name.
     /// </summary>
     public async Task<(StatusCodes, ContainerStatus?)> GetContainerStatusAsync(GetContainerStatusRequest body, CancellationToken cancellationToken)
     {

@@ -99,14 +99,6 @@ BANNOU_CONNECTURL=wss://api.example.com/connect
 |----------|-------------|
 | `BANNOU_STEAM_WEB_API_KEY` | Steam Web API key |
 
-## Dapr Configuration
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DAPR_HTTP_PORT` | `3500` | Dapr sidecar HTTP port |
-| `DAPR_GRPC_PORT` | `50001` | Dapr sidecar gRPC port |
-| `BANNOU_EmulateDapr` | `false` | Enable Dapr emulation mode |
-
 ## HTTP Configuration
 
 | Variable | Default | Description |
@@ -157,9 +149,9 @@ BANNOU_CONNECTURL=wss://api.example.com/connect
 | `OPENRESTY_HTTP_PORT` | `80` | HTTP ingress port |
 | `OPENRESTY_HTTPS_PORT` | `443` | HTTPS ingress port |
 
-## Dapr State Stores
+## State Stores
 
-State stores are configured in `/provisioning/dapr/components/`:
+State stores are configured via lib-state:
 
 | Store Name | Type | Purpose |
 |------------|------|---------|
@@ -169,7 +161,7 @@ State stores are configured in `/provisioning/dapr/components/`:
 | `behavior-statestore` | Redis | Behavior cache |
 | `game-session-statestore` | Redis | Game session state |
 
-## Dapr Pub/Sub
+## Pub/Sub (RabbitMQ via MassTransit)
 
 | Component | Broker | Topics |
 |-----------|--------|--------|
@@ -235,7 +227,6 @@ OPTIONAL_VAR=
 ```bash
 # .env for local development
 SERVICES_ENABLED=true
-BANNOU_EmulateDapr=true
 BANNOU_JWTSECRET=dev-secret-key
 BANNOU_MOCKPROVIDERS=true
 ```

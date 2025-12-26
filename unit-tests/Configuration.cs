@@ -10,25 +10,20 @@ public class Configuration : IClassFixture<CollectionFixture>
 {
     private CollectionFixture TestCollectionContext { get; }
 
-    [DaprService("ConfigTests.Test")]
-    [Obsolete]
-    private class Service_Attribute : IDaprService { }
+    [BannouService("ConfigTests.Test")]
+    private class Service_Attribute : IBannouService { }
 
-    [DaprService("ConfigTests.test")]
-    [Obsolete]
-    private class Service_WithPrefix : IDaprService { }
+    [BannouService("ConfigTests.test")]
+    private class Service_WithPrefix : IBannouService { }
 
-    [DaprService("ConfigTests.test")]
-    [Obsolete]
-    private class Service_Required : IDaprService { }
+    [BannouService("ConfigTests.test")]
+    private class Service_Required : IBannouService { }
 
-    [DaprService("game-session")]
-    [Obsolete]
-    private class Service_HyphenatedName : IDaprService { }
+    [BannouService("game-session")]
+    private class Service_HyphenatedName : IBannouService { }
 
-    [DaprService("relationship-type")]
-    [Obsolete]
-    private class Service_MultiHyphenatedName : IDaprService { }
+    [BannouService("relationship-type")]
+    private class Service_MultiHyphenatedName : IBannouService { }
 
     private abstract class ConfigBase : IServiceConfiguration
     {
@@ -44,28 +39,24 @@ public class Configuration : IClassFixture<CollectionFixture>
     }
 
     [ServiceConfiguration]
-    [Obsolete]
     private class Configuration_Attribute_NoService : ConfigBase
     {
         public string? Property { get; set; }
     }
 
     [ServiceConfiguration(typeof(Service_Attribute))]
-    [Obsolete]
     private class Configuration_Attribute_TestService : ConfigBase
     {
         public string? Property { get; set; }
     }
 
     [ServiceConfiguration(typeof(Service_WithPrefix), envPrefix: "test_")]
-    [Obsolete]
     private class Configuration_Attribute_TestService_WithPrefix : ConfigBase
     {
         public string? Property { get; set; }
     }
 
     [ServiceConfiguration(typeof(Service_WithPrefix), envPrefix: "BANNOU_")]
-    [Obsolete]
     private class Configuration_Attribute_BannouPrefix : ConfigBase
     {
         public string? JwtSecret { get; set; }
@@ -78,7 +69,6 @@ public class Configuration : IClassFixture<CollectionFixture>
     }
 
     [ServiceConfiguration(typeof(Service_Required))]
-    [Obsolete]
     private class Configuration_RequiredProperty : ConfigBase
     {
         [ConfigRequired(AllowEmptyStrings = false)]
@@ -86,7 +76,6 @@ public class Configuration : IClassFixture<CollectionFixture>
     }
 
     [ServiceConfiguration(typeof(Service_HyphenatedName))]
-    [Obsolete]
     private class Configuration_HyphenatedService : ConfigBase
     {
         public string? ServerSalt { get; set; }
@@ -94,7 +83,6 @@ public class Configuration : IClassFixture<CollectionFixture>
     }
 
     [ServiceConfiguration(typeof(Service_MultiHyphenatedName))]
-    [Obsolete]
     private class Configuration_MultiHyphenatedService : ConfigBase
     {
         public string? TypeName { get; set; }
@@ -103,7 +91,6 @@ public class Configuration : IClassFixture<CollectionFixture>
 
     private Configuration(CollectionFixture collectionContext) => TestCollectionContext = collectionContext;
 
-    [Obsolete]
     public Configuration(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
@@ -118,7 +105,6 @@ public class Configuration : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Configuration_CreateAllSwitchMappings()
     {
         IDictionary<string, string>? switchLookup = IServiceConfiguration.CreateAllSwitchMappings();
@@ -152,7 +138,6 @@ public class Configuration : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Configuration_HasRequired()
     {
         Environment.SetEnvironmentVariable("PROPERTY", null);
@@ -178,14 +163,12 @@ public class Configuration : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Configuration_HasRequired_Invalid()
     {
         _ = Assert.Throws<InvalidCastException>(() => IServiceConfiguration.HasRequiredForType(typeof(Configuration_Invalid)));
     }
 
     [Fact]
-    [Obsolete]
     public void Configuration_HasRequired_ByType()
     {
         Environment.SetEnvironmentVariable($"{"ConfigTests.test".ToUpper()}_PROPERTY", null);
@@ -203,7 +186,6 @@ public class Configuration : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Configuration_HasRequired_ByType_Generic()
     {
         Environment.SetEnvironmentVariable($"{"ConfigTests.test".ToUpper()}_PROPERTY", null);
@@ -221,7 +203,6 @@ public class Configuration : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Configuration_AppConfigRoot()
     {
         Environment.SetEnvironmentVariable("FORCE_SERVICE_ID", null);
@@ -246,7 +227,6 @@ public class Configuration : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Configuration_AppConfigRoot_WithArgs()
     {
         var serviceID = Guid.NewGuid().ToString().ToLower();
@@ -256,7 +236,6 @@ public class Configuration : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Configuration_AppConfigRoot_WithPrefix()
     {
         Environment.SetEnvironmentVariable("TEST_FORCE_SERVICE_ID", null);
@@ -277,7 +256,6 @@ public class Configuration : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Configuration_AppConfig()
     {
         Environment.SetEnvironmentVariable("FORCE_SERVICE_ID", null);
@@ -299,7 +277,6 @@ public class Configuration : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Configuration_AppConfig_WithArgs()
     {
         var serviceID = Guid.NewGuid().ToString().ToLower();
@@ -314,7 +291,6 @@ public class Configuration : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Configuration_AppConfig_WithPrefix()
     {
         Environment.SetEnvironmentVariable("FORCE_SERVICE_ID", null);

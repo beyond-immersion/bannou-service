@@ -15,15 +15,13 @@ namespace BeyondImmersion.BannouService.Website;
 /// Note: This service is not yet implemented - planned for future release.
 /// Methods return placeholder responses until implementation is complete.
 /// </summary>
-[DaprService("website", typeof(IWebsiteService), lifetime: ServiceLifetime.Scoped)]
-[Obsolete]
+[BannouService("website", typeof(IWebsiteService), lifetime: ServiceLifetime.Scoped)]
 public partial class WebsiteService : IWebsiteService
 {
     private readonly ILogger<WebsiteService> _logger;
     private readonly WebsiteServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
 
-    [Obsolete]
     public WebsiteService(
         ILogger<WebsiteService> logger,
         WebsiteServiceConfiguration configuration,
@@ -36,7 +34,7 @@ public partial class WebsiteService : IWebsiteService
 
         // Register event handlers via partial class (WebsiteServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>

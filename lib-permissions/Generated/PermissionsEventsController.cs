@@ -36,7 +36,7 @@ public class PermissionsEventsController : ControllerBase
     }
 
     /// <summary>
-    /// Handle permissions.service-registered events via Dapr pubsub.
+    /// Handle permissions.service-registered events via pubsub.
     /// Dispatches to all registered handlers via IEventConsumer.
     /// </summary>
     [Topic("bannou-pubsub", "permissions.service-registered")]
@@ -45,7 +45,7 @@ public class PermissionsEventsController : ControllerBase
     {
         try
         {
-            var evt = await DaprEventHelper.ReadEventAsync<ServiceRegistrationEvent>(Request);
+            var evt = await BannouEventHelper.ReadEventAsync<ServiceRegistrationEvent>(Request);
 
             if (evt == null)
             {
@@ -67,7 +67,7 @@ public class PermissionsEventsController : ControllerBase
     }
 
     /// <summary>
-    /// Handle permissions.session-state-changed events via Dapr pubsub.
+    /// Handle permissions.session-state-changed events via pubsub.
     /// Dispatches to all registered handlers via IEventConsumer.
     /// </summary>
     [Topic("bannou-pubsub", "permissions.session-state-changed")]
@@ -76,7 +76,7 @@ public class PermissionsEventsController : ControllerBase
     {
         try
         {
-            var evt = await DaprEventHelper.ReadEventAsync<SessionStateChangeEvent>(Request);
+            var evt = await BannouEventHelper.ReadEventAsync<SessionStateChangeEvent>(Request);
 
             if (evt == null)
             {
@@ -98,7 +98,7 @@ public class PermissionsEventsController : ControllerBase
     }
 
     /// <summary>
-    /// Handle session.updated events via Dapr pubsub.
+    /// Handle session.updated events via pubsub.
     /// Dispatches to all registered handlers via IEventConsumer.
     /// </summary>
     [Topic("bannou-pubsub", "session.updated")]
@@ -107,7 +107,7 @@ public class PermissionsEventsController : ControllerBase
     {
         try
         {
-            var evt = await DaprEventHelper.ReadEventAsync<SessionUpdatedEvent>(Request);
+            var evt = await BannouEventHelper.ReadEventAsync<SessionUpdatedEvent>(Request);
 
             if (evt == null)
             {
@@ -129,7 +129,7 @@ public class PermissionsEventsController : ControllerBase
     }
 
     /// <summary>
-    /// Handle session.connected events via Dapr pubsub.
+    /// Handle session.connected events via pubsub.
     /// Dispatches to all registered handlers via IEventConsumer.
     /// </summary>
     [Topic("bannou-pubsub", "session.connected")]
@@ -138,7 +138,7 @@ public class PermissionsEventsController : ControllerBase
     {
         try
         {
-            var evt = await DaprEventHelper.ReadEventAsync<SessionConnectedEvent>(Request);
+            var evt = await BannouEventHelper.ReadEventAsync<SessionConnectedEvent>(Request);
 
             if (evt == null)
             {
@@ -160,7 +160,7 @@ public class PermissionsEventsController : ControllerBase
     }
 
     /// <summary>
-    /// Handle session.disconnected events via Dapr pubsub.
+    /// Handle session.disconnected events via pubsub.
     /// Dispatches to all registered handlers via IEventConsumer.
     /// </summary>
     [Topic("bannou-pubsub", "session.disconnected")]
@@ -169,7 +169,7 @@ public class PermissionsEventsController : ControllerBase
     {
         try
         {
-            var evt = await DaprEventHelper.ReadEventAsync<SessionDisconnectedEvent>(Request);
+            var evt = await BannouEventHelper.ReadEventAsync<SessionDisconnectedEvent>(Request);
 
             if (evt == null)
             {

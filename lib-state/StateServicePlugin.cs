@@ -9,19 +9,18 @@ namespace BeyondImmersion.BannouService.State;
 
 /// <summary>
 /// Plugin wrapper for State service enabling plugin-based discovery and lifecycle management.
-/// Bridges existing IDaprService implementation with the new Plugin system.
+/// Bridges existing IBannouService implementation with the new Plugin system.
 /// </summary>
 public class StateServicePlugin : BaseBannouPlugin
 {
     public override string PluginName => "state";
     public override string DisplayName => "State Service";
 
-    [Obsolete]
     private IStateService? _service;
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
-    /// Configure services for dependency injection - mimics existing [DaprService] registration.
+    /// Configure services for dependency injection - mimics existing [BannouService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
@@ -56,8 +55,8 @@ public class StateServicePlugin : BaseBannouPlugin
             MySqlConnectionString = stateConfig.MySqlConnectionString
         };
 
-        // Add default store mappings based on Dapr component naming conventions
-        // These map Dapr state store names to their backends
+        // Add default store mappings based on service naming conventions
+        // These map state store names to their backends
         var defaultStores = new Dictionary<string, (StateBackend backend, string? prefix)>
         {
             // Redis stores (ephemeral/session data)
@@ -99,7 +98,7 @@ public class StateServicePlugin : BaseBannouPlugin
         Logger?.LogInformation("Configuring State service application pipeline");
 
         // The generated StateController should already be discovered via standard ASP.NET Core controller discovery
-        // since we're not excluding the assembly like we did with IDaprController approach
+        // since we're not excluding the assembly like we did with IBannouController approach
 
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
@@ -108,9 +107,8 @@ public class StateServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Start the service - calls existing IDaprService lifecycle if present.
+    /// Start the service - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting State service");
@@ -128,11 +126,11 @@ public class StateServicePlugin : BaseBannouPlugin
                 return false;
             }
 
-            // Call existing IDaprService.OnStartAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnStartAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnStartAsync for State service");
-                await daprService.OnStartAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnStartAsync for State service");
+                await bannouService.OnStartAsync(CancellationToken.None);
             }
 
             Logger?.LogInformation("State service started successfully");
@@ -146,9 +144,8 @@ public class StateServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Running phase - calls existing IDaprService lifecycle if present.
+    /// Running phase - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -157,11 +154,11 @@ public class StateServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Call existing IDaprService.OnRunningAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnRunningAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for State service");
-                await daprService.OnRunningAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnRunningAsync for State service");
+                await bannouService.OnRunningAsync(CancellationToken.None);
             }
         }
         catch (Exception ex)
@@ -171,9 +168,8 @@ public class StateServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Shutdown the service - calls existing IDaprService lifecycle if present.
+    /// Shutdown the service - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;
@@ -182,11 +178,11 @@ public class StateServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Call existing IDaprService.OnShutdownAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnShutdownAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for State service");
-                await daprService.OnShutdownAsync();
+                Logger?.LogDebug("Calling IBannouService.OnShutdownAsync for State service");
+                await bannouService.OnShutdownAsync();
             }
 
             Logger?.LogInformation("State service shutdown complete");

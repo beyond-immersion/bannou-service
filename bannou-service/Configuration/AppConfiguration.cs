@@ -4,7 +4,6 @@ namespace BeyondImmersion.BannouService.Configuration;
 /// Main application configuration for the Bannou service platform.
 /// </summary>
 [ServiceConfiguration(envPrefix: "BANNOU_")]
-[Obsolete]
 public class AppConfiguration : BaseServiceConfiguration
 {
     /// <summary>
@@ -46,14 +45,14 @@ public class AppConfiguration : BaseServiceConfiguration
     public string? Include_Assemblies { get; set; } = "all";
 
     /// <summary>
-    /// Dapr configuration store name to use.
+    /// Mesh configuration store name to use.
     /// </summary>
-    public string? Dapr_Configuration_Store { get; set; }
+    public string? Mesh_Configuration_Store { get; set; }
 
     /// <summary>
-    /// Dapr secret store name to use.
+    /// Secret store name to use.
     /// </summary>
-    public string? Dapr_Secret_Store { get; set; }
+    public string? Secret_Store { get; set; }
 
     /// <summary>
     /// Whether services are enabled by default.
@@ -66,10 +65,10 @@ public class AppConfiguration : BaseServiceConfiguration
     public int Service_Start_Timeout { get; set; } = (int)TimeSpan.FromMinutes(3).TotalMilliseconds;
 
     /// <summary>
-    /// Time in milliseconds to wait for Dapr to be ready before failing startup.
-    /// Set to 0 to disable Dapr readiness checks.
+    /// Time in milliseconds to wait for mesh connectivity before failing startup.
+    /// Set to 0 to disable mesh readiness checks.
     /// </summary>
-    public int Dapr_Readiness_Timeout { get; set; } = (int)TimeSpan.FromMinutes(2).TotalMilliseconds;
+    public int Mesh_Readiness_Timeout { get; set; } = (int)TimeSpan.FromMinutes(2).TotalMilliseconds;
 
     /// <summary>
     /// The port the HTTP webhost is listening on.
@@ -117,11 +116,10 @@ public class AppConfiguration : BaseServiceConfiguration
     public bool PermissionHeartbeatEnabled { get; set; } = true;
 
     /// <summary>
-    /// The Dapr App ID for this service instance.
-    /// Environment variable: DAPR_APP_ID (or APP_ID for backwards compatibility)
-    /// Note: DAPR_APP_ID is a bootstrap variable read during Dapr client initialization.
+    /// The App ID for this service instance used for mesh routing.
+    /// Environment variable: BANNOU_APP_ID (or APP_ID for backwards compatibility)
     /// </summary>
-    public string? DaprAppId { get; set; }
+    public string? BannouAppId { get; set; }
 
     /// <summary>
     /// JWT secret key for token signing and validation.

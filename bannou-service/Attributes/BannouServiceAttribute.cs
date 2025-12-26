@@ -63,17 +63,3 @@ public class BannouServiceAttribute : BaseServiceAttribute
         Lifetime = lifetime;
     }
 }
-
-/// <summary>
-/// Obsolete alias for backward compatibility. Use <see cref="BannouServiceAttribute"/> instead.
-/// </summary>
-[Obsolete("Use BannouServiceAttribute instead. This alias will be removed in a future version.")]
-[AttributeUsage(validOn: AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
-public sealed class DaprServiceAttribute : BannouServiceAttribute
-{
-    /// <summary>
-    /// Initializes a new instance of the DaprServiceAttribute (obsolete alias for BannouServiceAttribute).
-    /// </summary>
-    public DaprServiceAttribute(string name, Type? interfaceType = null, bool priority = false, ServiceLifetime lifetime = ServiceLifetime.Singleton)
-        : base(name, interfaceType, priority, lifetime) { }
-}

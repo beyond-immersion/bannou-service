@@ -21,7 +21,6 @@ public class ApiRequest<T> : ApiRequest
     /// <param name="additionalHeaders">Optional additional headers.</param>
     /// <param name="httpMethod">The HTTP method to use.</param>
     /// <returns>True if the request was successful, false otherwise.</returns>
-    [Obsolete]
     public new virtual async Task<bool> ExecuteRequest(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
     {
         var result = await ExecuteRequest_INTERNAL<T>(service, method, additionalHeaders, httpMethod);
@@ -42,7 +41,6 @@ public class ApiRequest<T> : ApiRequest
     /// Creates a response instance and copies header properties from the request.
     /// </summary>
     /// <returns>A new response instance of type T.</returns>
-    [Obsolete]
     public T CreateResponse()
     {
         var requestType = GetType();

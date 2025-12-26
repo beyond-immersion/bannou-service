@@ -2,12 +2,12 @@ namespace BeyondImmersion.BannouService.Attributes;
 
 /// <summary>
 /// Stub Topic attribute for backward compatibility.
-/// This replaces Dapr's [Topic] attribute after Dapr removal.
+/// This replaces the mesh's [Topic] attribute after transitioning to lib-mesh.
 /// Actual pub/sub is handled by MassTransit consumers in lib-messaging.
 /// </summary>
 /// <remarks>
 /// This attribute has no runtime effect - it exists only to allow
-/// compilation of legacy event controllers that used Dapr's [Topic].
+/// compilation of legacy event controllers that used the mesh's [Topic].
 /// For new pub/sub handling, use MassTransit IConsumer pattern.
 /// </remarks>
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]

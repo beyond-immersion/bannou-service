@@ -9,7 +9,7 @@ x-service-configuration:
     # State Store Configuration
     StateStoreName:
       type: string
-      description: Dapr state store name for subscriptions
+      description: State store name for subscriptions
       env: SUBSCRIPTIONS_STATE_STORE_NAME
       default: "subscriptions-statestore"
     AuthorizationSuffix:

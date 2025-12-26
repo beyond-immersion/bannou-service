@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Bannou Messaging Service API
   description: |
-    Native RabbitMQ pub/sub messaging without Dapr CloudEvents overhead.
+    Native RabbitMQ pub/sub messaging with native serialization.
 
     **INTERNAL SERVICE API**: This API has NO x-permissions because these endpoints
     are NOT exposed to WebSocket clients. Service-to-service calls within the cluster
@@ -11,11 +11,10 @@ info:
     **POST-Only API Pattern**: All endpoints use POST with request bodies for
     consistency with WebSocket routing architecture.
 
-    See docs/planning/UPCOMING_PROPOSED_-_DAPR_REPLACEMENT_PLUGIN.md for design rationale.
   version: 1.0.0
 servers:
 - url: http://localhost:5012
-  description: Dapr sidecar endpoint
+  description: Bannou service endpoint
 
 paths:
   /messaging/publish:

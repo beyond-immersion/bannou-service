@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Asset Service Events
   description: |
-    Event models for Asset service RabbitMQ pub/sub via Dapr.
+    Event models for Asset service RabbitMQ pub/sub via MassTransit.
     Contains asset-specific service-to-service events for upload tracking,
     processing coordination, and asset lifecycle management.
   version: 1.0.0

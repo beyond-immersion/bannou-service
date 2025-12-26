@@ -10,7 +10,7 @@ namespace LibOrchestrator;
 
 /// <summary>
 /// Manages direct Redis connections for orchestrator service.
-/// CRITICAL: Uses direct connection (NOT Dapr) to avoid chicken-and-egg dependency.
+/// CRITICAL: Uses direct connection (NOT via mesh) to avoid chicken-and-egg dependency.
 /// Writes service heartbeats and routing information for NGINX to read.
 /// </summary>
 public class OrchestratorRedisManager : IOrchestratorRedisManager

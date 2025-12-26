@@ -42,7 +42,6 @@ echo "================================="
 # Pattern matching for containers to remove:
 # - bannou-test-* : docker-compose test stacks (test-http, test-edge, test-infra)
 # - bannou-bannou-* : orchestrator dynamically deployed containers
-# - bannou-*-dapr : dapr sidecars for orchestrator containers
 # - bannou-main*, bannou-auth*, bannou-edge* : split routing test containers
 
 PATTERNS=(

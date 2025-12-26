@@ -1,10 +1,10 @@
 # Generated State Store Reference
 
 > **Auto-generated**: 2025-12-21 15:52:30
-> **Source**: `provisioning/dapr/components/*.yaml`
+> **Source**: `provisioning/state-stores/*.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
-This document lists all Dapr state store components used in Bannou.
+This document lists all state store components used in Bannou.
 
 ## State Store Components
 
@@ -35,7 +35,7 @@ This document lists all Dapr state store components used in Bannou.
 
 ## Deployment Flexibility
 
-Dapr component abstraction means multiple logical state stores can share physical
+The state store abstraction means multiple logical state stores can share physical
 Redis/MySQL instances in simple deployments, while production deployments can map
 to dedicated infrastructure without code changes.
 

@@ -4,7 +4,7 @@ namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
 /// Client for invoking methods on other services via the mesh.
-/// Replaces DaprClient.InvokeMethodAsync for service-to-service communication.
+/// Provides service-to-service communication through lib-mesh infrastructure.
 /// Uses the mesh service for endpoint resolution and YARP for HTTP forwarding.
 /// </summary>
 public interface IMeshInvocationClient

@@ -31,17 +31,12 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     private readonly DockerClient _client;
 
     /// <summary>
-    /// Label used to identify Dapr app-id on containers.
+    /// Label used to identify app-id on containers.
     /// </summary>
-    private const string DAPR_APP_ID_LABEL = "dapr.io/app-id";
+    private const string BANNOU_APP_ID_LABEL = "bannou.app-id";
 
     /// <summary>
-    /// Alternative label format for Dapr app-id.
-    /// </summary>
-    private const string DAPR_APP_ID_LABEL_ALT = "io.dapr.app-id";
-
-    /// <summary>
-    /// Docker Compose label for service name (fallback when Dapr labels not present).
+    /// Docker Compose label for service name (fallback when Bannou labels not present).
     /// </summary>
     private const string COMPOSE_SERVICE_LABEL = "com.docker.compose.service";
 
@@ -51,11 +46,6 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     private const string COMPOSE_PROJECT_LABEL = "com.docker.compose.project";
 
     /// <summary>
-    /// Label to link sidecar containers to their app containers.
-    /// </summary>
-    private const string BANNOU_SIDECAR_FOR_LABEL = "bannou.sidecar-for";
-
-    /// <summary>
     /// Label to identify containers deployed by the orchestrator.
     /// Used for orphan detection instead of name-based parsing.
     /// </summary>
@@ -63,21 +53,13 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
 
     // Configuration from environment variables
     private readonly string _configuredDockerNetwork;
-    private readonly string _daprComponentsHostPath;
-    private readonly string _daprComponentsContainerPath;
-    private readonly string _daprImage;
-    private readonly string _placementHost;
     private readonly string _certificatesHostPath;
     private readonly string _presetsHostPath;
     private readonly string _logsVolumeName;
-    // Note: No custom Dapr config needed - mDNS (default) works for standalone containers on bridge network
 
     // Cached discovered network (lazy initialized)
     private string? _discoveredNetwork;
     private bool _networkDiscoveryAttempted;
-    // Cached discovered placement host (lazy initialized)
-    private string? _discoveredPlacementHost;
-    private bool _placementDiscoveryAttempted;
     // Cached discovered infrastructure hosts (service name -> IP address)
     private Dictionary<string, string>? _discoveredInfrastructureHosts;
     private bool _infrastructureDiscoveryAttempted;
@@ -93,23 +75,15 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
 
         // Read configuration from injected configuration class (Tenet 21 compliant)
         _configuredDockerNetwork = config.DockerNetwork ?? "bannou_default";
-        _daprComponentsHostPath = config.DaprComponentsHostPath ?? "/app/provisioning/dapr/components";
-        _daprComponentsContainerPath = config.DaprComponentsContainerPath ?? "/tmp/dapr-components";
-        _daprImage = config.DaprImage ?? "daprio/daprd:1.16.3";
-        _placementHost = config.PlacementHost ?? "placement:50006";
         _certificatesHostPath = config.CertificatesHostPath ?? "/app/provisioning/certificates";
         _presetsHostPath = config.PresetsHostPath ?? "/app/provisioning/orchestrator/presets";
         _logsVolumeName = config.LogsVolumeName ?? "logs-data";
 
         _logger.LogInformation(
-        "DockerComposeOrchestrator configured: Network={Network}, DaprComponents={Components}, DaprImage={Image}, Placement={Placement}",
-        _configuredDockerNetwork, _daprComponentsHostPath, _daprImage, _placementHost);
+            "DockerComposeOrchestrator configured: Network={Network}, Certificates={Certs}, Presets={Presets}",
+            _configuredDockerNetwork, _certificatesHostPath, _presetsHostPath);
     }
 
-    // NOTE: GenerateComponentsWithIpAddresses and EnsureDnsNameResolutionConfig methods removed
-    // With standalone Dapr containers (not network_mode: container:ID), Docker DNS works correctly
-    // and we no longer need IP address substitution or custom DNS configuration generation.
-    // mDNS (default Dapr resolver) handles Dapr-to-Dapr service discovery on bridge network.
 
     /// <summary>
     /// Resolve a host path using a primary value plus a set of fallbacks.
@@ -225,86 +199,6 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     }
 
     /// <summary>
-    /// Discovers the reachable placement host for dynamically created Dapr sidecars.
-    /// Looks for a running container with compose service name "placement" on the target network.
-    /// Falls back to the configured placement host if discovery fails.
-    /// </summary>
-    private async Task<string?> DiscoverPlacementHostAsync(string? targetNetwork, CancellationToken cancellationToken)
-    {
-        if (_placementDiscoveryAttempted)
-        {
-            return _discoveredPlacementHost;
-        }
-
-        _placementDiscoveryAttempted = true;
-
-        try
-        {
-            var containers = await _client.Containers.ListContainersAsync(
-                new Docker.DotNet.Models.ContainersListParameters
-                {
-                    All = true,
-                    Filters = new Dictionary<string, IDictionary<string, bool>>
-                    {
-                        ["label"] = new Dictionary<string, bool>
-                        {
-                            // docker compose applies this label to the placement service
-                            ["com.docker.compose.service=placement"] = true
-                        }
-                    }
-                },
-                cancellationToken);
-
-            // Fallback: allow name contains "placement" if label filter returns none
-            if (containers.Count == 0)
-            {
-                containers = await _client.Containers.ListContainersAsync(
-                    new Docker.DotNet.Models.ContainersListParameters
-                    {
-                        All = true
-                    },
-                    cancellationToken);
-                containers = containers
-                    .Where(c => c.Names.Any(n => n.Contains("placement", StringComparison.OrdinalIgnoreCase)))
-                    .ToList();
-            }
-
-            // Choose the container on the target network if provided
-            var candidate = containers
-                .FirstOrDefault(c =>
-                    targetNetwork != null &&
-                    c.NetworkSettings?.Networks != null &&
-                    c.NetworkSettings.Networks.ContainsKey(targetNetwork))
-                ?? containers.FirstOrDefault();
-
-            if (candidate != null)
-            {
-                var rawName = candidate.Names.FirstOrDefault()?.TrimStart('/');
-                if (!string.IsNullOrWhiteSpace(rawName))
-                {
-                    var port = _placementHost.Contains(':')
-                        ? _placementHost.Split(':').Last()
-                        : "50006";
-
-                    _discoveredPlacementHost = $"{rawName}:{port}";
-                    _logger.LogInformation("Discovered placement host: {PlacementHost}", _discoveredPlacementHost);
-                    return _discoveredPlacementHost;
-                }
-            }
-
-            _logger.LogWarning("Could not discover placement host container; falling back to configured value {Placement}", _placementHost);
-            _discoveredPlacementHost = null;
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error discovering placement host; will fall back to configured value");
-            _discoveredPlacementHost = null;
-            return null;
-        }
-    }
-
-    /// <summary>
     /// Discovers infrastructure containers (rabbitmq, redis, etc.) and returns their IPs.
     /// These IPs are used as ExtraHosts so dynamically created containers can resolve
     /// service names like "rabbitmq" that are normally only available via Docker Compose DNS.
@@ -321,9 +215,8 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         _infrastructureDiscoveryAttempted = true;
         _discoveredInfrastructureHosts = new Dictionary<string, string>();
 
-        // Infrastructure service names that Dapr components reference, plus Docker Compose services that
-        // dynamically created containers need to resolve (placement is especially critical for Dapr sidecars)
-        var serviceNames = new[] { "rabbitmq", "redis", "bannou-redis", "auth-redis", "routing-redis", "account-db", "mysql", "placement" };
+        // Infrastructure service names that dynamically created containers need to resolve
+        var serviceNames = new[] { "rabbitmq", "redis", "bannou-redis", "auth-redis", "routing-redis", "account-db", "mysql" };
 
         try
         {
@@ -471,7 +364,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 {
                     Accepted = false,
                     AppName = appName,
-                    Message = $"No container found with Dapr app-id '{appName}'"
+                    Message = $"No container found with app-id '{appName}'"
                 };
             }
 
@@ -537,38 +430,23 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         try
         {
             // ListContainersAsync - see ORCHESTRATOR-SDK-REFERENCE.md
-            // First try containers with Dapr labels
+            // First try containers with Bannou labels
             var containers = await _client.Containers.ListContainersAsync(
                 new ContainersListParameters
                 {
                     All = true, // Include stopped containers
                     Filters = new Dictionary<string, IDictionary<string, bool>>
                     {
-                        // Filter to containers with Dapr labels
+                        // Filter to containers with Bannou labels
                         ["label"] = new Dictionary<string, bool>
                         {
-                            [DAPR_APP_ID_LABEL] = true
+                            [BANNOU_APP_ID_LABEL] = true
                         }
                     }
                 },
                 cancellationToken);
 
-            // Also check alternative Dapr label format
-            var containersAlt = await _client.Containers.ListContainersAsync(
-                new ContainersListParameters
-                {
-                    All = true,
-                    Filters = new Dictionary<string, IDictionary<string, bool>>
-                    {
-                        ["label"] = new Dictionary<string, bool>
-                        {
-                            [DAPR_APP_ID_LABEL_ALT] = true
-                        }
-                    }
-                },
-                cancellationToken);
-
-            // Also check Docker Compose labels (fallback for containers without Dapr labels)
+            // Also check Docker Compose labels (fallback for containers without Bannou labels)
             var containersCompose = await _client.Containers.ListContainersAsync(
                 new ContainersListParameters
                 {
@@ -585,15 +463,14 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
 
             // Merge results, avoiding duplicates
             var allContainers = containers
-                .Concat(containersAlt)
                 .Concat(containersCompose)
                 .DistinctBy(c => c.ID)
                 .ToList();
 
             _logger.LogDebug(
-                "Found {Total} containers: {DaprCount} with Dapr labels, {ComposeCount} with Compose labels",
+                "Found {Total} containers: {BannouCount} with Bannou labels, {ComposeCount} with Compose labels",
                 allContainers.Count,
-                containers.Count + containersAlt.Count,
+                containers.Count,
                 containersCompose.Count);
 
             return allContainers
@@ -621,7 +498,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             var container = await FindContainerByAppNameAsync(appName, cancellationToken);
             if (container == null)
             {
-                return $"No container found with Dapr app-id '{appName}'";
+                return $"No container found with app-id '{appName}'";
             }
 
             // GetContainerLogsAsync - see ORCHESTRATOR-SDK-REFERENCE.md
@@ -649,13 +526,13 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     }
 
     /// <summary>
-    /// Finds a container by its Dapr app-id label.
+    /// Finds a container by its app-id label.
     /// </summary>
     private async Task<ContainerListResponse?> FindContainerByAppNameAsync(
         string appName,
         CancellationToken cancellationToken)
     {
-        // Try primary Dapr label format
+        // Try Bannou app-id label
         var containers = await _client.Containers.ListContainersAsync(
             new ContainersListParameters
             {
@@ -664,27 +541,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 {
                     ["label"] = new Dictionary<string, bool>
                     {
-                        [$"{DAPR_APP_ID_LABEL}={appName}"] = true
-                    }
-                }
-            },
-            cancellationToken);
-
-        if (containers.Count > 0)
-        {
-            return containers[0];
-        }
-
-        // Try alternative Dapr label format
-        containers = await _client.Containers.ListContainersAsync(
-            new ContainersListParameters
-            {
-                All = true,
-                Filters = new Dictionary<string, IDictionary<string, bool>>
-                {
-                    ["label"] = new Dictionary<string, bool>
-                    {
-                        [$"{DAPR_APP_ID_LABEL_ALT}={appName}"] = true
+                        [$"{BANNOU_APP_ID_LABEL}={appName}"] = true
                     }
                 }
             },
@@ -714,17 +571,12 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     }
 
     /// <summary>
-    /// Extracts Dapr app-id from container labels.
+    /// Extracts app-id from container labels.
     /// </summary>
     private static string GetAppNameFromContainer(ContainerListResponse container)
     {
-        // First try Dapr labels
-        if (container.Labels.TryGetValue(DAPR_APP_ID_LABEL, out var appId))
-        {
-            return appId;
-        }
-
-        if (container.Labels.TryGetValue(DAPR_APP_ID_LABEL_ALT, out appId))
+        // First try Bannou app-id label
+        if (container.Labels.TryGetValue(BANNOU_APP_ID_LABEL, out var appId))
         {
             return appId;
         }
@@ -812,13 +664,11 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         {
             // For Docker Compose, deployment involves:
             // 1. Creating the application container with appropriate image and labels
-            // 2. Creating a Dapr sidecar container that shares the app's network namespace
-            // 3. Connecting both to the correct Docker network
-            // 4. Starting both containers
+            // 2. Connecting to the correct Docker network
+            // 3. Starting the container
 
             var imageName = "bannou:latest";
             var containerName = $"bannou-{appId}";
-            var sidecarName = $"{appId}-dapr";
 
             // Validate that the bannou image is present locally
             try
@@ -828,26 +678,6 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             catch (DockerApiException)
             {
                 var msg = $"Docker image '{imageName}' not found locally. Run 'make build-compose' or build/pull the image before deploying.";
-                _logger.LogError(msg);
-                return new DeployServiceResult
-                {
-                    Success = false,
-                    AppId = appId,
-                    Message = msg
-                };
-            }
-
-            // Ensure required host paths exist
-            var componentsPath = ResolveHostPath(
-                _daprComponentsHostPath,
-                "/app/provisioning/dapr/components",
-                "provisioning/dapr/components",
-                "dapr/components");
-
-            if (componentsPath == null)
-            {
-                var msg = $"Dapr components path not found (checked {_daprComponentsHostPath}). " +
-                        "Set BANNOU_DaprComponentsHostPath or ensure provisioning/dapr/components exists.";
                 _logger.LogError(msg);
                 return new DeployServiceResult
                 {
@@ -869,16 +699,12 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
 
             // Prepare application container environment
             // Get the orchestrator's own app-id to set as the mapping source
-            var orchestratorAppId = Environment.GetEnvironmentVariable("DAPR_APP_ID")
+            var orchestratorAppId = Environment.GetEnvironmentVariable("BANNOU_APP_ID")
                 ?? AppConstants.DEFAULT_APP_NAME;
 
-            // With standalone Dapr containers, the app reaches Dapr via Docker DNS
             var envList = new List<string>
             {
-                // Dapr endpoints - use Docker DNS to reach standalone Dapr container
-                $"DAPR_HTTP_ENDPOINT=http://{sidecarName}:3500",
-                $"DAPR_GRPC_ENDPOINT=http://{sidecarName}:50001",
-                $"DAPR_APP_ID={appId}",
+                $"BANNOU_APP_ID={appId}",
                 // Tell deployed container to query this orchestrator for initial service mappings
                 // This ensures new containers have correct routing info before participating in network
                 $"BANNOU_MappingSourceAppId={orchestratorAppId}",
@@ -897,9 +723,8 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 envList.AddRange(environment.Select(kv => $"{kv.Key}={kv.Value}"));
             }
 
-            // Clean up any existing containers with these names
+            // Clean up any existing container with this name
             await CleanupExistingContainerAsync(containerName, cancellationToken);
-            await CleanupExistingContainerAsync(sidecarName, cancellationToken);
 
             // Discover the Docker network to use - required for container communication
             var dockerNetwork = await DiscoverDockerNetworkAsync(cancellationToken);
@@ -919,14 +744,9 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
 
             _logger.LogInformation("Using Docker network: {Network}", dockerNetwork);
 
-            // Discover placement host reachable from dynamically created containers
-            var placementHost = await DiscoverPlacementHostAsync(dockerNetwork, cancellationToken)
-                ?? _placementHost;
-
             // IMPORTANT: Docker DNS (127.0.0.11) doesn't work reliably for containers created via Docker API
             // (as opposed to Docker Compose). We need to inject ExtraHosts with actual IP addresses for
             // infrastructure services and Docker Compose-managed containers.
-            var componentsHostPath = componentsPath ?? _daprComponentsHostPath;
 
             // Discover infrastructure IPs for ExtraHosts injection
             var infrastructureHosts = await DiscoverInfrastructureHostsAsync(dockerNetwork, cancellationToken);
@@ -937,7 +757,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 .Select(kv => $"{kv.Key}:{kv.Value}")
                 .ToList();
 
-            // Also add full container names with project prefix (e.g., bannou-test-edge-placement-1)
+            // Also add full container names with project prefix (e.g., bannou-test-edge-rabbitmq-1)
             // Docker Compose creates container names with project prefix, and some services reference these full names
             foreach (var kv in infrastructureHosts)
             {
@@ -963,80 +783,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 bindMounts.Add($"{presetsPath}:/app/provisioning/orchestrator/presets:ro");
             }
 
-            // Step 1: Create the Dapr sidecar container FIRST (standalone, with its own network)
-            // NOTE: Order changed - create sidecar before app so app can depend on sidecar being available
-            _logger.LogInformation("Creating Dapr sidecar container: {SidecarName}", sidecarName);
-
-            var sidecarBindMounts = new List<string> { $"{componentsHostPath}:/components:ro" };
-            // Note: No custom Dapr config needed - mDNS (default) works for standalone containers on bridge network
-            var sidecarEnv = new List<string>();
-            if (certificatesPath != null)
-            {
-                sidecarBindMounts.Add($"{certificatesPath}:/certificates:ro");
-                sidecarEnv.Add("SSL_CERT_DIR=/certificates");
-            }
-
-            var sidecarCmd = new List<string>
-            {
-                "./daprd",
-                "--app-id", appId,
-                "--app-port", "80",
-                "--app-protocol", "http",
-                "--app-channel-address", containerName,  // Docker DNS resolves this to the app container
-                "--dapr-http-port", "3500",
-                "--dapr-grpc-port", "50001",
-                "--placement-host-address", placementHost,
-                "--resources-path", "/components",
-                // Note: No --config flag - using mDNS (default) for Dapr-to-Dapr service discovery
-                "--log-level", "info",
-                "--enable-api-logging"
-            };
-
-            var sidecarCreateParams = new Docker.DotNet.Models.CreateContainerParameters
-            {
-                Image = _daprImage,
-                Name = sidecarName,
-                Env = sidecarEnv.Count > 0 ? sidecarEnv : null,
-                Cmd = sidecarCmd,
-                Labels = new Dictionary<string, string>
-                {
-                    [DAPR_APP_ID_LABEL] = appId,
-                    [BANNOU_SIDECAR_FOR_LABEL] = containerName,
-                    [BANNOU_ORCHESTRATOR_MANAGED_LABEL] = "true"
-                },
-                HostConfig = new Docker.DotNet.Models.HostConfig
-                {
-                    // NO NetworkMode = container:ID - standalone container with own IP
-                    RestartPolicy = new Docker.DotNet.Models.RestartPolicy
-                    {
-                        Name = Docker.DotNet.Models.RestartPolicyKind.UnlessStopped
-                    },
-                    Binds = sidecarBindMounts,
-                    // ExtraHosts needed because Docker DNS doesn't work for dynamically created containers
-                    ExtraHosts = extraHosts
-                },
-                // Sidecar gets its own network endpoint (standalone container)
-                // Network alias allows app container to reach sidecar by service name
-                NetworkingConfig = new Docker.DotNet.Models.NetworkingConfig
-                {
-                    EndpointsConfig = new Dictionary<string, Docker.DotNet.Models.EndpointSettings>
-                    {
-                        [dockerNetwork] = new Docker.DotNet.Models.EndpointSettings
-                        {
-                            Aliases = new List<string> { sidecarName, $"{appId}-dapr" }
-                        }
-                    }
-                }
-            };
-
-            var sidecarContainer = await _client.Containers.CreateContainerAsync(sidecarCreateParams, cancellationToken);
-            _logger.LogInformation("Dapr sidecar container created: {ContainerId}", sidecarContainer.ID[..12]);
-
-            // Step 2: Start the sidecar container
-            await _client.Containers.StartContainerAsync(sidecarContainer.ID, new Docker.DotNet.Models.ContainerStartParameters(), cancellationToken);
-            _logger.LogInformation("Dapr sidecar container started: {ContainerId}", sidecarContainer.ID[..12]);
-
-            // Step 3: Create the application container
+            // Create the application container
             _logger.LogInformation("Creating application container: {ContainerName}", containerName);
 
             var appCreateParams = new Docker.DotNet.Models.CreateContainerParameters
@@ -1046,7 +793,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 Env = envList,
                 Labels = new Dictionary<string, string>
                 {
-                    [DAPR_APP_ID_LABEL] = appId,
+                    [BANNOU_APP_ID_LABEL] = appId,
                     ["bannou.service"] = serviceName,
                     [BANNOU_ORCHESTRATOR_MANAGED_LABEL] = "true"
                 },
@@ -1070,7 +817,6 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                     // ExtraHosts needed because Docker DNS doesn't work for dynamically created containers
                     ExtraHosts = extraHosts
                 },
-                // Network alias allows sidecar to reach app by container name (for --app-channel-address)
                 NetworkingConfig = new Docker.DotNet.Models.NetworkingConfig
                 {
                     EndpointsConfig = new Dictionary<string, Docker.DotNet.Models.EndpointSettings>
@@ -1086,20 +832,20 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             var appContainer = await _client.Containers.CreateContainerAsync(appCreateParams, cancellationToken);
             _logger.LogInformation("Application container created: {ContainerId}", appContainer.ID[..12]);
 
-            // Step 4: Start the application container
+            // Start the application container
             await _client.Containers.StartContainerAsync(appContainer.ID, new Docker.DotNet.Models.ContainerStartParameters(), cancellationToken);
             _logger.LogInformation("Application container started: {ContainerId}", appContainer.ID[..12]);
 
             _logger.LogInformation(
-                "Service {ServiceName} deployed successfully: app={AppId}, container={ContainerId}, sidecar={SidecarId}",
-                serviceName, appId, appContainer.ID[..12], sidecarContainer.ID[..12]);
+                "Service {ServiceName} deployed successfully: app={AppId}, container={ContainerId}",
+                serviceName, appId, appContainer.ID[..12]);
 
             return new DeployServiceResult
             {
                 Success = true,
                 AppId = appId,
                 ContainerId = appContainer.ID,
-                Message = $"Service {serviceName} deployed with app container {appContainer.ID[..12]} and sidecar {sidecarContainer.ID[..12]}"
+                Message = $"Service {serviceName} deployed with container {appContainer.ID[..12]}"
             };
         }
         catch (DockerApiException ex)
@@ -1181,42 +927,8 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 {
                     Success = false,
                     AppId = appName,
-                    Message = $"No container found with Dapr app-id '{appName}'"
+                    Message = $"No container found with app-id '{appName}'"
                 };
-            }
-
-            // Find the associated sidecar container (named {appName}-dapr)
-            var sidecarName = $"{appName}-dapr";
-            var sidecarContainers = await _client.Containers.ListContainersAsync(
-                new Docker.DotNet.Models.ContainersListParameters
-                {
-                    All = true,
-                    Filters = new Dictionary<string, IDictionary<string, bool>>
-                    {
-                        ["name"] = new Dictionary<string, bool> { [$"^/{sidecarName}$"] = true }
-                    }
-                },
-                cancellationToken);
-
-            // Stop and remove sidecar first (depends on app container's network)
-            foreach (var sidecar in sidecarContainers)
-            {
-                _logger.LogInformation("Stopping sidecar container: {SidecarId}", sidecar.ID[..12]);
-
-                if (sidecar.State == "running")
-                {
-                    await _client.Containers.StopContainerAsync(
-                        sidecar.ID,
-                        new Docker.DotNet.Models.ContainerStopParameters { WaitBeforeKillSeconds = 5 },
-                        cancellationToken);
-                }
-
-                await _client.Containers.RemoveContainerAsync(
-                    sidecar.ID,
-                    new Docker.DotNet.Models.ContainerRemoveParameters { Force = true },
-                    cancellationToken);
-
-                stoppedContainers.Add(sidecar.ID[..12]);
             }
 
             // Stop and remove the application container
@@ -1304,7 +1016,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             // In Docker Compose mode, we identify infrastructure services by:
             // 1. Container names that match known infrastructure patterns
             // 2. Containers in the same Docker Compose project
-            var infrastructurePatterns = new[] { "redis", "rabbitmq", "mysql", "mariadb", "postgres", "mongodb", "placement", "dapr" };
+            var infrastructurePatterns = new[] { "redis", "rabbitmq", "mysql", "mariadb", "postgres", "mongodb" };
 
             var allContainers = await _client.Containers.ListContainersAsync(
                 new ContainersListParameters { All = true },

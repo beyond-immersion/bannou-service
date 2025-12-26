@@ -1,7 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
-using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.Relationship;
 
@@ -10,7 +10,6 @@ namespace BeyondImmersion.BannouService.Relationship;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(RelationshipService))]
-[Obsolete]
 public class RelationshipServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

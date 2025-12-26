@@ -28,9 +28,9 @@ public class KubernetesOrchestrator : IContainerOrchestrator
     private readonly string _namespace;
 
     /// <summary>
-    /// Label used to identify Dapr app-id on pods/deployments.
+    /// Label used to identify app-id on pods/deployments.
     /// </summary>
-    private const string DAPR_APP_ID_LABEL = "dapr.io/app-id";
+    private const string BANNOU_APP_ID_LABEL = "bannou.app-id";
 
     /// <summary>
     /// Annotation used by kubectl to track restarts.
@@ -151,7 +151,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
                 {
                     Accepted = false,
                     AppName = appName,
-                    Message = $"No deployment found with Dapr app-id '{appName}' in namespace '{_namespace}'"
+                    Message = $"No deployment found with app-id '{appName}' in namespace '{_namespace}'"
                 };
             }
 
@@ -232,7 +232,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
             // ListNamespacedDeploymentAsync - see ORCHESTRATOR-SDK-REFERENCE.md
             var deployments = await _client.AppsV1.ListNamespacedDeploymentAsync(
                 _namespace,
-                labelSelector: DAPR_APP_ID_LABEL,
+                labelSelector: BANNOU_APP_ID_LABEL,
                 cancellationToken: cancellationToken);
 
             return deployments.Items
@@ -260,7 +260,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
             var pod = await FindPodByAppNameAsync(appName, cancellationToken);
             if (pod == null)
             {
-                return $"No pod found with Dapr app-id '{appName}' in namespace '{_namespace}'";
+                return $"No pod found with app-id '{appName}' in namespace '{_namespace}'";
             }
 
             // ReadNamespacedPodLogAsync returns a stream
@@ -287,7 +287,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
     }
 
     /// <summary>
-    /// Finds a deployment by its Dapr app-id label.
+    /// Finds a deployment by its app-id label.
     /// </summary>
     private async Task<V1Deployment?> FindDeploymentByAppNameAsync(
         string appName,
@@ -295,14 +295,14 @@ public class KubernetesOrchestrator : IContainerOrchestrator
     {
         var deployments = await _client.AppsV1.ListNamespacedDeploymentAsync(
             _namespace,
-            labelSelector: $"{DAPR_APP_ID_LABEL}={appName}",
+            labelSelector: $"{BANNOU_APP_ID_LABEL}={appName}",
             cancellationToken: cancellationToken);
 
         return deployments.Items.FirstOrDefault();
     }
 
     /// <summary>
-    /// Finds a pod by its Dapr app-id label.
+    /// Finds a pod by its app-id label.
     /// </summary>
     private async Task<V1Pod?> FindPodByAppNameAsync(
         string appName,
@@ -311,7 +311,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
         // ListNamespacedPodAsync - see ORCHESTRATOR-SDK-REFERENCE.md
         var pods = await _client.CoreV1.ListNamespacedPodAsync(
             _namespace,
-            labelSelector: $"{DAPR_APP_ID_LABEL}={appName}",
+            labelSelector: $"{BANNOU_APP_ID_LABEL}={appName}",
             cancellationToken: cancellationToken);
 
         // Return the first running pod, or any pod if none are running
@@ -321,17 +321,17 @@ public class KubernetesOrchestrator : IContainerOrchestrator
     }
 
     /// <summary>
-    /// Extracts Dapr app-id from deployment labels.
+    /// Extracts app-id from deployment labels.
     /// </summary>
     private static string GetAppNameFromDeployment(V1Deployment deployment)
     {
-        if (deployment.Metadata.Labels?.TryGetValue(DAPR_APP_ID_LABEL, out var appId) == true)
+        if (deployment.Metadata.Labels?.TryGetValue(BANNOU_APP_ID_LABEL, out var appId) == true)
         {
             return appId;
         }
 
         // Try pod template labels
-        if (deployment.Spec.Template.Metadata.Labels?.TryGetValue(DAPR_APP_ID_LABEL, out appId) == true)
+        if (deployment.Spec.Template.Metadata.Labels?.TryGetValue(BANNOU_APP_ID_LABEL, out appId) == true)
         {
             return appId;
         }
@@ -409,7 +409,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
             var envVars = new List<V1EnvVar>
             {
                 new() { Name = $"{serviceName.ToUpperInvariant()}_SERVICE_ENABLED", Value = "true" },
-                new() { Name = "DAPR_APP_ID", Value = appId },
+                new() { Name = "BANNOU_APP_ID", Value = appId },
                 // Required for proper service operation - not forwarded from orchestrator ENV
                 new() { Name = "DAEMON_MODE", Value = "true" },
                 new() { Name = "HEARTBEAT_ENABLED", Value = "true" }
@@ -428,7 +428,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
                     Name = $"bannou-{serviceName}-{appId}",
                     Labels = new Dictionary<string, string>
                     {
-                        [DAPR_APP_ID_LABEL] = appId,
+                        [BANNOU_APP_ID_LABEL] = appId,
                         ["bannou.service"] = serviceName
                     }
                 },
@@ -439,7 +439,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
                     {
                         MatchLabels = new Dictionary<string, string>
                         {
-                            [DAPR_APP_ID_LABEL] = appId
+                            [BANNOU_APP_ID_LABEL] = appId
                         }
                     },
                     Template = new V1PodTemplateSpec
@@ -448,14 +448,14 @@ public class KubernetesOrchestrator : IContainerOrchestrator
                         {
                             Labels = new Dictionary<string, string>
                             {
-                                [DAPR_APP_ID_LABEL] = appId,
+                                [BANNOU_APP_ID_LABEL] = appId,
                                 ["bannou.service"] = serviceName
                             },
                             Annotations = new Dictionary<string, string>
                             {
-                                ["dapr.io/enabled"] = "true",
-                                ["dapr.io/app-id"] = appId,
-                                ["dapr.io/app-port"] = "80"
+                                ["bannou.mesh-enabled"] = "true",
+                                ["bannou.app-id"] = appId,
+                                ["bannou.app-port"] = "80"
                             }
                         },
                         Spec = new V1PodSpec
@@ -537,7 +537,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
                 {
                     Success = false,
                     AppId = appName,
-                    Message = $"No deployment found with Dapr app-id '{appName}' in namespace '{_namespace}'"
+                    Message = $"No deployment found with app-id '{appName}' in namespace '{_namespace}'"
                 };
             }
 
@@ -600,7 +600,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
                 {
                     Success = false,
                     AppId = appName,
-                    Message = $"No deployment found with Dapr app-id '{appName}' in namespace '{_namespace}'"
+                    Message = $"No deployment found with app-id '{appName}' in namespace '{_namespace}'"
                 };
             }
 
@@ -662,7 +662,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
             // In Kubernetes mode, identify infrastructure by:
             // 1. Services/Deployments with specific labels
             // 2. Well-known infrastructure patterns in the same namespace
-            var infrastructurePatterns = new[] { "redis", "rabbitmq", "mysql", "mariadb", "postgres", "mongodb", "placement", "dapr" };
+            var infrastructurePatterns = new[] { "redis", "rabbitmq", "mysql", "mariadb", "postgres", "mongodb" };
 
             var deployments = await _client.ListNamespacedDeploymentAsync(_namespace, cancellationToken: cancellationToken);
 

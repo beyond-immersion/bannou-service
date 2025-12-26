@@ -6,7 +6,7 @@ namespace BeyondImmersion.BannouService.UnitTests;
 
 /// <summary>
 /// Unit tests for System.Text.Json serialization patterns used throughout Bannou.
-/// These tests verify that DaprSerializerConfig correctly handles our data models,
+/// These tests verify that BannouJson correctly handles our data models,
 /// especially the critical Unix timestamp properties that have caused 401 failures.
 /// </summary>
 [Collection("unit tests")]
@@ -14,7 +14,6 @@ public class Serialization : IClassFixture<CollectionFixture>
 {
     private CollectionFixture TestCollectionContext { get; }
 
-    [Obsolete]
     public Serialization(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
@@ -35,7 +34,7 @@ public class Serialization : IClassFixture<CollectionFixture>
         public List<string> Roles { get; set; } = new List<string>();
         public string SessionId { get; set; } = string.Empty;
 
-        // Store as Unix epoch timestamps (long) to avoid Dapr/System.Text.Json DateTimeOffset serialization bugs
+        // Store as Unix epoch timestamps (long) to avoid System.Text.Json DateTimeOffset serialization issues
         public long CreatedAtUnix { get; set; }
         public long ExpiresAtUnix { get; set; }
 
@@ -79,36 +78,36 @@ public class Serialization : IClassFixture<CollectionFixture>
 
     #endregion
 
-    #region DaprSerializerConfig Tests
+    #region BannouSerializerConfig Tests
 
     [Fact]
-    public void DaprSerializerConfig_Exists()
+    public void BannouSerializerConfig_Exists()
     {
         // Verify the shared serializer config exists
-        Assert.NotNull(IServiceConfiguration.DaprSerializerConfig);
+        Assert.NotNull(IServiceConfiguration.BannouSerializerConfig);
     }
 
     [Fact]
-    public void DaprSerializerConfig_NumberHandling_IsStrict()
+    public void BannouSerializerConfig_NumberHandling_IsStrict()
     {
         // Verify NumberHandling is Strict (numbers must be actual numbers, not strings)
-        var config = IServiceConfiguration.DaprSerializerConfig;
+        var config = IServiceConfiguration.BannouSerializerConfig;
         Assert.Equal(System.Text.Json.Serialization.JsonNumberHandling.Strict, config.NumberHandling);
     }
 
     [Fact]
-    public void DaprSerializerConfig_PropertyNameCaseInsensitive_IsTrue()
+    public void BannouSerializerConfig_PropertyNameCaseInsensitive_IsTrue()
     {
         // Verify PropertyNameCaseInsensitive is true (case-insensitive matching for flexibility)
-        var config = IServiceConfiguration.DaprSerializerConfig;
+        var config = IServiceConfiguration.BannouSerializerConfig;
         Assert.True(config.PropertyNameCaseInsensitive);
     }
 
     [Fact]
-    public void DaprSerializerConfig_PropertyNamingPolicy_IsNull()
+    public void BannouSerializerConfig_PropertyNamingPolicy_IsNull()
     {
         // Verify no naming policy (PascalCase preserved)
-        var config = IServiceConfiguration.DaprSerializerConfig;
+        var config = IServiceConfiguration.BannouSerializerConfig;
         Assert.Null(config.PropertyNamingPolicy);
     }
 
@@ -130,8 +129,8 @@ public class Serialization : IClassFixture<CollectionFixture>
             ExpiresAtUnix = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds()
         };
 
-        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
-        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.BannouSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.BannouSerializerConfig);
 
         Assert.NotNull(deserialized);
         Assert.Equal(original.AccountId, deserialized.AccountId);
@@ -150,8 +149,8 @@ public class Serialization : IClassFixture<CollectionFixture>
         var expectedExpiresAt = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds();
         var original = new SessionDataModel { ExpiresAtUnix = expectedExpiresAt };
 
-        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
-        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.BannouSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.BannouSerializerConfig);
 
         Assert.NotNull(deserialized);
         Assert.Equal(expectedExpiresAt, deserialized.ExpiresAtUnix);
@@ -168,8 +167,8 @@ public class Serialization : IClassFixture<CollectionFixture>
             ExpiresAtUnix = 1733503600  // Specific non-zero value
         };
 
-        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
-        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.BannouSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.BannouSerializerConfig);
 
         Assert.NotNull(deserialized);
         Assert.Equal(1733500000, deserialized.CreatedAtUnix);
@@ -185,7 +184,7 @@ public class Serialization : IClassFixture<CollectionFixture>
             SessionId = "test-session"
         };
 
-        var json = JsonSerializer.Serialize(model, IServiceConfiguration.DaprSerializerConfig);
+        var json = JsonSerializer.Serialize(model, IServiceConfiguration.BannouSerializerConfig);
 
         // Verify property names are PascalCase (not camelCase)
         Assert.Contains("\"ExpiresAtUnix\":", json);
@@ -203,7 +202,7 @@ public class Serialization : IClassFixture<CollectionFixture>
     {
         // This should work - property names match exactly
         var json = """{"PascalCase":"value1","ALLCAPS":"value2","lowercase":"value3"}""";
-        var deserialized = JsonSerializer.Deserialize<CaseSensitiveModel>(json, IServiceConfiguration.DaprSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<CaseSensitiveModel>(json, IServiceConfiguration.BannouSerializerConfig);
 
         Assert.NotNull(deserialized);
         Assert.Equal("value1", deserialized.PascalCase);
@@ -216,7 +215,7 @@ public class Serialization : IClassFixture<CollectionFixture>
     {
         // With PropertyNameCaseInsensitive = true, camelCase JSON matches PascalCase properties
         var camelCaseJson = """{"pascalCase":"value1","allcaps":"value2","lowercase":"value3"}""";
-        var deserialized = JsonSerializer.Deserialize<CaseSensitiveModel>(camelCaseJson, IServiceConfiguration.DaprSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<CaseSensitiveModel>(camelCaseJson, IServiceConfiguration.BannouSerializerConfig);
 
         Assert.NotNull(deserialized);
         // With case-insensitive matching, camelCase matches PascalCase
@@ -239,7 +238,7 @@ public class Serialization : IClassFixture<CollectionFixture>
         }
         """;
 
-        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(camelCaseJson, IServiceConfiguration.DaprSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(camelCaseJson, IServiceConfiguration.BannouSerializerConfig);
 
         Assert.NotNull(deserialized);
         // With case-insensitive matching, camelCase properties match PascalCase
@@ -264,7 +263,7 @@ public class Serialization : IClassFixture<CollectionFixture>
         }
         """;
 
-        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(pascalCaseJson, IServiceConfiguration.DaprSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(pascalCaseJson, IServiceConfiguration.BannouSerializerConfig);
 
         Assert.NotNull(deserialized);
         Assert.Equal(new Guid("00000000-0000-0000-0000-000000000001"), deserialized.AccountId);
@@ -282,8 +281,8 @@ public class Serialization : IClassFixture<CollectionFixture>
     public void LongValue_RoundTrip_PreservesValue()
     {
         var original = new NumericTypesModel { LongValue = 1765031079 };
-        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
-        var deserialized = JsonSerializer.Deserialize<NumericTypesModel>(json, IServiceConfiguration.DaprSerializerConfig);
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.BannouSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<NumericTypesModel>(json, IServiceConfiguration.BannouSerializerConfig);
 
         Assert.NotNull(deserialized);
         Assert.Equal(1765031079, deserialized.LongValue);
@@ -297,14 +296,14 @@ public class Serialization : IClassFixture<CollectionFixture>
 
         // This should throw because Strict handling doesn't allow string numbers
         Assert.Throws<JsonException>(() =>
-            JsonSerializer.Deserialize<NumericTypesModel>(jsonWithStringNumber, IServiceConfiguration.DaprSerializerConfig));
+            JsonSerializer.Deserialize<NumericTypesModel>(jsonWithStringNumber, IServiceConfiguration.BannouSerializerConfig));
     }
 
     [Fact]
     public void LongValue_DefaultsToZero_WhenMissing()
     {
         var jsonWithoutLongValue = """{"IntValue":42}""";
-        var deserialized = JsonSerializer.Deserialize<NumericTypesModel>(jsonWithoutLongValue, IServiceConfiguration.DaprSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<NumericTypesModel>(jsonWithoutLongValue, IServiceConfiguration.BannouSerializerConfig);
 
         Assert.NotNull(deserialized);
         Assert.Equal(42, deserialized.IntValue);
@@ -313,12 +312,12 @@ public class Serialization : IClassFixture<CollectionFixture>
 
     #endregion
 
-    #region Dapr Default Serializer Comparison
+    #region Web Default Serializer Comparison
 
     [Fact]
-    public void DaprDefaults_Use_CamelCase_Naming()
+    public void BannouDefaults_Use_CamelCase_Naming()
     {
-        // This demonstrates what Dapr SDK defaults do
+        // This demonstrates what web default JSON settings do
         var defaultOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 
         var model = new SessionDataModel
@@ -329,7 +328,7 @@ public class Serialization : IClassFixture<CollectionFixture>
 
         var json = JsonSerializer.Serialize(model, defaultOptions);
 
-        // Dapr defaults serialize with camelCase
+        // Web defaults serialize with camelCase
         Assert.Contains("\"expiresAtUnix\":", json);
         Assert.Contains("\"sessionId\":", json);
         Assert.DoesNotContain("\"ExpiresAtUnix\":", json);
@@ -345,7 +344,7 @@ public class Serialization : IClassFixture<CollectionFixture>
             SessionId = "test"
         };
 
-        var json = JsonSerializer.Serialize(model, IServiceConfiguration.DaprSerializerConfig);
+        var json = JsonSerializer.Serialize(model, IServiceConfiguration.BannouSerializerConfig);
 
         // Our config serializes with PascalCase
         Assert.Contains("\"ExpiresAtUnix\":", json);
@@ -355,9 +354,9 @@ public class Serialization : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    public void CrossSerializer_DaprDefaultsWrite_OurConfigRead_Succeeds()
+    public void CrossSerializer_BannouDefaultsWrite_OurConfigRead_Succeeds()
     {
-        // With PropertyNameCaseInsensitive = true, data written with Dapr defaults (camelCase)
+        // With PropertyNameCaseInsensitive = true, data written with web defaults (camelCase)
         // can be read with our config
 
         var defaultOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
@@ -368,11 +367,11 @@ public class Serialization : IClassFixture<CollectionFixture>
             SessionId = "important-session-id"
         };
 
-        // Simulate data saved by DaprClient with default settings
-        var jsonFromDaprDefaults = JsonSerializer.Serialize(original, defaultOptions);
+        // Simulate data saved with web default settings
+        var jsonFromBannouDefaults = JsonSerializer.Serialize(original, defaultOptions);
 
         // Try to read with our config (what the service does)
-        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(jsonFromDaprDefaults, IServiceConfiguration.DaprSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(jsonFromBannouDefaults, IServiceConfiguration.BannouSerializerConfig);
 
         Assert.NotNull(deserialized);
         // With case-insensitive matching, camelCase works correctly
@@ -390,8 +389,8 @@ public class Serialization : IClassFixture<CollectionFixture>
             SessionId = "important-session-id"
         };
 
-        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
-        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.BannouSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.BannouSerializerConfig);
 
         Assert.NotNull(deserialized);
         Assert.Equal(1733503600, deserialized.ExpiresAtUnix);
@@ -406,8 +405,8 @@ public class Serialization : IClassFixture<CollectionFixture>
     public void SessionDataModel_WithMaxLongValue_RoundTrips()
     {
         var original = new SessionDataModel { ExpiresAtUnix = long.MaxValue };
-        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
-        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.BannouSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.BannouSerializerConfig);
 
         Assert.NotNull(deserialized);
         Assert.Equal(long.MaxValue, deserialized.ExpiresAtUnix);
@@ -418,8 +417,8 @@ public class Serialization : IClassFixture<CollectionFixture>
     {
         // Zero is a valid Unix timestamp (Jan 1, 1970) - verify it serializes/deserializes
         var original = new SessionDataModel { ExpiresAtUnix = 0 };
-        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
-        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.BannouSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.BannouSerializerConfig);
 
         Assert.NotNull(deserialized);
         Assert.Equal(0, deserialized.ExpiresAtUnix);
@@ -430,8 +429,8 @@ public class Serialization : IClassFixture<CollectionFixture>
     {
         // Negative Unix time (before Jan 1, 1970) should also work
         var original = new SessionDataModel { ExpiresAtUnix = -1000000 };
-        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
-        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.BannouSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.BannouSerializerConfig);
 
         Assert.NotNull(deserialized);
         Assert.Equal(-1000000, deserialized.ExpiresAtUnix);
@@ -441,8 +440,8 @@ public class Serialization : IClassFixture<CollectionFixture>
     public void SessionDataModel_WithEmptyRoles_RoundTrips()
     {
         var original = new SessionDataModel { Roles = new List<string>() };
-        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
-        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.BannouSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.BannouSerializerConfig);
 
         Assert.NotNull(deserialized);
         Assert.NotNull(deserialized.Roles);
@@ -453,12 +452,12 @@ public class Serialization : IClassFixture<CollectionFixture>
     public void SessionDataModel_WithNullRoles_HandledCorrectly()
     {
         var original = new SessionDataModel { Roles = null! };
-        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.BannouSerializerConfig);
 
         // DefaultIgnoreCondition.WhenWritingNull should exclude null Roles
         Assert.DoesNotContain("\"Roles\":null", json);
 
-        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.BannouSerializerConfig);
         Assert.NotNull(deserialized);
         // Roles should be default (new List<string>()) since it wasn't in JSON
         Assert.NotNull(deserialized.Roles);

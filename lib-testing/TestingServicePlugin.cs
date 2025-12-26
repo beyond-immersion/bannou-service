@@ -15,7 +15,6 @@ public class TestingServicePlugin : BaseBannouPlugin
     public override string PluginName => "testing";
     public override string DisplayName => "Testing Service";
 
-    [Obsolete]
     private ITestingService? _service;
     private IServiceProvider? _serviceProvider;
 
@@ -26,7 +25,7 @@ public class TestingServicePlugin : BaseBannouPlugin
     {
         Logger?.LogDebug("Configuring service dependencies");
 
-        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // Service registration is now handled centrally by PluginLoader based on [BannouService] attributes
         // No need to register ITestingService and TestingService here
 
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
@@ -51,7 +50,6 @@ public class TestingServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Start the service - uses centralized service resolution from PluginLoader.
     /// </summary>
-    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting service");
@@ -116,11 +114,11 @@ public class TestingServicePlugin : BaseBannouPlugin
 
             Logger?.LogInformation("TestingService resolved successfully (fallback)");
 
-            // Call existing IDaprService.OnStartAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnStartAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnStartAsync for Testing service");
-                await daprService.OnStartAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnStartAsync for Testing service");
+                await bannouService.OnStartAsync(CancellationToken.None);
             }
 
             // Test the service is working
@@ -141,9 +139,8 @@ public class TestingServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Running phase - calls existing IDaprService lifecycle if present.
+    /// Running phase - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -152,11 +149,11 @@ public class TestingServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Call existing IDaprService.OnRunningAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnRunningAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for Testing service");
-                await daprService.OnRunningAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnRunningAsync for Testing service");
+                await bannouService.OnRunningAsync(CancellationToken.None);
             }
 
             // Run a periodic test
@@ -173,9 +170,8 @@ public class TestingServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Shutdown the service - calls existing IDaprService lifecycle if present.
+    /// Shutdown the service - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;
@@ -184,11 +180,11 @@ public class TestingServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Call existing IDaprService.OnShutdownAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnShutdownAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for Testing service");
-                await daprService.OnShutdownAsync();
+                Logger?.LogDebug("Calling IBannouService.OnShutdownAsync for Testing service");
+                await bannouService.OnShutdownAsync();
             }
 
             Logger?.LogInformation("Service shutdown complete");

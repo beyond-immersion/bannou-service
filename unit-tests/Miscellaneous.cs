@@ -1,3 +1,5 @@
+#pragma warning disable CS0618 // Intentional obsolete usage for testing IsObsolete() extension method
+
 using JWT;
 using JWT.Algorithms;
 using JWT.Builder;
@@ -44,15 +46,12 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
     [Obsolete(message: "Test message")]
     private readonly bool ObsoleteTestField = true;
 
-    [Obsolete]
     private bool ObsoleteTestProperty { get; set; } = true;
 
-    [Obsolete]
     private bool ObsoleteTestMethod() => true;
 
     private Miscellaneous(CollectionFixture collectionContext) => TestCollectionContext = collectionContext;
 
-    [Obsolete]
     public Miscellaneous(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
@@ -110,7 +109,6 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
     }
 
     [Fact]
-    [Obsolete]
     public void ObsoleteTest_GetMessage()
     {
         System.Reflection.FieldInfo? obsMemberInfo = GetType().GetField(nameof(ObsoleteTestField), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);

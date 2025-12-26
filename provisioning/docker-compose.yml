@@ -1,6 +1,5 @@
-# Base Bannou Services - Standalone Dapr Containers
-# Each Dapr sidecar runs as independent container with its own IP
-# Uses mDNS (default) for Dapr-to-Dapr service discovery on bridge network
+# Base Bannou Services - Infrastructure libs pattern (no sidecars)
+# Uses lib-mesh for service routing, lib-messaging for RabbitMQ, lib-state for Redis/MySQL
 
 services:
 
@@ -11,9 +10,7 @@ services:
       context: ../
       dockerfile: provisioning/Dockerfile
     environment:
-      # Dapr endpoints - use Docker DNS to reach standalone Dapr container
-      - DAPR_HTTP_ENDPOINT=http://bannou-dapr:3500
-      - DAPR_GRPC_ENDPOINT=http://bannou-dapr:50001
+      - BANNOU_APP_ID=bannou
     volumes:
       - "./certificates:/certificates"
       - "logs-data:/app/logs/"
@@ -28,46 +25,8 @@ services:
       retries: 5
       start_period: 60s
     depends_on:
-      - bannou-dapr
-
-  # Dapr sidecar - standalone container with own IP (NOT network_mode: service:bannou)
-  # Uses mDNS (default) for Dapr-to-Dapr service discovery
-  bannou-dapr:
-    image: "daprio/daprd:1.16.3"
-    command: [
-      "./daprd",
-      "--app-id", "bannou",
-      "--app-port", "80",
-      "--app-protocol", "http",
-      "--app-channel-address", "bannou",
-      "--dapr-http-port", "3500",
-      "--dapr-grpc-port", "50001",
-      "--placement-host-address", "placement:50006",
-      "--resources-path", "./components",
-      "--log-level", "debug",
-      "--enable-api-logging"
-    ]
-    volumes:
-      - "./dapr/components/:/components"
-      - "./certificates:/certificates"
-    environment:
-      - "SSL_CERT_DIR=/certificates"
-    # NO network_mode - container gets its own IP on the default network
-    restart: always
-    depends_on:
-      placement:
-        condition: service_started
       rabbitmq:
         condition: service_healthy
-
-  # Dapr placement service - uses default bridge network
-  placement:
-    image: "daprio/placement:1.16.3"
-    command: [
-      "./placement", "--port", "50006"
-    ]
-    ports:
-      - "50006:50006"
 
   # RabbitMQ message broker - uses default bridge network
   rabbitmq:

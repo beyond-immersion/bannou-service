@@ -1005,7 +1005,7 @@ public class MeshRedisManagerTests
 
 /// <summary>
 /// Tests for MeshInvocationClient - the YARP-based service invocation client
-/// that replaces DaprClient.InvokeMethodAsync for service-to-service communication.
+/// for service-to-service communication via lib-mesh infrastructure.
 /// </summary>
 public class MeshInvocationClientTests : IDisposable
 {

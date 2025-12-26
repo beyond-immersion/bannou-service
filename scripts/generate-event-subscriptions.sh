@@ -4,7 +4,7 @@
 # Usage: ./generate-event-subscriptions.sh <service-name> <schema-file>
 # Extracts x-event-subscriptions from {service}-events.yaml (preferred) or
 # x-subscribes-to from {service}-api.yaml (legacy fallback) and generates:
-# 1. Generated/{Service}EventsController.cs - Dapr topic handlers
+# 1. Generated/{Service}EventsController.cs - RabbitMQ topic handlers
 # 2. {Service}ServiceEvents.cs - Partial class with handler stubs (only if doesn't exist)
 
 set -e
@@ -252,7 +252,7 @@ for sub in data:
 
     print(f'''
     /// <summary>
-    /// Handle {topic} events via Dapr pubsub.
+    /// Handle {topic} events via pubsub.
     /// Dispatches to all registered handlers via IEventConsumer.
     /// </summary>
     [Topic(\"bannou-pubsub\", \"{topic}\")]
@@ -261,7 +261,7 @@ for sub in data:
     {{
         try
         {{
-            var evt = await DaprEventHelper.ReadEventAsync<{event_type}>(Request);
+            var evt = await BannouEventHelper.ReadEventAsync<{event_type}>(Request);
 
             if (evt == null)
             {{
@@ -309,7 +309,7 @@ namespace BeyondImmersion.BannouService.${SERVICE_PASCAL};
 public partial class ${SERVICE_PASCAL}Service
 {
     /// <summary>
-    /// Registers event consumers for Dapr pub/sub events this service handles.
+    /// Registers event consumers for pub/sub events this service handles.
     /// Called from the main service constructor.
     /// </summary>
     /// <param name="eventConsumer">The event consumer for registering handlers.</param>

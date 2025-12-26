@@ -11,7 +11,7 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Test handler for relationship API endpoints using generated clients.
 /// Tests the relationship service APIs directly via NSwag-generated RelationshipClient.
 ///
-/// Note: Relationship APIs test service-to-service communication via Dapr.
+/// Note: Relationship APIs test service-to-service communication via mesh.
 /// These tests validate entity-to-entity relationship management with composite uniqueness,
 /// bidirectional support, and soft-delete capability.
 /// </summary>

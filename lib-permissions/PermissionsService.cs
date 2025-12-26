@@ -23,10 +23,9 @@ namespace BeyondImmersion.BannouService.Permissions;
 
 /// <summary>
 /// Permissions service - authoritative source for all permission mappings and session capabilities.
-/// Uses Dapr state store for atomic operations and Redis-backed data structures.
+/// Uses lib-state for atomic operations and Redis-backed data structures.
 /// </summary>
-[DaprService("permissions", typeof(IPermissionsService), lifetime: ServiceLifetime.Singleton)]
-[Obsolete]
+[BannouService("permissions", typeof(IPermissionsService), lifetime: ServiceLifetime.Singleton)]
 public partial class PermissionsService : IPermissionsService
 {
     private readonly ILogger<PermissionsService> _logger;
@@ -37,7 +36,7 @@ public partial class PermissionsService : IPermissionsService
     private readonly IClientEventPublisher _clientEventPublisher;
     private static readonly string[] ROLE_ORDER = new[] { "anonymous", "user", "developer", "admin" };
 
-    // Dapr state store name
+    // State store name
     private const string STATE_STORE = "permissions-store";
 
     // State key patterns
@@ -52,7 +51,7 @@ public partial class PermissionsService : IPermissionsService
     private const string SERVICE_LOCK_KEY = "lock:service-registration:{0}";
     private const string PERMISSION_HASH_KEY = "permission_hash:{0}"; // Stores hash of service permission data for idempotent registration
 
-    // Cache for compiled permissions (in-memory cache with Dapr state backing)
+    // Cache for compiled permissions (in-memory cache with lib-state backing)
     private readonly ConcurrentDictionary<string, CapabilityResponse> _sessionCapabilityCache;
 
     public PermissionsService(
@@ -114,7 +113,7 @@ public partial class PermissionsService : IPermissionsService
     }
 
     /// <summary>
-    /// Get compiled capabilities for a session from Dapr state store with in-memory caching.
+    /// Get compiled capabilities for a session from lib-state store with in-memory caching.
     /// </summary>
     public async Task<(StatusCodes, CapabilityResponse?)> GetCapabilitiesAsync(
         CapabilityRequest body,
@@ -194,14 +193,14 @@ public partial class PermissionsService : IPermissionsService
                 "GetCapabilities",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.SessionId });
             return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
-    /// Fast O(1) validation using Dapr state lookup for specific API access.
+    /// Fast O(1) validation using lib-state lookup for specific API access.
     /// </summary>
     public async Task<(StatusCodes, ValidationResponse?)> ValidateApiAccessAsync(
         ValidationRequest body,
@@ -249,7 +248,7 @@ public partial class PermissionsService : IPermissionsService
                 "ValidateApiAccess",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.SessionId, body.ServiceId, body.Method });
             return (StatusCodes.InternalServerError, null);
         }
@@ -257,7 +256,7 @@ public partial class PermissionsService : IPermissionsService
 
     /// <summary>
     /// Register service permission matrix and trigger recompilation for all active sessions.
-    /// Uses Dapr atomic transactions to prevent race conditions.
+    /// Uses lib-state atomic transactions to prevent race conditions.
     /// </summary>
     public async Task<(StatusCodes, RegistrationResponse?)> RegisterServicePermissionsAsync(
         ServicePermissionMatrix body,
@@ -512,7 +511,7 @@ public partial class PermissionsService : IPermissionsService
                 "RegisterServicePermissions",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "lib-state",
                 details: new { body.ServiceId });
             return (StatusCodes.InternalServerError, null);
         }
@@ -520,7 +519,7 @@ public partial class PermissionsService : IPermissionsService
 
     /// <summary>
     /// Update session state for specific service and recompile permissions.
-    /// Uses Dapr atomic transactions for consistency.
+    /// Uses lib-state atomic transactions for consistency.
     /// </summary>
     public async Task<(StatusCodes, SessionUpdateResponse?)> UpdateSessionStateAsync(
         SessionStateUpdate body,
@@ -564,7 +563,7 @@ public partial class PermissionsService : IPermissionsService
             await hashSetStore.SaveAsync(ACTIVE_SESSIONS_KEY, activeSessions, cancellationToken: cancellationToken);
 
             // Recompile session permissions using the states we already have
-            // (avoids read-after-write consistency issues by not re-reading from Dapr)
+            // (avoids read-after-write consistency issues by not re-reading from state store)
             await RecompileSessionPermissionsAsync(body.SessionId, sessionStates, "session_state_changed");
 
             return (StatusCodes.OK, new SessionUpdateResponse
@@ -581,7 +580,7 @@ public partial class PermissionsService : IPermissionsService
                 "UpdateSessionState",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "lib-state",
                 details: new { body.SessionId, body.ServiceId, body.NewState });
             return (StatusCodes.InternalServerError, null);
         }
@@ -636,7 +635,7 @@ public partial class PermissionsService : IPermissionsService
                 "UpdateSessionRole",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.SessionId, body.NewRole });
             return (StatusCodes.InternalServerError, null);
         }
@@ -721,7 +720,7 @@ public partial class PermissionsService : IPermissionsService
                 "ClearSessionState",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.SessionId, body.ServiceId });
             return (StatusCodes.InternalServerError, null);
         }
@@ -801,7 +800,7 @@ public partial class PermissionsService : IPermissionsService
                 "GetSessionInfo",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.SessionId });
             return (StatusCodes.InternalServerError, null);
         }
@@ -967,7 +966,7 @@ public partial class PermissionsService : IPermissionsService
                 "RecompileSessionPermissions",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { sessionId, reason });
         }
     }
@@ -1174,7 +1173,7 @@ public partial class PermissionsService : IPermissionsService
                 "GetRegisteredServices",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: null);
             return (StatusCodes.InternalServerError, null);
         }

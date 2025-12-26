@@ -1,10 +1,9 @@
 #!/bin/sh
-# Wait for infrastructure services to be ready before starting Dapr sidecar
+# Wait for infrastructure services to be ready before starting application
 # Total timeout: 60 seconds across all services
 # All service names configurable via environment variables
 
 # Service configuration (all configurable via ENV)
-# All state stores consolidated to bannou-redis (Redis 8 includes RediSearch built-in)
 RABBITMQ_HOST="${RABBITMQ_HOST:-rabbitmq}"
 RABBITMQ_PORT="${RABBITMQ_PORT:-5672}"
 REDIS_HOST="${REDIS_HOST:-bannou-redis}"
@@ -46,7 +45,7 @@ wait_for_service() {
         sleep "$CHECK_INTERVAL"
     done
 
-    echo "WARNING: ${name} not ready within timeout. Starting Dapr anyway..."
+    echo "WARNING: ${name} not ready within timeout."
     return 1
 }
 
@@ -64,6 +63,8 @@ wait_for_service "$MYSQL_HOST" "$MYSQL_PORT" "MySQL"
 elapsed=$(($(date +%s) - start_time))
 echo "Infrastructure ready check completed in ${elapsed}s"
 
-# Start Dapr with all passed arguments
-echo "Starting Dapr sidecar..."
-exec /daprd "$@"
+# If arguments provided, execute them (allows use as entrypoint wrapper)
+if [ $# -gt 0 ]; then
+    echo "Starting: $@"
+    exec "$@"
+fi

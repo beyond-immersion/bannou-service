@@ -10,7 +10,7 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Test handler for species API endpoints using generated clients.
 /// Tests the species service APIs directly via NSwag-generated SpeciesClient.
 ///
-/// Note: Species APIs test service-to-service communication via Dapr.
+/// Note: Species APIs test service-to-service communication via mesh.
 /// These tests validate realm-associated species management with real datastores.
 /// Species-realm associations require real Realms to exist first.
 /// </summary>

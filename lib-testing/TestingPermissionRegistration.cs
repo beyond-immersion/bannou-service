@@ -39,8 +39,8 @@ public static class TestingPermissionRegistration
             Timestamp = DateTimeOffset.UtcNow,
             ServiceId = ServiceId,
             Version = ServiceVersion,
-            // DAPR_APP_ID is a legitimate Tenet 21 exception - Dapr bootstrap variable
-            AppId = Environment.GetEnvironmentVariable("DAPR_APP_ID") ?? AppConstants.DEFAULT_APP_NAME,
+            // BANNOU_APP_ID is a legitimate Tenet 21 exception - mesh bootstrap variable
+            AppId = Environment.GetEnvironmentVariable("BANNOU_APP_ID") ?? AppConstants.DEFAULT_APP_NAME,
             Endpoints = GetEndpoints()
         };
     }

@@ -507,7 +507,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
     /// <summary>
     /// Test that setting game-session:in_game state triggers capability manifest update via WebSocket.
     /// This validates the real-time push mechanism where:
-    /// - Session state changes published via Dapr pub/sub
+    /// - Session state changes published via Bannou pub/sub
     /// - Permissions service recompiles capabilities
     /// - Connect service pushes updated capability manifest to WebSocket client
     /// </summary>

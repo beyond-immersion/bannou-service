@@ -27,7 +27,7 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 using System = global::System;
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public interface IOrchestratorController : BeyondImmersion.BannouService.Controllers.IDaprController
+public interface IOrchestratorController : BeyondImmersion.BannouService.Controllers.IBannouController
 {
 
     /// <summary>
@@ -38,7 +38,7 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// Validates connectivity and health of core infrastructure components:
     /// <br/>- Redis (direct connection via StackExchange.Redis)
     /// <br/>- RabbitMQ (direct connection via RabbitMQ.Client)
-    /// <br/>- Dapr Placement service
+    /// <br/>-
     /// </remarks>
 
     /// <returns>Infrastructure health status (check response body for component health)</returns>
@@ -125,7 +125,7 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>Presets define service combinations and configuration for specific use cases.
     /// <br/>
     /// <br/>Built-in presets:
-    /// <br/>- `local-development`: All services in single container with Dapr
+    /// <br/>- `local-development`: All services in single container with mesh infrastructure
     /// <br/>- `local-testing`: Test environment with infrastructure services
     /// <br/>- `integration-http`: HTTP integration testing preset
     /// <br/>- `integration-edge`: WebSocket/edge testing preset
@@ -170,7 +170,7 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// </summary>
 
     /// <remarks>
-    /// Returns the current service-to-app-id routing mappings used for Dapr service invocation.
+    /// Returns the current service-to-app-id routing mappings used for mesh service invocation through lib-mesh.
     /// <br/>This is the authoritative source of truth for how services are routed in the current deployment.
     /// <br/>
     /// <br/>In development, all services route to "bannou" by default. In production, services may be
@@ -473,7 +473,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     /// Validates connectivity and health of core infrastructure components:
     /// <br/>- Redis (direct connection via StackExchange.Redis)
     /// <br/>- RabbitMQ (direct connection via RabbitMQ.Client)
-    /// <br/>- Dapr Placement service
+    /// <br/>-
     /// </remarks>
     /// <returns>Infrastructure health status (check response body for component health)</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/health/infrastructure")]
@@ -580,7 +580,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     /// <br/>Presets define service combinations and configuration for specific use cases.
     /// <br/>
     /// <br/>Built-in presets:
-    /// <br/>- `local-development`: All services in single container with Dapr
+    /// <br/>- `local-development`: All services in single container with mesh infrastructure
     /// <br/>- `local-testing`: Test environment with infrastructure services
     /// <br/>- `integration-http`: HTTP integration testing preset
     /// <br/>- `integration-edge`: WebSocket/edge testing preset
@@ -633,7 +633,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     /// Get current service-to-app-id routing mappings
     /// </summary>
     /// <remarks>
-    /// Returns the current service-to-app-id routing mappings used for Dapr service invocation.
+    /// Returns the current service-to-app-id routing mappings used for mesh service invocation through lib-mesh.
     /// <br/>This is the authoritative source of truth for how services are routed in the current deployment.
     /// <br/>
     /// <br/>In development, all services route to "bannou" by default. In production, services may be
@@ -1038,7 +1038,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     private static readonly string _GetInfrastructureHealth_Info = """
 {
   "summary": "Check infrastructure component health",
-  "description": "Validates connectivity and health of core infrastructure components:\n- Redis (direct connection via StackExchange.Redis)\ n- RabbitMQ (direct connection via RabbitMQ.Client)\n- Dapr Placement service\n",
+  "description": "Validates connectivity and health of core infrastructure components:\n- Redis (direct connection via StackExchange.Redis)\ n- RabbitMQ (direct connection via RabbitMQ.Client)\n- \n",
   "tags": [],
   "deprecated": false,
   "operationId": "GetInfrastructureHealth"
@@ -1170,7 +1170,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "appId": {
           "type": "string",
-          "description": "Dapr app-id (e.g., \"bannou\", \"npc-omega-01\")"
+          "description": "App-id for mesh routing (e.g., \"bannou\", \"npc-omega-01\")"
         },
         "status": {
           "type": "string",
@@ -1836,14 +1836,14 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           },
           "description": "Node-specific environment overrides"
         },
-        "daprEnabled": {
+        "meshEnabled": {
           "type": "boolean",
           "default": true,
-          "description": "Whether to attach Dapr sidecar"
+          "description": "Whether mesh routing is enabled"
         },
-        "daprAppId": {
+        "appId": {
           "type": "string",
-          "description": "Dapr app-id override (default derives from node name)"
+          "description": "App-id override for mesh routing (default derives from node name)"
         }
       }
     },
@@ -1879,10 +1879,6 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "mysql": {
           "$ref": "#/$defs/InfraServiceConfig"
-        },
-        "placement": {
-          "$ref": "#/$defs/InfraServiceConfig",
-          "description": "Dapr placement service"
         },
         "ingress": {
           "$ref": "#/$defs/IngressConfig"
@@ -1962,7 +1958,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         "swarm",
         "compose"
       ],
-      "description": "Container orchestration backend type.\ nPriority order: kubernetes > portainer > swarm > compose\n"
+      "description": "Container orchestration backend type.\nPriority order: kubernetes > portainer > swarm > compose\n"
     }
   }
 }
@@ -1971,7 +1967,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     private static readonly string _GetPresets_Info = """
 {
   "summary": "List available deployment presets",
-  "description": "Returns all available deployment presets from the orchestrator's preset directory.\nPresets define service combinations and configuration for specific use cases.\n\nBuilt-in presets:\n- `local-development`: All services in single container with Dapr\ n- `local-testing`: Test environment with infrastructure services\n- `integration-http`: HTTP integration testing preset\n- `integration-edge`: WebSocket/edge testing preset\n- `split-auth-accounts`: Auth and Accounts in separate containers\n- `distributed-npc`: NPC processing distributed across nodes\n",
+  "description": "Returns all available deployment presets from the orchestrator's preset directory.\nPresets define service combinations and configuration for specific use cases.\n\nBuilt-in presets:\n- `local-development`: All services in single container with mesh infrastructure\n- `local-testing`: Test environment with infrastructure services\n- `integration-http`: HTTP integration testing preset\n- `integration-edge`: WebSocket/edge testing preset\n- `split-auth-accounts`: Auth and Accounts in separate containers\n- `distributed-npc`: NPC processing distributed across nodes\n",
   "tags": [],
   "deprecated": false,
   "operationId": "GetPresets"
@@ -2117,14 +2113,14 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           },
           "description": "Node-specific environment overrides"
         },
-        "daprEnabled": {
+        "meshEnabled": {
           "type": "boolean",
           "default": true,
-          "description": "Whether to attach Dapr sidecar"
+          "description": "Whether mesh routing is enabled"
         },
-        "daprAppId": {
+        "appId": {
           "type": "string",
-          "description": "Dapr app-id override (default derives from node name)"
+          "description": "App-id override for mesh routing (default derives from node name)"
         }
       }
     },
@@ -2160,10 +2156,6 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "mysql": {
           "$ref": "#/$defs/InfraServiceConfig"
-        },
-        "placement": {
-          "$ref": "#/$defs/InfraServiceConfig",
-          "description": "Dapr placement service"
         },
         "ingress": {
           "$ref": "#/$defs/IngressConfig"
@@ -2252,7 +2244,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         "force",
         "clean"
       ],
-      "description": "Deployment mode:\n- graceful: Wait for connections to drain\ n- force: Apply immediately\n- clean: Tear down and rebuild\n"
+      "description": "Deployment mode:\n- graceful: Wait for connections to drain\n- force: Apply immediately\ n- clean: Tear down and rebuild\n"
     }
   }
 }
@@ -2377,14 +2369,14 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           },
           "description": "Node-specific environment overrides"
         },
-        "daprEnabled": {
+        "meshEnabled": {
           "type": "boolean",
           "default": true,
-          "description": "Whether to attach Dapr sidecar"
+          "description": "Whether mesh routing is enabled"
         },
-        "daprAppId": {
+        "appId": {
           "type": "string",
-          "description": "Dapr app-id override (default derives from node name)"
+          "description": "App-id override for mesh routing (default derives from node name)"
         }
       }
     },
@@ -2420,10 +2412,6 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "mysql": {
           "$ref": "#/$defs/InfraServiceConfig"
-        },
-        "placement": {
-          "$ref": "#/$defs/InfraServiceConfig",
-          "description": "Dapr placement service"
         },
         "ingress": {
           "$ref": "#/$defs/IngressConfig"
@@ -2634,7 +2622,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Map of service names to Dapr app-id routing destinations.\nExample: { \"accounts\": \"bannou\", \"behavior\": \"npc-processing-01\" }\n"
+          "description": "Map of service names to Bannou app-id routing destinations.\nExample: { \"accounts\": \"bannou\", \"behavior\": \"npc-processing-01\" }\n"
         },
         "defaultAppId": {
           "type": "string",
@@ -2665,7 +2653,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     private static readonly string _GetServiceRouting_Info = """
 {
   "summary": "Get current service-to-app-id routing mappings",
-  "description": "Returns the current service-to-app-id routing mappings used for Dapr service invocation.\nThis is the authoritative source of truth for how services are routed in the current deployment.\n\nIn development, all services route to \"bannou\" by default. In production, services may be\ndistributed across multiple app-ids based on deployment topology.\n\n**Use Cases**:\n- Services querying routing on startup\n- Debugging service communication issues\ n- Monitoring deployment topology\n",
+  "description": "Returns the current service-to-app-id routing mappings used for mesh service invocation through lib-mesh.\nThis is the authoritative source of truth for how services are routed in the current deployment.\n\nIn development, all services route to \"bannou\" by default. In production, services may be\ndistributed across multiple app-ids based on deployment topology.\n\n**Use Cases**:\n- Services querying routing on startup\n- Debugging service communication issues\n- Monitoring deployment topology\n",
   "tags": [],
   "deprecated": false,
   "operationId": "GetServiceRouting"
@@ -2854,14 +2842,14 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           },
           "description": "Node-specific environment overrides"
         },
-        "daprEnabled": {
+        "meshEnabled": {
           "type": "boolean",
           "default": true,
-          "description": "Whether to attach Dapr sidecar"
+          "description": "Whether mesh routing is enabled"
         },
-        "daprAppId": {
+        "appId": {
           "type": "string",
-          "description": "Dapr app-id override (default derives from node name)"
+          "description": "App-id override for mesh routing (default derives from node name)"
         }
       }
     },
@@ -2897,10 +2885,6 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "mysql": {
           "$ref": "#/$defs/InfraServiceConfig"
-        },
-        "placement": {
-          "$ref": "#/$defs/InfraServiceConfig",
-          "description": "Dapr placement service"
         },
         "ingress": {
           "$ref": "#/$defs/IngressConfig"
@@ -3751,14 +3735,14 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           },
           "description": "Node-specific environment overrides"
         },
-        "daprEnabled": {
+        "meshEnabled": {
           "type": "boolean",
           "default": true,
-          "description": "Whether to attach Dapr sidecar"
+          "description": "Whether mesh routing is enabled"
         },
-        "daprAppId": {
+        "appId": {
           "type": "string",
-          "description": "Dapr app-id override (default derives from node name)"
+          "description": "App-id override for mesh routing (default derives from node name)"
         }
       }
     },
@@ -3790,7 +3774,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         "force",
         "clean"
       ],
-      "description": "Deployment mode:\n- graceful: Wait for connections to drain\n- force: Apply immediately\ n- clean: Tear down and rebuild\n"
+      "description": "Deployment mode:\n- graceful: Wait for connections to drain\n- force: Apply immediately\n- clean: Tear down and rebuild\n"
     }
   }
 }
@@ -3910,14 +3894,14 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           },
           "description": "Node-specific environment overrides"
         },
-        "daprEnabled": {
+        "meshEnabled": {
           "type": "boolean",
           "default": true,
-          "description": "Whether to attach Dapr sidecar"
+          "description": "Whether mesh routing is enabled"
         },
-        "daprAppId": {
+        "appId": {
           "type": "string",
-          "description": "Dapr app-id override (default derives from node name)"
+          "description": "App-id override for mesh routing (default derives from node name)"
         }
       }
     },
@@ -3953,10 +3937,6 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "mysql": {
           "$ref": "#/$defs/InfraServiceConfig"
-        },
-        "placement": {
-          "$ref": "#/$defs/InfraServiceConfig",
-          "description": "Dapr placement service"
         },
         "ingress": {
           "$ref": "#/$defs/IngressConfig"
@@ -4100,7 +4080,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       "properties": {
         "appName": {
           "type": "string",
-          "description": "Container's Dapr app name (e.g., \"bannou\", \"npc-omega\")"
+          "description": "Container's app-id for mesh routing (e.g., \"bannou\", \"npc-omega\")"
         },
         "reason": {
           "type": "string",
@@ -4244,7 +4224,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       "properties": {
         "appName": {
           "type": "string",
-          "description": "Container's Dapr app name"
+          "description": "Container's app-id for mesh routing"
         }
       }
     }
@@ -4267,7 +4247,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       "properties": {
         "appName": {
           "type": "string",
-          "description": "Container's Dapr app name"
+          "description": "Container's app-id for mesh routing"
         },
         "status": {
           "type": "string",
@@ -4719,7 +4699,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "app_id": {
           "type": "string",
-          "description": "Dapr app-id for service invocation to this processor"
+          "description": "App-id for mesh service invocation to this processor"
         },
         "lease_id": {
           "type": "string",

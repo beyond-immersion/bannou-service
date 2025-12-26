@@ -106,7 +106,7 @@ public partial class ServiceRoutingResponse
 {
 
     /// <summary>
-    /// Map of service names to Dapr app-id routing destinations.
+    /// Map of service names to Bannou app-id routing destinations.
     /// <br/>Example: { "accounts": "bannou", "behavior": "npc-processing-01" }
     /// <br/>
     /// </summary>
@@ -284,7 +284,7 @@ public partial class ContainerRestartRequestBody
 {
 
     /// <summary>
-    /// Container's Dapr app name (e.g., "bannou", "npc-omega")
+    /// Container's app-id for mesh routing (e.g., "bannou", "npc-omega")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -323,7 +323,7 @@ public partial class GetContainerStatusRequest
 {
 
     /// <summary>
-    /// Container's Dapr app name
+    /// Container's app-id for mesh routing
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -513,7 +513,7 @@ public partial class ServiceHealthStatus
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Dapr app-id (e.g., "bannou", "npc-omega-01")
+    /// App-id for mesh routing (e.g., "bannou", "npc-omega-01")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1150,16 +1150,16 @@ public partial class TopologyNode
     public System.Collections.Generic.IDictionary<string, string> Environment { get; set; } = default!;
 
     /// <summary>
-    /// Whether to attach Dapr sidecar
+    /// Whether mesh routing is enabled
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("daprEnabled")]
-    public bool DaprEnabled { get; set; } = true;
+    [System.Text.Json.Serialization.JsonPropertyName("meshEnabled")]
+    public bool MeshEnabled { get; set; } = true;
 
     /// <summary>
-    /// Dapr app-id override (default derives from node name)
+    /// App-id override for mesh routing (default derives from node name)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("daprAppId")]
-    public string DaprAppId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("appId")]
+    public string AppId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -1184,12 +1184,6 @@ public partial class InfrastructureConfig
 
     [System.Text.Json.Serialization.JsonPropertyName("mysql")]
     public InfraServiceConfig Mysql { get; set; } = default!;
-
-    /// <summary>
-    /// Dapr placement service
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("placement")]
-    public InfraServiceConfig Placement { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("ingress")]
     public IngressConfig Ingress { get; set; } = default!;
@@ -2248,7 +2242,7 @@ public partial class ConfigurationChangedEvent
     /// <br/>Key prefixes indicate scope:
     /// <br/>- "auth.*" - Authentication-related
     /// <br/>- "database.*" - Database connections
-    /// <br/>- "dapr.*" - Dapr components (typically global impact)
+    /// <br/>- "mesh.*" - Mesh components (typically global impact)
     /// <br/>- "connect.*" - WebSocket/connection settings
     /// <br/>
     /// </summary>
@@ -2379,7 +2373,7 @@ public partial class ContainerStatus
 {
 
     /// <summary>
-    /// Container's Dapr app name
+    /// Container's app-id for mesh routing
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -2645,7 +2639,7 @@ public partial class AcquireProcessorResponse
     public string Processor_id { get; set; } = default!;
 
     /// <summary>
-    /// Dapr app-id for service invocation to this processor
+    /// App-id for mesh service invocation to this processor
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("app_id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

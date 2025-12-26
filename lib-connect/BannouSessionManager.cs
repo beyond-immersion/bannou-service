@@ -9,18 +9,18 @@ namespace BeyondImmersion.BannouService.Connect;
 /// Session management for distributed WebSocket connection state.
 /// Uses Redis state store and message bus for infrastructure access.
 /// </summary>
-public class DaprSessionManager : ISessionManager
+public class BannouSessionManager : ISessionManager
 {
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
-    private readonly ILogger<DaprSessionManager> _logger;
+    private readonly ILogger<BannouSessionManager> _logger;
 
     // State store name (must match Redis configuration)
     private const string STATE_STORE = "connect-statestore";
     private const string SESSION_EVENTS_TOPIC = "connect.session-events";
 
     // Key prefixes - MUST be unique across all services to avoid key collisions
-    // (Dapr prefixes keys with app-id, not component name, so all components share key namespace)
+    // (mesh prefixes keys with app-id, not component name, so all components share key namespace)
     private const string SESSION_KEY_PREFIX = "ws-session:";
     private const string SESSION_MAPPINGS_KEY_PREFIX = "ws-mappings:";
     private const string SESSION_HEARTBEAT_KEY_PREFIX = "heartbeat:";
@@ -31,12 +31,12 @@ public class DaprSessionManager : ISessionManager
     private static readonly int HEARTBEAT_TTL_SECONDS = (int)TimeSpan.FromMinutes(5).TotalSeconds;
 
     /// <summary>
-    /// Creates a new DaprSessionManager with the specified infrastructure services.
+    /// Creates a new BannouSessionManager with the specified infrastructure services.
     /// </summary>
-    public DaprSessionManager(
+    public BannouSessionManager(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
-        ILogger<DaprSessionManager> logger)
+        ILogger<BannouSessionManager> logger)
     {
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));

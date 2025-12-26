@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BeyondImmersion.BannouService.Controllers;
 
 /// <summary>
-/// Dapr pub/sub handlers for orchestrator events.
+/// Pub/sub handlers for orchestrator events.
 /// Receives service heartbeats from all bannou instances for health monitoring.
 /// Note: Orchestrator PUBLISHES full service mappings, it does not consume them.
 /// </summary>

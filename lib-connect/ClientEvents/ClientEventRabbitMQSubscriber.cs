@@ -12,12 +12,12 @@ namespace BeyondImmersion.BannouService.Connect.ClientEvents;
 /// </summary>
 /// <remarks>
 /// <para>
-/// TENET EXCEPTION: Uses direct RabbitMQ because Dapr pub/sub doesn't support
+/// TENET EXCEPTION: Uses direct RabbitMQ because lib-messaging pub/sub doesn't support
 /// dynamic runtime subscriptions. This is similar to how Orchestrator uses direct Redis.
 /// </para>
 /// <para>
 /// When a client connects, we create a queue and bind it to the session-specific
-/// exchange (CONNECT_SESSION_{sessionId}). Dapr creates these exchanges automatically
+/// exchange (CONNECT_SESSION_{sessionId}). These exchanges are created automatically
 /// when services publish to the topic.
 /// </para>
 /// </remarks>
@@ -172,10 +172,10 @@ public class ClientEventRabbitMQSubscriber : IAsyncDisposable
                 },
                 cancellationToken: cancellationToken);
 
-            // Declare the exchange as fanout (Dapr creates these, but we declare to be safe)
-            // IMPORTANT: Must match Dapr's pubsub-rabbitmq.yaml settings:
-            //   - durable: true (matches Dapr's durable: "true")
-            //   - autoDelete: true (matches Dapr's autoDeleteExchange: "true")
+            // Declare the exchange as fanout (lib-messaging creates these, but we declare to be safe)
+            // IMPORTANT: Must match RabbitMQ configuration settings:
+            //   - durable: true
+            //   - autoDelete: true
             // Mismatched settings cause PRECONDITION_FAILED errors from RabbitMQ
             await _channel.ExchangeDeclareAsync(
                 exchange: exchangeName,

@@ -7,19 +7,17 @@ using Microsoft.Extensions.Logging;
 namespace BeyondImmersion.BannouService.Connect;
 
 /// <summary>
-/// Controller for handling Dapr pubsub events related to the Connect service.
+/// Controller for handling pub/sub events related to the Connect service.
 /// This controller is separate from the generated ConnectController to allow
-/// Dapr subscription discovery while maintaining schema-first architecture.
+/// subscription discovery while maintaining schema-first architecture.
 /// </summary>
 [ApiController]
 [Route("[controller]")]
 public class ConnectEventsController : ControllerBase
 {
     private readonly ILogger<ConnectEventsController> _logger;
-    [Obsolete]
     private readonly IConnectService _connectService;
 
-    [Obsolete]
     public ConnectEventsController(
         ILogger<ConnectEventsController> logger,
         IConnectService connectService)
@@ -36,18 +34,17 @@ public class ConnectEventsController : ControllerBase
 
     /// <summary>
     /// Handle session invalidation events from the Auth service.
-    /// Called by Dapr when sessions are invalidated (logout, account deletion, security revocation).
+    /// Called when sessions are invalidated (logout, account deletion, security revocation).
     /// Disconnects affected WebSocket clients.
     /// </summary>
     [Topic("bannou-pubsub", "session.invalidated")]
     [HttpPost("handle-session-invalidated")]
-    [Obsolete]
     public async Task<IActionResult> HandleSessionInvalidatedAsync()
     {
         try
         {
             // Read and parse event using typed model (handles both CloudEvents and raw formats)
-            var evt = await DaprEventHelper.ReadEventAsync<SessionInvalidatedEvent>(Request);
+            var evt = await BannouEventHelper.ReadEventAsync<SessionInvalidatedEvent>(Request);
 
             if (evt == null)
             {
@@ -90,7 +87,7 @@ public class ConnectEventsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling session-invalidated event");
-            return Ok(); // Don't fail Dapr retries - log and continue
+            return Ok(); // Don't fail event retries - log and continue
         }
     }
 }

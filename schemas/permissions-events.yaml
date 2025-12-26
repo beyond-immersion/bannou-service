@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Permissions Service Events
-  description: Event models for permissions service RabbitMQ pub/sub via Dapr
+  description: Event models for permissions service RabbitMQ pub/sub via MassTransit
   version: 1.0.0
   x-event-subscriptions:
     # Service registration - services publish their API permissions on startup

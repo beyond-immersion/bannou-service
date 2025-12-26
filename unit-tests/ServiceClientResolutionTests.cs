@@ -36,7 +36,7 @@ public class ServiceClientResolutionTests
         services.AddLogging();
 
         // Act
-        services.AddAllBannouServiceClients();
+        ServiceClientExtensions.AddAllBannouServiceClients(services);
         var serviceProvider = services.BuildServiceProvider();
 
         // Assert
@@ -384,7 +384,7 @@ public class ServiceClientResolutionTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddAllBannouServiceClients();
+        ServiceClientExtensions.AddAllBannouServiceClients(services);
 
         // Mock HTTP client factory
         var mockHttpClient = new HttpClient();
@@ -414,7 +414,7 @@ public class ServiceClientResolutionTests
 
     /// <summary>
     /// Tests that the service client registration can discover client types by naming convention.
-    /// This validates the AddAllDaprServiceClients reflection-based discovery.
+    /// This validates the AddAllBannouServiceClients reflection-based discovery.
     /// </summary>
     [Fact]
     public void ServiceClientDiscovery_FindsClientTypesByNamingConvention()
@@ -422,7 +422,7 @@ public class ServiceClientResolutionTests
         // Arrange
         var assembly = typeof(ServiceClientExtensions).Assembly;
 
-        // Act - Simulate the discovery logic from AddAllDaprServiceClients
+        // Act - Simulate the discovery logic from AddAllBannouServiceClients
         var clientTypes = assembly.GetTypes()
             .Where(t => t.IsClass && !t.IsAbstract && t.Name.EndsWith("Client"))
             .ToList();
@@ -454,7 +454,7 @@ public class ServiceClientResolutionTests
 /// Example of how a service client SHOULD be implemented for distributed calls.
 /// This demonstrates the correct architecture pattern.
 /// </summary>
-public class ExampleAccountsClient : DaprServiceClientBase
+public class ExampleAccountsClient : BannouServiceClientBase
 {
     public ExampleAccountsClient(
         HttpClient httpClient,
@@ -465,7 +465,7 @@ public class ExampleAccountsClient : DaprServiceClientBase
     }
 
     /// <summary>
-    /// Example of correct service-to-service call using Dapr routing.
+    /// Example of correct service-to-service call using Bannou routing.
     /// </summary>
     public async Task<CreateAccountResponse?> CreateAccountAsync(CreateAccountRequest request)
     {

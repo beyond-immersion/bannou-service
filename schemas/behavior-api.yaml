@@ -15,11 +15,11 @@ info:
     - GOAP (Goal-Oriented Action Planning) integration
     - Cultural adaptation and context-aware behavior modification
     - Real-time behavior state management and caching
-    - Integration with Dapr service mesh for distributed character agents
+    - Integration with Bannou mesh for distributed character agents
 
 servers:
 - url: http://localhost:5012
-  description: Dapr sidecar endpoint (internal only)
+  description: Bannou service endpoint (internal only)
 
 paths:
   /compile:

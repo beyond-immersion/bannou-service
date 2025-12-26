@@ -6,8 +6,8 @@ using BeyondImmersion.BannouService.Messaging;
 namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
-/// Native RabbitMQ message publishing without Dapr CloudEvents overhead.
-/// Replaces DaprClient.PublishEventAsync() with direct RabbitMQ access.
+/// Native RabbitMQ message publishing via MassTransit.
+/// Provides direct RabbitMQ access for event-driven communication.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -95,7 +95,7 @@ public interface IMessageBus
 }
 
 /// <summary>
-/// Subscribe to RabbitMQ topics without Dapr topic handlers.
+/// Subscribe to RabbitMQ topics via MassTransit.
 /// Integrates with existing IEventConsumer for fan-out.
 /// </summary>
 /// <remarks>

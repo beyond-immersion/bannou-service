@@ -24,10 +24,9 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// <summary>
 /// GameSession service implementation.
 /// Manages game sessions for Arcadia and other multiplayer games.
-/// Handles session shortcuts for subscribed accounts via Dapr pubsub events.
+/// Handles session shortcuts for subscribed accounts via mesh pubsub events.
 /// </summary>
-[DaprService("game-session", typeof(IGameSessionService), lifetime: ServiceLifetime.Scoped)]
-[Obsolete]
+[BannouService("game-session", typeof(IGameSessionService), lifetime: ServiceLifetime.Scoped)]
 public partial class GameSessionService : IGameSessionService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -172,7 +171,7 @@ public partial class GameSessionService : IGameSessionService
                 "ListGameSessions",
                 "unexpected_exception",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 endpoint: "post:/game-session/list",
                 details: null,
                 stack: ex.StackTrace);
@@ -267,7 +266,7 @@ public partial class GameSessionService : IGameSessionService
                 "CreateGameSession",
                 "unexpected_exception",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 endpoint: "post:/game-session/create",
                 details: null,
                 stack: ex.StackTrace);
@@ -304,7 +303,7 @@ public partial class GameSessionService : IGameSessionService
                 "GetGameSession",
                 "unexpected_exception",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 endpoint: "post:/game-session/get",
                 details: new { SessionId = body.SessionId },
                 stack: ex.StackTrace);
@@ -524,7 +523,7 @@ public partial class GameSessionService : IGameSessionService
                 "JoinGameSession",
                 "unexpected_exception",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 endpoint: "post:/game-session/join",
                 details: new { SessionId = body.SessionId },
                 stack: ex.StackTrace);
@@ -590,7 +589,7 @@ public partial class GameSessionService : IGameSessionService
                 "PerformGameAction",
                 "unexpected_exception",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 endpoint: "post:/game-session/action",
                 details: new { SessionId = body.SessionId, ActionType = body.ActionType.ToString() },
                 stack: ex.StackTrace);
@@ -733,7 +732,7 @@ public partial class GameSessionService : IGameSessionService
                 "LeaveGameSession",
                 "unexpected_exception",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 endpoint: "post:/game-session/leave",
                 details: new { SessionId = body.SessionId },
                 stack: ex.StackTrace);
@@ -802,7 +801,7 @@ public partial class GameSessionService : IGameSessionService
                 "KickPlayer",
                 "unexpected_exception",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 endpoint: "post:/game-session/kick",
                 details: new { SessionId = body.SessionId, TargetAccountId = body.TargetAccountId },
                 stack: ex.StackTrace);
@@ -856,7 +855,7 @@ public partial class GameSessionService : IGameSessionService
                 "SendChatMessage",
                 "unexpected_exception",
                 ex.Message,
-                dependency: "dapr-pubsub",
+                dependency: "pubsub",
                 endpoint: "post:/game-session/chat",
                 details: new { SessionId = body.SessionId },
                 stack: ex.StackTrace);

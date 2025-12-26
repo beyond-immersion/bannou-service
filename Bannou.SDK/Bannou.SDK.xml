@@ -36,7 +36,7 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver">
             <summary>
-            Resolves service names to Dapr app-ids for distributed service routing.
+            Resolves service names to app-ids for distributed service routing.
             Supports dynamic mapping via RabbitMQ events for production scaling.
             </summary>
         </member>
@@ -48,19 +48,19 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.GetAppIdForService(System.String)">
             <summary>
-            Gets the Dapr app-id for the specified service name.
+            Gets the app-id for the specified service name.
             Defaults to "bannou" (omnipotent local node) but can be overridden
             by service mapping events from RabbitMQ.
             </summary>
             <param name="serviceName">The service name (e.g., "accounts", "character-agent"). Can be null.</param>
-            <returns>The Dapr app-id to route requests to</returns>
+            <returns>The app-id to route requests to</returns>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.UpdateServiceMapping(System.String,System.String)">
             <summary>
             Updates the service mapping from RabbitMQ service discovery events.
             </summary>
             <param name="serviceName">The service name</param>
-            <param name="appId">The Dapr app-id where this service is running</param>
+            <param name="appId">The app-id where this service is running</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.RemoveServiceMapping(System.String)">
             <summary>
@@ -99,7 +99,7 @@
         <member name="T:BeyondImmersion.BannouService.Services.IMeshInvocationClient">
             <summary>
             Client for invoking methods on other services via the mesh.
-            Replaces DaprClient.InvokeMethodAsync for service-to-service communication.
+            Provides service-to-service communication through lib-mesh infrastructure.
             Uses the mesh service for endpoint resolution and YARP for HTTP forwarding.
             </summary>
         </member>
@@ -517,7 +517,7 @@
         </member>
         <member name="F:BeyondImmersion.BannouService.Connect.Protocol.MessageFlags.Client">
             <summary>
-            Route to another WebSocket client (not a Dapr service)
+            Route to another WebSocket client (not a Bannou service)
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Connect.Protocol.MessageFlags.Response">
@@ -5137,7 +5137,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Mesh.MeshEndpoint.AppId">
             <summary>
-            Dapr-compatible app-id (e.g., "bannou", "bannou-npc-01")
+            Bannou app-id (e.g., "bannou", "bannou-npc-01")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Mesh.MeshEndpoint.Host">
@@ -7906,7 +7906,7 @@
             <br/>appearing in this list means it has completed startup and registered its
             <br/>API permissions, indicating it's ready to handle requests.
             <br/>
-            <br/>For service-to-service calls (via Dapr), this endpoint is unrestricted.
+            <br/>For service-to-service calls (via mesh), this endpoint is unrestricted.
             <br/>For client calls through WebSocket/Connect, only admin users can access it.
             </remarks>
             <returns>List of registered services</returns>
@@ -8050,7 +8050,7 @@
             <br/>appearing in this list means it has completed startup and registered its
             <br/>API permissions, indicating it's ready to handle requests.
             <br/>
-            <br/>For service-to-service calls (via Dapr), this endpoint is unrestricted.
+            <br/>For service-to-service calls (via mesh), this endpoint is unrestricted.
             <br/>For client calls through WebSocket/Connect, only admin users can access it.
             </remarks>
             <returns>List of registered services</returns>
@@ -9480,7 +9480,7 @@
             Validates connectivity and health of core infrastructure components:
             <br/>- Redis (direct connection via StackExchange.Redis)
             <br/>- RabbitMQ (direct connection via RabbitMQ.Client)
-            <br/>- Dapr Placement service
+            <br/>-
             </remarks>
             <returns>Infrastructure health status (check response body for component health)</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
@@ -9562,7 +9562,7 @@
             <br/>Presets define service combinations and configuration for specific use cases.
             <br/>
             <br/>Built-in presets:
-            <br/>- `local-development`: All services in single container with Dapr
+            <br/>- `local-development`: All services in single container with mesh infrastructure
             <br/>- `local-testing`: Test environment with infrastructure services
             <br/>- `integration-http`: HTTP integration testing preset
             <br/>- `integration-edge`: WebSocket/edge testing preset
@@ -9605,7 +9605,7 @@
             Get current service-to-app-id routing mappings
             </summary>
             <remarks>
-            Returns the current service-to-app-id routing mappings used for Dapr service invocation.
+            Returns the current service-to-app-id routing mappings used for mesh service invocation through lib-mesh.
             <br/>This is the authoritative source of truth for how services are routed in the current deployment.
             <br/>
             <br/>In development, all services route to "bannou" by default. In production, services may be
@@ -9889,7 +9889,7 @@
             Validates connectivity and health of core infrastructure components:
             <br/>- Redis (direct connection via StackExchange.Redis)
             <br/>- RabbitMQ (direct connection via RabbitMQ.Client)
-            <br/>- Dapr Placement service
+            <br/>-
             </remarks>
             <returns>Infrastructure health status (check response body for component health)</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
@@ -9971,7 +9971,7 @@
             <br/>Presets define service combinations and configuration for specific use cases.
             <br/>
             <br/>Built-in presets:
-            <br/>- `local-development`: All services in single container with Dapr
+            <br/>- `local-development`: All services in single container with mesh infrastructure
             <br/>- `local-testing`: Test environment with infrastructure services
             <br/>- `integration-http`: HTTP integration testing preset
             <br/>- `integration-edge`: WebSocket/edge testing preset
@@ -10014,7 +10014,7 @@
             Get current service-to-app-id routing mappings
             </summary>
             <remarks>
-            Returns the current service-to-app-id routing mappings used for Dapr service invocation.
+            Returns the current service-to-app-id routing mappings used for mesh service invocation through lib-mesh.
             <br/>This is the authoritative source of truth for how services are routed in the current deployment.
             <br/>
             <br/>In development, all services route to "bannou" by default. In production, services may be
@@ -10273,7 +10273,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceRoutingResponse.Mappings">
             <summary>
-            Map of service names to Dapr app-id routing destinations.
+            Map of service names to Bannou app-id routing destinations.
             <br/>Example: { "accounts": "bannou", "behavior": "npc-processing-01" }
             <br/>
             </summary>
@@ -10365,7 +10365,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequestBody.AppName">
             <summary>
-            Container's Dapr app name (e.g., "bannou", "npc-omega")
+            Container's app-id for mesh routing (e.g., "bannou", "npc-omega")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequestBody.Reason">
@@ -10380,7 +10380,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.GetContainerStatusRequest.AppName">
             <summary>
-            Container's Dapr app name
+            Container's app-id for mesh routing
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.GetConfigVersionRequest">
@@ -10472,7 +10472,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus.AppId">
             <summary>
-            Dapr app-id (e.g., "bannou", "npc-omega-01")
+            App-id for mesh routing (e.g., "bannou", "npc-omega-01")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus.Status">
@@ -10792,19 +10792,14 @@
             Node-specific environment overrides
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyNode.DaprEnabled">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyNode.MeshEnabled">
             <summary>
-            Whether to attach Dapr sidecar
+            Whether mesh routing is enabled
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyNode.DaprAppId">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyNode.AppId">
             <summary>
-            Dapr app-id override (default derives from node name)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.InfrastructureConfig.Placement">
-            <summary>
-            Dapr placement service
+            App-id override for mesh routing (default derives from node name)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.InfraServiceConfig.Image">
@@ -11235,7 +11230,7 @@
             <br/>Key prefixes indicate scope:
             <br/>- "auth.*" - Authentication-related
             <br/>- "database.*" - Database connections
-            <br/>- "dapr.*" - Dapr components (typically global impact)
+            <br/>- "mesh.*" - Mesh components (typically global impact)
             <br/>- "connect.*" - WebSocket/connection settings
             <br/>
             </summary>
@@ -11291,7 +11286,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerStatus.AppName">
             <summary>
-            Container's Dapr app name
+            Container's app-id for mesh routing
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerStatus.Instances">
@@ -11406,7 +11401,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorResponse.App_id">
             <summary>
-            Dapr app-id for service invocation to this processor
+            App-id for mesh service invocation to this processor
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorResponse.Lease_id">
@@ -14954,7 +14949,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceRegistrationEvent.AppId">
             <summary>
-            Dapr app-id for service routing (typically "bannou")
+            Bannou app-id for service routing (typically "bannou")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceRegistrationEvent.Endpoints">
@@ -15049,7 +15044,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceHeartbeatEvent.AppId">
             <summary>
-            Dapr app-id for this instance (e.g., "bannou", "jobberwocky")
+            Bannou app-id for this instance (e.g., "bannou", "jobberwocky")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceHeartbeatEvent.Status">
@@ -15151,7 +15146,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.AppId">
             <summary>
-            Dapr app-id of the instance emitting the error
+            Bannou app-id of the instance emitting the error
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Operation">
@@ -15181,7 +15176,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Dependency">
             <summary>
-            Dependency implicated in the failure (e.g., redis, dapr-pubsub, http:accounts)
+            Dependency implicated in the failure (e.g., redis, pubsub, http:accounts)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Endpoint">
@@ -15425,7 +15420,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.AppId">
             <summary>
-            Dapr app-id where the service is running
+            Bannou app-id where the service is running
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Action">

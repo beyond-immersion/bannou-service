@@ -4,7 +4,7 @@ The Asset Service provides binary asset management for Bannou including storage,
 
 ## Architecture Overview
 
-The Asset Service uses a **pre-signed URL architecture** where all binary data transfers bypass WebSocket/Dapr payloads entirely:
+The Asset Service uses a **pre-signed URL architecture** where all binary data transfers bypass WebSocket payloads entirely:
 
 ```
 Client → Bannou API → Pre-signed URL → MinIO (direct upload/download)
@@ -13,7 +13,7 @@ Client → Bannou API → Pre-signed URL → MinIO (direct upload/download)
 ```
 
 Key architectural decisions:
-- **Pre-signed URLs only**: All transfers via MinIO/S3, bypassing Dapr's 4MB payload limits
+- **Pre-signed URLs only**: All transfers via MinIO/S3, avoiding payload size constraints
 - **Storage abstraction**: `IAssetStorageProvider` enables swappable backends (MinIO → S3 → R2)
 - **Processing delegation**: Heavy operations offloaded to dedicated processing pool instances
 - **Custom bundle format**: `.bannou` format optimized for streaming with LZ4 compression
@@ -216,7 +216,7 @@ For large files (>50MB by default), processing is delegated to dedicated instanc
 
 1. Asset service calls `IOrchestratorClient.AcquireProcessorAsync()`
 2. Orchestrator returns an available processor app-id
-3. Processing request forwarded via Dapr service invocation
+3. Processing request forwarded via mesh service invocation
 4. Results returned to main asset service
 
 Configure the processing pool in `provisioning/orchestrator/presets/asset-processing.yaml`.
@@ -288,7 +288,7 @@ services.AddHealthChecks()
 | Check | Tags | Description |
 |-------|------|-------------|
 | `minio` | storage, asset | MinIO storage connectivity |
-| `redis` | cache, state, asset | Redis state store via Dapr |
+| `redis` | cache, state, asset | Redis state store via lib-state |
 | `processing-pool` | processing, asset | Processing pool availability |
 
 ## Metrics

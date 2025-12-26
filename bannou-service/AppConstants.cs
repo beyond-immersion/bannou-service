@@ -21,7 +21,7 @@ public static class AppConstants
     // ==========================================================================
 
     /// <summary>
-    /// Default Dapr pub/sub component name used by all services.
+    /// Default pub/sub component name used by all services.
     /// </summary>
     public const string PUBSUB_NAME = "bannou-pubsub";
 
@@ -40,12 +40,12 @@ public static class AppConstants
     public const int DEFAULT_RABBITMQ_PORT = 5672;
 
     /// <summary>
-    /// Default Dapr HTTP sidecar port.
+    /// Default HTTP port for service mesh communication.
     /// </summary>
-    public const int DEFAULT_DAPR_HTTP_PORT = 3500;
+    public const int DEFAULT_BANNOU_HTTP_PORT = 3500;
 
     /// <summary>
-    /// Default Dapr gRPC sidecar port.
+    /// Default gRPC port (legacy constant name, kept for compatibility).
     /// </summary>
     public const int DEFAULT_DAPR_GRPC_PORT = 50001;
 
@@ -54,20 +54,20 @@ public static class AppConstants
     // ==========================================================================
 
     /// <summary>
-    /// Environment variable for Dapr app ID. Used by PermissionRegistration and
+    /// Environment variable for app ID (legacy env var name). Used by PermissionRegistration and
     /// ServiceHeartbeatManager. This is a Tenet 21 exception - needed before DI is available.
     /// </summary>
-    public const string ENV_DAPR_APP_ID = "DAPR_APP_ID";
+    public const string ENV_BANNOU_APP_ID = "BANNOU_APP_ID";
 
     /// <summary>
-    /// Environment variable for Dapr HTTP endpoint. This is a Tenet 21 exception -
-    /// needed to bootstrap DaprClient before configuration system initializes.
+    /// Environment variable for mesh HTTP endpoint. This is a Tenet 21 exception -
+    /// needed to bootstrap mesh client before configuration system initializes.
     /// </summary>
-    public const string ENV_DAPR_HTTP_ENDPOINT = "DAPR_HTTP_ENDPOINT";
+    public const string ENV_BANNOU_HTTP_ENDPOINT = "BANNOU_HTTP_ENDPOINT";
 
     /// <summary>
-    /// Environment variable for Dapr gRPC endpoint. This is a Tenet 21 exception -
-    /// needed to bootstrap DaprClient before configuration system initializes.
+    /// Environment variable for gRPC endpoint (legacy env var name). This is a Tenet 21 exception -
+    /// needed to bootstrap infrastructure before configuration system initializes.
     /// </summary>
     public const string ENV_DAPR_GRPC_ENDPOINT = "DAPR_GRPC_ENDPOINT";
 }

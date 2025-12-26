@@ -16,8 +16,7 @@ namespace BeyondImmersion.BannouService.Servicedata;
 /// Implementation of the ServiceData service.
 /// Provides a minimal registry of game services (games/applications) that users can subscribe to.
 /// </summary>
-[DaprService("servicedata", typeof(IServicedataService), lifetime: ServiceLifetime.Singleton)]
-[Obsolete]
+[BannouService("servicedata", typeof(IServicedataService), lifetime: ServiceLifetime.Singleton)]
 public partial class ServicedataService : IServicedataService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -30,7 +29,6 @@ public partial class ServicedataService : IServicedataService
     private const string SERVICE_STUB_INDEX_PREFIX = "service-stub:";
     private const string SERVICE_LIST_KEY = "service-list";
 
-    [Obsolete]
     public ServicedataService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
@@ -45,7 +43,7 @@ public partial class ServicedataService : IServicedataService
 
         // Register event handlers via partial class (ServicedataServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     private string StateStoreName => _configuration.StateStoreName ?? "servicedata-statestore";
@@ -380,7 +378,7 @@ public partial class ServicedataService : IServicedataService
 
     /// <summary>
     /// Registers this service's API permissions with the Permissions service on startup.
-    /// Overrides the default IDaprService implementation to use generated permission data.
+    /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()
     {
@@ -416,7 +414,7 @@ public partial class ServicedataService : IServicedataService
 }
 
 /// <summary>
-/// Internal storage model using Unix timestamps to avoid Dapr serialization issues.
+/// Internal storage model using Unix timestamps to avoid serialization issues.
 /// Accessible to test project via InternalsVisibleTo attribute.
 /// </summary>
 internal class ServiceDataModel

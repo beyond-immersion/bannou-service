@@ -1,6 +1,6 @@
 ﻿{% if GeneratePartialControllers -%}
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "{{ ToolchainVersion }}")]
-public interface I{{ Class }}Controller : BeyondImmersion.BannouService.Controllers.IDaprController
+public interface I{{ Class }}Controller : BeyondImmersion.BannouService.Controllers.IBannouController
 {
 {%-     for operation in Operations %}
 {%-         comment -%}
@@ -285,14 +285,14 @@ Generate event handler methods from x-event-subscriptions in OpenAPI spec
     /// <remarks>
     /// {{ subscription.description }}
     /// </remarks>
-    [Dapr.Topic("{{ subscription.pubsub }}", "{{ subscription.topic }}")]
+    [BeyondImmersion.BannouService.Attributes.Topic("{{ subscription.pubsub }}", "{{ subscription.topic }}")]
     [{{ AspNetNamespace }}.HttpPost("{{ subscription.path }}")]
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> {{ methodName }}([{{ AspNetNamespace }}.FromBody] object eventData)
     {
         try
         {
             var logger = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<{{ Class }}Controller>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogDebug(logger, "Processing Dapr event: {Topic}", "{{ subscription.topic }}");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogDebug(logger, "Processing pub/sub event: {Topic}", "{{ subscription.topic }}");
 
             // Use BannouJson for consistent serialization with generated models
             var serializedData = BeyondImmersion.BannouService.Configuration.BannouJson.Serialize(eventData);
@@ -392,7 +392,7 @@ Generate event handler methods from x-event-subscriptions in OpenAPI spec (for a
     /// <remarks>
     /// {{ subscription.description }}
     /// </remarks>
-    [Dapr.Topic("{{ subscription.pubsub }}", "{{ subscription.topic }}")]
+    [BeyondImmersion.BannouService.Attributes.Topic("{{ subscription.pubsub }}", "{{ subscription.topic }}")]
     [{{ AspNetNamespace }}.HttpPost("{{ subscription.path }}")]
     public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> {{ methodName }}([{{ AspNetNamespace }}.FromBody] object eventData);
 

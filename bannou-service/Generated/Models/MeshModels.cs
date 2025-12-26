@@ -44,7 +44,7 @@ public partial class MeshEndpoint
     public System.Guid InstanceId { get; set; } = default!;
 
     /// <summary>
-    /// Dapr-compatible app-id (e.g., "bannou", "bannou-npc-01")
+    /// Bannou app-id (e.g., "bannou", "bannou-npc-01")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

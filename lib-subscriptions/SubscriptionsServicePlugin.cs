@@ -8,25 +8,24 @@ namespace BeyondImmersion.BannouService.Subscriptions;
 
 /// <summary>
 /// Plugin wrapper for Subscriptions service enabling plugin-based discovery and lifecycle management.
-/// Bridges existing IDaprService implementation with the new Plugin system.
+/// Bridges existing IBannouService implementation with the new Plugin system.
 /// </summary>
 public class SubscriptionsServicePlugin : BaseBannouPlugin
 {
     public override string PluginName => "subscriptions";
     public override string DisplayName => "Subscriptions Service";
 
-    [Obsolete]
     private ISubscriptionsService? _service;
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
-    /// Configure services for dependency injection - mimics existing [DaprService] registration.
+    /// Configure services for dependency injection - mimics existing [BannouService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
         Logger?.LogInformation("Configuring Subscriptions service dependencies");
 
-        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // Service registration is now handled centrally by PluginLoader based on [BannouService] attributes
         // No need to register IGameSessionService and GameSessionService here
 
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
@@ -49,7 +48,7 @@ public class SubscriptionsServicePlugin : BaseBannouPlugin
         Logger?.LogInformation("Configuring Subscriptions service application pipeline");
 
         // The generated SubscriptionsController should already be discovered via standard ASP.NET Core controller discovery
-        // since we're not excluding the assembly like we did with IDaprController approach
+        // since we're not excluding the assembly like we did with IBannouController approach
 
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
@@ -58,9 +57,8 @@ public class SubscriptionsServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Start the service - calls existing IDaprService lifecycle if present.
+    /// Start the service - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting Subscriptions service");
@@ -78,11 +76,11 @@ public class SubscriptionsServicePlugin : BaseBannouPlugin
                 return false;
             }
 
-            // Call existing IDaprService.OnStartAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnStartAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnStartAsync for Subscriptions service");
-                await daprService.OnStartAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnStartAsync for Subscriptions service");
+                await bannouService.OnStartAsync(CancellationToken.None);
             }
 
             Logger?.LogInformation("Subscriptions service started successfully");
@@ -96,9 +94,8 @@ public class SubscriptionsServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Running phase - calls existing IDaprService lifecycle if present.
+    /// Running phase - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -107,11 +104,11 @@ public class SubscriptionsServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Call existing IDaprService.OnRunningAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnRunningAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for Subscriptions service");
-                await daprService.OnRunningAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnRunningAsync for Subscriptions service");
+                await bannouService.OnRunningAsync(CancellationToken.None);
             }
         }
         catch (Exception ex)
@@ -121,9 +118,8 @@ public class SubscriptionsServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Shutdown the service - calls existing IDaprService lifecycle if present.
+    /// Shutdown the service - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;
@@ -132,11 +128,11 @@ public class SubscriptionsServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Call existing IDaprService.OnShutdownAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnShutdownAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for Subscriptions service");
-                await daprService.OnShutdownAsync();
+                Logger?.LogDebug("Calling IBannouService.OnShutdownAsync for Subscriptions service");
+                await bannouService.OnShutdownAsync();
             }
 
             Logger?.LogInformation("Subscriptions service shutdown complete");

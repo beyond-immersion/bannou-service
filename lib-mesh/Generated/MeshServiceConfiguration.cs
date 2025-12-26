@@ -1,7 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
-using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.Mesh;
 
@@ -10,7 +10,6 @@ namespace BeyondImmersion.BannouService.Mesh;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(MeshService))]
-[Obsolete]
 public class MeshServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

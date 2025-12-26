@@ -54,7 +54,7 @@
         </member>
         <member name="F:BeyondImmersion.BannouService.AppConstants.PUBSUB_NAME">
             <summary>
-            Default Dapr pub/sub component name used by all services.
+            Default pub/sub component name used by all services.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.AppConstants.DEFAULT_REDIS_PORT">
@@ -67,33 +67,65 @@
             Default RabbitMQ AMQP port.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.BannouService.AppConstants.DEFAULT_DAPR_HTTP_PORT">
+        <member name="F:BeyondImmersion.BannouService.AppConstants.DEFAULT_BANNOU_HTTP_PORT">
             <summary>
-            Default Dapr HTTP sidecar port.
+            Default HTTP port for service mesh communication.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.AppConstants.DEFAULT_DAPR_GRPC_PORT">
             <summary>
-            Default Dapr gRPC sidecar port.
+            Default gRPC port (legacy constant name, kept for compatibility).
             </summary>
         </member>
-        <member name="F:BeyondImmersion.BannouService.AppConstants.ENV_DAPR_APP_ID">
+        <member name="F:BeyondImmersion.BannouService.AppConstants.ENV_BANNOU_APP_ID">
             <summary>
-            Environment variable for Dapr app ID. Used by PermissionRegistration and
+            Environment variable for app ID (legacy env var name). Used by PermissionRegistration and
             ServiceHeartbeatManager. This is a Tenet 21 exception - needed before DI is available.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.BannouService.AppConstants.ENV_DAPR_HTTP_ENDPOINT">
+        <member name="F:BeyondImmersion.BannouService.AppConstants.ENV_BANNOU_HTTP_ENDPOINT">
             <summary>
-            Environment variable for Dapr HTTP endpoint. This is a Tenet 21 exception -
-            needed to bootstrap DaprClient before configuration system initializes.
+            Environment variable for mesh HTTP endpoint. This is a Tenet 21 exception -
+            needed to bootstrap mesh client before configuration system initializes.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.AppConstants.ENV_DAPR_GRPC_ENDPOINT">
             <summary>
-            Environment variable for Dapr gRPC endpoint. This is a Tenet 21 exception -
-            needed to bootstrap DaprClient before configuration system initializes.
+            Environment variable for gRPC endpoint (legacy env var name). This is a Tenet 21 exception -
+            needed to bootstrap infrastructure before configuration system initializes.
             </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Attributes.BannouControllerAttribute">
+            <summary>
+            Attribute for locating Bannou controller API classes for a given service.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.BannouControllerAttribute.InterfaceType">
+            <summary>
+            Service type this controller is for.
+            If it's independent of any services, leave null.
+            If requiring multiple service, add more attributes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.BannouControllerAttribute.#ctor(System.Type)">
+            <summary>
+            Initializes a new instance of the BannouControllerAttribute with the specified interface type.
+            </summary>
+            <param name="interfaceType">The service interface type this controller is for.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.BannouControllerAttribute.#ctor(System.String,System.Type)">
+            <summary>
+            Initializes a new instance of the BannouControllerAttribute with a custom template and interface type.
+            </summary>
+            <param name="template">The custom route template for this controller.</param>
+            <param name="interfaceType">The service interface type this controller is for.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.BannouControllerAttribute.GetControllerTemplate(System.Type)">
+            <summary>
+            Gets the controller route template for the specified interface type.
+            </summary>
+            <param name="interfaceType">The service interface type to get the template for.</param>
+            <returns>The route template string for the controller.</returns>
         </member>
         <member name="T:BeyondImmersion.BannouService.Attributes.BannouServiceAttribute">
             <summary>
@@ -138,16 +170,6 @@
             <param name="priority">Whether this service has automatic priority over other handlers.</param>
             <param name="lifetime">How long the service instance lasts (Transient, Scoped, or Singleton).</param>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Attributes.DaprServiceAttribute">
-            <summary>
-            Obsolete alias for backward compatibility. Use <see cref="T:BeyondImmersion.BannouService.Attributes.BannouServiceAttribute"/> instead.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Attributes.DaprServiceAttribute.#ctor(System.String,System.Type,System.Boolean,Microsoft.Extensions.DependencyInjection.ServiceLifetime)">
-            <summary>
-            Initializes a new instance of the DaprServiceAttribute (obsolete alias for BannouServiceAttribute).
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Attributes.BaseServiceAttribute">
             <summary>
             Easy base type for custom attributes.
@@ -158,41 +180,9 @@
             The configuration property is required for the service to function.
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Attributes.DaprControllerAttribute">
-            <summary>
-            Attribute for locating Dapr controller API classes for a given service.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Attributes.DaprControllerAttribute.InterfaceType">
-            <summary>
-            Service type this controller is for.
-            If it's independent of any services, leave null.
-            If requiring multiple service, add more attributes.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Attributes.DaprControllerAttribute.#ctor(System.Type)">
-            <summary>
-            Initializes a new instance of the DaprControllerAttribute with the specified interface type.
-            </summary>
-            <param name="interfaceType">The service interface type this controller is for.</param>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Attributes.DaprControllerAttribute.#ctor(System.String,System.Type)">
-            <summary>
-            Initializes a new instance of the DaprControllerAttribute with a custom template and interface type.
-            </summary>
-            <param name="template">The custom route template for this controller.</param>
-            <param name="interfaceType">The service interface type this controller is for.</param>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Attributes.DaprControllerAttribute.GetControllerTemplate(System.Type)">
-            <summary>
-            Gets the controller route template for the specified interface type.
-            </summary>
-            <param name="interfaceType">The service interface type to get the template for.</param>
-            <returns>The route template string for the controller.</returns>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Attributes.HeaderArrayAttribute">
             <summary>
-            Attribute to propagate common headers through dapr requests.
+            Attribute to propagate common headers through mesh requests.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Attributes.HeaderArrayAttribute.Name">
@@ -337,12 +327,12 @@
         <member name="T:BeyondImmersion.BannouService.Attributes.TopicAttribute">
             <summary>
             Stub Topic attribute for backward compatibility.
-            This replaces Dapr's [Topic] attribute after Dapr removal.
+            This replaces the mesh's [Topic] attribute after transitioning to lib-mesh.
             Actual pub/sub is handled by MassTransit consumers in lib-messaging.
             </summary>
             <remarks>
             This attribute has no runtime effect - it exists only to allow
-            compilation of legacy event controllers that used Dapr's [Topic].
+            compilation of legacy event controllers that used the mesh's [Topic].
             For new pub/sub handling, use MassTransit IConsumer pattern.
             </remarks>
         </member>
@@ -362,6 +352,48 @@
             </summary>
             <param name="pubsubName">The pub/sub component name.</param>
             <param name="name">The topic name.</param>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.BannouEventHelper">
+            <summary>
+            Helper class for parsing pub/sub events with CloudEvents format handling.
+            Handles both CloudEvents-wrapped events and raw payloads since RabbitMQ
+            can deliver events in either format depending on timing and configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.BannouEventHelper.ReadEventJsonAsync(Microsoft.AspNetCore.Http.HttpRequest)">
+            <summary>
+            Reads and parses a pub/sub event from the HTTP request body, returning the unwrapped JSON element.
+            Automatically handles both CloudEvents format (with 'data' wrapper) and raw format.
+            Use this method when you need to manually extract properties from the event.
+            </summary>
+            <param name="request">The HTTP request containing the event</param>
+            <returns>The unwrapped event JSON element, or null if parsing fails</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.BannouEventHelper.ReadEventAsync``1(Microsoft.AspNetCore.Http.HttpRequest)">
+            <summary>
+            Reads and parses a pub/sub event from the HTTP request body.
+            Automatically handles both CloudEvents format (with 'data' wrapper) and raw format.
+            </summary>
+            <typeparam name="T">The event model type to deserialize</typeparam>
+            <param name="request">The HTTP request containing the event</param>
+            <returns>The deserialized event model, or null if parsing fails</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.BannouEventHelper.UnwrapCloudEventsEnvelope(System.Byte[])">
+            <summary>
+            Unwraps a CloudEvents envelope from raw byte payload.
+            Automatically handles both CloudEvents format (with 'data' wrapper) and raw format.
+            Used by Connect service for RabbitMQ subscriber which receives raw bytes.
+            </summary>
+            <param name="payload">Raw event payload bytes (potentially CloudEvents-wrapped)</param>
+            <returns>Unwrapped event data bytes, or original payload if not CloudEvents format</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.BannouEventHelper.UnwrapCloudEventsToJson(System.Byte[])">
+            <summary>
+            Unwraps a CloudEvents envelope and returns the data as a JsonElement.
+            Useful when you need to inspect or modify the unwrapped data before forwarding.
+            </summary>
+            <param name="payload">Raw event payload bytes (potentially CloudEvents-wrapped)</param>
+            <returns>Tuple of (unwrapped JsonElement, raw bytes), or (null, original bytes) if parsing fails</returns>
         </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.ClientEventNormalizer">
              <summary>
@@ -824,14 +856,14 @@
             The assemblies to load from the /libs directory.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Dapr_Configuration_Store">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Mesh_Configuration_Store">
             <summary>
-            Dapr configuration store name to use.
+            Mesh configuration store name to use.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Dapr_Secret_Store">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Secret_Store">
             <summary>
-            Dapr secret store name to use.
+            Secret store name to use.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Services_Enabled">
@@ -845,10 +877,10 @@
             throw an error and start application shutdown.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Dapr_Readiness_Timeout">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Mesh_Readiness_Timeout">
             <summary>
-            Time in milliseconds to wait for Dapr to be ready before failing startup.
-            Set to 0 to disable Dapr readiness checks.
+            Time in milliseconds to wait for mesh connectivity before failing startup.
+            Set to 0 to disable mesh readiness checks.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.HTTP_Web_Host_Port">
@@ -896,11 +928,10 @@
             Environment variable: PERMISSION_HEARTBEAT_ENABLED or BANNOU_PERMISSION_HEARTBEAT_ENABLED
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.DaprAppId">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.BannouAppId">
             <summary>
-            The Dapr App ID for this service instance.
-            Environment variable: DAPR_APP_ID (or APP_ID for backwards compatibility)
-            Note: DAPR_APP_ID is a bootstrap variable read during Dapr client initialization.
+            The App ID for this service instance used for mesh routing.
+            Environment variable: BANNOU_APP_ID (or APP_ID for backwards compatibility)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.JwtSecret">
@@ -1026,9 +1057,9 @@
             Interface for service configuration with support for environment variables, JSON files, and command line arguments.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.DaprSerializerConfig">
+        <member name="F:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.BannouSerializerConfig">
             <summary>
-            Shared serializer options, between all dapr services/consumers.
+            Shared serializer options, between all Bannou services/consumers.
             References BannouJson.Options as the single source of truth for JSON serialization.
             IMPORTANT: Must include JsonStringEnumConverter to ensure enum values serialize
             as strings (e.g., "permissions.capabilities_refresh") instead of numbers (e.g., 0).
@@ -1162,47 +1193,47 @@
             </summary>
             <returns>HTTP 200 if healthy, 503 if starting, 500 if error.</returns>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Controllers.IDaprController">
+        <member name="T:BeyondImmersion.BannouService.Controllers.IBannouController">
             <summary>
-            Interface implemented for all dapr API controllers.
+            Interface implemented for all Bannou API controllers.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.IDaprController.Controllers">
+        <member name="P:BeyondImmersion.BannouService.Controllers.IBannouController.Controllers">
             <summary>
-            Gets the full list of dapr controllers.
+            Gets the full list of Bannou controllers.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.IDaprController.NonServiceControllers">
+        <member name="P:BeyondImmersion.BannouService.Controllers.IBannouController.NonServiceControllers">
             <summary>
-            Gets the full list of non-service dapr API controllers.
+            Gets the full list of non-service Bannou API controllers.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.IDaprController.ServiceControllers">
+        <member name="P:BeyondImmersion.BannouService.Controllers.IBannouController.ServiceControllers">
             <summary>
-            Gets the full list of service dapr API controllers.
+            Gets the full list of service Bannou API controllers.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.IDaprController.EnabledServiceControllers">
+        <member name="P:BeyondImmersion.BannouService.Controllers.IBannouController.EnabledServiceControllers">
             <summary>
-            Gets the full list of enabled service dapr API controllers.
+            Gets the full list of enabled service Bannou API controllers.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.IDaprController.FindForInterface``1">
+        <member name="M:BeyondImmersion.BannouService.Controllers.IBannouController.FindForInterface``1">
             <summary>
             Gets the full list of associated controllers to the given service interface.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.IDaprController.FindForImplementation``1">
+        <member name="M:BeyondImmersion.BannouService.Controllers.IBannouController.FindForImplementation``1">
             <summary>
             Gets the full list of associated controllers to the given service implementation.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.IDaprController.FindForInterface(System.Type)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.IBannouController.FindForInterface(System.Type)">
             <summary>
             Gets the full list of associated controllers to a given service interface.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.IDaprController.FindForImplementation(System.Type)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.IBannouController.FindForImplementation(System.Type)">
             <summary>
             Gets the full list of associated controllers to a given service implementation.
             </summary>
@@ -1364,7 +1395,7 @@
             <summary>
             Handles full service mapping events from Orchestrator.
             Atomically updates the ServiceAppMappingResolver with complete routing state.
-            This controller subscribes to the bannou-full-service-mappings topic via Dapr pub/sub.
+            This controller subscribes to the bannou-full-service-mappings topic via Bannou pub/sub.
             </summary>
             <remarks>
             Architecture:
@@ -1393,48 +1424,6 @@
             <summary>
             Simple health check endpoint to verify the controller is reachable.
             </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.DaprEventHelper">
-            <summary>
-            Helper class for parsing Dapr pub/sub events with CloudEvents format handling.
-            Handles both CloudEvents-wrapped events and raw payloads since Dapr's RabbitMQ
-            component can deliver events in either format depending on timing and configuration.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.DaprEventHelper.ReadEventJsonAsync(Microsoft.AspNetCore.Http.HttpRequest)">
-            <summary>
-            Reads and parses a Dapr pub/sub event from the HTTP request body, returning the unwrapped JSON element.
-            Automatically handles both CloudEvents format (with 'data' wrapper) and raw format.
-            Use this method when you need to manually extract properties from the event.
-            </summary>
-            <param name="request">The HTTP request containing the event</param>
-            <returns>The unwrapped event JSON element, or null if parsing fails</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.DaprEventHelper.ReadEventAsync``1(Microsoft.AspNetCore.Http.HttpRequest)">
-            <summary>
-            Reads and parses a Dapr pub/sub event from the HTTP request body.
-            Automatically handles both CloudEvents format (with 'data' wrapper) and raw format.
-            </summary>
-            <typeparam name="T">The event model type to deserialize</typeparam>
-            <param name="request">The HTTP request containing the event</param>
-            <returns>The deserialized event model, or null if parsing fails</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.DaprEventHelper.UnwrapCloudEventsEnvelope(System.Byte[])">
-            <summary>
-            Unwraps a CloudEvents envelope from raw byte payload.
-            Automatically handles both CloudEvents format (with 'data' wrapper) and raw format.
-            Used by Connect service for RabbitMQ subscriber which receives raw bytes.
-            </summary>
-            <param name="payload">Raw event payload bytes (potentially CloudEvents-wrapped)</param>
-            <returns>Unwrapped event data bytes, or original payload if not CloudEvents format</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.DaprEventHelper.UnwrapCloudEventsToJson(System.Byte[])">
-            <summary>
-            Unwraps a CloudEvents envelope and returns the data as a JsonElement.
-            Useful when you need to inspect or modify the unwrapped data before forwarding.
-            </summary>
-            <param name="payload">Raw event payload bytes (potentially CloudEvents-wrapped)</param>
-            <returns>Tuple of (unwrapped JsonElement, raw bytes), or (null, original bytes) if parsing fails</returns>
         </member>
         <member name="T:BeyondImmersion.BannouService.AppRunningStates">
             <summary>
@@ -1609,7 +1598,7 @@
             <typeparam name="TService">The service type that handles the event.</typeparam>
             <typeparam name="TEvent">The event type.</typeparam>
             <param name="eventConsumer">The event consumer.</param>
-            <param name="topicName">The Dapr topic name.</param>
+            <param name="topicName">The message topic name.</param>
             <param name="handler">The handler method on the service.</param>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.EventPublisherBase">
@@ -1721,30 +1710,30 @@
             Clear all registrations. For testing purposes only.
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Events.IDaprEvent">
+        <member name="T:BeyondImmersion.BannouService.Events.IBannouEvent">
             <summary>
-            Base interface for all Dapr events.
+            Base interface for all Bannou events.
             Provides common properties that all events should have.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.IDaprEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.IBannouEvent.EventId">
             <summary>
             Unique identifier for this event instance.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.IDaprEvent.Timestamp">
+        <member name="P:BeyondImmersion.BannouService.Events.IBannouEvent.Timestamp">
             <summary>
             Timestamp when the event occurred.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.IEventConsumer">
             <summary>
-            Service for registering and dispatching Dapr pub/sub events across all plugins.
-            This provides an application-level fan-out layer on top of Dapr's single-subscription-per-topic limitation.
+            Service for registering and dispatching Bannou pub/sub events across all plugins.
+            This provides an application-level fan-out layer on top of RabbitMQ's topic routing limitation.
             </summary>
             <remarks>
             <para>
-            Dapr only allows ONE endpoint to subscribe to a topic per app-id. When multiple plugins
+            RabbitMQ only allows ONE consumer group to subscribe to a topic per app-id. When multiple plugins
             want to handle the same event, only one receives it. This service solves that by:
             </para>
             <list type="number">
@@ -1763,7 +1752,7 @@
             Registers an event handler for a specific topic.
             </summary>
             <typeparam name="TEvent">The event type to handle.</typeparam>
-            <param name="topicName">The Dapr topic name (e.g., "session.connected").</param>
+            <param name="topicName">The message topic name (e.g., "session.connected").</param>
             <param name="handlerKey">Unique key to prevent duplicate registrations (e.g., "permissions:session.connected").</param>
             <param name="handlerFactory">
             Factory that takes IServiceProvider and event, resolves the service, and calls the handler.
@@ -1775,7 +1764,7 @@
             Dispatches an event to all registered handlers for the topic.
             </summary>
             <typeparam name="TEvent">The event type.</typeparam>
-            <param name="topicName">The Dapr topic name.</param>
+            <param name="topicName">The message topic name.</param>
             <param name="evt">The event data.</param>
             <param name="requestScope">The DI scope for the current request (used to resolve services).</param>
             <returns>Task that completes when all handlers have been invoked.</returns>
@@ -1823,7 +1812,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceRegistrationEvent.AppId">
             <summary>
-            Dapr app-id for service routing (typically "bannou")
+            Bannou app-id for service routing (typically "bannou")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceRegistrationEvent.Endpoints">
@@ -1918,7 +1907,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceHeartbeatEvent.AppId">
             <summary>
-            Dapr app-id for this instance (e.g., "bannou", "jobberwocky")
+            Bannou app-id for this instance (e.g., "bannou", "jobberwocky")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceHeartbeatEvent.Status">
@@ -2020,7 +2009,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.AppId">
             <summary>
-            Dapr app-id of the instance emitting the error
+            Bannou app-id of the instance emitting the error
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Operation">
@@ -2050,7 +2039,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Dependency">
             <summary>
-            Dependency implicated in the failure (e.g., redis, dapr-pubsub, http:accounts)
+            Dependency implicated in the failure (e.g., redis, pubsub, http:accounts)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Endpoint">
@@ -2294,7 +2283,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.AppId">
             <summary>
-            Dapr app-id where the service is running
+            Bannou app-id where the service is running
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Action">
@@ -4183,7 +4172,7 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.ExtensionMethods.GetServiceName(System.Type)">
             <summary>
-            Gets the service name from a service type using DaprServiceAttribute or service info.
+            Gets the service name from a service type using BannouServiceAttribute or service info.
             </summary>
             <param name="serviceType">The service type to examine.</param>
             <returns>The service name if found, otherwise null.</returns>
@@ -8880,7 +8869,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Mesh.MeshEndpoint.AppId">
             <summary>
-            Dapr-compatible app-id (e.g., "bannou", "bannou-npc-01")
+            Bannou app-id (e.g., "bannou", "bannou-npc-01")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Mesh.MeshEndpoint.Host">
@@ -9389,7 +9378,7 @@
             Validates connectivity and health of core infrastructure components:
             <br/>- Redis (direct connection via StackExchange.Redis)
             <br/>- RabbitMQ (direct connection via RabbitMQ.Client)
-            <br/>- Dapr Placement service
+            <br/>-
             </remarks>
             <returns>Infrastructure health status (check response body for component health)</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
@@ -9471,7 +9460,7 @@
             <br/>Presets define service combinations and configuration for specific use cases.
             <br/>
             <br/>Built-in presets:
-            <br/>- `local-development`: All services in single container with Dapr
+            <br/>- `local-development`: All services in single container with mesh infrastructure
             <br/>- `local-testing`: Test environment with infrastructure services
             <br/>- `integration-http`: HTTP integration testing preset
             <br/>- `integration-edge`: WebSocket/edge testing preset
@@ -9514,7 +9503,7 @@
             Get current service-to-app-id routing mappings
             </summary>
             <remarks>
-            Returns the current service-to-app-id routing mappings used for Dapr service invocation.
+            Returns the current service-to-app-id routing mappings used for mesh service invocation through lib-mesh.
             <br/>This is the authoritative source of truth for how services are routed in the current deployment.
             <br/>
             <br/>In development, all services route to "bannou" by default. In production, services may be
@@ -9798,7 +9787,7 @@
             Validates connectivity and health of core infrastructure components:
             <br/>- Redis (direct connection via StackExchange.Redis)
             <br/>- RabbitMQ (direct connection via RabbitMQ.Client)
-            <br/>- Dapr Placement service
+            <br/>-
             </remarks>
             <returns>Infrastructure health status (check response body for component health)</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
@@ -9880,7 +9869,7 @@
             <br/>Presets define service combinations and configuration for specific use cases.
             <br/>
             <br/>Built-in presets:
-            <br/>- `local-development`: All services in single container with Dapr
+            <br/>- `local-development`: All services in single container with mesh infrastructure
             <br/>- `local-testing`: Test environment with infrastructure services
             <br/>- `integration-http`: HTTP integration testing preset
             <br/>- `integration-edge`: WebSocket/edge testing preset
@@ -9923,7 +9912,7 @@
             Get current service-to-app-id routing mappings
             </summary>
             <remarks>
-            Returns the current service-to-app-id routing mappings used for Dapr service invocation.
+            Returns the current service-to-app-id routing mappings used for mesh service invocation through lib-mesh.
             <br/>This is the authoritative source of truth for how services are routed in the current deployment.
             <br/>
             <br/>In development, all services route to "bannou" by default. In production, services may be
@@ -10182,7 +10171,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceRoutingResponse.Mappings">
             <summary>
-            Map of service names to Dapr app-id routing destinations.
+            Map of service names to Bannou app-id routing destinations.
             <br/>Example: { "accounts": "bannou", "behavior": "npc-processing-01" }
             <br/>
             </summary>
@@ -10274,7 +10263,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequestBody.AppName">
             <summary>
-            Container's Dapr app name (e.g., "bannou", "npc-omega")
+            Container's app-id for mesh routing (e.g., "bannou", "npc-omega")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequestBody.Reason">
@@ -10289,7 +10278,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.GetContainerStatusRequest.AppName">
             <summary>
-            Container's Dapr app name
+            Container's app-id for mesh routing
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.GetConfigVersionRequest">
@@ -10381,7 +10370,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus.AppId">
             <summary>
-            Dapr app-id (e.g., "bannou", "npc-omega-01")
+            App-id for mesh routing (e.g., "bannou", "npc-omega-01")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus.Status">
@@ -10701,19 +10690,14 @@
             Node-specific environment overrides
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyNode.DaprEnabled">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyNode.MeshEnabled">
             <summary>
-            Whether to attach Dapr sidecar
+            Whether mesh routing is enabled
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyNode.DaprAppId">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyNode.AppId">
             <summary>
-            Dapr app-id override (default derives from node name)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.InfrastructureConfig.Placement">
-            <summary>
-            Dapr placement service
+            App-id override for mesh routing (default derives from node name)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.InfraServiceConfig.Image">
@@ -11144,7 +11128,7 @@
             <br/>Key prefixes indicate scope:
             <br/>- "auth.*" - Authentication-related
             <br/>- "database.*" - Database connections
-            <br/>- "dapr.*" - Dapr components (typically global impact)
+            <br/>- "mesh.*" - Mesh components (typically global impact)
             <br/>- "connect.*" - WebSocket/connection settings
             <br/>
             </summary>
@@ -11200,7 +11184,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerStatus.AppName">
             <summary>
-            Container's Dapr app name
+            Container's app-id for mesh routing
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerStatus.Instances">
@@ -11315,7 +11299,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorResponse.App_id">
             <summary>
-            Dapr app-id for service invocation to this processor
+            App-id for mesh service invocation to this processor
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorResponse.Lease_id">
@@ -11613,7 +11597,7 @@
             <br/>appearing in this list means it has completed startup and registered its
             <br/>API permissions, indicating it's ready to handle requests.
             <br/>
-            <br/>For service-to-service calls (via Dapr), this endpoint is unrestricted.
+            <br/>For service-to-service calls (via mesh), this endpoint is unrestricted.
             <br/>For client calls through WebSocket/Connect, only admin users can access it.
             </remarks>
             <returns>List of registered services</returns>
@@ -11757,7 +11741,7 @@
             <br/>appearing in this list means it has completed startup and registered its
             <br/>API permissions, indicating it's ready to handle requests.
             <br/>
-            <br/>For service-to-service calls (via Dapr), this endpoint is unrestricted.
+            <br/>For service-to-service calls (via mesh), this endpoint is unrestricted.
             <br/>For client calls through WebSocket/Connect, only admin users can access it.
             </remarks>
             <returns>List of registered services</returns>
@@ -16354,7 +16338,7 @@
         <member name="T:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin">
             <summary>
             Base implementation of IBannouPlugin that provides default behavior
-            and integrates with existing IDaprService implementations.
+            and integrates with existing IBannouService implementations.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.Logger">
@@ -16565,13 +16549,13 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.DiscoverClientTypes(System.Reflection.Assembly,System.String)">
             <summary>
-            Discover client types that implement IDaprClient interface.
+            Discover client types that implement IBannouClient interface.
             Pure interface-based discovery - no naming conventions.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.DiscoverServiceTypes(System.Reflection.Assembly,System.String)">
             <summary>
-            Discover service types using IDaprService interface and DaprServiceAttribute.
+            Discover service types using IBannouService interface and BannouServiceAttribute.
             Pure interface/attribute-based discovery from the specific assembly.
             </summary>
         </member>
@@ -16626,7 +16610,7 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.GetServiceNameFromType(System.Type)">
             <summary>
-            Extract service name from a service type using DaprService attribute.
+            Extract service name from a service type using BannouService attribute.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.GetResolvedService(System.String)">
@@ -16675,7 +16659,7 @@
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.RegisterServicePermissionsAsync">
             <summary>
             Registers service permissions for all enabled plugins with the Permissions service.
-            This should be called AFTER Dapr connectivity is confirmed to ensure events are delivered.
+            This should be called AFTER mesh connectivity is confirmed to ensure events are delivered.
             </summary>
             <returns>True if all permissions were registered successfully</returns>
         </member>
@@ -16750,7 +16734,7 @@
         <member name="P:BeyondImmersion.BannouService.Program.MeshInvocationClient">
             <summary>
             Mesh invocation client for service-to-service HTTP communication.
-            Replaces DaprClient for service invocation.
+            Replaces mesh client for service invocation.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Program.ShutdownCancellationTokenSource">
@@ -16792,7 +16776,7 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.Program.LoadPersistedMappingsAsync(Microsoft.AspNetCore.Builder.WebApplication,System.Threading.CancellationToken)">
             <summary>
-            Load persisted service mappings from Dapr state store (Redis).
+            Load persisted service mappings from state store (Redis).
             Used by orchestrator containers on restart to recover their routing table.
             </summary>
             <param name="webApp">The web application for service resolution</param>
@@ -16851,44 +16835,44 @@
             </summary>
             <returns>Cryptographically secure server salt</returns>
         </member>
-        <member name="T:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase">
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase">
             <summary>
-            Base class for all Dapr-aware service clients.
-            Handles dynamic app-id resolution and Dapr routing.
+            Base class for all Bannou-aware service clients.
+            Handles dynamic app-id resolution and Bannou routing.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase._httpClient">
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase._httpClient">
             <summary>
             HTTP client for making service requests.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase._appMappingResolver">
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase._appMappingResolver">
             <summary>
             Resolver for dynamic service-to-app-id mapping.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase._logger">
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase._logger">
             <summary>
             Logger for tracing service calls.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase._serviceName">
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase._serviceName">
             <summary>
             Name of the target service.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ServiceName">
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase.ServiceName">
             <summary>
             The name of the service this client communicates with.
-            Should match the service name in the corresponding DaprServiceAttribute.
+            Should match the service name in the corresponding BannouServiceAttribute.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.#ctor">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase.#ctor">
             <summary>
             Parameterless constructor for NSwag generated clients that handle their own dependency injection.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.#ctor(System.Net.Http.HttpClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger,System.String)">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase.#ctor(System.Net.Http.HttpClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger,System.String)">
             <summary>
             Full constructor for manual instantiation with all dependencies.
             </summary>
@@ -16897,16 +16881,16 @@
             <param name="logger">Logger for tracing service calls.</param>
             <param name="serviceName">Name of the target service.</param>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.BaseUrl">
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase.BaseUrl">
              <summary>
-             Gets the base URL for Dapr service invocation with dynamic app-id resolution.
+             Gets the base URL for Bannou service invocation with dynamic app-id resolution.
              For parameterless constructor, falls back to "bannou" app-id.
-             Uses environment variable DAPR_HTTP_ENDPOINT if available for containerized environments.
+             Uses environment variable BANNOU_HTTP_ENDPOINT if available for containerized environments.
              </summary>
              <remarks>
              CRITICAL ARCHITECTURAL CONSTRAINT:
-             The app-id used here ("bannou" by default) becomes part of the URL path that Dapr
-             forwards to the target service. Dapr does NOT strip the /v1.0/invoke/{app-id}/method/
+             The app-id used here ("bannou" by default) becomes part of the URL path that mesh
+             forwards to the target service. mesh does NOT strip the /v1.0/invoke/{app-id}/method/
              prefix - it preserves the full path.
             
              This means all OpenAPI schemas MUST use the same app-id in their `servers` URL:
@@ -16917,40 +16901,40 @@
              app-id (e.g., "game-session"), the generated controller route won't match the path
              that clients send, resulting in 404 errors.
             
-             The ServiceAppMappingResolver can dynamically route to different Dapr sidecars, but
+             The ServiceAppMappingResolver can dynamically route to different meshs, but
              the path structure (including app-id) must match what controllers expect.
             
              See docs/BANNOU_DESIGN.md "servers URL Constraint" section for full documentation.
              </remarks>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.PrepareRequest(System.Net.Http.HttpClient,System.Net.Http.HttpRequestMessage,System.String)">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase.PrepareRequest(System.Net.Http.HttpClient,System.Net.Http.HttpRequestMessage,System.String)">
             <summary>
-            Prepares the HTTP request with proper Dapr headers and custom headers.
+            Prepares the HTTP request with proper routing headers and custom headers.
             Works with both full constructor and parameterless constructor.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.PrepareRequest(System.Net.Http.HttpClient,System.Net.Http.HttpRequestMessage,System.Text.StringBuilder)">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase.PrepareRequest(System.Net.Http.HttpClient,System.Net.Http.HttpRequestMessage,System.Text.StringBuilder)">
             <summary>
-            Prepares the HTTP request with URL builder for Dapr routing and custom headers.
+            Prepares the HTTP request with URL builder for Bannou routing and custom headers.
             Works with both full constructor and parameterless constructor.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ProcessResponse(System.Net.Http.HttpClient,System.Net.Http.HttpResponseMessage)">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase.ProcessResponse(System.Net.Http.HttpClient,System.Net.Http.HttpResponseMessage)">
             <summary>
-            Processes the HTTP response from Dapr service invocation.
+            Processes the HTTP response from Bannou service invocation.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase._customHeaders">
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase._customHeaders">
             <summary>
             Storage for custom headers to be applied to the next request.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase._authorizationHeader">
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase._authorizationHeader">
             <summary>
             Authorization header value for the next request.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.SetHeader(System.String,System.String)">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase.SetHeader(System.String,System.String)">
             <summary>
             Sets a custom header for the next service request.
             Headers are applied once and then cleared.
@@ -16959,34 +16943,34 @@
             <param name="name">Header name (e.g., "X-Custom-Header")</param>
             <param name="value">Header value</param>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ClearAuthorization">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase.ClearAuthorization">
             <summary>
             Clears the Authorization header.
             Used by generated clients for type-safe fluent API.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ClearHeaders">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase.ClearHeaders">
             <summary>
             Clears all custom headers and authorization for a fresh request.
             Called automatically after each request.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ExtractAppIdFromUrl(System.String)">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase.ExtractAppIdFromUrl(System.String)">
             <summary>
-            Extracts the Dapr app-id from a Dapr invoke URL.
+            Extracts the app-id from a mesh invoke URL.
             URL pattern: http://localhost:3500/v1.0/invoke/{app-id}/method/...
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.ServiceClients.IDaprClient">
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.IBannouClient">
             <summary>
-            Marker interface for Dapr service clients.
+            Marker interface for Bannou service clients.
             Provides explicit identification of client types without relying on naming conventions.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ServiceClients.IDaprClient.ServiceName">
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IBannouClient.ServiceName">
             <summary>
             The name of the service this client communicates with.
-            Should match the service name in the corresponding DaprServiceAttribute.
+            Should match the service name in the corresponding BannouServiceAttribute.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceClient`1">
@@ -17007,7 +16991,7 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions">
             <summary>
-            Dependency injection extensions for registering Dapr-aware service clients.
+            Dependency injection extensions for registering Bannou-aware service clients.
             Provides dynamic app-id resolution with default "bannou" routing.
             </summary>
         </member>
@@ -17017,9 +17001,9 @@
             This resolver handles dynamic service-to-app-id mapping via RabbitMQ events.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddDaprServiceClient``2(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.String,System.Action{System.Net.Http.HttpClient})">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddBannouServiceClient``2(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.String,System.Action{System.Net.Http.HttpClient})">
             <summary>
-            Registers a Dapr-aware service client with automatic HttpClient configuration.
+            Registers a Bannou-aware service client with automatic HttpClient configuration.
             The client uses dynamic app-id resolution defaulting to "bannou".
             </summary>
             <typeparam name="TClient">The service client type (e.g., AccountsClient)</typeparam>
@@ -17028,13 +17012,13 @@
             <param name="serviceName">The service name for app-id resolution (e.g., "accounts")</param>
             <param name="configureClient">Optional HttpClient configuration</param>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddDaprServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.ValueTuple{System.Type,System.Type,System.String}[])">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.ValueTuple{System.Type,System.Type,System.String}[])">
             <summary>
-            Registers multiple Dapr service clients at once for convenience.
+            Registers multiple Bannou service clients at once for convenience.
             Uses service name derived from client type name (e.g., AccountsClient -> "accounts").
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddAllDaprServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddAllBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
             <summary>
             Auto-registers all service clients found in the current assembly and plugin assemblies.
             Follows naming convention: {Service}Client implements I{Service}Client.
@@ -17044,18 +17028,18 @@
         <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection">
             <summary>
             Extension methods for registering all service client infrastructure.
-            This includes Dapr service clients, event handling, and service mapping.
+            This includes Bannou service clients, event handling, and service mapping.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection.AddBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
             <summary>
             Registers the complete Bannou service client infrastructure.
-            Includes Dapr clients, service mapping, events, and lifecycle management.
+            Includes Bannou clients, service mapping, events, and lifecycle management.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection.AddAllBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
             <summary>
-            Registers all discovered Dapr service clients automatically.
+            Registers all discovered Bannou service clients automatically.
             Uses reflection to find all {Service}Client classes and registers them with DI.
             </summary>
         </member>
@@ -17064,26 +17048,26 @@
             Registers specific service clients manually for more control.
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Services.DaprService">
+        <member name="T:BeyondImmersion.BannouService.Services.BannouServiceBase">
             <summary>
             Optional base type for service handlers.
             Provides default implementation for InstanceId and other common service functionality.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Services.DaprService.InstanceId">
+        <member name="P:BeyondImmersion.BannouService.Services.BannouServiceBase.InstanceId">
             <summary>
             Unique instance identifier for this service plugin.
             Generated once per service instance lifetime.
             Used for log correlation and debugging across distributed systems.
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Services.DaprService`1">
+        <member name="T:BeyondImmersion.BannouService.Services.BannouService`1">
             <summary>
             Optional generic base type for service handlers.
             Automatically initializes the proper configuration.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Services.DaprService`1.Configuration">
+        <member name="P:BeyondImmersion.BannouService.Services.BannouService`1.Configuration">
             <inheritdoc/>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.IBannouService">
@@ -17243,11 +17227,6 @@
             Find the implementation for the given service handler.
             </summary>
             <returns>Interface Type, Implementation Type, Service Attribute</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Services.IDaprService">
-            <summary>
-            Obsolete alias for backward compatibility. Use <see cref="T:BeyondImmersion.BannouService.Services.IBannouService"/> instead.
-            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.ILockResponse">
             <summary>
@@ -17497,7 +17476,7 @@
         <member name="T:BeyondImmersion.BannouService.Services.IMeshInvocationClient">
             <summary>
             Client for invoking methods on other services via the mesh.
-            Replaces DaprClient.InvokeMethodAsync for service-to-service communication.
+            Provides service-to-service communication through lib-mesh infrastructure.
             Uses the mesh service for endpoint resolution and YARP for HTTP forwarding.
             </summary>
         </member>
@@ -17611,8 +17590,8 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.IMessageBus">
             <summary>
-            Native RabbitMQ message publishing without Dapr CloudEvents overhead.
-            Replaces DaprClient.PublishEventAsync() with direct RabbitMQ access.
+            Native RabbitMQ message publishing via MassTransit.
+            Provides direct RabbitMQ access for event-driven communication.
             </summary>
             <remarks>
             <para>
@@ -17678,7 +17657,7 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.IMessageSubscriber">
             <summary>
-            Subscribe to RabbitMQ topics without Dapr topic handlers.
+            Subscribe to RabbitMQ topics via MassTransit.
             Integrates with existing IEventConsumer for fan-out.
             </summary>
             <remarks>
@@ -18017,7 +17996,7 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver">
             <summary>
-            Resolves service names to Dapr app-ids for distributed service routing.
+            Resolves service names to app-ids for distributed service routing.
             Supports dynamic mapping via RabbitMQ events for production scaling.
             </summary>
         </member>
@@ -18029,19 +18008,19 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.GetAppIdForService(System.String)">
             <summary>
-            Gets the Dapr app-id for the specified service name.
+            Gets the app-id for the specified service name.
             Defaults to "bannou" (omnipotent local node) but can be overridden
             by service mapping events from RabbitMQ.
             </summary>
             <param name="serviceName">The service name (e.g., "accounts", "character-agent"). Can be null.</param>
-            <returns>The Dapr app-id to route requests to</returns>
+            <returns>The app-id to route requests to</returns>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.UpdateServiceMapping(System.String,System.String)">
             <summary>
             Updates the service mapping from RabbitMQ service discovery events.
             </summary>
             <param name="serviceName">The service name</param>
-            <param name="appId">The Dapr app-id where this service is running</param>
+            <param name="appId">The app-id where this service is running</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.RemoveServiceMapping(System.String)">
             <summary>
@@ -18094,7 +18073,7 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.IStateStore`1">
             <summary>
-            Generic state store interface replacing DaprClient.GetStateAsync()/SaveStateAsync().
+            Generic state store interface for lib-state infrastructure.
             Supports both Redis (ephemeral) and MySQL (durable) backends.
             </summary>
             <typeparam name="TValue">Value type stored</typeparam>
@@ -18312,7 +18291,7 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.GetAppIdForService(System.String)">
             <summary>
-            Gets the Dapr app-id for the specified service.
+            Gets the app-id for the specified service.
             Defaults to "bannou" but can be overridden by RabbitMQ service mapping events.
             </summary>
         </member>
@@ -18980,17 +18959,17 @@
              <code>
              public class MyServiceTests : ServiceTestBase&lt;MyServiceConfiguration&gt;
              {
-                 private readonly Mock&lt;DaprClient&gt; _mockDaprClient;
+                 private readonly Mock&lt;mesh client&gt; _mockmesh client;
                  private readonly Mock&lt;ILogger&lt;MyService&gt;&gt; _mockLogger;
             
                  public MyServiceTests()
                  {
-                     _mockDaprClient = new Mock&lt;DaprClient&gt;();
+                     _mockmesh client = new Mock&lt;mesh client&gt;();
                      _mockLogger = new Mock&lt;ILogger&lt;MyService&gt;&gt;();
                  }
             
                  private MyService CreateService() =&gt; new MyService(
-                     _mockDaprClient.Object,
+                     _mockmesh client.Object,
                      _mockLogger.Object,
                      Configuration);
              }

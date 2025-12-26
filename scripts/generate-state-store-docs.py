@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Generate State Store Documentation from Dapr Component Files.
+Generate State Store Documentation from Component Files.
 
-This script scans Dapr component YAML files and generates a comprehensive
+This script scans state store component YAML files and generates a comprehensive
 markdown table documenting all state stores used in Bannou.
 
 Output: docs/GENERATED-STATE-STORES.md
@@ -26,7 +26,7 @@ except ImportError:
 
 
 def get_backend_type(spec_type: str) -> str:
-    """Convert Dapr component type to human-readable backend name."""
+    """Convert component type to human-readable backend name."""
     type_map = {
         'state.redis': 'Redis',
         'state.mysql': 'MySQL',
@@ -136,10 +136,10 @@ def generate_markdown(stores: list) -> str:
         "# Generated State Store Reference",
         "",
         f"> **Auto-generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-        "> **Source**: `provisioning/dapr/components/*.yaml`",
+        "> **Source**: `provisioning/state-stores/*.yaml`",
         "> **Do not edit manually** - regenerate with `make generate-docs`",
         "",
-        "This document lists all Dapr state store components used in Bannou.",
+        "This document lists all state store components used in Bannou.",
         "",
         "## State Store Components",
         "",
@@ -163,7 +163,7 @@ def generate_markdown(stores: list) -> str:
         "",
         "## Deployment Flexibility",
         "",
-        "Dapr component abstraction means multiple logical state stores can share physical",
+        "The state store abstraction means multiple logical state stores can share physical",
         "Redis/MySQL instances in simple deployments, while production deployments can map",
         "to dedicated infrastructure without code changes.",
         "",

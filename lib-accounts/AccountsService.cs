@@ -17,8 +17,7 @@ namespace BeyondImmersion.BannouService.Accounts;
 /// State-backed implementation for Accounts service following schema-first architecture.
 /// Uses IStateStoreFactory for persistence.
 /// </summary>
-[DaprService("accounts", typeof(IAccountsService), lifetime: ServiceLifetime.Scoped)]
-[Obsolete]
+[BannouService("accounts", typeof(IAccountsService), lifetime: ServiceLifetime.Scoped)]
 public partial class AccountsService : IAccountsService
 {
     private readonly ILogger<AccountsService> _logger;
@@ -36,7 +35,6 @@ public partial class AccountsService : IAccountsService
     private const string ACCOUNT_UPDATED_TOPIC = "account.updated";
     private const string ACCOUNT_DELETED_TOPIC = "account.deleted";
 
-    [Obsolete]
     public AccountsService(
         ILogger<AccountsService> logger,
         AccountsServiceConfiguration configuration,
@@ -51,7 +49,7 @@ public partial class AccountsService : IAccountsService
 
         // Register event handlers via partial class (AccountsServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     public async Task<(StatusCodes, AccountListResponse?)> ListAccountsAsync(
@@ -182,7 +180,7 @@ public partial class AccountsService : IAccountsService
                 "ListAccounts",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.Page, body.PageSize });
             return (StatusCodes.InternalServerError, null);
         }
@@ -312,7 +310,7 @@ public partial class AccountsService : IAccountsService
                 "CreateAccount",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.Email });
             return (StatusCodes.InternalServerError, null);
         }
@@ -370,7 +368,7 @@ public partial class AccountsService : IAccountsService
             var accountId = body.AccountId;
             _logger.LogInformation("Retrieving account: {AccountId}", accountId);
 
-            // Get from Dapr state store (replaces Entity Framework query)
+            // Get from lib-state store (replaces Entity Framework query)
             var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNTS_STATE_STORE);
             var account = await accountStore.GetAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", cancellationToken);
 
@@ -411,7 +409,7 @@ public partial class AccountsService : IAccountsService
                 "GetAccount",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
@@ -495,7 +493,7 @@ public partial class AccountsService : IAccountsService
                 "UpdateAccount",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
@@ -566,7 +564,7 @@ public partial class AccountsService : IAccountsService
                 "GetAccountByEmail",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.Email });
             return (StatusCodes.InternalServerError, null);
         }
@@ -607,7 +605,7 @@ public partial class AccountsService : IAccountsService
                 "GetAuthMethods",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
@@ -688,7 +686,7 @@ public partial class AccountsService : IAccountsService
                 "AddAuthMethod",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.AccountId, body.Provider });
             return (StatusCodes.InternalServerError, null);
         }
@@ -774,7 +772,7 @@ public partial class AccountsService : IAccountsService
                 "GetAccountByProvider",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.Provider, body.ExternalId });
             return (StatusCodes.InternalServerError, null);
         }
@@ -860,7 +858,7 @@ public partial class AccountsService : IAccountsService
                 "UpdateProfile",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
@@ -913,7 +911,7 @@ public partial class AccountsService : IAccountsService
                 "DeleteAccount",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
@@ -975,7 +973,7 @@ public partial class AccountsService : IAccountsService
                 "RemoveAuthMethod",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.AccountId, body.MethodId });
             return (StatusCodes.InternalServerError, null);
         }
@@ -1019,7 +1017,7 @@ public partial class AccountsService : IAccountsService
                 "UpdatePasswordHash",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
@@ -1065,7 +1063,7 @@ public partial class AccountsService : IAccountsService
                 "UpdateVerificationStatus",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
@@ -1273,7 +1271,7 @@ public partial class AccountsService : IAccountsService
 
     /// <summary>
     /// Registers this service's API permissions with the Permissions service on startup.
-    /// Overrides the default IDaprService implementation to use generated permission data.
+    /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()
     {
@@ -1318,8 +1316,8 @@ public partial class AccountsService : IAccountsService
 }
 
 /// <summary>
-/// Account data model for Dapr state storage
-/// Replaces Entity Framework entities
+/// Account data model for lib-state storage.
+/// Replaces Entity Framework entities.
 /// </summary>
 public class AccountModel
 {
@@ -1330,7 +1328,7 @@ public class AccountModel
     public bool IsVerified { get; set; }
     public List<string> Roles { get; set; } = new List<string>(); // User roles (admin, user, etc.)
 
-    // Store as Unix epoch timestamps (long) to avoid Dapr/System.Text.Json DateTimeOffset serialization bugs
+    // Store as Unix epoch timestamps (long) to avoid System.Text.Json DateTimeOffset serialization issues
     public long CreatedAtUnix { get; set; }
     public long UpdatedAtUnix { get; set; }
     public long? DeletedAtUnix { get; set; }

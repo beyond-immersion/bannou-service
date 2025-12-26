@@ -30,8 +30,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// WebSocket-first edge gateway service providing zero-copy message routing.
 /// Uses Permissions service for dynamic API discovery and capability management.
 /// </summary>
-[DaprService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton)]
-[Obsolete]
+[BannouService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton)]
 public partial class ConnectService : IConnectService
 {
     // Static cached header values to avoid per-request allocations
@@ -58,7 +57,6 @@ public partial class ConnectService : IConnectService
     private readonly string _serverSalt;
     private readonly string _instanceId;
 
-    [Obsolete]
     public ConnectService(
         IAuthClient authClient,
         IMeshInvocationClient meshClient,
@@ -78,13 +76,13 @@ public partial class ConnectService : IConnectService
         {
             // Set timeout to 120 seconds to ensure Connect service doesn't hang indefinitely
             // This should be longer than client timeouts (60s) but shorter than infinite
-            // If Dapr/target service doesn't respond, we'll get TaskCanceledException
+            // If mesh/target service doesn't respond, we'll get TaskCanceledException
             Timeout = TimeSpan.FromSeconds(120)
         };
         _appMappingResolver = appMappingResolver ?? throw new ArgumentNullException(nameof(appMappingResolver));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-        _sessionManager = sessionManager; // Optional Dapr-based session management
+        _sessionManager = sessionManager; // Optional mesh-based session management
         _clientEventQueueManager = clientEventQueueManager; // Optional client event queuing
 
         _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
@@ -107,7 +105,7 @@ public partial class ConnectService : IConnectService
 
         // Register event handlers via partial class (ConnectServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
 
         _logger.LogInformation("Connect service initialized with instance ID: {InstanceId}, SessionManager: {SessionManagerEnabled}",
             _instanceId, sessionManager != null ? "Enabled" : "Disabled");
@@ -115,7 +113,7 @@ public partial class ConnectService : IConnectService
 
     /// <summary>
     /// Internal API proxy for stateless requests.
-    /// Routes requests through Dapr to the appropriate service.
+    /// Routes requests through mesh to the appropriate service.
     /// </summary>
     public async Task<(StatusCodes, InternalProxyResponse?)> ProxyInternalRequestAsync(
         InternalProxyRequest body,
@@ -189,7 +187,7 @@ public partial class ConnectService : IConnectService
 
             try
             {
-                // Route through Dapr service invocation
+                // Route through Bannou service invocation
                 HttpResponseMessage httpResponse;
 
                 if (body.Method == InternalProxyRequestMethod.GET ||
@@ -241,16 +239,16 @@ public partial class ConnectService : IConnectService
 
                 return (StatusCodes.OK, response);
             }
-            catch (Exception daprEx)
+            catch (Exception meshEx)
             {
-                _logger.LogError(daprEx, "Dapr service invocation failed for {Service}/{Endpoint}",
+                _logger.LogError(meshEx, "Bannou service invocation failed for {Service}/{Endpoint}",
                     body.TargetService, endpoint);
 
                 var errorResponse = new InternalProxyResponse
                 {
                     Success = false,
                     StatusCode = 503,
-                    Error = $"Service invocation failed: {daprEx.Message}",
+                    Error = $"Service invocation failed: {meshEx.Message}",
                     ExecutionTime = (int)(DateTime.UtcNow - startTime).TotalMilliseconds
                 };
 
@@ -932,7 +930,7 @@ public partial class ConnectService : IConnectService
     }
 
     /// <summary>
-    /// Routes a message to a Dapr service and handles the response.
+    /// Routes a message to a Bannou service and handles the response.
     /// ServiceName format: "servicename:METHOD:/path" (e.g., "orchestrator:GET:/orchestrator/health/infrastructure")
     /// </summary>
     private async Task RouteToServiceAsync(
@@ -975,7 +973,7 @@ public partial class ConnectService : IConnectService
             // Connect service should NEVER parse the payload - zero-copy routing based on GUID only
             var payloadBytes = message.Payload;
 
-            // Make the actual Dapr service invocation via direct HTTP
+            // Make the actual Bannou service invocation via direct HTTP
             // This preserves the full path including /v1.0/invoke/{appId}/method/ prefix
             // which is required because NSwag-generated controllers have route prefix [Route("v1.0/invoke/bannou/method")]
             string? responseJson = null;
@@ -983,16 +981,16 @@ public partial class ConnectService : IConnectService
 
             try
             {
-                // Build full Dapr URL like DaprServiceClientBase does
-                var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT")
-                    ?? throw new InvalidOperationException("DAPR_HTTP_ENDPOINT environment variable is not set. Dapr sidecar must be configured.");
-                var daprUrl = $"{daprHttpEndpoint}/v1.0/invoke/{appId}/method/{path.TrimStart('/')}";
+                // Build full mesh URL like BannouServiceClientBase does
+                var bannouHttpEndpoint = Environment.GetEnvironmentVariable("BANNOU_HTTP_ENDPOINT")
+                    ?? throw new InvalidOperationException("BANNOU_HTTP_ENDPOINT environment variable is not set. mesh must be configured.");
+                var meshUrl = $"{bannouHttpEndpoint}/v1.0/invoke/{appId}/method/{path.TrimStart('/')}";
 
                 // Create HTTP request with proper headers
-                using var request = new HttpRequestMessage(new HttpMethod(httpMethod), daprUrl);
+                using var request = new HttpRequestMessage(new HttpMethod(httpMethod), meshUrl);
 
-                // Add dapr-app-id header for routing (like DaprServiceClientBase.PrepareRequest)
-                request.Headers.Add("dapr-app-id", appId);
+                // Add bannou-app-id header for routing (like BannouServiceClientBase.PrepareRequest)
+                request.Headers.Add("bannou-app-id", appId);
                 // Use static cached Accept header to avoid per-request allocation
                 request.Headers.Accept.Add(s_jsonAcceptHeader);
 
@@ -1001,8 +999,8 @@ public partial class ConnectService : IConnectService
                 request.Headers.Add("X-Bannou-Session-Id", sessionId);
 
                 // Use Warning level to ensure visibility even when app logging is set to Warning
-                _logger.LogWarning("WebSocket -> Dapr HTTP: {Method} {Uri} AppId={AppId}",
-                    request.Method, daprUrl, appId);
+                _logger.LogWarning("WebSocket -> mesh HTTP: {Method} {Uri} AppId={AppId}",
+                    request.Method, meshUrl, appId);
 
                 // Pass raw payload bytes directly to service - true zero-copy forwarding
                 // Uses ByteArrayContent instead of StringContent to avoid UTF-8 → UTF-16 → UTF-8 conversion
@@ -1017,14 +1015,14 @@ public partial class ConnectService : IConnectService
 
                 // Track timing for long-running requests
                 var requestStartTime = DateTimeOffset.UtcNow;
-                _logger.LogDebug("Sending HTTP request to Dapr at {StartTime}", requestStartTime);
+                _logger.LogDebug("Sending HTTP request to mesh at {StartTime}", requestStartTime);
 
                 // Invoke the service via direct HTTP (preserves full path)
                 httpResponse = await _httpClient.SendAsync(request, cancellationToken);
 
                 var requestDuration = DateTimeOffset.UtcNow - requestStartTime;
                 // Use Warning level for response timing to ensure visibility in CI
-                _logger.LogWarning("Dapr HTTP response in {DurationMs}ms: {StatusCode}",
+                _logger.LogWarning("mesh HTTP response in {DurationMs}ms: {StatusCode}",
                     requestDuration.TotalMilliseconds, (int)httpResponse.StatusCode);
 
                 // Read response content
@@ -1047,7 +1045,7 @@ public partial class ConnectService : IConnectService
             catch (TaskCanceledException tcEx) when (tcEx.InnerException is TimeoutException)
             {
                 // HTTP client timeout reached (120 seconds)
-                _logger.LogError("Dapr HTTP request timed out (120s) for {Service} {Method} {Path}",
+                _logger.LogError("mesh HTTP request timed out (120s) for {Service} {Method} {Path}",
                     serviceName, httpMethod, path);
 
                 var errorPayload = new
@@ -1064,7 +1062,7 @@ public partial class ConnectService : IConnectService
                 var isTimeout = !cancellationToken.IsCancellationRequested;
                 if (isTimeout)
                 {
-                    _logger.LogError("Dapr HTTP request timed out for {Service} {Method} {Path}",
+                    _logger.LogError("mesh HTTP request timed out for {Service} {Method} {Path}",
                         serviceName, httpMethod, path);
 
                     var errorPayload = new
@@ -1077,7 +1075,7 @@ public partial class ConnectService : IConnectService
                 }
                 else
                 {
-                    _logger.LogWarning(tcEx, "Dapr HTTP request cancelled for {Service} {Method} {Path}",
+                    _logger.LogWarning(tcEx, "mesh HTTP request cancelled for {Service} {Method} {Path}",
                         serviceName, httpMethod, path);
 
                     var errorPayload = new
@@ -1091,7 +1089,7 @@ public partial class ConnectService : IConnectService
             }
             catch (HttpRequestException httpEx)
             {
-                _logger.LogWarning(httpEx, "HTTP request to Dapr failed for {Service} {Method} {Path}",
+                _logger.LogWarning(httpEx, "HTTP request to mesh failed for {Service} {Method} {Path}",
                     serviceName, httpMethod, path);
 
                 // Create error response
@@ -1313,7 +1311,7 @@ public partial class ConnectService : IConnectService
     {
         _logger.LogInformation("Registering Connect service RabbitMQ event handlers");
 
-        // Register auth event handler (subscribes via MassTransit, not Dapr Topics)
+        // Register auth event handler (subscribes via MassTransit, not mesh Topics)
         webApp.MapPost("/events/auth-events", ProcessAuthEventAsync)
             .WithMetadata("Connect service auth event handler");
 
@@ -1332,7 +1330,7 @@ public partial class ConnectService : IConnectService
         _logger.LogInformation("Connect service RabbitMQ event handlers registered successfully");
 
         // Initialize direct RabbitMQ subscriber for session-specific client events
-        // TENET exception: Dapr doesn't support dynamic runtime subscriptions
+        // TENET exception: mesh doesn't support dynamic runtime subscriptions
         if (string.IsNullOrEmpty(_rabbitMqConnectionString))
         {
             _logger.LogWarning("CONNECT_RABBITMQ_CONNECTION_STRING not configured - client events will not be delivered");
@@ -1580,9 +1578,9 @@ public partial class ConnectService : IConnectService
     {
         try
         {
-            // Unwrap CloudEvents envelope if present - Dapr pub/sub wraps events in CloudEvents format
+            // Unwrap CloudEvents envelope if present - Bannou pub/sub wraps events in CloudEvents format
             // Clients should receive the actual event data, not the CloudEvents wrapper
-            var unwrappedPayload = DaprEventHelper.UnwrapCloudEventsEnvelope(eventPayload);
+            var unwrappedPayload = BannouEventHelper.UnwrapCloudEventsEnvelope(eventPayload);
 
             // Check if this is an internal event that should be handled locally, not forwarded to client
             if (await TryHandleInternalEventAsync(sessionId, unwrappedPayload))
@@ -1695,7 +1693,7 @@ public partial class ConnectService : IConnectService
             // Try to parse just the event_name field to determine event type
             using var doc = JsonDocument.Parse(eventPayload);
 
-            // Handle CloudEvents envelope - Dapr wraps pub/sub messages in CloudEvents format
+            // Handle CloudEvents envelope - RabbitMQ wraps pub/sub messages in CloudEvents format
             // The actual event data is in the "data" property
             var root = doc.RootElement;
             if (root.TryGetProperty("data", out var dataElement))
@@ -2238,7 +2236,7 @@ public partial class ConnectService : IConnectService
 
     /// <summary>
     /// Registers this service's API permissions with the Permissions service on startup.
-    /// Overrides the default IDaprService implementation to use generated permission data.
+    /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()
     {

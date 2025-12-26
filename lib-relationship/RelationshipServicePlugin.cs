@@ -8,25 +8,24 @@ namespace BeyondImmersion.BannouService.Relationship;
 
 /// <summary>
 /// Plugin wrapper for Relationship service enabling plugin-based discovery and lifecycle management.
-/// Bridges existing IDaprService implementation with the new Plugin system.
+/// Bridges existing IBannouService implementation with the new Plugin system.
 /// </summary>
 public class RelationshipServicePlugin : BaseBannouPlugin
 {
     public override string PluginName => "relationship";
     public override string DisplayName => "Relationship Service";
 
-    [Obsolete]
     private IRelationshipService? _service;
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
-    /// Configure services for dependency injection - mimics existing [DaprService] registration.
+    /// Configure services for dependency injection - mimics existing [BannouService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
         Logger?.LogDebug("Configuring service dependencies");
 
-        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // Service registration is now handled centrally by PluginLoader based on [BannouService] attributes
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
@@ -48,9 +47,8 @@ public class RelationshipServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Start the service - calls existing IDaprService lifecycle if present.
+    /// Start the service - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting service");
@@ -66,10 +64,10 @@ public class RelationshipServicePlugin : BaseBannouPlugin
                 return false;
             }
 
-            if (_service is IDaprService daprService)
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnStartAsync for Relationship service");
-                await daprService.OnStartAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnStartAsync for Relationship service");
+                await bannouService.OnStartAsync(CancellationToken.None);
             }
 
             Logger?.LogInformation("Service started");
@@ -83,9 +81,8 @@ public class RelationshipServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Running phase - calls existing IDaprService lifecycle if present.
+    /// Running phase - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -94,10 +91,10 @@ public class RelationshipServicePlugin : BaseBannouPlugin
 
         try
         {
-            if (_service is IDaprService daprService)
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for Relationship service");
-                await daprService.OnRunningAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnRunningAsync for Relationship service");
+                await bannouService.OnRunningAsync(CancellationToken.None);
             }
         }
         catch (Exception ex)
@@ -107,9 +104,8 @@ public class RelationshipServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Shutdown the service - calls existing IDaprService lifecycle if present.
+    /// Shutdown the service - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;
@@ -118,10 +114,10 @@ public class RelationshipServicePlugin : BaseBannouPlugin
 
         try
         {
-            if (_service is IDaprService daprService)
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for Relationship service");
-                await daprService.OnShutdownAsync();
+                Logger?.LogDebug("Calling IBannouService.OnShutdownAsync for Relationship service");
+                await bannouService.OnShutdownAsync();
             }
 
             Logger?.LogInformation("Service shutdown complete");

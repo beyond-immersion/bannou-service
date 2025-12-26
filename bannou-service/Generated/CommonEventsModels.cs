@@ -64,7 +64,7 @@ public partial class ServiceRegistrationEvent
     public string Version { get; set; } = default!;
 
     /// <summary>
-    /// Dapr app-id for service routing (typically "bannou")
+    /// Bannou app-id for service routing (typically "bannou")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -223,7 +223,7 @@ public partial class ServiceHeartbeatEvent
     public System.Guid ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Dapr app-id for this instance (e.g., "bannou", "jobberwocky")
+    /// Bannou app-id for this instance (e.g., "bannou", "jobberwocky")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -395,7 +395,7 @@ public partial class ServiceErrorEvent
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Dapr app-id of the instance emitting the error
+    /// Bannou app-id of the instance emitting the error
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -436,7 +436,7 @@ public partial class ServiceErrorEvent
     public ServiceErrorEventSeverity Severity { get; set; } = BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity.Error;
 
     /// <summary>
-    /// Dependency implicated in the failure (e.g., redis, dapr-pubsub, http:accounts)
+    /// Dependency implicated in the failure (e.g., redis, pubsub, http:accounts)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("dependency")]
     public string? Dependency { get; set; } = default!;
@@ -801,7 +801,7 @@ public partial class ServiceMappingEvent
     public string ServiceName { get; set; } = default!;
 
     /// <summary>
-    /// Dapr app-id where the service is running
+    /// Bannou app-id where the service is running
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

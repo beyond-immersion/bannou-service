@@ -8,11 +8,11 @@ using System.Net.Http.Json;
 namespace BeyondImmersion.BannouService.Testing;
 
 /// <summary>
-/// Test handler for Dapr service mapping and routing functionality.
+/// Test handler for Bannou service mapping and routing functionality.
 /// Tests dynamic app-id resolution and service discovery events.
 /// TEMPORARILY DISABLED - Will be regenerated with new schema-first services
 /// </summary>
-public class DaprServiceMappingTestHandler : IServiceTestHandler
+public class BannouServiceMappingTestHandler : IServiceTestHandler
 {
     public ServiceTest[] GetServiceTests()
     {
@@ -21,7 +21,7 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
         [
             new ServiceTest(Isolated(TestServiceMappingResolver), "Service Mapping Resolver", "Infrastructure", "Tests basic service-to-app-id resolution"),
             new ServiceTest(Isolated(TestServiceMappingEvents), "Service Mapping Events", "Infrastructure", "Tests RabbitMQ service mapping events"),
-            new ServiceTest(Isolated(TestDaprServiceClientRouting), "Dapr Service Client Routing", "Infrastructure", "Tests Dapr service client routing"),
+            new ServiceTest(Isolated(TestBannouServiceClientRouting), "Mesh Service Client Routing", "Infrastructure", "Tests Bannou service client routing"),
             new ServiceTest(Isolated(TestServiceMappingHealth), "Service Mapping Health", "Infrastructure", "Tests service mapping health endpoints")
         ];
     }
@@ -140,34 +140,34 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Tests Dapr service client routing with app-id resolution.
+    /// Tests Bannou service client routing with app-id resolution.
     /// </summary>
-    private static Task<TestResult> TestDaprServiceClientRouting(ITestClient testClient, string[] args)
+    private static Task<TestResult> TestBannouServiceClientRouting(ITestClient testClient, string[] args)
     {
         try
         {
-            Console.WriteLine("Testing Dapr service client routing...");
+            Console.WriteLine("Testing Bannou service client routing...");
 
             var resolver = new ServiceAppMappingResolver(CreateTestLogger<ServiceAppMappingResolver>());
-            var logger = CreateTestLogger<DaprServiceClientBase>();
+            var logger = CreateTestLogger<BannouServiceClientBase>();
 
             // Create a mock service client base to test routing
             using var httpClient = new HttpClient();
-            var serviceClient = new TestDaprServiceClient(httpClient, resolver, logger, "accounts");
+            var serviceClient = new TestBannouServiceClient(httpClient, resolver, logger, "accounts");
 
             // Test base URL generation
             var baseUrl = serviceClient.TestGetBaseUrl();
             Console.WriteLine($"Generated base URL: {baseUrl}");
 
-            // DAPR_HTTP_ENDPOINT is a legitimate Tenet 21 exception - Dapr bootstrap variable
-            string daprEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT") ?? "localhost:3500";
-            if (!baseUrl.Contains(daprEndpoint))
-                return Task.FromResult(new TestResult(false, $"Expected Dapr sidecar URL {daprEndpoint}, got: {baseUrl}"));
+            // BANNOU_HTTP_ENDPOINT is a legitimate Tenet 21 exception - mesh bootstrap variable
+            string meshEndpoint = Environment.GetEnvironmentVariable("BANNOU_HTTP_ENDPOINT") ?? "localhost:3500";
+            if (!baseUrl.Contains(meshEndpoint))
+                return Task.FromResult(new TestResult(false, $"Expected mesh URL {meshEndpoint}, got: {baseUrl}"));
 
             if (!baseUrl.Contains("/bannou/"))
                 return Task.FromResult(new TestResult(false, $"Expected default app-id 'bannou' in URL, got: {baseUrl}"));
 
-            Console.WriteLine("✓ Default Dapr routing URL generated correctly");
+            Console.WriteLine("✓ Default Bannou routing URL generated correctly");
 
             // Test with dynamic mapping
             resolver.UpdateServiceMapping("accounts", "accounts-east");
@@ -176,13 +176,13 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
             if (!baseUrl.Contains("/accounts-east/"))
                 return Task.FromResult(new TestResult(false, $"Expected dynamic app-id 'accounts-east' in URL, got: {baseUrl}"));
 
-            Console.WriteLine("✓ Dynamic Dapr routing URL generated correctly");
+            Console.WriteLine("✓ Dynamic Bannou routing URL generated correctly");
 
-            return Task.FromResult(new TestResult(true, "Dapr service client routing tests passed"));
+            return Task.FromResult(new TestResult(true, "Bannou service client routing tests passed"));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(new TestResult(false, $"Dapr service client routing test failed: {ex.Message}", ex));
+            return Task.FromResult(new TestResult(false, $"Bannou service client routing test failed: {ex.Message}", ex));
         }
     }
 
@@ -283,11 +283,11 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Test implementation of DaprServiceClientBase for testing routing.
+    /// Test implementation of BannouServiceClientBase for testing routing.
     /// </summary>
-    private class TestDaprServiceClient : DaprServiceClientBase
+    private class TestBannouServiceClient : BannouServiceClientBase
     {
-        public TestDaprServiceClient(
+        public TestBannouServiceClient(
             HttpClient httpClient,
             IServiceAppMappingResolver appMappingResolver,
             ILogger logger,

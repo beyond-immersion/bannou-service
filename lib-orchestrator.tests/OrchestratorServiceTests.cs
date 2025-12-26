@@ -1609,7 +1609,7 @@ public class OrchestratorResetToDefaultTests
                     new()
                     {
                         Name = "bannou-auth",
-                        DaprAppId = "bannou-auth",
+                        AppId = "bannou-auth",
                         Services = new List<string> { "auth" }
                     }
                 }

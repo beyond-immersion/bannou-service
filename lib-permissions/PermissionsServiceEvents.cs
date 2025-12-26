@@ -8,12 +8,12 @@ namespace BeyondImmersion.BannouService.Permissions;
 
 /// <summary>
 /// Partial class for PermissionsService event handling.
-/// Contains event consumer registration and handler implementations for ALL Dapr pub/sub events.
+/// Contains event consumer registration and handler implementations for all pub/sub events.
 /// </summary>
 public partial class PermissionsService
 {
     /// <summary>
-    /// Registers event consumers for Dapr pub/sub events this service handles.
+    /// Registers event consumers for pub/sub events this service handles.
     /// Called from the main service constructor.
     /// </summary>
     /// <param name="eventConsumer">The event consumer for registering handlers.</param>

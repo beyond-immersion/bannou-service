@@ -172,7 +172,6 @@ public class Attributes : IClassFixture<CollectionFixture>
 
     private Attributes(CollectionFixture collectionContext) => TestCollectionContext = collectionContext;
 
-    [Obsolete]
     public Attributes(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
@@ -183,7 +182,6 @@ public class Attributes : IClassFixture<CollectionFixture>
         => BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static;
 
     [Fact]
-    [Obsolete]
     public void Attributes_GetClass()
     {
         List<(Type, IServiceAttribute)> withAttr = IServiceAttribute.GetClassesWithAttribute(typeof(ClassAttributeA));
@@ -198,7 +196,6 @@ public class Attributes : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Attributes_GetClass_Generic()
     {
         List<(Type, ClassAttributeA)> withAttrA = IServiceAttribute.GetClassesWithAttribute<ClassAttributeA>();
@@ -213,7 +210,6 @@ public class Attributes : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Attributes_GetMethod()
     {
         List<(Type, MethodInfo, IServiceAttribute)> withAttr = IServiceAttribute.GetMethodsWithAttribute(typeof(MethodAttributeA));
@@ -236,7 +232,6 @@ public class Attributes : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Attributes_GetMethod_Generic()
     {
         List<(Type, MethodInfo, MethodAttributeA)> withAttrA = IServiceAttribute.GetMethodsWithAttribute<MethodAttributeA>();
@@ -259,7 +254,6 @@ public class Attributes : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Attributes_GetProperty()
     {
         List<(Type, PropertyInfo, IServiceAttribute)> withAttr = IServiceAttribute.GetPropertiesWithAttribute(typeof(PropertyAttributeA));
@@ -282,7 +276,6 @@ public class Attributes : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Attributes_GetProperty_Generic()
     {
         List<(Type, PropertyInfo, PropertyAttributeA)> withAttrA = IServiceAttribute.GetPropertiesWithAttribute<PropertyAttributeA>();
@@ -305,7 +298,6 @@ public class Attributes : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Attributes_GetField()
     {
         List<(Type, FieldInfo, IServiceAttribute)> withAttr = IServiceAttribute.GetFieldsWithAttribute(typeof(FieldAttributeA));
@@ -328,7 +320,6 @@ public class Attributes : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Attributes_GetField_Generic()
     {
         List<(Type, FieldInfo, FieldAttributeA)> withAttrA = IServiceAttribute.GetFieldsWithAttribute<FieldAttributeA>();
@@ -351,7 +342,6 @@ public class Attributes : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Attributes_GetMethod_SpecificClass()
     {
         List<(MethodInfo, IServiceAttribute)> withAttr = IServiceAttribute.GetMethodsWithAttribute(typeof(MethodClassA), typeof(MethodAttributeA));
@@ -370,7 +360,6 @@ public class Attributes : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Attributes_GetMethod_SpecificClass_Generic()
     {
         List<(MethodInfo, MethodAttributeA)> withAttrA = IServiceAttribute.GetMethodsWithAttribute<MethodAttributeA>(typeof(MethodClassA));
@@ -389,7 +378,6 @@ public class Attributes : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Attributes_GetProperty_SpecificClass()
     {
         List<(PropertyInfo, IServiceAttribute)> withAttr = IServiceAttribute.GetPropertiesWithAttribute(typeof(PropertyClassA), typeof(PropertyAttributeA));
@@ -408,7 +396,6 @@ public class Attributes : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Attributes_GetProperty_SpecificClass_Generic()
     {
         List<(PropertyInfo, PropertyAttributeA)> withAttrA = IServiceAttribute.GetPropertiesWithAttribute<PropertyAttributeA>(typeof(PropertyClassA));
@@ -427,7 +414,6 @@ public class Attributes : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Attributes_GetField_SpecificClass()
     {
         List<(FieldInfo, IServiceAttribute)> withAttr = IServiceAttribute.GetFieldsWithAttribute(typeof(FieldClassA), typeof(FieldAttributeA));
@@ -446,7 +432,6 @@ public class Attributes : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    [Obsolete]
     public void Attributes_GetField_SpecificClass_Generic()
     {
         List<(FieldInfo, FieldAttributeA)> withAttrA = IServiceAttribute.GetFieldsWithAttribute<FieldAttributeA>(typeof(FieldClassA));

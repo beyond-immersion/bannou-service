@@ -278,7 +278,7 @@ public class AuthServiceTests
 
     #region Role Handling Tests
 
-    // NOTE: Complex role handling tests requiring DaprClient mocking with internal SessionDataModel
+    // NOTE: Complex role handling tests requiring mesh client mocking with internal SessionDataModel
     // are better suited for integration testing where real Redis can be used.
     // The permission flow is fully tested in PermissionsServiceTests.
     // Role storage in Redis is verified through HTTP integration tests (http-tester).

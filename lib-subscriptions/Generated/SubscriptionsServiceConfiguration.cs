@@ -1,7 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
-using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.Subscriptions;
 
@@ -10,14 +10,13 @@ namespace BeyondImmersion.BannouService.Subscriptions;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(SubscriptionsService))]
-[Obsolete]
 public class SubscriptionsServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
     public string? Force_Service_ID { get; set; }
 
     /// <summary>
-    /// Dapr state store name for subscriptions
+    /// State store name for subscriptions
     /// Environment variable: SUBSCRIPTIONS_STATE_STORE_NAME
     /// </summary>
     public string StateStoreName { get; set; } = "subscriptions-statestore";

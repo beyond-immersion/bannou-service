@@ -30,8 +30,7 @@ namespace BeyondImmersion.BannouService.Auth;
 /// Auth service implementation focused on authentication, token management, and OAuth provider integration.
 /// Follows schema-first architecture - implements generated IAuthService interface.
 /// </summary>
-[DaprService("auth", typeof(IAuthService), lifetime: ServiceLifetime.Scoped)]
-[Obsolete]
+[BannouService("auth", typeof(IAuthService), lifetime: ServiceLifetime.Scoped)]
 public partial class AuthService : IAuthService
 {
     private readonly IAccountsClient _accountsClient;
@@ -1064,7 +1063,7 @@ public partial class AuthService : IAuthService
         public List<string> Authorizations { get; set; } = new List<string>();
         public string SessionId { get; set; } = string.Empty;
 
-        // Store as Unix epoch timestamps (long) to avoid Dapr/System.Text.Json DateTimeOffset serialization bugs
+        // Store as Unix epoch timestamps (long) to avoid System.Text.Json DateTimeOffset serialization issues
         public long CreatedAtUnix { get; set; }
         public long ExpiresAtUnix { get; set; }
 
@@ -1210,7 +1209,7 @@ public partial class AuthService : IAuthService
             // configuration (e.g., AdminEmailDomain). Clients have no choice in their authorization level.
             //
             // HOW ROLES WORK:
-            // 1. Roles stored in AccountModel (MySQL via Dapr) - assigned by Accounts service
+            // 1. Roles stored in AccountModel (MySQL via lib-state) - assigned by Accounts service
             // 2. Roles copied to SessionDataModel (Redis) during session creation - stored with session data
             // 3. JWT contains only opaque "session_key" claim - points to Redis session data
             // 4. ValidateTokenAsync reads roles from Redis session data (NOT from JWT claims)
@@ -2195,7 +2194,7 @@ public partial class AuthService : IAuthService
     #region Event Handlers
 
     /// <summary>
-    /// Called when a Dapr event is received. Routes to appropriate event handlers.
+    /// Called when a pub/sub event is received. Routes to appropriate event handlers.
     /// </summary>
     public async Task OnEventReceivedAsync<T>(string topic, T eventData) where T : class
     {
@@ -2514,7 +2513,7 @@ public partial class AuthService : IAuthService
 
     /// <summary>
     /// Registers this service's API permissions with the Permissions service on startup.
-    /// Overrides the default IDaprService implementation to use generated permission data.
+    /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()
     {

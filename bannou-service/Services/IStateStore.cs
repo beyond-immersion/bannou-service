@@ -22,7 +22,7 @@ public enum StateBackend
 }
 
 /// <summary>
-/// Generic state store interface replacing DaprClient.GetStateAsync()/SaveStateAsync().
+/// Generic state store interface for lib-state infrastructure.
 /// Supports both Redis (ephemeral) and MySQL (durable) backends.
 /// </summary>
 /// <typeparam name="TValue">Value type stored</typeparam>

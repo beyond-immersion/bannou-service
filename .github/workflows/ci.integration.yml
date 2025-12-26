@@ -155,7 +155,7 @@ jobs:
           echo "🚀 Publishing preview v${{ steps.pack.outputs.preview_version }} to NuGet.org..."
           dotnet nuget push ./nuget-packages/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
           echo "✅ Preview packages published:"
-          echo "   • BeyondImmersion.Bannou.SDK (Server SDK - with ServiceClients + Dapr)"
+          echo "   • BeyondImmersion.Bannou.SDK (Server SDK - with ServiceClients)"
           echo "   • BeyondImmersion.Bannou.Client.SDK (Client SDK - WebSocket only)"
           echo "   Pre-release packages are not installed by default - users must explicitly opt-in"
 

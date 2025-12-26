@@ -13,10 +13,9 @@ namespace BeyondImmersion.BannouService.Mesh;
 /// <summary>
 /// Implementation of the Mesh service.
 /// Provides service discovery, endpoint registration, load balancing, and routing.
-/// Uses direct Redis connection (NOT Dapr) to avoid circular dependencies.
+/// Uses direct Redis connection (NOT via mesh) to avoid circular dependencies.
 /// </summary>
-[DaprService("mesh", typeof(IMeshService), lifetime: ServiceLifetime.Scoped)]
-[Obsolete]
+[BannouService("mesh", typeof(IMeshService), lifetime: ServiceLifetime.Scoped)]
 public partial class MeshService : IMeshService
 {
     private readonly IMessageBus _messageBus;
@@ -41,7 +40,7 @@ public partial class MeshService : IMeshService
     /// <summary>
     /// Initializes a new instance of the MeshService class.
     /// </summary>
-    /// <param name="messageBus">The message bus for pub/sub operations (replaces DaprClient).</param>
+    /// <param name="messageBus">The message bus for pub/sub operations (replaces mesh client).</param>
     /// <param name="logger">The logger.</param>
     /// <param name="configuration">The service configuration.</param>
     /// <param name="errorEventEmitter">The error event emitter.</param>

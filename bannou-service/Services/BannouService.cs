@@ -4,8 +4,7 @@ namespace BeyondImmersion.BannouService.Services;
 /// Optional base type for service handlers.
 /// Provides default implementation for InstanceId and other common service functionality.
 /// </summary>
-[Obsolete]
-public abstract class DaprService : IDaprService
+public abstract class BannouServiceBase : IBannouService
 {
     /// <summary>
     /// Unique instance identifier for this service plugin.

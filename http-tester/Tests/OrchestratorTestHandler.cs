@@ -17,7 +17,7 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Test handler for orchestrator service API endpoints.
 /// Tests the orchestrator service APIs directly via NSwag-generated OrchestratorClient.
 ///
-/// Note: The orchestrator service must be running with a Dapr sidecar for these tests to work.
+/// Note: The orchestrator service must be running with a mesh for these tests to work.
 /// Use: docker compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.services.yml -f provisioning/docker-compose.orchestrator.yml up
 /// </summary>
 public class OrchestratorTestHandler : IServiceTestHandler
@@ -73,7 +73,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Test the infrastructure health check endpoint.
-    /// Validates connectivity to Redis, RabbitMQ, and Dapr.
+    /// Validates connectivity to Redis and RabbitMQ.
     /// </summary>
     private static async Task<TestResult> TestInfrastructureHealth(ITestClient client, string[] args)
     {
@@ -596,7 +596,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Test the service routing endpoint.
-    /// Returns service-to-app-id mappings for Dapr service invocation.
+    /// Returns service-to-app-id mappings for Bannou service invocation.
     /// </summary>
     private static async Task<TestResult> TestGetServiceRouting(ITestClient client, string[] args)
     {

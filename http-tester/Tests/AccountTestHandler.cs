@@ -760,9 +760,9 @@ public class AccountTestHandler : IServiceTestHandler
             Console.WriteLine($"[DIAG-TEST] DeleteAccountAsync completed for accountId={accountId}");
 
             // Step 5: Wait for event processing with retry loop
-            // Dapr cold-start in CI can take up to 60 seconds for:
+            // mesh cold-start in CI can take up to 60 seconds for:
             // - Service healthcheck start_period (60s)
-            // - Dapr subscription discovery (calls /dapr/subscribe)
+            // - subscription discovery (subscribes to topics)
             // - RabbitMQ queue creation and consumer setup
             const int maxRetries = 30;
             const int retryDelayMs = 2000;

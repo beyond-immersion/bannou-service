@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.State.Services;
 
 /// <summary>
 /// Redis-based distributed lock provider using SET NX EX pattern.
-/// Provides reliable distributed locking without Dapr dependencies.
+/// Provides reliable distributed locking without mesh dependencies.
 /// </summary>
 public sealed class RedisDistributedLockProvider : IDistributedLockProvider, IAsyncDisposable
 {

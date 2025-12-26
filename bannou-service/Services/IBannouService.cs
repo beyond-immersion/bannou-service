@@ -47,7 +47,6 @@ public interface IBannouService
     /// Default implementation returns healthy status with no additional metadata.
     /// </summary>
     /// <returns>ServiceStatus with this service's current health information</returns>
-    [Obsolete]
     ServiceStatus OnHeartbeat()
     {
         return new ServiceStatus
@@ -77,7 +76,6 @@ public interface IBannouService
     /// <summary>
     /// Gets all discovered service types with their attributes.
     /// </summary>
-    [Obsolete]
     public static (Type, Type, BannouServiceAttribute)[] Services
     {
         get
@@ -147,7 +145,6 @@ public interface IBannouService
     /// <summary>
     /// Gets all enabled service types (not disabled via configuration).
     /// </summary>
-    [Obsolete]
     public static (Type, Type, BannouServiceAttribute)[] EnabledServices
     {
         get
@@ -172,7 +169,6 @@ public interface IBannouService
     ///
     /// <seealso cref="NetworkModePresets"/>
     /// </summary>
-    [Obsolete]
     public static IDictionary<string, IList<(Type, Type, BannouServiceAttribute)>> ServiceAppMappings
     {
         get
@@ -209,7 +205,6 @@ public interface IBannouService
     /// mappings to use.
     /// <seealso cref="ServiceAppMappings"/>
     /// </summary>
-    [Obsolete]
     public static Dictionary<string, string> NetworkModePresets
     {
         get
@@ -284,7 +279,6 @@ public interface IBannouService
     /// Called when the service is starting up. Override to implement custom startup logic.
     /// </summary>
     /// <param name="token">Cancellation token for startup timeout.</param>
-    [Obsolete]
     async Task OnStartAsync(CancellationToken token)
     {
         var serviceName = GetName() ?? GetType().Name;
@@ -298,7 +292,6 @@ public interface IBannouService
     /// </summary>
     /// <param name="webApp">The WebApplication instance for registering endpoints.</param>
     /// <param name="token">Cancellation token for startup timeout.</param>
-    [Obsolete]
     async Task OnStartAsync(WebApplication webApp, CancellationToken token)
     {
         var serviceName = GetName() ?? GetType().Name;
@@ -311,7 +304,6 @@ public interface IBannouService
     /// Called when the service is running and ready. Override to implement background processing.
     /// </summary>
     /// <param name="token">Cancellation token for shutdown.</param>
-    [Obsolete]
     async Task OnRunningAsync(CancellationToken token)
     {
         var serviceName = GetName() ?? GetType().Name;
@@ -322,7 +314,6 @@ public interface IBannouService
     /// <summary>
     /// Called when the service is shutting down. Override to implement cleanup logic.
     /// </summary>
-    [Obsolete]
     async Task OnShutdownAsync()
     {
         var serviceName = GetName() ?? GetType().Name;
@@ -334,7 +325,6 @@ public interface IBannouService
     /// Gets the service name from the service type attributes.
     /// </summary>
     /// <returns>The service name if found, otherwise null.</returns>
-    [Obsolete]
     public string? GetName()
         => GetType().GetServiceName();
 
@@ -345,7 +335,6 @@ public interface IBannouService
     /// Override this method if the service has custom permission registration logic.
     /// </summary>
     /// <returns>Task representing the registration operation</returns>
-    [Obsolete]
     virtual Task RegisterServicePermissionsAsync()
     {
         // Default implementation does nothing - method will be overridden
@@ -367,7 +356,6 @@ public interface IBannouService
     /// will only register once. Handlers are invoked when any plugin's EventsController
     /// receives the corresponding topic event.
     /// </remarks>
-    [Obsolete]
     virtual void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
         // Default implementation does nothing - method will be overridden
@@ -379,21 +367,18 @@ public interface IBannouService
     /// <summary>
     /// Returns whether the configuration indicates the service should be disabled.
     /// </summary>
-    [Obsolete]
     public bool IsDisabled()
         => IsDisabled(GetType());
 
     /// <summary>
     /// Returns whether the configuration indicates the service should be enabled.
     /// </summary>
-    [Obsolete]
     public static bool IsDisabled<T>()
         => IsDisabled(typeof(T));
 
     /// <summary>
     /// Returns whether the configuration indicates the service should be disabled.
     /// </summary>
-    [Obsolete]
     public static bool IsDisabled(Type serviceType)
     {
         if (!typeof(IBannouService).IsAssignableFrom(serviceType))
@@ -407,7 +392,6 @@ public interface IBannouService
     /// Returns whether the configuration indicates the service should be disabled.
     /// Uses the two-mode enable/disable system based on SERVICES_ENABLED environment variable.
     /// </summary>
-    [Obsolete]
     public static bool IsDisabled(string? serviceName)
     {
         if (string.IsNullOrWhiteSpace(serviceName))
@@ -441,7 +425,6 @@ public interface IBannouService
     /// Find the highest priority/derived service type with the given name.
     /// </summary>
     /// <returns>Interface Type, Implementation Type, Service Attribute</returns>
-    [Obsolete]
     public static (Type, Type, BannouServiceAttribute)? GetServiceInfo(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -460,7 +443,6 @@ public interface IBannouService
     /// Find the implementation for the given service handler.
     /// </summary>
     /// <returns>Interface Type, Implementation Type, Service Attribute</returns>
-    [Obsolete]
     public static (Type, Type, BannouServiceAttribute)? GetServiceInfo(Type interfaceType)
     {
         foreach ((Type, Type, BannouServiceAttribute) serviceInfo in Services)
@@ -472,9 +454,3 @@ public interface IBannouService
         return null;
     }
 }
-
-/// <summary>
-/// Obsolete alias for backward compatibility. Use <see cref="IBannouService"/> instead.
-/// </summary>
-[Obsolete("Use IBannouService instead. This alias will be removed in a future version.")]
-public interface IDaprService : IBannouService { }

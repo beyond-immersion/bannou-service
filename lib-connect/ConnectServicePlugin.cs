@@ -9,37 +9,36 @@ namespace BeyondImmersion.BannouService.Connect;
 
 /// <summary>
 /// Plugin wrapper for Connect service enabling plugin-based discovery and lifecycle management.
-/// Bridges existing IDaprService implementation with the new Plugin system.
+/// Bridges existing IBannouService implementation with the new Plugin system.
 /// </summary>
 public class ConnectServicePlugin : BaseBannouPlugin
 {
     public override string PluginName => "connect";
     public override string DisplayName => "Connect Service";
 
-    [Obsolete]
     private IConnectService? _service;
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
-    /// Configure services for dependency injection - mimics existing [DaprService] registration.
+    /// Configure services for dependency injection - mimics existing [BannouService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
         Logger?.LogDebug("Configuring service dependencies");
 
-        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // Service registration is now handled centrally by PluginLoader based on [BannouService] attributes
         // No need to register IConnectService and ConnectService here
 
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register ConnectServiceConfiguration here
 
-        // Register DaprSessionManager for distributed session state management
-        // Uses Dapr state store (connect-statestore) instead of direct Redis
-        services.AddSingleton<ISessionManager, DaprSessionManager>();
-        Logger?.LogDebug("Registered DaprSessionManager for session state management");
+        // Register BannouSessionManager for distributed session state management
+        // Uses lib-state (connect-statestore) for state storage
+        services.AddSingleton<ISessionManager, BannouSessionManager>();
+        Logger?.LogDebug("Registered BannouSessionManager for session state management");
 
         // Register client event queue manager for disconnection handling
-        // Uses Dapr state store to queue events during client reconnection window
+        // Uses lib-state to queue events during client reconnection window
         // MUST be Singleton because it's used from RabbitMQ consumer callbacks (outside request scope)
         services.AddSingleton<ClientEventQueueManager>();
         Logger?.LogDebug("Registered ClientEventQueueManager for event queuing");
@@ -58,7 +57,7 @@ public class ConnectServicePlugin : BaseBannouPlugin
         Logger?.LogDebug("Configuring application pipeline");
 
         // The generated ConnectController should already be discovered via standard ASP.NET Core controller discovery
-        // since we're not excluding the assembly like we did with IDaprController approach
+        // since we're not excluding the assembly like we did with IBannouController approach
 
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
@@ -67,9 +66,8 @@ public class ConnectServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Start the service - calls existing IDaprService lifecycle if present.
+    /// Start the service - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting service");
@@ -85,11 +83,11 @@ public class ConnectServicePlugin : BaseBannouPlugin
                 return false;
             }
 
-            // Call existing IDaprService.OnStartAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnStartAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnStartAsync for Connect service");
-                await daprService.OnStartAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnStartAsync for Connect service");
+                await bannouService.OnStartAsync(CancellationToken.None);
             }
 
             Logger?.LogInformation("Service started");
@@ -103,9 +101,8 @@ public class ConnectServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Running phase - calls existing IDaprService lifecycle if present.
+    /// Running phase - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -114,11 +111,11 @@ public class ConnectServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Call existing IDaprService.OnRunningAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnRunningAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for Connect service");
-                await daprService.OnRunningAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnRunningAsync for Connect service");
+                await bannouService.OnRunningAsync(CancellationToken.None);
             }
         }
         catch (Exception ex)
@@ -128,9 +125,8 @@ public class ConnectServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Shutdown the service - calls existing IDaprService lifecycle if present.
+    /// Shutdown the service - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;
@@ -139,11 +135,11 @@ public class ConnectServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Call existing IDaprService.OnShutdownAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnShutdownAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for Connect service");
-                await daprService.OnShutdownAsync();
+                Logger?.LogDebug("Calling IBannouService.OnShutdownAsync for Connect service");
+                await bannouService.OnShutdownAsync();
             }
 
             Logger?.LogInformation("Service shutdown complete");

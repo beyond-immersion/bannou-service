@@ -3,12 +3,12 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BeyondImmersion.BannouService.Events;
 
 /// <summary>
-/// Service for registering and dispatching Dapr pub/sub events across all plugins.
-/// This provides an application-level fan-out layer on top of Dapr's single-subscription-per-topic limitation.
+/// Service for registering and dispatching Bannou pub/sub events across all plugins.
+/// This provides an application-level fan-out layer on top of RabbitMQ's topic routing limitation.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Dapr only allows ONE endpoint to subscribe to a topic per app-id. When multiple plugins
+/// RabbitMQ only allows ONE consumer group to subscribe to a topic per app-id. When multiple plugins
 /// want to handle the same event, only one receives it. This service solves that by:
 /// </para>
 /// <list type="number">
@@ -27,7 +27,7 @@ public interface IEventConsumer
     /// Registers an event handler for a specific topic.
     /// </summary>
     /// <typeparam name="TEvent">The event type to handle.</typeparam>
-    /// <param name="topicName">The Dapr topic name (e.g., "session.connected").</param>
+    /// <param name="topicName">The message topic name (e.g., "session.connected").</param>
     /// <param name="handlerKey">Unique key to prevent duplicate registrations (e.g., "permissions:session.connected").</param>
     /// <param name="handlerFactory">
     /// Factory that takes IServiceProvider and event, resolves the service, and calls the handler.
@@ -42,7 +42,7 @@ public interface IEventConsumer
     /// Dispatches an event to all registered handlers for the topic.
     /// </summary>
     /// <typeparam name="TEvent">The event type.</typeparam>
-    /// <param name="topicName">The Dapr topic name.</param>
+    /// <param name="topicName">The message topic name.</param>
     /// <param name="evt">The event data.</param>
     /// <param name="requestScope">The DI scope for the current request (used to resolve services).</param>
     /// <returns>Task that completes when all handlers have been invoked.</returns>

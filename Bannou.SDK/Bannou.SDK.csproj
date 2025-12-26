@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -10,8 +10,8 @@
     <!-- NuGet Package Metadata -->
     <PackageId>BeyondImmersion.Bannou.SDK</PackageId>
     <Authors>BeyondImmersion</Authors>
-    <Description>Server SDK for Bannou service platform with Dapr service clients, models, events, and WebSocket protocol support. Use this for game servers and internal services.</Description>
-    <PackageTags>bannou;microservices;websocket;dapr;server;sdk;service-client</PackageTags>
+    <Description>Server SDK for Bannou service platform with service clients, models, events, and WebSocket protocol support. Use this for game servers and internal services.</Description>
+    <PackageTags>bannou;microservices;websocket;server;sdk;service-client</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
     <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
@@ -29,7 +29,7 @@
 
   <ItemGroup>
     <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
-    <PackageReference Include="Dapr.Client" Version="1.15.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
   </ItemGroup>
 
   <!-- Generated Files via MSBuild Target (VS-Compatible) -->

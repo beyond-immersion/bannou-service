@@ -6,10 +6,10 @@ using System.Text;
 namespace BeyondImmersion.BannouService.ServiceClients;
 
 /// <summary>
-/// Base class for all Dapr-aware service clients.
-/// Handles dynamic app-id resolution and Dapr routing.
+/// Base class for all Bannou-aware service clients.
+/// Handles dynamic app-id resolution and Bannou routing.
 /// </summary>
-public abstract class DaprServiceClientBase : IDaprClient
+public abstract class BannouServiceClientBase : IBannouClient
 {
     /// <summary>
     /// HTTP client for making service requests.
@@ -33,14 +33,14 @@ public abstract class DaprServiceClientBase : IDaprClient
 
     /// <summary>
     /// The name of the service this client communicates with.
-    /// Should match the service name in the corresponding DaprServiceAttribute.
+    /// Should match the service name in the corresponding BannouServiceAttribute.
     /// </summary>
     public virtual string ServiceName => _serviceName ?? GetType().Name.Replace("Client", "").ToLowerInvariant();
 
     /// <summary>
     /// Parameterless constructor for NSwag generated clients that handle their own dependency injection.
     /// </summary>
-    protected DaprServiceClientBase()
+    protected BannouServiceClientBase()
     {
     }
 
@@ -51,7 +51,7 @@ public abstract class DaprServiceClientBase : IDaprClient
     /// <param name="appMappingResolver">Resolver for dynamic app-id mapping.</param>
     /// <param name="logger">Logger for tracing service calls.</param>
     /// <param name="serviceName">Name of the target service.</param>
-    protected DaprServiceClientBase(
+    protected BannouServiceClientBase(
         HttpClient httpClient,
         IServiceAppMappingResolver appMappingResolver,
         ILogger logger,
@@ -64,14 +64,14 @@ public abstract class DaprServiceClientBase : IDaprClient
     }
 
     /// <summary>
-    /// Gets the base URL for Dapr service invocation with dynamic app-id resolution.
+    /// Gets the base URL for Bannou service invocation with dynamic app-id resolution.
     /// For parameterless constructor, falls back to "bannou" app-id.
-    /// Uses environment variable DAPR_HTTP_ENDPOINT if available for containerized environments.
+    /// Uses environment variable BANNOU_HTTP_ENDPOINT if available for containerized environments.
     /// </summary>
     /// <remarks>
     /// CRITICAL ARCHITECTURAL CONSTRAINT:
-    /// The app-id used here ("bannou" by default) becomes part of the URL path that Dapr
-    /// forwards to the target service. Dapr does NOT strip the /v1.0/invoke/{app-id}/method/
+    /// The app-id used here ("bannou" by default) becomes part of the URL path that mesh
+    /// forwards to the target service. mesh does NOT strip the /v1.0/invoke/{app-id}/method/
     /// prefix - it preserves the full path.
     ///
     /// This means all OpenAPI schemas MUST use the same app-id in their `servers` URL:
@@ -82,7 +82,7 @@ public abstract class DaprServiceClientBase : IDaprClient
     /// app-id (e.g., "game-session"), the generated controller route won't match the path
     /// that clients send, resulting in 404 errors.
     ///
-    /// The ServiceAppMappingResolver can dynamically route to different Dapr sidecars, but
+    /// The ServiceAppMappingResolver can dynamically route to different meshs, but
     /// the path structure (including app-id) must match what controllers expect.
     ///
     /// See docs/BANNOU_DESIGN.md "servers URL Constraint" section for full documentation.
@@ -91,40 +91,40 @@ public abstract class DaprServiceClientBase : IDaprClient
     {
         get
         {
-            // Get Dapr HTTP endpoint from environment (for container environments)
-            // Match ServiceHeartbeatManager pattern: check DAPR_HTTP_ENDPOINT first, then DAPR_HTTP_PORT
-            var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT");
-            if (string.IsNullOrEmpty(daprHttpEndpoint))
+            // Get mesh HTTP endpoint from environment (for container environments)
+            // Match ServiceHeartbeatManager pattern: check BANNOU_HTTP_ENDPOINT first, then BANNOU_HTTP_PORT
+            var bannouHttpEndpoint = Environment.GetEnvironmentVariable("BANNOU_HTTP_ENDPOINT");
+            if (string.IsNullOrEmpty(bannouHttpEndpoint))
             {
-                var portStr = Environment.GetEnvironmentVariable("DAPR_HTTP_PORT");
+                var portStr = Environment.GetEnvironmentVariable("BANNOU_HTTP_PORT");
                 var port = int.TryParse(portStr, out var p) && p > 0 ? p : 3500;
-                daprHttpEndpoint = $"http://localhost:{port}";
+                bannouHttpEndpoint = $"http://localhost:{port}";
             }
 
             // If full dependencies available, use dynamic resolution
             if (_appMappingResolver != null && _serviceName != null)
             {
                 var appId = _appMappingResolver.GetAppIdForService(_serviceName);
-                var baseUrl = $"{daprHttpEndpoint}/v1.0/invoke/{appId}/method/";
-                _logger?.LogTrace("Service {ServiceName} routing to app-id {AppId} via {DaprEndpoint}", _serviceName, appId, daprHttpEndpoint);
+                var baseUrl = $"{bannouHttpEndpoint}/v1.0/invoke/{appId}/method/";
+                _logger?.LogTrace("Service {ServiceName} routing to app-id {AppId} via {BannouEndpoint}", _serviceName, appId, bannouHttpEndpoint);
                 return baseUrl;
             }
 
             // Fallback for parameterless constructor - use "bannou" default
-            var fallbackUrl = $"{daprHttpEndpoint}/v1.0/invoke/bannou/method/";
-            _logger?.LogTrace("Service {ServiceName} using fallback app-id 'bannou' via {DaprEndpoint} (parameterless constructor)", ServiceName, daprHttpEndpoint);
+            var fallbackUrl = $"{bannouHttpEndpoint}/v1.0/invoke/bannou/method/";
+            _logger?.LogTrace("Service {ServiceName} using fallback app-id 'bannou' via {BannouEndpoint} (parameterless constructor)", ServiceName, bannouHttpEndpoint);
             return fallbackUrl;
         }
     }
 
     /// <summary>
-    /// Prepares the HTTP request with proper Dapr headers and custom headers.
+    /// Prepares the HTTP request with proper routing headers and custom headers.
     /// Works with both full constructor and parameterless constructor.
     /// </summary>
     protected virtual void PrepareRequest(HttpClient client, HttpRequestMessage request, string url)
     {
-        // Ensure dapr-app-id header is set if not already present
-        if (!request.Headers.Contains("dapr-app-id"))
+        // Ensure bannou-app-id header is set if not already present
+        if (!request.Headers.Contains("bannou-app-id"))
         {
             string appId;
 
@@ -141,8 +141,8 @@ public abstract class DaprServiceClientBase : IDaprClient
                 _logger?.LogTrace("Service {ServiceName} using fallback app-id {AppId} (parameterless constructor)", ServiceName, appId);
             }
 
-            request.Headers.Add("dapr-app-id", appId);
-            _logger?.LogTrace("Added dapr-app-id header: {AppId} for URL: {Url}", appId, url);
+            request.Headers.Add("bannou-app-id", appId);
+            _logger?.LogTrace("Added bannou-app-id header: {AppId} for URL: {Url}", appId, url);
         }
 
         // Apply authorization header if set
@@ -171,13 +171,13 @@ public abstract class DaprServiceClientBase : IDaprClient
     }
 
     /// <summary>
-    /// Prepares the HTTP request with URL builder for Dapr routing and custom headers.
+    /// Prepares the HTTP request with URL builder for Bannou routing and custom headers.
     /// Works with both full constructor and parameterless constructor.
     /// </summary>
     protected virtual void PrepareRequest(HttpClient client, HttpRequestMessage request, StringBuilder urlBuilder)
     {
-        // Ensure dapr-app-id header is set if not already present
-        if (!request.Headers.Contains("dapr-app-id"))
+        // Ensure bannou-app-id header is set if not already present
+        if (!request.Headers.Contains("bannou-app-id"))
         {
             string appId;
 
@@ -194,8 +194,8 @@ public abstract class DaprServiceClientBase : IDaprClient
                 _logger?.LogTrace("Service {ServiceName} using fallback app-id {AppId} (parameterless constructor)", ServiceName, appId);
             }
 
-            request.Headers.Add("dapr-app-id", appId);
-            _logger?.LogTrace("Added dapr-app-id header: {AppId} for URL builder: {Url}", appId, urlBuilder.ToString());
+            request.Headers.Add("bannou-app-id", appId);
+            _logger?.LogTrace("Added bannou-app-id header: {AppId} for URL builder: {Url}", appId, urlBuilder.ToString());
         }
 
         // Apply authorization header if set
@@ -224,7 +224,7 @@ public abstract class DaprServiceClientBase : IDaprClient
     }
 
     /// <summary>
-    /// Processes the HTTP response from Dapr service invocation.
+    /// Processes the HTTP response from Bannou service invocation.
     /// </summary>
     protected virtual void ProcessResponse(HttpClient client, HttpResponseMessage response)
     {
@@ -285,7 +285,7 @@ public abstract class DaprServiceClientBase : IDaprClient
     #endregion
 
     /// <summary>
-    /// Extracts the Dapr app-id from a Dapr invoke URL.
+    /// Extracts the app-id from a mesh invoke URL.
     /// URL pattern: http://localhost:3500/v1.0/invoke/{app-id}/method/...
     /// </summary>
     private static string? ExtractAppIdFromUrl(string url)

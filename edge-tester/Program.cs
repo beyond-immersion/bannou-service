@@ -120,7 +120,7 @@ public class Program
     /// <summary>
     /// Waits for OpenResty gateway and backend services to become ready.
     /// Polls the health endpoint with exponential backoff, then verifies
-    /// that Dapr-dependent services are also ready by making a warmup call.
+    /// that mesh-dependent services are also ready by making a warmup call.
     /// </summary>
     /// <returns>True if services are ready, false if timeout exceeded.</returns>
     private static async Task<bool> WaitForServiceReadiness()
@@ -196,12 +196,12 @@ public class Program
             return false;
         }
 
-        // Phase 2: Wait for Dapr sidecar to be ready by making a warmup login attempt
-        // The login endpoint calls AccountsClient through Dapr to look up the account, so this
-        // exercises the full Dapr dependency chain. We use a non-existent account to get 401,
+        // Phase 2: Wait for mesh to be ready by making a warmup login attempt
+        // The login endpoint calls AccountsClient through mesh to look up the account, so this
+        // exercises the full mesh dependency chain. We use a non-existent account to get 401,
         // which avoids publishing any events (unlike registration which publishes account.created).
-        // We expect 401 (not found) when working, but 500/502/503 when Dapr isn't ready yet.
-        Console.WriteLine($"⏳ Verifying Dapr sidecar readiness...");
+        // We expect 401 (not found) when working, but 500/502/503 when mesh isn't ready yet.
+        Console.WriteLine($"⏳ Verifying mesh readiness...");
         var loginUrl = $"http://{openrestyHost}:{openrestyPort}/auth/login";
         delayMs = initialDelayMs;
 
@@ -209,26 +209,26 @@ public class Program
         {
             try
             {
-                // Make a login request with a non-existent account - exercises Dapr without publishing events
+                // Make a login request with a non-existent account - exercises mesh without publishing events
                 var warmupContent = new StringContent(
-                    "{\"username\":\"dapr-warmup-nonexistent@test.local\",\"password\":\"warmup-password-123\"}",
+                    "{\"username\":\"mesh-warmup-nonexistent@test.local\",\"password\":\"warmup-password-123\"}",
                     Encoding.UTF8,
                     "application/json");
                 var warmupResponse = await HttpClient.PostAsync(loginUrl, warmupContent);
 
-                // 500/502/503 typically indicates Dapr sidecar isn't ready
+                // 500/502/503 typically indicates mesh isn't ready
                 if (warmupResponse.StatusCode == System.Net.HttpStatusCode.InternalServerError ||
                     warmupResponse.StatusCode == System.Net.HttpStatusCode.BadGateway ||
                     warmupResponse.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
                 {
-                    Console.WriteLine($"⏳ Dapr sidecar not ready ({warmupResponse.StatusCode}), retrying in {delayMs}ms...");
+                    Console.WriteLine($"⏳ mesh not ready ({warmupResponse.StatusCode}), retrying in {delayMs}ms...");
                     await Task.Delay(delayMs);
                     delayMs = Math.Min(delayMs * 2, maxDelayMs);
                     continue;
                 }
 
-                // 401 Unauthorized (account not found) or 400 Bad Request means Dapr invocation worked
-                Console.WriteLine($"✅ Dapr sidecar ready after {stopwatch.Elapsed.TotalSeconds:F1}s (warmup returned {warmupResponse.StatusCode})");
+                // 401 Unauthorized (account not found) or 400 Bad Request means mesh invocation worked
+                Console.WriteLine($"✅ mesh ready after {stopwatch.Elapsed.TotalSeconds:F1}s (warmup returned {warmupResponse.StatusCode})");
 
                 // Phase 3 (Permission Registration) is now handled via WebSocket capability manifest
                 // The BannouClient will receive capability manifests after connection, and we verify
@@ -248,7 +248,7 @@ public class Program
             delayMs = Math.Min(delayMs * 2, maxDelayMs);
         }
 
-        Console.WriteLine($"❌ Dapr sidecar failed to become ready within {maxWaitSeconds}s");
+        Console.WriteLine($"❌ mesh failed to become ready within {maxWaitSeconds}s");
         return false;
     }
 

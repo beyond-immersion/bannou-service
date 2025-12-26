@@ -40,7 +40,7 @@ public enum MessageFlags : byte
     Event = 0x10,
 
     /// <summary>
-    /// Route to another WebSocket client (not a Dapr service)
+    /// Route to another WebSocket client (not a Bannou service)
     /// </summary>
     Client = 0x20,
 

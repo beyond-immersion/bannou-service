@@ -7,7 +7,7 @@ info:
     session-specific RabbitMQ channels (CONNECT_SESSION_{sessionId}).
 
     These events are different from service-to-service events:
-    - Service events: Dapr pub/sub between services
+    - Service events: RabbitMQ pub/sub between services via MassTransit
     - Client events: Services → RabbitMQ → Connect service → WebSocket → Client
   version: 1.0.0
   contact:

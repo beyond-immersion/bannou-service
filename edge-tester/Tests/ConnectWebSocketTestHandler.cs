@@ -1089,7 +1089,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 if (!disconnectNotificationReceived)
                 {
                     Console.WriteLine("⚠️ Did not receive disconnect_notification before WebSocket closed");
-                    Console.WriteLine("   Check that DaprSessionManager is properly registered and state store is available");
+                    Console.WriteLine("   Check that BannouSessionManager is properly registered and state store is available");
                 }
             }
         }
@@ -1100,7 +1100,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         if (string.IsNullOrEmpty(reconnectionToken))
         {
             Console.WriteLine("❌ FAIL: No reconnection token received - disconnect_notification was not sent");
-            Console.WriteLine("   This indicates session management is not working (check DaprSessionManager registration)");
+            Console.WriteLine("   This indicates session management is not working (check BannouSessionManager registration)");
             return false;
         }
 

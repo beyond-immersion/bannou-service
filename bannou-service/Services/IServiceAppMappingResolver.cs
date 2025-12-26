@@ -16,7 +16,7 @@ public class ServiceMappingChangedEventArgs : EventArgs
 }
 
 /// <summary>
-/// Resolves service names to Dapr app-ids for distributed service routing.
+/// Resolves service names to app-ids for distributed service routing.
 /// Supports dynamic mapping via RabbitMQ events for production scaling.
 /// </summary>
 public interface IServiceAppMappingResolver
@@ -27,19 +27,19 @@ public interface IServiceAppMappingResolver
     /// </summary>
     event EventHandler<ServiceMappingChangedEventArgs>? MappingChanged;
     /// <summary>
-    /// Gets the Dapr app-id for the specified service name.
+    /// Gets the app-id for the specified service name.
     /// Defaults to "bannou" (omnipotent local node) but can be overridden
     /// by service mapping events from RabbitMQ.
     /// </summary>
     /// <param name="serviceName">The service name (e.g., "accounts", "character-agent"). Can be null.</param>
-    /// <returns>The Dapr app-id to route requests to</returns>
+    /// <returns>The app-id to route requests to</returns>
     string GetAppIdForService(string? serviceName);
 
     /// <summary>
     /// Updates the service mapping from RabbitMQ service discovery events.
     /// </summary>
     /// <param name="serviceName">The service name</param>
-    /// <param name="appId">The Dapr app-id where this service is running</param>
+    /// <param name="appId">The app-id where this service is running</param>
     void UpdateServiceMapping(string serviceName, string appId);
 
     /// <summary>

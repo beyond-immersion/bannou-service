@@ -1,7 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
-using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.Orchestrator;
 
@@ -10,7 +10,6 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(OrchestratorService))]
-[Obsolete]
 public class OrchestratorServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
@@ -63,30 +62,6 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     /// Environment variable: ORCHESTRATOR_DOCKER_NETWORK
     /// </summary>
     public string DockerNetwork { get; set; } = "bannou_default";
-
-    /// <summary>
-    /// Host path for Dapr components (mounted into containers)
-    /// Environment variable: ORCHESTRATOR_DAPR_COMPONENTS_HOST_PATH
-    /// </summary>
-    public string DaprComponentsHostPath { get; set; } = "/app/provisioning/dapr/components";
-
-    /// <summary>
-    /// Container path for mounted Dapr components
-    /// Environment variable: ORCHESTRATOR_DAPR_COMPONENTS_CONTAINER_PATH
-    /// </summary>
-    public string DaprComponentsContainerPath { get; set; } = "/tmp/dapr-components";
-
-    /// <summary>
-    /// Docker image for Dapr sidecar containers
-    /// Environment variable: ORCHESTRATOR_DAPR_IMAGE
-    /// </summary>
-    public string DaprImage { get; set; } = "daprio/daprd:1.16.3";
-
-    /// <summary>
-    /// Dapr placement service host:port
-    /// Environment variable: ORCHESTRATOR_PLACEMENT_HOST
-    /// </summary>
-    public string PlacementHost { get; set; } = "placement:50006";
 
     /// <summary>
     /// Host path for TLS certificates

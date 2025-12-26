@@ -11,26 +11,25 @@ namespace BeyondImmersion.BannouService.Auth;
 
 /// <summary>
 /// Plugin wrapper for AuthService enabling plugin-based discovery and lifecycle management.
-/// Bridges existing IDaprService implementation with the new Plugin system.
+/// Bridges existing IBannouService implementation with the new Plugin system.
 /// </summary>
 public class AuthServicePlugin : BaseBannouPlugin
 {
     public override string PluginName => "auth";
     public override string DisplayName => "Auth Service";
 
-    [Obsolete]
     private IAuthService? _authService;
     private IServiceProvider? _serviceProvider;
 
 
     /// <summary>
-    /// Configure services for dependency injection - mimics existing [DaprService] registration.
+    /// Configure services for dependency injection - mimics existing [BannouService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
         Logger?.LogDebug("Configuring service dependencies");
 
-        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // Service registration is now handled centrally by PluginLoader based on [BannouService] attributes
         // No need to register IAuthService and AuthService here
 
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
@@ -61,7 +60,7 @@ public class AuthServicePlugin : BaseBannouPlugin
         Logger?.LogDebug("Configuring application pipeline");
 
         // The generated AuthController should already be discovered via standard ASP.NET Core controller discovery
-        // since we're not excluding the assembly like we did with IDaprController approach
+        // since we're not excluding the assembly like we did with IBannouController approach
 
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
@@ -70,9 +69,8 @@ public class AuthServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Start the service - calls existing IDaprService lifecycle if present.
+    /// Start the service - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting service");
@@ -89,11 +87,11 @@ public class AuthServicePlugin : BaseBannouPlugin
                 return false;
             }
 
-            // Call existing IDaprService.OnStartAsync if the service implements it
-            if (_authService is IDaprService daprService)
+            // Call existing IBannouService.OnStartAsync if the service implements it
+            if (_authService is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnStartAsync for Auth service");
-                await daprService.OnStartAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnStartAsync for Auth service");
+                await bannouService.OnStartAsync(CancellationToken.None);
             }
 
             Logger?.LogInformation("Service started");
@@ -107,9 +105,8 @@ public class AuthServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Running phase - calls existing IDaprService lifecycle if present.
+    /// Running phase - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_authService == null) return;
@@ -118,11 +115,11 @@ public class AuthServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Call existing IDaprService.OnRunningAsync if the service implements it
-            if (_authService is IDaprService daprService)
+            // Call existing IBannouService.OnRunningAsync if the service implements it
+            if (_authService is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for Auth service");
-                await daprService.OnRunningAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnRunningAsync for Auth service");
+                await bannouService.OnRunningAsync(CancellationToken.None);
             }
         }
         catch (Exception ex)
@@ -132,9 +129,8 @@ public class AuthServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Shutdown the service - calls existing IDaprService lifecycle if present.
+    /// Shutdown the service - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_authService == null) return;
@@ -143,11 +139,11 @@ public class AuthServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Call existing IDaprService.OnShutdownAsync if the service implements it
-            if (_authService is IDaprService daprService)
+            // Call existing IBannouService.OnShutdownAsync if the service implements it
+            if (_authService is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for Auth service");
-                await daprService.OnShutdownAsync();
+                Logger?.LogDebug("Calling IBannouService.OnShutdownAsync for Auth service");
+                await bannouService.OnShutdownAsync();
             }
 
             Logger?.LogInformation("Service shutdown complete");

@@ -11,13 +11,13 @@ namespace BeyondImmersion.BannouService.Configuration;
 public interface IServiceConfiguration
 {
     /// <summary>
-    /// Shared serializer options, between all dapr services/consumers.
+    /// Shared serializer options, between all Bannou services/consumers.
     /// References BannouJson.Options as the single source of truth for JSON serialization.
     /// IMPORTANT: Must include JsonStringEnumConverter to ensure enum values serialize
     /// as strings (e.g., "permissions.capabilities_refresh") instead of numbers (e.g., 0).
     /// This is critical for client event handling where event_name is matched by string value.
     /// </summary>
-    public static readonly JsonSerializerOptions DaprSerializerConfig = BannouJson.Options;
+    public static readonly JsonSerializerOptions BannouSerializerConfig = BannouJson.Options;
 
     /// <summary>
     /// Set to override GUID for administrative service endpoints.
@@ -29,7 +29,6 @@ public interface IServiceConfiguration
     /// <summary>
     /// Returns whether this configuration has values set for all required properties.
     /// </summary>
-    [Obsolete]
     public bool HasRequired()
     {
         return IServiceAttribute.GetPropertiesWithAttribute<ConfigRequiredAttribute>(GetType())
@@ -45,7 +44,6 @@ public interface IServiceConfiguration
     /// <summary>
     /// Returns whether the required configuration is provided for the given configuration type.
     /// </summary>
-    [Obsolete]
     public static bool HasRequiredForType<T>()
         where T : class, IServiceConfiguration
         => HasRequiredForType(typeof(T));
@@ -53,7 +51,6 @@ public interface IServiceConfiguration
     /// <summary>
     /// Returns whether the required configuration is provided for the given configuration type.
     /// </summary>
-    [Obsolete]
     public static bool HasRequiredForType(Type configurationType)
     {
         if (!typeof(IServiceConfiguration).IsAssignableFrom(configurationType))
@@ -71,7 +68,6 @@ public interface IServiceConfiguration
     /// <summary>
     /// Builds the service configuration root from available .env files, Config.json, ENVs, and command line switches.
     /// </summary>
-    [Obsolete]
     public static IConfigurationRoot BuildConfigurationRoot(string[]? args = null, string? envPrefix = null)
     {
         // Load .env file first for local development support
@@ -102,7 +98,6 @@ public interface IServiceConfiguration
     /// <summary>
     /// Builds the service configuration from available Config.json, ENVs, and command line switches.
     /// </summary>
-    [Obsolete]
     public static IServiceConfiguration BuildConfiguration(string[]? args = null, string? envPrefix = null)
         => BuildConfigurationRoot(args, envPrefix)
             .Get<AppConfiguration>((options) => options.BindNonPublicProperties = true) ?? new();
@@ -165,7 +160,6 @@ public interface IServiceConfiguration
     /// <summary>
     /// Create and return the full lookup of switch mappings for all configuration classes.
     /// </summary>
-    [Obsolete]
     public static IDictionary<string, string>? CreateAllSwitchMappings()
     {
         var allSwitchMappings = new Dictionary<string, string>();

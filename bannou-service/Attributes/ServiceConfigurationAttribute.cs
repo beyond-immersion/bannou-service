@@ -19,8 +19,7 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
     /// <summary>
     /// Attribute attached to the service.
     /// </summary>
-    [Obsolete]
-    public DaprServiceAttribute? ServiceAttribute { get; }
+    public BannouServiceAttribute? ServiceAttribute { get; }
 
     /// <summary>
     /// Prefix for ENVs for this configuration.
@@ -32,7 +31,6 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
     /// Initializes a new instance of the ServiceConfigurationAttribute for app-level configuration (no associated service).
     /// </summary>
     /// <param name="envPrefix">The prefix for environment variables used by this configuration.</param>
-    [Obsolete]
     public ServiceConfigurationAttribute(string? envPrefix = null)
     {
         ServiceImplementationType = null;
@@ -45,20 +43,19 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
     /// </summary>
     /// <param name="serviceImplementation">The service implementation type this configuration is for (required).</param>
     /// <param name="envPrefix">The prefix for environment variables used by this configuration.</param>
-    [Obsolete]
     public ServiceConfigurationAttribute(Type serviceImplementation, string? envPrefix = null)
     {
         if (serviceImplementation == null)
             throw new ArgumentNullException(nameof(serviceImplementation), "Service implementation type is required");
 
-        if (!typeof(IDaprService).IsAssignableFrom(serviceImplementation))
-            throw new InvalidCastException($"Service implementation type provided does not implement {nameof(IDaprService)}");
+        if (!typeof(IBannouService).IsAssignableFrom(serviceImplementation))
+            throw new InvalidCastException($"Service implementation type provided does not implement {nameof(IBannouService)}");
 
         if (serviceImplementation.IsAbstract || serviceImplementation.IsInterface)
             throw new InvalidCastException($"Service implementation type provided to config must be a concrete class.");
 
         ServiceImplementationType = serviceImplementation;
-        ServiceAttribute = serviceImplementation.GetCustomAttribute<DaprServiceAttribute>();
+        ServiceAttribute = serviceImplementation.GetCustomAttribute<BannouServiceAttribute>();
 
         EnvPrefix = envPrefix;
         if (ServiceAttribute != null && envPrefix == null)

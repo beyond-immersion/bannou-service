@@ -10,10 +10,9 @@ namespace BeyondImmersion.BannouService.Testing;
 
 /// <summary>
 /// Testing service implementation that exercises the plugin system properly.
-/// Implements IDaprService to test centralized service resolution.
+/// Implements IBannouService to test centralized service resolution.
 /// </summary>
-[DaprService("testing", interfaceType: typeof(ITestingService), priority: false, lifetime: ServiceLifetime.Scoped)]
-[Obsolete]
+[BannouService("testing", interfaceType: typeof(ITestingService), priority: false, lifetime: ServiceLifetime.Scoped)]
 public partial class TestingService : ITestingService
 {
     private readonly ILogger<TestingService> _logger;
@@ -21,7 +20,6 @@ public partial class TestingService : ITestingService
     private readonly IMessageBus _messageBus;
     private readonly IClientEventPublisher _clientEventPublisher;
 
-    [Obsolete]
     public TestingService(
         ILogger<TestingService> logger,
         TestingServiceConfiguration configuration,
@@ -34,10 +32,10 @@ public partial class TestingService : ITestingService
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
 
-        // Required by Tenet 6 - calls default IDaprService.RegisterEventConsumers() no-op
+        // Required by Tenet 6 - calls default IBannouService.RegisterEventConsumers() no-op
         // Must cast to interface to access default interface implementation
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>
@@ -335,8 +333,7 @@ public partial class TestingService : ITestingService
 /// <summary>
 /// Testing service interface for dependency injection.
 /// </summary>
-[Obsolete]
-public interface ITestingService : IDaprService
+public interface ITestingService : IBannouService
 {
     Task<(StatusCodes, TestResponse?)> RunTestAsync(string testName, CancellationToken cancellationToken = default);
     Task<(StatusCodes, ConfigTestResponse?)> TestConfigurationAsync(CancellationToken cancellationToken = default);

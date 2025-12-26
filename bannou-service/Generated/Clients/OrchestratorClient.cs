@@ -42,7 +42,7 @@ public partial interface IOrchestratorClient
     /// Validates connectivity and health of core infrastructure components:
     /// <br/>- Redis (direct connection via StackExchange.Redis)
     /// <br/>- RabbitMQ (direct connection via RabbitMQ.Client)
-    /// <br/>- Dapr Placement service
+    /// <br/>-
     /// </remarks>
     /// <returns>Infrastructure health status (check response body for component health)</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
@@ -124,7 +124,7 @@ public partial interface IOrchestratorClient
     /// <br/>Presets define service combinations and configuration for specific use cases.
     /// <br/>
     /// <br/>Built-in presets:
-    /// <br/>- `local-development`: All services in single container with Dapr
+    /// <br/>- `local-development`: All services in single container with mesh infrastructure
     /// <br/>- `local-testing`: Test environment with infrastructure services
     /// <br/>- `integration-http`: HTTP integration testing preset
     /// <br/>- `integration-edge`: WebSocket/edge testing preset
@@ -167,7 +167,7 @@ public partial interface IOrchestratorClient
     /// Get current service-to-app-id routing mappings
     /// </summary>
     /// <remarks>
-    /// Returns the current service-to-app-id routing mappings used for Dapr service invocation.
+    /// Returns the current service-to-app-id routing mappings used for mesh service invocation through lib-mesh.
     /// <br/>This is the authoritative source of truth for how services are routed in the current deployment.
     /// <br/>
     /// <br/>In development, all services route to "bannou" by default. In production, services may be
@@ -521,7 +521,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
     /// Validates connectivity and health of core infrastructure components:
     /// <br/>- Redis (direct connection via StackExchange.Redis)
     /// <br/>- RabbitMQ (direct connection via RabbitMQ.Client)
-    /// <br/>- Dapr Placement service
+    /// <br/>-
     /// </remarks>
     /// <returns>Infrastructure health status (check response body for component health)</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
@@ -970,7 +970,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
     /// <br/>Presets define service combinations and configuration for specific use cases.
     /// <br/>
     /// <br/>Built-in presets:
-    /// <br/>- `local-development`: All services in single container with Dapr
+    /// <br/>- `local-development`: All services in single container with mesh infrastructure
     /// <br/>- `local-testing`: Test environment with infrastructure services
     /// <br/>- `integration-http`: HTTP integration testing preset
     /// <br/>- `integration-edge`: WebSocket/edge testing preset
@@ -1185,7 +1185,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
     /// Get current service-to-app-id routing mappings
     /// </summary>
     /// <remarks>
-    /// Returns the current service-to-app-id routing mappings used for Dapr service invocation.
+    /// Returns the current service-to-app-id routing mappings used for mesh service invocation through lib-mesh.
     /// <br/>This is the authoritative source of truth for how services are routed in the current deployment.
     /// <br/>
     /// <br/>In development, all services route to "bannou" by default. In production, services may be
@@ -2669,7 +2669,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -2681,7 +2681,7 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

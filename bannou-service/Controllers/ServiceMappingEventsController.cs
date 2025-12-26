@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 /// <summary>
 /// Handles full service mapping events from Orchestrator.
 /// Atomically updates the ServiceAppMappingResolver with complete routing state.
-/// This controller subscribes to the bannou-full-service-mappings topic via Dapr pub/sub.
+/// This controller subscribes to the bannou-full-service-mappings topic via Bannou pub/sub.
 /// </summary>
 /// <remarks>
 /// Architecture:

@@ -8,25 +8,24 @@ namespace BeyondImmersion.BannouService.Servicedata;
 
 /// <summary>
 /// Plugin wrapper for Servicedata service enabling plugin-based discovery and lifecycle management.
-/// Bridges existing IDaprService implementation with the new Plugin system.
+/// Bridges existing IBannouService implementation with the new Plugin system.
 /// </summary>
 public class ServicedataServicePlugin : BaseBannouPlugin
 {
     public override string PluginName => "servicedata";
     public override string DisplayName => "Servicedata Service";
 
-    [Obsolete]
     private IServicedataService? _service;
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
-    /// Configure services for dependency injection - mimics existing [DaprService] registration.
+    /// Configure services for dependency injection - mimics existing [BannouService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
         Logger?.LogInformation("Configuring Servicedata service dependencies");
 
-        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // Service registration is now handled centrally by PluginLoader based on [BannouService] attributes
         // No need to register IGameSessionService and GameSessionService here
 
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
@@ -43,7 +42,7 @@ public class ServicedataServicePlugin : BaseBannouPlugin
         Logger?.LogInformation("Configuring Servicedata service application pipeline");
 
         // The generated ServicedataController should already be discovered via standard ASP.NET Core controller discovery
-        // since we're not excluding the assembly like we did with IDaprController approach
+        // since we're not excluding the assembly like we did with IBannouController approach
 
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
@@ -52,9 +51,8 @@ public class ServicedataServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Start the service - calls existing IDaprService lifecycle if present.
+    /// Start the service - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting Servicedata service");
@@ -72,11 +70,11 @@ public class ServicedataServicePlugin : BaseBannouPlugin
                 return false;
             }
 
-            // Call existing IDaprService.OnStartAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnStartAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnStartAsync for Servicedata service");
-                await daprService.OnStartAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnStartAsync for Servicedata service");
+                await bannouService.OnStartAsync(CancellationToken.None);
             }
 
             Logger?.LogInformation("Servicedata service started successfully");
@@ -90,9 +88,8 @@ public class ServicedataServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Running phase - calls existing IDaprService lifecycle if present.
+    /// Running phase - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -101,11 +98,11 @@ public class ServicedataServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Call existing IDaprService.OnRunningAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnRunningAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for Servicedata service");
-                await daprService.OnRunningAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnRunningAsync for Servicedata service");
+                await bannouService.OnRunningAsync(CancellationToken.None);
             }
         }
         catch (Exception ex)
@@ -115,9 +112,8 @@ public class ServicedataServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Shutdown the service - calls existing IDaprService lifecycle if present.
+    /// Shutdown the service - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;
@@ -126,11 +122,11 @@ public class ServicedataServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Call existing IDaprService.OnShutdownAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnShutdownAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for Servicedata service");
-                await daprService.OnShutdownAsync();
+                Logger?.LogDebug("Calling IBannouService.OnShutdownAsync for Servicedata service");
+                await bannouService.OnShutdownAsync();
             }
 
             Logger?.LogInformation("Servicedata service shutdown complete");

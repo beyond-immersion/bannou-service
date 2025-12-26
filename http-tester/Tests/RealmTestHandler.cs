@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Test handler for realm API endpoints using generated clients.
 /// Tests the realm service APIs directly via NSwag-generated RealmClient.
 ///
-/// Note: Realm APIs test service-to-service communication via Dapr.
+/// Note: Realm APIs test service-to-service communication via mesh.
 /// These tests validate realm management with real datastores.
 /// </summary>
 public class RealmTestHandler : IServiceTestHandler

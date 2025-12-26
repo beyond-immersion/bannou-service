@@ -36,7 +36,7 @@ public class MeshTestHandler : IServiceTestHandler
             new ServiceTest(TestRegisterAndDeregister, "RegisterDeregister", "Mesh", "Test endpoint registration and deregistration lifecycle"),
             new ServiceTest(TestHeartbeat, "Heartbeat", "Mesh", "Test heartbeat updates endpoint status"),
 
-            // Mesh Invocation Client Tests (replacement for Dapr InvokeMethodAsync)
+            // Mesh Invocation Client Tests (replacement for direct service invocation)
             new ServiceTest(TestInvocationClientAvailable, "InvocationClientDI", "Mesh", "Test IMeshInvocationClient is available via DI"),
             new ServiceTest(TestInvocationCreateRequest, "InvocationCreateRequest", "Mesh", "Test CreateInvokeMethodRequest works correctly"),
             new ServiceTest(TestInvocationServiceAvailability, "InvocationServiceCheck", "Mesh", "Test IsServiceAvailableAsync for registered endpoints"),
@@ -468,7 +468,7 @@ public class MeshTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Test that IMeshInvocationClient is available via DI.
-    /// This is the Dapr replacement client for service-to-service communication.
+    /// This is the mesh replacement client for service-to-service communication.
     /// </summary>
     private static async Task<TestResult> TestInvocationClientAvailable(ITestClient client, string[] args)
     {
@@ -480,7 +480,7 @@ public class MeshTestHandler : IServiceTestHandler
                 return TestResult.Failed("IMeshInvocationClient not registered in DI");
             }
 
-            return TestResult.Successful("IMeshInvocationClient is available via DI (Dapr replacement ready)");
+            return TestResult.Successful("IMeshInvocationClient is available via DI (mesh replacement ready)");
         }
         catch (InvalidOperationException ex)
         {
@@ -494,7 +494,7 @@ public class MeshTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Test CreateInvokeMethodRequest creates properly configured HTTP requests.
-    /// This method is equivalent to DaprClient.CreateInvokeMethodRequest.
+    /// This method is equivalent to mesh client.CreateInvokeMethodRequest.
     /// </summary>
     private static async Task<TestResult> TestInvocationCreateRequest(ITestClient client, string[] args)
     {

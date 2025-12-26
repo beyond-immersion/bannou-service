@@ -23,8 +23,7 @@ namespace BeyondImmersion.BannouService.Voice;
 /// Implementation of the Voice service.
 /// Manages P2P and scaled tier voice room coordination for game sessions.
 /// </summary>
-[DaprService("voice", typeof(IVoiceService), lifetime: ServiceLifetime.Scoped)]
-[Obsolete]
+[BannouService("voice", typeof(IVoiceService), lifetime: ServiceLifetime.Scoped)]
 public partial class VoiceService : IVoiceService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -54,7 +53,6 @@ public partial class VoiceService : IVoiceService
     /// <param name="eventConsumer">Event consumer for registering event handlers.</param>
     /// <param name="clientEventPublisher">Optional client event publisher for WebSocket push events. May be null if Connect service is not loaded.</param>
     /// <param name="permissionsClient">Optional permissions client for setting voice:ringing state. May be null if Permissions service is not loaded.</param>
-    [Obsolete]
     public VoiceService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
@@ -79,7 +77,7 @@ public partial class VoiceService : IVoiceService
 
         // Register event handlers via partial class (VoiceServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>

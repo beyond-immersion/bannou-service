@@ -1,7 +1,7 @@
 namespace BeyondImmersion.BannouService.Attributes;
 
 /// <summary>
-/// Attribute to propagate common headers through dapr requests.
+/// Attribute to propagate common headers through mesh requests.
 /// </summary>
 [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
 public sealed class HeaderArrayAttribute : Attribute

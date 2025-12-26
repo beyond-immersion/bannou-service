@@ -17,7 +17,6 @@ public class HeaderArrayActionFilter : IActionFilter
     /// Called before action method execution to map HTTP headers to request properties.
     /// </summary>
     /// <param name="context">The action executing context.</param>
-    [Obsolete]
     public void OnActionExecuting(ActionExecutingContext context)
     {
         try
@@ -61,7 +60,6 @@ public class HeaderArrayActionFilter : IActionFilter
     /// Called after action method execution to map response properties to HTTP headers.
     /// </summary>
     /// <param name="context">The action executed context.</param>
-    [Obsolete]
     public void OnActionExecuted(ActionExecutedContext context)
     {
         if (context.Result is ObjectResult objectResult && objectResult?.Value != null)

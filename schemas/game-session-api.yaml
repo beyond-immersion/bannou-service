@@ -11,7 +11,7 @@ info:
   # NOTE: Event subscriptions moved to game-session-events.yaml (x-event-subscriptions)
 servers:
 - url: http://localhost:5012
-  description: Dapr sidecar endpoint (internal only)
+  description: Bannou service endpoint (internal only)
 
 paths:
   /sessions/list:

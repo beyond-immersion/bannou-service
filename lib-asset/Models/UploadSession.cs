@@ -1,7 +1,7 @@
 namespace BeyondImmersion.BannouService.Asset.Models;
 
 /// <summary>
-/// Tracks the state of an upload session in the Dapr state store.
+/// Tracks the state of an upload session in the lib-state store.
 /// Used by both AssetService and MinioWebhookHandler.
 /// </summary>
 public sealed class UploadSession

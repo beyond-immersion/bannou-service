@@ -11,7 +11,7 @@ info:
   # NOTE: Event subscriptions moved to permissions-events.yaml (x-event-subscriptions)
 servers:
 - url: http://localhost:5012
-  description: Dapr sidecar endpoint (internal only)
+  description: Bannou service endpoint (internal only)
 
 paths:
   /permissions/capabilities:
@@ -329,7 +329,7 @@ paths:
         appearing in this list means it has completed startup and registered its
         API permissions, indicating it's ready to handle requests.
 
-        For service-to-service calls (via Dapr), this endpoint is unrestricted.
+        For service-to-service calls (via mesh), this endpoint is unrestricted.
         For client calls through WebSocket/Connect, only admin users can access it.
       operationId: getRegisteredServices
       tags:
@@ -374,7 +374,7 @@ paths:
       x-endpoint-info-json: "{\n  \"summary\": \"List all registered services\",\n  \"description\": \"Returns list of all
         services that have registered their permissions.\\nThis endpoint is used by testers to wait for service readiness
         - a service\\nappearing in this list means it has completed startup and registered its\\nAPI permissions, indicating
-        it's ready to handle requests.\\n\\nFor service-to-service calls (via Dapr), this endpoint is unrestricted.\\nFor
+        it's ready to handle requests.\\n\\nFor service-to-service calls (via mesh), this endpoint is unrestricted.\\nFor
         client calls through WebSocket/Connect, only admin users can access it.\\n\",\n  \"tags\": [\n    \"Service Management\"\
         \n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getRegisteredServices\"\n}"
 components:

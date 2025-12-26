@@ -15,7 +15,7 @@ info:
   version: 1.0.0
 servers:
 - url: http://localhost:5012
-  description: Dapr sidecar endpoint (MUST use "bannou" app-id)
+  description: Bannou service endpoint (MUST use "bannou" app-id)
 
 paths:
   # ===== Browser-Facing Endpoint (Tenet 15) =====

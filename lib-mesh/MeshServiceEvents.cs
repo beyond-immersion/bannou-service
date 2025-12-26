@@ -69,7 +69,7 @@ public partial class MeshService
                 {
                     InstanceId = instanceId,
                     AppId = evt.AppId,
-                    Host = evt.AppId, // Use app-id as host for Dapr-style routing
+                    Host = evt.AppId, // Use app-id as host for mesh-style routing
                     Port = 80,
                     Status = MapHeartbeatStatus(evt.Status),
                     Services = evt.Services?.Select(s => s.ServiceName).ToList() ?? new List<string>(),

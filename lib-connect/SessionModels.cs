@@ -2,7 +2,7 @@ namespace BeyondImmersion.BannouService.Connect;
 
 /// <summary>
 /// Data model for storing connection state in distributed state store.
-/// Contains only serializable fields suitable for Dapr state storage.
+/// Contains only serializable fields suitable for lib-state storage.
 /// </summary>
 public class ConnectionStateData
 {
@@ -16,7 +16,7 @@ public class ConnectionStateData
     /// </summary>
     public string? AccountId { get; set; }
 
-    // Store as Unix epoch timestamps (long) to avoid Dapr/System.Text.Json DateTimeOffset serialization bugs
+    // Store as Unix epoch timestamps (long) to avoid System.Text.Json DateTimeOffset serialization issues
     public long ConnectedAtUnix { get; set; }
     public long LastActivityUnix { get; set; }
     public long? ReconnectionExpiresAtUnix { get; set; }
@@ -102,7 +102,7 @@ public class SessionHeartbeat
     /// </summary>
     public string InstanceId { get; set; } = string.Empty;
 
-    // Store as Unix epoch timestamp (long) to avoid Dapr/System.Text.Json DateTimeOffset serialization bugs
+    // Store as Unix epoch timestamp (long) to avoid System.Text.Json DateTimeOffset serialization issues
     public long LastSeenUnix { get; set; }
 
     /// <summary>
@@ -136,7 +136,7 @@ public class SessionEvent
     /// </summary>
     public string SessionId { get; set; } = string.Empty;
 
-    // Store as Unix epoch timestamp (long) to avoid Dapr/System.Text.Json DateTimeOffset serialization bugs
+    // Store as Unix epoch timestamp (long) to avoid System.Text.Json DateTimeOffset serialization issues
     public long TimestampUnix { get; set; }
 
     /// <summary>

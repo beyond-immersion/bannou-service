@@ -59,7 +59,6 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     private const string HEARTBEAT_TOPIC = "bannou-service-heartbeats";
 
     /// <inheritdoc/>
-    [Obsolete]
     public ServiceHeartbeatManager(
         IMessageBus messageBus,
         ILogger<ServiceHeartbeatManager> logger,
@@ -77,7 +76,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         _mappingResolver.MappingChanged += OnMappingChanged;
 
         // Resolve app-id from configuration
-        AppId = configuration.DaprAppId ?? AppConstants.DEFAULT_APP_NAME;
+        AppId = configuration.BannouAppId ?? AppConstants.DEFAULT_APP_NAME;
 
         // Get heartbeat settings from configuration (Tenet 21 compliant)
         HeartbeatIntervalSeconds = configuration.HeartbeatIntervalSeconds > 0
@@ -97,7 +96,6 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>True if heartbeat published successfully, false otherwise</returns>
-    [Obsolete]
     public async Task<bool> PublishStartupHeartbeatAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Publishing startup heartbeat for {Count} enabled services...",
@@ -134,7 +132,6 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     /// <param name="retryDelayMs">Delay between retries in milliseconds</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>True if message bus is ready, false if all retries exhausted</returns>
-    [Obsolete]
     public async Task<bool> WaitForConnectivityAsync(
         int maxRetries = 30,
         int retryDelayMs = 2000,
@@ -183,7 +180,6 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     /// Start the periodic heartbeat timer.
     /// Heartbeats will be published at the configured interval.
     /// </summary>
-    [Obsolete]
     public void StartPeriodicHeartbeats()
     {
         if (_isRunning)
@@ -208,7 +204,6 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     /// Publish a periodic heartbeat with current service statuses.
     /// Also re-registers permissions if enabled (solves late-subscriber and race condition issues).
     /// </summary>
-    [Obsolete]
     private async Task PublishPeriodicHeartbeatAsync()
     {
         try
@@ -241,7 +236,6 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     /// Re-register permissions for all services as part of periodic heartbeat.
     /// This ensures late-joining permission services receive API mappings.
     /// </summary>
-    [Obsolete]
     private async Task ReRegisterPermissionsAsync()
     {
         try
@@ -266,7 +260,6 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     /// <summary>
     /// Publish a shutdown heartbeat to notify orchestrator this instance is going down.
     /// </summary>
-    [Obsolete]
     public async Task PublishShutdownHeartbeatAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Publishing shutdown heartbeat...");
@@ -335,7 +328,6 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     /// Build the heartbeat event with all service statuses.
     /// Filters out services that are routed to a different app-id.
     /// </summary>
-    [Obsolete]
     private ServiceHeartbeatEvent BuildHeartbeatEvent(ServiceHeartbeatEventStatus overallStatus)
     {
         var serviceStatuses = new List<ServiceStatus>();
@@ -379,7 +371,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
             else
             {
                 _logger.LogDebug(
-                    "Plugin {PluginName} has no resolved service (may not implement IDaprService)",
+                    "Plugin {PluginName} has no resolved service (may not implement IBannouService)",
                     plugin.PluginName);
             }
         }
@@ -401,7 +393,6 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     /// Determine the overall status based on all service statuses.
     /// Returns the worst status among all services (excluding suppressed services).
     /// </summary>
-    [Obsolete]
     private ServiceHeartbeatEventStatus DetermineOverallStatus()
     {
         if (_currentIssues.Count > 0)

@@ -80,7 +80,7 @@ if [ ! -f "$TEST_PROJECT_FILE" ]; then
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Moq" Version="4.20.72" />
-    <!-- Dapr.Client, Logging.Abstractions, Mvc.Core come from lib-$SERVICE_NAME → bannou-service -->
+    <!-- Logging.Abstractions, Mvc.Core come from lib-$SERVICE_NAME → bannou-service -->
   </ItemGroup>
 
   <ItemGroup>

@@ -5,7 +5,7 @@ namespace BeyondImmersion.BannouService.Mesh.Services;
 /// <summary>
 /// Interface for Mesh Redis operations.
 /// Manages service endpoint registration, health status, and routing information.
-/// Uses direct Redis connection (NOT Dapr) to avoid circular dependencies.
+/// Uses direct Redis connection (NOT via mesh) to avoid circular dependencies.
 /// </summary>
 public interface IMeshRedisManager : IDisposable, IAsyncDisposable
 {

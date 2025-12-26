@@ -16,7 +16,7 @@ info:
   # NOTE: Event subscriptions and publications are in auth-events.yaml
 servers:
 - url: http://localhost:5012
-  description: Dapr sidecar endpoint
+  description: Bannou service endpoint
 
 paths:
   /auth/login:

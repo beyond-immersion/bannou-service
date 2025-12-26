@@ -6,7 +6,7 @@ namespace BeyondImmersion.BannouService.Asset.Events;
 
 /// <summary>
 /// Implementation of IAssetEventEmitter that uses IClientEventPublisher
-/// to emit asset events to client sessions via Dapr pub/sub.
+/// to emit asset events to client sessions via RabbitMQ pub/sub.
 /// </summary>
 public class AssetEventEmitter : IAssetEventEmitter
 {

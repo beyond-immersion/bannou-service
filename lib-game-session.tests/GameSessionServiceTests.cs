@@ -741,7 +741,7 @@ public class GameSessionConfigurationTests
     [Fact]
     public void Configuration_ShouldBindFromEnvironmentVariables()
     {
-        // Arrange - Use GAMESESSION_ prefix (derived from DaprService("game-session"))
+        // Arrange - Use GAMESESSION_ prefix (derived from BannouService("game-session"))
         Environment.SetEnvironmentVariable("GAMESESSION_MAXPLAYERSPERSESSION", "8");
         Environment.SetEnvironmentVariable("GAMESESSION_DEFAULTSESSIONTIMEOUTSECONDS", "3600");
 

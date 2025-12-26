@@ -1759,7 +1759,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 {
                     new ServiceEndpoint
                     {
-                        Path = "/test/dapr-event-endpoint",
+                        Path = "/test/pubsub-event-endpoint",
                         Method = ServiceEndpointMethod.GET,
                         Permissions = new Collection<PermissionRequirement>
                         {
@@ -1833,7 +1833,7 @@ public class PermissionsTestHandler : IServiceTestHandler
             if (capabilities.Permissions.ContainsKey(testServiceId))
             {
                 var methods = capabilities.Permissions[testServiceId];
-                if (methods.Contains("GET:/test/dapr-event-endpoint"))
+                if (methods.Contains("GET:/test/pubsub-event-endpoint"))
                 {
                     return TestResult.Successful(
                         $"Event subscription verified: service {testServiceId} registered via RabbitMQ pubsub event, " +

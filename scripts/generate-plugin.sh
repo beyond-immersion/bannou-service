@@ -65,7 +65,7 @@ namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 
 /// <summary>
 /// Plugin wrapper for $SERVICE_PASCAL service enabling plugin-based discovery and lifecycle management.
-/// Bridges existing IDaprService implementation with the new Plugin system.
+/// Bridges existing IBannouService implementation with the new Plugin system.
 /// </summary>
 public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
 {
@@ -76,13 +76,13 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
-    /// Configure services for dependency injection - mimics existing [DaprService] registration.
+    /// Configure services for dependency injection - mimics existing [BannouService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
         Logger?.LogDebug("Configuring service dependencies");
 
-        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // Service registration is now handled centrally by PluginLoader based on [BannouService] attributes
         // No need to register I${SERVICE_PASCAL}Service and ${SERVICE_PASCAL}Service here
 
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
@@ -102,7 +102,6 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
         Logger?.LogInformation("Configuring $SERVICE_PASCAL service application pipeline");
 
         // The generated ${SERVICE_PASCAL}Controller should already be discovered via standard ASP.NET Core controller discovery
-        // since we're not excluding the assembly like we did with IDaprController approach
 
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
@@ -111,7 +110,7 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Start the service - calls existing IDaprService lifecycle if present.
+    /// Start the service - calls existing IBannouService lifecycle if present.
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
@@ -130,11 +129,11 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
                 return false;
             }
 
-            // Call existing IDaprService.OnStartAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnStartAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnStartAsync for $SERVICE_PASCAL service");
-                await daprService.OnStartAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnStartAsync for $SERVICE_PASCAL service");
+                await bannouService.OnStartAsync(CancellationToken.None);
             }
 
             Logger?.LogInformation("$SERVICE_PASCAL service started successfully");
@@ -148,7 +147,7 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Running phase - calls existing IDaprService lifecycle if present.
+    /// Running phase - calls existing IBannouService lifecycle if present.
     /// </summary>
     protected override async Task OnRunningAsync()
     {
@@ -158,11 +157,11 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Call existing IDaprService.OnRunningAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnRunningAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for $SERVICE_PASCAL service");
-                await daprService.OnRunningAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnRunningAsync for $SERVICE_PASCAL service");
+                await bannouService.OnRunningAsync(CancellationToken.None);
             }
         }
         catch (Exception ex)
@@ -172,7 +171,7 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Shutdown the service - calls existing IDaprService lifecycle if present.
+    /// Shutdown the service - calls existing IBannouService lifecycle if present.
     /// </summary>
     protected override async Task OnShutdownAsync()
     {
@@ -182,11 +181,11 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Call existing IDaprService.OnShutdownAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnShutdownAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for $SERVICE_PASCAL service");
-                await daprService.OnShutdownAsync();
+                Logger?.LogDebug("Calling IBannouService.OnShutdownAsync for $SERVICE_PASCAL service");
+                await bannouService.OnShutdownAsync();
             }
 
             Logger?.LogInformation("$SERVICE_PASCAL service shutdown complete");

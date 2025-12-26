@@ -33,9 +33,9 @@ public class PortainerOrchestrator : IContainerOrchestrator
     private readonly int _endpointId;
 
     /// <summary>
-    /// Label used to identify Dapr app-id on containers.
+    /// Label used to identify app-id on containers.
     /// </summary>
-    private const string DAPR_APP_ID_LABEL = "dapr.io/app-id";
+    private const string BANNOU_APP_ID_LABEL = "bannou.app-id";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -149,7 +149,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
                 {
                     Accepted = false,
                     AppName = appName,
-                    Message = $"No container found with Dapr app-id '{appName}'"
+                    Message = $"No container found with app-id '{appName}'"
                 };
             }
 
@@ -225,9 +225,9 @@ public class PortainerOrchestrator : IContainerOrchestrator
                 JsonOptions,
                 cancellationToken) ?? new List<PortainerContainer>();
 
-            // Filter to containers with Dapr app-id label
+            // Filter to containers with app-id label
             return containers
-                .Where(c => c.Labels?.ContainsKey(DAPR_APP_ID_LABEL) == true)
+                .Where(c => c.Labels?.ContainsKey(BANNOU_APP_ID_LABEL) == true)
                 .Select(c => MapContainerToStatus(c, GetAppNameFromContainer(c)))
                 .ToList();
         }
@@ -252,7 +252,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             var container = await FindContainerByAppNameAsync(appName, cancellationToken);
             if (container == null)
             {
-                return $"No container found with Dapr app-id '{appName}'";
+                return $"No container found with app-id '{appName}'";
             }
 
             // GET /api/endpoints/{id}/docker/containers/{containerId}/logs
@@ -281,7 +281,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
     }
 
     /// <summary>
-    /// Finds a container by its Dapr app-id label.
+    /// Finds a container by its app-id label.
     /// </summary>
     private async Task<PortainerContainer?> FindContainerByAppNameAsync(
         string appName,
@@ -302,16 +302,16 @@ public class PortainerOrchestrator : IContainerOrchestrator
             cancellationToken) ?? new List<PortainerContainer>();
 
         return containers.FirstOrDefault(c =>
-            c.Labels?.TryGetValue(DAPR_APP_ID_LABEL, out var label) == true &&
+            c.Labels?.TryGetValue(BANNOU_APP_ID_LABEL, out var label) == true &&
             label == appName);
     }
 
     /// <summary>
-    /// Extracts Dapr app-id from container labels.
+    /// Extracts app-id from container labels.
     /// </summary>
     private static string GetAppNameFromContainer(PortainerContainer container)
     {
-        if (container.Labels?.TryGetValue(DAPR_APP_ID_LABEL, out var appId) == true)
+        if (container.Labels?.TryGetValue(BANNOU_APP_ID_LABEL, out var appId) == true)
         {
             return appId;
         }
@@ -366,7 +366,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             var envList = new List<string>
             {
                 $"{serviceName.ToUpperInvariant()}_SERVICE_ENABLED=true",
-                $"DAPR_APP_ID={appId}",
+                $"BANNOU_APP_ID={appId}",
                 // Required for proper service operation - not forwarded from orchestrator ENV
                 "DAEMON_MODE=true",
                 "HEARTBEAT_ENABLED=true"
@@ -386,7 +386,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
                 Env = envList,
                 Labels = new Dictionary<string, string>
                 {
-                    [DAPR_APP_ID_LABEL] = appId,
+                    [BANNOU_APP_ID_LABEL] = appId,
                     ["bannou.service"] = serviceName
                 },
                 HostConfig = new
@@ -471,7 +471,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
                 {
                     Success = false,
                     AppId = appName,
-                    Message = $"No container found with Dapr app-id '{appName}'"
+                    Message = $"No container found with app-id '{appName}'"
                 };
             }
 
@@ -548,7 +548,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
         try
         {
             // In Portainer mode, identify infrastructure by container name patterns
-            var infrastructurePatterns = new[] { "redis", "rabbitmq", "mysql", "mariadb", "postgres", "mongodb", "placement", "dapr" };
+            var infrastructurePatterns = new[] { "redis", "rabbitmq", "mysql", "mariadb", "postgres", "mongodb" };
 
             var containers = await ListContainersAsync(cancellationToken);
 

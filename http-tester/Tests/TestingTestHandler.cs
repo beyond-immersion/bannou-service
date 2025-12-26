@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// <summary>
 /// Test handler for the Testing service HTTP API endpoints.
 /// Tests debugging and infrastructure validation endpoints.
-/// These tests are critical for validating routing behavior and diagnosing Dapr path handling.
+/// These tests are critical for validating routing behavior and diagnosing mesh path handling.
 /// </summary>
 public class TestingTestHandler : IServiceTestHandler
 {
@@ -19,9 +19,9 @@ public class TestingTestHandler : IServiceTestHandler
     static TestingTestHandler()
     {
         // Get base URL from environment or default to localhost
-        // Note: When connecting via Dapr sidecar, paths must include /v1.0/invoke/{appId}/method/ prefix
-        var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT") ?? "http://localhost:5012";
-        _baseUrl = daprHttpEndpoint;
+        // Note: When connecting via mesh, paths must include /v1.0/invoke/{appId}/method/ prefix
+        var bannouHttpEndpoint = Environment.GetEnvironmentVariable("BANNOU_HTTP_ENDPOINT") ?? "http://localhost:5012";
+        _baseUrl = bannouHttpEndpoint;
     }
 
     public ServiceTest[] GetServiceTests()
@@ -36,10 +36,10 @@ public class TestingTestHandler : IServiceTestHandler
             new ServiceTest(TestDebugPathReceivedPath, "PathReceived", "Testing", "Verify controller receives expected path"),
             new ServiceTest(TestDebugPathWithCatchAll, "PathCatchAll", "Testing", "Test debug path with catch-all segment"),
             new ServiceTest(TestDebugPathControllerRoute, "ControllerRoute", "Testing", "Verify controller route attribute value"),
-            new ServiceTest(TestDebugPathDaprHeaders, "DaprHeaders", "Testing", "Check for Dapr-related headers in request"),
+            new ServiceTest(TestDebugPathMeshHeaders, "MeshHeaders", "Testing", "Check for mesh-related headers in request"),
 
             // Routing Architecture Tests
-            new ServiceTest(TestDirectVsDaprRouting, "DirectVsDapr", "Testing", "Compare direct vs Dapr routing paths"),
+            new ServiceTest(TestDirectVsMeshRouting, "DirectVsMesh", "Testing", "Compare direct vs mesh routing paths"),
             new ServiceTest(TestPathWithDifferentPrefixes, "PathPrefixes", "Testing", "Test paths with various prefixes"),
         };
     }
@@ -100,7 +100,7 @@ public class TestingTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Verify the controller receives the expected path format.
-    /// This is the key test for understanding Dapr path stripping behavior.
+    /// This is the key test for understanding mesh path stripping behavior.
     /// </summary>
     private static async Task<TestResult> TestDebugPathReceivedPath(ITestClient client, string[] args)
     {
@@ -131,17 +131,17 @@ public class TestingTestHandler : IServiceTestHandler
             };
 
             // The key insight: what path does the controller actually receive?
-            // If Dapr strips /v1.0/invoke/bannou/method/, the path should be just /testing/debug/path
-            // If Dapr preserves it, the path would be /v1.0/invoke/bannou/method/testing/debug/path
+            // If mesh strips /v1.0/invoke/bannou/method/, the path should be just /testing/debug/path
+            // If mesh preserves it, the path would be /v1.0/invoke/bannou/method/testing/debug/path
             var receivedPath = debugInfo.Path;
 
             if (receivedPath.Contains("/v1.0/invoke/"))
             {
-                return TestResult.Successful($"Path INCLUDES Dapr prefix (Dapr NOT stripping): {string.Join(", ", pathDetails)}");
+                return TestResult.Successful($"Path INCLUDES mesh prefix (mesh NOT stripping): {string.Join(", ", pathDetails)}");
             }
             else if (receivedPath.StartsWith("/testing/"))
             {
-                return TestResult.Successful($"Path EXCLUDES Dapr prefix (Dapr IS stripping): {string.Join(", ", pathDetails)}");
+                return TestResult.Successful($"Path EXCLUDES mesh prefix (mesh IS stripping): {string.Join(", ", pathDetails)}");
             }
             else
             {
@@ -224,7 +224,7 @@ public class TestingTestHandler : IServiceTestHandler
 
             var controllerRoute = debugInfo.ControllerRoute;
 
-            // TestingController uses [Route("testing")] - not the Dapr route prefix
+            // TestingController uses [Route("testing")] - not the mesh route prefix
             // Generated controllers use [Route("v1.0/invoke/bannou/method")]
             if (controllerRoute == "testing")
             {
@@ -232,7 +232,7 @@ public class TestingTestHandler : IServiceTestHandler
             }
             else if (controllerRoute.Contains("v1.0/invoke"))
             {
-                return TestResult.Successful($"Controller route includes Dapr prefix: '{controllerRoute}' (generated controller pattern)");
+                return TestResult.Successful($"Controller route includes mesh prefix: '{controllerRoute}' (generated controller pattern)");
             }
             else
             {
@@ -246,9 +246,9 @@ public class TestingTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Check for Dapr-related headers in the request.
+    /// Check for mesh-related headers in the request.
     /// </summary>
-    private static async Task<TestResult> TestDebugPathDaprHeaders(ITestClient client, string[] args)
+    private static async Task<TestResult> TestDebugPathMeshHeaders(ITestClient client, string[] args)
     {
         try
         {
@@ -268,20 +268,20 @@ public class TestingTestHandler : IServiceTestHandler
             }
 
             var headers = debugInfo.Headers ?? new Dictionary<string, string>();
-            var daprHeaders = headers.Where(h =>
-                h.Key.StartsWith("dapr-", StringComparison.OrdinalIgnoreCase) ||
+            var routingHeaders = headers.Where(h =>
+                h.Key.StartsWith("bannou-", StringComparison.OrdinalIgnoreCase) ||
                 h.Key.StartsWith("traceparent", StringComparison.OrdinalIgnoreCase) ||
                 h.Key.StartsWith("tracestate", StringComparison.OrdinalIgnoreCase)
             ).ToList();
 
-            if (daprHeaders.Count == 0)
+            if (routingHeaders.Count == 0)
             {
-                return TestResult.Successful("No Dapr headers present (direct HTTP call, not through Dapr sidecar)");
+                return TestResult.Successful("No routing headers present (direct HTTP call, not through mesh)");
             }
             else
             {
-                var headerList = string.Join(", ", daprHeaders.Select(h => $"{h.Key}={h.Value}"));
-                return TestResult.Successful($"Dapr headers found: {headerList}");
+                var headerList = string.Join(", ", routingHeaders.Select(h => $"{h.Key}={h.Value}"));
+                return TestResult.Successful($"routing headers found: {headerList}");
             }
         }
         catch (Exception ex)
@@ -291,13 +291,13 @@ public class TestingTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Compare direct HTTP call vs Dapr-routed call path behavior.
+    /// Compare direct HTTP call vs mesh-routed call path behavior.
     /// </summary>
-    private static async Task<TestResult> TestDirectVsDaprRouting(ITestClient client, string[] args)
+    private static async Task<TestResult> TestDirectVsMeshRouting(ITestClient client, string[] args)
     {
         try
         {
-            // Call through Dapr sidecar with proper prefix
+            // Call through mesh with proper prefix
             var directResponse = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path");
 
             if (!directResponse.IsSuccessStatusCode)
@@ -313,38 +313,38 @@ public class TestingTestHandler : IServiceTestHandler
                 return TestResult.Failed("Failed to deserialize direct call response");
             }
 
-            // Try Dapr-prefixed path (if Dapr is configured and running)
-            var daprPort = Environment.GetEnvironmentVariable("DAPR_HTTP_PORT") ?? "3500";
-            var daprUrl = $"http://localhost:{daprPort}/v1.0/invoke/bannou/method/testing/debug/path";
+            // Try mesh-prefixed path (if mesh is configured and running)
+            var meshPort = Environment.GetEnvironmentVariable("BANNOU_HTTP_PORT") ?? "3500";
+            var meshUrl = $"http://localhost:{meshPort}/v1.0/invoke/bannou/method/testing/debug/path";
 
             try
             {
-                var daprResponse = await _httpClient.GetAsync(daprUrl);
+                var bannouResponse = await _httpClient.GetAsync(meshUrl);
 
-                if (daprResponse.IsSuccessStatusCode)
+                if (bannouResponse.IsSuccessStatusCode)
                 {
-                    var daprContent = await daprResponse.Content.ReadAsStringAsync();
-                    var daprInfo = BannouJson.Deserialize<RoutingDebugInfo>(daprContent);
+                    var meshContent = await bannouResponse.Content.ReadAsStringAsync();
+                    var bannouInfo = BannouJson.Deserialize<RoutingDebugInfo>(meshContent);
 
-                    if (daprInfo != null)
+                    if (bannouInfo != null)
                     {
                         return TestResult.Successful(
-                            $"Direct path: {directInfo.Path}, Dapr path: {daprInfo.Path} - " +
-                            $"Routes {(directInfo.Path == daprInfo.Path ? "MATCH" : "DIFFER")}");
+                            $"Direct path: {directInfo.Path}, mesh path: {bannouInfo.Path} - " +
+                            $"Routes {(directInfo.Path == bannouInfo.Path ? "MATCH" : "DIFFER")}");
                     }
                 }
 
-                return TestResult.Successful($"Direct path works ({directInfo.Path}), Dapr call returned {daprResponse.StatusCode}");
+                return TestResult.Successful($"Direct path works ({directInfo.Path}), mesh call returned {bannouResponse.StatusCode}");
             }
             catch
             {
-                // Dapr sidecar might not be available in test environment
-                return TestResult.Successful($"Direct path: {directInfo.Path} (Dapr sidecar not reachable for comparison)");
+                // mesh might not be available in test environment
+                return TestResult.Successful($"Direct path: {directInfo.Path} (mesh not reachable for comparison)");
             }
         }
         catch (Exception ex)
         {
-            return TestResult.Failed($"Direct vs Dapr test failed: {ex.Message}");
+            return TestResult.Failed($"Direct vs mesh test failed: {ex.Message}");
         }
     }
 

@@ -79,7 +79,7 @@ if [ ! -f "$PROJECT_FILE" ]; then
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Only packages NOT provided by bannou-service - Dapr.Client, NSwag, etc. come transitively -->
+    <!-- Only packages NOT provided by bannou-service - NSwag, etc. come transitively -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
   </ItemGroup>

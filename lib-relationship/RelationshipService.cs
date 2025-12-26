@@ -18,8 +18,7 @@ namespace BeyondImmersion.BannouService.Relationship;
 /// Manages entity-to-entity relationships with composite uniqueness validation,
 /// bidirectional support, and soft-delete capability.
 /// </summary>
-[DaprService("relationship", typeof(IRelationshipService), lifetime: ServiceLifetime.Scoped)]
-[Obsolete]
+[BannouService("relationship", typeof(IRelationshipService), lifetime: ServiceLifetime.Scoped)]
 public partial class RelationshipService : IRelationshipService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -41,7 +40,6 @@ public partial class RelationshipService : IRelationshipService
     /// <param name="logger">Logger for diagnostic output.</param>
     /// <param name="configuration">Service configuration.</param>
     /// <param name="errorEventEmitter">Error event emitter for publishing error events.</param>
-    [Obsolete]
     public RelationshipService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
@@ -56,7 +54,7 @@ public partial class RelationshipService : IRelationshipService
 
         // Register event handlers via partial class (RelationshipServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     #region Read Operations

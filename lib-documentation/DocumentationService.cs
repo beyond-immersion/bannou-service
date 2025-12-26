@@ -17,8 +17,7 @@ namespace BeyondImmersion.BannouService.Documentation;
 /// State-store implementation for Documentation service following schema-first architecture.
 /// Uses IStateStoreFactory for persistence.
 /// </summary>
-[DaprService("documentation", typeof(IDocumentationService), lifetime: ServiceLifetime.Scoped)]
-[Obsolete]
+[BannouService("documentation", typeof(IDocumentationService), lifetime: ServiceLifetime.Scoped)]
 public partial class DocumentationService : IDocumentationService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -64,7 +63,7 @@ public partial class DocumentationService : IDocumentationService
 
     /// <summary>
     /// Registers this service's API permissions with the Permissions service on startup.
-    /// Overrides the default IDaprService implementation to use generated permission data.
+    /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()
     {
@@ -1835,7 +1834,7 @@ public partial class DocumentationService : IDocumentationService
     #region Internal Types
 
     /// <summary>
-    /// Internal model for document storage in Dapr state store.
+    /// Internal model for document storage in lib-state store.
     /// </summary>
     internal sealed class StoredDocument
     {

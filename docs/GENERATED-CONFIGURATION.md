@@ -1,6 +1,6 @@
 # Generated Configuration Reference
 
-> **Auto-generated**: 2025-12-25 21:45:33
+> **Auto-generated**: 2025-12-26 00:15:36
 > **Source**: `schemas/*-configuration.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -184,16 +184,12 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `ORCHESTRATOR_CACHE_TTL_MINUTES` | int | `5` | Cache TTL in minutes for orchestrator data |
 | `ORCHESTRATOR_CERTIFICATES_HOST_PATH` | string | `/app/provisioning/certificates` | Host path for TLS certificates |
-| `ORCHESTRATOR_DAPR_COMPONENTS_CONTAINER_PATH` | string | `/tmp/dapr-components` | Container path for mounted Dapr components |
-| `ORCHESTRATOR_DAPR_COMPONENTS_HOST_PATH` | string | `/app/provisioning/dapr/components` | Host path for Dapr components (mounted into containers) |
-| `ORCHESTRATOR_DAPR_IMAGE` | string | `daprio/daprd:1.16.3` | Docker image for Dapr sidecar containers |
 | `ORCHESTRATOR_DEGRADATION_THRESHOLD_MINUTES` | int | `5` | Time in minutes before a service is marked as degraded |
 | `ORCHESTRATOR_DOCKER_HOST` | string | `unix:///var/run/docker.sock` | Docker host for direct Docker API access |
 | `ORCHESTRATOR_DOCKER_NETWORK` | string | `bannou_default` | Docker network name for deployed containers |
 | `ORCHESTRATOR_HEARTBEAT_TIMEOUT_SECONDS` | int | `90` | Service heartbeat timeout in seconds |
 | `ORCHESTRATOR_KUBERNETES_NAMESPACE` | string | `default` | Kubernetes namespace for deployments |
 | `ORCHESTRATOR_LOGS_VOLUME` | string | `logs-data` | Docker volume name for logs |
-| `ORCHESTRATOR_PLACEMENT_HOST` | string | `placement:50006` | Dapr placement service host:port |
 | `ORCHESTRATOR_PORTAINER_API_KEY` | string | **REQUIRED** | Portainer API key |
 | `ORCHESTRATOR_PORTAINER_ENDPOINT_ID` | int | `1` | Portainer endpoint ID |
 | `ORCHESTRATOR_PORTAINER_URL` | string | **REQUIRED** | Portainer API URL |
@@ -229,7 +225,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `SERVICEDATA_STATE_STORE_NAME` | string | `servicedata-statestore` | Dapr state store name for service data |
+| `SERVICEDATA_STATE_STORE_NAME` | string | `servicedata-statestore` | State store name for service data |
 
 ### Species
 
@@ -252,7 +248,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `SUBSCRIPTIONS_AUTHORIZATION_SUFFIX` | string | `authorized` | Suffix for authorization keys in state store |
-| `SUBSCRIPTIONS_STATE_STORE_NAME` | string | `subscriptions-statestore` | Dapr state store name for subscriptions |
+| `SUBSCRIPTIONS_STATE_STORE_NAME` | string | `subscriptions-statestore` | State store name for subscriptions |
 
 ### Voice
 
@@ -279,9 +275,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 159
+- **Total properties**: 155
 - **Required (no default)**: 31
-- **Optional (has default)**: 128
+- **Optional (has default)**: 124
 
 ## Environment Variable Naming Convention
 

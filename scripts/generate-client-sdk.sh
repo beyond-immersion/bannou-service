@@ -26,7 +26,7 @@ echo "Found ${#CLIENT_FILES[@]} client files, ${#MODEL_FILES[@]} model files, ${
 
 # =============================================================================
 # SERVER SDK: Bannou.SDK (Full SDK with ServiceClients)
-# For game servers and internal services that need Dapr service-to-service calls
+# For game servers and internal services that need mesh service-to-service calls
 # =============================================================================
 
 SERVER_SDK_DIR="Bannou.SDK"
@@ -38,7 +38,7 @@ cat > "$SERVER_SDK_PROJECT" << 'EOF'
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -47,8 +47,8 @@ cat > "$SERVER_SDK_PROJECT" << 'EOF'
     <!-- NuGet Package Metadata -->
     <PackageId>BeyondImmersion.Bannou.SDK</PackageId>
     <Authors>BeyondImmersion</Authors>
-    <Description>Server SDK for Bannou service platform with Dapr service clients, models, events, and WebSocket protocol support. Use this for game servers and internal services.</Description>
-    <PackageTags>bannou;microservices;websocket;dapr;server;sdk;service-client</PackageTags>
+    <Description>Server SDK for Bannou service platform with service clients, models, events, and WebSocket protocol support. Use this for game servers and internal services.</Description>
+    <PackageTags>bannou;microservices;websocket;server;sdk;service-client</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
     <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
@@ -66,7 +66,7 @@ cat > "$SERVER_SDK_PROJECT" << 'EOF'
 
   <ItemGroup>
     <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
-    <PackageReference Include="Dapr.Client" Version="1.15.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
   </ItemGroup>
 
 EOF
@@ -147,14 +147,14 @@ cat > "$SERVER_SDK_DIR/README.md" << 'EOF'
 # Bannou Server SDK
 
 Server SDK for the Bannou service platform. Use this for **game servers** and **internal services** that need:
-- Dapr service-to-service calls via generated ServiceClients
+- Mesh service-to-service calls via generated ServiceClients
 - WebSocket connections for event reception
 - Full access to all Bannou APIs
 
 ## When to Use This SDK
 
 - **Game Servers** (e.g., Stride3D game server) that need to call Bannou services directly
-- **Internal Microservices** that communicate via Dapr service invocation
+- **Internal Microservices** that communicate via mesh service invocation
 - **External Servers** that connect via WebSocket for event reception
 
 ## Features
@@ -164,17 +164,17 @@ Server SDK for the Bannou service platform. Use this for **game servers** and **
 - ✅ Event models for pub/sub messaging
 - ✅ WebSocket binary protocol (31-byte header)
 - ✅ `BannouClient` for WebSocket connections
-- ✅ Dapr service routing with dynamic app-id resolution
+- ✅ Mesh service routing with dynamic app-id resolution
 
 ## Usage
 
-### Using Service Clients (Dapr)
+### Using Service Clients
 
 ```csharp
 using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Auth;
 
-// Service clients use Dapr for routing
+// Service clients use mesh routing
 var accountsClient = new AccountsClient();
 var authClient = new AuthClient();
 
@@ -205,7 +205,7 @@ dotnet add package BeyondImmersion.Bannou.SDK
 
 ## See Also
 
-- **Bannou.Client.SDK** - For game clients that only use WebSocket (no Dapr dependency)
+- **Bannou.Client.SDK** - For game clients that only use WebSocket (lightweight, no service clients)
 EOF
 
 echo "✅ Server SDK: $SERVER_SDK_PROJECT"
@@ -224,7 +224,7 @@ cat > "$CLIENT_SDK_PROJECT" << 'EOF'
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -233,7 +233,7 @@ cat > "$CLIENT_SDK_PROJECT" << 'EOF'
     <!-- NuGet Package Metadata -->
     <PackageId>BeyondImmersion.Bannou.Client.SDK</PackageId>
     <Authors>BeyondImmersion</Authors>
-    <Description>Client SDK for Bannou service platform with models, events, and WebSocket protocol support. For game clients - no Dapr dependency.</Description>
+    <Description>Client SDK for Bannou service platform with models, events, and WebSocket protocol support. Lightweight package for game clients.</Description>
     <PackageTags>bannou;microservices;websocket;client;sdk;game-client</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
@@ -250,7 +250,7 @@ cat > "$CLIENT_SDK_PROJECT" << 'EOF'
     <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
 
-  <!-- NO Dapr.Client dependency - this is for game clients only -->
+  <!-- Minimal dependencies - this is for game clients only -->
   <ItemGroup>
     <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
   </ItemGroup>
@@ -296,7 +296,7 @@ cat >> "$CLIENT_SDK_PROJECT" << 'EOF'
     </ItemGroup>
   </Target>
 
-  <!-- Shared Infrastructure (no Dapr dependency) -->
+  <!-- Shared Infrastructure -->
   <ItemGroup>
     <Compile Include="../bannou-service/ApiException.cs" Condition="Exists('../bannou-service/ApiException.cs')" />
     <Compile Include="../bannou-service/Configuration/BannouJson.cs" Condition="Exists('../bannou-service/Configuration/BannouJson.cs')" />
@@ -325,7 +325,7 @@ cat > "$CLIENT_SDK_DIR/README.md" << 'EOF'
 
 Lightweight client SDK for the Bannou service platform. Use this for **game clients** that:
 - Connect via WebSocket only
-- Don't need Dapr service-to-service calls
+- Don't need service-to-service calls
 - Want minimal dependencies
 
 ## When to Use This SDK
@@ -338,8 +338,7 @@ Lightweight client SDK for the Bannou service platform. Use this for **game clie
 
 This SDK **does not include**:
 - ❌ ServiceClients (`AccountsClient`, `AuthClient`, etc.) - use `Bannou.SDK` if you need these
-- ❌ `Dapr.Client` dependency
-- ❌ Dapr service infrastructure
+- ❌ Server-side infrastructure dependencies
 
 ## Features
 
@@ -347,7 +346,7 @@ This SDK **does not include**:
 - ✅ Event models for pub/sub messaging
 - ✅ WebSocket binary protocol (31-byte header)
 - ✅ `BannouClient` for WebSocket connections
-- ✅ Zero Dapr dependencies (smaller package)
+- ✅ Minimal dependencies (smaller package)
 
 ## Usage
 
@@ -382,7 +381,7 @@ dotnet add package BeyondImmersion.Bannou.Client.SDK
 
 ## See Also
 
-- **Bannou.SDK** - For game servers that need Dapr service clients
+- **Bannou.SDK** - For game servers that need service clients
 EOF
 
 echo "✅ Client SDK: $CLIENT_SDK_PROJECT"
@@ -397,5 +396,5 @@ echo ""
 echo "   Server SDK (Bannou.SDK):       ${#CLIENT_FILES[@]} clients, ${#MODEL_FILES[@]} models, ${#EVENT_FILES[@]} events"
 echo "   Client SDK (Bannou.Client.SDK): 0 clients, ${#MODEL_FILES[@]} models, ${#EVENT_FILES[@]} events"
 echo ""
-echo "   Server SDK includes: ServiceClients + Models + Events + Protocol + BannouClient + Dapr"
-echo "   Client SDK includes: Models + Events + Protocol + BannouClient (NO ServiceClients, NO Dapr)"
+echo "   Server SDK includes: ServiceClients + Models + Events + Protocol + BannouClient"
+echo "   Client SDK includes: Models + Events + Protocol + BannouClient (NO ServiceClients)"

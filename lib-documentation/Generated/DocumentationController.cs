@@ -27,7 +27,7 @@ namespace BeyondImmersion.BannouService.Documentation;
 using System = global::System;
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public interface IDocumentationController : BeyondImmersion.BannouService.Controllers.IDaprController
+public interface IDocumentationController : BeyondImmersion.BannouService.Controllers.IBannouController
 {
 
     /// <summary>

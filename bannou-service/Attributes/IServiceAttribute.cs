@@ -10,7 +10,6 @@ public interface IServiceAttribute
     /// <summary>
     /// Will retrieve all types across all loaded assemblies with the given attribute.
     /// </summary>
-    [Obsolete]
     public static List<(Type, T)> GetClassesWithAttribute<T>()
         where T : Attribute, IServiceAttribute
     {
@@ -54,7 +53,6 @@ public interface IServiceAttribute
     /// <summary>
     /// Will retrieve all types across all loaded assemblies with the given attribute.
     /// </summary>
-    [Obsolete]
     public static List<(Type, IServiceAttribute)> GetClassesWithAttribute(Type attributeType)
     {
         List<(Type, IServiceAttribute)> results = new();
@@ -100,7 +98,6 @@ public interface IServiceAttribute
     ///
     /// Return the type, propertyInfo, and the attribute instance.
     /// </summary>
-    [Obsolete]
     public static List<(Type, PropertyInfo, T)> GetPropertiesWithAttribute<T>()
         where T : Attribute, IServiceAttribute
     {
@@ -146,7 +143,6 @@ public interface IServiceAttribute
     ///
     /// Return the type, propertyInfo, and the attribute instance.
     /// </summary>
-    [Obsolete]
     public static List<(Type, PropertyInfo, IServiceAttribute)> GetPropertiesWithAttribute(Type attributeType)
     {
         List<(Type, PropertyInfo, IServiceAttribute)> results = new();
@@ -191,7 +187,6 @@ public interface IServiceAttribute
     ///
     /// Return the type, fieldInfo, and the attribute instance.
     /// </summary>
-    [Obsolete]
     public static List<(Type, FieldInfo, T)> GetFieldsWithAttribute<T>()
         where T : Attribute, IServiceAttribute
     {
@@ -237,7 +232,6 @@ public interface IServiceAttribute
     ///
     /// Return the type, fieldInfo, and the attribute instance.
     /// </summary>
-    [Obsolete]
     public static List<(Type, FieldInfo, IServiceAttribute)> GetFieldsWithAttribute(Type attributeType)
     {
         List<(Type, FieldInfo, IServiceAttribute)> results = new();
@@ -282,7 +276,6 @@ public interface IServiceAttribute
     ///
     /// Return the type, methodInfo, and the attribute instance.
     /// </summary>
-    [Obsolete]
     public static List<(Type, MethodInfo, T)> GetMethodsWithAttribute<T>()
         where T : Attribute, IServiceAttribute
     {
@@ -328,7 +321,6 @@ public interface IServiceAttribute
     ///
     /// Return the type, methodInfo, and the attribute instance.
     /// </summary>
-    [Obsolete]
     public static List<(Type, MethodInfo, IServiceAttribute)> GetMethodsWithAttribute(Type attributeType)
     {
         List<(Type, MethodInfo, IServiceAttribute)> results = new();
@@ -370,7 +362,6 @@ public interface IServiceAttribute
     /// <summary>
     /// Will retrieve PropertyInfo for all properties with the given attribute in the given class type.
     /// </summary>
-    [Obsolete]
     public static List<(PropertyInfo, IServiceAttribute)> GetPropertiesWithAttribute(Type classType, Type attributeType)
     {
         List<(PropertyInfo, IServiceAttribute)> results = new();
@@ -401,7 +392,6 @@ public interface IServiceAttribute
     /// <summary>
     /// Will retrieve PropertyInfo for all properties with the given attribute in the given class type.
     /// </summary>
-    [Obsolete]
     public static List<(PropertyInfo, T)> GetPropertiesWithAttribute<T>(Type classType)
         where T : Attribute, IServiceAttribute
     {
@@ -433,7 +423,6 @@ public interface IServiceAttribute
     /// <summary>
     /// Will retrieve FieldInfo for all fields with the given attribute in the given class type.
     /// </summary>
-    [Obsolete]
     public static List<(FieldInfo, T)> GetFieldsWithAttribute<T>(Type classType)
         where T : Attribute, IServiceAttribute
     {
@@ -465,7 +454,6 @@ public interface IServiceAttribute
     /// <summary>
     /// Will retrieve FieldInfo for all fields with the given attribute in the given class type.
     /// </summary>
-    [Obsolete]
     public static List<(FieldInfo, IServiceAttribute)> GetFieldsWithAttribute(Type classType, Type attributeType)
     {
         List<(FieldInfo, IServiceAttribute)> results = new();
@@ -496,7 +484,6 @@ public interface IServiceAttribute
     /// <summary>
     /// Will retrieve MethodInfo for all methods with the given attribute in the given class type.
     /// </summary>
-    [Obsolete]
     public static List<(MethodInfo, IServiceAttribute)> GetMethodsWithAttribute(Type classType, Type attributeType)
     {
         List<(MethodInfo, IServiceAttribute)> results = new();
@@ -530,7 +517,6 @@ public interface IServiceAttribute
     /// <summary>
     /// Will retrieve MethodInfo for all methods with the given attribute in the given class type.
     /// </summary>
-    [Obsolete]
     public static List<(MethodInfo, T)> GetMethodsWithAttribute<T>(Type classType)
         where T : Attribute, IServiceAttribute
     {

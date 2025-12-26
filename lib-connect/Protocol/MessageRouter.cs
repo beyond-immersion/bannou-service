@@ -238,7 +238,7 @@ public class MessageRouteInfo
 /// </summary>
 public enum RouteType
 {
-    /// <summary>Route to a Dapr service.</summary>
+    /// <summary>Route to a Bannou service.</summary>
     Service,
 
     /// <summary>Route to another WebSocket client.</summary>

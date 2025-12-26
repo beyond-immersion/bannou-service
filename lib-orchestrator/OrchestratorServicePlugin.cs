@@ -10,14 +10,13 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 
 /// <summary>
 /// Plugin wrapper for Orchestrator service enabling plugin-based discovery and lifecycle management.
-/// Bridges existing IDaprService implementation with the new Plugin system.
+/// Bridges existing IBannouService implementation with the new Plugin system.
 /// </summary>
 public class OrchestratorServicePlugin : BaseBannouPlugin
 {
     public override string PluginName => "orchestrator";
     public override string DisplayName => "Orchestrator Service";
 
-    [Obsolete]
     private IOrchestratorService? _service;
     private IServiceProvider? _serviceProvider;
 
@@ -39,14 +38,14 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
         }
 
         // CRITICAL: Enforce that orchestrator ONLY runs on "bannou" app-id
-        var currentAppId = Environment.GetEnvironmentVariable("DAPR_APP_ID") ?? AppConstants.DEFAULT_APP_NAME;
+        var currentAppId = Environment.GetEnvironmentVariable("BANNOU_APP_ID") ?? AppConstants.DEFAULT_APP_NAME;
         if (currentAppId != AppConstants.DEFAULT_APP_NAME)
         {
             Logger?.LogCritical(
                 "FATAL: Orchestrator service can ONLY run on '{DefaultAppId}' app-id, not '{CurrentAppId}'. " +
                 "The orchestrator is the control plane that manages all other services - it must remain on the " +
                 "primary 'bannou' instance to prevent control plane instability. " +
-                "To run orchestrator APIs, ensure DAPR_APP_ID is set to '{DefaultAppId}' or unset (defaults to 'bannou').",
+                "To run orchestrator APIs, ensure BANNOU_APP_ID is set to '{DefaultAppId}' or unset (defaults to 'bannou').",
                 AppConstants.DEFAULT_APP_NAME, currentAppId, AppConstants.DEFAULT_APP_NAME);
 
             throw new InvalidOperationException(
@@ -62,9 +61,8 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Configure services for dependency injection - mimics existing [DaprService] registration.
+    /// Configure services for dependency injection - mimics existing [BannouService] registration.
     /// </summary>
-    [Obsolete]
     public override void ConfigureServices(IServiceCollection services)
     {
         if (!OnValidatePlugin())
@@ -90,7 +88,7 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
         services.AddSingleton<ISmartRestartManager, SmartRestartManager>();
         services.AddSingleton<IBackendDetector, BackendDetector>();
 
-        // Register the service implementation (existing pattern from [DaprService] attribute)
+        // Register the service implementation (existing pattern from [BannouService] attribute)
         services.AddScoped<IOrchestratorService, OrchestratorService>();
         services.AddScoped<OrchestratorService>();
 
@@ -111,7 +109,7 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
         Logger?.LogInformation("Configuring Orchestrator service application pipeline");
 
         // The generated OrchestratorController should already be discovered via standard ASP.NET Core controller discovery
-        // since we're not excluding the assembly like we did with IDaprController approach
+        // since we're not excluding the assembly like we did with IBannouController approach
 
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
@@ -120,9 +118,8 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Start the service - initializes infrastructure connections and calls existing IDaprService lifecycle if present.
+    /// Start the service - initializes infrastructure connections and calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         if (!OnValidatePlugin()) return true;
@@ -155,11 +152,11 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
                 return false;
             }
 
-            // Call existing IDaprService.OnStartAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnStartAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnStartAsync for Orchestrator service");
-                await daprService.OnStartAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnStartAsync for Orchestrator service");
+                await bannouService.OnStartAsync(CancellationToken.None);
             }
 
             Logger?.LogInformation("Orchestrator service started successfully");
@@ -173,9 +170,8 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Running phase - calls existing IDaprService lifecycle if present.
+    /// Running phase - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (!OnValidatePlugin() || _service == null) return;
@@ -184,11 +180,11 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Call existing IDaprService.OnRunningAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnRunningAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for Orchestrator service");
-                await daprService.OnRunningAsync(CancellationToken.None);
+                Logger?.LogDebug("Calling IBannouService.OnRunningAsync for Orchestrator service");
+                await bannouService.OnRunningAsync(CancellationToken.None);
             }
         }
         catch (Exception ex)
@@ -198,9 +194,8 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Shutdown the service - calls existing IDaprService lifecycle if present.
+    /// Shutdown the service - calls existing IBannouService lifecycle if present.
     /// </summary>
-    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (!OnValidatePlugin() || _service == null) return;
@@ -209,11 +204,11 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Call existing IDaprService.OnShutdownAsync if the service implements it
-            if (_service is IDaprService daprService)
+            // Call existing IBannouService.OnShutdownAsync if the service implements it
+            if (_service is IBannouService bannouService)
             {
-                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for Orchestrator service");
-                await daprService.OnShutdownAsync();
+                Logger?.LogDebug("Calling IBannouService.OnShutdownAsync for Orchestrator service");
+                await bannouService.OnShutdownAsync();
             }
 
             Logger?.LogInformation("Orchestrator service shutdown complete");

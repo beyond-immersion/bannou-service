@@ -13,7 +13,6 @@ public static class ServiceLogging
     /// <summary>
     /// Create a JSON-enabled service logger.
     /// </summary>
-    [Obsolete]
     public static Microsoft.Extensions.Logging.ILogger CreateApplicationLogger()
     {
         var logFilepath = Path.Combine(Directory.GetCurrentDirectory(), $"logs/app.log");
@@ -30,7 +29,6 @@ public static class ServiceLogging
     /// <summary>
     /// Create a simple service logger.
     /// </summary>
-    [Obsolete]
     public static Microsoft.Extensions.Logging.ILogger CreateServiceLogger(string serviceName)
     {
         if (string.Equals("app", serviceName, StringComparison.InvariantCultureIgnoreCase))
@@ -46,7 +44,6 @@ public static class ServiceLogging
         return factory.CreateLogger(serviceName.ToLower());
     }
 
-    [Obsolete]
     private static LoggerConfiguration WriteToFile(this LoggerConfiguration config, string logFilepath)
     {
         if (Program.Configuration.Log_Mode.HasFlag(AppConfiguration.LogModes.File))
@@ -55,7 +52,6 @@ public static class ServiceLogging
         return config;
     }
 
-    [Obsolete]
     private static LoggerConfiguration WriteToConsole(this LoggerConfiguration config)
     {
         if (Program.Configuration.Log_Mode.HasFlag(AppConfiguration.LogModes.Console))
@@ -75,8 +71,7 @@ public static class ServiceLogging
     /// <summary>
     /// Create a simple logger for the given service type.
     /// </summary>
-    [Obsolete]
     public static void CreateServiceLogger<T>()
-        where T : IDaprService
+        where T : IBannouService
         => CreateServiceLogger(typeof(T).Name);
 }

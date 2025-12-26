@@ -31,7 +31,7 @@ info:
   version: 2.0.0
 servers:
 - url: http://localhost:5012
-  description: Dapr sidecar endpoint (internal only)
+  description: Bannou service endpoint (internal only)
 
 # NOTE: x-lifecycle moved to species-events.yaml
 

@@ -21,8 +21,7 @@ namespace BeyondImmersion.BannouService.Species;
 /// Manages species definitions for characters in the Arcadia game world.
 /// Species are realm-specific, allowing different realms to have distinct populations.
 /// </summary>
-[DaprService("species", typeof(ISpeciesService), lifetime: ServiceLifetime.Scoped)]
-[Obsolete]
+[BannouService("species", typeof(ISpeciesService), lifetime: ServiceLifetime.Scoped)]
 public partial class SpeciesService : ISpeciesService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -38,7 +37,6 @@ public partial class SpeciesService : ISpeciesService
     private const string REALM_INDEX_PREFIX = "realm-index:";
     private const string ALL_SPECIES_KEY = "all-species";
 
-    [Obsolete]
     public SpeciesService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
@@ -57,7 +55,7 @@ public partial class SpeciesService : ISpeciesService
 
         // Register event handlers via partial class (SpeciesServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     #region Key Building Helpers
@@ -148,7 +146,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogError(ex, "Error getting species: {SpeciesId}", body.SpeciesId);
             await _messageBus.TryPublishErrorAsync(
                 "species", "GetSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/get",
+                dependency: "state", endpoint: "post:/species/get",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -187,7 +185,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogError(ex, "Error getting species by code: {Code}", body.Code);
             await _messageBus.TryPublishErrorAsync(
                 "species", "GetSpeciesByCode", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/get-by-code",
+                dependency: "state", endpoint: "post:/species/get-by-code",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -261,7 +259,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogError(ex, "Error listing species");
             await _messageBus.TryPublishErrorAsync(
                 "species", "ListSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/list",
+                dependency: "state", endpoint: "post:/species/list",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -332,7 +330,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogError(ex, "Error listing species by realm: {RealmId}", body.RealmId);
             await _messageBus.TryPublishErrorAsync(
                 "species", "ListSpeciesByRealm", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/list-by-realm",
+                dependency: "state", endpoint: "post:/species/list-by-realm",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -435,7 +433,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogError(ex, "Error creating species: {Code}", body.Code);
             await _messageBus.TryPublishErrorAsync(
                 "species", "CreateSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/create",
+                dependency: "state", endpoint: "post:/species/create",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -519,7 +517,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogError(ex, "Error updating species: {SpeciesId}", body.SpeciesId);
             await _messageBus.TryPublishErrorAsync(
                 "species", "UpdateSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/update",
+                dependency: "state", endpoint: "post:/species/update",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -593,7 +591,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogError(ex, "Error deleting species: {SpeciesId}", body.SpeciesId);
             await _messageBus.TryPublishErrorAsync(
                 "species", "DeleteSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/delete",
+                dependency: "state", endpoint: "post:/species/delete",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -657,7 +655,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogError(ex, "Error adding species to realm");
             await _messageBus.TryPublishErrorAsync(
                 "species", "AddSpeciesToRealm", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/add-to-realm",
+                dependency: "state", endpoint: "post:/species/add-to-realm",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -730,7 +728,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogError(ex, "Error removing species from realm");
             await _messageBus.TryPublishErrorAsync(
                 "species", "RemoveSpeciesFromRealm", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/remove-from-realm",
+                dependency: "state", endpoint: "post:/species/remove-from-realm",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -846,7 +844,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogError(ex, "Error seeding species");
             await _messageBus.TryPublishErrorAsync(
                 "species", "SeedSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/seed",
+                dependency: "state", endpoint: "post:/species/seed",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -897,7 +895,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogError(ex, "Error deprecating species: {SpeciesId}", body.SpeciesId);
             await _messageBus.TryPublishErrorAsync(
                 "species", "DeprecateSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/deprecate",
+                dependency: "state", endpoint: "post:/species/deprecate",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -944,7 +942,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogError(ex, "Error undeprecating species: {SpeciesId}", body.SpeciesId);
             await _messageBus.TryPublishErrorAsync(
                 "species", "UndeprecateSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/undeprecate",
+                dependency: "state", endpoint: "post:/species/undeprecate",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -1058,7 +1056,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogError(ex, "Error merging species {SourceId} into {TargetId}", body.SourceSpeciesId, body.TargetSpeciesId);
             await _messageBus.TryPublishErrorAsync(
                 "species", "MergeSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/merge",
+                dependency: "state", endpoint: "post:/species/merge",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }

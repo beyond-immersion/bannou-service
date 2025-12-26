@@ -18,8 +18,7 @@ namespace BeyondImmersion.BannouService.Realm;
 /// Manages realm definitions - top-level persistent worlds in Arcadia (e.g., Omega, Arcadia, Fantasia).
 /// Each realm operates as an independent peer with distinct characteristics.
 /// </summary>
-[DaprService("realm", typeof(IRealmService), lifetime: ServiceLifetime.Scoped)]
-[Obsolete]
+[BannouService("realm", typeof(IRealmService), lifetime: ServiceLifetime.Scoped)]
 public partial class RealmService : IRealmService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -32,7 +31,6 @@ public partial class RealmService : IRealmService
     private const string CODE_INDEX_PREFIX = "code-index:";
     private const string ALL_REALMS_KEY = "all-realms";
 
-    [Obsolete]
     public RealmService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
@@ -47,7 +45,7 @@ public partial class RealmService : IRealmService
 
         // Register event handlers via partial class (RealmServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     #region Key Building Helpers
@@ -86,7 +84,7 @@ public partial class RealmService : IRealmService
             _logger.LogError(ex, "Error getting realm: {RealmId}", body.RealmId);
             await _messageBus.TryPublishErrorAsync(
                 "realm", "GetRealm", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/realm/get",
+                dependency: "state", endpoint: "post:/realm/get",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -128,7 +126,7 @@ public partial class RealmService : IRealmService
             _logger.LogError(ex, "Error getting realm by code: {Code}", body.Code);
             await _messageBus.TryPublishErrorAsync(
                 "realm", "GetRealmByCode", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/realm/get-by-code",
+                dependency: "state", endpoint: "post:/realm/get-by-code",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -207,7 +205,7 @@ public partial class RealmService : IRealmService
             _logger.LogError(ex, "Error listing realms");
             await _messageBus.TryPublishErrorAsync(
                 "realm", "ListRealms", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/realm/list",
+                dependency: "state", endpoint: "post:/realm/list",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -249,7 +247,7 @@ public partial class RealmService : IRealmService
             _logger.LogError(ex, "Error checking realm existence: {RealmId}", body.RealmId);
             await _messageBus.TryPublishErrorAsync(
                 "realm", "RealmExists", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/realm/exists",
+                dependency: "state", endpoint: "post:/realm/exists",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -327,7 +325,7 @@ public partial class RealmService : IRealmService
             _logger.LogError(ex, "Error creating realm: {Code}", body.Code);
             await _messageBus.TryPublishErrorAsync(
                 "realm", "CreateRealm", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/realm/create",
+                dependency: "state", endpoint: "post:/realm/create",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -399,7 +397,7 @@ public partial class RealmService : IRealmService
             _logger.LogError(ex, "Error updating realm: {RealmId}", body.RealmId);
             await _messageBus.TryPublishErrorAsync(
                 "realm", "UpdateRealm", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/realm/update",
+                dependency: "state", endpoint: "post:/realm/update",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -457,7 +455,7 @@ public partial class RealmService : IRealmService
             _logger.LogError(ex, "Error deleting realm: {RealmId}", body.RealmId);
             await _messageBus.TryPublishErrorAsync(
                 "realm", "DeleteRealm", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/realm/delete",
+                dependency: "state", endpoint: "post:/realm/delete",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -511,7 +509,7 @@ public partial class RealmService : IRealmService
             _logger.LogError(ex, "Error deprecating realm: {RealmId}", body.RealmId);
             await _messageBus.TryPublishErrorAsync(
                 "realm", "DeprecateRealm", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/realm/deprecate",
+                dependency: "state", endpoint: "post:/realm/deprecate",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -561,7 +559,7 @@ public partial class RealmService : IRealmService
             _logger.LogError(ex, "Error undeprecating realm: {RealmId}", body.RealmId);
             await _messageBus.TryPublishErrorAsync(
                 "realm", "UndeprecateRealm", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/realm/undeprecate",
+                dependency: "state", endpoint: "post:/realm/undeprecate",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -673,7 +671,7 @@ public partial class RealmService : IRealmService
             _logger.LogError(ex, "Error seeding realms");
             await _messageBus.TryPublishErrorAsync(
                 "realm", "SeedRealms", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/realm/seed",
+                dependency: "state", endpoint: "post:/realm/seed",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }

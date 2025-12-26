@@ -11,7 +11,7 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Test handler for character API endpoints using generated clients.
 /// Tests the character service APIs directly via NSwag-generated CharacterClient.
 ///
-/// Note: Character APIs test service-to-service communication via Dapr.
+/// Note: Character APIs test service-to-service communication via mesh.
 /// These tests validate full CRUD operations with real datastores.
 /// Characters require valid Realm and Species - these are created as dependencies.
 /// </summary>

@@ -36,7 +36,7 @@ public class AuthEventsController : ControllerBase
     }
 
     /// <summary>
-    /// Handle account.deleted events via Dapr pubsub.
+    /// Handle account.deleted events via pubsub.
     /// Dispatches to all registered handlers via IEventConsumer.
     /// </summary>
     [Topic("bannou-pubsub", "account.deleted")]
@@ -45,7 +45,7 @@ public class AuthEventsController : ControllerBase
     {
         try
         {
-            var evt = await DaprEventHelper.ReadEventAsync<AccountDeletedEvent>(Request);
+            var evt = await BannouEventHelper.ReadEventAsync<AccountDeletedEvent>(Request);
 
             if (evt == null)
             {
@@ -67,7 +67,7 @@ public class AuthEventsController : ControllerBase
     }
 
     /// <summary>
-    /// Handle account.updated events via Dapr pubsub.
+    /// Handle account.updated events via pubsub.
     /// Dispatches to all registered handlers via IEventConsumer.
     /// </summary>
     [Topic("bannou-pubsub", "account.updated")]
@@ -76,7 +76,7 @@ public class AuthEventsController : ControllerBase
     {
         try
         {
-            var evt = await DaprEventHelper.ReadEventAsync<AccountUpdatedEvent>(Request);
+            var evt = await BannouEventHelper.ReadEventAsync<AccountUpdatedEvent>(Request);
 
             if (evt == null)
             {
@@ -98,7 +98,7 @@ public class AuthEventsController : ControllerBase
     }
 
     /// <summary>
-    /// Handle subscription.updated events via Dapr pubsub.
+    /// Handle subscription.updated events via pubsub.
     /// Dispatches to all registered handlers via IEventConsumer.
     /// </summary>
     [Topic("bannou-pubsub", "subscription.updated")]
@@ -107,7 +107,7 @@ public class AuthEventsController : ControllerBase
     {
         try
         {
-            var evt = await DaprEventHelper.ReadEventAsync<SubscriptionUpdatedEvent>(Request);
+            var evt = await BannouEventHelper.ReadEventAsync<SubscriptionUpdatedEvent>(Request);
 
             if (evt == null)
             {

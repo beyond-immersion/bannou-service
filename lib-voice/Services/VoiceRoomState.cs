@@ -1,7 +1,7 @@
 namespace BeyondImmersion.BannouService.Voice.Services;
 
 /// <summary>
-/// Internal state model for a voice room stored in Dapr state store.
+/// Internal state model for a voice room stored in state store.
 /// This is the source of truth for room configuration; participants are stored separately.
 /// </summary>
 public class VoiceRoomData

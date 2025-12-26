@@ -9,18 +9,17 @@ namespace BeyondImmersion.BannouService.Testing;
 
 /// <summary>
 /// Test handler for service registration pattern infrastructure.
-/// Tests the automatic permission registration mechanism in IDaprService.
+/// Tests the automatic permission registration mechanism in IBannouService.
 /// </summary>
 public class ServiceRegistrationTestHandler : IServiceTestHandler
 {
-    [Obsolete]
     public ServiceTest[] GetServiceTests()
     {
         return
         [
             new ServiceTest(TestServiceRegistrationPattern, "Service Registration Pattern", "Infrastructure", "Tests automatic service permission registration"),
             new ServiceTest(TestCommonEventModels, "Common Event Models", "Infrastructure", "Tests common event model generation and access"),
-            new ServiceTest(TestRegistrationMethodSignature, "Registration Method Signature", "Infrastructure", "Tests IDaprService.RegisterServicePermissionsAsync signature"),
+            new ServiceTest(TestRegistrationMethodSignature, "Registration Method Signature", "Infrastructure", "Tests IBannouService.RegisterServicePermissionsAsync signature"),
             new ServiceTest(TestEventSerialization, "Event Serialization", "Infrastructure", "Tests ServiceRegistrationEvent serialization")
         ];
     }
@@ -28,20 +27,19 @@ public class ServiceRegistrationTestHandler : IServiceTestHandler
     /// <summary>
     /// Tests the service registration pattern infrastructure.
     /// </summary>
-    [Obsolete]
     private static Task<TestResult> TestServiceRegistrationPattern(ITestClient testClient, string[] args)
     {
         try
         {
             Console.WriteLine("Testing service registration pattern...");
 
-            // Test that IDaprService has RegisterServicePermissionsAsync method
-            var daprServiceInterface = typeof(IDaprService);
-            var registrationMethod = daprServiceInterface.GetMethods()
+            // Test that IBannouService has RegisterServicePermissionsAsync method
+            var bannouServiceInterface = typeof(IBannouService);
+            var registrationMethod = bannouServiceInterface.GetMethods()
                 .FirstOrDefault(m => m.Name == "RegisterServicePermissionsAsync");
 
             if (registrationMethod == null)
-                return Task.FromResult(new TestResult(false, "IDaprService.RegisterServicePermissionsAsync method not found"));
+                return Task.FromResult(new TestResult(false, "IBannouService.RegisterServicePermissionsAsync method not found"));
 
             // Verify method signature
             if (registrationMethod.ReturnType != typeof(Task))
@@ -50,7 +48,7 @@ public class ServiceRegistrationTestHandler : IServiceTestHandler
             if (registrationMethod.GetParameters().Length != 0)
                 return Task.FromResult(new TestResult(false, "RegisterServicePermissionsAsync should have no parameters"));
 
-            Console.WriteLine("✓ IDaprService.RegisterServicePermissionsAsync method signature correct");
+            Console.WriteLine("✓ IBannouService.RegisterServicePermissionsAsync method signature correct");
 
             // Test that method is virtual
             if (!registrationMethod.IsVirtual)
@@ -117,19 +115,18 @@ public class ServiceRegistrationTestHandler : IServiceTestHandler
     /// <summary>
     /// Tests the registration method signature matches expected pattern.
     /// </summary>
-    [Obsolete]
     private static Task<TestResult> TestRegistrationMethodSignature(ITestClient testClient, string[] args)
     {
         try
         {
             Console.WriteLine("Testing registration method signature...");
 
-            // Verify IDaprService interface exists and has correct method
-            var daprServiceType = typeof(IDaprService);
-            var methods = daprServiceType.GetMethods().Where(m => m.Name.Contains("RegisterService")).ToArray();
+            // Verify IBannouService interface exists and has correct method
+            var bannouServiceType = typeof(IBannouService);
+            var methods = bannouServiceType.GetMethods().Where(m => m.Name.Contains("RegisterService")).ToArray();
 
             if (methods.Length == 0)
-                return Task.FromResult(new TestResult(false, "No RegisterService methods found in IDaprService"));
+                return Task.FromResult(new TestResult(false, "No RegisterService methods found in IBannouService"));
 
             var registrationMethod = methods.FirstOrDefault(m => m.Name == "RegisterServicePermissionsAsync");
             if (registrationMethod == null)

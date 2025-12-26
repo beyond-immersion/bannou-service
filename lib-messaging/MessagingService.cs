@@ -16,8 +16,7 @@ namespace BeyondImmersion.BannouService.Messaging;
 /// Implementation of the Messaging service.
 /// Provides HTTP API layer over native RabbitMQ messaging infrastructure.
 /// </summary>
-[DaprService("messaging", typeof(IMessagingService), lifetime: ServiceLifetime.Singleton)]
-[Obsolete]
+[BannouService("messaging", typeof(IMessagingService), lifetime: ServiceLifetime.Singleton)]
 public partial class MessagingService : IMessagingService, IAsyncDisposable
 {
     private readonly ILogger<MessagingService> _logger;

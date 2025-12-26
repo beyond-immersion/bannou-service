@@ -7,8 +7,8 @@ namespace BeyondImmersion.BannouService.Mesh.Services;
 
 /// <summary>
 /// Manages direct Redis connections for mesh service.
-/// CRITICAL: Uses direct connection (NOT Dapr) to avoid circular dependencies.
-/// This is the service mesh - it cannot depend on Dapr for service discovery.
+/// CRITICAL: Uses direct connection (NOT via mesh) to avoid circular dependencies.
+/// This is the service mesh - it provides service discovery.
 /// </summary>
 public class MeshRedisManager : IMeshRedisManager
 {

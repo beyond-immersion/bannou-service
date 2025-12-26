@@ -202,25 +202,6 @@ In distributed deployments, the Orchestrator publishes service routing informati
 3. `ServiceAppMappingResolver` updates routing tables atomically
 4. Requests route to correct nodes based on current topology
 
-### Dapr Sidecar Configuration
-
-Each Bannou instance needs a Dapr sidecar:
-
-```yaml
-# docker-compose.yml pattern
-services:
-  bannou-auth:
-    image: bannou-service
-    environment:
-      - SERVICES_ENABLED=false
-      - AUTH_SERVICE_ENABLED=true
-
-  bannou-auth-dapr:
-    image: daprio/daprd
-    command: ["./daprd", "-app-id", "bannou-auth", "-app-port", "5000"]
-    network_mode: "service:bannou-auth"
-```
-
 ## Networking Considerations
 
 ### WSL2 Docker Networking
@@ -238,7 +219,7 @@ See [Networking Strategy](../operations/NETWORKING_STRATEGY.md) for details.
 ### Service Discovery
 
 - **Development**: mDNS on Docker bridge networks
-- **Production**: Dapr service discovery with DNS or Kubernetes service mesh
+- **Production**: DNS or Kubernetes service mesh via lib-mesh
 
 ### Port Allocation
 
@@ -246,8 +227,6 @@ See [Networking Strategy](../operations/NETWORKING_STRATEGY.md) for details.
 |---------|-------------|
 | Bannou HTTP | 5012 |
 | Bannou HTTPS | 5013 |
-| Dapr HTTP | 3500 |
-| Dapr gRPC | 50001 |
 | Redis | 6379 |
 | RabbitMQ | 5672 |
 | MySQL | 3306 |
@@ -260,10 +239,6 @@ Key environment variables for deployment:
 # Service selection
 SERVICES_ENABLED=true|false
 {SERVICE}_SERVICE_ENABLED=true|false
-
-# Dapr configuration
-DAPR_HTTP_PORT=3500
-DAPR_GRPC_PORT=50001
 
 # JWT settings
 BANNOU_JWTSECRET=your-secret-key
@@ -279,12 +254,9 @@ See [Configuration Reference](../reference/CONFIGURATION.md) for the complete li
 
 ## Health Monitoring
 
-### Dapr Health Endpoints
+### Health Endpoints
 
 ```bash
-# Sidecar health
-curl http://localhost:3500/v1.0/healthz
-
 # App health
 curl http://localhost:5012/health
 ```
@@ -313,23 +285,21 @@ docker compose logs -f
 ### Services Not Starting
 
 1. Check environment variables are set correctly
-2. Verify Dapr sidecar is healthy
-3. Check logs for startup errors
+2. Check logs for startup errors
 
 ```bash
 docker compose logs bannou-service
-docker compose logs bannou-dapr
 ```
 
 ### Service Communication Failures
 
-1. Verify Dapr components are configured
+1. Verify Redis and RabbitMQ are healthy
 2. Check service discovery is working
 3. Verify network connectivity between containers
 
 ```bash
-# Test Dapr invocation
-curl http://localhost:3500/v1.0/invoke/auth/method/health
+# Test service invocation
+curl http://localhost:5012/health
 ```
 
 ### WebSocket Connection Issues

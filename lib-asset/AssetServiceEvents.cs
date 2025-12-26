@@ -32,7 +32,7 @@ public partial class AssetService
         // Currently, the Asset service does not subscribe to external events.
         //
         // When processing pool workers are implemented, they will call back
-        // via Dapr service invocation rather than pub/sub, so the AssetService
+        // via Bannou service invocation rather than pub/sub, so the AssetService
         // interface will expose a completion endpoint.
         //
         // Future subscriptions may include:

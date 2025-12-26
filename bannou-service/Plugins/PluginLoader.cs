@@ -42,8 +42,7 @@ public class PluginLoader
     private readonly Dictionary<string, Assembly> _loadedAssemblies = new();
 
     // Resolved service instances for enabled plugins only
-    [Obsolete]
-    private readonly Dictionary<string, IDaprService> _resolvedServices = new();
+    private readonly Dictionary<string, IBannouService> _resolvedServices = new();
 
     // WebApplication reference for service startup (stored during ConfigureApplication)
     private WebApplication? _webApp;
@@ -87,7 +86,6 @@ public class PluginLoader
     /// <param name="pluginsDirectory">Root plugins directory</param>
     /// <param name="requestedPlugins">List of specific plugins to load, or null for all</param>
     /// <returns>Number of enabled plugins successfully loaded</returns>
-    [Obsolete]
     public async Task<int?> DiscoverAndLoadPluginsAsync(string pluginsDirectory, IList<string>? requestedPlugins = null)
     {
         _logger.LogInformation("Discovering plugins in: {PluginsDirectory}", pluginsDirectory);
@@ -195,7 +193,6 @@ public class PluginLoader
     /// </summary>
     /// <param name="serviceName">Name of the service (e.g., "auth", "accounts")</param>
     /// <returns>True if service should be enabled, false if disabled</returns>
-    [Obsolete]
     private bool IsServiceEnabled(string serviceName)
     {
         if (string.IsNullOrWhiteSpace(serviceName))
@@ -216,7 +213,7 @@ public class PluginLoader
             Program.Configuration.Services_Enabled : // Default fallback
             string.Equals(servicesEnabledEnv, "true", StringComparison.OrdinalIgnoreCase);
 
-        // Get service name from DaprServiceAttribute for ENV prefix
+        // Get service name from BannouServiceAttribute for ENV prefix
         var serviceNameUpper = serviceName.ToUpper();
 
         if (globalServicesEnabled)
@@ -287,7 +284,6 @@ public class PluginLoader
     /// This includes ALL client types (even from disabled plugins) and service types from enabled plugins only.
     /// Also scans the host assembly (bannou-service) for centralized client types.
     /// </summary>
-    [Obsolete]
     private void DiscoverTypesForRegistration()
     {
         _logger.LogInformation("Discovering types for DI registration from {AssemblyCount} plugin assemblies + host assembly", _loadedAssemblies.Count);
@@ -348,13 +344,13 @@ public class PluginLoader
     }
 
     /// <summary>
-    /// Discover client types that implement IDaprClient interface.
+    /// Discover client types that implement IBannouClient interface.
     /// Pure interface-based discovery - no naming conventions.
     /// </summary>
     private void DiscoverClientTypes(Assembly assembly, string pluginName)
     {
         var clientTypes = assembly.GetTypes()
-            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IDaprClient).IsAssignableFrom(t))
+            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IBannouClient).IsAssignableFrom(t))
             .ToList();
 
         foreach (var clientType in clientTypes)
@@ -368,19 +364,18 @@ public class PluginLoader
     }
 
     /// <summary>
-    /// Discover service types using IDaprService interface and DaprServiceAttribute.
+    /// Discover service types using IBannouService interface and BannouServiceAttribute.
     /// Pure interface/attribute-based discovery from the specific assembly.
     /// </summary>
-    [Obsolete]
     private void DiscoverServiceTypes(Assembly assembly, string pluginName)
     {
         var serviceTypes = assembly.GetTypes()
-            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IDaprService).IsAssignableFrom(t))
+            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IBannouService).IsAssignableFrom(t))
             .ToList();
 
         foreach (var serviceType in serviceTypes)
         {
-            var serviceAttr = serviceType.GetCustomAttribute<DaprServiceAttribute>();
+            var serviceAttr = serviceType.GetCustomAttribute<BannouServiceAttribute>();
             if (serviceAttr != null)
             {
                 var interfaceType = serviceAttr.InterfaceType ?? serviceType;
@@ -392,13 +387,13 @@ public class PluginLoader
             }
             else
             {
-                _logger.LogDebug("🚫 Skipping service {ServiceType} - missing [DaprService] attribute",
+                _logger.LogDebug("🚫 Skipping service {ServiceType} - missing [BannouService] attribute",
                     serviceType.Name);
             }
         }
 
         _logger.LogDebug("Discovered {Count} service types in assembly {AssemblyName}",
-            serviceTypes.Count(t => t.GetCustomAttribute<DaprServiceAttribute>() != null), assembly.GetName().Name);
+            serviceTypes.Count(t => t.GetCustomAttribute<BannouServiceAttribute>() != null), assembly.GetName().Name);
     }
 
     /// <summary>
@@ -406,7 +401,6 @@ public class PluginLoader
     /// Configuration lifetimes match their corresponding service lifetimes.
     /// Pure attribute-based discovery - configurations must have ServiceImplementationType specified.
     /// </summary>
-    [Obsolete]
     private void DiscoverConfigurationTypes(Assembly assembly, string pluginName)
     {
         _logger.LogInformation("Discovering configuration types in assembly {AssemblyName} for plugin {PluginName}", assembly.GetName().Name, pluginName);
@@ -450,7 +444,7 @@ public class PluginLoader
 
                 // Find service by name in the same assembly
                 serviceType = assembly.GetTypes()
-                    .FirstOrDefault(t => t.Name == serviceName && typeof(IDaprService).IsAssignableFrom(t));
+                    .FirstOrDefault(t => t.Name == serviceName && typeof(IBannouService).IsAssignableFrom(t));
 
                 if (serviceType != null)
                 {
@@ -597,7 +591,7 @@ public class PluginLoader
     private ServiceLifetime GetClientLifetime(Type clientInterface)
     {
         // All clients should be Singleton regardless of their service lifetime.
-        // Clients are generated code for making Dapr requests and should not depend on their service's lifetime.
+        // Clients are generated code for making mesh requests and should not depend on their service's lifetime.
         // Some services that USE clients (not the service they communicate with) could be Singleton,
         // so all clients need to be at least Singleton to be injectable.
         _logger.LogDebug("Using Singleton lifetime for client '{ClientInterface}' (all clients are Singleton)", clientInterface.Name);
@@ -674,7 +668,6 @@ public class PluginLoader
     /// This happens AFTER the web application is built and DI container is ready.
     /// </summary>
     /// <param name="serviceProvider">Service provider to resolve services from</param>
-    [Obsolete]
     public void ResolveServices(IServiceProvider serviceProvider)
     {
         _logger.LogInformation("Centrally resolving services for {EnabledCount} enabled plugins", _enabledPlugins.Count);
@@ -696,9 +689,9 @@ public class PluginLoader
                 if (serviceRegistration != default)
                 {
                     var serviceInstance = scopedServiceProvider.GetService(serviceRegistration.interfaceType);
-                    if (serviceInstance is IDaprService daprService)
+                    if (serviceInstance is IBannouService bannouService)
                     {
-                        _resolvedServices[plugin.PluginName] = daprService;
+                        _resolvedServices[plugin.PluginName] = bannouService;
                         _logger.LogInformation("Resolved {ServiceType} for plugin: {PluginName}",
                             serviceRegistration.implementationType.Name, plugin.PluginName);
                     }
@@ -726,13 +719,12 @@ public class PluginLoader
     }
 
     /// <summary>
-    /// Extract service name from a service type using DaprService attribute.
+    /// Extract service name from a service type using BannouService attribute.
     /// </summary>
-    [Obsolete]
     private string? GetServiceNameFromType(Type serviceType)
     {
-        var daprServiceAttr = serviceType.GetCustomAttribute<DaprServiceAttribute>();
-        return daprServiceAttr?.Name;
+        var bannouServiceAttr = serviceType.GetCustomAttribute<BannouServiceAttribute>();
+        return bannouServiceAttr?.Name;
     }
 
 
@@ -741,8 +733,7 @@ public class PluginLoader
     /// </summary>
     /// <param name="pluginName">Name of the plugin</param>
     /// <returns>Resolved service instance or null if not found</returns>
-    [Obsolete]
-    public IDaprService? GetResolvedService(string pluginName)
+    public IBannouService? GetResolvedService(string pluginName)
     {
         return _resolvedServices.GetValueOrDefault(pluginName);
     }
@@ -860,7 +851,6 @@ public class PluginLoader
     /// their failure causes immediate startup failure.
     /// </summary>
     /// <returns>True if all plugins and services initialized successfully</returns>
-    [Obsolete]
     public async Task<bool> InitializeAsync()
     {
         _logger.LogInformation("🚀 Initializing {EnabledCount} enabled plugins", _enabledPlugins.Count);
@@ -953,10 +943,9 @@ public class PluginLoader
 
     /// <summary>
     /// Registers service permissions for all enabled plugins with the Permissions service.
-    /// This should be called AFTER Dapr connectivity is confirmed to ensure events are delivered.
+    /// This should be called AFTER mesh connectivity is confirmed to ensure events are delivered.
     /// </summary>
     /// <returns>True if all permissions were registered successfully</returns>
-    [Obsolete]
     public async Task<bool> RegisterServicePermissionsAsync()
     {
         _logger.LogInformation("Registering service permissions for {ServiceCount} services: {ServiceNames}",
@@ -1041,7 +1030,6 @@ public class PluginLoader
     /// <summary>
     /// Invoke running methods for enabled plugins and resolved services.
     /// </summary>
-    [Obsolete]
     public async Task InvokeRunningAsync()
     {
         _logger.LogInformation("Invoking running methods for {EnabledCount} enabled plugins", _enabledPlugins.Count);
@@ -1080,7 +1068,6 @@ public class PluginLoader
     /// <summary>
     /// Shutdown enabled plugins and resolved services gracefully.
     /// </summary>
-    [Obsolete]
     public async Task ShutdownAsync()
     {
         _logger.LogInformation("Shutting down {EnabledCount} enabled plugins", _enabledPlugins.Count);

@@ -36,7 +36,7 @@ public class GameSessionEventsController : ControllerBase
     }
 
     /// <summary>
-    /// Handle session.connected events via Dapr pubsub.
+    /// Handle session.connected events via pubsub.
     /// Dispatches to all registered handlers via IEventConsumer.
     /// </summary>
     [Topic("bannou-pubsub", "session.connected")]
@@ -45,7 +45,7 @@ public class GameSessionEventsController : ControllerBase
     {
         try
         {
-            var evt = await DaprEventHelper.ReadEventAsync<SessionConnectedEvent>(Request);
+            var evt = await BannouEventHelper.ReadEventAsync<SessionConnectedEvent>(Request);
 
             if (evt == null)
             {
@@ -67,7 +67,7 @@ public class GameSessionEventsController : ControllerBase
     }
 
     /// <summary>
-    /// Handle session.disconnected events via Dapr pubsub.
+    /// Handle session.disconnected events via pubsub.
     /// Dispatches to all registered handlers via IEventConsumer.
     /// </summary>
     [Topic("bannou-pubsub", "session.disconnected")]
@@ -76,7 +76,7 @@ public class GameSessionEventsController : ControllerBase
     {
         try
         {
-            var evt = await DaprEventHelper.ReadEventAsync<SessionDisconnectedEvent>(Request);
+            var evt = await BannouEventHelper.ReadEventAsync<SessionDisconnectedEvent>(Request);
 
             if (evt == null)
             {
@@ -98,7 +98,7 @@ public class GameSessionEventsController : ControllerBase
     }
 
     /// <summary>
-    /// Handle session.reconnected events via Dapr pubsub.
+    /// Handle session.reconnected events via pubsub.
     /// Dispatches to all registered handlers via IEventConsumer.
     /// </summary>
     [Topic("bannou-pubsub", "session.reconnected")]
@@ -107,7 +107,7 @@ public class GameSessionEventsController : ControllerBase
     {
         try
         {
-            var evt = await DaprEventHelper.ReadEventAsync<SessionReconnectedEvent>(Request);
+            var evt = await BannouEventHelper.ReadEventAsync<SessionReconnectedEvent>(Request);
 
             if (evt == null)
             {
@@ -129,7 +129,7 @@ public class GameSessionEventsController : ControllerBase
     }
 
     /// <summary>
-    /// Handle subscription.updated events via Dapr pubsub.
+    /// Handle subscription.updated events via pubsub.
     /// Dispatches to all registered handlers via IEventConsumer.
     /// </summary>
     [Topic("bannou-pubsub", "subscription.updated")]
@@ -138,7 +138,7 @@ public class GameSessionEventsController : ControllerBase
     {
         try
         {
-            var evt = await DaprEventHelper.ReadEventAsync<SubscriptionUpdatedEvent>(Request);
+            var evt = await BannouEventHelper.ReadEventAsync<SubscriptionUpdatedEvent>(Request);
 
             if (evt == null)
             {

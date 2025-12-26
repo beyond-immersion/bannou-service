@@ -125,7 +125,7 @@ public class Program
     }
 
     /// <summary>
-    /// Sets up dependency injection with DaprClient and service clients for testing.
+    /// Sets up dependency injection with service clients for testing.
     /// </summary>
     private static async Task<bool> SetupServiceProvider()
     {
@@ -197,7 +197,7 @@ public class Program
             // Add YARP HTTP forwarder for MeshInvocationClient
             serviceCollection.AddHttpForwarder();
 
-            // Register MeshInvocationClient (Dapr replacement for service-to-service calls)
+            // Register MeshInvocationClient for service-to-service calls
             serviceCollection.AddSingleton<IMeshInvocationClient, MeshInvocationClient>();
 
             // Build the service provider
@@ -241,7 +241,7 @@ public class Program
 
     /// <summary>
     /// Waits for the bannou service to be healthy before proceeding with testing.
-    /// Uses HTTP health endpoint instead of Dapr sidecar.
+    /// Uses HTTP health endpoint instead of mesh.
     /// </summary>
     /// <returns>True if service is healthy, false if timeout or error occurs.</returns>
     private static async Task<bool> WaitForServiceHealthAsync()
@@ -686,9 +686,9 @@ public class Program
         var crashIndicators = new[]
         {
             "connection refused",           // Service not responding (likely crashed)
-            "bannou, err:",                // Dapr invoke error (service unreachable)
+            "bannou, err:",                // mesh invoke error (service unreachable)
             "dial tcp",                    // Network connection failure to service
-            "ERR_DIRECT_INVOKE",          // Dapr service invocation failure
+            "ERR_DIRECT_INVOKE",          // Bannou service invocation failure
             "No connection could be made", // Windows equivalent of connection refused
             "timeout",                     // Service not responding (potential crash)
             "Connection reset by peer"     // Service crashed during request

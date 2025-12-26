@@ -41,12 +41,8 @@ public class ServiceErrorEventsController : ControllerBase
             case "redis":
                 // TODO: orchestrator response for redis issues (restart redis/notify)
                 break;
-            case "dapr-pubsub":
             case "pubsub":
                 // TODO: orchestrator response for pubsub issues
-                break;
-            case "placement":
-                // TODO: orchestrator response for placement failures
                 break;
             default:
                 // TODO: catch-all orchestrator handling

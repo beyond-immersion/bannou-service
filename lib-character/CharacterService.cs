@@ -21,8 +21,7 @@ namespace BeyondImmersion.BannouService.Character;
 /// Uses realm-based partitioning for scalability.
 /// Note: Character relationships are managed by the separate Relationship service.
 /// </summary>
-[DaprService("character", typeof(ICharacterService), lifetime: ServiceLifetime.Scoped)]
-[Obsolete]
+[BannouService("character", typeof(ICharacterService), lifetime: ServiceLifetime.Scoped)]
 public partial class CharacterService : ICharacterService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -46,7 +45,6 @@ public partial class CharacterService : ICharacterService
     private const string CHARACTER_REALM_JOINED_TOPIC = "character.realm.joined";
     private const string CHARACTER_REALM_LEFT_TOPIC = "character.realm.left";
 
-    [Obsolete]
     public CharacterService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
@@ -65,7 +63,7 @@ public partial class CharacterService : ICharacterService
 
         // Register event handlers via partial class (CharacterServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     #region Character CRUD Operations
@@ -844,7 +842,7 @@ public partial class CharacterService : ICharacterService
 #region Internal Models
 
 /// <summary>
-/// Character data model for Dapr state storage
+/// Character data model for lib-state storage.
 /// </summary>
 internal class CharacterModel
 {
@@ -854,7 +852,7 @@ internal class CharacterModel
     public string SpeciesId { get; set; } = string.Empty;
     public CharacterStatus Status { get; set; } = CharacterStatus.Alive;
 
-    // Store as DateTimeOffset directly - Dapr handles serialization
+    // Store as DateTimeOffset directly - lib-state handles serialization
     public DateTimeOffset BirthDate { get; set; }
     public DateTimeOffset? DeathDate { get; set; }
     public DateTimeOffset CreatedAt { get; set; }

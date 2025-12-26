@@ -26,7 +26,6 @@ public class PluginLoaderTests
     /// This addresses the "Cannot resolve scoped service from root provider" issue.
     /// </summary>
     [Fact]
-    [Obsolete]
     public void ServiceResolution_ShouldUseServiceScopeForScopedServices()
     {
         // Arrange
@@ -51,7 +50,6 @@ public class PluginLoaderTests
     /// Tests the new centralized plugin discovery and service registration workflow.
     /// </summary>
     [Fact]
-    [Obsolete]
     public Task NewPluginDiscovery_ShouldDiscoverAndRegisterTypesCorrectly()
     {
         // Arrange
@@ -114,7 +112,6 @@ public class PluginLoaderTests
     /// Tests service type discovery debugging - investigate why service types aren't found.
     /// </summary>
     [Fact]
-    [Obsolete]
     public void ServiceTypeDiscovery_ShouldDebugAssemblyTypeLoading()
     {
         // Arrange - Load all assemblies like the PluginLoader would
@@ -122,8 +119,8 @@ public class PluginLoaderTests
         var testAssembly = typeof(TestService).Assembly;
 
         // Act - Search for types in assemblies
-        var currentAssemblyTypes = GetTypesImplementingIDaprService(currentAssembly);
-        var testAssemblyTypes = GetTypesImplementingIDaprService(testAssembly);
+        var currentAssemblyTypes = GetTypesImplementingIBannouService(currentAssembly);
+        var testAssemblyTypes = GetTypesImplementingIBannouService(testAssembly);
 
         // Assert - Debug output to understand what's happening
         Assert.NotNull(currentAssemblyTypes);
@@ -132,7 +129,7 @@ public class PluginLoaderTests
         // We should find TestService in the test assembly
         var testServiceType = testAssemblyTypes.FirstOrDefault(t => t.Name == "TestService");
         Assert.NotNull(testServiceType);
-        Assert.True(typeof(IDaprService).IsAssignableFrom(testServiceType));
+        Assert.True(typeof(IBannouService).IsAssignableFrom(testServiceType));
 
         // Debug: Print all found types for investigation
         var allFoundTypes = currentAssemblyTypes.Concat(testAssemblyTypes).ToList();
@@ -144,7 +141,6 @@ public class PluginLoaderTests
     /// This replicates the service discovery workflow without external dependencies.
     /// </summary>
     [Fact]
-    [Obsolete]
     public void ServiceTypeDiscovery_ShouldWorkWithTestingServiceOnly()
     {
         // Arrange - Use only the TestingService which is guaranteed to exist
@@ -155,7 +151,7 @@ public class PluginLoaderTests
 
         // Act - Perform the exact same search that PluginLoader does
         var types = testingAssembly.GetTypes()
-            .Where(t => typeof(IDaprService).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
+            .Where(t => typeof(IBannouService).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
             .ToList();
 
         // Check if TestingService is in the list
@@ -165,7 +161,7 @@ public class PluginLoaderTests
         Assert.NotEmpty(types);
         Assert.NotNull(testingServiceType);
         Assert.Equal(expectedServiceTypeName, testingServiceType.Name);
-        Assert.True(typeof(IDaprService).IsAssignableFrom(testingServiceType));
+        Assert.True(typeof(IBannouService).IsAssignableFrom(testingServiceType));
 
         // This proves the service discovery logic works correctly
         Assert.True(testingServiceType == typeof(BeyondImmersion.BannouService.Testing.TestingService));
@@ -175,28 +171,27 @@ public class PluginLoaderTests
     /// Debug test to understand ServiceLifetime parameter issue.
     /// </summary>
     [Fact]
-    [Obsolete]
-    public void Debug_DaprServiceAttribute_ParameterMapping()
+    public void Debug_BannouServiceAttribute_ParameterMapping()
     {
         // Test direct attribute creation with explicit parameters to verify constructor behavior
-        var attr1 = new DaprServiceAttribute("test1", typeof(IDaprService), false, ServiceLifetime.Scoped);
+        var attr1 = new BannouServiceAttribute("test1", typeof(IBannouService), false, ServiceLifetime.Scoped);
         Assert.Equal("test1", attr1.Name);
-        Assert.Equal(typeof(IDaprService), attr1.InterfaceType);
+        Assert.Equal(typeof(IBannouService), attr1.InterfaceType);
         Assert.False(attr1.Priority);
         Assert.Equal(ServiceLifetime.Scoped, attr1.Lifetime);
 
         // Test with named parameters
-        var attr2 = new DaprServiceAttribute("test2", interfaceType: typeof(IDaprService), priority: false, lifetime: ServiceLifetime.Scoped);
+        var attr2 = new BannouServiceAttribute("test2", interfaceType: typeof(IBannouService), priority: false, lifetime: ServiceLifetime.Scoped);
         Assert.Equal("test2", attr2.Name);
-        Assert.Equal(typeof(IDaprService), attr2.InterfaceType);
+        Assert.Equal(typeof(IBannouService), attr2.InterfaceType);
         Assert.False(attr2.Priority);
         Assert.Equal(ServiceLifetime.Scoped, attr2.Lifetime);
 
         // Test positional with different lifetimes
-        var attr3 = new DaprServiceAttribute("test3", typeof(IDaprService), false, ServiceLifetime.Transient);
+        var attr3 = new BannouServiceAttribute("test3", typeof(IBannouService), false, ServiceLifetime.Transient);
         Assert.Equal(ServiceLifetime.Transient, attr3.Lifetime);
 
-        var attr4 = new DaprServiceAttribute("test4", typeof(IDaprService), false, ServiceLifetime.Singleton);
+        var attr4 = new BannouServiceAttribute("test4", typeof(IBannouService), false, ServiceLifetime.Singleton);
         Assert.Equal(ServiceLifetime.Singleton, attr4.Lifetime);
     }
 
@@ -204,7 +199,6 @@ public class PluginLoaderTests
     /// Debug test to understand why only 2 services are discovered instead of 8.
     /// </summary>
     [Fact]
-    [Obsolete]
     public void Debug_ServiceTypeDiscovery_ActualPluginLoaderBehavior()
     {
         // Use reflection to access the PluginLoader's internal state after type discovery
@@ -253,10 +247,10 @@ public class PluginLoaderTests
 
         foreach (var type in allTypes)
         {
-            var implementsIDaprService = typeof(IDaprService).IsAssignableFrom(type);
-            var daprAttr = type.GetCustomAttribute<DaprServiceAttribute>();
+            var implementsIBannouService = typeof(IBannouService).IsAssignableFrom(type);
+            var bannouAttr = type.GetCustomAttribute<BannouServiceAttribute>();
 
-            testOutput += $"  - {type.Name}: IDaprService={implementsIDaprService}, DaprAttr={daprAttr?.Name ?? "NONE"}\n";
+            testOutput += $"  - {type.Name}: IBannouService={implementsIBannouService}, BannouAttr={bannouAttr?.Name ?? "NONE"}\n";
         }
 
         // The only way to see test output in xUnit is through an assertion failure
@@ -328,7 +322,6 @@ public class PluginLoaderTests
     /// Tests service type discovery specifically for TestingService in lib-testing assembly.
     /// </summary>
     [Fact]
-    [Obsolete]
     public void ServiceTypeDiscovery_ShouldFindTestingService()
     {
         // Arrange
@@ -337,7 +330,7 @@ public class PluginLoaderTests
 
         // Act - Search for TestingService in the testing assembly
         var types = testingAssembly.GetTypes()
-            .Where(t => typeof(IDaprService).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
+            .Where(t => typeof(IBannouService).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
             .ToList();
 
         var testingServiceType = types.FirstOrDefault(t => t.Name == expectedServiceTypeName);
@@ -346,7 +339,7 @@ public class PluginLoaderTests
         Assert.NotEmpty(types);
         Assert.NotNull(testingServiceType);
         Assert.Equal(expectedServiceTypeName, testingServiceType.Name);
-        Assert.True(typeof(IDaprService).IsAssignableFrom(testingServiceType));
+        Assert.True(typeof(IBannouService).IsAssignableFrom(testingServiceType));
 
         // Verify it can be cast to the specific type
         Assert.True(testingServiceType == typeof(BeyondImmersion.BannouService.Testing.TestingService));
@@ -410,7 +403,6 @@ public class PluginLoaderTests
     /// This prevents the ConnectServiceConfiguration lifetime mismatch we fixed.
     /// </summary>
     [Fact]
-    [Obsolete]
     public void ConfigurationLifetime_ShouldMatchServiceLifetime()
     {
         // Arrange
@@ -456,7 +448,6 @@ public class PluginLoaderTests
     /// This prevents conflicts between plugin registration and PluginLoader registration.
     /// </summary>
     [Fact]
-    [Obsolete]
     public void DuplicateServiceRegistration_ShouldBeDetectable()
     {
         // Arrange
@@ -500,7 +491,6 @@ public class PluginLoaderTests
     /// This is a comprehensive regression test for the entire service registration flow.
     /// </summary>
     [Fact]
-    [Obsolete]
     public void CompleteServiceRegistration_ShouldNotCauseDIValidationErrors()
     {
         // Arrange
@@ -519,7 +509,7 @@ public class PluginLoaderTests
         productionServices.AddSingleton<ConnectService>();
         productionServices.AddSingleton<ConnectServiceConfiguration>();
 
-        // TestingService: Scoped (as specified in DaprService attribute)
+        // TestingService: Scoped (as specified in BannouService attribute)
         productionServices.AddScoped<TestService>();
         productionServices.AddScoped<TestServiceConfiguration>();
 
@@ -563,7 +553,6 @@ public class PluginLoaderTests
     /// This validates the new configuration registration functionality in PluginLoader.
     /// </summary>
     [Fact]
-    [Obsolete]
     public void ConfigurationTypeDiscovery_ShouldFindServiceConfigurationAttributes()
     {
         // Arrange
@@ -698,7 +687,6 @@ public class PluginLoaderTests
     /// This simulates the actual PluginLoader workflow that should prevent exit code 139.
     /// </summary>
     [Fact]
-    [Obsolete]
     public void EndToEndConfigurationWorkflow_ShouldPreventDIConflicts()
     {
         // Arrange - Simulate the complete workflow that happens in production
@@ -782,7 +770,6 @@ public class PluginLoaderTests
     /// This prevents the DI validation errors that cause exit code 139.
     /// </summary>
     [Fact]
-    [Obsolete]
     public void ConfigurationLifetimeValidation_ShouldPreventMismatchedLifetimes()
     {
         // Arrange - Test scenarios that could cause DI validation failures
@@ -882,20 +869,19 @@ public class PluginLoaderTests
 
 
     /// <summary>
-    /// Tests that services with [DaprService] attributes are discovered correctly.
+    /// Tests that services with [BannouService] attributes are discovered correctly.
     /// </summary>
     [Fact]
-    [Obsolete]
-    public void ServiceTypeDiscovery_ShouldFindServicesWithDaprServiceAttributes()
+    public void ServiceTypeDiscovery_ShouldFindServicesWithBannouServiceAttributes()
     {
         // Arrange
         var testingAssembly = typeof(BeyondImmersion.BannouService.Testing.TestingService).Assembly;
         var expectedServiceName = "testing";
 
-        // Act - Find all types with DaprService attributes
+        // Act - Find all types with BannouService attributes
         var serviceTypes = testingAssembly.GetTypes()
-            .Where(t => typeof(IDaprService).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
-            .Where(t => t.GetCustomAttribute<BeyondImmersion.BannouService.Attributes.DaprServiceAttribute>() != null)
+            .Where(t => typeof(IBannouService).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
+            .Where(t => t.GetCustomAttribute<BeyondImmersion.BannouService.Attributes.BannouServiceAttribute>() != null)
             .ToList();
 
         // Assert
@@ -904,29 +890,28 @@ public class PluginLoaderTests
         var testingServiceType = serviceTypes.FirstOrDefault(t => t.Name == "TestingService");
         Assert.NotNull(testingServiceType);
 
-        // Verify the DaprService attribute has correct configuration
-        var daprServiceAttr = testingServiceType.GetCustomAttribute<BeyondImmersion.BannouService.Attributes.DaprServiceAttribute>();
-        Assert.NotNull(daprServiceAttr);
-        Assert.Equal(expectedServiceName, daprServiceAttr.Name);
+        // Verify the BannouService attribute has correct configuration
+        var bannouServiceAttr = testingServiceType.GetCustomAttribute<BeyondImmersion.BannouService.Attributes.BannouServiceAttribute>();
+        Assert.NotNull(bannouServiceAttr);
+        Assert.Equal(expectedServiceName, bannouServiceAttr.Name);
 
         // Verify that the attribute is correctly reading the lifetime from our positional parameters
-        // [DaprService("testing", typeof(ITestingService), false, ServiceLifetime.Scoped)]
-        var actualLifetime = daprServiceAttr.Lifetime;
-        var actualInterfaceType = daprServiceAttr.InterfaceType;
-        var actualPriority = daprServiceAttr.Priority;
+        // [BannouService("testing", typeof(ITestingService), false, ServiceLifetime.Scoped)]
+        var actualLifetime = bannouServiceAttr.Lifetime;
+        var actualInterfaceType = bannouServiceAttr.InterfaceType;
+        var actualPriority = bannouServiceAttr.Priority;
 
         // Debug output for diagnostic purposes
-        System.Diagnostics.Debug.WriteLine($"Attribute values: Name={daprServiceAttr.Name}, InterfaceType={actualInterfaceType?.Name}, Priority={actualPriority}, Lifetime={actualLifetime}");
+        System.Diagnostics.Debug.WriteLine($"Attribute values: Name={bannouServiceAttr.Name}, InterfaceType={actualInterfaceType?.Name}, Priority={actualPriority}, Lifetime={actualLifetime}");
 
         Assert.Equal(ServiceLifetime.Scoped, actualLifetime);
     }
 
     /// <summary>
     /// Tests comprehensive interface/attribute-based service discovery.
-    /// Validates that only types implementing IDaprService with DaprServiceAttribute are discovered.
+    /// Validates that only types implementing IBannouService with BannouServiceAttribute are discovered.
     /// </summary>
     [Fact]
-    [Obsolete]
     public void InterfaceBasedDiscovery_ShouldOnlyFindValidServiceTypes()
     {
         // Arrange
@@ -934,8 +919,8 @@ public class PluginLoaderTests
 
         // Act - Test the exact logic used by PluginLoader.DiscoverServiceTypes
         var discoveredServices = testingAssembly.GetTypes()
-            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IDaprService).IsAssignableFrom(t))
-            .Where(t => t.GetCustomAttribute<DaprServiceAttribute>() != null)
+            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IBannouService).IsAssignableFrom(t))
+            .Where(t => t.GetCustomAttribute<BannouServiceAttribute>() != null)
             .ToList();
 
         // Assert - Should find TestingService
@@ -943,18 +928,18 @@ public class PluginLoaderTests
         var testingService = discoveredServices.FirstOrDefault(t => t.Name == "TestingService");
         Assert.NotNull(testingService);
 
-        // Verify it implements IDaprService
-        Assert.True(typeof(IDaprService).IsAssignableFrom(testingService));
+        // Verify it implements IBannouService
+        Assert.True(typeof(IBannouService).IsAssignableFrom(testingService));
 
-        // Verify it has DaprServiceAttribute
-        var daprAttr = testingService.GetCustomAttribute<DaprServiceAttribute>();
-        Assert.NotNull(daprAttr);
-        Assert.Equal("testing", daprAttr.Name);
+        // Verify it has BannouServiceAttribute
+        var bannouAttr = testingService.GetCustomAttribute<BannouServiceAttribute>();
+        Assert.NotNull(bannouAttr);
+        Assert.Equal("testing", bannouAttr.Name);
 
         // Verify no types without proper interface/attribute are discovered
         var invalidTypes = testingAssembly.GetTypes()
             .Where(t => !t.IsInterface && !t.IsAbstract)
-            .Where(t => !typeof(IDaprService).IsAssignableFrom(t) || t.GetCustomAttribute<DaprServiceAttribute>() == null)
+            .Where(t => !typeof(IBannouService).IsAssignableFrom(t) || t.GetCustomAttribute<BannouServiceAttribute>() == null)
             .Where(t => t.Name.EndsWith("Service"))  // Only check service-like classes
             .ToList();
 
@@ -966,32 +951,31 @@ public class PluginLoaderTests
     }
 
     /// <summary>
-    /// Tests that client discovery uses IDaprClient interface without fallbacks.
+    /// Tests that client discovery uses IBannouClient interface without fallbacks.
     /// </summary>
     [Fact]
-    [Obsolete]
-    public void InterfaceBasedClientDiscovery_ShouldRequireIDaprClientInterface()
+    public void InterfaceBasedClientDiscovery_ShouldRequireIBannouClientInterface()
     {
         // Arrange
         var testingAssembly = typeof(TestService).Assembly;  // This assembly
 
         // Act - Test client discovery logic (similar to PluginLoader.DiscoverClientTypes)
         var discoveredClients = testingAssembly.GetTypes()
-            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IDaprClient).IsAssignableFrom(t))
+            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IBannouClient).IsAssignableFrom(t))
             .ToList();
 
-        // Assert - Should only find types that implement IDaprClient
+        // Assert - Should only find types that implement IBannouClient
         foreach (var clientType in discoveredClients)
         {
-            Assert.True(typeof(IDaprClient).IsAssignableFrom(clientType));
+            Assert.True(typeof(IBannouClient).IsAssignableFrom(clientType));
             Assert.False(clientType.IsInterface);
             Assert.False(clientType.IsAbstract);
         }
 
-        // Verify that types ending in "Client" but not implementing IDaprClient are NOT discovered
+        // Verify that types ending in "Client" but not implementing IBannouClient are NOT discovered
         var nonClientTypes = testingAssembly.GetTypes()
             .Where(t => !t.IsInterface && !t.IsAbstract && t.Name.EndsWith("Client"))
-            .Where(t => !typeof(IDaprClient).IsAssignableFrom(t))
+            .Where(t => !typeof(IBannouClient).IsAssignableFrom(t))
             .ToList();
 
         foreach (var nonClientType in nonClientTypes)
@@ -1004,7 +988,6 @@ public class PluginLoaderTests
     /// Tests that configuration discovery requires explicit ServiceConfigurationAttribute.
     /// </summary>
     [Fact]
-    [Obsolete]
     public void AttributeBasedConfigurationDiscovery_ShouldRequireExplicitAttribute()
     {
         // Arrange
@@ -1046,7 +1029,6 @@ public class PluginLoaderTests
     /// Tests the complete workflow of interface/attribute-based discovery without naming conventions.
     /// </summary>
     [Fact]
-    [Obsolete]
     public void CompleteInterfaceAttributeBasedWorkflow_ShouldWorkWithoutNamingConventions()
     {
         // Arrange
@@ -1061,10 +1043,10 @@ public class PluginLoaderTests
 
         // Act - Test complete discovery workflow
 
-        // 1. Service Discovery - should find services with IDaprService + DaprServiceAttribute
+        // 1. Service Discovery - should find services with IBannouService + BannouServiceAttribute
         var serviceTypes = testingAssembly.GetTypes()
-            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IDaprService).IsAssignableFrom(t))
-            .Where(t => t.GetCustomAttribute<DaprServiceAttribute>() != null)
+            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IBannouService).IsAssignableFrom(t))
+            .Where(t => t.GetCustomAttribute<BannouServiceAttribute>() != null)
             .ToList();
 
         // 2. Configuration Discovery - should find configs with IServiceConfiguration (optionally + ServiceConfigurationAttribute)
@@ -1072,14 +1054,14 @@ public class PluginLoaderTests
             .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IServiceConfiguration).IsAssignableFrom(t))
             .ToList();
 
-        // 3. Client Discovery - should find clients with IDaprClient interface
+        // 3. Client Discovery - should find clients with IBannouClient interface
         var clientTypes = testingAssembly.GetTypes()
-            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IDaprClient).IsAssignableFrom(t))
+            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IBannouClient).IsAssignableFrom(t))
             .ToList();
 
         // Assert - Verify discovery worked based on interfaces/attributes, not naming
 
-        // Should find TestingService (has IDaprService + DaprServiceAttribute)
+        // Should find TestingService (has IBannouService + BannouServiceAttribute)
         var testingService = serviceTypes.FirstOrDefault(t => t.Name == "TestingService");
         Assert.NotNull(testingService);
 
@@ -1089,10 +1071,10 @@ public class PluginLoaderTests
         // Verify no discovery based on naming alone
         var typesWithServiceInName = testingAssembly.GetTypes()
             .Where(t => t.Name.Contains("Service") && !t.IsInterface && !t.IsAbstract)
-            .Where(t => !typeof(IDaprService).IsAssignableFrom(t))  // Don't implement IDaprService
+            .Where(t => !typeof(IBannouService).IsAssignableFrom(t))  // Don't implement IBannouService
             .ToList();
 
-        // None of these should be in serviceTypes (they don't implement IDaprService)
+        // None of these should be in serviceTypes (they don't implement IBannouService)
         foreach (var nameOnlyType in typesWithServiceInName)
         {
             Assert.DoesNotContain(nameOnlyType, serviceTypes);
@@ -1100,11 +1082,10 @@ public class PluginLoaderTests
     }
 
     /// <summary>
-    /// Tests that the PluginLoader correctly registers service types with DaprService attributes.
+    /// Tests that the PluginLoader correctly registers service types with BannouService attributes.
     /// </summary>
     [Fact]
-    [Obsolete]
-    public void PluginLoader_ShouldRegisterServicesWithDaprServiceAttributes()
+    public void PluginLoader_ShouldRegisterServicesWithBannouServiceAttributes()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -1145,7 +1126,7 @@ public class PluginLoaderTests
         var testingServiceRegistration = serviceTypes.FirstOrDefault(s => s.implementationType.Name == "TestingService");
         Assert.NotEqual(default, testingServiceRegistration);
         Assert.Equal("TestingService", testingServiceRegistration.implementationType.Name);
-        // This should be Scoped as specified in the DaprService attribute
+        // This should be Scoped as specified in the BannouService attribute
         Assert.Equal(ServiceLifetime.Scoped, testingServiceRegistration.lifetime);
     }
 
@@ -1153,7 +1134,6 @@ public class PluginLoaderTests
     /// Tests that PluginLoader rejects types that don't meet interface/attribute requirements.
     /// </summary>
     [Fact]
-    [Obsolete]
     public void PluginLoader_ShouldRejectTypesWithoutProperInterfaceAndAttributes()
     {
         // Arrange
@@ -1168,27 +1148,27 @@ public class PluginLoaderTests
 
         // Act - Test that PluginLoader only discovers properly attributed types
 
-        // TestService implements IDaprService but has NO DaprServiceAttribute
+        // TestService implements IBannouService but has NO BannouServiceAttribute
         var testServiceWithoutAttr = typeof(TestService);
-        Assert.True(typeof(IDaprService).IsAssignableFrom(testServiceWithoutAttr));
-        Assert.Null(testServiceWithoutAttr.GetCustomAttribute<DaprServiceAttribute>());
+        Assert.True(typeof(IBannouService).IsAssignableFrom(testServiceWithoutAttr));
+        Assert.Null(testServiceWithoutAttr.GetCustomAttribute<BannouServiceAttribute>());
 
-        // Mock a class that ends with "Service" but doesn't implement IDaprService
-        var nonServiceClass = typeof(TestConnectService);  // Has "Service" in name but doesn't implement IDaprService
-        Assert.False(typeof(IDaprService).IsAssignableFrom(nonServiceClass));
+        // Mock a class that ends with "Service" but doesn't implement IBannouService
+        var nonServiceClass = typeof(TestConnectService);  // Has "Service" in name but doesn't implement IBannouService
+        Assert.False(typeof(IBannouService).IsAssignableFrom(nonServiceClass));
 
         // Simulate PluginLoader discovery logic
         var discoveredServices = currentAssembly.GetTypes()
-            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IDaprService).IsAssignableFrom(t))
+            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IBannouService).IsAssignableFrom(t))
             .Where(t =>
             {
                 try
                 {
-                    return t.GetCustomAttribute<DaprServiceAttribute>() != null;
+                    return t.GetCustomAttribute<BannouServiceAttribute>() != null;
                 }
                 catch (AmbiguousMatchException)
                 {
-                    // Type has multiple DaprServiceAttribute - this should be valid and found
+                    // Type has multiple BannouServiceAttribute - this should be valid and found
                     return true;
                 }
             })
@@ -1201,44 +1181,43 @@ public class PluginLoaderTests
         // Only properly configured types should be found
         foreach (var discoveredService in discoveredServices)
         {
-            Assert.True(typeof(IDaprService).IsAssignableFrom(discoveredService));
+            Assert.True(typeof(IBannouService).IsAssignableFrom(discoveredService));
             try
             {
-                Assert.NotNull(discoveredService.GetCustomAttribute<DaprServiceAttribute>());
+                Assert.NotNull(discoveredService.GetCustomAttribute<BannouServiceAttribute>());
             }
             catch (AmbiguousMatchException)
             {
-                // Type has multiple DaprServiceAttribute - this is valid, just continue
-                Assert.True(discoveredService.GetCustomAttributes<DaprServiceAttribute>().Any());
+                // Type has multiple BannouServiceAttribute - this is valid, just continue
+                Assert.True(discoveredService.GetCustomAttributes<BannouServiceAttribute>().Any());
             }
         }
     }
 
     /// <summary>
-    /// Tests that service lifetime is correctly extracted from DaprServiceAttribute.
+    /// Tests that service lifetime is correctly extracted from BannouServiceAttribute.
     /// </summary>
     [Fact]
-    [Obsolete]
-    public void AttributeBasedLifetimeExtraction_ShouldRespectDaprServiceAttributeLifetime()
+    public void AttributeBasedLifetimeExtraction_ShouldRespectBannouServiceAttributeLifetime()
     {
         // Arrange
         var testingAssembly = typeof(BeyondImmersion.BannouService.Testing.TestingService).Assembly;
 
         // Act - Find TestingService and extract its lifetime from attribute
         var testingServiceType = testingAssembly.GetTypes()
-            .Where(t => t.Name == "TestingService" && typeof(IDaprService).IsAssignableFrom(t))
+            .Where(t => t.Name == "TestingService" && typeof(IBannouService).IsAssignableFrom(t))
             .FirstOrDefault();
 
         Assert.NotNull(testingServiceType);
-        var daprAttr = testingServiceType.GetCustomAttribute<DaprServiceAttribute>();
-        Assert.NotNull(daprAttr);
+        var bannouAttr = testingServiceType.GetCustomAttribute<BannouServiceAttribute>();
+        Assert.NotNull(bannouAttr);
 
         // Assert - Verify lifetime is read correctly from attribute
-        Assert.Equal(ServiceLifetime.Scoped, daprAttr.Lifetime);
-        Assert.Equal("testing", daprAttr.Name);
+        Assert.Equal(ServiceLifetime.Scoped, bannouAttr.Lifetime);
+        Assert.Equal("testing", bannouAttr.Name);
 
         // Test that the PluginLoader would use this lifetime for registration
-        var expectedLifetime = daprAttr.Lifetime;
+        var expectedLifetime = bannouAttr.Lifetime;
         Assert.Equal(ServiceLifetime.Scoped, expectedLifetime);
     }
 
@@ -1246,7 +1225,6 @@ public class PluginLoaderTests
     /// Tests that interface-based discovery ignores types that only match by naming convention.
     /// </summary>
     [Fact]
-    [Obsolete]
     public void InterfaceBasedDiscovery_ShouldIgnoreNamingConventionOnlyTypes()
     {
         // Arrange
@@ -1256,16 +1234,16 @@ public class PluginLoaderTests
         var conventionOnlyTypes = currentAssembly.GetTypes()
             .Where(t => !t.IsInterface && !t.IsAbstract)
             .Where(t => t.Name.EndsWith("Service") || t.Name.EndsWith("Client") || t.Name.EndsWith("Configuration"))
-            .Where(t => !typeof(IDaprService).IsAssignableFrom(t) && !typeof(IDaprClient).IsAssignableFrom(t) && !typeof(IServiceConfiguration).IsAssignableFrom(t))
+            .Where(t => !typeof(IBannouService).IsAssignableFrom(t) && !typeof(IBannouClient).IsAssignableFrom(t) && !typeof(IServiceConfiguration).IsAssignableFrom(t))
             .ToList();
 
         // Act - Test interface-based discovery
         var servicesViaInterface = currentAssembly.GetTypes()
-            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IDaprService).IsAssignableFrom(t))
+            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IBannouService).IsAssignableFrom(t))
             .ToList();
 
         var clientsViaInterface = currentAssembly.GetTypes()
-            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IDaprClient).IsAssignableFrom(t))
+            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IBannouClient).IsAssignableFrom(t))
             .ToList();
 
         var configurationsViaInterface = currentAssembly.GetTypes()
@@ -1283,12 +1261,12 @@ public class PluginLoaderTests
         // Interface-based discovery should only find types that implement the required interfaces
         foreach (var service in servicesViaInterface)
         {
-            Assert.True(typeof(IDaprService).IsAssignableFrom(service));
+            Assert.True(typeof(IBannouService).IsAssignableFrom(service));
         }
 
         foreach (var client in clientsViaInterface)
         {
-            Assert.True(typeof(IDaprClient).IsAssignableFrom(client));
+            Assert.True(typeof(IBannouClient).IsAssignableFrom(client));
         }
 
         foreach (var config in configurationsViaInterface)
@@ -1695,15 +1673,14 @@ public class PluginLoaderTests
     }
 
     /// <summary>
-    /// Helper method to get types implementing IDaprService from an assembly.
+    /// Helper method to get types implementing IBannouService from an assembly.
     /// </summary>
-    [Obsolete]
-    private List<Type> GetTypesImplementingIDaprService(Assembly assembly)
+    private List<Type> GetTypesImplementingIBannouService(Assembly assembly)
     {
         try
         {
             return assembly.GetTypes()
-                .Where(t => typeof(IDaprService).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
+                .Where(t => typeof(IBannouService).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
                 .ToList();
         }
         catch (ReflectionTypeLoadException ex)
@@ -1717,7 +1694,7 @@ public class PluginLoaderTests
                 if (type == null)
                     continue;
 
-                if (!typeof(IDaprService).IsAssignableFrom(type))
+                if (!typeof(IBannouService).IsAssignableFrom(type))
                     continue;
 
                 if (type.IsInterface)
@@ -1735,12 +1712,11 @@ public class PluginLoaderTests
 }
 
 /// <summary>
-/// Test service class that implements IDaprService for unit testing.
+/// Test service class that implements IBannouService for unit testing.
 /// </summary>
-[Obsolete]
-public class TestService : IDaprService
+public class TestService : IBannouService
 {
-    // IDaprService methods are provided by default interface implementations
+    // IBannouService methods are provided by default interface implementations
     // No additional implementation needed for basic testing
 }
 
@@ -1804,7 +1780,6 @@ public interface ITestConnectService
 /// Test configuration class with ServiceConfiguration attribute for testing.
 /// </summary>
 [ServiceConfiguration(typeof(TestService))]
-[Obsolete]
 public class TestServiceWithAttrConfiguration : IServiceConfiguration
 {
     public string TestSetting { get; set; } = "test";
@@ -1905,7 +1880,7 @@ public class ConfigurationDiscoveryTests
         var services = new ServiceCollection();
         services.AddLogging();
 
-        // Register service by interface (standard DaprService pattern)
+        // Register service by interface (standard BannouService pattern)
         services.AddSingleton<ITestConnectService, TestConnectService>();
 
         var serviceProvider = services.BuildServiceProvider();

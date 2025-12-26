@@ -1,14 +1,12 @@
 #!/bin/sh
 
-# Wait for bannou and Dapr sidecar health endpoints
-# Uses Docker DNS for service discovery (standalone Dapr containers)
+# Wait for bannou health endpoint
+# Uses Docker DNS for service discovery
 
 # Service hosts - use Docker DNS names (passed via environment or defaults)
 BANNOU_HOST="${BANNOU_HOST:-bannou}"
-DAPR_HOST="${DAPR_HOST:-bannou-dapr}"
 
 BANNOU_ENDPOINT="http://${BANNOU_HOST}:80/health"
-DAPR_ENDPOINT="http://${DAPR_HOST}:3500/v1.0/healthz"
 MAX_RETRIES=60
 RETRY_TIME=5
 
@@ -45,8 +43,5 @@ wait_for_service() {
 # Wait for Bannou service (expects 200)
 wait_for_service "Bannou service" "$BANNOU_ENDPOINT" "200" || exit 1
 
-# Wait for Dapr sidecar (expects 204 - No Content means healthy)
-wait_for_service "Dapr sidecar" "$DAPR_ENDPOINT" "204" || exit 1
-
-echo "✅ All services ready!"
+echo "✅ Bannou service ready!"
 exit 0

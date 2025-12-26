@@ -123,7 +123,7 @@ public partial interface IPermissionsClient
     /// <br/>appearing in this list means it has completed startup and registered its
     /// <br/>API permissions, indicating it's ready to handle requests.
     /// <br/>
-    /// <br/>For service-to-service calls (via Dapr), this endpoint is unrestricted.
+    /// <br/>For service-to-service calls (via mesh), this endpoint is unrestricted.
     /// <br/>For client calls through WebSocket/Connect, only admin users can access it.
     /// </remarks>
     /// <returns>List of registered services</returns>
@@ -834,7 +834,7 @@ public partial class PermissionsClient : IPermissionsClient, BeyondImmersion.Ban
     /// <br/>appearing in this list means it has completed startup and registered its
     /// <br/>API permissions, indicating it's ready to handle requests.
     /// <br/>
-    /// <br/>For service-to-service calls (via Dapr), this endpoint is unrestricted.
+    /// <br/>For service-to-service calls (via mesh), this endpoint is unrestricted.
     /// <br/>For client calls through WebSocket/Connect, only admin users can access it.
     /// </remarks>
     /// <returns>List of registered services</returns>
@@ -1001,7 +1001,7 @@ public partial class PermissionsClient : IPermissionsClient, BeyondImmersion.Ban
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -1013,7 +1013,7 @@ public partial class PermissionsClient : IPermissionsClient, BeyondImmersion.Ban
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

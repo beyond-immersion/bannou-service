@@ -267,12 +267,12 @@ jobs:
 
           ### Installation
 
-          **For Game Servers** (with Dapr service-to-service calls):
+          **For Game Servers** (with mesh service-to-service calls):
           \`\`\`bash
           dotnet add package BeyondImmersion.Bannou.SDK --version ${VERSION}
           \`\`\`
 
-          **For Game Clients** (WebSocket only, no Dapr):
+          **For Game Clients** (WebSocket only):
           \`\`\`bash
           dotnet add package BeyondImmersion.Bannou.Client.SDK --version ${VERSION}
           \`\`\`

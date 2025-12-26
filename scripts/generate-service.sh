@@ -21,7 +21,7 @@ if [ $# -lt 1 ]; then
     echo "  project        - Create service plugin project structure"
     echo "  models         - Generate models/DTOs from schema"
     echo "  controller     - Generate controller from schema"
-    echo "  client         - Generate service client for Dapr calls"
+    echo "  client         - Generate service client for mesh calls"
     echo "  interface      - Generate service interface from controller"
     echo "  config         - Generate service configuration class"
     echo "  implementation - Generate service implementation template"

@@ -193,7 +193,7 @@ public class ServiceDeploymentConfig
     /// <summary>Whether the service is enabled.</summary>
     public bool Enabled { get; set; }
 
-    /// <summary>Dapr app-id for the service.</summary>
+    /// <summary>app-id for the service.</summary>
     public string? AppId { get; set; }
 
     /// <summary>Number of replicas.</summary>
@@ -209,7 +209,7 @@ public class ServiceDeploymentConfig
 /// </summary>
 public class ServiceRouting
 {
-    /// <summary>Dapr app-id for this service.</summary>
+    /// <summary>app-id for this service.</summary>
     public required string AppId { get; set; }
 
     /// <summary>Container/host name where the service is running.</summary>
@@ -237,7 +237,7 @@ public class InstanceHealthStatus
     /// <summary>Unique GUID identifying this bannou instance.</summary>
     public Guid InstanceId { get; set; }
 
-    /// <summary>Dapr app-id for this instance.</summary>
+    /// <summary>app-id for this instance.</summary>
     public required string AppId { get; set; }
 
     /// <summary>Overall instance health status.</summary>
