@@ -33,7 +33,6 @@ public partial class GameSessionService : IGameSessionService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<GameSessionService> _logger;
     private readonly GameSessionServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly IVoiceClient? _voiceClient;
     private readonly IPermissionsClient? _permissionsClient;
     private readonly ISubscriptionsClient? _subscriptionsClient;
@@ -93,7 +92,6 @@ public partial class GameSessionService : IGameSessionService
         IMessageBus messageBus,
         ILogger<GameSessionService> logger,
         GameSessionServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
         IHttpContextAccessor httpContextAccessor,
         IEventConsumer eventConsumer,
         IVoiceClient? voiceClient = null,
@@ -104,7 +102,6 @@ public partial class GameSessionService : IGameSessionService
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
         _voiceClient = voiceClient; // Nullable - voice service may be disabled (Tenet 5)
         _permissionsClient = permissionsClient; // Nullable - permissions service may not be loaded (Tenet 5)
@@ -169,7 +166,7 @@ public partial class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to list game sessions");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "game-session",
                 "ListGameSessions",
                 "unexpected_exception",
@@ -264,7 +261,7 @@ public partial class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create game session");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "game-session",
                 "CreateGameSession",
                 "unexpected_exception",
@@ -301,7 +298,7 @@ public partial class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get game session {SessionId}", body.SessionId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "game-session",
                 "GetGameSession",
                 "unexpected_exception",
@@ -521,7 +518,7 @@ public partial class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to join game session {SessionId}", body.SessionId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "game-session",
                 "JoinGameSession",
                 "unexpected_exception",
@@ -587,7 +584,7 @@ public partial class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to perform game action in session {SessionId}", body.SessionId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "game-session",
                 "PerformGameAction",
                 "unexpected_exception",
@@ -730,7 +727,7 @@ public partial class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to leave game session {SessionId}", body.SessionId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "game-session",
                 "LeaveGameSession",
                 "unexpected_exception",
@@ -799,7 +796,7 @@ public partial class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to kick player from session {SessionId}", body.SessionId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "game-session",
                 "KickPlayer",
                 "unexpected_exception",
@@ -853,7 +850,7 @@ public partial class GameSessionService : IGameSessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send chat message in session {SessionId}", body.SessionId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "game-session",
                 "SendChatMessage",
                 "unexpected_exception",

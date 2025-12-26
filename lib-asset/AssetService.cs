@@ -33,7 +33,6 @@ public partial class AssetService : IAssetService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<AssetService> _logger;
     private readonly AssetServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly IAssetEventEmitter _eventEmitter;
     private readonly StorageModels.IAssetStorageProvider _storageProvider;
     private readonly IOrchestratorClient _orchestratorClient;
@@ -63,7 +62,6 @@ public partial class AssetService : IAssetService
         IMessageBus messageBus,
         ILogger<AssetService> logger,
         AssetServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
         IAssetEventEmitter eventEmitter,
         StorageModels.IAssetStorageProvider storageProvider,
         IOrchestratorClient orchestratorClient,
@@ -74,7 +72,6 @@ public partial class AssetService : IAssetService
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _eventEmitter = eventEmitter ?? throw new ArgumentNullException(nameof(eventEmitter));
         _storageProvider = storageProvider ?? throw new ArgumentNullException(nameof(storageProvider));
         _orchestratorClient = orchestratorClient ?? throw new ArgumentNullException(nameof(orchestratorClient));
@@ -235,7 +232,7 @@ public partial class AssetService : IAssetService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing RequestUpload operation");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "asset",
                 "RequestUpload",
                 "unexpected_exception",
@@ -400,7 +397,7 @@ public partial class AssetService : IAssetService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing CompleteUpload operation");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "asset",
                 "CompleteUpload",
                 "unexpected_exception",
@@ -468,7 +465,7 @@ public partial class AssetService : IAssetService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetAsset operation");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "asset",
                 "GetAsset",
                 "unexpected_exception",
@@ -534,7 +531,7 @@ public partial class AssetService : IAssetService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing ListAssetVersions operation");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "asset",
                 "ListAssetVersions",
                 "unexpected_exception",
@@ -636,7 +633,7 @@ public partial class AssetService : IAssetService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing SearchAssets operation");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "asset",
                 "SearchAssets",
                 "unexpected_exception",
@@ -894,7 +891,7 @@ public partial class AssetService : IAssetService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing CreateBundle operation");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "asset",
                 "CreateBundle",
                 "unexpected_exception",
@@ -1048,7 +1045,7 @@ public partial class AssetService : IAssetService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetBundle operation");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "asset",
                 "GetBundle",
                 "unexpected_exception",
@@ -1185,7 +1182,7 @@ public partial class AssetService : IAssetService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing RequestBundleUpload operation");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "asset",
                 "RequestBundleUpload",
                 "unexpected_exception",

@@ -26,7 +26,6 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
     private readonly Mock<IStateStore<List<string>>> _mockListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<SpeciesService>> _mockLogger;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<ICharacterClient> _mockCharacterClient;
     private readonly Mock<IRealmClient> _mockRealmClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
@@ -41,7 +40,6 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         _mockListStore = new Mock<IStateStore<List<string>>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<SpeciesService>>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockCharacterClient = new Mock<ICharacterClient>();
         _mockRealmClient = new Mock<IRealmClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
@@ -70,7 +68,6 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockCharacterClient.Object,
             _mockRealmClient.Object,
             _mockEventConsumer.Object);
@@ -97,7 +94,6 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockCharacterClient.Object,
             _mockRealmClient.Object,
             _mockEventConsumer.Object));
@@ -112,7 +108,6 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             null!,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockCharacterClient.Object,
             _mockRealmClient.Object,
             _mockEventConsumer.Object));
@@ -127,7 +122,6 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             _mockMessageBus.Object,
             null!,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockCharacterClient.Object,
             _mockRealmClient.Object,
             _mockEventConsumer.Object));
@@ -141,22 +135,6 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _mockLogger.Object,
-            null!,
-            _mockErrorEventEmitter.Object,
-            _mockCharacterClient.Object,
-            _mockRealmClient.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullErrorEventEmitter_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SpeciesService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            Configuration,
             null!,
             _mockCharacterClient.Object,
             _mockRealmClient.Object,
@@ -172,7 +150,6 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             null!,
             _mockRealmClient.Object,
             _mockEventConsumer.Object));
@@ -187,7 +164,6 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockCharacterClient.Object,
             null!,
             _mockEventConsumer.Object));

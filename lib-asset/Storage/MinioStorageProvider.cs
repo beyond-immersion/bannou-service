@@ -16,7 +16,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
     private readonly IMinioClient _minioClient;
     private readonly MinioStorageOptions _options;
     private readonly ILogger<MinioStorageProvider> _logger;
-    private readonly IErrorEventEmitter _errorEventEmitter;
+    private readonly IMessageBus _messageBus;
 
     /// <inheritdoc />
     public string ProviderName => "MinIO";
@@ -27,17 +27,17 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
     /// <param name="minioClient">MinIO client for storage operations.</param>
     /// <param name="options">Storage configuration options.</param>
     /// <param name="logger">Logger for diagnostic output.</param>
-    /// <param name="errorEventEmitter">Error event emitter for unexpected failures.</param>
+    /// <param name="messageBus">Message bus for error event publishing.</param>
     public MinioStorageProvider(
         IMinioClient minioClient,
         IOptions<MinioStorageOptions> options,
         ILogger<MinioStorageProvider> logger,
-        IErrorEventEmitter errorEventEmitter)
+        IMessageBus messageBus)
     {
         _minioClient = minioClient ?? throw new ArgumentNullException(nameof(minioClient));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
     }
 
     /// <inheritdoc />
@@ -91,7 +91,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to generate upload URL for {Bucket}/{Key}", bucket, key);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "asset",
                 "MinioStorageProvider.GenerateUploadUrlAsync",
                 "storage_error",
@@ -355,7 +355,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         {
             _logger.LogError(ex, "Failed to copy object from {SrcBucket}/{SrcKey} to {DstBucket}/{DstKey}",
                 sourceBucket, sourceKey, destBucket, destKey);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "asset",
                 "MinioStorageProvider.CopyObjectAsync",
                 "storage_error",
@@ -566,7 +566,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to put object {Bucket}/{Key}", bucket, key);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "asset",
                 "MinioStorageProvider.PutObjectAsync",
                 "storage_error",

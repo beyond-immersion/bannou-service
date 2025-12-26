@@ -42,7 +42,6 @@ public class PermissionsServiceTests
     private readonly Mock<IStateStore<object>> _mockObjectStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEmitter;
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
@@ -67,7 +66,6 @@ public class PermissionsServiceTests
         _mockObjectStore = new Mock<IStateStore<object>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
-        _mockErrorEmitter = new Mock<IErrorEventEmitter>();
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
@@ -121,7 +119,6 @@ public class PermissionsServiceTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _mockLockProvider.Object,
-            _mockErrorEmitter.Object,
             _mockClientEventPublisher.Object,
             _mockEventConsumer.Object);
     }

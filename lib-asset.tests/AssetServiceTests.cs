@@ -23,7 +23,6 @@ public class AssetServiceTests
     private Mock<IMessageBus> _mockMessageBus = null!;
     private Mock<ILogger<AssetService>> _mockLogger = null!;
     private AssetServiceConfiguration _configuration = null!;
-    private Mock<IErrorEventEmitter> _mockErrorEventEmitter = null!;
     private Mock<IAssetEventEmitter> _mockAssetEventEmitter = null!;
     private Mock<IAssetStorageProvider> _mockStorageProvider = null!;
     private Mock<IOrchestratorClient> _mockOrchestratorClient = null!;
@@ -40,7 +39,6 @@ public class AssetServiceTests
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<AssetService>>();
         _configuration = new AssetServiceConfiguration();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockAssetEventEmitter = new Mock<IAssetEventEmitter>();
         _mockStorageProvider = new Mock<IAssetStorageProvider>();
         _mockOrchestratorClient = new Mock<IOrchestratorClient>();
@@ -64,7 +62,6 @@ public class AssetServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockAssetEventEmitter.Object,
             _mockStorageProvider.Object,
             _mockOrchestratorClient.Object,
@@ -84,7 +81,6 @@ public class AssetServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockAssetEventEmitter.Object,
             _mockStorageProvider.Object,
             _mockOrchestratorClient.Object,
@@ -101,7 +97,6 @@ public class AssetServiceTests
             null!,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockAssetEventEmitter.Object,
             _mockStorageProvider.Object,
             _mockOrchestratorClient.Object,
@@ -118,7 +113,6 @@ public class AssetServiceTests
             _mockMessageBus.Object,
             null!,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockAssetEventEmitter.Object,
             _mockStorageProvider.Object,
             _mockOrchestratorClient.Object,
@@ -134,24 +128,6 @@ public class AssetServiceTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _mockLogger.Object,
-            null!,
-            _mockErrorEventEmitter.Object,
-            _mockAssetEventEmitter.Object,
-            _mockStorageProvider.Object,
-            _mockOrchestratorClient.Object,
-            _bundleConverter,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullErrorEventEmitter_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AssetService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
             null!,
             _mockAssetEventEmitter.Object,
             _mockStorageProvider.Object,
@@ -169,7 +145,6 @@ public class AssetServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             null!,
             _mockStorageProvider.Object,
             _mockOrchestratorClient.Object,
@@ -186,7 +161,6 @@ public class AssetServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockAssetEventEmitter.Object,
             null!,
             _mockOrchestratorClient.Object,
@@ -203,7 +177,6 @@ public class AssetServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockAssetEventEmitter.Object,
             _mockStorageProvider.Object,
             null!,
@@ -220,7 +193,6 @@ public class AssetServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockAssetEventEmitter.Object,
             _mockStorageProvider.Object,
             _mockOrchestratorClient.Object,
@@ -237,7 +209,6 @@ public class AssetServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockAssetEventEmitter.Object,
             _mockStorageProvider.Object,
             _mockOrchestratorClient.Object,
@@ -885,7 +856,6 @@ public class AssetServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockAssetEventEmitter.Object,
             _mockStorageProvider.Object,
             _mockOrchestratorClient.Object,

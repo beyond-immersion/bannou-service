@@ -33,7 +33,6 @@ public partial class PermissionsService : IPermissionsService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
     private readonly IDistributedLockProvider _lockProvider;
-    private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly IClientEventPublisher _clientEventPublisher;
     private static readonly string[] ROLE_ORDER = new[] { "anonymous", "user", "developer", "admin" };
 
@@ -61,7 +60,6 @@ public partial class PermissionsService : IPermissionsService
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
         IDistributedLockProvider lockProvider,
-        IErrorEventEmitter errorEventEmitter,
         IClientEventPublisher clientEventPublisher,
         IEventConsumer eventConsumer)
     {
@@ -70,7 +68,6 @@ public partial class PermissionsService : IPermissionsService
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
         _sessionCapabilityCache = new ConcurrentDictionary<string, CapabilityResponse>();
 
@@ -1048,7 +1045,7 @@ public partial class PermissionsService : IPermissionsService
         string? dependency = null,
         object? details = null)
     {
-        return _errorEventEmitter.TryPublishAsync(
+        return _messageBus.TryPublishErrorAsync(
             serviceId: "permissions",
             operation: operation,
             errorType: errorType,

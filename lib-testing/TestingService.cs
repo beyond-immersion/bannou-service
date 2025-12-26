@@ -19,21 +19,18 @@ public partial class TestingService : ITestingService
     private readonly TestingServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
     private readonly IClientEventPublisher _clientEventPublisher;
-    private readonly IErrorEventEmitter _errorEventEmitter;
 
     public TestingService(
         ILogger<TestingService> logger,
         TestingServiceConfiguration configuration,
         IMessageBus messageBus,
         IClientEventPublisher clientEventPublisher,
-        IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
 
         // Required by Tenet 6 - calls default IDaprService.RegisterEventConsumers() no-op
         // Must cast to interface to access default interface implementation
@@ -63,7 +60,7 @@ public partial class TestingService : ITestingService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error running test: {TestName}", testName);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "testing",
                 "RunTest",
                 ex.GetType().Name,
@@ -98,7 +95,7 @@ public partial class TestingService : ITestingService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error testing configuration");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "testing",
                 "TestConfiguration",
                 ex.GetType().Name,
@@ -172,7 +169,7 @@ public partial class TestingService : ITestingService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error testing dependency injection health");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "testing",
                 "TestDependencyInjectionHealth",
                 ex.GetType().Name,
@@ -221,7 +218,7 @@ public partial class TestingService : ITestingService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing ping request");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "testing",
                 "Ping",
                 ex.GetType().Name,

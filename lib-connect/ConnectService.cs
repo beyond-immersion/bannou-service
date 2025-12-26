@@ -47,7 +47,6 @@ public partial class ConnectService : IConnectService
     private readonly ILogger<ConnectService> _logger;
     private readonly WebSocketConnectionManager _connectionManager;
     private readonly ISessionManager? _sessionManager;
-    private readonly IErrorEventEmitter _errorEventEmitter;
 
     // Client event subscriber for session-specific RabbitMQ subscriptions (TENET exception)
     private ClientEventRabbitMQSubscriber? _clientEventSubscriber;
@@ -68,7 +67,6 @@ public partial class ConnectService : IConnectService
         ConnectServiceConfiguration configuration,
         ILogger<ConnectService> logger,
         ILoggerFactory loggerFactory,
-        IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer,
         ISessionManager? sessionManager = null,
         ClientEventQueueManager? clientEventQueueManager = null)
@@ -86,7 +84,6 @@ public partial class ConnectService : IConnectService
         _appMappingResolver = appMappingResolver ?? throw new ArgumentNullException(nameof(appMappingResolver));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _sessionManager = sessionManager; // Optional Dapr-based session management
         _clientEventQueueManager = clientEventQueueManager; // Optional client event queuing
 
@@ -2663,7 +2660,7 @@ public partial class ConnectService : IConnectService
         string? dependency = null,
         object? details = null)
     {
-        return _errorEventEmitter.TryPublishAsync(
+        return _messageBus.TryPublishErrorAsync(
             serviceId: "connect",
             operation: operation,
             errorType: errorType,

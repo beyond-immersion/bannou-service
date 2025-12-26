@@ -20,17 +20,17 @@ public partial class WebsiteService : IWebsiteService
 {
     private readonly ILogger<WebsiteService> _logger;
     private readonly WebsiteServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
+    private readonly IMessageBus _messageBus;
 
     public WebsiteService(
         ILogger<WebsiteService> logger,
         WebsiteServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
+        IMessageBus messageBus,
         IEventConsumer eventConsumer)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
 
         // Register event handlers via partial class (WebsiteServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
@@ -50,7 +50,7 @@ public partial class WebsiteService : IWebsiteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting status");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "website",
                 operation: "GetStatus",
                 errorType: ex.GetType().Name,
@@ -74,7 +74,7 @@ public partial class WebsiteService : IWebsiteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting page content");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "website",
                 operation: "GetPageContent",
                 errorType: ex.GetType().Name,
@@ -99,7 +99,7 @@ public partial class WebsiteService : IWebsiteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting news");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "website",
                 operation: "GetNews",
                 errorType: ex.GetType().Name,
@@ -124,7 +124,7 @@ public partial class WebsiteService : IWebsiteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting server status");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "website",
                 operation: "GetServerStatus",
                 errorType: ex.GetType().Name,
@@ -148,7 +148,7 @@ public partial class WebsiteService : IWebsiteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting downloads");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "website",
                 operation: "GetDownloads",
                 errorType: ex.GetType().Name,
@@ -173,7 +173,7 @@ public partial class WebsiteService : IWebsiteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error submitting contact");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "website",
                 operation: "SubmitContact",
                 errorType: ex.GetType().Name,
@@ -197,7 +197,7 @@ public partial class WebsiteService : IWebsiteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting account profile");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "website",
                 operation: "GetAccountProfile",
                 errorType: ex.GetType().Name,
@@ -221,7 +221,7 @@ public partial class WebsiteService : IWebsiteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting account characters");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "website",
                 operation: "GetAccountCharacters",
                 errorType: ex.GetType().Name,
@@ -245,7 +245,7 @@ public partial class WebsiteService : IWebsiteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating page");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "website",
                 operation: "CreatePage",
                 errorType: ex.GetType().Name,
@@ -269,7 +269,7 @@ public partial class WebsiteService : IWebsiteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating page");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "website",
                 operation: "UpdatePage",
                 errorType: ex.GetType().Name,
@@ -294,7 +294,7 @@ public partial class WebsiteService : IWebsiteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting site settings");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "website",
                 operation: "GetSiteSettings",
                 errorType: ex.GetType().Name,
@@ -318,7 +318,7 @@ public partial class WebsiteService : IWebsiteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating site settings");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "website",
                 operation: "UpdateSiteSettings",
                 errorType: ex.GetType().Name,
@@ -342,7 +342,7 @@ public partial class WebsiteService : IWebsiteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting theme");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "website",
                 operation: "GetTheme",
                 errorType: ex.GetType().Name,
@@ -366,7 +366,7 @@ public partial class WebsiteService : IWebsiteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating theme");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "website",
                 operation: "UpdateTheme",
                 errorType: ex.GetType().Name,
@@ -390,7 +390,7 @@ public partial class WebsiteService : IWebsiteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting subscription");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "website",
                 operation: "GetSubscription",
                 errorType: ex.GetType().Name,
@@ -414,7 +414,7 @@ public partial class WebsiteService : IWebsiteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting page");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "website",
                 operation: "DeletePage",
                 errorType: ex.GetType().Name,
@@ -439,7 +439,7 @@ public partial class WebsiteService : IWebsiteService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing pages");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "website",
                 operation: "ListPages",
                 errorType: ex.GetType().Name,

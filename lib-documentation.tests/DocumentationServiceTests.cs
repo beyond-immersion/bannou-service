@@ -24,7 +24,6 @@ public class DocumentationServiceTests
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<DocumentationService>> _mockLogger;
     private readonly DocumentationServiceConfiguration _configuration;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<ISearchIndexService> _mockSearchIndexService;
     private readonly DocumentationService _service;
@@ -42,7 +41,6 @@ public class DocumentationServiceTests
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<DocumentationService>>();
         _configuration = new DocumentationServiceConfiguration();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockSearchIndexService = new Mock<ISearchIndexService>();
 
@@ -61,7 +59,6 @@ public class DocumentationServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object,
             _mockSearchIndexService.Object);
     }
@@ -77,7 +74,6 @@ public class DocumentationServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object,
             _mockSearchIndexService.Object);
 
@@ -94,7 +90,6 @@ public class DocumentationServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object,
             _mockSearchIndexService.Object));
     }
@@ -108,7 +103,6 @@ public class DocumentationServiceTests
             _mockMessageBus.Object,
             null!,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object,
             _mockSearchIndexService.Object));
     }
@@ -121,21 +115,6 @@ public class DocumentationServiceTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _mockLogger.Object,
-            null!,
-            _mockErrorEventEmitter.Object,
-            _mockEventConsumer.Object,
-            _mockSearchIndexService.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullErrorEventEmitter_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new DocumentationService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
             null!,
             _mockEventConsumer.Object,
             _mockSearchIndexService.Object));
@@ -150,7 +129,6 @@ public class DocumentationServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             null!,
             _mockSearchIndexService.Object));
     }
@@ -164,7 +142,6 @@ public class DocumentationServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object,
             null!));
     }

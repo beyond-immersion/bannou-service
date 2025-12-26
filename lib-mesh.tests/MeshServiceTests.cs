@@ -25,7 +25,6 @@ public class MeshServiceTests
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<MeshService>> _mockLogger;
     private readonly MeshServiceConfiguration _configuration;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IMeshRedisManager> _mockRedisManager;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
@@ -34,7 +33,6 @@ public class MeshServiceTests
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<MeshService>>();
         _configuration = new MeshServiceConfiguration();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockRedisManager = new Mock<IMeshRedisManager>();
         _mockEventConsumer = new Mock<IEventConsumer>();
     }
@@ -45,7 +43,6 @@ public class MeshServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockRedisManager.Object,
             _mockEventConsumer.Object);
     }
@@ -68,7 +65,6 @@ public class MeshServiceTests
             null!,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockRedisManager.Object,
             _mockEventConsumer.Object));
 
@@ -83,7 +79,6 @@ public class MeshServiceTests
             _mockMessageBus.Object,
             null!,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockRedisManager.Object,
             _mockEventConsumer.Object));
 
@@ -98,26 +93,10 @@ public class MeshServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             null!,
-            _mockErrorEventEmitter.Object,
             _mockRedisManager.Object,
             _mockEventConsumer.Object));
 
         Assert.Equal("configuration", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullErrorEventEmitter_ShouldThrowArgumentNullException()
-    {
-        // Arrange & Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new MeshService(
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _configuration,
-            null!,
-            _mockRedisManager.Object,
-            _mockEventConsumer.Object));
-
-        Assert.Equal("errorEventEmitter", exception.ParamName);
     }
 
     [Fact]
@@ -128,7 +107,6 @@ public class MeshServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             null!,
             _mockEventConsumer.Object));
 
@@ -143,7 +121,6 @@ public class MeshServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockRedisManager.Object,
             null!));
 
@@ -217,8 +194,8 @@ public class MeshServiceTests
             .Setup(x => x.GetEndpointsForAppIdAsync(It.IsAny<string>(), It.IsAny<bool>()))
             .ThrowsAsync(new Exception("Redis connection failed"));
 
-        _mockErrorEventEmitter
-            .Setup(x => x.TryPublishAsync(
+        _mockMessageBus
+            .Setup(m => m.TryPublishErrorAsync(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),

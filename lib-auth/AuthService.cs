@@ -45,7 +45,6 @@ public partial class AuthService : IAuthService
     private readonly ITokenService _tokenService;
     private readonly ISessionService _sessionService;
     private readonly IOAuthProviderService _oauthService;
-    private readonly IErrorEventEmitter _errorEventEmitter;
 
     private const string REDIS_STATE_STORE = "auth-statestore";
     private const string SESSION_INVALIDATED_TOPIC = "session.invalidated";
@@ -71,7 +70,6 @@ public partial class AuthService : IAuthService
         ITokenService tokenService,
         ISessionService sessionService,
         IOAuthProviderService oauthService,
-        IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer)
     {
         _accountsClient = accountsClient ?? throw new ArgumentNullException(nameof(accountsClient));
@@ -84,7 +82,6 @@ public partial class AuthService : IAuthService
         _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
         _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
         _oauthService = oauthService ?? throw new ArgumentNullException(nameof(oauthService));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
 
         // Register event handlers via partial class (AuthServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
@@ -2539,7 +2536,7 @@ public partial class AuthService : IAuthService
         string? dependency = null,
         object? details = null)
     {
-        return _errorEventEmitter.TryPublishAsync(
+        return _messageBus.TryPublishErrorAsync(
             serviceId: "auth",
             operation: operation,
             errorType: errorType,

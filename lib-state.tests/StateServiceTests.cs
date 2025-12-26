@@ -9,7 +9,7 @@ public class StateServiceTests
 {
     private Mock<ILogger<StateService>> _mockLogger = null!;
     private StateServiceConfiguration _configuration = null!;
-    private Mock<IErrorEventEmitter> _mockErrorEventEmitter = null!;
+    private Mock<IMessageBus> _mockMessageBus = null!;
     private Mock<IStateStoreFactory> _mockStateStoreFactory = null!;
     private Mock<IStateStore<object>> _mockStateStore = null!;
 
@@ -17,7 +17,7 @@ public class StateServiceTests
     {
         _mockLogger = new Mock<ILogger<StateService>>();
         _configuration = new StateServiceConfiguration();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockStateStore = new Mock<IStateStore<object>>();
     }
@@ -27,7 +27,7 @@ public class StateServiceTests
         return new StateService(
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
+            _mockMessageBus.Object,
             _mockStateStoreFactory.Object);
     }
 
@@ -50,7 +50,7 @@ public class StateServiceTests
         Assert.Throws<ArgumentNullException>(() => new StateService(
             null!,
             _configuration,
-            _mockErrorEventEmitter.Object,
+            _mockMessageBus.Object,
             _mockStateStoreFactory.Object));
     }
 
@@ -61,12 +61,12 @@ public class StateServiceTests
         Assert.Throws<ArgumentNullException>(() => new StateService(
             _mockLogger.Object,
             null!,
-            _mockErrorEventEmitter.Object,
+            _mockMessageBus.Object,
             _mockStateStoreFactory.Object));
     }
 
     [Fact]
-    public void Constructor_WithNullErrorEventEmitter_ShouldThrowArgumentNullException()
+    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new StateService(
@@ -83,7 +83,7 @@ public class StateServiceTests
         Assert.Throws<ArgumentNullException>(() => new StateService(
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
+            _mockMessageBus.Object,
             null!));
     }
 
@@ -163,7 +163,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
         _mockStateStore.Setup(s => s.GetWithETagAsync("test-key", It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Redis connection failed"));
-        _mockErrorEventEmitter.Setup(e => e.TryPublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -175,7 +175,7 @@ public class StateServiceTests
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);
         Assert.Null(response);
-        _mockErrorEventEmitter.Verify(e => e.TryPublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "state", "GetState", "Exception", "Redis connection failed",
             "test-store", "post:/state/get", It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -338,7 +338,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
         _mockStateStore.Setup(s => s.SaveAsync("test-key", It.IsAny<object>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Save failed"));
-        _mockErrorEventEmitter.Setup(e => e.TryPublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -350,7 +350,7 @@ public class StateServiceTests
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);
         Assert.Null(response);
-        _mockErrorEventEmitter.Verify(e => e.TryPublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "state", "SaveState", "Exception", "Save failed",
             "test-store", "post:/state/save", It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -430,7 +430,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
         _mockStateStore.Setup(s => s.DeleteAsync("test-key", It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Delete failed"));
-        _mockErrorEventEmitter.Setup(e => e.TryPublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -442,7 +442,7 @@ public class StateServiceTests
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);
         Assert.Null(response);
-        _mockErrorEventEmitter.Verify(e => e.TryPublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "state", "DeleteState", "Exception", "Delete failed",
             "test-store", "post:/state/delete", It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -703,7 +703,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
         _mockStateStoreFactory.Setup(f => f.GetBackendType("test-store"))
             .Throws(new Exception("Backend check failed"));
-        _mockErrorEventEmitter.Setup(e => e.TryPublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -715,7 +715,7 @@ public class StateServiceTests
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);
         Assert.Null(response);
-        _mockErrorEventEmitter.Verify(e => e.TryPublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "state", "QueryState", "Exception", "Backend check failed",
             "test-store", "post:/state/query", It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -823,7 +823,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
         _mockStateStore.Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Bulk get failed"));
-        _mockErrorEventEmitter.Setup(e => e.TryPublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -835,7 +835,7 @@ public class StateServiceTests
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);
         Assert.Null(response);
-        _mockErrorEventEmitter.Verify(e => e.TryPublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "state", "BulkGetState", "Exception", "Bulk get failed",
             "test-store", "post:/state/bulk-get", It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -936,7 +936,7 @@ public class StateServiceTests
 
         _mockStateStoreFactory.Setup(f => f.GetStoreNames())
             .Throws(new Exception("Failed to list stores"));
-        _mockErrorEventEmitter.Setup(e => e.TryPublishAsync(
+        _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -948,7 +948,7 @@ public class StateServiceTests
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);
         Assert.Null(response);
-        _mockErrorEventEmitter.Verify(e => e.TryPublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "state", "ListStores", "Exception", "Failed to list stores",
             "state-factory", "post:/state/list-stores", It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);

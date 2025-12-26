@@ -28,7 +28,6 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     private readonly Mock<IStateStore<List<string>>> _mockListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<LocationService>> _mockLogger;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IRealmClient> _mockRealmClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
@@ -48,7 +47,6 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         _mockListStore = new Mock<IStateStore<List<string>>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<LocationService>>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockRealmClient = new Mock<IRealmClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
@@ -81,7 +79,6 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockRealmClient.Object,
             _mockEventConsumer.Object);
     }
@@ -136,7 +133,6 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockRealmClient.Object,
             _mockEventConsumer.Object));
     }
@@ -149,7 +145,6 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             null!,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockRealmClient.Object,
             _mockEventConsumer.Object));
     }
@@ -162,7 +157,6 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             _mockMessageBus.Object,
             null!,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockRealmClient.Object,
             _mockEventConsumer.Object));
     }
@@ -174,20 +168,6 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _mockLogger.Object,
-            null!,
-            _mockErrorEventEmitter.Object,
-            _mockRealmClient.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullErrorEventEmitter_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new LocationService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            Configuration,
             null!,
             _mockRealmClient.Object,
             _mockEventConsumer.Object));
@@ -201,7 +181,6 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             null!,
             _mockEventConsumer.Object));
     }
@@ -214,7 +193,6 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockRealmClient.Object,
             null!));
     }
@@ -286,7 +264,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);
         Assert.Null(response);
-        _mockErrorEventEmitter.Verify(e => e.TryPublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "location", "GetLocation", "unexpected_exception", It.IsAny<string>(),
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object>(), It.IsAny<string>(), It.IsAny<string>(), default), Times.Once);

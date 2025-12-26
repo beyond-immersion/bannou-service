@@ -1760,20 +1760,6 @@
             Gets the number of handlers registered for a topic.
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Events.ServiceErrorPublisher">
-            <summary>
-            Helper publisher for emitting ServiceErrorEvent to the shared error topic.
-            Use for unexpected/internal failures only (not user/input errors).
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Events.ServiceErrorPublisher.#ctor(Dapr.Client.DaprClient,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Events.ServiceErrorPublisher})">
-            <inheritdoc/>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Events.ServiceErrorPublisher.PublishErrorAsync(System.String,System.String,System.String,System.String,System.String,System.String,BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity,System.Object,System.String,System.String,System.String,System.Single,System.Single,System.Threading.CancellationToken)">
-            <summary>
-            Publishes a structured service error event.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Events.ServiceRegistrationEvent">
             <summary>
             Published by any service during startup to register its API endpoints
@@ -17123,17 +17109,6 @@
         <member name="P:BeyondImmersion.BannouService.Services.DaprService`1.Configuration">
             <inheritdoc/>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Services.ErrorEventEmitter">
-            <summary>
-            Centralized emitter for ServiceErrorEvent with guards against cascading failures.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Services.ErrorEventEmitter.#ctor(Dapr.Client.DaprClient,Microsoft.Extensions.Logging.ILoggerFactory)">
-            <inheritdoc/>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Services.ErrorEventEmitter.TryPublishAsync(System.String,System.String,System.String,System.String,System.String,System.String,BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity,System.Object,System.String,System.String,System.Threading.CancellationToken)">
-            <inheritdoc/>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Services.IDaprService">
              <summary>
              Interface to implement for all internal dapr service,
@@ -17291,14 +17266,6 @@
             Find the implementation for the given service handler.
             </summary>
             <returns>Interface Type, Implementation Type, Service Attribute</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Services.IErrorEventEmitter">
-            <summary>
-            Shared contract for emitting ServiceErrorEvent for unexpected/internal failures.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IErrorEventEmitter.TryPublishAsync(System.String,System.String,System.String,System.String,System.String,System.String,BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity,System.Object,System.String,System.String,System.Threading.CancellationToken)">
-            <inheritdoc/>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.JsonQueryCondition">
             <summary>
@@ -17672,6 +17639,33 @@
             <param name="options">Optional publish settings</param>
             <param name="cancellationToken">Cancellation token</param>
             <returns>The message ID assigned to this publication</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IMessageBus.TryPublishErrorAsync(System.String,System.String,System.String,System.String,System.String,System.String,BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity,System.Object,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Publish a service error event. Convenience method replacing IErrorEventEmitter.
+            </summary>
+            <remarks>
+            <para>
+            This method wraps error publishing with try/catch to prevent cascading failures
+            when the messaging infrastructure itself is the source of errors.
+            </para>
+            <para>
+            Use for unexpected/internal failures only (not user/input validation errors).
+            Similar to Sentry/error tracking services.
+            </para>
+            </remarks>
+            <param name="serviceId">Service identifier (e.g., "accounts", "auth")</param>
+            <param name="operation">Operation that failed (e.g., "GetAccount", "ValidateToken")</param>
+            <param name="errorType">Exception type name</param>
+            <param name="message">Error message</param>
+            <param name="dependency">External dependency that failed (optional)</param>
+            <param name="endpoint">Endpoint being called (optional)</param>
+            <param name="severity">Error severity level</param>
+            <param name="details">Additional context (will be serialized)</param>
+            <param name="stack">Stack trace (optional)</param>
+            <param name="correlationId">Correlation ID for tracing (optional)</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>True if the error event was published successfully, false otherwise</returns>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.IMessageSubscriber">
             <summary>

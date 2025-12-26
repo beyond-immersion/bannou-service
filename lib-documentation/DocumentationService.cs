@@ -24,7 +24,6 @@ public partial class DocumentationService : IDocumentationService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<DocumentationService> _logger;
     private readonly DocumentationServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly ISearchIndexService _searchIndexService;
 
     private const string STATE_STORE = "documentation-statestore";
@@ -48,7 +47,6 @@ public partial class DocumentationService : IDocumentationService
         IMessageBus messageBus,
         ILogger<DocumentationService> logger,
         DocumentationServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer,
         ISearchIndexService searchIndexService)
     {
@@ -56,7 +54,6 @@ public partial class DocumentationService : IDocumentationService
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _searchIndexService = searchIndexService ?? throw new ArgumentNullException(nameof(searchIndexService));
 
         // Register event handlers via partial class (minimal event subscriptions per schema)
@@ -139,7 +136,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ViewDocumentBySlug");
-            await _errorEventEmitter.TryPublishAsync("documentation", "ViewDocumentBySlug", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            await _messageBus.TryPublishErrorAsync("documentation", "ViewDocumentBySlug", "unexpected_exception", ex.Message, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -218,7 +215,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in QueryDocumentation");
-            await _errorEventEmitter.TryPublishAsync("documentation", "QueryDocumentation", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            await _messageBus.TryPublishErrorAsync("documentation", "QueryDocumentation", "unexpected_exception", ex.Message, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -321,7 +318,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in GetDocument");
-            await _errorEventEmitter.TryPublishAsync("documentation", "GetDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            await _messageBus.TryPublishErrorAsync("documentation", "GetDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -397,7 +394,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in SearchDocumentation");
-            await _errorEventEmitter.TryPublishAsync("documentation", "SearchDocumentation", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            await _messageBus.TryPublishErrorAsync("documentation", "SearchDocumentation", "unexpected_exception", ex.Message, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -479,7 +476,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ListDocuments");
-            await _errorEventEmitter.TryPublishAsync("documentation", "ListDocuments", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            await _messageBus.TryPublishErrorAsync("documentation", "ListDocuments", "unexpected_exception", ex.Message, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -532,7 +529,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in SuggestRelatedTopics");
-            await _errorEventEmitter.TryPublishAsync("documentation", "SuggestRelatedTopics", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            await _messageBus.TryPublishErrorAsync("documentation", "SuggestRelatedTopics", "unexpected_exception", ex.Message, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -634,7 +631,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in CreateDocument");
-            await _errorEventEmitter.TryPublishAsync("documentation", "CreateDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            await _messageBus.TryPublishErrorAsync("documentation", "CreateDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -776,7 +773,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in UpdateDocument");
-            await _errorEventEmitter.TryPublishAsync("documentation", "UpdateDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            await _messageBus.TryPublishErrorAsync("documentation", "UpdateDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -881,7 +878,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in DeleteDocument");
-            await _errorEventEmitter.TryPublishAsync("documentation", "DeleteDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            await _messageBus.TryPublishErrorAsync("documentation", "DeleteDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -966,7 +963,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in RecoverDocument");
-            await _errorEventEmitter.TryPublishAsync("documentation", "RecoverDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            await _messageBus.TryPublishErrorAsync("documentation", "RecoverDocument", "unexpected_exception", ex.Message, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1064,7 +1061,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in BulkUpdateDocuments");
-            await _errorEventEmitter.TryPublishAsync("documentation", "BulkUpdateDocuments", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            await _messageBus.TryPublishErrorAsync("documentation", "BulkUpdateDocuments", "unexpected_exception", ex.Message, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1148,7 +1145,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in BulkDeleteDocuments");
-            await _errorEventEmitter.TryPublishAsync("documentation", "BulkDeleteDocuments", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            await _messageBus.TryPublishErrorAsync("documentation", "BulkDeleteDocuments", "unexpected_exception", ex.Message, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1271,7 +1268,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ImportDocumentation");
-            await _errorEventEmitter.TryPublishAsync("documentation", "ImportDocumentation", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            await _messageBus.TryPublishErrorAsync("documentation", "ImportDocumentation", "unexpected_exception", ex.Message, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1352,7 +1349,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ListTrashcan");
-            await _errorEventEmitter.TryPublishAsync("documentation", "ListTrashcan", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            await _messageBus.TryPublishErrorAsync("documentation", "ListTrashcan", "unexpected_exception", ex.Message, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1417,7 +1414,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in PurgeTrashcan");
-            await _errorEventEmitter.TryPublishAsync("documentation", "PurgeTrashcan", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            await _messageBus.TryPublishErrorAsync("documentation", "PurgeTrashcan", "unexpected_exception", ex.Message, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1483,7 +1480,7 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in GetNamespaceStats");
-            await _errorEventEmitter.TryPublishAsync("documentation", "GetNamespaceStats", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            await _messageBus.TryPublishErrorAsync("documentation", "GetNamespaceStats", "unexpected_exception", ex.Message, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
     }

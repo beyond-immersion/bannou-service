@@ -23,7 +23,6 @@ public partial class ServicedataService : IServicedataService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<ServicedataService> _logger;
     private readonly ServicedataServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
 
     // Key patterns for state store
     private const string SERVICE_KEY_PREFIX = "service:";
@@ -35,14 +34,12 @@ public partial class ServicedataService : IServicedataService
         IMessageBus messageBus,
         ILogger<ServicedataService> logger,
         ServicedataServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer)
     {
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
 
         // Register event handlers via partial class (ServicedataServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
@@ -404,7 +401,7 @@ public partial class ServicedataService : IServicedataService
         string? dependency = null,
         object? details = null)
     {
-        return _errorEventEmitter.TryPublishAsync(
+        return _messageBus.TryPublishErrorAsync(
             serviceId: "servicedata",
             operation: operation,
             errorType: errorType,

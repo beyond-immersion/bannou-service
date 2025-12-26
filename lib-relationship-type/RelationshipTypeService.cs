@@ -25,7 +25,6 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<RelationshipTypeService> _logger;
     private readonly RelationshipTypeServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly IRelationshipClient _relationshipClient;
 
     private const string STATE_STORE = "relationship-type-statestore";
@@ -39,7 +38,6 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         IMessageBus messageBus,
         ILogger<RelationshipTypeService> logger,
         RelationshipTypeServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
         IRelationshipClient relationshipClient,
         IEventConsumer eventConsumer)
     {
@@ -47,7 +45,6 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _relationshipClient = relationshipClient ?? throw new ArgumentNullException(nameof(relationshipClient));
 
         // Register event handlers via partial class (RelationshipTypeServiceEvents.cs)
@@ -1115,7 +1112,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
     private async Task EmitErrorAsync(string operation, string endpoint, Exception ex)
     {
-        await _errorEventEmitter.TryPublishAsync(
+        await _messageBus.TryPublishErrorAsync(
             "relationship-type",
             operation,
             "unexpected_exception",

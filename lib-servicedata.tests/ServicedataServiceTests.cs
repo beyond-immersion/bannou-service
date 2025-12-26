@@ -22,7 +22,6 @@ public class ServicedataServiceTests
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<ServicedataService>> _mockLogger;
     private readonly ServicedataServiceConfiguration _configuration;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private const string STATE_STORE = "servicedata-statestore";
 
@@ -35,7 +34,6 @@ public class ServicedataServiceTests
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<ServicedataService>>();
         _configuration = new ServicedataServiceConfiguration();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup factory to return typed stores
@@ -54,7 +52,6 @@ public class ServicedataServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
     }
 
@@ -75,7 +72,7 @@ public class ServicedataServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new ServicedataService(
-            null!, _mockMessageBus.Object, _mockLogger.Object, _configuration, _mockErrorEventEmitter.Object, _mockEventConsumer.Object));
+            null!, _mockMessageBus.Object, _mockLogger.Object, _configuration, _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -83,7 +80,7 @@ public class ServicedataServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new ServicedataService(
-            _mockStateStoreFactory.Object, _mockMessageBus.Object, null!, _configuration, _mockErrorEventEmitter.Object, _mockEventConsumer.Object));
+            _mockStateStoreFactory.Object, _mockMessageBus.Object, null!, _configuration, _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -91,7 +88,7 @@ public class ServicedataServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new ServicedataService(
-            _mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, null!, _mockErrorEventEmitter.Object, _mockEventConsumer.Object));
+            _mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, null!, _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -99,7 +96,7 @@ public class ServicedataServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new ServicedataService(
-            _mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, _configuration, _mockErrorEventEmitter.Object, null!));
+            _mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, _configuration, null!));
     }
 
     #endregion

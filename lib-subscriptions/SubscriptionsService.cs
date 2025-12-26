@@ -26,7 +26,6 @@ public partial class SubscriptionsService : ISubscriptionsService
     private readonly ILogger<SubscriptionsService> _logger;
     private readonly SubscriptionsServiceConfiguration _configuration;
     private readonly IServicedataClient _servicedataClient;
-    private readonly IErrorEventEmitter _errorEventEmitter;
 
     // Key patterns for state store
     private const string SUBSCRIPTION_KEY_PREFIX = "subscription:";
@@ -42,7 +41,6 @@ public partial class SubscriptionsService : ISubscriptionsService
         ILogger<SubscriptionsService> logger,
         SubscriptionsServiceConfiguration configuration,
         IServicedataClient servicedataClient,
-        IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer)
     {
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
@@ -50,7 +48,6 @@ public partial class SubscriptionsService : ISubscriptionsService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _servicedataClient = servicedataClient ?? throw new ArgumentNullException(nameof(servicedataClient));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
 
         // Register event handlers via partial class (SubscriptionsServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
@@ -630,7 +627,7 @@ public partial class SubscriptionsService : ISubscriptionsService
         string? dependency = null,
         object? details = null)
     {
-        return _errorEventEmitter.TryPublishAsync(
+        return _messageBus.TryPublishErrorAsync(
             serviceId: "subscriptions",
             operation: operation,
             errorType: errorType,

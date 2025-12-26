@@ -21,7 +21,6 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
 {
     private readonly ILogger<MessagingService> _logger;
     private readonly MessagingServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly IMessageBus _messageBus;
     private readonly IMessageSubscriber _messageSubscriber;
 
@@ -48,13 +47,11 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
     public MessagingService(
         ILogger<MessagingService> logger,
         MessagingServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
         IMessageBus messageBus,
         IMessageSubscriber messageSubscriber)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _messageSubscriber = messageSubscriber ?? throw new ArgumentNullException(nameof(messageSubscriber));
     }
@@ -97,7 +94,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to publish event to topic {Topic}", body.Topic);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "messaging",
                 "PublishEvent",
                 ex.GetType().Name,
@@ -166,7 +163,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
             httpClient?.Dispose();
 
             _logger.LogError(ex, "Failed to create subscription to topic {Topic}", body.Topic);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "messaging",
                 "CreateSubscription",
                 ex.GetType().Name,
@@ -206,7 +203,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to remove subscription {SubscriptionId}", body.SubscriptionId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "messaging",
                 "RemoveSubscription",
                 ex.GetType().Name,
@@ -248,7 +245,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to list topics");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "messaging",
                 "ListTopics",
                 ex.GetType().Name,

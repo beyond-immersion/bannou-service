@@ -30,7 +30,6 @@ public partial class VoiceService : IVoiceService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<VoiceService> _logger;
     private readonly VoiceServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly ISipEndpointRegistry _endpointRegistry;
     private readonly IP2PCoordinator _p2pCoordinator;
     private readonly IScaledTierCoordinator _scaledTierCoordinator;
@@ -48,7 +47,6 @@ public partial class VoiceService : IVoiceService
     /// <param name="messageBus">Message bus for event publishing.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Voice service configuration.</param>
-    /// <param name="errorEventEmitter">Error event emitter for unexpected failures.</param>
     /// <param name="endpointRegistry">SIP endpoint registry for participant tracking.</param>
     /// <param name="p2pCoordinator">P2P coordinator for mesh topology management.</param>
     /// <param name="scaledTierCoordinator">Scaled tier coordinator for SFU-based conferencing.</param>
@@ -60,7 +58,6 @@ public partial class VoiceService : IVoiceService
         IMessageBus messageBus,
         ILogger<VoiceService> logger,
         VoiceServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
         ISipEndpointRegistry endpointRegistry,
         IP2PCoordinator p2pCoordinator,
         IScaledTierCoordinator scaledTierCoordinator,
@@ -72,7 +69,6 @@ public partial class VoiceService : IVoiceService
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _endpointRegistry = endpointRegistry ?? throw new ArgumentNullException(nameof(endpointRegistry));
         _p2pCoordinator = p2pCoordinator ?? throw new ArgumentNullException(nameof(p2pCoordinator));
         _scaledTierCoordinator = scaledTierCoordinator ?? throw new ArgumentNullException(nameof(scaledTierCoordinator));
@@ -143,7 +139,7 @@ public partial class VoiceService : IVoiceService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating voice room for session {SessionId}", body.SessionId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "voice",
                 "CreateVoiceRoom",
                 "unexpected_exception",
@@ -193,7 +189,7 @@ public partial class VoiceService : IVoiceService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting voice room {RoomId}", body.RoomId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "voice",
                 "GetVoiceRoom",
                 "unexpected_exception",
@@ -380,7 +376,7 @@ public partial class VoiceService : IVoiceService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error joining voice room {RoomId}", body.RoomId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "voice",
                 "JoinVoiceRoom",
                 "unexpected_exception",
@@ -424,7 +420,7 @@ public partial class VoiceService : IVoiceService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error leaving voice room {RoomId}", body.RoomId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "voice",
                 "LeaveVoiceRoom",
                 "unexpected_exception",
@@ -488,7 +484,7 @@ public partial class VoiceService : IVoiceService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting voice room {RoomId}", body.RoomId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "voice",
                 "DeleteVoiceRoom",
                 "unexpected_exception",
@@ -523,7 +519,7 @@ public partial class VoiceService : IVoiceService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing heartbeat for {SessionId} in room {RoomId}", body.SessionId, body.RoomId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "voice",
                 "PeerHeartbeat",
                 "unexpected_exception",
@@ -595,7 +591,7 @@ public partial class VoiceService : IVoiceService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing SDP answer for target {TargetSessionId} in room {RoomId}", body.TargetSessionId, body.RoomId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "voice",
                 "AnswerPeer",
                 "unexpected_exception",
@@ -941,7 +937,7 @@ public partial class VoiceService : IVoiceService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to upgrade room {RoomId} to scaled tier", roomId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "voice",
                 "TryUpgradeToScaledTier",
                 "tier_upgrade_failed",

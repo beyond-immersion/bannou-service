@@ -26,7 +26,6 @@ public class SubscriptionsServiceTests
     private readonly Mock<ILogger<SubscriptionsService>> _mockLogger;
     private readonly SubscriptionsServiceConfiguration _configuration;
     private readonly Mock<IServicedataClient> _mockServicedataClient;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private const string STATE_STORE = "subscriptions-statestore";
 
@@ -39,7 +38,6 @@ public class SubscriptionsServiceTests
         _mockLogger = new Mock<ILogger<SubscriptionsService>>();
         _configuration = new SubscriptionsServiceConfiguration();
         _mockServicedataClient = new Mock<IServicedataClient>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup factory to return typed stores
@@ -67,7 +65,6 @@ public class SubscriptionsServiceTests
             _mockLogger.Object,
             _configuration,
             _mockServicedataClient.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
     }
 
@@ -93,7 +90,6 @@ public class SubscriptionsServiceTests
             _mockLogger.Object,
             _configuration,
             _mockServicedataClient.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -107,7 +103,6 @@ public class SubscriptionsServiceTests
             _mockLogger.Object,
             _configuration,
             _mockServicedataClient.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -121,7 +116,6 @@ public class SubscriptionsServiceTests
             null!,
             _configuration,
             _mockServicedataClient.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -135,7 +129,6 @@ public class SubscriptionsServiceTests
             _mockLogger.Object,
             null!,
             _mockServicedataClient.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -149,7 +142,6 @@ public class SubscriptionsServiceTests
             _mockLogger.Object,
             _configuration,
             null!,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -163,7 +155,6 @@ public class SubscriptionsServiceTests
             _mockLogger.Object,
             _configuration,
             _mockServicedataClient.Object,
-            _mockErrorEventEmitter.Object,
             null!));
     }
 

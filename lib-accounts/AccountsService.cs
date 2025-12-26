@@ -24,7 +24,6 @@ public partial class AccountsService : IAccountsService
     private readonly AccountsServiceConfiguration _configuration;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
-    private readonly IErrorEventEmitter _errorEventEmitter;
 
     private const string ACCOUNTS_STATE_STORE = "accounts-statestore"; // MySQL-backed state store
     private const string ACCOUNTS_KEY_PREFIX = "account-";
@@ -41,14 +40,12 @@ public partial class AccountsService : IAccountsService
         AccountsServiceConfiguration configuration,
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
-        IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
 
         // Register event handlers via partial class (AccountsServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
@@ -1306,7 +1303,7 @@ public partial class AccountsService : IAccountsService
         string? dependency = null,
         object? details = null)
     {
-        return _errorEventEmitter.TryPublishAsync(
+        return _messageBus.TryPublishErrorAsync(
             serviceId: "accounts",
             operation: operation,
             errorType: errorType,

@@ -25,7 +25,6 @@ public partial class LocationService : ILocationService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<LocationService> _logger;
     private readonly LocationServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly IRealmClient _realmClient;
 
     private const string STATE_STORE = "location-statestore";
@@ -40,7 +39,6 @@ public partial class LocationService : ILocationService
         IMessageBus messageBus,
         ILogger<LocationService> logger,
         LocationServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
         IRealmClient realmClient,
         IEventConsumer eventConsumer)
     {
@@ -48,7 +46,6 @@ public partial class LocationService : ILocationService
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _realmClient = realmClient ?? throw new ArgumentNullException(nameof(realmClient));
 
         // Register event handlers via partial class (LocationServiceEvents.cs)
@@ -88,7 +85,7 @@ public partial class LocationService : ILocationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting location {LocationId}", body.LocationId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "location", "GetLocation", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/location/get",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -125,7 +122,7 @@ public partial class LocationService : ILocationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting location by code {Code} in realm {RealmId}", body.Code, body.RealmId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "location", "GetLocationByCode", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/location/get-by-code",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -190,7 +187,7 @@ public partial class LocationService : ILocationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing locations");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "location", "ListLocations", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/location/list",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -259,7 +256,7 @@ public partial class LocationService : ILocationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing locations for realm {RealmId}", body.RealmId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "location", "ListLocationsByRealm", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/location/list-by-realm",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -337,7 +334,7 @@ public partial class LocationService : ILocationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing locations by parent {ParentLocationId}", body.ParentLocationId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "location", "ListLocationsByParent", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/location/list-by-parent",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -406,7 +403,7 @@ public partial class LocationService : ILocationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing root locations for realm {RealmId}", body.RealmId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "location", "ListRootLocations", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/location/list-root",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -460,7 +457,7 @@ public partial class LocationService : ILocationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting ancestors for location {LocationId}", body.LocationId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "location", "GetLocationAncestors", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/location/get-ancestors",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -525,7 +522,7 @@ public partial class LocationService : ILocationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting descendants for location {LocationId}", body.LocationId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "location", "GetLocationDescendants", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/location/get-descendants",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -565,7 +562,7 @@ public partial class LocationService : ILocationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error checking if location exists {LocationId}", body.LocationId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "location", "LocationExists", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/location/exists",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -675,7 +672,7 @@ public partial class LocationService : ILocationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating location {Code}", body.Code);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "location", "CreateLocation", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/location/create",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -742,7 +739,7 @@ public partial class LocationService : ILocationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating location {LocationId}", body.LocationId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "location", "UpdateLocation", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/location/update",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -828,7 +825,7 @@ public partial class LocationService : ILocationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error setting parent for location {LocationId}", body.LocationId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "location", "SetLocationParent", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/location/set-parent",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -887,7 +884,7 @@ public partial class LocationService : ILocationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing parent from location {LocationId}", body.LocationId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "location", "RemoveLocationParent", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/location/remove-parent",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -949,7 +946,7 @@ public partial class LocationService : ILocationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting location {LocationId}", body.LocationId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "location", "DeleteLocation", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/location/delete",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -994,7 +991,7 @@ public partial class LocationService : ILocationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deprecating location {LocationId}", body.LocationId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "location", "DeprecateLocation", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/location/deprecate",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -1039,7 +1036,7 @@ public partial class LocationService : ILocationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error undeprecating location {LocationId}", body.LocationId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "location", "UndeprecateLocation", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/location/undeprecate",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
@@ -1196,7 +1193,7 @@ public partial class LocationService : ILocationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error seeding locations");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "location", "SeedLocations", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/location/seed",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);

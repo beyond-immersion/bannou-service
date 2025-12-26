@@ -33,7 +33,6 @@ public partial class OrchestratorService : IOrchestratorService
     private readonly IBackendDetector _backendDetector;
     private readonly PresetLoader _presetLoader;
     private readonly ILoggerFactory _loggerFactory;
-    private readonly IErrorEventEmitter _errorEventEmitter;
 
     /// <summary>
     /// Cached orchestrator instance for container operations.
@@ -64,7 +63,6 @@ public partial class OrchestratorService : IOrchestratorService
         IServiceHealthMonitor healthMonitor,
         ISmartRestartManager restartManager,
         IBackendDetector backendDetector,
-        IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
@@ -76,7 +74,6 @@ public partial class OrchestratorService : IOrchestratorService
         _healthMonitor = healthMonitor ?? throw new ArgumentNullException(nameof(healthMonitor));
         _restartManager = restartManager ?? throw new ArgumentNullException(nameof(restartManager));
         _backendDetector = backendDetector ?? throw new ArgumentNullException(nameof(backendDetector));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
 
         // Create preset loader with configured presets directory
         var presetsPath = configuration.PresetsHostPath ?? "/app/provisioning/orchestrator/presets";
@@ -2056,7 +2053,7 @@ public partial class OrchestratorService : IOrchestratorService
         string? dependency = null,
         object? details = null)
     {
-        return _errorEventEmitter.TryPublishAsync(
+        return _messageBus.TryPublishErrorAsync(
             serviceId: "orchestrator",
             operation: operation,
             errorType: errorType,

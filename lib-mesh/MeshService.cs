@@ -21,7 +21,6 @@ public partial class MeshService : IMeshService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<MeshService> _logger;
     private readonly MeshServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly IMeshRedisManager _redisManager;
 
     // Local cache for service mappings (thread-safe, updated via events)
@@ -51,14 +50,12 @@ public partial class MeshService : IMeshService
         IMessageBus messageBus,
         ILogger<MeshService> logger,
         MeshServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
         IMeshRedisManager redisManager,
         IEventConsumer eventConsumer)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _redisManager = redisManager ?? throw new ArgumentNullException(nameof(redisManager));
 
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
@@ -102,7 +99,7 @@ public partial class MeshService : IMeshService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting endpoints for app {AppId}", body.AppId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "mesh",
                 "GetEndpoints",
                 ex.GetType().Name,
@@ -149,7 +146,7 @@ public partial class MeshService : IMeshService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing endpoints");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "mesh",
                 "ListEndpoints",
                 ex.GetType().Name,
@@ -215,7 +212,7 @@ public partial class MeshService : IMeshService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error registering endpoint for app {AppId}", body.AppId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "mesh",
                 "RegisterEndpoint",
                 ex.GetType().Name,
@@ -266,7 +263,7 @@ public partial class MeshService : IMeshService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deregistering endpoint {InstanceId}", body.InstanceId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "mesh",
                 "DeregisterEndpoint",
                 ex.GetType().Name,
@@ -329,7 +326,7 @@ public partial class MeshService : IMeshService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing heartbeat for {InstanceId}", body.InstanceId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "mesh",
                 "Heartbeat",
                 ex.GetType().Name,
@@ -396,7 +393,7 @@ public partial class MeshService : IMeshService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting route for app {AppId}", body.AppId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "mesh",
                 "GetRoute",
                 ex.GetType().Name,
@@ -467,7 +464,7 @@ public partial class MeshService : IMeshService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting service mappings");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "mesh",
                 "GetMappings",
                 ex.GetType().Name,
@@ -544,7 +541,7 @@ public partial class MeshService : IMeshService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting mesh health");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "mesh",
                 "GetHealth",
                 ex.GetType().Name,

@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using MassTransit;
 using Microsoft.Extensions.Logging;
@@ -176,6 +177,54 @@ public sealed class MassTransitMessageBus : IMessageBus
                 "Failed to publish raw message to topic '{Topic}'",
                 topic);
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Topic for service error events.
+    /// </summary>
+    private const string SERVICE_ERROR_TOPIC = "service.error";
+
+    /// <inheritdoc/>
+    public async Task<bool> TryPublishErrorAsync(
+        string serviceId,
+        string operation,
+        string errorType,
+        string message,
+        string? dependency = null,
+        string? endpoint = null,
+        ServiceErrorEventSeverity severity = ServiceErrorEventSeverity.Error,
+        object? details = null,
+        string? stack = null,
+        string? correlationId = null,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var errorEvent = new ServiceErrorEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ServiceId = serviceId,
+                AppId = Environment.GetEnvironmentVariable("DAPR_APP_ID") ?? "bannou",
+                Operation = operation,
+                ErrorType = errorType,
+                Message = message,
+                Dependency = dependency,
+                Endpoint = endpoint,
+                Severity = severity,
+                Stack = stack,
+                CorrelationId = correlationId
+            };
+
+            await PublishAsync(SERVICE_ERROR_TOPIC, errorEvent, null, cancellationToken);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            // Avoid cascading failures when pub/sub infrastructure is the culprit.
+            _logger.LogWarning(ex, "Failed to publish ServiceErrorEvent for {ServiceId}/{Operation}", serviceId, operation);
+            return false;
         }
     }
 }

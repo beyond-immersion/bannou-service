@@ -23,7 +23,6 @@ public class VoiceServiceTests
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<VoiceService>> _mockLogger;
     private readonly Mock<VoiceServiceConfiguration> _mockConfiguration;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<ISipEndpointRegistry> _mockEndpointRegistry;
     private readonly Mock<IP2PCoordinator> _mockP2PCoordinator;
     private readonly Mock<IScaledTierCoordinator> _mockScaledTierCoordinator;
@@ -38,7 +37,6 @@ public class VoiceServiceTests
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<VoiceService>>();
         _mockConfiguration = new Mock<VoiceServiceConfiguration>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockEndpointRegistry = new Mock<ISipEndpointRegistry>();
         _mockP2PCoordinator = new Mock<IP2PCoordinator>();
         _mockScaledTierCoordinator = new Mock<IScaledTierCoordinator>();
@@ -63,7 +61,6 @@ public class VoiceServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
-            _mockErrorEventEmitter.Object,
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
@@ -92,7 +89,6 @@ public class VoiceServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
-            _mockErrorEventEmitter.Object,
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
@@ -109,7 +105,6 @@ public class VoiceServiceTests
             _mockMessageBus.Object,
             null!,
             _mockConfiguration.Object,
-            _mockErrorEventEmitter.Object,
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
@@ -125,24 +120,6 @@ public class VoiceServiceTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _mockLogger.Object,
-            null!,
-            _mockErrorEventEmitter.Object,
-            _mockEndpointRegistry.Object,
-            _mockP2PCoordinator.Object,
-            _mockScaledTierCoordinator.Object,
-            _mockEventConsumer.Object,
-            _mockClientEventPublisher.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullErrorEventEmitter_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new VoiceService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            _mockConfiguration.Object,
             null!,
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
@@ -160,7 +137,6 @@ public class VoiceServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
-            _mockErrorEventEmitter.Object,
             null!,
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
@@ -177,7 +153,6 @@ public class VoiceServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
-            _mockErrorEventEmitter.Object,
             _mockEndpointRegistry.Object,
             null!,
             _mockScaledTierCoordinator.Object,
@@ -194,7 +169,6 @@ public class VoiceServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
-            _mockErrorEventEmitter.Object,
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
             null!,
@@ -211,7 +185,6 @@ public class VoiceServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
-            _mockErrorEventEmitter.Object,
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
@@ -228,7 +201,6 @@ public class VoiceServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
-            _mockErrorEventEmitter.Object,
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
@@ -658,7 +630,6 @@ public class VoiceServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
-            _mockErrorEventEmitter.Object,
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
@@ -1046,7 +1017,7 @@ public class VoiceServiceTests
         Assert.Null(result);
 
         // Verify error event was emitted
-        _mockErrorEventEmitter.Verify(e => e.TryPublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "voice",
             "CreateVoiceRoom",
             "unexpected_exception",

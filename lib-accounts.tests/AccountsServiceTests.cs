@@ -23,7 +23,6 @@ public class AccountsServiceTests
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IStateStore<List<AuthMethodInfo>>> _mockAuthMethodsStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     private const string ACCOUNTS_STATE_STORE = "accounts-statestore";
@@ -38,7 +37,6 @@ public class AccountsServiceTests
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockAuthMethodsStore = new Mock<IStateStore<List<AuthMethodInfo>>>();
         _mockMessageBus = new Mock<IMessageBus>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup default factory returns
@@ -65,7 +63,6 @@ public class AccountsServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
 
         Assert.NotNull(service);
@@ -157,7 +154,6 @@ public class AccountsServiceTests
             configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
     }
 
@@ -648,7 +644,6 @@ public class AccountsServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -661,7 +656,6 @@ public class AccountsServiceTests
             null!,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -674,7 +668,6 @@ public class AccountsServiceTests
             _configuration,
             null!,
             _mockMessageBus.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -691,7 +684,6 @@ public class AccountsServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
 
         // Mock empty accounts list
@@ -719,7 +711,6 @@ public class AccountsServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
 
         // Mock empty accounts list
@@ -747,7 +738,6 @@ public class AccountsServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
 
         // Mock empty accounts list
@@ -775,7 +765,6 @@ public class AccountsServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
 
         // Mock empty accounts list
@@ -807,7 +796,6 @@ public class AccountsServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
 
         var request = new CreateAccountRequest
@@ -869,7 +857,6 @@ public class AccountsServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
 
         var request = new CreateAccountRequest
@@ -929,7 +916,6 @@ public class AccountsServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
 
         var request = new CreateAccountRequest
@@ -989,7 +975,6 @@ public class AccountsServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
 
         // Mock email index lookup
@@ -1054,7 +1039,6 @@ public class AccountsServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
 
         // Mock email index lookup
@@ -1122,7 +1106,6 @@ public class AccountsServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
 
         var request = new CreateAccountRequest

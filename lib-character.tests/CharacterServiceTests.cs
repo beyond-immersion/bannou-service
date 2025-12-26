@@ -31,7 +31,6 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     private readonly Mock<IStateStore<List<string>>> _mockListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<CharacterService>> _mockLogger;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IRealmClient> _mockRealmClient;
     private readonly Mock<ISpeciesClient> _mockSpeciesClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
@@ -49,7 +48,6 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         _mockListStore = new Mock<IStateStore<List<string>>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<CharacterService>>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockRealmClient = new Mock<IRealmClient>();
         _mockSpeciesClient = new Mock<ISpeciesClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
@@ -90,7 +88,6 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockRealmClient.Object,
             _mockSpeciesClient.Object,
             _mockEventConsumer.Object);
@@ -128,56 +125,49 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     public void Constructor_WithNullStateStoreFactory_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(null!, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
+            new CharacterService(null!, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
     public void Constructor_WithNullMessageBus_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockStateStoreFactory.Object, null!, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
+            new CharacterService(_mockStateStoreFactory.Object, null!, _mockLogger.Object, Configuration, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
     public void Constructor_WithNullLogger_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, null!, Configuration, _mockErrorEventEmitter.Object, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
+            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, null!, Configuration, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
     public void Constructor_WithNullConfiguration_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, null!, _mockErrorEventEmitter.Object, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullErrorEventEmitter_ShouldThrow()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, null!, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
+            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, null!, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
     public void Constructor_WithNullRealmClient_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, null!, _mockSpeciesClient.Object, _mockEventConsumer.Object));
+            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, null!, _mockSpeciesClient.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
     public void Constructor_WithNullSpeciesClient_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockRealmClient.Object, null!, _mockEventConsumer.Object));
+            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockRealmClient.Object, null!, _mockEventConsumer.Object));
     }
 
     [Fact]
     public void Constructor_WithNullEventConsumer_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockRealmClient.Object, _mockSpeciesClient.Object, null!));
+            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockRealmClient.Object, _mockSpeciesClient.Object, null!));
     }
 
     #endregion

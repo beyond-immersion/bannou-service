@@ -26,7 +26,6 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     private readonly Mock<IStateStore<List<string>>> _mockListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<GameSessionService>> _mockLogger;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
@@ -43,7 +42,6 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         _mockListStore = new Mock<IStateStore<List<string>>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<GameSessionService>>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
@@ -70,7 +68,6 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockHttpContextAccessor.Object,
             _mockEventConsumer.Object);
     }
@@ -92,7 +89,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(null!, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
+            new GameSessionService(null!, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -100,7 +97,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(_mockStateStoreFactory.Object, null!, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
+            new GameSessionService(_mockStateStoreFactory.Object, null!, _mockLogger.Object, Configuration, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -108,7 +105,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(_mockStateStoreFactory.Object, _mockMessageBus.Object, null!, Configuration, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
+            new GameSessionService(_mockStateStoreFactory.Object, _mockMessageBus.Object, null!, Configuration, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -116,7 +113,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, null!, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
+            new GameSessionService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, null!, _mockHttpContextAccessor.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -124,7 +121,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new GameSessionService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockHttpContextAccessor.Object, null!));
+            new GameSessionService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockHttpContextAccessor.Object, null!));
     }
 
     #endregion
@@ -545,7 +542,6 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockHttpContextAccessor.Object,
             _mockEventConsumer.Object,
             voiceClient: null,
@@ -602,7 +598,6 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockHttpContextAccessor.Object,
             _mockEventConsumer.Object,
             voiceClient: null,

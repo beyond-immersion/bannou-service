@@ -14,7 +14,6 @@ public class MessagingServiceTests
 {
     private readonly Mock<ILogger<MessagingService>> _mockLogger;
     private readonly MessagingServiceConfiguration _configuration;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IMessageSubscriber> _mockMessageSubscriber;
     private readonly MessagingService _service;
@@ -23,14 +22,12 @@ public class MessagingServiceTests
     {
         _mockLogger = new Mock<ILogger<MessagingService>>();
         _configuration = new MessagingServiceConfiguration();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockMessageSubscriber = new Mock<IMessageSubscriber>();
 
         _service = new MessagingService(
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockMessageBus.Object,
             _mockMessageSubscriber.Object);
     }
@@ -44,7 +41,6 @@ public class MessagingServiceTests
         var service = new MessagingService(
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockMessageBus.Object,
             _mockMessageSubscriber.Object);
 
@@ -59,7 +55,6 @@ public class MessagingServiceTests
         var ex = Assert.Throws<ArgumentNullException>(() => new MessagingService(
             null!,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockMessageBus.Object,
             _mockMessageSubscriber.Object));
         Assert.Equal("logger", ex.ParamName);
@@ -72,23 +67,9 @@ public class MessagingServiceTests
         var ex = Assert.Throws<ArgumentNullException>(() => new MessagingService(
             _mockLogger.Object,
             null!,
-            _mockErrorEventEmitter.Object,
             _mockMessageBus.Object,
             _mockMessageSubscriber.Object));
         Assert.Equal("configuration", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullErrorEventEmitter_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new MessagingService(
-            _mockLogger.Object,
-            _configuration,
-            null!,
-            _mockMessageBus.Object,
-            _mockMessageSubscriber.Object));
-        Assert.Equal("errorEventEmitter", ex.ParamName);
     }
 
     [Fact]
@@ -98,7 +79,6 @@ public class MessagingServiceTests
         var ex = Assert.Throws<ArgumentNullException>(() => new MessagingService(
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             null!,
             _mockMessageSubscriber.Object));
         Assert.Equal("messageBus", ex.ParamName);
@@ -111,7 +91,6 @@ public class MessagingServiceTests
         var ex = Assert.Throws<ArgumentNullException>(() => new MessagingService(
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockMessageBus.Object,
             null!));
         Assert.Equal("messageSubscriber", ex.ParamName);
@@ -217,8 +196,8 @@ public class MessagingServiceTests
         Assert.NotNull(response);
         Assert.False(response.Success);
 
-        _mockErrorEventEmitter.Verify(
-            x => x.TryPublishAsync(
+        _mockMessageBus.Verify(
+            m => m.TryPublishErrorAsync(
                 "messaging",
                 "PublishEvent",
                 "InvalidOperationException",
@@ -353,8 +332,8 @@ public class MessagingServiceTests
         Assert.Equal(StatusCodes.InternalServerError, statusCode);
         Assert.Null(response);
 
-        _mockErrorEventEmitter.Verify(
-            x => x.TryPublishAsync(
+        _mockMessageBus.Verify(
+            m => m.TryPublishErrorAsync(
                 "messaging",
                 "CreateSubscription",
                 "InvalidOperationException",
@@ -500,8 +479,8 @@ public class MessagingServiceTests
         Assert.NotNull(response);
         Assert.False(response.Success);
 
-        _mockErrorEventEmitter.Verify(
-            x => x.TryPublishAsync(
+        _mockMessageBus.Verify(
+            m => m.TryPublishErrorAsync(
                 "messaging",
                 "RemoveSubscription",
                 It.IsAny<string>(),

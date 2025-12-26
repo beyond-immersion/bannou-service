@@ -27,7 +27,6 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IStateStore<List<string>>> _mockListStore;
     private readonly Mock<ILogger<RealmService>> _mockLogger;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     private const string STATE_STORE = "realm-statestore";
@@ -44,7 +43,6 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockListStore = new Mock<IStateStore<List<string>>>();
         _mockLogger = new Mock<ILogger<RealmService>>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup factory to return typed stores
@@ -66,7 +64,6 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
     }
 
@@ -114,7 +111,6 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -126,7 +122,6 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             null!,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -138,7 +133,6 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             _mockMessageBus.Object,
             null!,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -149,19 +143,6 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _mockLogger.Object,
-            null!,
-            _mockErrorEventEmitter.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullErrorEventEmitter_ShouldThrowArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new RealmService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            Configuration,
             null!,
             _mockEventConsumer.Object));
     }
@@ -174,7 +155,6 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             null!));
     }
 
@@ -244,10 +224,10 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);
         Assert.Null(response);
-        _mockErrorEventEmitter.Verify(e => e.TryPublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "realm", "GetRealm", "unexpected_exception", It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object>(), It.IsAny<string>(), It.IsAny<string>(), default), Times.Once);
+            It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), default), Times.Once);
     }
 
     #endregion

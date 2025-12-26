@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 
 namespace BeyondImmersion.BannouService.Services;
@@ -52,6 +53,44 @@ public interface IMessageBus
         ReadOnlyMemory<byte> payload,
         string contentType,
         PublishOptions? options = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Publish a service error event. Convenience method replacing IErrorEventEmitter.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This method wraps error publishing with try/catch to prevent cascading failures
+    /// when the messaging infrastructure itself is the source of errors.
+    /// </para>
+    /// <para>
+    /// Use for unexpected/internal failures only (not user/input validation errors).
+    /// Similar to Sentry/error tracking services.
+    /// </para>
+    /// </remarks>
+    /// <param name="serviceId">Service identifier (e.g., "accounts", "auth")</param>
+    /// <param name="operation">Operation that failed (e.g., "GetAccount", "ValidateToken")</param>
+    /// <param name="errorType">Exception type name</param>
+    /// <param name="message">Error message</param>
+    /// <param name="dependency">External dependency that failed (optional)</param>
+    /// <param name="endpoint">Endpoint being called (optional)</param>
+    /// <param name="severity">Error severity level</param>
+    /// <param name="details">Additional context (will be serialized)</param>
+    /// <param name="stack">Stack trace (optional)</param>
+    /// <param name="correlationId">Correlation ID for tracing (optional)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>True if the error event was published successfully, false otherwise</returns>
+    Task<bool> TryPublishErrorAsync(
+        string serviceId,
+        string operation,
+        string errorType,
+        string message,
+        string? dependency = null,
+        string? endpoint = null,
+        ServiceErrorEventSeverity severity = ServiceErrorEventSeverity.Error,
+        object? details = null,
+        string? stack = null,
+        string? correlationId = null,
         CancellationToken cancellationToken = default);
 }
 

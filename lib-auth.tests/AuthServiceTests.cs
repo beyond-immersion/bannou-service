@@ -34,7 +34,6 @@ public class AuthServiceTests
     private readonly Mock<ITokenService> _mockTokenService;
     private readonly Mock<ISessionService> _mockSessionService;
     private readonly Mock<IOAuthProviderService> _mockOAuthService;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public AuthServiceTests()
@@ -73,7 +72,6 @@ public class AuthServiceTests
         _mockTokenService = new Mock<ITokenService>();
         _mockSessionService = new Mock<ISessionService>();
         _mockOAuthService = new Mock<IOAuthProviderService>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup state store factory to return typed stores
@@ -121,7 +119,6 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
     }
 
@@ -556,7 +553,6 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -575,7 +571,6 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -594,7 +589,6 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -613,7 +607,6 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -632,7 +625,6 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -651,7 +643,6 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -670,7 +661,6 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -689,7 +679,6 @@ public class AuthServiceTests
             null!,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -708,7 +697,6 @@ public class AuthServiceTests
             _mockTokenService.Object,
             null!,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -727,7 +715,6 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             null!,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -746,7 +733,6 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             null!));
     }
 

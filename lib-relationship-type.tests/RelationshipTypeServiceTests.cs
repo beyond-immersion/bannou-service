@@ -27,7 +27,6 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
     private readonly Mock<IStateStore<List<string>>> _mockListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<RelationshipTypeService>> _mockLogger;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IRelationshipClient> _mockRelationshipClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
@@ -39,7 +38,6 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         _mockListStore = new Mock<IStateStore<List<string>>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<RelationshipTypeService>>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockRelationshipClient = new Mock<IRelationshipClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
@@ -56,7 +54,6 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockRelationshipClient.Object,
             _mockEventConsumer.Object);
     }
@@ -82,7 +79,6 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockRelationshipClient.Object,
             _mockEventConsumer.Object));
     }
@@ -96,7 +92,6 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             null!,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockRelationshipClient.Object,
             _mockEventConsumer.Object));
     }
@@ -110,7 +105,6 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             _mockMessageBus.Object,
             null!,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockRelationshipClient.Object,
             _mockEventConsumer.Object));
     }
@@ -123,21 +117,6 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _mockLogger.Object,
-            null!,
-            _mockErrorEventEmitter.Object,
-            _mockRelationshipClient.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullErrorEventEmitter_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new RelationshipTypeService(
-            _mockStateStoreFactory.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            Configuration,
             null!,
             _mockRelationshipClient.Object,
             _mockEventConsumer.Object));
@@ -152,7 +131,6 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockRelationshipClient.Object,
             null!));
     }

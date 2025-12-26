@@ -499,9 +499,6 @@ public class PluginLoader
         _logger.LogInformation("Centrally registering {ClientCount} client types, {ServiceCount} service types, and {ConfigCount} configuration types",
             _clientTypesToRegister.Count, _serviceTypesToRegister.Count, _configurationTypesToRegister.Count);
 
-        // Shared error event emitter for all services
-        services.AddSingleton<IErrorEventEmitter, ErrorEventEmitter>();
-
         // STAGE 1: Register ALL client types (even from disabled plugins for dependencies)
         RegisterClientTypes(services);
 

@@ -28,7 +28,6 @@ public partial class SpeciesService : ISpeciesService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<SpeciesService> _logger;
     private readonly SpeciesServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly ICharacterClient _characterClient;
     private readonly IRealmClient _realmClient;
 
@@ -43,7 +42,6 @@ public partial class SpeciesService : ISpeciesService
         IMessageBus messageBus,
         ILogger<SpeciesService> logger,
         SpeciesServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
         ICharacterClient characterClient,
         IRealmClient realmClient,
         IEventConsumer eventConsumer)
@@ -52,7 +50,6 @@ public partial class SpeciesService : ISpeciesService
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _characterClient = characterClient ?? throw new ArgumentNullException(nameof(characterClient));
         _realmClient = realmClient ?? throw new ArgumentNullException(nameof(realmClient));
 
@@ -147,7 +144,7 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting species: {SpeciesId}", body.SpeciesId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "GetSpecies", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/species/get",
                 details: null, stack: ex.StackTrace);
@@ -186,7 +183,7 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting species by code: {Code}", body.Code);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "GetSpeciesByCode", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/species/get-by-code",
                 details: null, stack: ex.StackTrace);
@@ -260,7 +257,7 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing species");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "ListSpecies", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/species/list",
                 details: null, stack: ex.StackTrace);
@@ -331,7 +328,7 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing species by realm: {RealmId}", body.RealmId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "ListSpeciesByRealm", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/species/list-by-realm",
                 details: null, stack: ex.StackTrace);
@@ -434,7 +431,7 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating species: {Code}", body.Code);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "CreateSpecies", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/species/create",
                 details: null, stack: ex.StackTrace);
@@ -518,7 +515,7 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating species: {SpeciesId}", body.SpeciesId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "UpdateSpecies", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/species/update",
                 details: null, stack: ex.StackTrace);
@@ -592,7 +589,7 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting species: {SpeciesId}", body.SpeciesId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "DeleteSpecies", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/species/delete",
                 details: null, stack: ex.StackTrace);
@@ -656,7 +653,7 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error adding species to realm");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "AddSpeciesToRealm", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/species/add-to-realm",
                 details: null, stack: ex.StackTrace);
@@ -729,7 +726,7 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing species from realm");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "RemoveSpeciesFromRealm", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/species/remove-from-realm",
                 details: null, stack: ex.StackTrace);
@@ -845,7 +842,7 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error seeding species");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "SeedSpecies", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/species/seed",
                 details: null, stack: ex.StackTrace);
@@ -896,7 +893,7 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deprecating species: {SpeciesId}", body.SpeciesId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "DeprecateSpecies", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/species/deprecate",
                 details: null, stack: ex.StackTrace);
@@ -943,7 +940,7 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error undeprecating species: {SpeciesId}", body.SpeciesId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "UndeprecateSpecies", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/species/undeprecate",
                 details: null, stack: ex.StackTrace);
@@ -1057,7 +1054,7 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error merging species {SourceId} into {TargetId}", body.SourceSpeciesId, body.TargetSpeciesId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "MergeSpecies", "unexpected_exception", ex.Message,
                 dependency: "dapr-state", endpoint: "post:/species/merge",
                 details: null, stack: ex.StackTrace);

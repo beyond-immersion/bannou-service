@@ -21,18 +21,18 @@ public partial class StateService : IStateService
 {
     private readonly ILogger<StateService> _logger;
     private readonly StateServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
+    private readonly IMessageBus _messageBus;
     private readonly IStateStoreFactory _stateStoreFactory;
 
     public StateService(
         ILogger<StateService> logger,
         StateServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
+        IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
     }
 
@@ -70,7 +70,7 @@ public partial class StateService : IStateService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get state from store {StoreName} with key {Key}", body.StoreName, body.Key);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "state",
                 "GetState",
                 ex.GetType().Name,
@@ -127,7 +127,7 @@ public partial class StateService : IStateService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to save state to store {StoreName} with key {Key}", body.StoreName, body.Key);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "state",
                 "SaveState",
                 ex.GetType().Name,
@@ -165,7 +165,7 @@ public partial class StateService : IStateService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to delete state from store {StoreName} with key {Key}", body.StoreName, body.Key);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "state",
                 "DeleteState",
                 ex.GetType().Name,
@@ -214,7 +214,7 @@ public partial class StateService : IStateService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to query state from store {StoreName}", body.StoreName);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "state",
                 "QueryState",
                 ex.GetType().Name,
@@ -548,7 +548,7 @@ public partial class StateService : IStateService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to bulk get from store {StoreName}", body.StoreName);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "state",
                 "BulkGetState",
                 ex.GetType().Name,
@@ -606,7 +606,7 @@ public partial class StateService : IStateService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to list state stores");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "state",
                 "ListStores",
                 ex.GetType().Name,

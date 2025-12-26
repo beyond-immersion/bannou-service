@@ -28,7 +28,6 @@ public partial class CharacterService : ICharacterService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<CharacterService> _logger;
     private readonly CharacterServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly IRealmClient _realmClient;
     private readonly ISpeciesClient _speciesClient;
 
@@ -51,7 +50,6 @@ public partial class CharacterService : ICharacterService
         IMessageBus messageBus,
         ILogger<CharacterService> logger,
         CharacterServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
         IRealmClient realmClient,
         ISpeciesClient speciesClient,
         IEventConsumer eventConsumer)
@@ -60,7 +58,6 @@ public partial class CharacterService : ICharacterService
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _realmClient = realmClient ?? throw new ArgumentNullException(nameof(realmClient));
         _speciesClient = speciesClient ?? throw new ArgumentNullException(nameof(speciesClient));
 
@@ -148,7 +145,7 @@ public partial class CharacterService : ICharacterService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating character: {Name}", body.Name);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "character",
                 "CreateCharacter",
                 "unexpected_exception",
@@ -184,7 +181,7 @@ public partial class CharacterService : ICharacterService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting character: {CharacterId}", body.CharacterId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "character",
                 "GetCharacter",
                 "unexpected_exception",
@@ -273,7 +270,7 @@ public partial class CharacterService : ICharacterService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating character: {CharacterId}", body.CharacterId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "character",
                 "UpdateCharacter",
                 "unexpected_exception",
@@ -329,7 +326,7 @@ public partial class CharacterService : ICharacterService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting character: {CharacterId}", body.CharacterId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "character",
                 "DeleteCharacter",
                 "unexpected_exception",
@@ -384,7 +381,7 @@ public partial class CharacterService : ICharacterService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing characters");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "character",
                 "ListCharacters",
                 "unexpected_exception",
@@ -420,7 +417,7 @@ public partial class CharacterService : ICharacterService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting characters by realm: {RealmId}", body.RealmId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "character",
                 "GetCharactersByRealm",
                 "unexpected_exception",
