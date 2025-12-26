@@ -37,6 +37,8 @@ public class PortainerOrchestrator : IContainerOrchestrator
     /// </summary>
     private const string BANNOU_APP_ID_LABEL = "bannou.app-id";
 
+    // NOTE: Portainer/Docker API uses camelCase - intentionally NOT using BannouJson.Options
+    // which is designed for internal Bannou service communication
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

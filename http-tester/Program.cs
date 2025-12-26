@@ -1,6 +1,8 @@
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.HttpTester.Tests;
+using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Mesh.Services;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.ServiceClients;
@@ -12,6 +14,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 namespace BeyondImmersion.BannouService.HttpTester;
+
+/// <summary>
+/// Message type for MassTransit connectivity check.
+/// MassTransit requires named types, not anonymous types.
+/// </summary>
+public record ConnectivityCheckMessage(string Test, DateTime Timestamp);
 
 /// <summary>
 /// Mock test client for tests that don't actually use the ITestClient interface
@@ -162,8 +170,44 @@ public class Program
                 });
             });
 
+            // Register MessagingServiceConfiguration required by MassTransitMessageBus
+            serviceCollection.AddSingleton(new MessagingServiceConfiguration());
+
             // Register IMessageBus for event publishing
             serviceCollection.AddSingleton<IMessageBus, MassTransitMessageBus>();
+
+            // =====================================================================
+            // MESH INFRASTRUCTURE - Real Redis-based service discovery
+            // =====================================================================
+            // Configure MeshServiceConfiguration from environment variables
+            var meshRedisHost = Environment.GetEnvironmentVariable("MESH_REDIS_HOST") ?? "bannou-redis";
+            var meshRedisPort = Environment.GetEnvironmentVariable("MESH_REDIS_PORT") ?? "6379";
+            var meshRedisConnectionString = Environment.GetEnvironmentVariable("MESH_REDIS_CONNECTION_STRING")
+                ?? $"{meshRedisHost}:{meshRedisPort}";
+
+            Console.WriteLine($"🔗 Configuring Mesh to use Redis at {meshRedisConnectionString}");
+
+            var meshConfig = new MeshServiceConfiguration
+            {
+                RedisConnectionString = meshRedisConnectionString,
+                DefaultAppId = "bannou",
+                UseLocalRouting = false,  // MUST use real Redis
+                RedisConnectionTimeoutSeconds = 60,
+                RedisConnectRetryCount = 10,
+                RedisSyncTimeoutMs = 5000
+            };
+            serviceCollection.AddSingleton(meshConfig);
+
+            // Register real MeshRedisManager (NOT LocalMeshRedisManager)
+            serviceCollection.AddSingleton<IMeshRedisManager, MeshRedisManager>();
+
+            // Register MeshInvocationClient using factory pattern (same as MeshServicePlugin)
+            serviceCollection.AddSingleton<IMeshInvocationClient>(sp =>
+            {
+                var redisManager = sp.GetRequiredService<IMeshRedisManager>();
+                var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
+                return new MeshInvocationClient(redisManager, logger);
+            });
 
             // Add Bannou service client infrastructure
             serviceCollection.AddBannouServiceClients();
@@ -192,11 +236,16 @@ public class Program
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Asset.IAssetClient, BeyondImmersion.BannouService.Asset.AssetClient>();
             // Note: TestingTestHandler uses direct HTTP calls, not a generated client
 
-            // Register MeshInvocationClient for service-to-service calls
-            serviceCollection.AddSingleton<IMeshInvocationClient, MeshInvocationClient>();
-
             // Build the service provider
             ServiceProvider = serviceCollection.BuildServiceProvider();
+
+            // Initialize mesh Redis connection (required for service discovery)
+            var meshRedisManager = ServiceProvider.GetRequiredService<IMeshRedisManager>();
+            if (!await WaitForMeshReadiness(meshRedisManager))
+            {
+                Console.WriteLine("❌ Mesh Redis connection failed.");
+                return false;
+            }
 
             // Wait for bannou service to be healthy before proceeding
             if (!await WaitForServiceHealthAsync())
@@ -280,6 +329,37 @@ public class Program
     }
 
     /// <summary>
+    /// Waits for the mesh Redis connection to be established.
+    /// This is required for service discovery to work.
+    /// </summary>
+    /// <param name="meshRedisManager">The mesh Redis manager to initialize.</param>
+    /// <returns>True if mesh is ready, false if timeout or error occurs.</returns>
+    private static async Task<bool> WaitForMeshReadiness(IMeshRedisManager meshRedisManager)
+    {
+        Console.WriteLine("Waiting for Mesh Redis connection...");
+
+        try
+        {
+            var initialized = await meshRedisManager.InitializeAsync();
+            if (initialized)
+            {
+                Console.WriteLine("✅ Mesh Redis connection established");
+                return true;
+            }
+            else
+            {
+                Console.WriteLine("❌ Mesh Redis initialization returned false");
+                return false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Mesh Redis initialization failed: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Waits for MassTransit to be connected to RabbitMQ.
     /// This ensures event-driven tests will work properly.
     /// </summary>
@@ -298,7 +378,7 @@ public class Program
             try
             {
                 // Try to publish a test message to verify RabbitMQ connectivity
-                await messageBus.PublishAsync("test-connectivity", new { test = "connectivity-check", timestamp = DateTime.UtcNow });
+                await messageBus.PublishAsync("test-connectivity", new ConnectivityCheckMessage("connectivity-check", DateTime.UtcNow));
                 Console.WriteLine($"✅ MassTransit is ready and connected to RabbitMQ");
                 return true;
             }

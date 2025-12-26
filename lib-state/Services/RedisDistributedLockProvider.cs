@@ -130,9 +130,11 @@ internal sealed class RedisLockResponse : ILockResponse
     private bool _disposed;
 
     // Lua script for safe unlock - only delete if the value matches our owner prefix
+    // NOTE: string.find uses plain=true (4th arg) to avoid Lua pattern interpretation
+    // The hyphen in lockOwner (e.g., "auth-abc123") is a special pattern char otherwise
     private static readonly string UnlockScript = @"
         local value = redis.call('GET', KEYS[1])
-        if value and string.find(value, ARGV[1]) == 1 then
+        if value and string.find(value, ARGV[1], 1, true) == 1 then
             return redis.call('DEL', KEYS[1])
         end
         return 0

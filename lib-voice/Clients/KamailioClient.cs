@@ -16,6 +16,8 @@ public class KamailioClient : IKamailioClient
     private readonly string _rpcEndpoint;
     private long _requestId;
 
+    // NOTE: Kamailio JSONRPC API uses snake_case - intentionally NOT using BannouJson.Options
+    // which is designed for internal Bannou service communication
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,

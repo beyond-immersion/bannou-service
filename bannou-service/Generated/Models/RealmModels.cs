@@ -43,9 +43,9 @@ public partial class GetRealmRequest
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -67,9 +67,9 @@ public partial class GetRealmByCodeRequest
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -108,9 +108,9 @@ public partial class ListRealmsRequest
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -166,9 +166,9 @@ public partial class CreateRealmRequest
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -221,9 +221,9 @@ public partial class UpdateRealmRequest
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -243,9 +243,9 @@ public partial class DeleteRealmRequest
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -272,9 +272,9 @@ public partial class DeprecateRealmRequest
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -294,9 +294,9 @@ public partial class UndeprecateRealmRequest
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -316,9 +316,9 @@ public partial class RealmExistsRequest
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -349,9 +349,9 @@ public partial class RealmExistsResponse
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -377,9 +377,9 @@ public partial class SeedRealmsRequest
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -424,9 +424,9 @@ public partial class SeedRealm
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -489,9 +489,9 @@ public partial class RealmResponse
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -523,9 +523,9 @@ public partial class RealmListResponse
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -563,9 +563,9 @@ public partial class SeedRealmsResponse
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 

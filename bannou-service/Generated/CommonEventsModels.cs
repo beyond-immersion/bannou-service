@@ -86,9 +86,9 @@ public partial class ServiceRegistrationEvent
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -140,9 +140,9 @@ public partial class ServiceEndpoint
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -183,9 +183,9 @@ public partial class PermissionRequirement
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -262,9 +262,9 @@ public partial class ServiceHeartbeatEvent
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -314,9 +314,9 @@ public partial class ServiceStatus
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -356,9 +356,9 @@ public partial class InstanceCapacity
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -474,9 +474,9 @@ public partial class ServiceErrorEvent
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -541,9 +541,9 @@ public partial class FullServiceMappingsEvent
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -617,9 +617,9 @@ public partial class SessionConnectedEvent
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -683,9 +683,9 @@ public partial class SessionDisconnectedEvent
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -761,9 +761,9 @@ public partial class SessionReconnectedEvent
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -824,9 +824,9 @@ public partial class ServiceMappingEvent
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 

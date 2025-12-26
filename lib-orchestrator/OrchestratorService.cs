@@ -18,7 +18,7 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 /// <summary>
 /// Implementation of the Orchestrator service.
 /// This class contains the business logic for all Orchestrator operations.
-/// CRITICAL: Uses direct Redis/RabbitMQ connections (NOT via mesh) to avoid chicken-and-egg dependency.
+/// Uses lib-state and lib-messaging infrastructure for state management and event publishing.
 /// </summary>
 [BannouService("orchestrator", typeof(IOrchestratorService), lifetime: ServiceLifetime.Scoped)]
 public partial class OrchestratorService : IOrchestratorService
@@ -26,7 +26,7 @@ public partial class OrchestratorService : IOrchestratorService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<OrchestratorService> _logger;
     private readonly OrchestratorServiceConfiguration _configuration;
-    private readonly IOrchestratorRedisManager _redisManager;
+    private readonly IOrchestratorStateManager _stateManager;
     private readonly IOrchestratorEventManager _eventManager;
     private readonly IServiceHealthMonitor _healthMonitor;
     private readonly ISmartRestartManager _restartManager;
@@ -44,7 +44,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private DateTimeOffset _orchestratorCachedAt;
 
-    private const string STATE_STORE = "orchestrator-store";
+    private const string STATE_STORE = "orchestrator-statestore";
     private const string CONFIG_VERSION_KEY = "orchestrator:config:version";
 
     /// <summary>
@@ -58,7 +58,7 @@ public partial class OrchestratorService : IOrchestratorService
         ILogger<OrchestratorService> logger,
         ILoggerFactory loggerFactory,
         OrchestratorServiceConfiguration configuration,
-        IOrchestratorRedisManager redisManager,
+        IOrchestratorStateManager stateManager,
         IOrchestratorEventManager eventManager,
         IServiceHealthMonitor healthMonitor,
         ISmartRestartManager restartManager,
@@ -69,7 +69,7 @@ public partial class OrchestratorService : IOrchestratorService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _redisManager = redisManager ?? throw new ArgumentNullException(nameof(redisManager));
+        _stateManager = stateManager ?? throw new ArgumentNullException(nameof(stateManager));
         _eventManager = eventManager ?? throw new ArgumentNullException(nameof(eventManager));
         _healthMonitor = healthMonitor ?? throw new ArgumentNullException(nameof(healthMonitor));
         _restartManager = restartManager ?? throw new ArgumentNullException(nameof(restartManager));
@@ -150,26 +150,31 @@ public partial class OrchestratorService : IOrchestratorService
             var components = new List<ComponentHealth>();
             var overallHealthy = true;
 
-            // Check Redis connectivity
-            var (redisHealthy, redisMessage, redisPing) = await _redisManager.CheckHealthAsync();
+            // Check state store connectivity
+            var (stateHealthy, stateMessage, stateOpTime) = await _stateManager.CheckHealthAsync();
             components.Add(new ComponentHealth
             {
-                Name = "redis",
-                Status = redisHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
+                Name = "statestore",
+                Status = stateHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
                 LastSeen = DateTimeOffset.UtcNow,
-                Message = redisMessage ?? string.Empty,
-                Metrics = redisPing.HasValue
-                    ? (object)new Dictionary<string, object> { { "pingTimeMs", redisPing.Value.TotalMilliseconds } }
+                Message = stateMessage ?? string.Empty,
+                Metrics = stateOpTime.HasValue
+                    ? (object)new Dictionary<string, object> { { "operationTimeMs", stateOpTime.Value.TotalMilliseconds } }
                     : new Dictionary<string, object>()
             });
-            overallHealthy = overallHealthy && redisHealthy;
+            overallHealthy = overallHealthy && stateHealthy;
 
             // Check pub/sub path by publishing a tiny health probe
             bool pubsubHealthy;
             string pubsubMessage;
             try
             {
-                await _messageBus.PublishAsync("orchestrator-health", new { ping = "ok" });
+                await _messageBus.PublishAsync("orchestrator-health", new OrchestratorHealthPingEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    Status = OrchestratorHealthPingEventStatus.Ok
+                });
                 pubsubHealthy = true;
                 pubsubMessage = "Message bus pub/sub path active";
             }
@@ -706,7 +711,7 @@ public partial class OrchestratorService : IOrchestratorService
                     cancellationToken.ThrowIfCancellationRequested();
 
                     // Poll Redis for heartbeats from expected app-ids
-                    var heartbeats = await _redisManager.GetServiceHeartbeatsAsync();
+                    var heartbeats = await _stateManager.GetServiceHeartbeatsAsync();
 
                     // Check which expected app-ids have sent heartbeats
                     foreach (var heartbeat in heartbeats)
@@ -823,7 +828,7 @@ public partial class OrchestratorService : IOrchestratorService
                     }
                 }
 
-                var configVersion = await _redisManager.SaveConfigurationVersionAsync(deploymentConfig);
+                var configVersion = await _stateManager.SaveConfigurationVersionAsync(deploymentConfig);
                 _logger.LogInformation(
                     "Saved deployment configuration version {Version} for deployment {DeploymentId}",
                     configVersion, deploymentId);
@@ -888,7 +893,7 @@ public partial class OrchestratorService : IOrchestratorService
         {
             // Get service-to-app-id mappings from Redis
             // These are populated by DeployAsync when deploying presets with split topologies
-            var serviceRoutings = await _redisManager.GetServiceRoutingsAsync();
+            var serviceRoutings = await _stateManager.GetServiceRoutingsAsync();
 
             // Convert to simple string -> string mappings (service -> appId)
             var mappings = new Dictionary<string, string>();
@@ -1859,8 +1864,8 @@ public partial class OrchestratorService : IOrchestratorService
         try
         {
             // Get current configuration
-            var currentConfig = await _redisManager.GetCurrentConfigurationAsync();
-            var currentVersion = await _redisManager.GetConfigVersionAsync();
+            var currentConfig = await _stateManager.GetCurrentConfigurationAsync();
+            var currentVersion = await _stateManager.GetConfigVersionAsync();
 
             if (currentVersion <= 1)
             {
@@ -1876,7 +1881,7 @@ public partial class OrchestratorService : IOrchestratorService
 
             // Get the previous version (currentVersion - 1)
             var targetVersion = currentVersion - 1;
-            var previousConfig = await _redisManager.GetConfigurationVersionAsync(targetVersion);
+            var previousConfig = await _stateManager.GetConfigurationVersionAsync(targetVersion);
 
             if (previousConfig == null)
             {
@@ -1891,7 +1896,7 @@ public partial class OrchestratorService : IOrchestratorService
             }
 
             // Perform the rollback
-            var success = await _redisManager.RestoreConfigurationVersionAsync(targetVersion);
+            var success = await _stateManager.RestoreConfigurationVersionAsync(targetVersion);
 
             if (!success)
             {
@@ -1906,7 +1911,7 @@ public partial class OrchestratorService : IOrchestratorService
             }
 
             // Get the new version (which is currentVersion + 1 after rollback)
-            var newVersion = await _redisManager.GetConfigVersionAsync();
+            var newVersion = await _stateManager.GetConfigVersionAsync();
 
             // Determine what changed
             var changedKeys = new List<string>();
@@ -1964,12 +1969,12 @@ public partial class OrchestratorService : IOrchestratorService
         try
         {
             // Get current version and configuration from Redis
-            var currentVersion = await _redisManager.GetConfigVersionAsync();
-            var currentConfig = await _redisManager.GetCurrentConfigurationAsync();
+            var currentVersion = await _stateManager.GetConfigVersionAsync();
+            var currentConfig = await _stateManager.GetCurrentConfigurationAsync();
 
             // Check if previous version exists
             var hasPreviousConfig = currentVersion > 1 &&
-                await _redisManager.GetConfigurationVersionAsync(currentVersion - 1) != null;
+                await _stateManager.GetConfigurationVersionAsync(currentVersion - 1) != null;
 
             // Collect key prefixes from current config
             var keyPrefixes = new List<string>();
@@ -2099,7 +2104,7 @@ public partial class OrchestratorService : IOrchestratorService
         try
         {
             // Get the current deployment configuration - this tells us exactly what we deployed
-            var currentConfig = await _redisManager.GetCurrentConfigurationAsync();
+            var currentConfig = await _stateManager.GetCurrentConfigurationAsync();
 
             if (currentConfig == null || currentConfig.Services.Count == 0)
             {
@@ -2130,7 +2135,7 @@ public partial class OrchestratorService : IOrchestratorService
             {
                 // All services were deployed to "bannou" - nothing to tear down
                 await _healthMonitor.ResetAllMappingsToDefaultAsync();
-                await _redisManager.ClearCurrentConfigurationAsync();
+                await _stateManager.ClearCurrentConfigurationAsync();
 
                 return (true, "Already at default topology - all services on 'bannou', configuration cleared", tornDownServices);
             }
@@ -2166,7 +2171,7 @@ public partial class OrchestratorService : IOrchestratorService
             await _healthMonitor.ResetAllMappingsToDefaultAsync();
 
             // Clear the deployment configuration (saves empty config as new version for audit trail)
-            await _redisManager.ClearCurrentConfigurationAsync();
+            await _stateManager.ClearCurrentConfigurationAsync();
 
             var message = tornDownServices.Count > 0
                 ? $"Reset to default topology: torn down {tornDownServices.Count} tracked container(s), all services now route to 'bannou'"
@@ -2214,7 +2219,7 @@ public partial class OrchestratorService : IOrchestratorService
             var leasesKey = string.Format(POOL_LEASES_KEY, body.Pool_type);
 
             // Try to get an available processor from the pool
-            var availableProcessors = await _redisManager.GetListAsync<ProcessorInstance>(availableKey);
+            var availableProcessors = await _stateManager.GetListAsync<ProcessorInstance>(availableKey);
 
             if (availableProcessors == null || availableProcessors.Count == 0)
             {
@@ -2227,7 +2232,7 @@ public partial class OrchestratorService : IOrchestratorService
             // Pop the first available processor
             var processor = availableProcessors[0];
             availableProcessors.RemoveAt(0);
-            await _redisManager.SetListAsync(availableKey, availableProcessors);
+            await _stateManager.SetListAsync(availableKey, availableProcessors);
 
             // Create a lease for this processor
             var leaseId = Guid.NewGuid();
@@ -2247,9 +2252,9 @@ public partial class OrchestratorService : IOrchestratorService
             };
 
             // Store the lease
-            var leases = await _redisManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
+            var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
             leases[leaseId.ToString()] = lease;
-            await _redisManager.SetHashAsync(leasesKey, leases);
+            await _stateManager.SetHashAsync(leasesKey, leases);
 
             _logger.LogInformation(
                 "AcquireProcessor: Acquired processor {ProcessorId} from pool {PoolType} with lease {LeaseId}, expires at {ExpiresAt}",
@@ -2300,7 +2305,7 @@ public partial class OrchestratorService : IOrchestratorService
             foreach (var pt in poolTypes)
             {
                 var leasesKey = string.Format(POOL_LEASES_KEY, pt);
-                var leases = await _redisManager.GetHashAsync<ProcessorLease>(leasesKey);
+                var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey);
 
                 if (leases != null && leases.TryGetValue(body.Lease_id.ToString(), out var foundLease))
                 {
@@ -2318,13 +2323,13 @@ public partial class OrchestratorService : IOrchestratorService
 
             // Remove the lease
             var leasesKeyToUpdate = string.Format(POOL_LEASES_KEY, poolType);
-            var currentLeases = await _redisManager.GetHashAsync<ProcessorLease>(leasesKeyToUpdate) ?? new Dictionary<string, ProcessorLease>();
+            var currentLeases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKeyToUpdate) ?? new Dictionary<string, ProcessorLease>();
             currentLeases.Remove(body.Lease_id.ToString());
-            await _redisManager.SetHashAsync(leasesKeyToUpdate, currentLeases);
+            await _stateManager.SetHashAsync(leasesKeyToUpdate, currentLeases);
 
             // Return processor to available pool
             var availableKey = string.Format(POOL_AVAILABLE_KEY, poolType);
-            var availableProcessors = await _redisManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+            var availableProcessors = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
 
             availableProcessors.Add(new ProcessorInstance
             {
@@ -2335,7 +2340,7 @@ public partial class OrchestratorService : IOrchestratorService
                 LastUpdated = DateTimeOffset.UtcNow
             });
 
-            await _redisManager.SetListAsync(availableKey, availableProcessors);
+            await _stateManager.SetListAsync(availableKey, availableProcessors);
 
             // Update metrics
             await UpdatePoolMetricsAsync(poolType, body.Success);
@@ -2383,10 +2388,10 @@ public partial class OrchestratorService : IOrchestratorService
             var configKey = string.Format(POOL_CONFIG_KEY, body.Pool_type);
             var metricsKey = string.Format(POOL_METRICS_KEY, body.Pool_type);
 
-            var allInstances = await _redisManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
-            var availableInstances = await _redisManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
-            var leases = await _redisManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
-            var config = await _redisManager.GetValueAsync<PoolConfiguration>(configKey);
+            var allInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
+            var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+            var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
+            var config = await _stateManager.GetValueAsync<PoolConfiguration>(configKey);
 
             var response = new PoolStatusResponse
             {
@@ -2402,7 +2407,7 @@ public partial class OrchestratorService : IOrchestratorService
             // Include metrics if requested
             if (body.Include_metrics)
             {
-                var metrics = await _redisManager.GetValueAsync<PoolMetricsData>(metricsKey);
+                var metrics = await _stateManager.GetValueAsync<PoolMetricsData>(metricsKey);
                 if (metrics != null)
                 {
                     response.Recent_metrics = new PoolMetrics
@@ -2455,9 +2460,9 @@ public partial class OrchestratorService : IOrchestratorService
             var leasesKey = string.Format(POOL_LEASES_KEY, body.Pool_type);
             var metricsKey = string.Format(POOL_METRICS_KEY, body.Pool_type);
 
-            var currentInstances = await _redisManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
-            var availableInstances = await _redisManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
-            var leases = await _redisManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
+            var currentInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
+            var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+            var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
 
             var previousCount = currentInstances.Count;
             var scaledUp = 0;
@@ -2534,14 +2539,14 @@ public partial class OrchestratorService : IOrchestratorService
             }
 
             // Save updated state
-            await _redisManager.SetListAsync(instancesKey, currentInstances);
-            await _redisManager.SetListAsync(availableKey, availableInstances);
-            await _redisManager.SetHashAsync(leasesKey, leases);
+            await _stateManager.SetListAsync(instancesKey, currentInstances);
+            await _stateManager.SetListAsync(availableKey, availableInstances);
+            await _stateManager.SetHashAsync(leasesKey, leases);
 
             // Update metrics with scale event
-            var metrics = await _redisManager.GetValueAsync<PoolMetricsData>(metricsKey) ?? new PoolMetricsData();
+            var metrics = await _stateManager.GetValueAsync<PoolMetricsData>(metricsKey) ?? new PoolMetricsData();
             metrics.LastScaleEvent = DateTimeOffset.UtcNow;
-            await _redisManager.SetValueAsync(metricsKey, metrics);
+            await _stateManager.SetValueAsync(metricsKey, metrics);
 
             return (StatusCodes.OK, new ScalePoolResponse
             {
@@ -2583,9 +2588,9 @@ public partial class OrchestratorService : IOrchestratorService
             var availableKey = string.Format(POOL_AVAILABLE_KEY, body.Pool_type);
             var configKey = string.Format(POOL_CONFIG_KEY, body.Pool_type);
 
-            var currentInstances = await _redisManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
-            var availableInstances = await _redisManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
-            var config = await _redisManager.GetValueAsync<PoolConfiguration>(configKey);
+            var currentInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
+            var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+            var config = await _stateManager.GetValueAsync<PoolConfiguration>(configKey);
 
             var minInstances = config?.MinInstances ?? 1;
             var targetCount = body.Preserve_minimum ? minInstances : 0;
@@ -2611,8 +2616,8 @@ public partial class OrchestratorService : IOrchestratorService
             availableInstances.RemoveAll(p => removedIds.Contains(p.ProcessorId));
             currentInstances.RemoveAll(p => removedIds.Contains(p.ProcessorId));
 
-            await _redisManager.SetListAsync(instancesKey, currentInstances);
-            await _redisManager.SetListAsync(availableKey, availableInstances);
+            await _stateManager.SetListAsync(instancesKey, currentInstances);
+            await _stateManager.SetListAsync(availableKey, availableInstances);
 
             _logger.LogInformation(
                 "CleanupPool: Removed {Count} idle instances from pool {PoolType}, {Remaining} instances remaining",
@@ -2649,7 +2654,7 @@ public partial class OrchestratorService : IOrchestratorService
     private async Task UpdatePoolMetricsAsync(string poolType, bool success)
     {
         var metricsKey = string.Format(POOL_METRICS_KEY, poolType);
-        var metrics = await _redisManager.GetValueAsync<PoolMetricsData>(metricsKey) ?? new PoolMetricsData();
+        var metrics = await _stateManager.GetValueAsync<PoolMetricsData>(metricsKey) ?? new PoolMetricsData();
 
         if (success)
         {
@@ -2660,7 +2665,7 @@ public partial class OrchestratorService : IOrchestratorService
             metrics.JobsFailed1h++;
         }
 
-        await _redisManager.SetValueAsync(metricsKey, metrics);
+        await _stateManager.SetValueAsync(metricsKey, metrics);
     }
 
     #endregion

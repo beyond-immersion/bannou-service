@@ -464,4 +464,188 @@ public class Serialization : IClassFixture<CollectionFixture>
     }
 
     #endregion
+
+    #region BannouJson.ApplyBannouSettings Tests
+
+    [Fact]
+    public void ApplyBannouSettings_CopiesAllSettings()
+    {
+        // Arrange
+        var target = new JsonSerializerOptions();
+
+        // Act
+        BannouJson.ApplyBannouSettings(target);
+
+        // Assert - verify key settings are copied
+        Assert.Equal(BannouJson.Options.AllowTrailingCommas, target.AllowTrailingCommas);
+        Assert.Equal(BannouJson.Options.DefaultIgnoreCondition, target.DefaultIgnoreCondition);
+        Assert.Equal(BannouJson.Options.PropertyNameCaseInsensitive, target.PropertyNameCaseInsensitive);
+        Assert.Equal(BannouJson.Options.MaxDepth, target.MaxDepth);
+        Assert.Equal(BannouJson.Options.NumberHandling, target.NumberHandling);
+        Assert.Equal(BannouJson.Options.WriteIndented, target.WriteIndented);
+    }
+
+    [Fact]
+    public void ApplyBannouSettings_CopiesConverters()
+    {
+        // Arrange
+        var target = new JsonSerializerOptions();
+        var originalConverterCount = BannouJson.Options.Converters.Count;
+
+        // Act
+        BannouJson.ApplyBannouSettings(target);
+
+        // Assert - converters should be copied
+        Assert.Equal(originalConverterCount, target.Converters.Count);
+    }
+
+    [Fact]
+    public void ApplyBannouSettings_DoesNotDuplicateConverters()
+    {
+        // Arrange
+        var target = new JsonSerializerOptions();
+        BannouJson.ApplyBannouSettings(target);
+        var countAfterFirst = target.Converters.Count;
+
+        // Act - apply settings again
+        BannouJson.ApplyBannouSettings(target);
+
+        // Assert - should not duplicate converters
+        Assert.Equal(countAfterFirst, target.Converters.Count);
+    }
+
+    [Fact]
+    public void ApplyBannouSettings_ReturnsTargetForChaining()
+    {
+        // Arrange
+        var target = new JsonSerializerOptions();
+
+        // Act
+        var result = BannouJson.ApplyBannouSettings(target);
+
+        // Assert - should return same instance for fluent chaining
+        Assert.Same(target, result);
+    }
+
+    #endregion
+
+    #region AdditionalProperties Serialization Tests (NSwag Generated Models)
+
+    /// <summary>
+    /// Model mimicking NSwag-generated models with AdditionalProperties.
+    /// This tests the fix for invalid JSON when AdditionalProperties is null.
+    ///
+    /// CRITICAL BUG FIXED: NSwag generates lazy initialization that created empty {}
+    /// in serialized JSON, resulting in invalid JSON like: {"prop":"value",{}}
+    /// Fix: Changed getter to return null directly, made property nullable.
+    /// </summary>
+    private class ModelWithAdditionalProperties
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Value { get; set; }
+
+        // Mimics NSwag generated pattern AFTER fix:
+        // Property is nullable, getter returns backing field directly (no lazy init)
+        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+        [System.Text.Json.Serialization.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+        {
+            get => _additionalProperties;
+            set { _additionalProperties = value; }
+        }
+    }
+
+    [Fact]
+    public void AdditionalProperties_WhenNull_DoesNotSerializeAsEmptyObject()
+    {
+        // Arrange - model with null AdditionalProperties
+        var model = new ModelWithAdditionalProperties
+        {
+            Name = "Test",
+            Value = 42
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(model, IServiceConfiguration.BannouSerializerConfig);
+
+        // Assert - should NOT contain empty {} which would make invalid JSON
+        Assert.DoesNotContain("{}", json);
+        Assert.DoesNotContain(",}", json); // No trailing comma before }
+        Assert.Contains("\"Name\":", json);
+        Assert.Contains("\"Value\":", json);
+    }
+
+    [Fact]
+    public void AdditionalProperties_WhenPopulated_SerializesCorrectly()
+    {
+        // Arrange
+        var model = new ModelWithAdditionalProperties
+        {
+            Name = "Test",
+            Value = 42,
+            AdditionalProperties = new Dictionary<string, object>
+            {
+                { "extra1", "value1" },
+                { "extra2", 123 }
+            }
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(model, IServiceConfiguration.BannouSerializerConfig);
+
+        // Assert - additional properties should be included inline (not nested)
+        Assert.Contains("\"extra1\":", json);
+        Assert.Contains("\"extra2\":", json);
+    }
+
+    [Fact]
+    public void AdditionalProperties_WhenEmptyDict_SerializesWithoutInvalidJson()
+    {
+        // Arrange - explicitly set to empty dictionary (not null)
+        var model = new ModelWithAdditionalProperties
+        {
+            Name = "Test",
+            Value = 42,
+            AdditionalProperties = new Dictionary<string, object>()
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(model, IServiceConfiguration.BannouSerializerConfig);
+
+        // Assert - empty dict with JsonExtensionData should not add anything
+        // The JSON should be valid (parseable)
+        var parsed = JsonSerializer.Deserialize<ModelWithAdditionalProperties>(json, IServiceConfiguration.BannouSerializerConfig);
+        Assert.NotNull(parsed);
+        Assert.Equal("Test", parsed.Name);
+        Assert.Equal(42, parsed.Value);
+    }
+
+    [Fact]
+    public void AdditionalProperties_RoundTrip_PreservesData()
+    {
+        // Arrange
+        var original = new ModelWithAdditionalProperties
+        {
+            Name = "Test",
+            Value = 42,
+            AdditionalProperties = new Dictionary<string, object>
+            {
+                { "customField", "customValue" }
+            }
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.BannouSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<ModelWithAdditionalProperties>(json, IServiceConfiguration.BannouSerializerConfig);
+
+        // Assert
+        Assert.NotNull(deserialized);
+        Assert.Equal(original.Name, deserialized.Name);
+        Assert.Equal(original.Value, deserialized.Value);
+        Assert.NotNull(deserialized.AdditionalProperties);
+        Assert.True(deserialized.AdditionalProperties.ContainsKey("customField"));
+    }
+
+    #endregion
 }

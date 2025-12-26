@@ -1014,6 +1014,14 @@
             Serialize object to JsonElement using Bannou's standard configuration.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.BannouJson.ApplyBannouSettings(System.Text.Json.JsonSerializerOptions)">
+            <summary>
+            Apply Bannou's standard JSON serializer settings to an existing options object.
+            Use this when configuring external libraries (MassTransit, etc.) that provide their own options.
+            </summary>
+            <param name="target">The options object to configure</param>
+            <returns>The configured options object for fluent chaining</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Configuration.BannouJsonExtensions">
             <summary>
             Extension methods for JSON serialization using Bannou's standard configuration.
@@ -2857,6 +2865,121 @@
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.GameSessionPlayerJoinedEvent">
+            <summary>
+            Published when a player joins a game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerJoinedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerJoinedEvent.Timestamp">
+            <summary>
+            When the player joined
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerJoinedEvent.SessionId">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerJoinedEvent.AccountId">
+            <summary>
+            ID of the account that joined
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.GameSessionPlayerLeftEvent">
+            <summary>
+            Published when a player leaves a game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerLeftEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerLeftEvent.Timestamp">
+            <summary>
+            When the player left
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerLeftEvent.SessionId">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerLeftEvent.AccountId">
+            <summary>
+            ID of the account that left
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerLeftEvent.Kicked">
+            <summary>
+            Whether the player was kicked (vs left voluntarily)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerLeftEvent.Reason">
+            <summary>
+            Reason for leaving/being kicked (if applicable)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent">
+            <summary>
+            Published to game-session.created when a gamesession is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent">
+            <summary>
+            Published to game-session.updated when a gamesession is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent">
+            <summary>
+            Published to game-session.deleted when a gamesession is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.LocationCreatedEvent">
             <summary>
             Published to location.created when a location is created
@@ -3144,6 +3267,28 @@
         <member name="T:BeyondImmersion.BannouService.Events.SubscriptionRemovedReason">
             <summary>
             Reason the subscription was removed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.OrchestratorHealthPingEvent">
+            <summary>
+            Simple health ping event published to verify pub/sub path is active.
+            <br/>Used by infrastructure health checks.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.OrchestratorHealthPingEvent.EventId">
+            <summary>
+            Unique identifier for this health ping
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.OrchestratorHealthPingEvent.Timestamp">
+            <summary>
+            When the health ping was sent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.OrchestratorHealthPingEvent.Status">
+            <summary>
+            Current health status
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.PermissionCapabilityUpdate">

@@ -50,9 +50,9 @@ public partial class GetStateRequest
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -80,9 +80,9 @@ public partial class GetStateResponse
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -119,9 +119,9 @@ public partial class SaveStateRequest
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -146,9 +146,9 @@ public partial class SaveStateResponse
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -175,9 +175,9 @@ public partial class DeleteStateRequest
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -196,9 +196,9 @@ public partial class DeleteStateResponse
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -230,9 +230,9 @@ public partial class StateOptions
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -263,9 +263,9 @@ public partial class StateMetadata
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -343,9 +343,9 @@ public partial class QueryStateRequest
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -371,9 +371,9 @@ public partial class SortField
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -406,9 +406,9 @@ public partial class QueryCondition
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -493,9 +493,9 @@ public partial class QueryStateResponse
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -522,9 +522,9 @@ public partial class BulkGetStateRequest
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -543,9 +543,9 @@ public partial class BulkGetStateResponse
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -582,9 +582,9 @@ public partial class BulkStateItem
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -613,9 +613,9 @@ public partial class ListStoresRequest
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -634,9 +634,9 @@ public partial class ListStoresResponse
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -668,9 +668,9 @@ public partial class StoreInfo
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 

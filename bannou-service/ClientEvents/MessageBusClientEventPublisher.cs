@@ -68,7 +68,11 @@ public class MessageBusClientEventPublisher : IClientEventPublisher
 
         try
         {
-            await _messageBus.PublishAsync(topic, eventData, cancellationToken: cancellationToken);
+            // CRITICAL: Use topic as exchange name so it matches what ClientEventRabbitMQSubscriber expects
+            // Subscriber binds to fanout exchange named "CONNECT_SESSION_{sessionId}"
+            // If we used the default "bannou" exchange, messages would never reach the subscriber
+            var options = new PublishOptions { Exchange = topic };
+            await _messageBus.PublishAsync(topic, eventData, options, cancellationToken);
 
             _logger.LogDebug(
                 "Published client event {EventName} to session {SessionId}",
@@ -122,7 +126,9 @@ public class MessageBusClientEventPublisher : IClientEventPublisher
                 var topic = $"{SESSION_TOPIC_PREFIX}{sessionId}";
                 try
                 {
-                    await _messageBus.PublishAsync(topic, eventData, cancellationToken: cancellationToken);
+                    // CRITICAL: Use topic as exchange name (see comment in PublishToSessionAsync)
+                    var options = new PublishOptions { Exchange = topic };
+                    await _messageBus.PublishAsync(topic, eventData, options, cancellationToken);
                     Interlocked.Increment(ref successCount);
 
                     _logger.LogDebug(

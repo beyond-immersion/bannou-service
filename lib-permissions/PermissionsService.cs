@@ -37,7 +37,7 @@ public partial class PermissionsService : IPermissionsService
     private static readonly string[] ROLE_ORDER = new[] { "anonymous", "user", "developer", "admin" };
 
     // State store name
-    private const string STATE_STORE = "permissions-store";
+    private const string STATE_STORE = "permissions-statestore";
 
     // State key patterns
     private const string ACTIVE_SESSIONS_KEY = "active_sessions";
@@ -368,7 +368,7 @@ public partial class PermissionsService : IPermissionsService
             // Uses Redis-based distributed lock to prevent race conditions when multiple services register concurrently
             // NO FALLBACK - if lock fails after retries, registration fails. We don't mask failures with alternative paths.
             // RETRY IS NOT A FALLBACK - retrying lock acquisition is the correct approach for handling lock contention.
-            const string LOCK_STORE = "permissions-store"; // Use Redis state store for distributed locking
+            const string LOCK_STORE = "permissions-statestore"; // Use Redis state store for distributed locking
             const string LOCK_RESOURCE = "registered_services_lock";
             var lockOwnerId = $"{body.ServiceId}-{Guid.NewGuid():N}";
 
@@ -455,6 +455,7 @@ public partial class PermissionsService : IPermissionsService
                 _logger.LogInformation("Acquired lock for {ServiceId} to update registered services", body.ServiceId);
 
                 // Now we have exclusive access - safe to read-modify-write
+                // CRITICAL: Keep lock scope minimal to avoid timeout during concurrent registrations
                 var registeredServicesStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
                 var lockedServices = await registeredServicesStore.GetAsync(REGISTERED_SERVICES_KEY, cancellationToken) ?? new HashSet<string>();
 
@@ -472,37 +473,39 @@ public partial class PermissionsService : IPermissionsService
                 {
                     _logger.LogInformation("Service {ServiceId} already in registered services list", body.ServiceId);
                 }
+            } // End of await using (serviceLock) - release lock BEFORE expensive session recompilation
 
-                // Get all active sessions and recompile (for state tracking)
-                var activeSessions = await registeredServicesStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
+            // Session recompilation happens OUTSIDE the lock to prevent lock timeouts
+            // during concurrent service registrations at startup
+            var registeredStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var activeSessions = await registeredStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
 
-                // Recompile permissions for all active sessions
-                var recompiledCount = 0;
-                foreach (var sessionId in activeSessions)
-                {
-                    await RecompileSessionPermissionsAsync(sessionId, "service_registered");
-                    recompiledCount++;
-                }
+            // Recompile permissions for all active sessions
+            var recompiledCount = 0;
+            foreach (var sessionId in activeSessions)
+            {
+                await RecompileSessionPermissionsAsync(sessionId, "service_registered");
+                recompiledCount++;
+            }
 
-                _logger.LogInformation("Service {ServiceId} registered successfully, recompiled {Count} sessions",
-                    body.ServiceId, recompiledCount);
+            _logger.LogInformation("Service {ServiceId} registered successfully, recompiled {Count} sessions",
+                body.ServiceId, recompiledCount);
 
-                // Note: RecompileSessionPermissionsAsync already handles publishing via PublishCapabilityUpdateAsync,
-                // which checks activeConnections before publishing to avoid RabbitMQ crashes
+            // Note: RecompileSessionPermissionsAsync already handles publishing via PublishCapabilityUpdateAsync,
+            // which checks activeConnections before publishing to avoid RabbitMQ crashes
 
-                // Store the new hash for idempotent registration detection
-                await _stateStoreFactory.GetStore<string>(STATE_STORE)
-                    .SaveAsync(hashKey, newHash, cancellationToken: cancellationToken);
-                _logger.LogDebug("Stored permission hash for {ServiceId}: {Hash}",
-                    body.ServiceId, newHash[..8] + "...");
+            // Store the new hash for idempotent registration detection
+            await _stateStoreFactory.GetStore<string>(STATE_STORE)
+                .SaveAsync(hashKey, newHash, cancellationToken: cancellationToken);
+            _logger.LogDebug("Stored permission hash for {ServiceId}: {Hash}",
+                body.ServiceId, newHash[..8] + "...");
 
-                return (StatusCodes.OK, new RegistrationResponse
-                {
-                    ServiceId = body.ServiceId,
-                    Success = true,
-                    Message = $"Registered {body.Permissions?.Count ?? 0} permission rules, recompiled {recompiledCount} sessions"
-                });
-            } // End of await using (serviceLock)
+            return (StatusCodes.OK, new RegistrationResponse
+            {
+                ServiceId = body.ServiceId,
+                Success = true,
+                Message = $"Registered {body.Permissions?.Count ?? 0} permission rules, recompiled {recompiledCount} sessions"
+            });
         }
         catch (Exception ex)
         {

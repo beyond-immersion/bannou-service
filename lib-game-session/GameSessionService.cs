@@ -248,10 +248,23 @@ public partial class GameSessionService : IGameSessionService
 
             await sessionListStore.SaveAsync(SESSION_LIST_KEY, sessionIds, cancellationToken: cancellationToken);
 
-            // Publish event
+            // Publish event with full model data
             await _messageBus.PublishAsync(
                 SESSION_CREATED_TOPIC,
-                new { SessionId = session.SessionId, GameType = body.GameType.ToString() });
+                new GameSessionCreatedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    SessionId = session.SessionId,
+                    GameType = session.GameType.ToString(),
+                    SessionName = session.SessionName ?? string.Empty,
+                    Status = session.Status.ToString(),
+                    MaxPlayers = session.MaxPlayers,
+                    CurrentPlayers = session.CurrentPlayers,
+                    IsPrivate = session.IsPrivate,
+                    Owner = session.Owner,
+                    CreatedAt = session.CreatedAt
+                });
 
             var response = MapModelToResponse(session);
 
@@ -400,7 +413,13 @@ public partial class GameSessionService : IGameSessionService
             // Publish event
             await _messageBus.PublishAsync(
                 PLAYER_JOINED_TOPIC,
-                new { SessionId = sessionId, AccountId = accountId.ToString() });
+                new GameSessionPlayerJoinedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    SessionId = sessionId,
+                    AccountId = accountId.ToString()
+                });
 
             // Set game-session:in_game state to enable leave/chat/action endpoints (Tenet 10)
             var clientSessionId = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Session-Id"].FirstOrDefault();
@@ -698,7 +717,14 @@ public partial class GameSessionService : IGameSessionService
             // Publish event
             await _messageBus.PublishAsync(
                 PLAYER_LEFT_TOPIC,
-                new { SessionId = sessionId, AccountId = leavingPlayer.AccountId.ToString() });
+                new GameSessionPlayerLeftEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    SessionId = sessionId,
+                    AccountId = leavingPlayer.AccountId.ToString(),
+                    Kicked = false
+                });
 
             // Clear game-session:in_game state to remove leave/chat/action endpoint access (Tenet 10)
             var clientSessionId = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Session-Id"].FirstOrDefault();
@@ -788,7 +814,15 @@ public partial class GameSessionService : IGameSessionService
             // Publish event
             await _messageBus.PublishAsync(
                 PLAYER_LEFT_TOPIC,
-                new { SessionId = sessionId, AccountId = targetAccountId.ToString(), Kicked = true, Reason = body.Reason });
+                new GameSessionPlayerLeftEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    SessionId = sessionId,
+                    AccountId = targetAccountId.ToString(),
+                    Kicked = true,
+                    Reason = body.Reason
+                });
 
             _logger.LogInformation("Player {TargetAccountId} kicked from session {SessionId}", targetAccountId, sessionId);
             return (StatusCodes.OK, null);

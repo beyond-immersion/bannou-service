@@ -57,6 +57,11 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             ["voice-statestore"] = (StateBackend.Redis, "voice", false),
             ["asset-statestore"] = (StateBackend.Redis, "asset", false),
 
+            // Orchestrator stores (heartbeats, routings, configuration)
+            ["orchestrator-heartbeats"] = (StateBackend.Redis, "orch:hb", false),
+            ["orchestrator-routings"] = (StateBackend.Redis, "orch:rt", false),
+            ["orchestrator-config"] = (StateBackend.Redis, "orch:cfg", false),
+
             // Redis stores with full-text search (Redis 8+ via NRedisStack)
             ["documentation-statestore"] = (StateBackend.Redis, "doc", true),
 

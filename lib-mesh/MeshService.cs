@@ -255,7 +255,7 @@ public partial class MeshService : IMeshService
             await PublishEndpointDeregisteredEventAsync(
                 body.InstanceId,
                 endpoint.AppId,
-                "Graceful",
+                MeshEndpointDeregisteredEventReason.Graceful,
                 cancellationToken);
 
             return (StatusCodes.NoContent, null);
@@ -625,15 +625,15 @@ public partial class MeshService : IMeshService
     {
         try
         {
-            var evt = new
+            var evt = new MeshEndpointRegisteredEvent
             {
-                eventId = Guid.NewGuid(),
-                timestamp = DateTimeOffset.UtcNow,
-                instanceId = endpoint.InstanceId,
-                appId = endpoint.AppId,
-                host = endpoint.Host,
-                port = endpoint.Port,
-                services = endpoint.Services
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                InstanceId = endpoint.InstanceId,
+                AppId = endpoint.AppId,
+                Host = endpoint.Host,
+                Port = endpoint.Port,
+                Services = endpoint.Services
             };
 
             await _messageBus.PublishAsync(
@@ -652,18 +652,18 @@ public partial class MeshService : IMeshService
     private async Task PublishEndpointDeregisteredEventAsync(
         Guid instanceId,
         string appId,
-        string reason,
+        MeshEndpointDeregisteredEventReason reason,
         CancellationToken cancellationToken)
     {
         try
         {
-            var evt = new
+            var evt = new MeshEndpointDeregisteredEvent
             {
-                eventId = Guid.NewGuid(),
-                timestamp = DateTimeOffset.UtcNow,
-                instanceId = instanceId,
-                appId = appId,
-                reason = reason
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                InstanceId = instanceId,
+                AppId = appId,
+                Reason = reason
             };
 
             await _messageBus.PublishAsync(

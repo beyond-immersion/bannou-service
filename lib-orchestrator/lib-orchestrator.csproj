@@ -17,6 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
+    <ProjectReference Include="../lib-state/lib-state.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,8 +25,6 @@
     <PackageReference Include="Docker.DotNet" Version="3.125.15" />
     <PackageReference Include="KubernetesClient" Version="18.0.13" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
-    <PackageReference Include="RabbitMQ.Client" Version="7.2.0" />
-    <PackageReference Include="StackExchange.Redis" Version="2.10.1" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>

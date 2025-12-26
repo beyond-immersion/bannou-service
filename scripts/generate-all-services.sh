@@ -150,6 +150,38 @@ for schema_file in "${SCHEMA_FILES[@]}"; do
     echo ""
 done
 
+# Post-process generated files to fix NSwag AdditionalProperties lazy initialization
+# This pattern causes invalid JSON when serialized: empty {} appears as ,{} which breaks parsing
+# See: https://github.com/RicoSuter/NSwag/issues/3420
+echo -e "${BLUE}🔧 Post-processing: Fixing AdditionalProperties lazy initialization...${NC}"
+
+# Find all generated .cs files and fix the problematic pattern
+GENERATED_FILES=($(find .. -path "*/Generated/*.cs" -o -name "*.Generated.cs" 2>/dev/null))
+FIXED_COUNT=0
+
+for file in "${GENERATED_FILES[@]}"; do
+    if grep -q "return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>())" "$file" 2>/dev/null; then
+        # Fix the getter to return null instead of creating empty dictionary
+        # Change: get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        # To:     get => _additionalProperties;
+        sed -i 's/get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }/get => _additionalProperties;/g' "$file"
+
+        # Also make the property nullable to match the backing field
+        # Change: public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        # To:     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+        sed -i 's/public System.Collections.Generic.IDictionary<string, object> AdditionalProperties/public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties/g' "$file"
+
+        FIXED_COUNT=$((FIXED_COUNT + 1))
+    fi
+done
+
+if [ $FIXED_COUNT -gt 0 ]; then
+    echo -e "${GREEN}✅ Fixed AdditionalProperties in $FIXED_COUNT files${NC}"
+else
+    echo -e "${YELLOW}ℹ️  No AdditionalProperties patterns found to fix${NC}"
+fi
+echo ""
+
 # Print summary
 echo -e "${BLUE}📊 Generation Summary:${NC}"
 echo "=========================="

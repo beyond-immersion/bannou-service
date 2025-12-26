@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
@@ -68,6 +69,9 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
                     h.Password(password);
                     h.RequestedConnectionTimeout(TimeSpan.FromSeconds(connectionTimeoutSeconds));
                 });
+
+                // Configure MassTransit to use BannouJson serializer options for consistency
+                cfg.ConfigureJsonSerializerOptions(opts => BannouJson.ApplyBannouSettings(opts));
 
                 // Set send/publish timeout
                 cfg.SendTopology.ConfigureErrorSettings = settings =>

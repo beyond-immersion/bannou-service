@@ -327,6 +327,14 @@
             Serialize object to JsonElement using Bannou's standard configuration.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Configuration.BannouJson.ApplyBannouSettings(System.Text.Json.JsonSerializerOptions)">
+            <summary>
+            Apply Bannou's standard JSON serializer settings to an existing options object.
+            Use this when configuring external libraries (MassTransit, etc.) that provide their own options.
+            </summary>
+            <param name="target">The options object to configure</param>
+            <returns>The configured options object for fluent chaining</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Configuration.BannouJsonExtensions">
             <summary>
             Extension methods for JSON serialization using Bannou's standard configuration.
@@ -13907,6 +13915,66 @@
         <member name="P:BeyondImmersion.BannouService.Events.CharacterDeletedEvent.DeletedReason">
             <summary>
             Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.GameSessionPlayerJoinedEvent">
+            <summary>
+            Published when a player joins a game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerJoinedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerJoinedEvent.Timestamp">
+            <summary>
+            When the player joined
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerJoinedEvent.SessionId">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerJoinedEvent.AccountId">
+            <summary>
+            ID of the account that joined
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.GameSessionPlayerLeftEvent">
+            <summary>
+            Published when a player leaves a game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerLeftEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerLeftEvent.Timestamp">
+            <summary>
+            When the player left
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerLeftEvent.SessionId">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerLeftEvent.AccountId">
+            <summary>
+            ID of the account that left
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerLeftEvent.Kicked">
+            <summary>
+            Whether the player was kicked (vs left voluntarily)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionPlayerLeftEvent.Reason">
+            <summary>
+            Reason for leaving/being kicked (if applicable)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.StateChangedEvent">

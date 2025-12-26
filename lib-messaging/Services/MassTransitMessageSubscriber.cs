@@ -2,7 +2,9 @@
 
 using BeyondImmersion.BannouService.Services;
 using MassTransit;
+using MassTransit.RabbitMqTransport;
 using Microsoft.Extensions.Logging;
+using RabbitMQ.Client;
 using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
@@ -108,6 +110,9 @@ public sealed class MassTransitMessageSubscriber : IMessageSubscriber, IAsyncDis
         var subscriptionId = Guid.NewGuid();
         var queueName = $"{topic}.dynamic.{subscriptionId:N}";
 
+        // Get the exchange name that publishers use (from configuration)
+        var exchangeName = _configuration.DefaultExchange;
+
         try
         {
             // Create a temporary receive endpoint for dynamic subscriptions
@@ -116,9 +121,30 @@ public sealed class MassTransitMessageSubscriber : IMessageSubscriber, IAsyncDis
             {
                 endpoint.PrefetchCount = _configuration.DefaultPrefetchCount;
 
-                // Dynamic subscriptions use auto-delete queues configured below
-                // When using ConnectReceiveEndpoint, MassTransit creates a temporary endpoint
-                // that is cleaned up when disposed
+                // CRITICAL: Bind this queue to the publisher's exchange for fan-out
+                // Publishers send to exchange "{exchangeName}" with routing key = topic
+                // Without this binding, messages would never reach this queue
+                // This enables fan-out: all dynamic subscribers get copies of each message
+                // NOTE: MassTransit creates exchange as 'fanout' by default when using
+                // exchange:{name}?bind=true&queue={topic} URI, so we must match that type
+                if (endpoint is IRabbitMqReceiveEndpointConfigurator rmqEndpoint)
+                {
+                    rmqEndpoint.Bind(exchangeName, x =>
+                    {
+                        x.RoutingKey = topic;
+                        x.ExchangeType = ExchangeType.Fanout;
+                    });
+
+                    _logger.LogDebug(
+                        "Bound queue '{QueueName}' to exchange '{Exchange}' with routing key '{RoutingKey}'",
+                        queueName, exchangeName, topic);
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Cannot bind queue to exchange - endpoint is not RabbitMQ. " +
+                        "Dynamic subscriptions may not receive messages.");
+                }
 
                 endpoint.Handler<TEvent>(async context =>
                 {

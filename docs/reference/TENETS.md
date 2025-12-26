@@ -1,7 +1,7 @@
 # Bannou Service Development Tenets
 
-> **Version**: 3.0
-> **Last Updated**: 2025-12-25
+> **Version**: 4.0
+> **Last Updated**: 2025-12-26
 > **Scope**: All Bannou microservices and related infrastructure
 
 This document establishes the mandatory tenets for developing high-quality Bannou services. All service implementations, tests, and infrastructure MUST adhere to these tenets. Tenets must not be changed or added without EXPLICIT approval, without exception.
@@ -193,14 +193,12 @@ public MyService(
     IMessageBus messageBus,
     ILogger<MyService> logger,
     MyServiceConfiguration configuration,
-    IErrorEventEmitter errorEventEmitter,
     IEventConsumer eventConsumer)  // Required for event handling
 {
     _stateStore = stateStoreFactory.Create<MyModel>("my-service");
     _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
     _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-    _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
 
     // Register event handlers via partial class
     ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
@@ -247,9 +245,11 @@ public partial class MyService
 
 ---
 
-## Tenet 4: Infrastructure Libs Pattern (MANDATORY)
+## Tenet 4: Infrastructure Libs Pattern (ABSOLUTE)
 
-**Rule**: Services MUST use the three infrastructure libs (`lib-messaging`, `lib-mesh`, `lib-state`) for all infrastructure concerns. Direct database/cache/queue access is forbidden unless there is an EXCEPTIONALLY good reason documented with explicit approval.
+**Rule**: Services MUST use the three infrastructure libs (`lib-messaging`, `lib-mesh`, `lib-state`) for all infrastructure concerns. Direct database/cache/queue access is FORBIDDEN with NO exceptions in service code.
+
+**Infrastructure libs cannot be disabled** - they are core to the architecture and provide the abstraction layer that enables deployment flexibility. All services depend on these abstractions regardless of deployment topology.
 
 ### The Three Infrastructure Libs
 
@@ -406,6 +406,24 @@ Backend selection is handled by `IStateStoreFactory` based on service configurat
 
 **Rule**: All meaningful state changes MUST publish events, even without current consumers.
 
+### No Anonymous Events (ABSOLUTE)
+
+**All events MUST be defined as typed schemas** - anonymous object publishing is FORBIDDEN:
+
+```csharp
+// CORRECT: Use typed event model
+await _messageBus.PublishAsync("account.created", new AccountCreatedEvent { ... });
+
+// FORBIDDEN: Anonymous object publishing
+await _messageBus.PublishAsync("account.created", new { AccountId = id }); // NO!
+```
+
+**Why Typed Events Are Required**:
+- Event schemas enable code generation for consumers
+- Type safety catches breaking changes at compile time
+- Documentation is auto-generated from schemas
+- Event versioning and evolution require explicit contracts
+
 ### Required Events Per Service
 
 See [Generated Events Reference](../GENERATED-EVENTS.md) for the complete, auto-maintained list of all published events.
@@ -439,9 +457,9 @@ EventName:
 - `bannou.full-service-mappings` - Service routing updates
 - `bannou.service-heartbeats` - Health monitoring
 
-### Lifecycle Events (x-lifecycle)
+### Lifecycle Events (x-lifecycle) - NEVER MANUALLY CREATE
 
-For CRUD-based resources, use `x-lifecycle` in the events schema to auto-generate Created/Updated/Deleted events:
+**ABSOLUTE RULE**: CRUD-style lifecycle events (Created/Updated/Deleted) MUST be auto-generated via `x-lifecycle` in the events schema. **NEVER manually define these event patterns.**
 
 ```yaml
 # In {service}-events.yaml
@@ -454,10 +472,35 @@ x-lifecycle:
     sensitive: [passwordHash, secretKey]  # Fields excluded from events
 ```
 
-**Generated Output** (`Generated/{service}-lifecycle-events.yaml`):
+**Generated Output** (`schemas/Generated/{service}-lifecycle-events.yaml`):
 - `EntityNameCreatedEvent` - Full entity data on creation
 - `EntityNameUpdatedEvent` - Full entity data + `changedFields` array
 - `EntityNameDeletedEvent` - Entity ID + `deletedReason`
+
+**Why This Rule Exists**:
+- Ensures consistent event structure across all services
+- Automatically handles sensitive field exclusion
+- Guarantees `changedFields` tracking on updates
+- Prevents copy-paste errors and inconsistent naming
+- Generated files are automatically maintained during schema changes
+
+```yaml
+# FORBIDDEN: Manually defining lifecycle events
+components:
+  schemas:
+    AccountCreatedEvent:     # NO! Use x-lifecycle instead
+      type: object
+      properties:
+        accountId: ...
+
+# CORRECT: Define in x-lifecycle, events are generated
+x-lifecycle:
+  Account:
+    model:
+      accountId: { type: string, format: uuid, primary: true, required: true }
+      email: { type: string, required: true }
+    sensitive: [passwordHash]  # Excluded from generated events
+```
 
 ### Full-State Events Pattern
 
@@ -558,7 +601,6 @@ public partial class ServiceNameService : IServiceNameService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<ServiceNameService> _logger;
     private readonly ServiceNameServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
 
     // Optional dependencies (nullable - may not be registered)
     private readonly IAuthClient? _authClient;
@@ -568,7 +610,6 @@ public partial class ServiceNameService : IServiceNameService
         IMessageBus messageBus,
         ILogger<ServiceNameService> logger,
         ServiceNameServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer,
         IAuthClient? authClient = null)
     {
@@ -576,7 +617,6 @@ public partial class ServiceNameService : IServiceNameService
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _authClient = authClient;  // May be null - check before use
 
         // Register event handlers via partial class
@@ -601,12 +641,11 @@ public partial class ServiceNameService : IServiceNameService
 | Dependency | Purpose |
 |------------|---------|
 | `IStateStoreFactory` | Create typed state stores (Redis/MySQL) |
-| `IMessageBus` | Publish events to RabbitMQ |
+| `IMessageBus` | Publish events to RabbitMQ (includes `TryPublishErrorAsync` for error events) |
 | `IMessageSubscriber` | Subscribe to RabbitMQ topics |
 | `IMeshInvocationClient` | Service-to-service invocation |
 | `ILogger<T>` | Structured logging |
 | `{Service}ServiceConfiguration` | Generated configuration class |
-| `IErrorEventEmitter` | Emit `ServiceErrorEvent` for unexpected failures |
 | `IEventConsumer` | Register event handlers for pub/sub fan-out |
 
 **Context-Dependent** (may not be registered):
@@ -661,7 +700,7 @@ try
 catch (Exception ex)
 {
     _logger.LogError(ex, "Failed to get {Entity} with key {Key}", entityType, key);
-    await _errorEventEmitter.TryPublishAsync(
+    await _messageBus.TryPublishErrorAsync(
         serviceId: _configuration.ServiceId ?? "unknown",
         operation: "GetEntity",
         errorType: ex.GetType().Name,
@@ -693,7 +732,7 @@ catch (Exception ex)
 {
     // Unexpected error - log as error, emit error event
     _logger.LogError(ex, "Unexpected error calling service");
-    await _errorEventEmitter.TryPublishAsync(
+    await _messageBus.TryPublishErrorAsync(
         serviceId: _configuration.ServiceId ?? "unknown",
         operation: "ServiceCall",
         errorType: ex.GetType().Name,
@@ -704,13 +743,14 @@ catch (Exception ex)
 }
 ```
 
-### IErrorEventEmitter API
+### Error Event Publishing via IMessageBus
 
-Use `IErrorEventEmitter` for unexpected/internal failures (similar to Sentry):
+Use `IMessageBus.TryPublishErrorAsync` for unexpected/internal failures (similar to Sentry error tracking):
 
 ```csharp
-Task<bool> TryPublishAsync(
-    string serviceId,           // Service identifier
+// On IMessageBus interface:
+Task<bool> TryPublishErrorAsync(
+    string serviceId,           // Service identifier (e.g., "accounts", "auth")
     string operation,           // Operation that failed (e.g., "GetAccount")
     string errorType,           // Exception type name
     string message,             // Error message
@@ -724,10 +764,11 @@ Task<bool> TryPublishAsync(
 ```
 
 **Guidelines**:
-- Emit only for unexpected/internal failures that should never happen
-- Do **not** emit for validation/user errors or expected conflicts
+- Emit **only** for unexpected/internal failures that should never happen
+- Do **NOT** emit for validation/user errors or expected conflicts
 - Redact sensitive information; include correlation IDs and minimal structured context
 - Method returns `false` if publishing fails (prevents cascading failures)
+- This replaces the legacy `IErrorEventEmitter` interface
 
 ### Error Granularity
 
@@ -1435,12 +1476,15 @@ x-service-configuration:
 |-----------|-------|-----|
 | Editing Generated/ files | 1, 2 | Edit schema, regenerate |
 | Wrong env var format (`JWTSECRET`) | 2 | Use `{SERVICE}_{PROPERTY}` pattern |
-| Direct database access | 4 | Use IStateStore via lib-state |
-| Direct RabbitMQ access | 4 | Use IMessageBus via lib-messaging |
-| Direct HTTP service calls | 4 | Use IMeshInvocationClient via lib-mesh |
+| Direct Redis/MySQL connection | 4 | Use IStateStoreFactory via lib-state |
+| Direct RabbitMQ connection | 4 | Use IMessageBus via lib-messaging |
+| Direct HTTP service calls | 4 | Use IMeshInvocationClient or generated clients via lib-mesh |
+| Anonymous event objects | 5 | Define typed event in schema, use generated model |
+| Manually defining lifecycle events | 5 | Use `x-lifecycle` in events schema - Created/Updated/Deleted are auto-generated |
 | Missing event publication | 5 | Use IMessageBus.PublishAsync |
 | Service class missing `partial` | 6 | Add `partial` keyword |
 | Missing event consumer registration | 3 | Add RegisterEventConsumers call |
+| Using IErrorEventEmitter | 7 | Use IMessageBus.TryPublishErrorAsync instead |
 | Plain Dictionary for cache | 9 | Use ConcurrentDictionary |
 | Per-instance salt/key generation | 9 | Use shared/deterministic values |
 | Using Microsoft.AspNetCore.Http.StatusCodes | 8 | Use BeyondImmersion.BannouService.StatusCodes |
@@ -1455,6 +1499,7 @@ x-service-configuration:
 | Direct `Environment.GetEnvironmentVariable` | 21 | Use service configuration class |
 | Hardcoded credential fallback | 21 | Remove default, require configuration |
 | Hardcoded connection string default | 21 | Define in schema, inject config |
+| Emitting error events for user errors | 7 | Only emit for unexpected/internal failures |
 
 ---
 

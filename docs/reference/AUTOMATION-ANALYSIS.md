@@ -113,7 +113,7 @@ The [TENETS](TENETS.md) document codifies 20 development standards in 1,309 line
 | **T4: Infrastructure Libs** | No debate about state stores, pub/sub, service invocation |
 | **T5: Event-Driven Architecture** | Topic naming, event schema patterns, lifecycle events |
 | **T6: Service Implementation Pattern** | Constructor dependencies, partial classes, helper services |
-| **T7: Error Handling** | IErrorEventEmitter pattern, ApiException handling |
+| **T7: Error Handling** | IMessageBus.TryPublishErrorAsync pattern, ApiException handling |
 | **T8: Return Pattern** | Tuple returns, StatusCodes enum usage |
 | **T9: Multi-Instance Safety** | ConcurrentDictionary, distributed locks, shared state |
 | **T10: Logging Standards** | Structured logging, no emojis, no brackets |

@@ -1,33 +1,30 @@
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
-using ServiceHealthStatus = BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus;
 
 namespace LibOrchestrator;
 
 /// <summary>
-/// Interface for managing direct Redis connections for orchestrator service.
-/// Enables unit testing through mocking.
+/// Interface for managing orchestrator state via lib-state infrastructure.
+/// Replaces direct Redis connections with proper infrastructure lib abstraction.
 /// </summary>
-public interface IOrchestratorRedisManager : IAsyncDisposable, IDisposable
+public interface IOrchestratorStateManager : IAsyncDisposable, IDisposable
 {
     /// <summary>
-    /// Initialize Redis connection with wait-on-startup retry logic.
-    /// Uses exponential backoff to handle infrastructure startup delays.
+    /// Initialize state stores with retry logic for infrastructure startup delays.
     /// </summary>
-    /// <returns>True if connection successful, false otherwise.</returns>
+    /// <returns>True if initialization successful, false otherwise.</returns>
     Task<bool> InitializeAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Get all service heartbeat data from Redis.
-    /// Pattern: service:heartbeat:{serviceId}:{appId}
-    /// TTL: 90 seconds (from ServiceHeartbeatEvent schema)
+    /// Get all service heartbeat data.
+    /// Uses index-based pattern to avoid KEYS/SCAN operations.
     /// </summary>
     Task<List<ServiceHealthStatus>> GetServiceHeartbeatsAsync();
 
     /// <summary>
-    /// Check if Redis is currently connected and healthy.
+    /// Check if state stores are connected and healthy.
     /// </summary>
-    Task<(bool IsHealthy, string? Message, TimeSpan? PingTime)> CheckHealthAsync();
+    Task<(bool IsHealthy, string? Message, TimeSpan? OperationTime)> CheckHealthAsync();
 
     /// <summary>
     /// Get specific service heartbeat by serviceId and appId.
@@ -35,34 +32,31 @@ public interface IOrchestratorRedisManager : IAsyncDisposable, IDisposable
     Task<ServiceHealthStatus?> GetServiceHeartbeatAsync(string serviceId, string appId);
 
     /// <summary>
-    /// Write service heartbeat data to Redis.
-    /// Called when heartbeat events are received from RabbitMQ.
-    /// Pattern: service:heartbeat:{serviceId}:{appId}
+    /// Write service heartbeat data.
+    /// Called when heartbeat events are received from message bus.
     /// TTL: 90 seconds
     /// </summary>
     Task WriteServiceHeartbeatAsync(ServiceHeartbeatEvent heartbeat);
 
     /// <summary>
-    /// Write service routing mapping to Redis for NGINX to read.
-    /// Pattern: service:routing:{serviceName}
-    /// Contains: app_id, host, port for NGINX to route requests.
+    /// Write service routing mapping for dynamic routing.
     /// </summary>
     Task WriteServiceRoutingAsync(string serviceName, ServiceRouting routing);
 
     /// <summary>
-    /// Get all service routing mappings from Redis.
-    /// Used by NGINX Lua script for dynamic routing.
+    /// Get all service routing mappings.
+    /// Uses index-based pattern to avoid KEYS/SCAN operations.
     /// </summary>
     Task<Dictionary<string, ServiceRouting>> GetServiceRoutingsAsync();
 
     /// <summary>
-    /// Remove service routing mapping from Redis.
+    /// Remove service routing mapping.
     /// Called when a service is unregistered.
     /// </summary>
     Task RemoveServiceRoutingAsync(string serviceName);
 
     /// <summary>
-    /// Clear all service routing mappings from Redis.
+    /// Clear all service routing mappings.
     /// Called when resetting to default topology.
     /// </summary>
     Task ClearAllServiceRoutingsAsync();
@@ -109,52 +103,33 @@ public interface IOrchestratorRedisManager : IAsyncDisposable, IDisposable
     #region Generic Storage Methods for Processing Pools
 
     /// <summary>
-    /// Get a list of items from Redis.
+    /// Get a list of items.
     /// </summary>
-    /// <typeparam name="T">Type of items in the list.</typeparam>
-    /// <param name="key">Redis key.</param>
-    /// <returns>List of items, or null if key doesn't exist.</returns>
     Task<List<T>?> GetListAsync<T>(string key) where T : class;
 
     /// <summary>
-    /// Set a list of items in Redis.
+    /// Set a list of items.
     /// </summary>
-    /// <typeparam name="T">Type of items in the list.</typeparam>
-    /// <param name="key">Redis key.</param>
-    /// <param name="items">Items to store.</param>
     Task SetListAsync<T>(string key, List<T> items) where T : class;
 
     /// <summary>
-    /// Get a hash (dictionary) from Redis.
+    /// Get a hash (dictionary).
     /// </summary>
-    /// <typeparam name="T">Type of values in the hash.</typeparam>
-    /// <param name="key">Redis key.</param>
-    /// <returns>Dictionary of key-value pairs, or null if key doesn't exist.</returns>
     Task<Dictionary<string, T>?> GetHashAsync<T>(string key) where T : class;
 
     /// <summary>
-    /// Set a hash (dictionary) in Redis.
+    /// Set a hash (dictionary).
     /// </summary>
-    /// <typeparam name="T">Type of values in the hash.</typeparam>
-    /// <param name="key">Redis key.</param>
-    /// <param name="hash">Dictionary to store.</param>
     Task SetHashAsync<T>(string key, Dictionary<string, T> hash) where T : class;
 
     /// <summary>
-    /// Get a single value from Redis.
+    /// Get a single value.
     /// </summary>
-    /// <typeparam name="T">Type of the value.</typeparam>
-    /// <param name="key">Redis key.</param>
-    /// <returns>Value, or null if key doesn't exist.</returns>
     Task<T?> GetValueAsync<T>(string key) where T : class;
 
     /// <summary>
-    /// Set a single value in Redis.
+    /// Set a single value.
     /// </summary>
-    /// <typeparam name="T">Type of the value.</typeparam>
-    /// <param name="key">Redis key.</param>
-    /// <param name="value">Value to store.</param>
-    /// <param name="ttl">Optional TTL for the key.</param>
     Task SetValueAsync<T>(string key, T value, TimeSpan? ttl = null) where T : class;
 
     #endregion
@@ -204,8 +179,8 @@ public class ServiceDeploymentConfig
 }
 
 /// <summary>
-/// Service routing information for NGINX.
-/// Contains the app_id and host:port for external HTTP routing.
+/// Service routing information for dynamic routing.
+/// Contains the app_id and host:port for routing.
 /// </summary>
 public class ServiceRouting
 {
@@ -229,7 +204,7 @@ public class ServiceRouting
 }
 
 /// <summary>
-/// Instance health status stored in Redis.
+/// Instance health status stored in state store.
 /// Represents the aggregated health state of a bannou app instance.
 /// </summary>
 public class InstanceHealthStatus
@@ -263,4 +238,39 @@ public class InstanceHealthStatus
 
     /// <summary>Memory usage percentage (0.0 - 1.0).</summary>
     public float MemoryUsage { get; set; }
+}
+
+/// <summary>
+/// Index for tracking known heartbeat app IDs.
+/// Stored at a special key to enable listing without KEYS/SCAN.
+/// </summary>
+internal class HeartbeatIndex
+{
+    /// <summary>Set of known app IDs with active heartbeats.</summary>
+    public HashSet<string> AppIds { get; set; } = new();
+
+    /// <summary>When the index was last updated.</summary>
+    public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;
+}
+
+/// <summary>
+/// Index for tracking known service routing names.
+/// Stored at a special key to enable listing without KEYS/SCAN.
+/// </summary>
+internal class RoutingIndex
+{
+    /// <summary>Set of known service names with active routings.</summary>
+    public HashSet<string> ServiceNames { get; set; } = new();
+
+    /// <summary>When the index was last updated.</summary>
+    public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;
+}
+
+/// <summary>
+/// Wrapper for storing configuration version as a class (required by IStateStore).
+/// </summary>
+internal class ConfigVersion
+{
+    /// <summary>Current version number.</summary>
+    public int Version { get; set; }
 }

@@ -63,6 +63,16 @@ public class StateStoreFactoryConfiguration
     public string? MySqlConnectionString { get; set; }
 
     /// <summary>
+    /// Maximum number of connection retry attempts for databases.
+    /// </summary>
+    public int ConnectionRetryCount { get; set; } = 10;
+
+    /// <summary>
+    /// Total timeout in seconds for database connection attempts.
+    /// </summary>
+    public int ConnectionTimeoutSeconds { get; set; } = 60;
+
+    /// <summary>
     /// Store configurations by name.
     /// </summary>
     public Dictionary<string, StoreConfiguration> Stores { get; set; } = new();
@@ -127,19 +137,61 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                 _redis = await ConnectionMultiplexer.ConnectAsync(_configuration.RedisConnectionString);
             }
 
-            // Initialize MySQL if any store uses it
+            // Initialize MySQL if any store uses it (with retry logic)
             var hasMySqlStore = _configuration.Stores.Values.Any(s => s.Backend == StateBackend.MySql);
             if (hasMySqlStore && !string.IsNullOrEmpty(_configuration.MySqlConnectionString))
             {
-                _logger.LogInformation("Initializing MySQL connection");
-                var optionsBuilder = new DbContextOptionsBuilder<StateDbContext>();
-                optionsBuilder.UseMySql(
-                    _configuration.MySqlConnectionString,
-                    ServerVersion.AutoDetect(_configuration.MySqlConnectionString));
-                _mysqlContext = new StateDbContext(optionsBuilder.Options);
+                var maxRetries = _configuration.ConnectionRetryCount;
+                var totalTimeoutSeconds = _configuration.ConnectionTimeoutSeconds;
+                var retryDelayMs = Math.Max(1000, (totalTimeoutSeconds * 1000) / Math.Max(1, maxRetries));
 
-                // Ensure database and tables exist
-                await _mysqlContext.Database.EnsureCreatedAsync();
+                _logger.LogInformation(
+                    "Initializing MySQL connection (timeout: {TotalTimeout}s, retries: {MaxRetries})",
+                    totalTimeoutSeconds, maxRetries);
+
+                for (int attempt = 1; attempt <= maxRetries; attempt++)
+                {
+                    try
+                    {
+                        _logger.LogDebug(
+                            "Attempting MySQL connection (attempt {Attempt}/{MaxAttempts})",
+                            attempt, maxRetries);
+
+                        var optionsBuilder = new DbContextOptionsBuilder<StateDbContext>();
+                        optionsBuilder.UseMySql(
+                            _configuration.MySqlConnectionString,
+                            ServerVersion.AutoDetect(_configuration.MySqlConnectionString));
+                        _mysqlContext = new StateDbContext(optionsBuilder.Options);
+
+                        // Ensure database and tables exist - this will throw if connection fails
+                        await _mysqlContext.Database.EnsureCreatedAsync();
+
+                        _logger.LogInformation("MySQL connection established successfully");
+                        break; // Success - exit retry loop
+                    }
+                    catch (Exception ex) when (attempt < maxRetries)
+                    {
+                        _logger.LogWarning(
+                            "MySQL connection failed (attempt {Attempt}/{MaxAttempts}): {Message}",
+                            attempt, maxRetries, ex.Message);
+
+                        // Dispose failed context before retry
+                        if (_mysqlContext != null)
+                        {
+                            await _mysqlContext.DisposeAsync();
+                            _mysqlContext = null;
+                        }
+
+                        await Task.Delay(retryDelayMs);
+                    }
+                    // Last attempt - let exception propagate
+                }
+
+                if (_mysqlContext == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to establish MySQL connection after {maxRetries} attempts");
+                }
             }
 
             _initialized = true;

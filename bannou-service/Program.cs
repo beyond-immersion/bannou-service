@@ -183,16 +183,16 @@ public static class Program
                 })
                 .AddJsonOptions(jsonOptions =>
                 {
-                    // Configure System.Text.Json serialization options
-                    jsonOptions.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+                    // Apply BannouJson standard settings as base configuration
+                    BeyondImmersion.BannouService.Configuration.BannouJson.ApplyBannouSettings(jsonOptions.JsonSerializerOptions);
+
+                    // Web API-specific overrides for client compatibility:
+                    // - CamelCase for JavaScript clients expecting camelCase JSON
+                    // - AllowReadingFromString for lenient parsing of numeric strings from clients
+                    // - Skip comments for more lenient request parsing
                     jsonOptions.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-                    jsonOptions.JsonSerializerOptions.PropertyNameCaseInsensitive = true; // CRITICAL: Allow case-insensitive deserialization
-                    jsonOptions.JsonSerializerOptions.WriteIndented = false;
-                    jsonOptions.JsonSerializerOptions.AllowTrailingCommas = true;
-                    jsonOptions.JsonSerializerOptions.ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip;
                     jsonOptions.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString;
-                    // Serialize enums as strings matching C# enum names (e.g., GettingStarted -> "GettingStarted")
-                    jsonOptions.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+                    jsonOptions.JsonSerializerOptions.ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip;
                 });
 
             webAppBuilder.Services
@@ -328,6 +328,11 @@ public static class Program
                 }
                 Logger.Log(LogLevel.Information, null, "Plugin initialization complete.");
             }
+
+            // Register event types before starting messaging plugin (required for NativeEventConsumerBackend)
+            // This MUST happen before PluginLoader.StartAsync() which starts the messaging backend
+            EventSubscriptionRegistration.RegisterAll();
+            Logger.Log(LogLevel.Debug, null, "Registered {Count} event subscription types.", Events.EventSubscriptionRegistry.Count);
 
             // Start plugins
             if (PluginLoader != null)

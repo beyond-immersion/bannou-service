@@ -46,7 +46,7 @@ public class PermissionsServiceTests
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     // State store constants (must match PermissionsService)
-    private const string STATE_STORE = "permissions-store";
+    private const string STATE_STORE = "permissions-statestore";
     private const string ACTIVE_SESSIONS_KEY = "active_sessions";
     private const string ACTIVE_CONNECTIONS_KEY = "active_connections"; // Phase 6: tracks WebSocket-connected sessions
     private const string REGISTERED_SERVICES_KEY = "registered_services";
@@ -141,7 +141,7 @@ public class PermissionsServiceTests
         var failedLockResponse = new TestLockResponse { Success = false };
         _mockLockProvider
             .Setup(l => l.LockAsync(
-                "permissions-store",
+                STATE_STORE,
                 "registered_services_lock",
                 It.IsAny<string>(),
                 30,
@@ -217,7 +217,7 @@ public class PermissionsServiceTests
         var lockResponse = new TestLockResponse { Success = true };
         _mockLockProvider
             .Setup(l => l.LockAsync(
-                "permissions-store",
+                STATE_STORE,
                 "registered_services_lock",
                 It.IsAny<string>(),
                 30,

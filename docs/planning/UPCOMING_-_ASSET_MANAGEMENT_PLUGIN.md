@@ -2760,7 +2760,7 @@ components:
 #### Publishing Events (Service Implementation)
 
 ```csharp
-// IErrorEventEmitter pattern for asset events
+// Client event publishing pattern for asset events
 public interface IAssetEventEmitter
 {
     Task EmitUploadCompleteAsync(string sessionId, AssetUploadCompleteEvent evt);

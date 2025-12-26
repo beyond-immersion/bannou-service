@@ -1171,6 +1171,7 @@ public partial class AssetService : IAssetService
             // Add required headers to additional properties if any
             if (uploadResult.RequiredHeaders != null)
             {
+                response.AdditionalProperties ??= new Dictionary<string, object>();
                 foreach (var header in uploadResult.RequiredHeaders)
                 {
                     response.AdditionalProperties[$"header_{header.Key}"] = header.Value;

@@ -1,6 +1,6 @@
 # Generated Configuration Reference
 
-> **Auto-generated**: 2025-12-26 05:01:32
+> **Auto-generated**: 2025-12-26 13:15:52
 > **Source**: `schemas/*-configuration.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -153,7 +153,10 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_MAX_RETRIES` | int | `3` | Maximum retry attempts for failed service calls |
 | `MESH_METRICS_ENABLED` | bool | `true` | Whether to collect routing metrics |
 | `MESH_REDIS_CONNECTION_STRING` | string | `localhost:6379` | Redis connection string for service registry storage |
+| `MESH_REDIS_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Total timeout in seconds for Redis connection establishment ... |
+| `MESH_REDIS_CONNECT_RETRY_COUNT` | int | `5` | Maximum number of Redis connection retry attempts |
 | `MESH_REDIS_KEY_PREFIX` | string | `mesh:` | Prefix for all mesh-related Redis keys |
+| `MESH_REDIS_SYNC_TIMEOUT_MS` | int | `5000` | Timeout in milliseconds for synchronous Redis operations |
 | `MESH_RETRY_DELAY_MILLISECONDS` | int | `100` | Initial delay between retries (doubles on each retry) |
 | `MESH_USE_LOCAL_ROUTING` | bool | `false` | Use local-only routing instead of Redis. All calls route to ... |
 
@@ -163,6 +166,7 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `MESSAGING_CONNECTION_RETRY_COUNT` | int | `5` | Number of connection retry attempts |
 | `MESSAGING_CONNECTION_RETRY_DELAY_MS` | int | `1000` | Delay between connection retry attempts in milliseconds |
+| `MESSAGING_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Timeout in seconds for establishing RabbitMQ connection |
 | `MESSAGING_DEAD_LETTER_EXCHANGE` | string | `bannou-dlx` | Dead letter exchange name for failed messages |
 | `MESSAGING_DEFAULT_AUTO_ACK` | bool | `false` | Default auto-acknowledge setting for subscriptions |
 | `MESSAGING_DEFAULT_EXCHANGE` | string | `bannou` | Default exchange name for publishing |
@@ -175,6 +179,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESSAGING_RABBITMQ_PORT` | int | `5672` | RabbitMQ server port |
 | `MESSAGING_RABBITMQ_USERNAME` | string | `guest` (insecure) | RabbitMQ username |
 | `MESSAGING_RABBITMQ_VHOST` | string | `/` | RabbitMQ virtual host |
+| `MESSAGING_REQUEST_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for individual message operations |
 | `MESSAGING_RETRY_DELAY_MS` | int | `5000` | Delay between retry attempts in milliseconds |
 | `MESSAGING_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts before dead-lettering |
 | `MESSAGING_USE_INMEMORY` | bool | `false` | Use in-memory messaging instead of RabbitMQ. Messages are NO... |
@@ -244,6 +249,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ENABLE_TRACING` | bool | `true` | Enable distributed tracing for state operations |
 | `MYSQL_CONNECTION_STRING` | string | **REQUIRED** | MySQL connection string for MySQL-backed state stores |
 | `REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string (host:port format) for Redis-backed ... |
+| `STATE_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Total timeout in seconds for establishing Redis/MySQL connec... |
+| `STATE_CONNECT_RETRY_COUNT` | int | `5` | Maximum number of connection retry attempts |
 | `STATE_USE_INMEMORY` | bool | `false` | Use in-memory storage instead of Redis/MySQL. Data is NOT pe... |
 
 ### Subscriptions
@@ -278,9 +285,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 158
+- **Total properties**: 165
 - **Required (no default)**: 31
-- **Optional (has default)**: 127
+- **Optional (has default)**: 134
 
 ## Environment Variable Naming Convention
 

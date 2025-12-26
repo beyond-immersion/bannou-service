@@ -60,7 +60,8 @@ public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorServ
         services.AddHttpClient();
 
         // Register orchestrator helper classes as Singletons to maintain persistent connections
-        services.AddSingleton<IOrchestratorRedisManager, OrchestratorRedisManager>();
+        // Note: IOrchestratorStateManager uses IStateStoreFactory from lib-state (no direct Redis dependency)
+        services.AddSingleton<IOrchestratorStateManager, OrchestratorStateManager>();
         services.AddSingleton<IOrchestratorEventManager, OrchestratorEventManager>();
         services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
         services.AddSingleton<ISmartRestartManager, SmartRestartManager>();
@@ -79,16 +80,16 @@ public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorServ
 
         Logger?.LogInformation("Starting Orchestrator service");
 
-        // Initialize Redis connection (Singleton services, no scope needed)
-        var redisManager = ServiceProvider?.GetService<IOrchestratorRedisManager>();
+        // Initialize state manager (uses IStateStoreFactory from lib-state)
+        var stateManager = ServiceProvider?.GetService<IOrchestratorStateManager>();
 
-        if (redisManager != null)
+        if (stateManager != null)
         {
-            Logger?.LogInformation("Initializing Redis connection for orchestrator...");
-            var redisInitialized = await redisManager.InitializeAsync();
-            if (!redisInitialized)
+            Logger?.LogInformation("Initializing state stores for orchestrator via lib-state...");
+            var stateInitialized = await stateManager.InitializeAsync();
+            if (!stateInitialized)
             {
-                Logger?.LogWarning("Redis connection initialization failed - health checks will report unhealthy");
+                Logger?.LogWarning("State store initialization failed - health checks will report unhealthy");
             }
         }
 

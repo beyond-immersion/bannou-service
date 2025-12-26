@@ -6,16 +6,16 @@ using System.Collections.Concurrent;
 namespace LibOrchestrator;
 
 /// <summary>
-/// Monitors service health based on ServiceHeartbeatEvent data from Redis.
+/// Monitors service health based on ServiceHeartbeatEvent data from state stores.
 /// Uses existing heartbeat schema from common-events.yaml.
-/// Writes heartbeat data and service routing to Redis for NGINX to read.
+/// Writes heartbeat data and service routing to state stores for dynamic routing.
 /// Publishes FullServiceMappingsEvent periodically and on routing changes.
 /// </summary>
 public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
 {
     private readonly ILogger<ServiceHealthMonitor> _logger;
     private readonly OrchestratorServiceConfiguration _configuration;
-    private readonly IOrchestratorRedisManager _redisManager;
+    private readonly IOrchestratorStateManager _stateManager;
     private readonly IOrchestratorEventManager _eventManager;
 
     // Cache of current service routings to detect changes
@@ -38,12 +38,12 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     public ServiceHealthMonitor(
         ILogger<ServiceHealthMonitor> logger,
         OrchestratorServiceConfiguration configuration,
-        IOrchestratorRedisManager redisManager,
+        IOrchestratorStateManager stateManager,
         IOrchestratorEventManager eventManager)
     {
         _logger = logger;
         _configuration = configuration;
-        _redisManager = redisManager;
+        _stateManager = stateManager;
         _eventManager = eventManager;
 
         // Subscribe to real-time heartbeat events from RabbitMQ
@@ -88,8 +88,8 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     {
         try
         {
-            // Write instance heartbeat to Redis
-            await _redisManager.WriteServiceHeartbeatAsync(heartbeat);
+            // Write instance heartbeat to state store
+            await _stateManager.WriteServiceHeartbeatAsync(heartbeat);
 
             // Update routing for each service in the aggregated heartbeat
             if (heartbeat.Services == null || heartbeat.Services.Count == 0)
@@ -123,7 +123,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                     existingRouting.LoadPercent = loadPercent;
                     existingRouting.LastUpdated = DateTimeOffset.UtcNow;
 
-                    await _redisManager.WriteServiceRoutingAsync(serviceName, existingRouting);
+                    await _stateManager.WriteServiceRoutingAsync(serviceName, existingRouting);
 
                     _logger.LogDebug(
                         "Updated health for {ServiceName} on {AppId} (status: {Status}, load: {Load}%)",
@@ -141,7 +141,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                         LoadPercent = loadPercent
                     };
 
-                    await _redisManager.WriteServiceRoutingAsync(serviceName, newRouting);
+                    await _stateManager.WriteServiceRoutingAsync(serviceName, newRouting);
                     _currentRoutings[serviceName] = newRouting;
                     routingChanged = true;
 
@@ -179,7 +179,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
             Status = "healthy"
         };
 
-        await _redisManager.WriteServiceRoutingAsync(serviceName, routing);
+        await _stateManager.WriteServiceRoutingAsync(serviceName, routing);
         _currentRoutings[serviceName] = routing;
         MarkRoutingChanged();
 
@@ -191,7 +191,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     public async Task RemoveServiceRoutingAsync(string serviceName)
     {
-        await _redisManager.RemoveServiceRoutingAsync(serviceName);
+        await _stateManager.RemoveServiceRoutingAsync(serviceName);
         _currentRoutings.TryRemove(serviceName, out _);
         MarkRoutingChanged();
 
@@ -207,7 +207,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         try
         {
             // Clear all service-specific routings from Redis
-            await _redisManager.ClearAllServiceRoutingsAsync();
+            await _stateManager.ClearAllServiceRoutingsAsync();
 
             // Clear in-memory cache
             _currentRoutings.Clear();
@@ -260,7 +260,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         try
         {
             // Get all current routings from Redis (source of truth)
-            var routings = await _redisManager.GetServiceRoutingsAsync();
+            var routings = await _stateManager.GetServiceRoutingsAsync();
 
             // Build mappings dictionary
             var mappings = new Dictionary<string, string>();
@@ -315,7 +315,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     public async Task<ServiceHealthReport> GetServiceHealthReportAsync()
     {
-        var heartbeats = await _redisManager.GetServiceHeartbeatsAsync();
+        var heartbeats = await _stateManager.GetServiceHeartbeatsAsync();
         var now = DateTimeOffset.UtcNow;
         var heartbeatTimeout = TimeSpan.FromSeconds(_configuration.HeartbeatTimeoutSeconds);
 
@@ -359,7 +359,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     public async Task<RestartRecommendation> ShouldRestartServiceAsync(string serviceName)
     {
         // Get all heartbeats for this service (may be multiple app-ids)
-        var allHeartbeats = await _redisManager.GetServiceHeartbeatsAsync();
+        var allHeartbeats = await _stateManager.GetServiceHeartbeatsAsync();
         var serviceHeartbeats = allHeartbeats
             .Where(h => h.ServiceId == serviceName)
             .ToList();
@@ -469,7 +469,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     public async Task<ServiceHealthStatus?> GetServiceHealthStatusAsync(string serviceId, string appId)
     {
-        return await _redisManager.GetServiceHeartbeatAsync(serviceId, appId);
+        return await _stateManager.GetServiceHeartbeatAsync(serviceId, appId);
     }
 
     public async ValueTask DisposeAsync()
