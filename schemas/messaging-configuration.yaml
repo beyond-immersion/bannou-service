@@ -6,6 +6,13 @@ info:
 paths: {}
 x-service-configuration:
   properties:
+    # In-Memory Mode (for testing/minimal infrastructure)
+    UseInMemory:
+      type: boolean
+      description: "Use in-memory messaging instead of RabbitMQ. Messages are NOT persisted. ONLY for testing/minimal infrastructure."
+      env: MESSAGING_USE_INMEMORY
+      default: false
+
     # RabbitMQ Connection Settings
     RabbitMQHost:
       type: string

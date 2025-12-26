@@ -47,6 +47,12 @@ public class StoreConfiguration
 public class StateStoreFactoryConfiguration
 {
     /// <summary>
+    /// Use in-memory storage for all stores. Data is NOT persisted.
+    /// ONLY use for testing or minimal infrastructure scenarios.
+    /// </summary>
+    public bool UseInMemory { get; set; }
+
+    /// <summary>
     /// Redis connection string.
     /// </summary>
     public string RedisConnectionString { get; set; } = "bannou-redis:6379";
@@ -103,6 +109,15 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
         {
             if (_initialized) return;
 
+            // Skip real infrastructure when using in-memory mode
+            if (_configuration.UseInMemory)
+            {
+                _logger.LogWarning(
+                    "State store factory using IN-MEMORY mode. Data will NOT be persisted across restarts!");
+                _initialized = true;
+                return;
+            }
+
             // Initialize Redis if any store uses it
             var hasRedisStore = _configuration.Stores.Values.Any(s => s.Backend == StateBackend.Redis);
             if (hasRedisStore && !string.IsNullOrEmpty(_configuration.RedisConnectionString))
@@ -154,6 +169,13 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             // Ensure connections are initialized
             EnsureInitializedAsync().GetAwaiter().GetResult();
 
+            // Use in-memory store when configured (for testing/minimal infrastructure)
+            if (_configuration.UseInMemory)
+            {
+                var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
+                return new InMemoryStateStore<TValue>(storeName, memoryLogger);
+            }
+
             var storeConfig = _configuration.Stores[storeName];
 
             if (storeConfig.Backend == StateBackend.Redis)
@@ -185,6 +207,11 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                     keyPrefix,
                     defaultTtl,
                     redisLogger);
+            }
+            else if (storeConfig.Backend == StateBackend.Memory)
+            {
+                var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
+                return new InMemoryStateStore<TValue>(storeName, memoryLogger);
             }
             else // MySql
             {
@@ -302,6 +329,12 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     public StateBackend GetBackendType(string storeName)
     {
         ArgumentNullException.ThrowIfNull(storeName);
+
+        // In-memory mode overrides all backends
+        if (_configuration.UseInMemory)
+        {
+            return StateBackend.Memory;
+        }
 
         if (!_configuration.Stores.TryGetValue(storeName, out var config))
         {

@@ -22,6 +22,21 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
         // Get configuration to read RabbitMQ settings
         var config = services.BuildServiceProvider().GetService<MessagingServiceConfiguration>();
 
+        // Check for in-memory mode
+        if (config?.UseInMemory == true)
+        {
+            Logger?.LogWarning(
+                "Messaging using IN-MEMORY mode. Messages will NOT be persisted or delivered across processes!");
+
+            // Register in-memory implementation (no RabbitMQ connection)
+            services.AddSingleton<InMemoryMessageBus>();
+            services.AddSingleton<IMessageBus>(sp => sp.GetRequiredService<InMemoryMessageBus>());
+            services.AddSingleton<IMessageSubscriber>(sp => sp.GetRequiredService<InMemoryMessageBus>());
+
+            Logger?.LogDebug("In-memory messaging configured");
+            return;
+        }
+
         // Configure MassTransit with RabbitMQ
         services.AddMassTransit(x =>
         {

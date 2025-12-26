@@ -16,6 +16,12 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     public string? Force_Service_ID { get; set; }
 
     /// <summary>
+    /// Use in-memory messaging instead of RabbitMQ. Messages are NOT persisted. ONLY for testing/minimal infrastructure.
+    /// Environment variable: MESSAGING_USE_INMEMORY
+    /// </summary>
+    public bool UseInMemory { get; set; } = false;
+
+    /// <summary>
     /// RabbitMQ server hostname
     /// Environment variable: MESSAGING_RABBITMQ_HOST
     /// </summary>

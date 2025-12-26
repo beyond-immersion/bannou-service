@@ -39,6 +39,7 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
     {
         var config = new StateStoreFactoryConfiguration
         {
+            UseInMemory = stateConfig.UseInMemory,
             RedisConnectionString = !string.IsNullOrEmpty(stateConfig.RedisConnectionString)
                 ? stateConfig.RedisConnectionString
                 : "localhost:6379",

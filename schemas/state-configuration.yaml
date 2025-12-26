@@ -12,6 +12,11 @@ paths: {}
 # e.g., RedisConnectionString -> REDIS_CONNECTION_STRING (normalizes back correctly)
 x-service-configuration:
   properties:
+    UseInMemory:
+      type: boolean
+      description: "Use in-memory storage instead of Redis/MySQL. Data is NOT persisted. ONLY for testing/minimal infrastructure."
+      env: STATE_USE_INMEMORY
+      default: false
     RedisConnectionString:
       type: string
       description: Redis connection string (host:port format) for Redis-backed state stores

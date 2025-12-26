@@ -18,7 +18,13 @@ public enum StateBackend
     /// <summary>
     /// MySQL backend for durable/queryable data.
     /// </summary>
-    MySql
+    MySql,
+
+    /// <summary>
+    /// In-memory backend for testing/minimal infrastructure.
+    /// Data is NOT persisted across restarts.
+    /// </summary>
+    Memory
 }
 
 /// <summary>

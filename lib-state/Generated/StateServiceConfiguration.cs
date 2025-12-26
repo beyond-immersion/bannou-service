@@ -16,6 +16,12 @@ public class StateServiceConfiguration : IServiceConfiguration
     public string? Force_Service_ID { get; set; }
 
     /// <summary>
+    /// Use in-memory storage instead of Redis/MySQL. Data is NOT persisted. ONLY for testing/minimal infrastructure.
+    /// Environment variable: STATE_USE_INMEMORY
+    /// </summary>
+    public bool UseInMemory { get; set; } = false;
+
+    /// <summary>
     /// Redis connection string (host:port format) for Redis-backed state stores
     /// Environment variable: REDIS_CONNECTION_STRING
     /// </summary>

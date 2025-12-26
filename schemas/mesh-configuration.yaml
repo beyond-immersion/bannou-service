@@ -16,6 +16,15 @@ paths: {}
 x-service-configuration:
   properties:
     # =========================================================================
+    # Local Mode (for testing/minimal infrastructure)
+    # =========================================================================
+    UseLocalRouting:
+      type: boolean
+      description: "Use local-only routing instead of Redis. All calls route to local instance. ONLY for testing/minimal infrastructure."
+      env: MESH_USE_LOCAL_ROUTING
+      default: false
+
+    # =========================================================================
     # Redis Configuration
     # =========================================================================
     RedisConnectionString:

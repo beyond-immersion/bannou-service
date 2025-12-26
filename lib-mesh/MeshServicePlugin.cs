@@ -15,14 +15,30 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
     public override string DisplayName => "Mesh Service";
 
     private IMeshRedisManager? _redisManager;
+    private bool _useLocalRouting;
 
     public override void ConfigureServices(IServiceCollection services)
     {
         Logger?.LogDebug("Configuring service dependencies");
 
-        // Register MeshRedisManager as Singleton (direct Redis connection for service discovery)
-        // This avoids circular dependencies since Mesh IS the service discovery layer
-        services.AddSingleton<IMeshRedisManager, MeshRedisManager>();
+        // Get configuration to check for local routing mode
+        var config = services.BuildServiceProvider().GetService<MeshServiceConfiguration>();
+        _useLocalRouting = config?.UseLocalRouting ?? false;
+
+        if (_useLocalRouting)
+        {
+            Logger?.LogWarning(
+                "Mesh using LOCAL ROUTING mode. All service calls will route locally (no Redis)!");
+
+            // Register LocalMeshRedisManager (no Redis connection)
+            services.AddSingleton<IMeshRedisManager, LocalMeshRedisManager>();
+        }
+        else
+        {
+            // Register MeshRedisManager as Singleton (direct Redis connection for service discovery)
+            // This avoids circular dependencies since Mesh IS the service discovery layer
+            services.AddSingleton<IMeshRedisManager, MeshRedisManager>();
+        }
 
         // Register the mesh invocation client for service-to-service calls
         services.AddSingleton<IMeshInvocationClient>(sp =>
@@ -40,10 +56,19 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
         Logger?.LogInformation("Starting Mesh service");
 
         // Initialize Redis connection first (Mesh uses direct Redis for service discovery)
+        // In local routing mode, this is a no-op that always succeeds
         _redisManager = ServiceProvider?.GetService<IMeshRedisManager>();
         if (_redisManager != null)
         {
-            Logger?.LogInformation("Initializing Mesh Redis connection...");
+            if (_useLocalRouting)
+            {
+                Logger?.LogInformation("Mesh using local routing mode (no Redis)");
+            }
+            else
+            {
+                Logger?.LogInformation("Initializing Mesh Redis connection...");
+            }
+
             var redisConnected = await _redisManager.InitializeAsync(CancellationToken.None);
             if (!redisConnected)
             {

@@ -16,6 +16,12 @@ public class MeshServiceConfiguration : IServiceConfiguration
     public string? Force_Service_ID { get; set; }
 
     /// <summary>
+    /// Use local-only routing instead of Redis. All calls route to local instance. ONLY for testing/minimal infrastructure.
+    /// Environment variable: MESH_USE_LOCAL_ROUTING
+    /// </summary>
+    public bool UseLocalRouting { get; set; } = false;
+
+    /// <summary>
     /// Redis connection string for service registry storage
     /// Environment variable: MESH_REDIS_CONNECTION_STRING
     /// </summary>

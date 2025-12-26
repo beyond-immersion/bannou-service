@@ -18109,6 +18109,12 @@
             MySQL backend for durable/queryable data.
             </summary>
         </member>
+        <member name="F:BeyondImmersion.BannouService.Services.StateBackend.Memory">
+            <summary>
+            In-memory backend for testing/minimal infrastructure.
+            Data is NOT persisted across restarts.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Services.IStateStore`1">
             <summary>
             Generic state store interface for lib-state infrastructure.
