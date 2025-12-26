@@ -35,8 +35,8 @@ public class ServiceClientResolutionTests
         var services = new ServiceCollection();
         services.AddLogging();
 
-        // Act
-        ServiceClientExtensions.AddAllBannouServiceClients(services);
+        // Act - Use ServiceClientsDependencyInjection which registers both resolver and clients
+        ServiceClientsDependencyInjection.AddAllBannouServiceClients(services);
         var serviceProvider = services.BuildServiceProvider();
 
         // Assert
@@ -384,7 +384,8 @@ public class ServiceClientResolutionTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        ServiceClientExtensions.AddAllBannouServiceClients(services);
+        // Use ServiceClientsDependencyInjection which registers both resolver and clients
+        ServiceClientsDependencyInjection.AddAllBannouServiceClients(services);
 
         // Mock HTTP client factory
         var mockHttpClient = new HttpClient();

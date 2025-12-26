@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Dapr.AspNetCore, NSwag.AspNetCore come from bannou-service -->
+    <!-- NSwag.AspNetCore comes from bannou-service -->
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <!-- NSwag.MSBuild needed locally because bannou-service has PrivateAssets="all" -->
     <PackageReference Include="NSwag.MSBuild" Version="14.6.3">

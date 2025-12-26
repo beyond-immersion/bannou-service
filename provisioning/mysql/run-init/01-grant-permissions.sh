@@ -2,7 +2,7 @@
 # Grant permissions script that uses environment variables
 # The MySQL container automatically creates MYSQL_USER with MYSQL_PASSWORD
 # This script grants the necessary permissions for Docker network access
-# and creates additional databases needed by Dapr state stores
+# and creates additional databases needed by lib-state stores
 
 echo "Granting permissions for user: $MYSQL_USER"
 
@@ -15,7 +15,7 @@ mysql -u root -p"$MYSQL_ROOT_PASSWORD" <<-EOSQL
     -- Ensure the main user uses native password authentication
     ALTER USER '$MYSQL_USER'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_PASSWORD';
 
-    -- Create additional databases for Dapr state stores
+    -- Create additional databases for lib-state stores
     -- (accounts is created by MYSQL_DATABASE env var, these are additional)
     CREATE DATABASE IF NOT EXISTS characters;
     CREATE DATABASE IF NOT EXISTS realms;

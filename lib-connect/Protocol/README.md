@@ -25,7 +25,7 @@ These classes can be copied directly to Client SDKs with the following character
 ### Zero External Dependencies
 - Only uses `System.*` namespaces (System.Text, System.Security.Cryptography, etc.)
 - No ASP.NET Core dependencies
-- No Dapr dependencies
+- No external infrastructure dependencies
 - No logging framework dependencies
 
 ### Namespace Structure

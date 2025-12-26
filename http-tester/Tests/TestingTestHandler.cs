@@ -15,7 +15,7 @@ public class TestingTestHandler : BaseHttpTestHandler
 {
     private static readonly HttpClient _httpClient = new();
     private static readonly string _baseUrl;
-    private const string DAPR_PREFIX = "/v1.0/invoke/bannou/method";
+    private const string MESH_PREFIX = "/v1.0/invoke/bannou/method";
 
     static TestingTestHandler()
     {
@@ -45,7 +45,7 @@ public class TestingTestHandler : BaseHttpTestHandler
     private static Task<TestResult> TestHealthEndpoint(ITestClient client, string[] args) =>
         ExecuteTestAsync(async () =>
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/health");
+            var response = await _httpClient.GetAsync($"{_baseUrl}{MESH_PREFIX}/testing/health");
 
             if (!response.IsSuccessStatusCode)
                 return TestResult.Failed($"Health endpoint returned {response.StatusCode}");
@@ -57,7 +57,7 @@ public class TestingTestHandler : BaseHttpTestHandler
     private static Task<TestResult> TestDebugPathEndpoint(ITestClient client, string[] args) =>
         ExecuteTestAsync(async () =>
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path");
+            var response = await _httpClient.GetAsync($"{_baseUrl}{MESH_PREFIX}/testing/debug/path");
 
             if (!response.IsSuccessStatusCode)
                 return TestResult.Failed($"Debug path endpoint returned {response.StatusCode}");
@@ -75,7 +75,7 @@ public class TestingTestHandler : BaseHttpTestHandler
     private static Task<TestResult> TestDebugPathReceivedPath(ITestClient client, string[] args) =>
         ExecuteTestAsync(async () =>
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path");
+            var response = await _httpClient.GetAsync($"{_baseUrl}{MESH_PREFIX}/testing/debug/path");
 
             if (!response.IsSuccessStatusCode)
                 return TestResult.Failed($"Debug path endpoint returned {response.StatusCode}");
@@ -119,7 +119,7 @@ public class TestingTestHandler : BaseHttpTestHandler
         {
             // Test with a nested path to see what the catch-all captures
             var testPath = "some/nested/path/segments";
-            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path/{testPath}");
+            var response = await _httpClient.GetAsync($"{_baseUrl}{MESH_PREFIX}/testing/debug/path/{testPath}");
 
             if (!response.IsSuccessStatusCode)
                 return TestResult.Failed($"Debug path catch-all returned {response.StatusCode}");
@@ -150,7 +150,7 @@ public class TestingTestHandler : BaseHttpTestHandler
     private static Task<TestResult> TestDebugPathControllerRoute(ITestClient client, string[] args) =>
         ExecuteTestAsync(async () =>
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path");
+            var response = await _httpClient.GetAsync($"{_baseUrl}{MESH_PREFIX}/testing/debug/path");
 
             if (!response.IsSuccessStatusCode)
                 return TestResult.Failed($"Debug path endpoint returned {response.StatusCode}");
@@ -182,7 +182,7 @@ public class TestingTestHandler : BaseHttpTestHandler
     private static Task<TestResult> TestDebugPathMeshHeaders(ITestClient client, string[] args) =>
         ExecuteTestAsync(async () =>
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path");
+            var response = await _httpClient.GetAsync($"{_baseUrl}{MESH_PREFIX}/testing/debug/path");
 
             if (!response.IsSuccessStatusCode)
                 return TestResult.Failed($"Debug path endpoint returned {response.StatusCode}");
@@ -215,7 +215,7 @@ public class TestingTestHandler : BaseHttpTestHandler
         ExecuteTestAsync(async () =>
         {
             // Call through mesh with proper prefix
-            var directResponse = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path");
+            var directResponse = await _httpClient.GetAsync($"{_baseUrl}{MESH_PREFIX}/testing/debug/path");
 
             if (!directResponse.IsSuccessStatusCode)
                 return TestResult.Failed($"Direct call returned {directResponse.StatusCode}");

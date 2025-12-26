@@ -198,10 +198,9 @@ def main():
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
 
-    # Scan both component directories
+    # Scan state store directories
     components_dirs = [
-        repo_root / 'provisioning' / 'dapr' / 'components',
-        repo_root / 'provisioning' / 'dapr' / 'components-http-test',
+        repo_root / 'provisioning' / 'state-stores',
     ]
 
     all_stores = []

@@ -37,17 +37,17 @@ quick: ## Quick development cycle - clean, generate, fix, build, unit tests (no 
 # =============================================================================
 # Standards for environment-specific Docker Compose configurations:
 # - docker-compose.yml: Base services (bannou, databases, core infrastructure)
-# - docker-compose.local.yml: Local development overrides (env files, local dapr components)
-# - docker-compose.ci.yml: CI/CD environment (CI Dapr components, test configurations)
+# - docker-compose.local.yml: Local development overrides (env files, local components)
+# - docker-compose.ci.yml: CI/CD environment (test configurations)
 # - docker-compose.ingress.yml: OpenResty edge proxy + routing infrastructure
 # - docker-compose.ingress.local.yml: Local ingress overrides (volumes, certificates)
 # - docker-compose.elk.yml: Elasticsearch + Kibana logging stack
 #
 # Environment Patterns:
 # - Local Dev: base + local + dev + [feature-specific]
-# - Local Dev (Host): base + local + host + [feature-specific] (WSL2 Dapr workaround)
+# - Local Dev (Host): base + local + host + [feature-specific]
 # - Local Test: base + local + test-local + [feature-specific]
-# - Local Test (Host): base + local + test-local + host + [feature-specific] (WSL2 workaround)
+# - Local Test (Host): base + local + test-local + host + [feature-specific]
 # - CI/CD: base + ci + [feature-specific]
 # - Production: base + production + [region-specific] + [feature-specific]
 # =============================================================================
@@ -352,14 +352,14 @@ test-infrastructure:
 
 # HTTP integration testing (matches CI workflow)
 # Usage: make test-http [PLUGIN=plugin-name]
-# Stack: base + services + test + test.http (service-to-service via Dapr, no ingress)
+# Stack: base + services + test + test.http (service-to-service via mesh, no ingress)
 # Note: Uses 'up -d' + 'wait' instead of '--exit-code-from' to avoid aborting
 #       when orchestrator tests create/destroy containers during the test run.
 test-http:
 	@if [ "$(PLUGIN)" ]; then \
 		echo "🧪 Running HTTP integration tests for plugin: $(PLUGIN)..."; \
 	else \
-		echo "🧪 Running HTTP integration tests (service-to-service via Dapr)..."; \
+		echo "🧪 Running HTTP integration tests (service-to-service via mesh)..."; \
 	fi
 	@SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
 		-f "./provisioning/docker-compose.yml" \
@@ -409,12 +409,10 @@ test-http:
 # Stack: base + services + ingress + test + test.edge
 # Note: Uses 'up -d' + 'wait' instead of '--exit-code-from' for consistency
 #       with HTTP tests and to avoid abort issues with container lifecycle.
-# Dapr components host path for orchestrator dynamic deployments
-DAPR_COMPONENTS_HOST_PATH := $(PWD)/provisioning/dapr/components-http-test
 
 test-edge: test-pre-cleanup
 	@echo "🧪 Running Edge/WebSocket integration tests..."
-	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
+	@docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.storage.yml" \
@@ -422,7 +420,7 @@ test-edge: test-pre-cleanup
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.edge.yml" \
 		build --no-cache
-	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
+	@docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.storage.yml" \
@@ -430,7 +428,7 @@ test-edge: test-pre-cleanup
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.edge.yml" \
 		up -d
-	@( DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
+	@( docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.storage.yml" \
@@ -438,7 +436,7 @@ test-edge: test-pre-cleanup
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.edge.yml" \
 		logs -f bannou-edge-tester & ); \
-	DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
+	docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.storage.yml" \
@@ -523,7 +521,7 @@ test-http-down: ## Stop HTTP test containers
 test-edge-dev: test-logs-dir ## Edge tests: keep containers running, save logs to ./test-logs/
 	@echo "🧪 Starting Edge/WebSocket tests (dev mode - containers stay running)..."
 	@echo "📁 Logs will be saved to $(TEST_LOG_DIR)/"
-	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
+	@docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.storage.yml" \
@@ -531,7 +529,7 @@ test-edge-dev: test-logs-dir ## Edge tests: keep containers running, save logs t
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.edge.yml" \
 		build --no-cache
-	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
+	@docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.storage.yml" \
@@ -603,9 +601,8 @@ test-logs-clean: ## Remove all saved test logs
 # =============================================================================
 # ORCHESTRATOR COMMANDS
 # =============================================================================
-# The orchestrator runs in standalone mode without Dapr, connecting directly
-# to Redis (heartbeats) and RabbitMQ (events). It monitors and manages
-# Bannou service deployments across multiple backends.
+# The orchestrator connects directly to Redis (heartbeats) and RabbitMQ (events).
+# It monitors and manages Bannou service deployments across multiple backends.
 # =============================================================================
 
 up-orchestrator: ## Start orchestrator standalone with infrastructure
@@ -775,7 +772,7 @@ down-compose-voice: ## Stop services + voice infrastructure
 test-voice-scaled: test-pre-cleanup ## Voice scaled tier tests with Kamailio + RTPEngine
 	@echo "🎙️ Running Voice Scaled Tier integration tests..."
 	@echo "📋 Building test containers with voice infrastructure..."
-	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-voice \
+	@docker compose -p bannou-test-voice \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \
@@ -784,7 +781,7 @@ test-voice-scaled: test-pre-cleanup ## Voice scaled tier tests with Kamailio + R
 		-f "./provisioning/docker-compose.test.voice.yml" \
 		build --no-cache
 	@echo "📋 Starting voice test environment..."
-	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-voice \
+	@docker compose -p bannou-test-voice \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \
@@ -792,7 +789,7 @@ test-voice-scaled: test-pre-cleanup ## Voice scaled tier tests with Kamailio + R
 		-f "./provisioning/docker-compose.test.edge.yml" \
 		-f "./provisioning/docker-compose.test.voice.yml" \
 		up -d
-	@( DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-voice \
+	@( docker compose -p bannou-test-voice \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \
@@ -800,7 +797,7 @@ test-voice-scaled: test-pre-cleanup ## Voice scaled tier tests with Kamailio + R
 		-f "./provisioning/docker-compose.test.edge.yml" \
 		-f "./provisioning/docker-compose.test.voice.yml" \
 		logs -f bannou-edge-tester & ); \
-	DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-voice \
+	docker compose -p bannou-test-voice \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \
@@ -829,7 +826,7 @@ test-voice-scaled: test-pre-cleanup ## Voice scaled tier tests with Kamailio + R
 test-voice-dev: test-logs-dir ## Voice tests: keep containers running, save logs
 	@echo "🎙️ Starting Voice tests (dev mode - containers stay running)..."
 	@echo "📁 Logs will be saved to $(TEST_LOG_DIR)/"
-	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-voice \
+	@docker compose -p bannou-test-voice \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \
@@ -837,7 +834,7 @@ test-voice-dev: test-logs-dir ## Voice tests: keep containers running, save logs
 		-f "./provisioning/docker-compose.test.edge.yml" \
 		-f "./provisioning/docker-compose.test.voice.yml" \
 		build --no-cache
-	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-voice \
+	@docker compose -p bannou-test-voice \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \

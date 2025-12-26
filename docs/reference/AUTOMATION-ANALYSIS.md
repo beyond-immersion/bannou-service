@@ -110,7 +110,7 @@ The [TENETS](TENETS.md) document codifies 20 development standards in 1,309 line
 | **T1: Schema-First** | "Where do I define the API?" "How do I add an endpoint?" |
 | **T2: Code Generation Pipeline** | 8-component generation order, what to edit vs never touch |
 | **T3: Event Consumer Fan-Out** | Multi-plugin event handling pattern |
-| **T4: Dapr-First** | No debate about state stores, pub/sub, service invocation |
+| **T4: Infrastructure Libs** | No debate about state stores, pub/sub, service invocation |
 | **T5: Event-Driven Architecture** | Topic naming, event schema patterns, lifecycle events |
 | **T6: Service Implementation Pattern** | Constructor dependencies, partial classes, helper services |
 | **T7: Error Handling** | IErrorEventEmitter pattern, ApiException handling |
@@ -157,7 +157,7 @@ The one-time investment that enables ongoing automation:
 | **CI/CD Workflows** | 809 | 10-step progressive testing |
 | **TENETS** | 1,309 | Decision elimination |
 | **Documentation** | 19,155 | Self-serve onboarding |
-| **Provisioning YAML** | 1,930 | Docker/Dapr infrastructure |
+| **Provisioning YAML** | 1,930 | Docker infrastructure |
 | **Total Infrastructure** | **32,070** | |
 
 **ROI:** 32,070 lines of infrastructure enables 91,286 lines of generated code.

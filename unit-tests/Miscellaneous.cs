@@ -46,8 +46,10 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
     [Obsolete(message: "Test message")]
     private readonly bool ObsoleteTestField = true;
 
+    [Obsolete(message: "Test property message")]
     private bool ObsoleteTestProperty { get; set; } = true;
 
+    [Obsolete(message: "Test method message")]
     private bool ObsoleteTestMethod() => true;
 
     private Miscellaneous(CollectionFixture collectionContext) => TestCollectionContext = collectionContext;
