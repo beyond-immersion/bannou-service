@@ -1839,7 +1839,7 @@ public partial class DocumentationService : IDocumentationService
     /// <summary>
     /// Internal model for document storage in Dapr state store.
     /// </summary>
-    private sealed class StoredDocument
+    internal sealed class StoredDocument
     {
         public Guid DocumentId { get; set; }
         public string Namespace { get; set; } = string.Empty;
@@ -1859,7 +1859,7 @@ public partial class DocumentationService : IDocumentationService
     /// <summary>
     /// Internal model for trashcan storage with TTL metadata.
     /// </summary>
-    private sealed class TrashedDocument
+    internal sealed class TrashedDocument
     {
         public StoredDocument Document { get; set; } = new();
         public DateTimeOffset DeletedAt { get; set; }

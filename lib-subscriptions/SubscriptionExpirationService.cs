@@ -44,7 +44,15 @@ public class SubscriptionExpirationService : BackgroundService
         _logger.LogInformation("Subscription expiration service starting, check interval: {Interval}", CheckInterval);
 
         // Wait a bit before first check to allow other services to start
-        await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Subscription expiration service cancelled during startup");
+            return;
+        }
 
         while (!stoppingToken.IsCancellationRequested)
         {

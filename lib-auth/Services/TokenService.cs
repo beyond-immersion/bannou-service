@@ -256,6 +256,12 @@ public class TokenService : ITokenService
                 _logger.LogWarning(ex, "JWT token validation failed");
                 return (StatusCodes.Unauthorized, null);
             }
+            catch (ArgumentException ex)
+            {
+                // ArgumentException is thrown for malformed JWT tokens (e.g., invalid format)
+                _logger.LogWarning(ex, "JWT token is malformed");
+                return (StatusCodes.Unauthorized, null);
+            }
         }
         catch (Exception ex)
         {

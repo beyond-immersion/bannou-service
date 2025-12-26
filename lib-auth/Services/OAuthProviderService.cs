@@ -311,6 +311,13 @@ public class OAuthProviderService : IOAuthProviderService
     /// <inheritdoc/>
     public async Task<AccountResponse?> FindOrCreateOAuthAccountAsync(Provider provider, OAuthUserInfo userInfo, CancellationToken cancellationToken, string? providerOverride = null)
     {
+        // Handle null userInfo gracefully - return null if no user info provided
+        if (userInfo == null)
+        {
+            _logger.LogWarning("FindOrCreateOAuthAccountAsync called with null userInfo for provider {Provider}", provider);
+            return null;
+        }
+
         var providerName = providerOverride ?? provider.ToString().ToLower();
         var oauthLinkKey = $"oauth-link:{providerName}:{userInfo.ProviderId}";
 

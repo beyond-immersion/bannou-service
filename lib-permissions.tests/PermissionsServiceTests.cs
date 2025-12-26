@@ -3,11 +3,9 @@ using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
-using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -74,6 +72,10 @@ public class PermissionsServiceTests
         _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup factory to return typed stores
+        // Note: object setup must come FIRST (most general) to avoid Castle proxy matching issues
+        // where the object proxy is incorrectly returned for more specific type calls
+        _mockStateStoreFactory.Setup(f => f.GetStore<object>(STATE_STORE))
+            .Returns(_mockObjectStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<HashSet<string>>(STATE_STORE))
             .Returns(_mockHashSetStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<Dictionary<string, string>>(STATE_STORE))
@@ -82,8 +84,6 @@ public class PermissionsServiceTests
             .Returns(_mockDictObjectStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
             .Returns(_mockStringStore.Object);
-        _mockStateStoreFactory.Setup(f => f.GetStore<object>(STATE_STORE))
-            .Returns(_mockObjectStore.Object);
 
         // Setup default behavior for stores - SaveAsync returns Task<string> (etag)
         _mockHashSetStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<HashSet<string>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))

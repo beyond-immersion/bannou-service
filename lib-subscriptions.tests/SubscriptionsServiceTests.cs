@@ -774,8 +774,8 @@ public class SubscriptionsServiceTests
                 It.IsAny<SubscriptionDataModel>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, SubscriptionDataModel, TimeSpan?, CancellationToken>(
-                (key, data, ttl, ct) => savedModel = data)
+            .Callback<string, SubscriptionDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data)
             .ReturnsAsync("etag");
 
         // Act
@@ -852,8 +852,8 @@ public class SubscriptionsServiceTests
                 It.IsAny<SubscriptionDataModel>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, SubscriptionDataModel, TimeSpan?, CancellationToken>(
-                (key, data, ttl, ct) => savedModel = data)
+            .Callback<string, SubscriptionDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data)
             .ReturnsAsync("etag");
 
         // Act
@@ -977,8 +977,8 @@ public class SubscriptionsServiceTests
                 It.IsAny<SubscriptionDataModel>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, SubscriptionDataModel, TimeSpan?, CancellationToken>(
-                (key, data, ttl, ct) => savedModel = data)
+            .Callback<string, SubscriptionDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data)
             .ReturnsAsync("etag");
 
         // Act
@@ -1033,8 +1033,8 @@ public class SubscriptionsServiceTests
                 It.IsAny<SubscriptionDataModel>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, SubscriptionDataModel, TimeSpan?, CancellationToken>(
-                (key, data, ttl, ct) => savedModel = data)
+            .Callback<string, SubscriptionDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data)
             .ReturnsAsync("etag");
 
         // Act
@@ -1109,8 +1109,8 @@ public class SubscriptionsServiceTests
                 It.IsAny<SubscriptionDataModel>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, SubscriptionDataModel, TimeSpan?, CancellationToken>(
-                (key, data, ttl, ct) => savedModel = data)
+            .Callback<string, SubscriptionDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data)
             .ReturnsAsync("etag");
 
         // Act

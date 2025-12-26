@@ -10,6 +10,8 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="lib-voice.tests" />
+    <!-- Required for Moq/Castle.Core to mock IStateStore<internal types> -->
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
 
   <ItemGroup>

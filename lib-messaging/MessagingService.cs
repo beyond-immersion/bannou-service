@@ -71,12 +71,19 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
             // Wrap payload in GenericMessageEnvelope - MassTransit requires concrete types
             var envelope = new Services.GenericMessageEnvelope(body.Topic, body.Payload);
 
+            // Normalize options - treat Guid.Empty as null for CorrelationId
+            var options = body.Options;
+            if (options?.CorrelationId == Guid.Empty)
+            {
+                options.CorrelationId = null;
+            }
+
             // Publish via IMessageBus using the envelope
             // API options and interface options use the same generated PublishOptions type
             var messageId = await _messageBus.PublishAsync(
                 body.Topic,
                 envelope,
-                body.Options,
+                options,
                 cancellationToken);
 
             _logger.LogDebug("Published event {MessageId} to topic {Topic}", messageId, body.Topic);

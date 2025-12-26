@@ -215,8 +215,8 @@ public class ServicedataServiceTests
                 It.IsAny<List<string>>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, List<string>, TimeSpan?, CancellationToken>(
-                (key, data, ttl, ct) => savedList = data);
+            .Callback<string, List<string>, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedList = data);
 
         // Act
         var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
@@ -587,8 +587,8 @@ public class ServicedataServiceTests
                 It.IsAny<ServiceDataModel>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ServiceDataModel, TimeSpan?, CancellationToken>(
-                (key, data, ttl, ct) => savedModel = data);
+            .Callback<string, ServiceDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data);
 
         // Act
         var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
@@ -635,8 +635,8 @@ public class ServicedataServiceTests
                 It.IsAny<ServiceDataModel>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ServiceDataModel, TimeSpan?, CancellationToken>(
-                (key, data, ttl, ct) => savedModel = data);
+            .Callback<string, ServiceDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data);
 
         // Act
         var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
@@ -722,8 +722,8 @@ public class ServicedataServiceTests
                 It.IsAny<ServiceDataModel>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ServiceDataModel, TimeSpan?, CancellationToken>(
-                (key, data, ttl, ct) => savedModel = data);
+            .Callback<string, ServiceDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data);
 
         // Act
         var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
@@ -848,8 +848,8 @@ public class ServicedataServiceTests
                 It.IsAny<List<string>>(),
                 It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, List<string>, TimeSpan?, CancellationToken>(
-                (key, data, ttl, ct) => savedList = data);
+            .Callback<string, List<string>, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedList = data);
 
         // Act
         var (statusCode, response) = await service.DeleteServiceAsync(request, CancellationToken.None);

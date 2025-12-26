@@ -18,6 +18,9 @@ public class DocumentationServiceTests
 {
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<IStateStore<DocumentationService.StoredDocument>> _mockDocumentStore;
+    private readonly Mock<IStateStore<DocumentationService.TrashedDocument>> _mockTrashStore;
+    private readonly Mock<IStateStore<List<Guid>>> _mockGuidListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<DocumentationService>> _mockLogger;
     private readonly DocumentationServiceConfiguration _configuration;
@@ -33,6 +36,9 @@ public class DocumentationServiceTests
     {
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockStringStore = new Mock<IStateStore<string>>();
+        _mockDocumentStore = new Mock<IStateStore<DocumentationService.StoredDocument>>();
+        _mockTrashStore = new Mock<IStateStore<DocumentationService.TrashedDocument>>();
+        _mockGuidListStore = new Mock<IStateStore<List<Guid>>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<DocumentationService>>();
         _configuration = new DocumentationServiceConfiguration();
@@ -43,6 +49,12 @@ public class DocumentationServiceTests
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
             .Returns(_mockStringStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<DocumentationService.StoredDocument>(STATE_STORE))
+            .Returns(_mockDocumentStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<DocumentationService.TrashedDocument>(STATE_STORE))
+            .Returns(_mockTrashStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(STATE_STORE))
+            .Returns(_mockGuidListStore.Object);
 
         _service = new DocumentationService(
             _mockStateStoreFactory.Object,
