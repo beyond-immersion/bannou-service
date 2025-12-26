@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Location;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(LocationService))]
+[Obsolete]
 public class LocationServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

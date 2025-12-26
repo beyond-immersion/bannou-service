@@ -19,9 +19,11 @@ namespace BeyondImmersion.BannouService.Testing;
 [Route("v1.0/invoke/bannou/method/testing")]
 public class TestingController : ControllerBase
 {
+    [Obsolete]
     private readonly ITestingService _testingService;
     private readonly ILogger<TestingController> _logger;
 
+    [Obsolete]
     public TestingController(ITestingService testingService, ILogger<TestingController> logger)
     {
         _testingService = testingService;
@@ -34,6 +36,7 @@ public class TestingController : ControllerBase
     /// </summary>
     [HttpGet("run-enabled")]
     [HttpPost("run-enabled")]
+    [Obsolete]
     public Task<IActionResult> RunEnabled()
     {
         try
@@ -422,6 +425,7 @@ public class TestingController : ControllerBase
         public DateTime Timestamp { get; set; }
     }
 
+    [Obsolete]
     private int GetEnabledServiceCount()
     {
         try

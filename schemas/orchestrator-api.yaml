@@ -29,7 +29,7 @@ info:
     service invocation.
 
 servers:
-- url: http://localhost:3500/v1.0/invoke/bannou/method
+- url: http://localhost:5012
   description: Dapr sidecar endpoint for service-to-service invocation (orchestrator runs as plugin within bannou)
 
 paths:

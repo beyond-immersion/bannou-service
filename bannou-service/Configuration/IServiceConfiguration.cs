@@ -1,4 +1,3 @@
-using Dapr.Extensions.Configuration;
 using DotNetEnv;
 using System.IO;
 using System.Reflection;
@@ -30,6 +29,7 @@ public interface IServiceConfiguration
     /// <summary>
     /// Returns whether this configuration has values set for all required properties.
     /// </summary>
+    [Obsolete]
     public bool HasRequired()
     {
         return IServiceAttribute.GetPropertiesWithAttribute<ConfigRequiredAttribute>(GetType())
@@ -45,6 +45,7 @@ public interface IServiceConfiguration
     /// <summary>
     /// Returns whether the required configuration is provided for the given configuration type.
     /// </summary>
+    [Obsolete]
     public static bool HasRequiredForType<T>()
         where T : class, IServiceConfiguration
         => HasRequiredForType(typeof(T));
@@ -52,6 +53,7 @@ public interface IServiceConfiguration
     /// <summary>
     /// Returns whether the required configuration is provided for the given configuration type.
     /// </summary>
+    [Obsolete]
     public static bool HasRequiredForType(Type configurationType)
     {
         if (!typeof(IServiceConfiguration).IsAssignableFrom(configurationType))
@@ -69,6 +71,7 @@ public interface IServiceConfiguration
     /// <summary>
     /// Builds the service configuration root from available .env files, Config.json, ENVs, and command line switches.
     /// </summary>
+    [Obsolete]
     public static IConfigurationRoot BuildConfigurationRoot(string[]? args = null, string? envPrefix = null)
     {
         // Load .env file first for local development support
@@ -99,6 +102,7 @@ public interface IServiceConfiguration
     /// <summary>
     /// Builds the service configuration from available Config.json, ENVs, and command line switches.
     /// </summary>
+    [Obsolete]
     public static IServiceConfiguration BuildConfiguration(string[]? args = null, string? envPrefix = null)
         => BuildConfigurationRoot(args, envPrefix)
             .Get<AppConfiguration>((options) => options.BindNonPublicProperties = true) ?? new();
@@ -161,6 +165,7 @@ public interface IServiceConfiguration
     /// <summary>
     /// Create and return the full lookup of switch mappings for all configuration classes.
     /// </summary>
+    [Obsolete]
     public static IDictionary<string, string>? CreateAllSwitchMappings()
     {
         var allSwitchMappings = new Dictionary<string, string>();

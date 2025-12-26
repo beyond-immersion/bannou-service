@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Relationship;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(RelationshipService))]
+[Obsolete]
 public class RelationshipServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

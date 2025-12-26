@@ -1,5 +1,7 @@
 using BeyondImmersion.BannouService.RelationshipType;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -47,7 +49,7 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
     {
         try
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
 
             var createRequest = new CreateRelationshipTypeRequest
             {
@@ -82,7 +84,7 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
     {
         try
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
 
             // Create a type first
             var createRequest = new CreateRelationshipTypeRequest
@@ -118,7 +120,7 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
     {
         try
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
 
             // Create a type first
             var code = $"CODE_TEST_{DateTime.Now.Ticks}";
@@ -152,7 +154,7 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
     {
         try
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
 
             // Create a type
             var createRequest = new CreateRelationshipTypeRequest
@@ -194,7 +196,7 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
     {
         try
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
 
             // Create a type
             var createRequest = new CreateRelationshipTypeRequest
@@ -240,7 +242,7 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
     {
         try
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
 
             // Create some types
             var category = $"LIST_CAT_{DateTime.Now.Ticks}";
@@ -279,7 +281,7 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
     {
         try
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
 
             // Create parent type
             var parentRequest = new CreateRelationshipTypeRequest
@@ -322,7 +324,7 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
     {
         try
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
 
             // Create parent
             var parent = await typeClient.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
@@ -367,7 +369,7 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
     {
         try
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
 
             // Create hierarchy: grandparent -> parent -> child
             var grandparent = await typeClient.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
@@ -429,7 +431,7 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
     {
         try
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
 
             // Create hierarchy
             var root = await typeClient.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
@@ -477,7 +479,7 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
     {
         try
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
 
             try
             {
@@ -506,7 +508,7 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
     {
         try
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
 
             var code = $"DUPLICATE_{DateTime.Now.Ticks}";
 
@@ -546,7 +548,7 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
     {
         try
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
 
             // Create parent with child
             var parent = await typeClient.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
@@ -590,7 +592,7 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
     {
         try
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
 
             // Capture ticks once so parent reference matches actual parent code
             var testId = DateTime.Now.Ticks;
@@ -639,7 +641,7 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
     {
         try
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
             var testId = DateTime.Now.Ticks;
 
             // Step 1: Create root type

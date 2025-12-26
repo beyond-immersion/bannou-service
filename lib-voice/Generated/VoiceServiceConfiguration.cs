@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Voice;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(VoiceService))]
+[Obsolete]
 public class VoiceServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -50,7 +51,7 @@ public class AccountTestHandler : IServiceTestHandler
         try
         {
             // Create AccountsClient directly with parameterless constructor
-            var accountsClient = new AccountsClient();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             var testUsername = $"testuser_{DateTime.Now.Ticks}";
 
@@ -82,7 +83,7 @@ public class AccountTestHandler : IServiceTestHandler
         try
         {
             // Create AccountsClient directly with parameterless constructor
-            var accountsClient = new AccountsClient();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             // First create a test account
             var testUsername = $"testuser_{DateTime.Now.Ticks}";
@@ -121,7 +122,7 @@ public class AccountTestHandler : IServiceTestHandler
         try
         {
             // Create AccountsClient directly with parameterless constructor
-            var accountsClient = new AccountsClient();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             var response = await accountsClient.ListAccountsAsync(new ListAccountsRequest { Page = 1, PageSize = 10 });
 
@@ -142,7 +143,7 @@ public class AccountTestHandler : IServiceTestHandler
         try
         {
             // Create AccountsClient directly with parameterless constructor
-            var accountsClient = new AccountsClient();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             // First create a test account
             var testUsername = $"testuser_{DateTime.Now.Ticks}";
@@ -188,7 +189,7 @@ public class AccountTestHandler : IServiceTestHandler
         try
         {
             // Create AccountsClient
-            var accountsClient = new AccountsClient();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             var testUsername = $"deletetest_{DateTime.Now.Ticks}";
 
@@ -234,7 +235,7 @@ public class AccountTestHandler : IServiceTestHandler
     {
         try
         {
-            var accountsClient = new AccountsClient();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             // First create a test account
             var testUsername = $"emailtest_{DateTime.Now.Ticks}";
@@ -271,7 +272,7 @@ public class AccountTestHandler : IServiceTestHandler
     {
         try
         {
-            var accountsClient = new AccountsClient();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             // Try to look up a non-existent provider account (should return 404)
             try
@@ -299,7 +300,7 @@ public class AccountTestHandler : IServiceTestHandler
     {
         try
         {
-            var accountsClient = new AccountsClient();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             // First create a test account
             var testUsername = $"authmethodtest_{DateTime.Now.Ticks}";
@@ -331,7 +332,7 @@ public class AccountTestHandler : IServiceTestHandler
     {
         try
         {
-            var accountsClient = new AccountsClient();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             // First create a test account
             var testUsername = $"addauthtest_{DateTime.Now.Ticks}";
@@ -371,7 +372,7 @@ public class AccountTestHandler : IServiceTestHandler
     {
         try
         {
-            var accountsClient = new AccountsClient();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             // First create a test account
             var testUsername = $"removeauthtest_{DateTime.Now.Ticks}";
@@ -411,7 +412,7 @@ public class AccountTestHandler : IServiceTestHandler
     {
         try
         {
-            var accountsClient = new AccountsClient();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             // First create a test account
             var testUsername = $"profiletest_{DateTime.Now.Ticks}";
@@ -453,7 +454,7 @@ public class AccountTestHandler : IServiceTestHandler
     {
         try
         {
-            var accountsClient = new AccountsClient();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             // First create a test account
             var testUsername = $"passwordtest_{DateTime.Now.Ticks}";
@@ -493,7 +494,7 @@ public class AccountTestHandler : IServiceTestHandler
     {
         try
         {
-            var accountsClient = new AccountsClient();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             // First create a test account (default emailVerified=false)
             var testUsername = $"verifytest_{DateTime.Now.Ticks}";
@@ -538,7 +539,7 @@ public class AccountTestHandler : IServiceTestHandler
     {
         try
         {
-            var accountsClient = new AccountsClient();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
             var testPrefix = $"pagination_{DateTime.Now.Ticks}_";
             var createdAccounts = new List<Guid>();
 
@@ -606,7 +607,7 @@ public class AccountTestHandler : IServiceTestHandler
     {
         try
         {
-            var accountsClient = new AccountsClient();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
             var testPrefix = $"filter_{DateTime.Now.Ticks}_";
 
             // Create test accounts with different attributes
@@ -706,8 +707,8 @@ public class AccountTestHandler : IServiceTestHandler
         try
         {
             // Create clients
-            var accountsClient = new AccountsClient();
-            var authClient = new AuthClient();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
+            var authClient = Program.ServiceProvider!.GetRequiredService<IAuthClient>();
 
             var testUsername = $"sessiontest_{DateTime.Now.Ticks}";
             var testPassword = "TestPassword123!";
@@ -744,7 +745,7 @@ public class AccountTestHandler : IServiceTestHandler
             Console.WriteLine($"[DIAG-TEST] Login successful, got access token (length={accessToken.Length})");
 
             // Step 3: Verify session exists by calling GetSessions
-            var sessionsResponse = await authClient
+            var sessionsResponse = await ((IServiceClient<AuthClient>)authClient)
                 .WithAuthorization(accessToken)
                 .GetSessionsAsync();
             if (sessionsResponse.Sessions == null || !sessionsResponse.Sessions.Any())
@@ -775,7 +776,7 @@ public class AccountTestHandler : IServiceTestHandler
 
                 try
                 {
-                    var sessionsAfterDeletion = await authClient
+                    var sessionsAfterDeletion = await ((IServiceClient<AuthClient>)authClient)
                         .WithAuthorization(accessToken)
                         .GetSessionsAsync();
 

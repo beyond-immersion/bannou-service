@@ -15,6 +15,7 @@ public class AccountsServicePlugin : BaseBannouPlugin
     public override string PluginName => "accounts";
     public override string DisplayName => "Accounts Service";
 
+    [Obsolete]
     private IAccountsService? _service;
     private IServiceProvider? _serviceProvider;
 
@@ -57,6 +58,7 @@ public class AccountsServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Start the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting Accounts service");
@@ -93,6 +95,7 @@ public class AccountsServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Running phase - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -117,6 +120,7 @@ public class AccountsServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Shutdown the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;

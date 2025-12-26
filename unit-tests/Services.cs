@@ -11,73 +11,88 @@ public class Services : IClassFixture<CollectionFixture>
     private class Service_Invalid { }
 
     [DaprService("ServiceTests.InvalidTest")]
+    [Obsolete]
     private class Service_Invalid_Attribute { }
 
+    [Obsolete]
     private class Service : IDaprService { }
 
     [DaprService("ServiceTests.Test")]
+    [Obsolete]
     private class Service_Attribute : IDaprService { }
 
     /// <summary>
     /// Service for testing priority overrides using attributes.
     /// </summary>
     [DaprService("ServiceTests.PriorityTest", interfaceType: typeof(Service_Priority_1))]
+    [Obsolete]
     private class Service_Priority_1 : IDaprService { }
 
     /// <summary>
     /// Service for testing priority overrides using attributes.
     /// </summary>
     [DaprService("ServiceTests.PriorityTest", interfaceType: typeof(Service_Priority_1), priority: true)]
+    [Obsolete]
     private class Service_Priority_2 : IDaprService { }
 
     /// <summary>
     /// Service for testing implicit overrides using attributes.
     /// </summary>
     [DaprService("ServiceTests.OverrideTest", interfaceType: typeof(Service_Override_1))]
+    [Obsolete]
     private class Service_Override_1 : IDaprService { }
 
     /// <summary>
     /// Service for testing implicit overrides using attributes.
     /// </summary>
     [DaprService("ServiceTests.OverrideTest", interfaceType: typeof(Service_Override_1))]
+    [Obsolete]
     private class Service_Override_2 : Service_Override_1 { }
 
     /// <summary>
     /// Service for testing implicit overrides without using attributes.
     /// </summary>
     [DaprService("ServiceTests.OverrideNoAttrTest", interfaceType: typeof(Service_Override_NoAttribute_1))]
+    [Obsolete]
     private class Service_Override_NoAttribute_1 : IDaprService { }
 
     /// <summary>
     /// Service for testing implicit overrides without using attributes.
     /// </summary>
+    [Obsolete]
     private class Service_Override_NoAttribute_2 : Service_Override_NoAttribute_1 { }
 
     /// <summary>
     /// Service for testing implicit overrides using attributes.
     /// </summary>
     [DaprService("ServiceTests.PriorityOverrideTest", interfaceType: typeof(Service_PriorityAndOverride_1), priority: true)]
+    [Obsolete]
     private class Service_PriorityAndOverride_1 : IDaprService { }
 
     /// <summary>
     /// Service for testing implicit overrides using attributes.
     /// </summary>
     [DaprService("ServiceTests.PriorityOverrideTest", interfaceType: typeof(Service_PriorityAndOverride_1))]
+    [Obsolete]
     private class Service_PriorityAndOverride_2 : Service_PriorityAndOverride_1 { }
 
     [ServiceConfiguration(typeof(Service_Attribute))]
+    [Obsolete]
     private class Configuration : BaseServiceConfiguration
     {
         public string? Property { get; set; }
     }
 
     [DaprService("ServiceTests.test_required")]
+    [Obsolete]
     private class Service_Required : IDaprService { }
 
     [DaprService("ServiceTests.test_multiple_required")]
+    [Obsolete]
     private class Service_MultipleRequired : IDaprService { }
 
     [ServiceConfiguration(typeof(Service_Required))]
+    [Obsolete]
     private class Configuration_Required : BaseServiceConfiguration
     {
         [ConfigRequired(AllowEmptyStrings = false)]
@@ -85,6 +100,7 @@ public class Services : IClassFixture<CollectionFixture>
     }
 
     [ServiceConfiguration(typeof(Service_MultipleRequired))]
+    [Obsolete]
     private class Configuration_MultipleRequired_A : BaseServiceConfiguration
     {
         // PropertyA binds from PROPERTY_A env var (normalized to PascalCase)
@@ -93,6 +109,7 @@ public class Services : IClassFixture<CollectionFixture>
     }
 
     [ServiceConfiguration(typeof(Service_MultipleRequired))]
+    [Obsolete]
     private class Configuration_MultipleRequired_B : BaseServiceConfiguration
     {
         // PropertyB binds from PROPERTY_B env var (normalized to PascalCase)
@@ -100,6 +117,7 @@ public class Services : IClassFixture<CollectionFixture>
         public string? PropertyB { get; set; }
     }
 
+    [Obsolete]
     public Services(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
@@ -107,6 +125,7 @@ public class Services : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Services_GetServiceName()
     {
         Assert.Null(typeof(Service).GetServiceName());
@@ -114,6 +133,7 @@ public class Services : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Services_GetServiceName_FromService()
     {
         IDaprService testService = new Service();
@@ -124,6 +144,7 @@ public class Services : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Services_AnyServiceEnabled()
     {
         // Test that at least one service is available - use Services property to check
@@ -131,6 +152,7 @@ public class Services : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Services_ServiceEnabled_NoAttribute()
     {
         IDaprService testService = new Service();
@@ -152,6 +174,7 @@ public class Services : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Services_ServiceEnabled()
     {
         IDaprService testService = new Service_Attribute();
@@ -169,18 +192,21 @@ public class Services : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Services_ServiceEnabled_Default()
     {
         Assert.False(IDaprService.IsDisabled(typeof(Service_Attribute)));
     }
 
     [Fact]
+    [Obsolete]
     public void Services_ServiceEnabled_BadType()
     {
         _ = Assert.Throws<InvalidCastException>(() => IDaprService.IsDisabled(typeof(Service_Invalid)));
     }
 
     [Fact]
+    [Obsolete]
     public void Services_ServiceEnabled_TestType()
     {
         try
@@ -205,6 +231,7 @@ public class Services : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Services_ServiceEnabled_TestType_Generic()
     {
         try
@@ -229,6 +256,7 @@ public class Services : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Services_ServiceEnabled_TestString()
     {
         try
@@ -256,6 +284,7 @@ public class Services : IClassFixture<CollectionFixture>
     // Configuration type discovery is handled internally by the plugin system
 
     [Fact]
+    [Obsolete]
     public void Services_FindAll()
     {
         try
@@ -313,38 +342,43 @@ public class Services : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Services_FindAll_TestOverride_MostDerivedType()
     {
-        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.GetServiceInfo("ServiceTests.OverrideTest");
+        (Type, Type, BannouServiceAttribute)? locateService = IBannouService.GetServiceInfo("ServiceTests.OverrideTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(Service_Override_2), locateService.Value.Item2);
     }
 
     [Fact]
+    [Obsolete]
     public void Services_FindAll_TestOverride_MostDerivedType_NoAttribute()
     {
-        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.GetServiceInfo("ServiceTests.OverrideNoAttrTest");
+        (Type, Type, BannouServiceAttribute)? locateService = IBannouService.GetServiceInfo("ServiceTests.OverrideNoAttrTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(Service_Override_NoAttribute_2), locateService.Value.Item2);
     }
 
     [Fact]
+    [Obsolete]
     public void Services_FindAll_TestOverride_Priority()
     {
-        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.GetServiceInfo("ServiceTests.PriorityTest");
+        (Type, Type, BannouServiceAttribute)? locateService = IBannouService.GetServiceInfo("ServiceTests.PriorityTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(Service_Priority_2), locateService.Value.Item2);
     }
 
     [Fact]
+    [Obsolete]
     public void Services_FindAll_TestOverride_PriorityOverMostDerivedType()
     {
-        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.GetServiceInfo("ServiceTests.PriorityOverrideTest");
+        (Type, Type, BannouServiceAttribute)? locateService = IBannouService.GetServiceInfo("ServiceTests.PriorityOverrideTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(Service_PriorityAndOverride_1), locateService.Value.Item2);
     }
 
     [Fact]
+    [Obsolete]
     public void Services_HasRequiredConfiguration()
     {
         // Test configuration requirements using IServiceConfiguration.HasRequired() instead of the removed method
@@ -366,6 +400,7 @@ public class Services : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Services_HasRequiredConfiguration_MultipleTypes()
     {
         // Test multiple configuration requirements using IServiceConfiguration.HasRequired()
@@ -399,6 +434,7 @@ public class Services : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Services_HasRequiredConfiguration_ByType()
     {
         // Test configuration requirements by type using IServiceConfiguration.HasRequiredForType()
@@ -416,6 +452,7 @@ public class Services : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Services_HasRequiredConfiguration_ByType_MultipleTypes()
     {
         // Test multiple configuration requirements by type
@@ -442,6 +479,7 @@ public class Services : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Services_HasRequiredConfiguration_ByType_Generic()
     {
         // Test generic configuration requirements
@@ -459,6 +497,7 @@ public class Services : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Services_HasRequiredConfiguration_ByType_MultipleTypes_Generic()
     {
         // Test generic multiple configuration requirements

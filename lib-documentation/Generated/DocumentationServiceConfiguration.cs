@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Documentation;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(DocumentationService))]
+[Obsolete]
 public class DocumentationServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

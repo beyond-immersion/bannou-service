@@ -8,6 +8,7 @@ namespace BeyondImmersion.BannouService.Location;
 /// <summary>
 /// Service interface for Location API
 /// </summary>
+[Obsolete]
 public partial interface ILocationService : IDaprService
 {
     /// <summary>

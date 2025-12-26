@@ -10,7 +10,7 @@ info:
   version: 3.0.0
   # NOTE: Event subscriptions moved to permissions-events.yaml (x-event-subscriptions)
 servers:
-- url: http://localhost:3500/v1.0/invoke/bannou/method
+- url: http://localhost:5012
   description: Dapr sidecar endpoint (internal only)
 
 paths:

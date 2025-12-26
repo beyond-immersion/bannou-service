@@ -19,6 +19,7 @@ namespace BeyondImmersion.BannouService.Location;
 /// Locations are partitioned by realm for scalability.
 /// </summary>
 [DaprService("location", typeof(ILocationService), lifetime: ServiceLifetime.Scoped)]
+[Obsolete]
 public partial class LocationService : ILocationService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -34,6 +35,7 @@ public partial class LocationService : ILocationService
     private const string PARENT_INDEX_PREFIX = "parent-index:";
     private const string ROOT_LOCATIONS_PREFIX = "root-locations:";
 
+    [Obsolete]
     public LocationService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,

@@ -5,7 +5,6 @@ using BeyondImmersion.BannouService.Logging;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebSockets;
 using Serilog;
@@ -33,21 +32,26 @@ public static class Program
     }
 
     private static IConfigurationRoot _configurationRoot;
+
     /// <summary>
     /// Shared service configuration root.
     /// Includes command line args.
     /// </summary>
+    [Obsolete]
     public static IConfigurationRoot ConfigurationRoot
     {
         get => _configurationRoot ??= IServiceConfiguration.BuildConfigurationRoot(Environment.GetCommandLineArgs());
         internal set => _configurationRoot = value;
     }
 
+    [Obsolete]
     private static AppConfiguration _configuration;
+
     /// <summary>
     /// Service configuration.
     /// Pull from Config.json, ENVs, and command line args.
     /// </summary>
+    [Obsolete]
     public static AppConfiguration Configuration
     {
         get => _configuration ??= IServiceConfiguration.BuildConfiguration<AppConfiguration>(Environment.GetCommandLineArgs());
@@ -55,10 +59,12 @@ public static class Program
     }
 
     private static string _serviceGUID;
+
     /// <summary>
     /// Internal service GUID- largely used for administrative network commands.
     /// Randomly generated on service startup.
     /// </summary>
+    [Obsolete]
     public static string ServiceGUID
     {
         get => _serviceGUID ??= Configuration.Force_Service_ID ?? Guid.NewGuid().ToString().ToLower();
@@ -66,9 +72,11 @@ public static class Program
     }
 
     private static Microsoft.Extensions.Logging.ILogger _logger;
+
     /// <summary>
     /// Application/global logger.
     /// </summary>
+    [Obsolete]
     public static Microsoft.Extensions.Logging.ILogger Logger
     {
         get => _logger ??= ServiceLogging.CreateApplicationLogger();
@@ -96,6 +104,7 @@ public static class Program
     /// </summary>
     public static CancellationTokenSource ShutdownCancellationTokenSource { get; } = new CancellationTokenSource();
 
+    [Obsolete]
     private static async Task<int> Main()
     {
         Logger.Log(LogLevel.Information, null, "Service starting.");
@@ -177,13 +186,6 @@ public static class Program
                             manager.ApplicationParts.Add(new Microsoft.AspNetCore.Mvc.ApplicationParts.AssemblyPart(assembly));
                         }
                     }
-                })
-                .AddDapr(daprClientBuilder =>
-                {
-                    // CRITICAL: Configure DaprClient serializer here, NOT in separate AddDaprClient call
-                    // AddDapr() registers DaprClient first, and subsequent AddDaprClient() calls are ignored
-                    // (TryAddSingleton pattern - first registration wins)
-                    daprClientBuilder.UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig);
                 })
                 .AddJsonOptions(jsonOptions =>
                 {
@@ -307,17 +309,10 @@ public static class Program
                 KeepAliveInterval = TimeSpan.FromMinutes(2)
             });
 
-            // Add CloudEvents support for Dapr pub/sub
-            webApp.UseCloudEvents();
-
-            // Normalize Dapr invoke paths so controllers work with any sidecar app-id
-            webApp.UseMiddleware<BeyondImmersion.BannouService.Middleware.InvokeAppIdRewriteMiddleware>();
-
-            // map controller routes and subscription handlers
+            // map controller routes
             _ = webApp.UseRouting().UseEndpoints(endpointOptions =>
             {
                 endpointOptions.MapDefaultControllerRoute();
-                endpointOptions.MapSubscribeHandler(); // Required for Dapr pub/sub
             });
 
             // Configure plugin application pipeline
@@ -485,6 +480,7 @@ public static class Program
     /// <summary>
     /// Load and initialize plugins based on current application configuration.
     /// </summary>
+    [Obsolete]
     private static async Task<bool> LoadPlugins()
     {
         // Enable assembly resolution for plugin dependencies
@@ -518,6 +514,7 @@ public static class Program
     /// Get the list of requested plugins based on Include_Assemblies configuration.
     /// </summary>
     /// <returns>List of plugin names to load, or null for all plugins</returns>
+    [Obsolete]
     private static IList<string>? GetRequestedPlugins()
     {
         if (string.Equals("none", Configuration.Include_Assemblies, StringComparison.InvariantCultureIgnoreCase))
@@ -544,6 +541,7 @@ public static class Program
     /// <summary>
     /// Include /plugins/ and subdirectories in resolving .dll dependencies.
     /// </summary>
+    [Obsolete]
     private static Assembly? OnAssemblyResolve(object? sender, ResolveEventArgs args)
     {
         if (string.IsNullOrWhiteSpace(args?.Name))
@@ -587,6 +585,7 @@ public static class Program
         return null;
     }
 
+    [Obsolete]
     private static bool TryLoadAssembly(string assemblyPath, out Assembly? assembly)
     {
         if (File.Exists(assemblyPath))
@@ -626,6 +625,7 @@ public static class Program
     /// <param name="webApp">The web application for service resolution</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>True if import succeeded, false otherwise</returns>
+    [Obsolete]
     private static async Task<bool> ImportServiceMappingsFromSourceAsync(
         string sourceAppId,
         WebApplication webApp,
@@ -699,6 +699,7 @@ public static class Program
     /// </summary>
     /// <param name="webApp">The web application for service resolution</param>
     /// <param name="cancellationToken">Cancellation token</param>
+    [Obsolete]
     private static async Task LoadPersistedMappingsAsync(
         WebApplication webApp,
         CancellationToken cancellationToken)

@@ -16,12 +16,14 @@ namespace BeyondImmersion.BannouService.Website;
 /// Methods return placeholder responses until implementation is complete.
 /// </summary>
 [DaprService("website", typeof(IWebsiteService), lifetime: ServiceLifetime.Scoped)]
+[Obsolete]
 public partial class WebsiteService : IWebsiteService
 {
     private readonly ILogger<WebsiteService> _logger;
     private readonly WebsiteServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
 
+    [Obsolete]
     public WebsiteService(
         ILogger<WebsiteService> logger,
         WebsiteServiceConfiguration configuration,

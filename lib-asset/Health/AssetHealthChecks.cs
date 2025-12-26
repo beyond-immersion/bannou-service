@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -51,28 +52,28 @@ public class MinioHealthCheck : IHealthCheck
 }
 
 /// <summary>
-/// Health check for Redis connectivity via Dapr state store.
+/// Health check for Redis connectivity via lib-state.
 /// </summary>
 public class RedisHealthCheck : IHealthCheck
 {
-    private readonly Dapr.Client.DaprClient _daprClient;
+    private readonly IStateStore<object> _stateStore;
     private readonly ILogger<RedisHealthCheck> _logger;
     private const string HEALTH_CHECK_KEY = "asset-health-check";
-    private const string STATE_STORE_NAME = "asset-statestore";
 
     /// <summary>
     /// Initializes a new instance of the RedisHealthCheck class.
     /// </summary>
-    /// <param name="daprClient">The Dapr client.</param>
+    /// <param name="stateStoreFactory">The state store factory.</param>
     /// <param name="logger">The logger.</param>
-    public RedisHealthCheck(Dapr.Client.DaprClient daprClient, ILogger<RedisHealthCheck> logger)
+    public RedisHealthCheck(IStateStoreFactory stateStoreFactory, ILogger<RedisHealthCheck> logger)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        ArgumentNullException.ThrowIfNull(stateStoreFactory);
+        _stateStore = stateStoreFactory.GetStore<object>("asset-statestore");
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
-    /// Checks Redis connectivity via Dapr state store.
+    /// Checks Redis connectivity via lib-state.
     /// </summary>
     public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
@@ -82,13 +83,13 @@ public class RedisHealthCheck : IHealthCheck
         {
             // Try to save and retrieve a health check value
             var healthValue = new { Timestamp = DateTimeOffset.UtcNow };
-            await _daprClient.SaveStateAsync(STATE_STORE_NAME, HEALTH_CHECK_KEY, healthValue, cancellationToken: cancellationToken);
+            await _stateStore.SaveAsync(HEALTH_CHECK_KEY, healthValue, null, cancellationToken);
 
-            var retrieved = await _daprClient.GetStateAsync<object>(STATE_STORE_NAME, HEALTH_CHECK_KEY, cancellationToken: cancellationToken);
+            var retrieved = await _stateStore.GetAsync(HEALTH_CHECK_KEY, cancellationToken);
 
             if (retrieved != null)
             {
-                return HealthCheckResult.Healthy("Redis state store is accessible via Dapr.");
+                return HealthCheckResult.Healthy("Redis state store is accessible.");
             }
 
             return HealthCheckResult.Degraded("Redis state store write succeeded but read returned null.");
@@ -96,7 +97,7 @@ public class RedisHealthCheck : IHealthCheck
         catch (Exception ex)
         {
             _logger.LogError(ex, "Redis health check failed");
-            return HealthCheckResult.Unhealthy("Redis state store is not accessible via Dapr.", ex);
+            return HealthCheckResult.Unhealthy("Redis state store is not accessible.", ex);
         }
     }
 }

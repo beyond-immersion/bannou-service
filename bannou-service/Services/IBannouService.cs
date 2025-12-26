@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using Microsoft.AspNetCore.Builder;
@@ -5,19 +6,19 @@ using Microsoft.AspNetCore.Builder;
 namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
-/// Interface to implement for all internal dapr service,
+/// Interface to implement for all Bannou service plugins,
 /// which provides the logic for any given set of APIs.
 ///
 /// For example, the Inventory service is in charge of
 /// any API calls that desire to create/modify inventory
 /// data in the game.
 /// </summary>
-public interface IDaprService
+public interface IBannouService
 {
-    private static (Type, Type, DaprServiceAttribute)[]? _services;
+    private static (Type, Type, BannouServiceAttribute)[]? _services;
 
     // Static storage for instance IDs (using ConditionalWeakTable to avoid memory leaks)
-    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<IDaprService, GuidBox> _instanceIds = new();
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<IBannouService, GuidBox> _instanceIds = new();
 
     // Helper class to wrap Guid as a reference type for ConditionalWeakTable
     private sealed class GuidBox
@@ -46,6 +47,7 @@ public interface IDaprService
     /// Default implementation returns healthy status with no additional metadata.
     /// </summary>
     /// <returns>ServiceStatus with this service's current health information</returns>
+    [Obsolete]
     ServiceStatus OnHeartbeat()
     {
         return new ServiceStatus
@@ -58,7 +60,7 @@ public interface IDaprService
     }
 
     /// <summary>
-    /// Called when a Dapr event is received by this service.
+    /// Called when a pub/sub event is received by this service.
     /// Override in service implementations to handle specific events.
     /// Default implementation does nothing.
     /// </summary>
@@ -71,44 +73,46 @@ public interface IDaprService
         // Default empty implementation
         return Task.CompletedTask;
     }
+
     /// <summary>
     /// Gets all discovered service types with their attributes.
     /// </summary>
-    public static (Type, Type, DaprServiceAttribute)[] Services
+    [Obsolete]
+    public static (Type, Type, BannouServiceAttribute)[] Services
     {
         get
         {
             if (_services == null)
             {
-                List<(Type, DaprServiceAttribute)> serviceProviders = IServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>();
+                List<(Type, BannouServiceAttribute)> serviceProviders = IServiceAttribute.GetClassesWithAttribute<BannouServiceAttribute>();
                 if (!serviceProviders.Any())
                 {
                     Program.Logger?.Log(LogLevel.Trace, null, $"No service handler types were found.");
-                    return Array.Empty<(Type, Type, DaprServiceAttribute)>();
+                    return Array.Empty<(Type, Type, BannouServiceAttribute)>();
                 }
 
-                var handlerLookup = new Dictionary<Type, (Type, Type, DaprServiceAttribute)>();
-                foreach ((Type, DaprServiceAttribute) serviceProvider in serviceProviders)
+                var handlerLookup = new Dictionary<Type, (Type, Type, BannouServiceAttribute)>();
+                foreach ((Type, BannouServiceAttribute) serviceProvider in serviceProviders)
                 {
                     Type serviceType = serviceProvider.Item1;
-                    DaprServiceAttribute serviceAttr = serviceProvider.Item2;
+                    BannouServiceAttribute serviceAttr = serviceProvider.Item2;
                     Type handlerType = serviceAttr.InterfaceType ?? serviceType;
 
                     Program.Logger?.Log(LogLevel.Trace, null, $"Checking service type {serviceType.Name}...");
 
-                    if (serviceType.IsAbstract || serviceType.IsInterface || !serviceType.IsAssignableTo(typeof(IDaprService)))
+                    if (serviceType.IsAbstract || serviceType.IsInterface || !serviceType.IsAssignableTo(typeof(IBannouService)))
                     {
                         Program.Logger?.Log(LogLevel.Debug, null, $"Invalid service type {serviceType.Name} won't be returned.");
                         continue;
                     }
 
-                    if (!handlerType.IsAssignableTo(typeof(IDaprService)))
+                    if (!handlerType.IsAssignableTo(typeof(IBannouService)))
                     {
                         Program.Logger?.Log(LogLevel.Debug, null, $"Invalid handler for service type {serviceType.Name}.");
                         continue;
                     }
 
-                    if (handlerLookup.TryGetValue(handlerType, out (Type, Type, DaprServiceAttribute) existingEntry))
+                    if (handlerLookup.TryGetValue(handlerType, out (Type, Type, BannouServiceAttribute) existingEntry))
                     {
                         if (existingEntry.Item3.Priority)
                         {
@@ -143,11 +147,12 @@ public interface IDaprService
     /// <summary>
     /// Gets all enabled service types (not disabled via configuration).
     /// </summary>
-    public static (Type, Type, DaprServiceAttribute)[] EnabledServices
+    [Obsolete]
+    public static (Type, Type, BannouServiceAttribute)[] EnabledServices
     {
         get
         {
-            var enabledServiceInfo = new List<(Type, Type, DaprServiceAttribute)>();
+            var enabledServiceInfo = new List<(Type, Type, BannouServiceAttribute)>();
             foreach (var serviceInfo in Services)
             {
                 var serviceName = serviceInfo.Item3.Name;
@@ -159,32 +164,34 @@ public interface IDaprService
         }
     }
 
-    private static IDictionary<string, IList<(Type, Type, DaprServiceAttribute)>> _serviceAppMappings;
+    private static IDictionary<string, IList<(Type, Type, BannouServiceAttribute)>> _serviceAppMappings;
+
     /// <summary>
-    /// Lookup for mapping applications to services in the Dapr network.
+    /// Lookup for mapping applications to services in the Bannou network.
     /// Is applied as an override to hardcoded and configurable network_mode presets.
     ///
     /// <seealso cref="NetworkModePresets"/>
     /// </summary>
-    public static IDictionary<string, IList<(Type, Type, DaprServiceAttribute)>> ServiceAppMappings
+    [Obsolete]
+    public static IDictionary<string, IList<(Type, Type, BannouServiceAttribute)>> ServiceAppMappings
     {
         get
         {
             if (_serviceAppMappings == null)
             {
-                _serviceAppMappings = new Dictionary<string, IList<(Type, Type, DaprServiceAttribute)>>();
-                foreach ((Type, Type, DaprServiceAttribute) serviceHandler in Services)
+                _serviceAppMappings = new Dictionary<string, IList<(Type, Type, BannouServiceAttribute)>>();
+                foreach ((Type, Type, BannouServiceAttribute) serviceHandler in Services)
                 {
                     var serviceName = serviceHandler.Item3.Name;
                     var appName = Program.ConfigurationRoot.GetValue<string>(serviceName.ToUpper() + "_APP_MAPPING") ?? AppConstants.DEFAULT_APP_NAME;
 
-                    if (_serviceAppMappings.TryGetValue(appName, out IList<(Type, Type, DaprServiceAttribute)>? existingApp))
+                    if (_serviceAppMappings.TryGetValue(appName, out IList<(Type, Type, BannouServiceAttribute)>? existingApp))
                     {
                         existingApp.Add(serviceHandler);
                         continue;
                     }
 
-                    _serviceAppMappings.Add(appName, new List<(Type, Type, DaprServiceAttribute)>() { serviceHandler });
+                    _serviceAppMappings.Add(appName, new List<(Type, Type, BannouServiceAttribute)>() { serviceHandler });
                 }
             }
 
@@ -193,6 +200,7 @@ public interface IDaprService
     }
 
     private static Dictionary<string, string> _networkModePresets;
+
     /// <summary>
     /// The service->application name mappings for the network.
     /// Specific to the network mode that's been configured.
@@ -201,6 +209,7 @@ public interface IDaprService
     /// mappings to use.
     /// <seealso cref="ServiceAppMappings"/>
     /// </summary>
+    [Obsolete]
     public static Dictionary<string, string> NetworkModePresets
     {
         get
@@ -275,6 +284,7 @@ public interface IDaprService
     /// Called when the service is starting up. Override to implement custom startup logic.
     /// </summary>
     /// <param name="token">Cancellation token for startup timeout.</param>
+    [Obsolete]
     async Task OnStartAsync(CancellationToken token)
     {
         var serviceName = GetName() ?? GetType().Name;
@@ -288,6 +298,7 @@ public interface IDaprService
     /// </summary>
     /// <param name="webApp">The WebApplication instance for registering endpoints.</param>
     /// <param name="token">Cancellation token for startup timeout.</param>
+    [Obsolete]
     async Task OnStartAsync(WebApplication webApp, CancellationToken token)
     {
         var serviceName = GetName() ?? GetType().Name;
@@ -300,6 +311,7 @@ public interface IDaprService
     /// Called when the service is running and ready. Override to implement background processing.
     /// </summary>
     /// <param name="token">Cancellation token for shutdown.</param>
+    [Obsolete]
     async Task OnRunningAsync(CancellationToken token)
     {
         var serviceName = GetName() ?? GetType().Name;
@@ -310,6 +322,7 @@ public interface IDaprService
     /// <summary>
     /// Called when the service is shutting down. Override to implement cleanup logic.
     /// </summary>
+    [Obsolete]
     async Task OnShutdownAsync()
     {
         var serviceName = GetName() ?? GetType().Name;
@@ -321,6 +334,7 @@ public interface IDaprService
     /// Gets the service name from the service type attributes.
     /// </summary>
     /// <returns>The service name if found, otherwise null.</returns>
+    [Obsolete]
     public string? GetName()
         => GetType().GetServiceName();
 
@@ -331,6 +345,7 @@ public interface IDaprService
     /// Override this method if the service has custom permission registration logic.
     /// </summary>
     /// <returns>Task representing the registration operation</returns>
+    [Obsolete]
     virtual Task RegisterServicePermissionsAsync()
     {
         // Default implementation does nothing - method will be overridden
@@ -341,7 +356,7 @@ public interface IDaprService
     }
 
     /// <summary>
-    /// Registers event consumers for Dapr pub/sub events this service wants to handle.
+    /// Registers event consumers for pub/sub events this service wants to handle.
     /// This method should be called from the service constructor with the injected IEventConsumer.
     /// Override in {Service}ServiceEvents.cs partial class to register event handlers.
     /// Generated by generate-event-subscriptions.sh based on x-subscribes-to in OpenAPI schema.
@@ -350,8 +365,9 @@ public interface IDaprService
     /// <remarks>
     /// Handler registration is idempotent - calling multiple times with the same handler key
     /// will only register once. Handlers are invoked when any plugin's EventsController
-    /// receives the corresponding Dapr topic event.
+    /// receives the corresponding topic event.
     /// </remarks>
+    [Obsolete]
     virtual void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
         // Default implementation does nothing - method will be overridden
@@ -363,22 +379,25 @@ public interface IDaprService
     /// <summary>
     /// Returns whether the configuration indicates the service should be disabled.
     /// </summary>
+    [Obsolete]
     public bool IsDisabled()
         => IsDisabled(GetType());
 
     /// <summary>
     /// Returns whether the configuration indicates the service should be enabled.
     /// </summary>
+    [Obsolete]
     public static bool IsDisabled<T>()
         => IsDisabled(typeof(T));
 
     /// <summary>
     /// Returns whether the configuration indicates the service should be disabled.
     /// </summary>
+    [Obsolete]
     public static bool IsDisabled(Type serviceType)
     {
-        if (!typeof(IDaprService).IsAssignableFrom(serviceType))
-            throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
+        if (!typeof(IBannouService).IsAssignableFrom(serviceType))
+            throw new InvalidCastException($"Type provided does not implement {nameof(IBannouService)}");
 
         var serviceName = serviceType.GetServiceName();
         return IsDisabled(serviceName);
@@ -388,6 +407,7 @@ public interface IDaprService
     /// Returns whether the configuration indicates the service should be disabled.
     /// Uses the two-mode enable/disable system based on SERVICES_ENABLED environment variable.
     /// </summary>
+    [Obsolete]
     public static bool IsDisabled(string? serviceName)
     {
         if (string.IsNullOrWhiteSpace(serviceName))
@@ -421,12 +441,13 @@ public interface IDaprService
     /// Find the highest priority/derived service type with the given name.
     /// </summary>
     /// <returns>Interface Type, Implementation Type, Service Attribute</returns>
-    public static (Type, Type, DaprServiceAttribute)? GetServiceInfo(string name)
+    [Obsolete]
+    public static (Type, Type, BannouServiceAttribute)? GetServiceInfo(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
             return null;
 
-        foreach ((Type, Type, DaprServiceAttribute) serviceInfo in Services)
+        foreach ((Type, Type, BannouServiceAttribute) serviceInfo in Services)
         {
             if (string.Equals(name, serviceInfo.Item3.Name, StringComparison.InvariantCultureIgnoreCase))
                 return serviceInfo;
@@ -439,9 +460,10 @@ public interface IDaprService
     /// Find the implementation for the given service handler.
     /// </summary>
     /// <returns>Interface Type, Implementation Type, Service Attribute</returns>
-    public static (Type, Type, DaprServiceAttribute)? GetServiceInfo(Type interfaceType)
+    [Obsolete]
+    public static (Type, Type, BannouServiceAttribute)? GetServiceInfo(Type interfaceType)
     {
-        foreach ((Type, Type, DaprServiceAttribute) serviceInfo in Services)
+        foreach ((Type, Type, BannouServiceAttribute) serviceInfo in Services)
         {
             if (serviceInfo.Item1 == interfaceType)
                 return serviceInfo;
@@ -450,3 +472,9 @@ public interface IDaprService
         return null;
     }
 }
+
+/// <summary>
+/// Obsolete alias for backward compatibility. Use <see cref="IBannouService"/> instead.
+/// </summary>
+[Obsolete("Use IBannouService instead. This alias will be removed in a future version.")]
+public interface IDaprService : IBannouService { }

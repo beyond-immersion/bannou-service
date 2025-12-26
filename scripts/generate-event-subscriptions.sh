@@ -198,14 +198,14 @@ cat > "$CONTROLLER_FILE" << CSHARP_HEADER
 #nullable enable
 
 using BeyondImmersion.BannouService.Events;
-using Dapr;
+using BeyondImmersion.BannouService.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.${SERVICE_PASCAL};
 
 /// <summary>
-/// Generated controller for handling Dapr pubsub events for ${SERVICE_PASCAL} service.
+/// Generated controller for handling pubsub events for ${SERVICE_PASCAL} service.
 /// Dispatches events to registered handlers via IEventConsumer.
 /// </summary>
 [ApiController]

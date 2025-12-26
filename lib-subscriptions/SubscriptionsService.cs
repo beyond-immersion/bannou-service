@@ -19,6 +19,7 @@ namespace BeyondImmersion.BannouService.Subscriptions;
 /// Publishes subscription.updated events for real-time session authorization updates.
 /// </summary>
 [DaprService("subscriptions", typeof(ISubscriptionsService), lifetime: ServiceLifetime.Singleton)]
+[Obsolete]
 public partial class SubscriptionsService : ISubscriptionsService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -35,6 +36,7 @@ public partial class SubscriptionsService : ISubscriptionsService
     // Event topics
     private const string SUBSCRIPTION_UPDATED_TOPIC = "subscription.updated";
 
+    [Obsolete]
     public SubscriptionsService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,

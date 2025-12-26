@@ -1,14 +1,15 @@
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Permissions;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Testing;
-using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
 /// <summary>
-/// Test handler for permissions service API endpoints, including Dapr event subscription tests.
-/// Tests both direct API calls and event-driven permission updates via Dapr pubsub.
+/// Test handler for permissions service API endpoints, including event subscription tests.
+/// Tests both direct API calls and event-driven permission updates via RabbitMQ/MassTransit.
 /// </summary>
 public class PermissionsTestHandler : IServiceTestHandler
 {
@@ -57,9 +58,9 @@ public class PermissionsTestHandler : IServiceTestHandler
             new ServiceTest(TestStateBasedPermissionEscalation, "StateBasedEscalation", "Permissions", "Test setting game-session:in_game state grants additional permissions"),
             new ServiceTest(TestDefaultVsInGameState, "DefaultVsInGame", "Permissions", "Test difference between default and game-session:in_game state permissions"),
 
-            // Dapr Event Tests
-            new ServiceTest(TestDaprEventSubscription, "DaprEventSubscription", "Permissions", "Test Dapr pubsub event subscription for service registration"),
-            new ServiceTest(TestSessionStateChangeEvent, "SessionStateChangeEvent", "Permissions", "Test Dapr pubsub event subscription for session state changes"),
+            // RabbitMQ/MassTransit Event Tests
+            new ServiceTest(TestEventSubscription, "EventSubscription", "Permissions", "Test RabbitMQ pubsub event subscription for service registration"),
+            new ServiceTest(TestSessionStateChangeEvent, "SessionStateChangeEvent", "Permissions", "Test RabbitMQ pubsub event subscription for session state changes"),
 
             // Phase 6: Session Connection Event Tests (activeConnections tracking)
             new ServiceTest(TestSessionConnectedEvent, "SessionConnectedEvent", "Permissions", "Test session.connected event adds session to activeConnections"),
@@ -77,7 +78,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testServiceId = $"test-service-direct-{Guid.NewGuid():N}";
 
             var permissionMatrix = new ServicePermissionMatrix
@@ -121,7 +122,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"multi-svc-{Guid.NewGuid():N}";
 
             // Register first service
@@ -181,7 +182,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testServiceId = $"multi-state-svc-{Guid.NewGuid():N}";
 
             var permissionMatrix = new ServicePermissionMatrix
@@ -230,7 +231,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testServiceId = $"multi-role-svc-{Guid.NewGuid():N}";
 
             var permissionMatrix = new ServicePermissionMatrix
@@ -273,7 +274,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testServiceId = $"cap-test-svc-{Guid.NewGuid():N}";
             var testSessionId = $"cap-test-session-{Guid.NewGuid():N}";
 
@@ -341,7 +342,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var nonExistentSessionId = $"nonexistent-{Guid.NewGuid():N}";
 
             try
@@ -381,7 +382,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"filter-test-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var service1Id = $"{testPrefix}-svc1";
@@ -466,7 +467,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"validate-allowed-{Guid.NewGuid():N}";
             var testServiceId = $"{testPrefix}-svc";
             var testSessionId = $"{testPrefix}-session";
@@ -530,7 +531,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"validate-denied-{Guid.NewGuid():N}";
             var testServiceId = $"{testPrefix}-svc";
             var testSessionId = $"{testPrefix}-session";
@@ -595,7 +596,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testSessionId = $"unknown-svc-test-{Guid.NewGuid():N}";
             var unknownServiceId = $"nonexistent-service-{Guid.NewGuid():N}";
 
@@ -637,7 +638,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testSessionId = $"state-update-{Guid.NewGuid():N}";
             var testServiceId = $"state-svc-{Guid.NewGuid():N}";
 
@@ -674,7 +675,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"transition-{Guid.NewGuid():N}";
             var testServiceId = $"{testPrefix}-svc";
             var testSessionId = $"{testPrefix}-session";
@@ -770,7 +771,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testSessionId = $"role-update-{Guid.NewGuid():N}";
 
             var roleUpdate = new SessionRoleUpdate
@@ -805,7 +806,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"role-all-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var service1Id = $"{testPrefix}-svc1";
@@ -920,7 +921,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"clear-state-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1010,7 +1011,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"clear-match-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1076,7 +1077,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"clear-nomatch-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1147,7 +1148,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"clear-nostate-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1195,7 +1196,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"session-info-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1267,7 +1268,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var nonExistentSessionId = $"nonexistent-session-{Guid.NewGuid():N}";
 
             try
@@ -1307,7 +1308,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"admin-cap-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1374,7 +1375,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"user-cap-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1448,7 +1449,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"escalation-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1545,7 +1546,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"state-esc-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1644,7 +1645,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"state-diff-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1725,45 +1726,47 @@ public class PermissionsTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Test Dapr pubsub event subscription for service registration.
-    /// This tests the full Dapr eventing flow:
-    /// 1. Publish ServiceRegistrationEvent via Dapr pubsub
-    /// 2. Dapr routes to PermissionsService's [Topic] handler
+    /// Test pub/sub event subscription for service registration.
+    /// This tests the full eventing flow:
+    /// 1. Publish ServiceRegistrationEvent via IMessageBus
+    /// 2. MassTransit routes to PermissionsService's event handler
     /// 3. Verify the service was registered by querying capabilities
     /// </summary>
-    private static async Task<TestResult> TestDaprEventSubscription(ITestClient client, string[] args)
+    private static async Task<TestResult> TestEventSubscription(ITestClient client, string[] args)
     {
         try
         {
-            // Get DaprClient from the service provider
-            var daprClient = Program.ServiceProvider?.GetService<DaprClient>();
-            if (daprClient == null)
+            // Get IMessageBus from the service provider
+            var messageBus = Program.ServiceProvider?.GetService<IMessageBus>();
+            if (messageBus == null)
             {
-                return TestResult.Failed("DaprClient not available from service provider");
+                return TestResult.Failed("IMessageBus not available from service provider");
             }
 
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testServiceId = $"test-service-event-{Guid.NewGuid():N}";
             var testSessionId = $"test-session-{Guid.NewGuid():N}";
 
-            // Step 1: Create a service registration event
-            // This matches the format expected by PermissionsService.HandleServiceRegistrationAsync
-            var serviceRegistrationEvent = new
+            // Step 1: Create a service registration event using strongly-typed model
+            var serviceRegistrationEvent = new ServiceRegistrationEvent
             {
-                serviceId = testServiceId,
-                version = "1.0.0",
-                endpoints = new[]
+                EventId = Guid.NewGuid().ToString(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ServiceId = testServiceId,
+                Version = "1.0.0",
+                AppId = "bannou",
+                Endpoints = new Collection<ServiceEndpoint>
                 {
-                    new
+                    new ServiceEndpoint
                     {
-                        path = "/test/dapr-event-endpoint",
-                        method = "GET",
-                        permissions = new[]
+                        Path = "/test/dapr-event-endpoint",
+                        Method = ServiceEndpointMethod.GET,
+                        Permissions = new Collection<PermissionRequirement>
                         {
-                            new
+                            new PermissionRequirement
                             {
-                                role = "user",
-                                requiredStates = new Dictionary<string, string>
+                                Role = "user",
+                                RequiredStates = new Dictionary<string, string>
                                 {
                                     [testServiceId] = "authenticated"
                                 }
@@ -1773,19 +1776,15 @@ public class PermissionsTestHandler : IServiceTestHandler
                 }
             };
 
-            Console.WriteLine($"  Publishing service registration event for {testServiceId} via Dapr pubsub...");
+            Console.WriteLine($"  Publishing service registration event for {testServiceId} via IMessageBus...");
 
-            // Publish the event via Dapr pubsub
-            // This should be routed to PermissionsService's [Topic("bannou-pubsub", "permissions.service-registered")] handler
-            await daprClient.PublishEventAsync(
-                "bannou-pubsub",
-                "permissions.service-registered",
-                serviceRegistrationEvent);
+            // Publish the event via IMessageBus
+            await messageBus.PublishAsync("permissions.service-registered", serviceRegistrationEvent);
 
-            Console.WriteLine("  Event published via Dapr pubsub, waiting for processing...");
+            Console.WriteLine("  Event published via IMessageBus, waiting for processing...");
 
             // Wait for event to be processed
-            // Dapr pubsub is async, so we need to wait a bit for the event to be delivered and processed
+            // MassTransit pubsub is async, so we need to wait a bit for the event to be delivered and processed
             await Task.Delay(2000);
 
             // Create a test session with the service state so we can query capabilities
@@ -1837,7 +1836,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 if (methods.Contains("GET:/test/dapr-event-endpoint"))
                 {
                     return TestResult.Successful(
-                        $"Dapr event subscription verified: service {testServiceId} registered via pubsub event, " +
+                        $"Event subscription verified: service {testServiceId} registered via RabbitMQ pubsub event, " +
                         $"capabilities include {methods.Count} method(s)");
                 }
                 else
@@ -1851,13 +1850,13 @@ public class PermissionsTestHandler : IServiceTestHandler
             {
                 return TestResult.Failed(
                     $"Service {testServiceId} not found in capabilities after event publication. " +
-                    $"This indicates the Dapr event subscription may not be working. " +
+                    $"This indicates the RabbitMQ event subscription may not be working. " +
                     $"Available services: [{string.Join(", ", capabilities.Permissions.Keys)}]");
             }
         }
         catch (ApiException ex)
         {
-            return TestResult.Failed($"API error during Dapr event test: {ex.StatusCode} - {ex.Message}");
+            return TestResult.Failed($"API error during event test: {ex.StatusCode} - {ex.Message}");
         }
         catch (Exception ex)
         {
@@ -1866,25 +1865,25 @@ public class PermissionsTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Test Dapr pubsub event subscription for session state changes.
+    /// Test pub/sub event subscription for session state changes.
     /// This tests the full flow:
     /// 1. Register a service with permissions
     /// 2. Create a session
-    /// 3. Publish a session state change event via Dapr pubsub
+    /// 3. Publish a session state change event via IMessageBus
     /// 4. Verify the session state was updated
     /// </summary>
     private static async Task<TestResult> TestSessionStateChangeEvent(ITestClient client, string[] args)
     {
         try
         {
-            // Get DaprClient from the service provider
-            var daprClient = Program.ServiceProvider?.GetService<DaprClient>();
-            if (daprClient == null)
+            // Get IMessageBus from the service provider
+            var messageBus = Program.ServiceProvider?.GetService<IMessageBus>();
+            if (messageBus == null)
             {
-                return TestResult.Failed("DaprClient not available from service provider");
+                return TestResult.Failed("IMessageBus not available from service provider");
             }
 
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testServiceId = $"test-service-state-{Guid.NewGuid():N}";
             var testSessionId = $"test-session-state-{Guid.NewGuid():N}";
 
@@ -1939,20 +1938,19 @@ public class PermissionsTestHandler : IServiceTestHandler
             }
             Console.WriteLine($"  Initial capabilities: {initialMethodCount} methods");
 
-            // Step 4: Publish session state change event via Dapr pubsub
-            var stateChangeEvent = new
+            // Step 4: Publish session state change event via IMessageBus using strongly-typed model
+            var stateChangeEvent = new SessionStateChangeEvent
             {
-                sessionId = testSessionId,
-                serviceId = testServiceId,
-                newState = "in_game",
-                previousState = "in_lobby"
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SessionId = testSessionId,
+                ServiceId = testServiceId,
+                NewState = "in_game",
+                PreviousState = "in_lobby"
             };
 
-            Console.WriteLine($"  Publishing session state change event via Dapr pubsub...");
-            await daprClient.PublishEventAsync(
-                "bannou-pubsub",
-                "permissions.session-state-changed",
-                stateChangeEvent);
+            Console.WriteLine($"  Publishing session state change event via IMessageBus...");
+            await messageBus.PublishAsync("permissions.session-state-changed", stateChangeEvent);
 
             // Step 5: Wait for event processing
             await Task.Delay(2000);
@@ -2030,13 +2028,13 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var daprClient = Program.ServiceProvider?.GetService<DaprClient>();
-            if (daprClient == null)
+            var messageBus = Program.ServiceProvider?.GetService<IMessageBus>();
+            if (messageBus == null)
             {
-                return TestResult.Failed("DaprClient not available from service provider");
+                return TestResult.Failed("IMessageBus not available from service provider");
             }
 
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"session-connected-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testAccountId = $"{testPrefix}-account";
@@ -2056,21 +2054,21 @@ public class PermissionsTestHandler : IServiceTestHandler
                 }
             });
 
-            // Step 2: Publish session.connected event via Dapr pubsub
+            // Step 2: Publish session.connected event via IMessageBus using strongly-typed model
             // This simulates Connect service notifying Permissions that WebSocket is established
-            var sessionConnectedEvent = new
+            var sessionConnectedEvent = new SessionConnectedEvent
             {
-                eventId = Guid.NewGuid().ToString(),
-                timestamp = DateTime.UtcNow.ToString("o"),
-                sessionId = testSessionId,
-                accountId = testAccountId,
-                roles = new[] { "user" },
-                authorizations = (string[]?)null,
-                connectInstanceId = Guid.NewGuid().ToString()
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SessionId = testSessionId,
+                AccountId = testAccountId,
+                Roles = new List<string> { "user" },
+                Authorizations = null,
+                ConnectInstanceId = Guid.NewGuid()
             };
 
             Console.WriteLine($"  Publishing session.connected event for {testSessionId}...");
-            await daprClient.PublishEventAsync("bannou-pubsub", "session.connected", sessionConnectedEvent);
+            await messageBus.PublishAsync("session.connected", sessionConnectedEvent);
 
             // Wait for event to be processed
             await Task.Delay(2000);
@@ -2128,13 +2126,13 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var daprClient = Program.ServiceProvider?.GetService<DaprClient>();
-            if (daprClient == null)
+            var messageBus = Program.ServiceProvider?.GetService<IMessageBus>();
+            if (messageBus == null)
             {
-                return TestResult.Failed("DaprClient not available from service provider");
+                return TestResult.Failed("IMessageBus not available from service provider");
             }
 
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"session-roles-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testAccountId = $"{testPrefix}-account";
@@ -2155,19 +2153,19 @@ public class PermissionsTestHandler : IServiceTestHandler
                 }
             });
 
-            // Step 2: Publish session.connected with admin role
-            var sessionConnectedEvent = new
+            // Step 2: Publish session.connected with admin role using strongly-typed model
+            var sessionConnectedEvent = new SessionConnectedEvent
             {
-                eventId = Guid.NewGuid().ToString(),
-                timestamp = DateTime.UtcNow.ToString("o"),
-                sessionId = testSessionId,
-                accountId = testAccountId,
-                roles = new[] { "user", "admin" },  // Admin role should be selected (highest priority)
-                authorizations = (string[]?)null
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SessionId = testSessionId,
+                AccountId = testAccountId,
+                Roles = new List<string> { "user", "admin" },  // Admin role should be selected (highest priority)
+                Authorizations = null
             };
 
             Console.WriteLine($"  Publishing session.connected with roles [user, admin]...");
-            await daprClient.PublishEventAsync("bannou-pubsub", "session.connected", sessionConnectedEvent);
+            await messageBus.PublishAsync("session.connected", sessionConnectedEvent);
 
             await Task.Delay(2000);
 
@@ -2228,30 +2226,30 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var daprClient = Program.ServiceProvider?.GetService<DaprClient>();
-            if (daprClient == null)
+            var messageBus = Program.ServiceProvider?.GetService<IMessageBus>();
+            if (messageBus == null)
             {
-                return TestResult.Failed("DaprClient not available from service provider");
+                return TestResult.Failed("IMessageBus not available from service provider");
             }
 
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"session-disconnect-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testAccountId = $"{testPrefix}-account";
 
-            // Step 1: First connect the session
-            var connectEvent = new
+            // Step 1: First connect the session using strongly-typed model
+            var connectEvent = new SessionConnectedEvent
             {
-                eventId = Guid.NewGuid().ToString(),
-                timestamp = DateTime.UtcNow.ToString("o"),
-                sessionId = testSessionId,
-                accountId = testAccountId,
-                roles = new[] { "user" },
-                authorizations = (string[]?)null
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SessionId = testSessionId,
+                AccountId = testAccountId,
+                Roles = new List<string> { "user" },
+                Authorizations = null
             };
 
             Console.WriteLine($"  Publishing session.connected for {testSessionId}...");
-            await daprClient.PublishEventAsync("bannou-pubsub", "session.connected", connectEvent);
+            await messageBus.PublishAsync("session.connected", connectEvent);
             await Task.Delay(1500);
 
             // Verify session is connected (has capabilities)
@@ -2265,20 +2263,20 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Console.WriteLine("  Warning: Session may not have capabilities before disconnect test");
             }
 
-            // Step 2: Disconnect the session
-            var disconnectEvent = new
+            // Step 2: Disconnect the session using strongly-typed model
+            var disconnectEvent = new SessionDisconnectedEvent
             {
-                eventId = Guid.NewGuid().ToString(),
-                timestamp = DateTime.UtcNow.ToString("o"),
-                sessionId = testSessionId,
-                accountId = testAccountId,
-                reason = "test_disconnect",
-                reconnectable = false,
-                durationSeconds = 60
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SessionId = testSessionId,
+                AccountId = testAccountId,
+                Reason = "test_disconnect",
+                Reconnectable = false,
+                DurationSeconds = 60
             };
 
             Console.WriteLine($"  Publishing session.disconnected for {testSessionId}...");
-            await daprClient.PublishEventAsync("bannou-pubsub", "session.disconnected", disconnectEvent);
+            await messageBus.PublishAsync("session.disconnected", disconnectEvent);
             await Task.Delay(1500);
 
             // Step 3: The session is removed from activeConnections
@@ -2325,13 +2323,13 @@ public class PermissionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var daprClient = Program.ServiceProvider?.GetService<DaprClient>();
-            if (daprClient == null)
+            var messageBus = Program.ServiceProvider?.GetService<IMessageBus>();
+            if (messageBus == null)
             {
-                return TestResult.Failed("DaprClient not available from service provider");
+                return TestResult.Failed("IMessageBus not available from service provider");
             }
 
-            var permissionsClient = new PermissionsClient();
+            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
             var testPrefix = $"session-reconn-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testAccountId = $"{testPrefix}-account";
@@ -2351,19 +2349,19 @@ public class PermissionsTestHandler : IServiceTestHandler
                 }
             });
 
-            // Step 2: Connect the session
-            var connectEvent = new
+            // Step 2: Connect the session using strongly-typed model
+            var connectEvent = new SessionConnectedEvent
             {
-                eventId = Guid.NewGuid().ToString(),
-                timestamp = DateTime.UtcNow.ToString("o"),
-                sessionId = testSessionId,
-                accountId = testAccountId,
-                roles = new[] { "user" },
-                authorizations = (string[]?)null
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SessionId = testSessionId,
+                AccountId = testAccountId,
+                Roles = new List<string> { "user" },
+                Authorizations = null
             };
 
             Console.WriteLine($"  Publishing session.connected...");
-            await daprClient.PublishEventAsync("bannou-pubsub", "session.connected", connectEvent);
+            await messageBus.PublishAsync("session.connected", connectEvent);
             await Task.Delay(1500);
 
             // Capture capabilities before disconnect
@@ -2375,20 +2373,20 @@ public class PermissionsTestHandler : IServiceTestHandler
             var beforeCount = beforeCapabilities.Permissions?.Values
                 .SelectMany(methods => methods).Count() ?? 0;
 
-            // Step 3: Disconnect with reconnectable=true
-            var disconnectEvent = new
+            // Step 3: Disconnect with reconnectable=true using strongly-typed model
+            var disconnectEvent = new SessionDisconnectedEvent
             {
-                eventId = Guid.NewGuid().ToString(),
-                timestamp = DateTime.UtcNow.ToString("o"),
-                sessionId = testSessionId,
-                accountId = testAccountId,
-                reason = "temporary_disconnect",
-                reconnectable = true,  // Key difference: session can reconnect
-                durationSeconds = 30
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SessionId = testSessionId,
+                AccountId = testAccountId,
+                Reason = "temporary_disconnect",
+                Reconnectable = true,  // Key difference: session can reconnect
+                DurationSeconds = 30
             };
 
             Console.WriteLine($"  Publishing session.disconnected with reconnectable=true...");
-            await daprClient.PublishEventAsync("bannou-pubsub", "session.disconnected", disconnectEvent);
+            await messageBus.PublishAsync("session.disconnected", disconnectEvent);
             await Task.Delay(1500);
 
             // Step 4: Verify session data is preserved (can still get capabilities)

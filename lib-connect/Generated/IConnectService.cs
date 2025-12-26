@@ -8,6 +8,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// <summary>
 /// Service interface for Connect API
 /// </summary>
+[Obsolete]
 public partial interface IConnectService : IDaprService
 {
     /// <summary>

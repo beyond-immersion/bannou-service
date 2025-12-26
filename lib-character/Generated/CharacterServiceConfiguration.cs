@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Character;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(CharacterService))]
+[Obsolete]
 public class CharacterServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

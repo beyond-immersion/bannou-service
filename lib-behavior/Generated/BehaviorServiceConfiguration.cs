@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Behavior;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(BehaviorService))]
+[Obsolete]
 public class BehaviorServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

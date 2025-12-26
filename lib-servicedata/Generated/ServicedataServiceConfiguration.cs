@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Servicedata;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(ServicedataService))]
+[Obsolete]
 public class ServicedataServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

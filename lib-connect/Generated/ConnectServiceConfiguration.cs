@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(ConnectService))]
+[Obsolete]
 public class ConnectServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

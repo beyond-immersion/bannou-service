@@ -45,6 +45,7 @@ public class ApiRequest : ApiMessage
     /// <param name="additionalHeaders">Optional additional headers.</param>
     /// <param name="httpMethod">The HTTP method to use.</param>
     /// <returns>True if the request was successful, false otherwise.</returns>
+    [Obsolete]
     public virtual async Task<bool> ExecuteRequest<T>(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
         where T : ApiResponse, new()
     {
@@ -69,6 +70,7 @@ public class ApiRequest : ApiMessage
     /// <param name="additionalHeaders">Optional additional headers.</param>
     /// <param name="httpMethod">The HTTP method to use.</param>
     /// <returns>True if the request was successful, false otherwise.</returns>
+    [Obsolete]
     public virtual async Task<bool> ExecuteRequest(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
         => await ExecuteRequest_INTERNAL(service, method, additionalHeaders, httpMethod);
 
@@ -80,6 +82,7 @@ public class ApiRequest : ApiMessage
     /// <param name="additionalHeaders">Optional additional headers.</param>
     /// <param name="httpMethod">The HTTP method to use.</param>
     /// <returns>True if the request was successful, false otherwise.</returns>
+    [Obsolete]
     protected async Task<bool> ExecuteRequest_INTERNAL(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
     {
         try
@@ -145,6 +148,7 @@ public class ApiRequest : ApiMessage
     /// <param name="additionalHeaders">Optional additional headers.</param>
     /// <param name="httpMethod">The HTTP method to use.</param>
     /// <returns>True if the request was successful, false otherwise.</returns>
+    [Obsolete]
     protected async Task<bool> ExecuteRequest_INTERNAL<T>(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
         where T : ApiResponse, new()
     {

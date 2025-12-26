@@ -1,6 +1,6 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Events;
-using Dapr;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -16,8 +16,10 @@ namespace BeyondImmersion.BannouService.Connect;
 public class ConnectEventsController : ControllerBase
 {
     private readonly ILogger<ConnectEventsController> _logger;
+    [Obsolete]
     private readonly IConnectService _connectService;
 
+    [Obsolete]
     public ConnectEventsController(
         ILogger<ConnectEventsController> logger,
         IConnectService connectService)
@@ -39,6 +41,7 @@ public class ConnectEventsController : ControllerBase
     /// </summary>
     [Topic("bannou-pubsub", "session.invalidated")]
     [HttpPost("handle-session-invalidated")]
+    [Obsolete]
     public async Task<IActionResult> HandleSessionInvalidatedAsync()
     {
         try

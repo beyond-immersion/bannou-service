@@ -16,12 +16,14 @@ namespace BeyondImmersion.BannouService.Behavior;
 /// Methods return placeholder responses until implementation is complete.
 /// </summary>
 [DaprService("behavior", typeof(IBehaviorService), lifetime: ServiceLifetime.Scoped)]
+[Obsolete]
 public partial class BehaviorService : IBehaviorService
 {
     private readonly ILogger<BehaviorService> _logger;
     private readonly BehaviorServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
 
+    [Obsolete]
     public BehaviorService(
         ILogger<BehaviorService> logger,
         BehaviorServiceConfiguration configuration,

@@ -15,6 +15,7 @@ public class BehaviorServicePlugin : BaseBannouPlugin
     public override string PluginName => "behavior";
     public override string DisplayName => "Behavior Service";
 
+    [Obsolete]
     private IBehaviorService? _service;
     private IServiceProvider? _serviceProvider;
 
@@ -58,6 +59,7 @@ public class BehaviorServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Start the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting service");
@@ -94,6 +96,7 @@ public class BehaviorServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Running phase - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -118,6 +121,7 @@ public class BehaviorServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Shutdown the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;

@@ -37,6 +37,7 @@ public abstract class BaseBannouPlugin : IBannouPlugin
     }
 
     /// <inheritdoc />
+    [Obsolete]
     public virtual async Task<bool> InitializeAsync()
     {
         // Create logger for this plugin
@@ -130,6 +131,7 @@ public abstract class BaseBannouPlugin : IBannouPlugin
     /// Get logger factory from service provider if available.
     /// </summary>
     /// <returns>Logger factory or null if not available</returns>
+    [Obsolete]
     private static ILoggerFactory? GetLoggerFactory()
     {
         try

@@ -15,6 +15,7 @@ public class PermissionsServicePlugin : BaseBannouPlugin
     public override string PluginName => "permissions";
     public override string DisplayName => "Permissions Service";
 
+    [Obsolete]
     private IPermissionsService? _service;
     private IServiceProvider? _serviceProvider;
 
@@ -60,6 +61,7 @@ public class PermissionsServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Start the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting service");
@@ -96,6 +98,7 @@ public class PermissionsServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Running phase - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -120,6 +123,7 @@ public class PermissionsServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Shutdown the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;

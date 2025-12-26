@@ -6,6 +6,7 @@ namespace BeyondImmersion.BannouService.Services;
 /// Optional generic base type for service handlers.
 /// Automatically initializes the proper configuration.
 /// </summary>
+[Obsolete]
 public abstract class DaprService<T> : DaprService
     where T : class, IServiceConfiguration, new()
 {

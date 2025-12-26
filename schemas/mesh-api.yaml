@@ -19,7 +19,7 @@ info:
     WebSocket clients should not directly access mesh endpoints.
   version: 1.0.0
 servers:
-- url: http://localhost:3500/v1.0/invoke/bannou/method
+- url: http://localhost:5012
   description: Dapr sidecar endpoint (during migration)
 
 paths:

@@ -22,6 +22,7 @@ namespace BeyondImmersion.BannouService.Character;
 /// Note: Character relationships are managed by the separate Relationship service.
 /// </summary>
 [DaprService("character", typeof(ICharacterService), lifetime: ServiceLifetime.Scoped)]
+[Obsolete]
 public partial class CharacterService : ICharacterService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -45,6 +46,7 @@ public partial class CharacterService : ICharacterService
     private const string CHARACTER_REALM_JOINED_TOPIC = "character.realm.joined";
     private const string CHARACTER_REALM_LEFT_TOPIC = "character.realm.left";
 
+    [Obsolete]
     public CharacterService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,

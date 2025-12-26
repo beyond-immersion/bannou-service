@@ -145,7 +145,7 @@ public class AuthTestHandler : IServiceTestHandler
             // ValidateTokenAsync now uses header-based token authentication
             try
             {
-                var validationResponse = await authClient
+                var validationResponse = await ((IServiceClient<AuthClient>)authClient)
                     .WithAuthorization("invalid_token")
                     .ValidateTokenAsync();
                 return TestResult.Successful($"Token validation endpoint responded: Valid={validationResponse.Valid}");
@@ -180,7 +180,7 @@ public class AuthTestHandler : IServiceTestHandler
 
             try
             {
-                var refreshResponse = await authClient
+                var refreshResponse = await ((IServiceClient<AuthClient>)authClient)
                     .WithAuthorization("dummy-jwt-token")
                     .RefreshTokenAsync(refreshRequest);
                 return TestResult.Successful($"Token refresh endpoint responded correctly with AccountId: {refreshResponse.AccountId}");
@@ -279,7 +279,7 @@ public class AuthTestHandler : IServiceTestHandler
 
             try
             {
-                var sessionsResponse = await authClient
+                var sessionsResponse = await ((IServiceClient<AuthClient>)authClient)
                     .WithAuthorization("dummy-jwt-token")
                     .GetSessionsAsync();
                 return TestResult.Successful($"Get sessions endpoint responded with {sessionsResponse.Sessions.Count} sessions");
@@ -329,7 +329,7 @@ public class AuthTestHandler : IServiceTestHandler
             var accessToken = loginResponse.AccessToken;
 
             // Step 3: Test token validation with the actual access token
-            var validationResponse = await authClient
+            var validationResponse = await ((IServiceClient<AuthClient>)authClient)
                 .WithAuthorization(accessToken)
                 .ValidateTokenAsync();
             if (!validationResponse.Valid)
@@ -447,7 +447,7 @@ public class AuthTestHandler : IServiceTestHandler
 
             // Logout current session
             var logoutRequest = new LogoutRequest { AllSessions = false };
-            await authClient
+            await ((IServiceClient<AuthClient>)authClient)
                 .WithAuthorization(accessToken)
                 .LogoutAsync(logoutRequest);
             return TestResult.Successful("Logout completed successfully");
@@ -484,7 +484,7 @@ public class AuthTestHandler : IServiceTestHandler
 
             // Logout all sessions
             var logoutRequest = new LogoutRequest { AllSessions = true };
-            await authClient
+            await ((IServiceClient<AuthClient>)authClient)
                 .WithAuthorization(accessToken)
                 .LogoutAsync(logoutRequest);
             return TestResult.Successful("Logout all sessions completed successfully");
@@ -523,7 +523,7 @@ public class AuthTestHandler : IServiceTestHandler
             var testSessionId = Guid.NewGuid();
             try
             {
-                await authClient
+                await ((IServiceClient<AuthClient>)authClient)
                     .WithAuthorization(accessToken)
                     .TerminateSessionAsync(new TerminateSessionRequest { SessionId = testSessionId });
                 return TestResult.Successful("Session termination endpoint responded successfully");
@@ -631,7 +631,7 @@ public class AuthTestHandler : IServiceTestHandler
                 return TestResult.Failed("First login failed to return access token");
 
             // Step 3: Validate session A works
-            var validationA1 = await authClient.WithAuthorization(tokenA).ValidateTokenAsync();
+            var validationA1 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(tokenA).ValidateTokenAsync();
             if (!validationA1.Valid)
                 return TestResult.Failed("Session A validation failed immediately after creation");
 
@@ -645,12 +645,12 @@ public class AuthTestHandler : IServiceTestHandler
                 return TestResult.Failed("Second login failed to return access token");
 
             // Step 5: Validate session A STILL works after session B was created
-            var validationA2 = await authClient.WithAuthorization(tokenA).ValidateTokenAsync();
+            var validationA2 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(tokenA).ValidateTokenAsync();
             if (!validationA2.Valid)
                 return TestResult.Failed($"Session A became invalid after creating session B! RemainingTime before: {remainingTimeA1}");
 
             // Step 6: Validate session B also works
-            var validationB = await authClient.WithAuthorization(tokenB).ValidateTokenAsync();
+            var validationB = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(tokenB).ValidateTokenAsync();
             if (!validationB.Valid)
                 return TestResult.Failed("Session B validation failed");
 
@@ -658,9 +658,9 @@ public class AuthTestHandler : IServiceTestHandler
             var loginResponseC = await authClient.LoginAsync(new LoginRequest { Email = email, Password = password });
 
             // Step 8: Validate ALL sessions still work
-            var validationA3 = await authClient.WithAuthorization(tokenA).ValidateTokenAsync();
-            var validationB2 = await authClient.WithAuthorization(tokenB).ValidateTokenAsync();
-            var validationC = await authClient.WithAuthorization(loginResponseC.AccessToken).ValidateTokenAsync();
+            var validationA3 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(tokenA).ValidateTokenAsync();
+            var validationB2 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(tokenB).ValidateTokenAsync();
+            var validationC = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(loginResponseC.AccessToken).ValidateTokenAsync();
 
             if (!validationA3.Valid || !validationB2.Valid || !validationC.Valid)
             {
@@ -706,7 +706,7 @@ public class AuthTestHandler : IServiceTestHandler
             var token = loginResponse.AccessToken;
 
             // Immediately validate
-            var validation = await authClient.WithAuthorization(token).ValidateTokenAsync();
+            var validation = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token).ValidateTokenAsync();
 
             if (!validation.Valid)
                 return TestResult.Failed($"Immediate validation failed! SessionId: {validation.SessionId}, RemainingTime: {validation.RemainingTime}");
@@ -753,7 +753,7 @@ public class AuthTestHandler : IServiceTestHandler
             var token = loginResponse.AccessToken;
 
             // Validate immediately
-            var validation1 = await authClient.WithAuthorization(token).ValidateTokenAsync();
+            var validation1 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token).ValidateTokenAsync();
             if (!validation1.Valid)
                 return TestResult.Failed("Immediate validation failed");
 
@@ -763,7 +763,7 @@ public class AuthTestHandler : IServiceTestHandler
             await Task.Delay(2000);
 
             // Validate again
-            var validation2 = await authClient.WithAuthorization(token).ValidateTokenAsync();
+            var validation2 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token).ValidateTokenAsync();
             if (!validation2.Valid)
                 return TestResult.Failed($"Validation after 2s delay failed! RemainingTime before: {remainingTime1}");
 
@@ -815,7 +815,7 @@ public class AuthTestHandler : IServiceTestHandler
 
             // Validate all tokens work
             var validationTasks = tokens.Select(t =>
-                authClient.WithAuthorization(t).ValidateTokenAsync()
+                ((IServiceClient<AuthClient>)authClient).WithAuthorization(t).ValidateTokenAsync()
             ).ToList();
 
             var validations = await Task.WhenAll(validationTasks);
@@ -867,7 +867,7 @@ public class AuthTestHandler : IServiceTestHandler
             var token = loginResponse.AccessToken;
 
             // Validate and check RemainingTime
-            var validation = await authClient.WithAuthorization(token).ValidateTokenAsync();
+            var validation = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token).ValidateTokenAsync();
 
             if (!validation.Valid)
                 return TestResult.Failed("Token validation returned Valid=false");

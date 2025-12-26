@@ -8,6 +8,7 @@ namespace BeyondImmersion.BannouService.Subscriptions;
 /// <summary>
 /// Service interface for Subscriptions API
 /// </summary>
+[Obsolete]
 public partial interface ISubscriptionsService : IDaprService
 {
     /// <summary>

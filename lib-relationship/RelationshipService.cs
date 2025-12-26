@@ -19,6 +19,7 @@ namespace BeyondImmersion.BannouService.Relationship;
 /// bidirectional support, and soft-delete capability.
 /// </summary>
 [DaprService("relationship", typeof(IRelationshipService), lifetime: ServiceLifetime.Scoped)]
+[Obsolete]
 public partial class RelationshipService : IRelationshipService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -40,6 +41,7 @@ public partial class RelationshipService : IRelationshipService
     /// <param name="logger">Logger for diagnostic output.</param>
     /// <param name="configuration">Service configuration.</param>
     /// <param name="errorEventEmitter">Error event emitter for publishing error events.</param>
+    [Obsolete]
     public RelationshipService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,

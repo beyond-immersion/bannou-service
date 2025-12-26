@@ -1,10 +1,12 @@
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.HttpTester.Tests;
 using BeyondImmersion.BannouService.Mesh.Services;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Testing;
-using Dapr.Client;
+using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -138,53 +140,32 @@ public class Program
                 builder.SetMinimumLevel(LogLevel.Information);
             });
 
-            // Add Dapr client for service-to-service communication
-            // In CI environment, connect to sidecar container instead of localhost
-            var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT") ?? "http://localhost:3500";
-            Console.WriteLine($"🔗 Configuring DaprClient to use endpoint: {daprHttpEndpoint}");
+            // Configure MassTransit with RabbitMQ for pub/sub communication
+            var rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "rabbitmq";
+            var rabbitPort = ushort.Parse(Environment.GetEnvironmentVariable("RABBITMQ_PORT") ?? "5672");
+            var rabbitUser = Environment.GetEnvironmentVariable("RABBITMQ_USERNAME") ?? "guest";
+            var rabbitPass = Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD") ?? "guest";
 
-            // Test connectivity to the endpoint before configuring DaprClient
-            try
-            {
-                using var httpClient = new HttpClient();
-                var healthUrl = daprHttpEndpoint + "/v1.0/healthz";
-                Console.WriteLine($"🔍 Testing connectivity to: {healthUrl}");
-                var response = await httpClient.GetAsync(healthUrl);
-                Console.WriteLine($"✅ HTTP healthz test successful: {response.StatusCode}");
+            Console.WriteLine($"🔗 Configuring MassTransit to use RabbitMQ at {rabbitHost}:{rabbitPort}");
 
-                // Also test the metadata endpoint that DaprClient uses
-                var metadataUrl = daprHttpEndpoint + "/v1.0/metadata";
-                Console.WriteLine($"🔍 Testing metadata endpoint: {metadataUrl}");
-                var metadataResponse = await httpClient.GetAsync(metadataUrl);
-                Console.WriteLine($"✅ HTTP metadata test successful: {metadataResponse.StatusCode}");
-                var metadataContent = await metadataResponse.Content.ReadAsStringAsync();
-                Console.WriteLine($"📋 Metadata response: {metadataContent.Substring(0, Math.Min(200, metadataContent.Length))}...");
-            }
-            catch (Exception ex)
+            serviceCollection.AddMassTransit(x =>
             {
-                Console.WriteLine($"❌ HTTP connectivity test failed: {ex.Message}");
-                Console.WriteLine($"   Exception type: {ex.GetType().Name}");
-                if (ex.InnerException != null)
+                x.SetKebabCaseEndpointNameFormatter();
+
+                x.UsingRabbitMq((context, cfg) =>
                 {
-                    Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
-                }
-            }
+                    cfg.Host(rabbitHost, rabbitPort, "/", h =>
+                    {
+                        h.Username(rabbitUser);
+                        h.Password(rabbitPass);
+                    });
 
-            serviceCollection.AddDaprClient(daprClientBuilder =>
-            {
-                // Configure both HTTP and gRPC endpoints for bannou-http-tester-dapr
-                var daprGrpcEndpoint = Environment.GetEnvironmentVariable("DAPR_GRPC_ENDPOINT") ?? "http://localhost:50001";
-                Console.WriteLine($"🔧 DaprClient HTTP endpoint: {daprHttpEndpoint}");
-                Console.WriteLine($"🔧 DaprClient gRPC endpoint: {daprGrpcEndpoint}");
-
-                daprClientBuilder.UseHttpEndpoint(daprHttpEndpoint);
-                daprClientBuilder.UseGrpcEndpoint(daprGrpcEndpoint);
-
-                daprClientBuilder.UseJsonSerializationOptions(new System.Text.Json.JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+                    cfg.ConfigureEndpoints(context);
                 });
             });
+
+            // Register IMessageBus for event publishing
+            serviceCollection.AddSingleton<IMessageBus, MassTransitMessageBus>();
 
             // Add Bannou service client infrastructure
             serviceCollection.AddBannouServiceClients();
@@ -222,34 +203,23 @@ public class Program
             // Build the service provider
             ServiceProvider = serviceCollection.BuildServiceProvider();
 
-            // Get DaprClient for readiness check
-            var daprClient = ServiceProvider.GetRequiredService<DaprClient>();
-
-            // Wait for Dapr to be ready before proceeding (same pattern as main Bannou service)
-            if (!await WaitForDaprReadiness(daprClient))
+            // Wait for bannou service to be healthy before proceeding
+            if (!await WaitForServiceHealthAsync())
             {
-                Console.WriteLine("❌ Failed to wait for Dapr readiness");
+                Console.WriteLine("❌ Failed to wait for bannou service health");
                 return false;
             }
 
-            // Wait for pubsub component to be ready (RabbitMQ connectivity)
-            // This ensures event-driven tests will work properly
-            if (!await WaitForPubSubReadiness(daprClient))
+            // Wait for MassTransit to connect to RabbitMQ
+            var messageBus = ServiceProvider.GetRequiredService<IMessageBus>();
+            if (!await WaitForMessagingReadiness(messageBus))
             {
-                Console.WriteLine("❌ Pubsub readiness check failed.");
-                return false;
-            }
-
-            // Wait for statestore component to be ready (Redis connectivity)
-            // This ensures Accounts service tests will work properly
-            if (!await WaitForStateStoreReadiness(daprClient))
-            {
-                Console.WriteLine("❌ Statestore readiness check failed.");
+                Console.WriteLine("❌ Messaging readiness check failed.");
                 return false;
             }
 
             Console.WriteLine("✅ Service provider setup completed successfully");
-            Console.WriteLine("✅ Dapr client connectivity verified");
+            Console.WriteLine("✅ MassTransit connectivity verified");
 
             // Wait for services to register their permissions (signals service readiness)
             // This is more reliable than fixed delays since services only register after startup complete
@@ -270,132 +240,86 @@ public class Program
     }
 
     /// <summary>
-    /// Waits for Dapr to be ready before proceeding with testing.
-    /// Uses the same pattern as the main Bannou service for consistency.
+    /// Waits for the bannou service to be healthy before proceeding with testing.
+    /// Uses HTTP health endpoint instead of Dapr sidecar.
     /// </summary>
-    /// <param name="daprClient">The Dapr client to use for readiness checks.</param>
-    /// <returns>True if Dapr is ready, false if timeout or error occurs.</returns>
-    private static async Task<bool> WaitForDaprReadiness(DaprClient daprClient)
+    /// <returns>True if service is healthy, false if timeout or error occurs.</returns>
+    private static async Task<bool> WaitForServiceHealthAsync()
     {
-        // Use a 60-second timeout for testing scenarios
         var timeout = TimeSpan.FromSeconds(60);
         var checkInterval = TimeSpan.FromSeconds(1);
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var serviceUrl = Environment.GetEnvironmentVariable("BANNOU_SERVICE_URL") ?? "http://bannou:5012";
+        var healthUrl = $"{serviceUrl}/health";
 
-        Console.WriteLine($"Waiting for Dapr to be ready (timeout: {timeout.TotalSeconds}s)...");
+        Console.WriteLine($"Waiting for bannou service to be healthy (timeout: {timeout.TotalSeconds}s)...");
+
+        using var httpClient = new HttpClient();
+        httpClient.Timeout = TimeSpan.FromSeconds(5);
 
         while (stopwatch.Elapsed < timeout)
         {
             try
             {
-                // Try to get Dapr metadata as a basic connectivity check
-                var metadata = await daprClient.GetMetadataAsync();
-                if (metadata != null)
+                var response = await httpClient.GetAsync(healthUrl);
+                if (response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine($"✅ Dapr is ready (sidecar ID: {metadata.Id})");
+                    Console.WriteLine($"✅ Bannou service is healthy at {serviceUrl}");
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"⏳ Dapr readiness check failed, retrying... ({stopwatch.Elapsed.TotalSeconds:F1}s elapsed) - {ex.Message}");
+                var elapsed = stopwatch.Elapsed.TotalSeconds;
+                if (elapsed < 5 || (int)elapsed % 5 == 0)
+                {
+                    Console.WriteLine($"⏳ Service health check failed, retrying... ({elapsed:F1}s elapsed) - {ex.Message}");
+                }
             }
 
             await Task.Delay(checkInterval);
         }
 
-        Console.WriteLine($"❌ Dapr readiness check timed out after {timeout.TotalSeconds}s. Ensure Dapr sidecar is running.");
+        Console.WriteLine($"❌ Service health check timed out after {timeout.TotalSeconds}s.");
         return false;
     }
 
     /// <summary>
-    /// Waits for the Dapr pubsub component to be fully connected to RabbitMQ.
+    /// Waits for MassTransit to be connected to RabbitMQ.
     /// This ensures event-driven tests will work properly.
     /// </summary>
-    /// <param name="daprClient">The Dapr client to use for pubsub checks.</param>
-    /// <returns>True if pubsub is ready, false if timeout or error occurs.</returns>
-    private static async Task<bool> WaitForPubSubReadiness(DaprClient daprClient)
+    /// <param name="messageBus">The message bus to use for connectivity checks.</param>
+    /// <returns>True if messaging is ready, false if timeout or error occurs.</returns>
+    private static async Task<bool> WaitForMessagingReadiness(IMessageBus messageBus)
     {
         var timeout = TimeSpan.FromSeconds(60);
         var checkInterval = TimeSpan.FromSeconds(2);
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        var pubsubName = "bannou-pubsub";
-        var testTopic = "test-connectivity";
 
-        Console.WriteLine($"Waiting for pubsub component '{pubsubName}' to be ready (timeout: {timeout.TotalSeconds}s)...");
+        Console.WriteLine($"Waiting for MassTransit/RabbitMQ to be ready (timeout: {timeout.TotalSeconds}s)...");
 
         while (stopwatch.Elapsed < timeout)
         {
             try
             {
                 // Try to publish a test message to verify RabbitMQ connectivity
-                // This will fail if RabbitMQ isn't connected yet
-                await daprClient.PublishEventAsync(pubsubName, testTopic, new { test = "connectivity-check", timestamp = DateTime.UtcNow });
-                Console.WriteLine($"✅ Pubsub component '{pubsubName}' is ready and connected to RabbitMQ");
+                await messageBus.PublishAsync("test-connectivity", new { test = "connectivity-check", timestamp = DateTime.UtcNow });
+                Console.WriteLine($"✅ MassTransit is ready and connected to RabbitMQ");
                 return true;
             }
             catch (Exception ex)
             {
                 var elapsed = stopwatch.Elapsed.TotalSeconds;
-                // Only log every few seconds to reduce noise
                 if (elapsed < 5 || (int)elapsed % 5 == 0)
                 {
-                    Console.WriteLine($"⏳ Pubsub not ready, retrying... ({elapsed:F1}s elapsed) - {ex.Message}");
+                    Console.WriteLine($"⏳ Messaging not ready, retrying... ({elapsed:F1}s elapsed) - {ex.Message}");
                 }
             }
 
             await Task.Delay(checkInterval);
         }
 
-        Console.WriteLine($"❌ Pubsub readiness check timed out after {timeout.TotalSeconds}s.");
-        return false;
-    }
-
-    /// <summary>
-    /// Waits for the Dapr statestore component to be fully connected to Redis.
-    /// This ensures Accounts service tests will work properly.
-    /// </summary>
-    /// <param name="daprClient">The Dapr client to use for statestore checks.</param>
-    /// <returns>True if statestore is ready, false if timeout or error occurs.</returns>
-    private static async Task<bool> WaitForStateStoreReadiness(DaprClient daprClient)
-    {
-        var timeout = TimeSpan.FromSeconds(60);
-        var checkInterval = TimeSpan.FromSeconds(2);
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        var storeName = "statestore";
-        var testKey = "test-connectivity-check";
-
-        Console.WriteLine($"Waiting for statestore component '{storeName}' to be ready (timeout: {timeout.TotalSeconds}s)...");
-
-        while (stopwatch.Elapsed < timeout)
-        {
-            try
-            {
-                // Try to save and retrieve a test value to verify Redis connectivity
-                await daprClient.SaveStateAsync(storeName, testKey, new { test = "connectivity-check", timestamp = DateTime.UtcNow });
-                var result = await daprClient.GetStateAsync<object>(storeName, testKey);
-                if (result != null)
-                {
-                    // Clean up test key
-                    await daprClient.DeleteStateAsync(storeName, testKey);
-                    Console.WriteLine($"✅ Statestore component '{storeName}' is ready and connected to Redis");
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                var elapsed = stopwatch.Elapsed.TotalSeconds;
-                // Only log every few seconds to reduce noise
-                if (elapsed < 5 || (int)elapsed % 5 == 0)
-                {
-                    Console.WriteLine($"⏳ Statestore not ready, retrying... ({elapsed:F1}s elapsed) - {ex.Message}");
-                }
-            }
-
-            await Task.Delay(checkInterval);
-        }
-
-        Console.WriteLine($"❌ Statestore readiness check timed out after {timeout.TotalSeconds}s.");
+        Console.WriteLine($"❌ Messaging readiness check timed out after {timeout.TotalSeconds}s.");
         return false;
     }
 

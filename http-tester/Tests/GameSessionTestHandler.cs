@@ -1,5 +1,7 @@
 using BeyondImmersion.BannouService.GameSession;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -42,7 +44,7 @@ public class GameSessionTestHandler : IServiceTestHandler
     {
         try
         {
-            var gameSessionClient = new GameSessionClient();
+            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
 
             var createRequest = new CreateGameSessionRequest
             {
@@ -76,7 +78,7 @@ public class GameSessionTestHandler : IServiceTestHandler
     {
         try
         {
-            var gameSessionClient = new GameSessionClient();
+            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
 
             // First create a test session
             var createRequest = new CreateGameSessionRequest
@@ -119,7 +121,7 @@ public class GameSessionTestHandler : IServiceTestHandler
     {
         try
         {
-            var gameSessionClient = new GameSessionClient();
+            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
 
             // Create a few test sessions first
             for (int i = 0; i < 3; i++)
@@ -162,7 +164,7 @@ public class GameSessionTestHandler : IServiceTestHandler
     {
         try
         {
-            var gameSessionClient = new GameSessionClient();
+            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
 
             // First create a test session
             var createRequest = new CreateGameSessionRequest
@@ -206,7 +208,7 @@ public class GameSessionTestHandler : IServiceTestHandler
     {
         try
         {
-            var gameSessionClient = new GameSessionClient();
+            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
 
             // Create and join a session first
             var createRequest = new CreateGameSessionRequest
@@ -244,7 +246,7 @@ public class GameSessionTestHandler : IServiceTestHandler
     {
         try
         {
-            var gameSessionClient = new GameSessionClient();
+            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
 
             // Create a session
             var createRequest = new CreateGameSessionRequest
@@ -297,7 +299,7 @@ public class GameSessionTestHandler : IServiceTestHandler
     {
         try
         {
-            var gameSessionClient = new GameSessionClient();
+            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
 
             // Create a session first
             var createRequest = new CreateGameSessionRequest
@@ -337,7 +339,7 @@ public class GameSessionTestHandler : IServiceTestHandler
     {
         try
         {
-            var gameSessionClient = new GameSessionClient();
+            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
 
             // Create a session first
             var createRequest = new CreateGameSessionRequest
@@ -384,7 +386,7 @@ public class GameSessionTestHandler : IServiceTestHandler
     {
         try
         {
-            var gameSessionClient = new GameSessionClient();
+            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
 
             var getRequest = new GetGameSessionRequest
             {
@@ -415,7 +417,7 @@ public class GameSessionTestHandler : IServiceTestHandler
     {
         try
         {
-            var gameSessionClient = new GameSessionClient();
+            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
 
             // Step 1: Create session
             var createRequest = new CreateGameSessionRequest

@@ -1,6 +1,9 @@
 using System.Text.Json;
 using BeyondImmersion.BannouService.Relationship;
+using BeyondImmersion.BannouService.RelationshipType;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -42,10 +45,10 @@ public class RelationshipTestHandler : IServiceTestHandler
     {
         try
         {
-            var relationshipClient = new RelationshipClient();
+            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
 
             // Create a relationship type first (we need a valid type ID)
-            var relationshipTypeClient = new RelationshipType.RelationshipTypeClient();
+            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {
@@ -95,10 +98,10 @@ public class RelationshipTestHandler : IServiceTestHandler
     {
         try
         {
-            var relationshipClient = new RelationshipClient();
+            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
 
             // Create a relationship type first
-            var relationshipTypeClient = new RelationshipType.RelationshipTypeClient();
+            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {
@@ -144,10 +147,10 @@ public class RelationshipTestHandler : IServiceTestHandler
     {
         try
         {
-            var relationshipClient = new RelationshipClient();
+            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
 
             // Create a relationship type first
-            var relationshipTypeClient = new RelationshipType.RelationshipTypeClient();
+            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {
@@ -210,10 +213,10 @@ public class RelationshipTestHandler : IServiceTestHandler
     {
         try
         {
-            var relationshipClient = new RelationshipClient();
+            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
 
             // Create a relationship type first
-            var relationshipTypeClient = new RelationshipType.RelationshipTypeClient();
+            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {
@@ -264,10 +267,10 @@ public class RelationshipTestHandler : IServiceTestHandler
     {
         try
         {
-            var relationshipClient = new RelationshipClient();
+            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
 
             // Create a relationship type
-            var relationshipTypeClient = new RelationshipType.RelationshipTypeClient();
+            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {
@@ -316,10 +319,10 @@ public class RelationshipTestHandler : IServiceTestHandler
     {
         try
         {
-            var relationshipClient = new RelationshipClient();
+            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
 
             // Create relationship types
-            var relationshipTypeClient = new RelationshipType.RelationshipTypeClient();
+            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
             var type1 = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {
@@ -385,10 +388,10 @@ public class RelationshipTestHandler : IServiceTestHandler
     {
         try
         {
-            var relationshipClient = new RelationshipClient();
+            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
 
             // Create a relationship type
-            var relationshipTypeClient = new RelationshipType.RelationshipTypeClient();
+            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {
@@ -435,7 +438,7 @@ public class RelationshipTestHandler : IServiceTestHandler
     {
         try
         {
-            var relationshipClient = new RelationshipClient();
+            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
 
             try
             {
@@ -464,10 +467,10 @@ public class RelationshipTestHandler : IServiceTestHandler
     {
         try
         {
-            var relationshipClient = new RelationshipClient();
+            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
 
             // Create a relationship type
-            var relationshipTypeClient = new RelationshipType.RelationshipTypeClient();
+            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {
@@ -523,12 +526,12 @@ public class RelationshipTestHandler : IServiceTestHandler
     {
         try
         {
-            var relationshipClient = new RelationshipClient();
+            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
             var testId = DateTime.Now.Ticks;
 
             // Step 1: Create a relationship type
             Console.WriteLine("  Step 1: Creating relationship type...");
-            var relationshipTypeClient = new RelationshipType.RelationshipTypeClient();
+            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {

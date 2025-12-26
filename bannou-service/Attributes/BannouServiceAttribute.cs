@@ -4,15 +4,15 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BeyondImmersion.BannouService.Attributes;
 
 /// <summary>
-/// Attribute for auto-loading dapr services.
+/// Attribute for auto-loading Bannou service plugins.
 /// Use {Name}_SERVICE_ENABLE as ENV or switch to enable/disable.
 /// </summary>
 [AttributeUsage(validOn: AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
-public sealed class DaprServiceAttribute : BaseServiceAttribute
+public class BannouServiceAttribute : BaseServiceAttribute
 {
     /// <summary>
-    /// IDaprService interface type.
-    /// Must implement/inherit IDaprService.
+    /// IBannouService interface type.
+    /// Must implement/inherit IBannouService.
     /// Can be an interface, abstract or concrete class.
     /// If null, will use exact class type.
     ///
@@ -38,23 +38,23 @@ public sealed class DaprServiceAttribute : BaseServiceAttribute
     /// </summary>
     public string Name { get; }
 
-    private DaprServiceAttribute() { }
+    private BannouServiceAttribute() { }
 
     /// <summary>
-    /// Initializes a new instance of the DaprServiceAttribute with the specified configuration.
+    /// Initializes a new instance of the BannouServiceAttribute with the specified configuration.
     /// </summary>
     /// <param name="name">Name of the service.</param>
-    /// <param name="interfaceType">The service interface type (must implement IDaprService).</param>
+    /// <param name="interfaceType">The service interface type (must implement IBannouService).</param>
     /// <param name="priority">Whether this service has automatic priority over other handlers.</param>
     /// <param name="lifetime">How long the service instance lasts (Transient, Scoped, or Singleton).</param>
-    public DaprServiceAttribute(string name, Type? interfaceType = null, bool priority = false, ServiceLifetime lifetime = ServiceLifetime.Singleton)
+    public BannouServiceAttribute(string name, Type? interfaceType = null, bool priority = false, ServiceLifetime lifetime = ServiceLifetime.Singleton)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentNullException(nameof(name));
 
-        // Note: We don't require the interface type to implement IDaprService
+        // Note: We don't require the interface type to implement IBannouService
         // because the interface is for registration, and the implementation class
-        // will implement IDaprService. The validation should be on the implementation type,
+        // will implement IBannouService. The validation should be on the implementation type,
         // not the interface type used for DI registration.
 
         Name = name;
@@ -62,4 +62,18 @@ public sealed class DaprServiceAttribute : BaseServiceAttribute
         InterfaceType = interfaceType;
         Lifetime = lifetime;
     }
+}
+
+/// <summary>
+/// Obsolete alias for backward compatibility. Use <see cref="BannouServiceAttribute"/> instead.
+/// </summary>
+[Obsolete("Use BannouServiceAttribute instead. This alias will be removed in a future version.")]
+[AttributeUsage(validOn: AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+public sealed class DaprServiceAttribute : BannouServiceAttribute
+{
+    /// <summary>
+    /// Initializes a new instance of the DaprServiceAttribute (obsolete alias for BannouServiceAttribute).
+    /// </summary>
+    public DaprServiceAttribute(string name, Type? interfaceType = null, bool priority = false, ServiceLifetime lifetime = ServiceLifetime.Singleton)
+        : base(name, interfaceType, priority, lifetime) { }
 }

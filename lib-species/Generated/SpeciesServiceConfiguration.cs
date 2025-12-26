@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Species;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(SpeciesService))]
+[Obsolete]
 public class SpeciesServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

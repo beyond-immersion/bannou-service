@@ -9,8 +9,6 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
-using Dapr;
-using Dapr.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,6 +31,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// Uses Permissions service for dynamic API discovery and capability management.
 /// </summary>
 [DaprService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton)]
+[Obsolete]
 public partial class ConnectService : IConnectService
 {
     // Static cached header values to avoid per-request allocations
@@ -59,6 +58,7 @@ public partial class ConnectService : IConnectService
     private readonly string _serverSalt;
     private readonly string _instanceId;
 
+    [Obsolete]
     public ConnectService(
         IAuthClient authClient,
         IMeshInvocationClient meshClient,
@@ -1313,24 +1313,20 @@ public partial class ConnectService : IConnectService
     {
         _logger.LogInformation("Registering Connect service RabbitMQ event handlers");
 
-        // Register auth event handler
+        // Register auth event handler (subscribes via MassTransit, not Dapr Topics)
         webApp.MapPost("/events/auth-events", ProcessAuthEventAsync)
-            .WithTopic("bannou-pubsub", "bannou-auth-events")
             .WithMetadata("Connect service auth event handler");
 
         // Register service registration handler
         webApp.MapPost("/events/service-registered", ProcessServiceRegistrationAsync)
-            .WithTopic("bannou-pubsub", "bannou-service-registered")
             .WithMetadata("Connect service registration handler");
 
         // Register client message handler
         webApp.MapPost("/events/client-messages", ProcessClientMessageEventAsync)
-            .WithTopic("bannou-pubsub", "bannou-client-messages")
             .WithMetadata("Connect service client message handler");
 
         // Register client RPC handler
         webApp.MapPost("/events/client-rpc", ProcessClientRPCEventAsync)
-            .WithTopic("bannou-pubsub", "bannou-client-rpc")
             .WithMetadata("Connect service client RPC handler");
 
         _logger.LogInformation("Connect service RabbitMQ event handlers registered successfully");

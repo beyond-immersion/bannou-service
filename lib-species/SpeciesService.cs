@@ -22,6 +22,7 @@ namespace BeyondImmersion.BannouService.Species;
 /// Species are realm-specific, allowing different realms to have distinct populations.
 /// </summary>
 [DaprService("species", typeof(ISpeciesService), lifetime: ServiceLifetime.Scoped)]
+[Obsolete]
 public partial class SpeciesService : ISpeciesService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -37,6 +38,7 @@ public partial class SpeciesService : ISpeciesService
     private const string REALM_INDEX_PREFIX = "realm-index:";
     private const string ALL_SPECIES_KEY = "all-species";
 
+    [Obsolete]
     public SpeciesService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,

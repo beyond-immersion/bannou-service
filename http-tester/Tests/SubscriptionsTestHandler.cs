@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Servicedata;
 using BeyondImmersion.BannouService.Subscriptions;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -35,7 +36,7 @@ public class SubscriptionsTestHandler : IServiceTestHandler
     /// <summary>
     /// Helper to create a test service for subscription tests.
     /// </summary>
-    private static async Task<ServiceInfo?> CreateTestService(ServicedataClient servicedataClient, string stubName)
+    private static async Task<ServiceInfo?> CreateTestService(IServicedataClient servicedataClient, string stubName)
     {
         var createRequest = new CreateServiceRequest
         {
@@ -51,7 +52,7 @@ public class SubscriptionsTestHandler : IServiceTestHandler
     /// <summary>
     /// Helper to create a test account for subscription tests.
     /// </summary>
-    private static async Task<AccountResponse?> CreateTestAccount(AccountsClient accountsClient, string username)
+    private static async Task<AccountResponse?> CreateTestAccount(IAccountsClient accountsClient, string username)
     {
         var createRequest = new CreateAccountRequest
         {
@@ -66,9 +67,9 @@ public class SubscriptionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var subscriptionsClient = new SubscriptionsClient();
-            var servicedataClient = new ServicedataClient();
-            var accountsClient = new AccountsClient();
+            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
+            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testStubName = $"sub-create-{testId}";
@@ -132,9 +133,9 @@ public class SubscriptionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var subscriptionsClient = new SubscriptionsClient();
-            var servicedataClient = new ServicedataClient();
-            var accountsClient = new AccountsClient();
+            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
+            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testStubName = $"sub-get-{testId}";
@@ -188,9 +189,9 @@ public class SubscriptionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var subscriptionsClient = new SubscriptionsClient();
-            var servicedataClient = new ServicedataClient();
-            var accountsClient = new AccountsClient();
+            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
+            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testStubName = $"sub-list-{testId}";
@@ -244,9 +245,9 @@ public class SubscriptionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var subscriptionsClient = new SubscriptionsClient();
-            var servicedataClient = new ServicedataClient();
-            var accountsClient = new AccountsClient();
+            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
+            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testStubName = $"sub-current-{testId}";
@@ -308,9 +309,9 @@ public class SubscriptionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var subscriptionsClient = new SubscriptionsClient();
-            var servicedataClient = new ServicedataClient();
-            var accountsClient = new AccountsClient();
+            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
+            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testStubName = $"sub-update-{testId}";
@@ -360,9 +361,9 @@ public class SubscriptionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var subscriptionsClient = new SubscriptionsClient();
-            var servicedataClient = new ServicedataClient();
-            var accountsClient = new AccountsClient();
+            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
+            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testStubName = $"sub-cancel-{testId}";
@@ -416,9 +417,9 @@ public class SubscriptionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var subscriptionsClient = new SubscriptionsClient();
-            var servicedataClient = new ServicedataClient();
-            var accountsClient = new AccountsClient();
+            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
+            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testStubName = $"sub-renew-{testId}";
@@ -475,8 +476,8 @@ public class SubscriptionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var subscriptionsClient = new SubscriptionsClient();
-            var accountsClient = new AccountsClient();
+            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testUsername = $"subtest-notfound-{testId}";
@@ -520,9 +521,9 @@ public class SubscriptionsTestHandler : IServiceTestHandler
     {
         try
         {
-            var subscriptionsClient = new SubscriptionsClient();
-            var servicedataClient = new ServicedataClient();
-            var accountsClient = new AccountsClient();
+            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
+            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
+            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testStubName = $"sub-dup-{testId}";

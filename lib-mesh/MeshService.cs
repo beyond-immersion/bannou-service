@@ -16,6 +16,7 @@ namespace BeyondImmersion.BannouService.Mesh;
 /// Uses direct Redis connection (NOT Dapr) to avoid circular dependencies.
 /// </summary>
 [DaprService("mesh", typeof(IMeshService), lifetime: ServiceLifetime.Scoped)]
+[Obsolete]
 public partial class MeshService : IMeshService
 {
     private readonly IMessageBus _messageBus;

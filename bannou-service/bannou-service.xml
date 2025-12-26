@@ -95,6 +95,59 @@
             needed to bootstrap DaprClient before configuration system initializes.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Attributes.BannouServiceAttribute">
+            <summary>
+            Attribute for auto-loading Bannou service plugins.
+            Use {Name}_SERVICE_ENABLE as ENV or switch to enable/disable.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.BannouServiceAttribute.InterfaceType">
+             <summary>
+             IBannouService interface type.
+             Must implement/inherit IBannouService.
+             Can be an interface, abstract or concrete class.
+             If null, will use exact class type.
+            
+             MUST match the service pulled from DI in related controllers.
+             </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.BannouServiceAttribute.Lifetime">
+            <summary>
+            How long the service instance lasts.
+            - Transient - One instance per service/reference.
+            - Scoped - One instance per request.
+            - Singleton - Only one instance, re-used each request.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.BannouServiceAttribute.Priority">
+            <summary>
+            Automatic priority over any other handlers.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.BannouServiceAttribute.Name">
+            <summary>
+            Name of the service.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.BannouServiceAttribute.#ctor(System.String,System.Type,System.Boolean,Microsoft.Extensions.DependencyInjection.ServiceLifetime)">
+            <summary>
+            Initializes a new instance of the BannouServiceAttribute with the specified configuration.
+            </summary>
+            <param name="name">Name of the service.</param>
+            <param name="interfaceType">The service interface type (must implement IBannouService).</param>
+            <param name="priority">Whether this service has automatic priority over other handlers.</param>
+            <param name="lifetime">How long the service instance lasts (Transient, Scoped, or Singleton).</param>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Attributes.DaprServiceAttribute">
+            <summary>
+            Obsolete alias for backward compatibility. Use <see cref="T:BeyondImmersion.BannouService.Attributes.BannouServiceAttribute"/> instead.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.DaprServiceAttribute.#ctor(System.String,System.Type,System.Boolean,Microsoft.Extensions.DependencyInjection.ServiceLifetime)">
+            <summary>
+            Initializes a new instance of the DaprServiceAttribute (obsolete alias for BannouServiceAttribute).
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Attributes.BaseServiceAttribute">
             <summary>
             Easy base type for custom attributes.
@@ -136,49 +189,6 @@
             </summary>
             <param name="interfaceType">The service interface type to get the template for.</param>
             <returns>The route template string for the controller.</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Attributes.DaprServiceAttribute">
-            <summary>
-            Attribute for auto-loading dapr services.
-            Use {Name}_SERVICE_ENABLE as ENV or switch to enable/disable.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Attributes.DaprServiceAttribute.InterfaceType">
-             <summary>
-             IDaprService interface type.
-             Must implement/inherit IDaprService.
-             Can be an interface, abstract or concrete class.
-             If null, will use exact class type.
-            
-             MUST match the service pulled from DI in related controllers.
-             </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Attributes.DaprServiceAttribute.Lifetime">
-            <summary>
-            How long the service instance lasts.
-            - Transient - One instance per service/reference.
-            - Scoped - One instance per request.
-            - Singleton - Only one instance, re-used each request.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Attributes.DaprServiceAttribute.Priority">
-            <summary>
-            Automatic priority over any other handlers.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Attributes.DaprServiceAttribute.Name">
-            <summary>
-            Name of the service.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Attributes.DaprServiceAttribute.#ctor(System.String,System.Type,System.Boolean,Microsoft.Extensions.DependencyInjection.ServiceLifetime)">
-            <summary>
-            Initializes a new instance of the DaprServiceAttribute with the specified configuration.
-            </summary>
-            <param name="name">Name of the service.</param>
-            <param name="interfaceType">The service interface type (must implement IDaprService).</param>
-            <param name="priority">Whether this service has automatic priority over other handlers.</param>
-            <param name="lifetime">How long the service instance lasts (Transient, Scoped, or Singleton).</param>
         </member>
         <member name="T:BeyondImmersion.BannouService.Attributes.HeaderArrayAttribute">
             <summary>
@@ -323,6 +333,35 @@
             </summary>
             <param name="serviceImplementation">The service implementation type this configuration is for (required).</param>
             <param name="envPrefix">The prefix for environment variables used by this configuration.</param>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Attributes.TopicAttribute">
+            <summary>
+            Stub Topic attribute for backward compatibility.
+            This replaces Dapr's [Topic] attribute after Dapr removal.
+            Actual pub/sub is handled by MassTransit consumers in lib-messaging.
+            </summary>
+            <remarks>
+            This attribute has no runtime effect - it exists only to allow
+            compilation of legacy event controllers that used Dapr's [Topic].
+            For new pub/sub handling, use MassTransit IConsumer pattern.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.TopicAttribute.PubsubName">
+            <summary>
+            The name of the pub/sub component (legacy, not used).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.TopicAttribute.Name">
+            <summary>
+            The topic name to subscribe to (legacy, not used).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.TopicAttribute.#ctor(System.String,System.String)">
+            <summary>
+            Creates a new Topic attribute.
+            </summary>
+            <param name="pubsubName">The pub/sub component name.</param>
+            <param name="name">The topic name.</param>
         </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.ClientEventNormalizer">
              <summary>
@@ -16312,20 +16351,6 @@
             <param name="json">JSON string to parse</param>
             <returns>Parsed JsonElement</returns>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Middleware.InvokeAppIdRewriteMiddleware">
-            <summary>
-            Rewrites Dapr invoke URLs so generated controllers can handle requests regardless of app-id.
-            Dapr preserves the /v1.0/invoke/{appId}/method/ prefix when forwarding, while our generated
-            controllers are hardcoded to "/v1.0/invoke/bannou/method". This middleware normalizes the path
-            to use the default app-id so routing continues to work even when sidecars run with different IDs.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Middleware.InvokeAppIdRewriteMiddleware.#ctor(Microsoft.AspNetCore.Http.RequestDelegate,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Middleware.InvokeAppIdRewriteMiddleware})">
-            <inheritdoc/>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Middleware.InvokeAppIdRewriteMiddleware.Invoke(Microsoft.AspNetCore.Http.HttpContext)">
-            <inheritdoc/>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin">
             <summary>
             Base implementation of IBannouPlugin that provides default behavior
@@ -17061,9 +17086,9 @@
         <member name="P:BeyondImmersion.BannouService.Services.DaprService`1.Configuration">
             <inheritdoc/>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Services.IDaprService">
+        <member name="T:BeyondImmersion.BannouService.Services.IBannouService">
              <summary>
-             Interface to implement for all internal dapr service,
+             Interface to implement for all Bannou service plugins,
              which provides the logic for any given set of APIs.
             
              For example, the Inventory service is in charge of
@@ -17071,7 +17096,7 @@
              data in the game.
              </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Services.IDaprService.InstanceId">
+        <member name="P:BeyondImmersion.BannouService.Services.IBannouService.InstanceId">
             <summary>
             Unique instance identifier for this service plugin.
             Used for log correlation and debugging across distributed systems.
@@ -17079,13 +17104,13 @@
             Default implementation generates a GUID on first access.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Services.IDaprService.ServiceVersion">
+        <member name="P:BeyondImmersion.BannouService.Services.IBannouService.ServiceVersion">
             <summary>
             Gets the service version string for heartbeat reporting.
             Override to provide a custom version. Default returns "1.0.0".
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.OnHeartbeat">
+        <member name="M:BeyondImmersion.BannouService.Services.IBannouService.OnHeartbeat">
             <summary>
             Called during heartbeat collection to gather service-specific status and metadata.
             Override to provide custom status reporting, capacity info, or metadata.
@@ -17093,9 +17118,9 @@
             </summary>
             <returns>ServiceStatus with this service's current health information</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.OnEventReceivedAsync``1(System.String,``0)">
+        <member name="M:BeyondImmersion.BannouService.Services.IBannouService.OnEventReceivedAsync``1(System.String,``0)">
             <summary>
-            Called when a Dapr event is received by this service.
+            Called when a pub/sub event is received by this service.
             Override in service implementations to handle specific events.
             Default implementation does nothing.
             </summary>
@@ -17104,41 +17129,41 @@
             <param name="eventData">The event data payload</param>
             <returns>Task representing the event handling operation</returns>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Services.IDaprService.Services">
+        <member name="P:BeyondImmersion.BannouService.Services.IBannouService.Services">
             <summary>
             Gets all discovered service types with their attributes.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Services.IDaprService.EnabledServices">
+        <member name="P:BeyondImmersion.BannouService.Services.IBannouService.EnabledServices">
             <summary>
             Gets all enabled service types (not disabled via configuration).
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Services.IDaprService.ServiceAppMappings">
+        <member name="P:BeyondImmersion.BannouService.Services.IBannouService.ServiceAppMappings">
              <summary>
-             Lookup for mapping applications to services in the Dapr network.
+             Lookup for mapping applications to services in the Bannou network.
              Is applied as an override to hardcoded and configurable network_mode presets.
             
-             <seealso cref="P:BeyondImmersion.BannouService.Services.IDaprService.NetworkModePresets"/>
+             <seealso cref="P:BeyondImmersion.BannouService.Services.IBannouService.NetworkModePresets"/>
              </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Services.IDaprService.NetworkModePresets">
+        <member name="P:BeyondImmersion.BannouService.Services.IBannouService.NetworkModePresets">
              <summary>
              The service->application name mappings for the network.
              Specific to the network mode that's been configured.
             
              Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
              mappings to use.
-             <seealso cref="P:BeyondImmersion.BannouService.Services.IDaprService.ServiceAppMappings"/>
+             <seealso cref="P:BeyondImmersion.BannouService.Services.IBannouService.ServiceAppMappings"/>
              </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.OnStartAsync(System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IBannouService.OnStartAsync(System.Threading.CancellationToken)">
             <summary>
             Called when the service is starting up. Override to implement custom startup logic.
             </summary>
             <param name="token">Cancellation token for startup timeout.</param>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.OnStartAsync(Microsoft.AspNetCore.Builder.WebApplication,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IBannouService.OnStartAsync(Microsoft.AspNetCore.Builder.WebApplication,System.Threading.CancellationToken)">
             <summary>
             Called when the service is starting up with access to the WebApplication.
             Override to register minimal API endpoints or other startup logic requiring the web app.
@@ -17146,24 +17171,24 @@
             <param name="webApp">The WebApplication instance for registering endpoints.</param>
             <param name="token">Cancellation token for startup timeout.</param>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.OnRunningAsync(System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IBannouService.OnRunningAsync(System.Threading.CancellationToken)">
             <summary>
             Called when the service is running and ready. Override to implement background processing.
             </summary>
             <param name="token">Cancellation token for shutdown.</param>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.OnShutdownAsync">
+        <member name="M:BeyondImmersion.BannouService.Services.IBannouService.OnShutdownAsync">
             <summary>
             Called when the service is shutting down. Override to implement cleanup logic.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.GetName">
+        <member name="M:BeyondImmersion.BannouService.Services.IBannouService.GetName">
             <summary>
             Gets the service name from the service type attributes.
             </summary>
             <returns>The service name if found, otherwise null.</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.RegisterServicePermissionsAsync">
+        <member name="M:BeyondImmersion.BannouService.Services.IBannouService.RegisterServicePermissionsAsync">
             <summary>
             Registers service permissions with the Permissions service on startup.
             This method is automatically called by PluginLoader and should be generated
@@ -17172,9 +17197,9 @@
             </summary>
             <returns>Task representing the registration operation</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.RegisterEventConsumers(BeyondImmersion.BannouService.Events.IEventConsumer)">
+        <member name="M:BeyondImmersion.BannouService.Services.IBannouService.RegisterEventConsumers(BeyondImmersion.BannouService.Events.IEventConsumer)">
             <summary>
-            Registers event consumers for Dapr pub/sub events this service wants to handle.
+            Registers event consumers for pub/sub events this service wants to handle.
             This method should be called from the service constructor with the injected IEventConsumer.
             Override in {Service}ServiceEvents.cs partial class to register event handlers.
             Generated by generate-event-subscriptions.sh based on x-subscribes-to in OpenAPI schema.
@@ -17183,41 +17208,46 @@
             <remarks>
             Handler registration is idempotent - calling multiple times with the same handler key
             will only register once. Handlers are invoked when any plugin's EventsController
-            receives the corresponding Dapr topic event.
+            receives the corresponding topic event.
             </remarks>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.IsDisabled">
+        <member name="M:BeyondImmersion.BannouService.Services.IBannouService.IsDisabled">
             <summary>
             Returns whether the configuration indicates the service should be disabled.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.IsDisabled``1">
+        <member name="M:BeyondImmersion.BannouService.Services.IBannouService.IsDisabled``1">
             <summary>
             Returns whether the configuration indicates the service should be enabled.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.IsDisabled(System.Type)">
+        <member name="M:BeyondImmersion.BannouService.Services.IBannouService.IsDisabled(System.Type)">
             <summary>
             Returns whether the configuration indicates the service should be disabled.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.IsDisabled(System.String)">
+        <member name="M:BeyondImmersion.BannouService.Services.IBannouService.IsDisabled(System.String)">
             <summary>
             Returns whether the configuration indicates the service should be disabled.
             Uses the two-mode enable/disable system based on SERVICES_ENABLED environment variable.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.GetServiceInfo(System.String)">
+        <member name="M:BeyondImmersion.BannouService.Services.IBannouService.GetServiceInfo(System.String)">
             <summary>
             Find the highest priority/derived service type with the given name.
             </summary>
             <returns>Interface Type, Implementation Type, Service Attribute</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.GetServiceInfo(System.Type)">
+        <member name="M:BeyondImmersion.BannouService.Services.IBannouService.GetServiceInfo(System.Type)">
             <summary>
             Find the implementation for the given service handler.
             </summary>
             <returns>Interface Type, Implementation Type, Service Attribute</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Services.IDaprService">
+            <summary>
+            Obsolete alias for backward compatibility. Use <see cref="T:BeyondImmersion.BannouService.Services.IBannouService"/> instead.
+            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.ILockResponse">
             <summary>

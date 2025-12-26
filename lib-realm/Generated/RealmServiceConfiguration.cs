@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Realm;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(RealmService))]
+[Obsolete]
 public class RealmServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

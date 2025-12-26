@@ -31,6 +31,7 @@ namespace BeyondImmersion.BannouService.Auth;
 /// Follows schema-first architecture - implements generated IAuthService interface.
 /// </summary>
 [DaprService("auth", typeof(IAuthService), lifetime: ServiceLifetime.Scoped)]
+[Obsolete]
 public partial class AuthService : IAuthService
 {
     private readonly IAccountsClient _accountsClient;

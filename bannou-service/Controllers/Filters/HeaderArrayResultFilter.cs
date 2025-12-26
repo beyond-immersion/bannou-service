@@ -23,6 +23,7 @@ public class HeaderArrayResultFilter : IResultFilter
     /// Called after the result is executed to restore header array properties.
     /// </summary>
     /// <param name="context">The result executed context.</param>
+    [Obsolete]
     public void OnResultExecuted(ResultExecutedContext context)
     {
         if (context.Result is ObjectResult objectResult && objectResult?.Value != null)

@@ -19,6 +19,7 @@ namespace BeyondImmersion.BannouService.Realm;
 /// Each realm operates as an independent peer with distinct characteristics.
 /// </summary>
 [DaprService("realm", typeof(IRealmService), lifetime: ServiceLifetime.Scoped)]
+[Obsolete]
 public partial class RealmService : IRealmService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -31,6 +32,7 @@ public partial class RealmService : IRealmService
     private const string CODE_INDEX_PREFIX = "code-index:";
     private const string ALL_REALMS_KEY = "all-realms";
 
+    [Obsolete]
     public RealmService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,

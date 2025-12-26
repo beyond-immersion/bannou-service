@@ -24,6 +24,7 @@ public class AssetServicePlugin : BaseBannouPlugin
     public override string PluginName => "asset";
     public override string DisplayName => "Asset Service";
 
+    [Obsolete]
     private IAssetService? _service;
     private IServiceProvider? _serviceProvider;
 
@@ -138,6 +139,7 @@ public class AssetServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Start the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting Asset service");
@@ -265,6 +267,7 @@ public class AssetServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Running phase - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -289,6 +292,7 @@ public class AssetServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Shutdown the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;

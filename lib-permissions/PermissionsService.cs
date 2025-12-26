@@ -26,6 +26,7 @@ namespace BeyondImmersion.BannouService.Permissions;
 /// Uses Dapr state store for atomic operations and Redis-backed data structures.
 /// </summary>
 [DaprService("permissions", typeof(IPermissionsService), lifetime: ServiceLifetime.Singleton)]
+[Obsolete]
 public partial class PermissionsService : IPermissionsService
 {
     private readonly ILogger<PermissionsService> _logger;

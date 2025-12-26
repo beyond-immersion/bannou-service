@@ -15,7 +15,7 @@ public class WebsiteServicePlugin : BaseBannouPlugin
     public override string PluginName => "website";
     public override string DisplayName => "Website Service";
 
-
+    [Obsolete]
     private IWebsiteService? _service;
     private IServiceProvider? _serviceProvider;
 
@@ -59,6 +59,7 @@ public class WebsiteServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Start the service - uses centrally resolved service from PluginLoader.
     /// </summary>
+    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting service");
@@ -95,6 +96,7 @@ public class WebsiteServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Running phase - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -119,6 +121,7 @@ public class WebsiteServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Shutdown the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;

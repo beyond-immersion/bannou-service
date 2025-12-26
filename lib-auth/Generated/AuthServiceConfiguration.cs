@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Auth;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(AuthService))]
+[Obsolete]
 public class AuthServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

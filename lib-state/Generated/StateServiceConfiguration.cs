@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.State;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(StateService))]
+[Obsolete]
 public class StateServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

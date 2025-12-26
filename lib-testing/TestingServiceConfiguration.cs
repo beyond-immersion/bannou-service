@@ -7,6 +7,7 @@ namespace BeyondImmersion.BannouService.Testing;
 /// Configuration class for lib-testing TestingService plugin.
 /// </summary>
 [ServiceConfiguration(typeof(TestingService))]
+[Obsolete]
 public class TestingServiceConfiguration : IServiceConfiguration
 {
     public bool EnableDebugLogging { get; set; } = true;

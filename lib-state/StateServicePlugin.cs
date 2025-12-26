@@ -16,6 +16,7 @@ public class StateServicePlugin : BaseBannouPlugin
     public override string PluginName => "state";
     public override string DisplayName => "State Service";
 
+    [Obsolete]
     private IStateService? _service;
     private IServiceProvider? _serviceProvider;
 
@@ -109,6 +110,7 @@ public class StateServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Start the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting State service");
@@ -146,6 +148,7 @@ public class StateServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Running phase - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -170,6 +173,7 @@ public class StateServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Shutdown the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;

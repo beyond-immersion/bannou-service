@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Mesh;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(MeshService))]
+[Obsolete]
 public class MeshServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

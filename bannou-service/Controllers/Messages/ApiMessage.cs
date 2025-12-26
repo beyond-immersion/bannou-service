@@ -57,6 +57,7 @@ public abstract class ApiMessage
     /// Maps HTTP headers to properties marked with HeaderArrayAttribute.
     /// </summary>
     /// <param name="headers">The HTTP headers to map to properties.</param>
+    [Obsolete]
     public virtual void SetHeadersToProperties(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
     {
         if (headers == null || !headers.Any())
@@ -91,6 +92,7 @@ public abstract class ApiMessage
     /// Converts properties marked with HeaderArrayAttribute to HTTP header arrays.
     /// </summary>
     /// <returns>Array of header name and value pairs.</returns>
+    [Obsolete]
     public virtual (string, string[])[] SetPropertiesToHeaders()
     {
         var messageType = GetType();
@@ -121,6 +123,7 @@ public abstract class ApiMessage
     /// <param name="value">The property value to convert.</param>
     /// <param name="headerAttr">The HeaderArrayAttribute containing configuration.</param>
     /// <returns>Array of header name and value pairs.</returns>
+    [Obsolete]
     public static (string, string[])[] SetHeaderArrayPropertyToHeaders(PropertyInfo propertyInfo, object value, HeaderArrayAttribute headerAttr)
     {
         var headersToSet = new List<(string, string[])>();
@@ -230,6 +233,7 @@ public abstract class ApiMessage
     /// <param name="headers">The header values to parse.</param>
     /// <param name="propertyAttr">The HeaderArrayAttribute containing parsing configuration.</param>
     /// <returns>The parsed property value or null if parsing fails.</returns>
+    [Obsolete]
     public static object? BuildPropertyValueFromHeaders(Type propertyType, IEnumerable<string> headers, HeaderArrayAttribute propertyAttr)
     {
         if (headers == null || !headers.Any())
@@ -287,6 +291,7 @@ public abstract class ApiMessage
         return null;
     }
 
+    [Obsolete]
     private static object? BuildArrayFromHeaders(Type propertyType, IEnumerable<string> headers, string delim)
     {
         try
@@ -403,6 +408,7 @@ public abstract class ApiMessage
         return null;
     }
 
+    [Obsolete]
     private static object? BuildListFromHeaders(Type propertyType, IEnumerable<string> headers, string delim)
     {
         try
@@ -519,6 +525,7 @@ public abstract class ApiMessage
         return null;
     }
 
+    [Obsolete]
     private static object? BuildDictionaryFromHeaders(Type propertyType, IEnumerable<string> headers, string delim)
     {
         try

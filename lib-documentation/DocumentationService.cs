@@ -18,6 +18,7 @@ namespace BeyondImmersion.BannouService.Documentation;
 /// Uses IStateStoreFactory for persistence.
 /// </summary>
 [DaprService("documentation", typeof(IDocumentationService), lifetime: ServiceLifetime.Scoped)]
+[Obsolete]
 public partial class DocumentationService : IDocumentationService
 {
     private readonly IStateStoreFactory _stateStoreFactory;

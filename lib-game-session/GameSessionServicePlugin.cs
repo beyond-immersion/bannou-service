@@ -15,6 +15,7 @@ public class GameSessionServicePlugin : BaseBannouPlugin
     public override string PluginName => "game-session";
     public override string DisplayName => "GameSession Service";
 
+    [Obsolete]
     private IGameSessionService? _service;
     private IServiceProvider? _serviceProvider;
 
@@ -61,6 +62,7 @@ public class GameSessionServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Start the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting service");
@@ -97,6 +99,7 @@ public class GameSessionServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Running phase - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -121,6 +124,7 @@ public class GameSessionServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Shutdown the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;

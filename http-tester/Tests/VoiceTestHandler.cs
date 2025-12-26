@@ -1,5 +1,7 @@
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
 using BeyondImmersion.BannouService.Voice;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -57,7 +59,7 @@ a=sendrecv";
     {
         try
         {
-            var voiceClient = new VoiceClient();
+            var voiceClient = Program.ServiceProvider!.GetRequiredService<IVoiceClient>();
 
             var createRequest = new CreateVoiceRoomRequest
             {
@@ -91,7 +93,7 @@ a=sendrecv";
     {
         try
         {
-            var voiceClient = new VoiceClient();
+            var voiceClient = Program.ServiceProvider!.GetRequiredService<IVoiceClient>();
 
             // First create a test room
             var createRequest = new CreateVoiceRoomRequest
@@ -129,7 +131,7 @@ a=sendrecv";
     {
         try
         {
-            var voiceClient = new VoiceClient();
+            var voiceClient = Program.ServiceProvider!.GetRequiredService<IVoiceClient>();
 
             // First create a test room
             var createRequest = new CreateVoiceRoomRequest
@@ -180,7 +182,7 @@ a=sendrecv";
     {
         try
         {
-            var voiceClient = new VoiceClient();
+            var voiceClient = Program.ServiceProvider!.GetRequiredService<IVoiceClient>();
 
             // Create and join a room first
             var createRequest = new CreateVoiceRoomRequest
@@ -232,7 +234,7 @@ a=sendrecv";
     {
         try
         {
-            var voiceClient = new VoiceClient();
+            var voiceClient = Program.ServiceProvider!.GetRequiredService<IVoiceClient>();
 
             // Create and join a room first
             var createRequest = new CreateVoiceRoomRequest
@@ -284,7 +286,7 @@ a=sendrecv";
     {
         try
         {
-            var voiceClient = new VoiceClient();
+            var voiceClient = Program.ServiceProvider!.GetRequiredService<IVoiceClient>();
 
             // Create a room first
             var createRequest = new CreateVoiceRoomRequest
@@ -335,7 +337,7 @@ a=sendrecv";
     {
         try
         {
-            var voiceClient = new VoiceClient();
+            var voiceClient = Program.ServiceProvider!.GetRequiredService<IVoiceClient>();
 
             var getRequest = new GetVoiceRoomRequest
             {
@@ -366,7 +368,7 @@ a=sendrecv";
     {
         try
         {
-            var voiceClient = new VoiceClient();
+            var voiceClient = Program.ServiceProvider!.GetRequiredService<IVoiceClient>();
 
             // Step 1: Create room
             var createRequest = new CreateVoiceRoomRequest

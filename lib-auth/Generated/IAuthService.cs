@@ -8,6 +8,7 @@ namespace BeyondImmersion.BannouService.Auth;
 /// <summary>
 /// Service interface for Auth API
 /// </summary>
+[Obsolete]
 public partial interface IAuthService : IDaprService
 {
     /// <summary>

@@ -15,6 +15,7 @@ public class ServicedataServicePlugin : BaseBannouPlugin
     public override string PluginName => "servicedata";
     public override string DisplayName => "Servicedata Service";
 
+    [Obsolete]
     private IServicedataService? _service;
     private IServiceProvider? _serviceProvider;
 
@@ -53,6 +54,7 @@ public class ServicedataServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Start the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting Servicedata service");
@@ -90,6 +92,7 @@ public class ServicedataServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Running phase - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -114,6 +117,7 @@ public class ServicedataServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Shutdown the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;

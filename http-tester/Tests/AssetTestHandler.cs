@@ -1,5 +1,7 @@
 using BeyondImmersion.BannouService.Asset;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http.Headers;
 using System.Text;
 
@@ -49,7 +51,7 @@ public class AssetTestHandler : IServiceTestHandler
     /// Helper to upload a test asset and return its metadata.
     /// Uses application/json content type to avoid processor pipeline.
     /// </summary>
-    private static async Task<AssetMetadata?> UploadTestAsset(AssetClient client, string testName, AssetType assetType = AssetType.Behavior, Asset.Realm realm = Asset.Realm.Arcadia)
+    private static async Task<AssetMetadata?> UploadTestAsset(IAssetClient client, string testName, AssetType assetType = AssetType.Behavior, Asset.Realm realm = Asset.Realm.Arcadia)
     {
         var testContent = $"{{\"test\": \"{testName}\", \"timestamp\": \"{DateTime.UtcNow:O}\"}}";
         var testBytes = Encoding.UTF8.GetBytes(testContent);
@@ -93,7 +95,7 @@ public class AssetTestHandler : IServiceTestHandler
     {
         try
         {
-            var assetClient = new AssetClient();
+            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
 
             var request = new UploadRequest
             {
@@ -135,7 +137,7 @@ public class AssetTestHandler : IServiceTestHandler
     {
         try
         {
-            var assetClient = new AssetClient();
+            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
 
             var metadata = await UploadTestAsset(assetClient, "complete-flow");
 
@@ -164,7 +166,7 @@ public class AssetTestHandler : IServiceTestHandler
     {
         try
         {
-            var assetClient = new AssetClient();
+            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
 
             // First upload a test asset
             var uploadedMetadata = await UploadTestAsset(assetClient, "get-asset");
@@ -205,7 +207,7 @@ public class AssetTestHandler : IServiceTestHandler
     {
         try
         {
-            var assetClient = new AssetClient();
+            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
 
             // First upload a test asset
             var uploadedMetadata = await UploadTestAsset(assetClient, "list-versions");
@@ -247,7 +249,7 @@ public class AssetTestHandler : IServiceTestHandler
     {
         try
         {
-            var assetClient = new AssetClient();
+            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
 
             // First upload a test asset with specific tags
             var uploadedMetadata = await UploadTestAsset(assetClient, "search-test");
@@ -291,7 +293,7 @@ public class AssetTestHandler : IServiceTestHandler
     {
         try
         {
-            var assetClient = new AssetClient();
+            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
 
             // Upload two test assets for bundling
             var asset1 = await UploadTestAsset(assetClient, "bundle-asset-1");
@@ -335,7 +337,7 @@ public class AssetTestHandler : IServiceTestHandler
     {
         try
         {
-            var assetClient = new AssetClient();
+            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
 
             // First create a bundle
             var asset1 = await UploadTestAsset(assetClient, "get-bundle-asset-1");
@@ -391,7 +393,7 @@ public class AssetTestHandler : IServiceTestHandler
     {
         try
         {
-            var assetClient = new AssetClient();
+            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
 
             var request = new BundleUploadRequest
             {
@@ -432,7 +434,7 @@ public class AssetTestHandler : IServiceTestHandler
     {
         try
         {
-            var assetClient = new AssetClient();
+            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
 
             var request = new GetAssetRequest
             {
@@ -463,7 +465,7 @@ public class AssetTestHandler : IServiceTestHandler
     {
         try
         {
-            var assetClient = new AssetClient();
+            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
 
             var request = new GetBundleRequest
             {
@@ -495,7 +497,7 @@ public class AssetTestHandler : IServiceTestHandler
     {
         try
         {
-            var assetClient = new AssetClient();
+            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
 
             // Step 1: Upload multiple assets
             Console.WriteLine("  Step 1: Uploading test assets...");

@@ -14,7 +14,7 @@ info:
     See docs/planning/UPCOMING_PROPOSED_-_DAPR_REPLACEMENT_PLUGIN.md for design rationale.
   version: 1.0.0
 servers:
-- url: http://localhost:3500/v1.0/invoke/bannou/method
+- url: http://localhost:5012
   description: Dapr sidecar endpoint
 
 paths:

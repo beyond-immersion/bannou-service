@@ -31,7 +31,7 @@ info:
     though admin CRUD operations are available for runtime modifications.
   version: 2.0.0
 servers:
-- url: http://localhost:3500/v1.0/invoke/bannou/method
+- url: http://localhost:5012
   description: Dapr sidecar endpoint (internal only)
 
 # NOTE: x-lifecycle moved to relationship-type-events.yaml

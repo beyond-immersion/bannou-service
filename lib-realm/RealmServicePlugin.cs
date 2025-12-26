@@ -15,6 +15,7 @@ public class RealmServicePlugin : BaseBannouPlugin
     public override string PluginName => "realm";
     public override string DisplayName => "Realm Service";
 
+    [Obsolete]
     private IRealmService? _service;
     private IServiceProvider? _serviceProvider;
 
@@ -56,6 +57,7 @@ public class RealmServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Start the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting service");
@@ -92,6 +94,7 @@ public class RealmServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Running phase - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -116,6 +119,7 @@ public class RealmServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Shutdown the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;

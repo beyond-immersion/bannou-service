@@ -61,7 +61,7 @@ public class ConnectTestHandler : IServiceTestHandler
     {
         try
         {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
             var response = await connectClient.GetClientCapabilitiesAsync(new GetClientCapabilitiesRequest());
 
             if (response == null)
@@ -103,7 +103,7 @@ public class ConnectTestHandler : IServiceTestHandler
     {
         try
         {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
             var response = await connectClient.GetClientCapabilitiesAsync(new GetClientCapabilitiesRequest());
 
             // Check required fields exist
@@ -160,7 +160,7 @@ public class ConnectTestHandler : IServiceTestHandler
     {
         try
         {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"test-session-{DateTime.Now.Ticks}";
 
             var proxyRequest = new InternalProxyRequest
@@ -209,7 +209,7 @@ public class ConnectTestHandler : IServiceTestHandler
     {
         try
         {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-invalid-{Guid.NewGuid():N}";
 
             var proxyRequest = new InternalProxyRequest
@@ -255,7 +255,7 @@ public class ConnectTestHandler : IServiceTestHandler
     {
         try
         {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
 
             var proxyRequest = new InternalProxyRequest
             {
@@ -300,7 +300,7 @@ public class ConnectTestHandler : IServiceTestHandler
     {
         try
         {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-methods-{Guid.NewGuid():N}";
 
             var methods = new[]
@@ -370,7 +370,7 @@ public class ConnectTestHandler : IServiceTestHandler
     {
         try
         {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-body-{Guid.NewGuid():N}";
 
             var proxyRequest = new InternalProxyRequest
@@ -416,7 +416,7 @@ public class ConnectTestHandler : IServiceTestHandler
     {
         try
         {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-headers-{Guid.NewGuid():N}";
 
             var proxyRequest = new InternalProxyRequest
@@ -462,7 +462,7 @@ public class ConnectTestHandler : IServiceTestHandler
     {
         try
         {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-empty-{Guid.NewGuid():N}";
 
             var proxyRequest = new InternalProxyRequest
@@ -508,7 +508,7 @@ public class ConnectTestHandler : IServiceTestHandler
     {
         try
         {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-accounts-{Guid.NewGuid():N}";
 
             var proxyRequest = new InternalProxyRequest
@@ -587,7 +587,7 @@ public class ConnectTestHandler : IServiceTestHandler
                 return TestResult.Failed("Login failed to return access token");
 
             // This is what Connect service calls internally when validating WebSocket upgrade
-            var validation = await authClient.WithAuthorization(token).ValidateTokenAsync();
+            var validation = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token).ValidateTokenAsync();
 
             if (!validation.Valid)
                 return TestResult.Failed($"Token validation failed for WebSocket upgrade simulation. Valid={validation.Valid}, SessionId={validation.SessionId}, RemainingTime={validation.RemainingTime}");
@@ -634,7 +634,7 @@ public class ConnectTestHandler : IServiceTestHandler
                 Password = "TestPassword123!"
             });
 
-            var validation = await authClient.WithAuthorization(loginResponse.AccessToken).ValidateTokenAsync();
+            var validation = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(loginResponse.AccessToken).ValidateTokenAsync();
 
             // Check all required fields for Connect service
             var issues = new List<string>();
@@ -701,7 +701,7 @@ public class ConnectTestHandler : IServiceTestHandler
             var results = new List<(bool Valid, int RemainingTime)>();
             for (int i = 0; i < 10; i++)
             {
-                var validation = await authClient.WithAuthorization(token).ValidateTokenAsync();
+                var validation = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token).ValidateTokenAsync();
                 results.Add((validation.Valid, validation.RemainingTime));
 
                 // Small delay between validations
@@ -763,7 +763,7 @@ public class ConnectTestHandler : IServiceTestHandler
             var token1 = loginResponse1.AccessToken;
 
             // Validate initial session
-            var validation1 = await authClient.WithAuthorization(token1).ValidateTokenAsync();
+            var validation1 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token1).ValidateTokenAsync();
             if (!validation1.Valid || validation1.RemainingTime <= 0)
                 return TestResult.Failed($"Initial validation failed: Valid={validation1.Valid}, RT={validation1.RemainingTime}");
 
@@ -775,10 +775,10 @@ public class ConnectTestHandler : IServiceTestHandler
             var loginResponse3 = await authClient.LoginAsync(new LoginRequest { Email = email, Password = password });
 
             // 3. Logout third session (simulating Logout test)
-            await authClient.WithAuthorization(loginResponse3.AccessToken).LogoutAsync(new LogoutRequest { AllSessions = false });
+            await ((IServiceClient<AuthClient>)authClient).WithAuthorization(loginResponse3.AccessToken).LogoutAsync(new LogoutRequest { AllSessions = false });
 
             // Now validate the ORIGINAL session - this is what WebSocket tests do
-            var validation2 = await authClient.WithAuthorization(token1).ValidateTokenAsync();
+            var validation2 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token1).ValidateTokenAsync();
 
             if (!validation2.Valid)
             {
@@ -791,7 +791,7 @@ public class ConnectTestHandler : IServiceTestHandler
             }
 
             // Also validate second session is still valid
-            var validation3 = await authClient.WithAuthorization(loginResponse2.AccessToken).ValidateTokenAsync();
+            var validation3 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(loginResponse2.AccessToken).ValidateTokenAsync();
             if (!validation3.Valid || validation3.RemainingTime <= 0)
             {
                 return TestResult.Failed($"Second session invalid after logout of third: Valid={validation3.Valid}, RT={validation3.RemainingTime}");

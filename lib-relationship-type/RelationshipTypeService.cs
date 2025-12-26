@@ -19,6 +19,7 @@ namespace BeyondImmersion.BannouService.RelationshipType;
 /// Manages hierarchical relationship types for character relationships.
 /// </summary>
 [DaprService("relationship-type", typeof(IRelationshipTypeService), lifetime: ServiceLifetime.Scoped)]
+[Obsolete]
 public partial class RelationshipTypeService : IRelationshipTypeService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -33,6 +34,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     private const string PARENT_INDEX_PREFIX = "parent-index:";
     private const string ALL_TYPES_KEY = "all-types";
 
+    [Obsolete]
     public RelationshipTypeService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,

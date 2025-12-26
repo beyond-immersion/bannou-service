@@ -1,5 +1,7 @@
 using BeyondImmersion.BannouService.Documentation;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -54,7 +56,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
 
             var createRequest = new CreateDocumentRequest
             {
@@ -90,7 +92,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
 
             // Create a document first
             var createRequest = new CreateDocumentRequest
@@ -132,7 +134,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
 
             // Create a document first
             var slug = $"slug-test-{DateTime.Now.Ticks}";
@@ -172,7 +174,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
 
             // Create a document
             var createRequest = new CreateDocumentRequest
@@ -223,7 +225,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
 
             // Create a document
             var createRequest = new CreateDocumentRequest
@@ -276,7 +278,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
             var testNamespace = $"list-test-{DateTime.Now.Ticks}";
 
             // Create some documents with category (required for filtering)
@@ -319,7 +321,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
             var testNamespace = $"query-test-{DateTime.Now.Ticks}";
 
             // Create a document with specific content
@@ -357,7 +359,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
             var testNamespace = $"search-test-{DateTime.Now.Ticks}";
 
             // Create documents with searchable content
@@ -395,7 +397,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
             var testNamespace = $"suggest-test-{DateTime.Now.Ticks}";
 
             // Create related documents
@@ -446,7 +448,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
 
             // Create and delete a document
             var created = await docClient.CreateDocumentAsync(new CreateDocumentRequest
@@ -499,7 +501,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
             var testNamespace = $"trashcan-list-{DateTime.Now.Ticks}";
 
             // Create and delete some documents
@@ -548,7 +550,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
             var testNamespace = $"purge-test-{DateTime.Now.Ticks}";
 
             // Create and delete a document
@@ -608,7 +610,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
             var testNamespace = $"bulk-update-{DateTime.Now.Ticks}";
 
             // Create some documents
@@ -654,7 +656,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
             var testNamespace = $"bulk-delete-{DateTime.Now.Ticks}";
 
             // Create some documents
@@ -697,7 +699,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
             var testNamespace = $"import-test-{DateTime.Now.Ticks}";
 
             // Import documents
@@ -744,7 +746,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
             var testNamespace = $"stats-test-{DateTime.Now.Ticks}";
 
             // Create some documents
@@ -786,7 +788,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
 
             try
             {
@@ -816,7 +818,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
             var slug = $"duplicate-test-{DateTime.Now.Ticks}";
 
             // Create first document
@@ -859,7 +861,7 @@ public class DocumentationTestHandler : IServiceTestHandler
     {
         try
         {
-            var docClient = new DocumentationClient();
+            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
             var testId = DateTime.Now.Ticks;
             var testNamespace = $"lifecycle-{testId}";
 

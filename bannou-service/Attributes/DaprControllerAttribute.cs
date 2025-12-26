@@ -19,6 +19,7 @@ public class DaprControllerAttribute : RouteAttribute, IServiceAttribute
     /// Initializes a new instance of the DaprControllerAttribute with the specified interface type.
     /// </summary>
     /// <param name="interfaceType">The service interface type this controller is for.</param>
+    [Obsolete]
     public DaprControllerAttribute(Type? interfaceType = null)
         : this(GetControllerTemplate(interfaceType), interfaceType) { }
 
@@ -27,6 +28,7 @@ public class DaprControllerAttribute : RouteAttribute, IServiceAttribute
     /// </summary>
     /// <param name="template">The custom route template for this controller.</param>
     /// <param name="interfaceType">The service interface type this controller is for.</param>
+    [Obsolete]
     public DaprControllerAttribute(string template, Type? interfaceType = null)
         : base(template ?? GetControllerTemplate(interfaceType))
     {
@@ -41,6 +43,7 @@ public class DaprControllerAttribute : RouteAttribute, IServiceAttribute
     /// </summary>
     /// <param name="interfaceType">The service interface type to get the template for.</param>
     /// <returns>The route template string for the controller.</returns>
+    [Obsolete]
     public static string GetControllerTemplate(Type? interfaceType)
     {
         if (interfaceType == null)

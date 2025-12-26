@@ -8,6 +8,7 @@ namespace BeyondImmersion.BannouService.Asset;
 /// <summary>
 /// Service interface for Asset API
 /// </summary>
+[Obsolete]
 public partial interface IAssetService : IDaprService
 {
     /// <summary>

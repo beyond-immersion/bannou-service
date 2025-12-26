@@ -1,7 +1,9 @@
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -42,7 +44,7 @@ public class CharacterTestHandler : IServiceTestHandler
     /// </summary>
     private static async Task<RealmResponse> CreateTestRealmAsync(string suffix)
     {
-        var realmClient = new RealmClient();
+        var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
         return await realmClient.CreateRealmAsync(new CreateRealmRequest
         {
             Code = $"CHAR_TEST_{DateTime.Now.Ticks}_{suffix}",
@@ -56,7 +58,7 @@ public class CharacterTestHandler : IServiceTestHandler
     /// </summary>
     private static async Task<SpeciesResponse> CreateTestSpeciesAsync(Guid realmId, string suffix)
     {
-        var speciesClient = new SpeciesClient();
+        var speciesClient = Program.ServiceProvider!.GetRequiredService<ISpeciesClient>();
 
         // Create the species
         var species = await speciesClient.CreateSpeciesAsync(new CreateSpeciesRequest
@@ -84,7 +86,7 @@ public class CharacterTestHandler : IServiceTestHandler
             var realm = await CreateTestRealmAsync("CREATE");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "CREATE");
 
-            var characterClient = new CharacterClient();
+            var characterClient = Program.ServiceProvider!.GetRequiredService<ICharacterClient>();
 
             var createRequest = new CreateCharacterRequest
             {
@@ -126,7 +128,7 @@ public class CharacterTestHandler : IServiceTestHandler
             var realm = await CreateTestRealmAsync("GET");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "GET");
 
-            var characterClient = new CharacterClient();
+            var characterClient = Program.ServiceProvider!.GetRequiredService<ICharacterClient>();
 
             // First create a test character
             var createRequest = new CreateCharacterRequest
@@ -172,7 +174,7 @@ public class CharacterTestHandler : IServiceTestHandler
             var realm = await CreateTestRealmAsync("UPDATE");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "UPDATE");
 
-            var characterClient = new CharacterClient();
+            var characterClient = Program.ServiceProvider!.GetRequiredService<ICharacterClient>();
 
             // First create a test character
             var createRequest = new CreateCharacterRequest
@@ -223,7 +225,7 @@ public class CharacterTestHandler : IServiceTestHandler
             var realm = await CreateTestRealmAsync("DELETE");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "DELETE");
 
-            var characterClient = new CharacterClient();
+            var characterClient = Program.ServiceProvider!.GetRequiredService<ICharacterClient>();
 
             // First create a test character
             var createRequest = new CreateCharacterRequest
@@ -273,7 +275,7 @@ public class CharacterTestHandler : IServiceTestHandler
             var realm = await CreateTestRealmAsync("LIST");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "LIST");
 
-            var characterClient = new CharacterClient();
+            var characterClient = Program.ServiceProvider!.GetRequiredService<ICharacterClient>();
 
             // Create a few test characters with the same realm for filtering
             for (int i = 0; i < 3; i++)
@@ -326,7 +328,7 @@ public class CharacterTestHandler : IServiceTestHandler
             var realm = await CreateTestRealmAsync("REALM");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "REALM");
 
-            var characterClient = new CharacterClient();
+            var characterClient = Program.ServiceProvider!.GetRequiredService<ICharacterClient>();
 
             // Create test characters in the specific realm
             for (int i = 0; i < 3; i++)
@@ -381,7 +383,7 @@ public class CharacterTestHandler : IServiceTestHandler
     {
         try
         {
-            var characterClient = new CharacterClient();
+            var characterClient = Program.ServiceProvider!.GetRequiredService<ICharacterClient>();
 
             var getRequest = new GetCharacterRequest
             {
@@ -416,7 +418,7 @@ public class CharacterTestHandler : IServiceTestHandler
             var realm = await CreateTestRealmAsync("LIFECYCLE");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "LIFECYCLE");
 
-            var characterClient = new CharacterClient();
+            var characterClient = Program.ServiceProvider!.GetRequiredService<ICharacterClient>();
 
             // Step 1: Create character
             var createRequest = new CreateCharacterRequest

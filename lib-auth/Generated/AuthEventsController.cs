@@ -7,14 +7,14 @@
 #nullable enable
 
 using BeyondImmersion.BannouService.Events;
-using Dapr;
+using BeyondImmersion.BannouService.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Auth;
 
 /// <summary>
-/// Generated controller for handling Dapr pubsub events for Auth service.
+/// Generated controller for handling pubsub events for Auth service.
 /// Dispatches events to registered handlers via IEventConsumer.
 /// </summary>
 [ApiController]

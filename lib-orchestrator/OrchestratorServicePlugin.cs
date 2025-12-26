@@ -17,6 +17,7 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
     public override string PluginName => "orchestrator";
     public override string DisplayName => "Orchestrator Service";
 
+    [Obsolete]
     private IOrchestratorService? _service;
     private IServiceProvider? _serviceProvider;
 
@@ -63,6 +64,7 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Configure services for dependency injection - mimics existing [DaprService] registration.
     /// </summary>
+    [Obsolete]
     public override void ConfigureServices(IServiceCollection services)
     {
         if (!OnValidatePlugin())
@@ -120,6 +122,7 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Start the service - initializes infrastructure connections and calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         if (!OnValidatePlugin()) return true;
@@ -172,6 +175,7 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Running phase - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (!OnValidatePlugin() || _service == null) return;
@@ -196,6 +200,7 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Shutdown the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (!OnValidatePlugin() || _service == null) return;

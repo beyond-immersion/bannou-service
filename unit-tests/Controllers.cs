@@ -12,30 +12,40 @@ public class Controllers : IClassFixture<CollectionFixture>
     public class Controller_NoAttribute : ControllerBase, IDaprController { }
 
     [DaprController]
+    [Obsolete]
     public class Controller_NoService : ControllerBase, IDaprController { }
 
     [DaprController(interfaceType: typeof(Service_SingleController))]
+    [Obsolete]
     public class Controller_SingleController : ControllerBase, IDaprController { }
 
     [DaprService("ControllerTests.OneController", interfaceType: typeof(Service_SingleController))]
+    [Obsolete]
     public class Service_SingleController : IDaprService { }
 
     [DaprController(interfaceType: typeof(Service_MultipleControllers))]
+    [Obsolete]
     public class ControllerA_MultipleControllers : ControllerBase, IDaprController { }
 
     [DaprController(interfaceType: typeof(Service_MultipleControllers))]
+    [Obsolete]
     public class ControllerB_MultipleControllers : ControllerBase, IDaprController { }
 
     [DaprService("ControllerTests.MultipleControllers", interfaceType: typeof(Service_MultipleControllers))]
+    [Obsolete]
     public class Service_MultipleControllers : IDaprService { }
 
+    [Obsolete]
     public interface ITestService_FromInterface : IDaprService { }
     [DaprService("ControllerTests.Interface", typeof(ITestService_FromInterface))]
+    [Obsolete]
     public class Service_FromInterface : ITestService_FromInterface { }
 
     [DaprController(typeof(ITestService_FromInterface))]
+    [Obsolete]
     public class Controller_FromInterface : ControllerBase, IDaprController { }
 
+    [Obsolete]
     public Controllers(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
@@ -43,6 +53,7 @@ public class Controllers : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Controllers_FindAllNonServiceControllers()
     {
         (Type, DaprControllerAttribute)[] allControllers = IDaprController.NonServiceControllers;
@@ -54,6 +65,7 @@ public class Controllers : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Controllers_FindAllControllers()
     {
         (Type, DaprControllerAttribute)[] allControllers = IDaprController.Controllers;
@@ -65,6 +77,7 @@ public class Controllers : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Controllers_FindAllServiceControllers()
     {
         (Type, DaprControllerAttribute)[] allControllers = IDaprController.ServiceControllers;
@@ -76,6 +89,7 @@ public class Controllers : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Controllers_FindServiceControllers_Enabled()
     {
         Environment.SetEnvironmentVariable("ControllerTests.OneController_Service_Disabled".ToUpper(), null);
@@ -116,6 +130,7 @@ public class Controllers : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Controllers_FindServiceControllers_ByInterface()
     {
         (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForInterface(typeof(ITestService_FromInterface));
@@ -128,6 +143,7 @@ public class Controllers : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Controllers_FindServiceControllers_ByInterface_OneController()
     {
         (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForInterface(typeof(Service_SingleController));
@@ -140,6 +156,7 @@ public class Controllers : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Controllers_FindServiceControllers_ByInterface_MultipleControllers()
     {
         (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForInterface(typeof(Service_MultipleControllers));
@@ -152,6 +169,7 @@ public class Controllers : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Controllers_FindServiceControllers_ByInterface_OneController_Generic()
     {
         (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForInterface<Service_SingleController>();
@@ -164,6 +182,7 @@ public class Controllers : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Controllers_FindServiceControllers_ByInterface_MultipleControllers_Generic()
     {
         (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForInterface<Service_MultipleControllers>();
@@ -176,6 +195,7 @@ public class Controllers : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Controllers_FindServiceControllers_ByImplementation()
     {
         (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForImplementation(typeof(Service_FromInterface));
@@ -188,6 +208,7 @@ public class Controllers : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Controllers_FindServiceControllers_ByImplementation_OneController()
     {
         (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForImplementation(typeof(Service_SingleController));
@@ -200,6 +221,7 @@ public class Controllers : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Controllers_FindServiceControllers_ByImplementation_MultipleControllers()
     {
         (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForImplementation(typeof(Service_MultipleControllers));
@@ -212,6 +234,7 @@ public class Controllers : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Controllers_FindServiceControllers_ByImplementation_OneController_Generic()
     {
         (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForImplementation<Service_SingleController>();
@@ -224,6 +247,7 @@ public class Controllers : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void Controllers_FindServiceControllers_ByImplementation_MultipleControllers_Generic()
     {
         (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForImplementation<Service_MultipleControllers>();

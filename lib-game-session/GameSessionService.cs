@@ -27,6 +27,7 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// Handles session shortcuts for subscribed accounts via Dapr pubsub events.
 /// </summary>
 [DaprService("game-session", typeof(IGameSessionService), lifetime: ServiceLifetime.Scoped)]
+[Obsolete]
 public partial class GameSessionService : IGameSessionService
 {
     private readonly IStateStoreFactory _stateStoreFactory;

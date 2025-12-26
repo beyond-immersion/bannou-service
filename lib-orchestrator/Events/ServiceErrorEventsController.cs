@@ -1,5 +1,5 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
-using Dapr;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 

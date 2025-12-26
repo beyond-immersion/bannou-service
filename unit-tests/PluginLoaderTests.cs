@@ -26,6 +26,7 @@ public class PluginLoaderTests
     /// This addresses the "Cannot resolve scoped service from root provider" issue.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void ServiceResolution_ShouldUseServiceScopeForScopedServices()
     {
         // Arrange
@@ -50,6 +51,7 @@ public class PluginLoaderTests
     /// Tests the new centralized plugin discovery and service registration workflow.
     /// </summary>
     [Fact]
+    [Obsolete]
     public Task NewPluginDiscovery_ShouldDiscoverAndRegisterTypesCorrectly()
     {
         // Arrange
@@ -112,6 +114,7 @@ public class PluginLoaderTests
     /// Tests service type discovery debugging - investigate why service types aren't found.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void ServiceTypeDiscovery_ShouldDebugAssemblyTypeLoading()
     {
         // Arrange - Load all assemblies like the PluginLoader would
@@ -141,6 +144,7 @@ public class PluginLoaderTests
     /// This replicates the service discovery workflow without external dependencies.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void ServiceTypeDiscovery_ShouldWorkWithTestingServiceOnly()
     {
         // Arrange - Use only the TestingService which is guaranteed to exist
@@ -171,6 +175,7 @@ public class PluginLoaderTests
     /// Debug test to understand ServiceLifetime parameter issue.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void Debug_DaprServiceAttribute_ParameterMapping()
     {
         // Test direct attribute creation with explicit parameters to verify constructor behavior
@@ -199,6 +204,7 @@ public class PluginLoaderTests
     /// Debug test to understand why only 2 services are discovered instead of 8.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void Debug_ServiceTypeDiscovery_ActualPluginLoaderBehavior()
     {
         // Use reflection to access the PluginLoader's internal state after type discovery
@@ -322,6 +328,7 @@ public class PluginLoaderTests
     /// Tests service type discovery specifically for TestingService in lib-testing assembly.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void ServiceTypeDiscovery_ShouldFindTestingService()
     {
         // Arrange
@@ -403,6 +410,7 @@ public class PluginLoaderTests
     /// This prevents the ConnectServiceConfiguration lifetime mismatch we fixed.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void ConfigurationLifetime_ShouldMatchServiceLifetime()
     {
         // Arrange
@@ -448,6 +456,7 @@ public class PluginLoaderTests
     /// This prevents conflicts between plugin registration and PluginLoader registration.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void DuplicateServiceRegistration_ShouldBeDetectable()
     {
         // Arrange
@@ -491,6 +500,7 @@ public class PluginLoaderTests
     /// This is a comprehensive regression test for the entire service registration flow.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void CompleteServiceRegistration_ShouldNotCauseDIValidationErrors()
     {
         // Arrange
@@ -553,6 +563,7 @@ public class PluginLoaderTests
     /// This validates the new configuration registration functionality in PluginLoader.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void ConfigurationTypeDiscovery_ShouldFindServiceConfigurationAttributes()
     {
         // Arrange
@@ -687,6 +698,7 @@ public class PluginLoaderTests
     /// This simulates the actual PluginLoader workflow that should prevent exit code 139.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void EndToEndConfigurationWorkflow_ShouldPreventDIConflicts()
     {
         // Arrange - Simulate the complete workflow that happens in production
@@ -770,6 +782,7 @@ public class PluginLoaderTests
     /// This prevents the DI validation errors that cause exit code 139.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void ConfigurationLifetimeValidation_ShouldPreventMismatchedLifetimes()
     {
         // Arrange - Test scenarios that could cause DI validation failures
@@ -872,6 +885,7 @@ public class PluginLoaderTests
     /// Tests that services with [DaprService] attributes are discovered correctly.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void ServiceTypeDiscovery_ShouldFindServicesWithDaprServiceAttributes()
     {
         // Arrange
@@ -912,6 +926,7 @@ public class PluginLoaderTests
     /// Validates that only types implementing IDaprService with DaprServiceAttribute are discovered.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void InterfaceBasedDiscovery_ShouldOnlyFindValidServiceTypes()
     {
         // Arrange
@@ -954,6 +969,7 @@ public class PluginLoaderTests
     /// Tests that client discovery uses IDaprClient interface without fallbacks.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void InterfaceBasedClientDiscovery_ShouldRequireIDaprClientInterface()
     {
         // Arrange
@@ -988,6 +1004,7 @@ public class PluginLoaderTests
     /// Tests that configuration discovery requires explicit ServiceConfigurationAttribute.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void AttributeBasedConfigurationDiscovery_ShouldRequireExplicitAttribute()
     {
         // Arrange
@@ -1029,6 +1046,7 @@ public class PluginLoaderTests
     /// Tests the complete workflow of interface/attribute-based discovery without naming conventions.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void CompleteInterfaceAttributeBasedWorkflow_ShouldWorkWithoutNamingConventions()
     {
         // Arrange
@@ -1085,6 +1103,7 @@ public class PluginLoaderTests
     /// Tests that the PluginLoader correctly registers service types with DaprService attributes.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void PluginLoader_ShouldRegisterServicesWithDaprServiceAttributes()
     {
         // Arrange
@@ -1134,6 +1153,7 @@ public class PluginLoaderTests
     /// Tests that PluginLoader rejects types that don't meet interface/attribute requirements.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void PluginLoader_ShouldRejectTypesWithoutProperInterfaceAndAttributes()
     {
         // Arrange
@@ -1198,6 +1218,7 @@ public class PluginLoaderTests
     /// Tests that service lifetime is correctly extracted from DaprServiceAttribute.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void AttributeBasedLifetimeExtraction_ShouldRespectDaprServiceAttributeLifetime()
     {
         // Arrange
@@ -1225,6 +1246,7 @@ public class PluginLoaderTests
     /// Tests that interface-based discovery ignores types that only match by naming convention.
     /// </summary>
     [Fact]
+    [Obsolete]
     public void InterfaceBasedDiscovery_ShouldIgnoreNamingConventionOnlyTypes()
     {
         // Arrange
@@ -1675,6 +1697,7 @@ public class PluginLoaderTests
     /// <summary>
     /// Helper method to get types implementing IDaprService from an assembly.
     /// </summary>
+    [Obsolete]
     private List<Type> GetTypesImplementingIDaprService(Assembly assembly)
     {
         try
@@ -1714,6 +1737,7 @@ public class PluginLoaderTests
 /// <summary>
 /// Test service class that implements IDaprService for unit testing.
 /// </summary>
+[Obsolete]
 public class TestService : IDaprService
 {
     // IDaprService methods are provided by default interface implementations
@@ -1780,6 +1804,7 @@ public interface ITestConnectService
 /// Test configuration class with ServiceConfiguration attribute for testing.
 /// </summary>
 [ServiceConfiguration(typeof(TestService))]
+[Obsolete]
 public class TestServiceWithAttrConfiguration : IServiceConfiguration
 {
     public string TestSetting { get; set; } = "test";

@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Servicedata;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -33,7 +34,7 @@ public class ServicedataTestHandler : IServiceTestHandler
     {
         try
         {
-            var servicedataClient = new ServicedataClient();
+            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
             var testStubName = $"test-service-{DateTime.Now.Ticks}";
 
             var createRequest = new CreateServiceRequest
@@ -71,7 +72,7 @@ public class ServicedataTestHandler : IServiceTestHandler
     {
         try
         {
-            var servicedataClient = new ServicedataClient();
+            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
             var testStubName = $"get-by-id-{DateTime.Now.Ticks}";
 
             // First create a test service
@@ -117,7 +118,7 @@ public class ServicedataTestHandler : IServiceTestHandler
     {
         try
         {
-            var servicedataClient = new ServicedataClient();
+            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
             var testStubName = $"get-by-stub-{DateTime.Now.Ticks}";
 
             // First create a test service
@@ -160,7 +161,7 @@ public class ServicedataTestHandler : IServiceTestHandler
     {
         try
         {
-            var servicedataClient = new ServicedataClient();
+            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
 
             // Create a test service to ensure list is not empty
             var testStubName = $"list-test-{DateTime.Now.Ticks}";
@@ -199,7 +200,7 @@ public class ServicedataTestHandler : IServiceTestHandler
     {
         try
         {
-            var servicedataClient = new ServicedataClient();
+            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
             var testStubName = $"update-test-{DateTime.Now.Ticks}";
 
             // Create a test service
@@ -257,7 +258,7 @@ public class ServicedataTestHandler : IServiceTestHandler
     {
         try
         {
-            var servicedataClient = new ServicedataClient();
+            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
             var testStubName = $"delete-test-{DateTime.Now.Ticks}";
 
             // Create a service to delete
@@ -302,7 +303,7 @@ public class ServicedataTestHandler : IServiceTestHandler
     {
         try
         {
-            var servicedataClient = new ServicedataClient();
+            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
             var testStubName = $"duplicate-test-{DateTime.Now.Ticks}";
 
             // Create first service
@@ -351,7 +352,7 @@ public class ServicedataTestHandler : IServiceTestHandler
     {
         try
         {
-            var servicedataClient = new ServicedataClient();
+            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
             var testPrefix = $"active-filter-{DateTime.Now.Ticks}";
 
             // Create an active service

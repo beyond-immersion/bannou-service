@@ -21,6 +21,7 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 /// CRITICAL: Uses direct Redis/RabbitMQ connections (NOT Dapr) to avoid chicken-and-egg dependency.
 /// </summary>
 [DaprService("orchestrator", typeof(IOrchestratorService), lifetime: ServiceLifetime.Scoped)]
+[Obsolete]
 public partial class OrchestratorService : IOrchestratorService
 {
     private readonly IMessageBus _messageBus;
@@ -53,6 +54,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private const string DEFAULT_PRESET = "bannou";
 
+    [Obsolete]
     public OrchestratorService(
         IMessageBus messageBus,
         ILogger<OrchestratorService> logger,

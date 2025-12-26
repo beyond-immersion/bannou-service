@@ -1,22 +1,21 @@
-using Dapr.Client;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Voice.Services;
 
 /// <summary>
-/// Implementation of SIP endpoint registry using Dapr state store for distributed state.
-/// Uses ConcurrentDictionary for local caching while persisting to Redis via Dapr.
+/// Implementation of SIP endpoint registry using lib-state for distributed state.
+/// Uses ConcurrentDictionary for local caching while persisting to Redis via lib-state.
 /// Thread-safe for multi-instance deployments (Tenet 4).
 /// Participants are keyed by sessionId to support multiple connections from the same account.
 /// </summary>
 public class SipEndpointRegistry : ISipEndpointRegistry
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStore<List<ParticipantRegistration>> _stateStore;
     private readonly ILogger<SipEndpointRegistry> _logger;
     private readonly VoiceServiceConfiguration _configuration;
 
-    private const string STATE_STORE = "voice-statestore";
     private const string ROOM_PARTICIPANTS_PREFIX = "voice:room:participants:";
 
     /// <summary>
@@ -28,15 +27,16 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     /// <summary>
     /// Initializes a new instance of the SipEndpointRegistry.
     /// </summary>
-    /// <param name="daprClient">Dapr client for state store operations.</param>
+    /// <param name="stateStoreFactory">State store factory for state operations.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Voice service configuration.</param>
     public SipEndpointRegistry(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
         ILogger<SipEndpointRegistry> logger,
         VoiceServiceConfiguration configuration)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        ArgumentNullException.ThrowIfNull(stateStoreFactory);
+        _stateStore = stateStoreFactory.GetStore<List<ParticipantRegistration>>("voice-statestore");
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
@@ -65,11 +65,11 @@ public class SipEndpointRegistry : ISipEndpointRegistry
             IsMuted = false
         };
 
-        // Load existing participants from Dapr state store if not in local cache
+        // Load existing participants from state store if not in local cache
         // Required for multi-instance safety (Tenet 4) - another instance may have participants we don't have locally
         if (!_localCache.TryGetValue(roomId, out var roomParticipants))
         {
-            // Try to load from Dapr state store
+            // Try to load from state store
             roomParticipants = await LoadRoomParticipantsAsync(roomId, cancellationToken);
             if (roomParticipants == null)
             {
@@ -86,7 +86,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
             return false;
         }
 
-        // Persist to Dapr state store
+        // Persist to state store
         await PersistRoomParticipantsAsync(roomId, roomParticipants, cancellationToken);
 
         _logger.LogInformation("Registered session {SessionId} in room {RoomId}", sessionId, roomId);
@@ -287,14 +287,14 @@ public class SipEndpointRegistry : ISipEndpointRegistry
 
         // Delete from state store
         var stateKey = $"{ROOM_PARTICIPANTS_PREFIX}{roomId}";
-        await _daprClient.DeleteStateAsync(STATE_STORE, stateKey, cancellationToken: cancellationToken);
+        await _stateStore.DeleteAsync(stateKey, cancellationToken);
 
         _logger.LogInformation("Cleared room {RoomId}, removed {Count} participants", roomId, removed.Count);
         return removed;
     }
 
     /// <summary>
-    /// Persists room participants to Dapr state store.
+    /// Persists room participants to state store.
     /// </summary>
     private async Task PersistRoomParticipantsAsync(
         Guid roomId,
@@ -304,18 +304,18 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         var stateKey = $"{ROOM_PARTICIPANTS_PREFIX}{roomId}";
         var participantList = participants.Values.ToList();
 
-        await _daprClient.SaveStateAsync(STATE_STORE, stateKey, participantList, cancellationToken: cancellationToken);
+        await _stateStore.SaveAsync(stateKey, participantList, null, cancellationToken);
     }
 
     /// <summary>
-    /// Loads room participants from Dapr state store into local cache.
+    /// Loads room participants from state store into local cache.
     /// </summary>
     private async Task<ConcurrentDictionary<string, ParticipantRegistration>?> LoadRoomParticipantsAsync(
         Guid roomId,
         CancellationToken cancellationToken)
     {
         var stateKey = $"{ROOM_PARTICIPANTS_PREFIX}{roomId}";
-        var participantList = await _daprClient.GetStateAsync<List<ParticipantRegistration>>(STATE_STORE, stateKey, cancellationToken: cancellationToken);
+        var participantList = await _stateStore.GetAsync(stateKey, cancellationToken);
 
         if (participantList == null || participantList.Count == 0)
         {

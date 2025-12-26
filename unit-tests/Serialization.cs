@@ -14,6 +14,7 @@ public class Serialization : IClassFixture<CollectionFixture>
 {
     private CollectionFixture TestCollectionContext { get; }
 
+    [Obsolete]
     public Serialization(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;

@@ -16,6 +16,7 @@ public class DocumentationServicePlugin : BaseBannouPlugin
     public override string PluginName => "documentation";
     public override string DisplayName => "Documentation Service";
 
+    [Obsolete]
     private IDocumentationService? _service;
     private IServiceProvider? _serviceProvider;
 
@@ -58,6 +59,7 @@ public class DocumentationServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Start the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting Documentation service");
@@ -95,6 +97,7 @@ public class DocumentationServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Running phase - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -119,6 +122,7 @@ public class DocumentationServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Shutdown the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;

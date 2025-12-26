@@ -13,6 +13,7 @@ namespace BeyondImmersion.BannouService.Testing;
 /// </summary>
 public class ServiceRegistrationTestHandler : IServiceTestHandler
 {
+    [Obsolete]
     public ServiceTest[] GetServiceTests()
     {
         return
@@ -27,6 +28,7 @@ public class ServiceRegistrationTestHandler : IServiceTestHandler
     /// <summary>
     /// Tests the service registration pattern infrastructure.
     /// </summary>
+    [Obsolete]
     private static Task<TestResult> TestServiceRegistrationPattern(ITestClient testClient, string[] args)
     {
         try
@@ -115,6 +117,7 @@ public class ServiceRegistrationTestHandler : IServiceTestHandler
     /// <summary>
     /// Tests the registration method signature matches expected pattern.
     /// </summary>
+    [Obsolete]
     private static Task<TestResult> TestRegistrationMethodSignature(ITestClient testClient, string[] args)
     {
         try

@@ -8,6 +8,7 @@ namespace BeyondImmersion.BannouService.State;
 /// <summary>
 /// Service interface for State API
 /// </summary>
+[Obsolete]
 public partial interface IStateService : IDaprService
 {
     /// <summary>

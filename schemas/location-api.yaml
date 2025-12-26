@@ -32,7 +32,7 @@ info:
     2. Optionally hard-delete the deprecated location after all references are removed
   version: 1.0.0
 servers:
-- url: http://localhost:3500/v1.0/invoke/bannou/method
+- url: http://localhost:5012
   description: Dapr sidecar endpoint (internal only)
 
 # NOTE: x-lifecycle moved to location-events.yaml

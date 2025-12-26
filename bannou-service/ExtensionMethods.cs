@@ -206,6 +206,7 @@ public static partial class ExtensionMethods
     /// </summary>
     /// <param name="serviceType">The service type to examine.</param>
     /// <returns>The service name if found, otherwise null.</returns>
+    [Obsolete]
     public static string? GetServiceName(this Type serviceType)
     {
         DaprServiceAttribute? serviceAttr = serviceType.GetCustomAttributes<DaprServiceAttribute>().FirstOrDefault();
@@ -238,6 +239,7 @@ public static partial class ExtensionMethods
     /// <summary>
     /// Add property headers.
     /// </summary>
+    [Obsolete]
     public static void AddPropertyHeaders(this HttpRequestMessage message, ApiRequest request)
     {
         foreach (var headerKVP in request.SetPropertiesToHeaders())

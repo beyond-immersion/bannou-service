@@ -20,6 +20,7 @@ public class MessagingServicePlugin : BaseBannouPlugin
     public override string PluginName => "messaging";
     public override string DisplayName => "Messaging Service";
 
+    [Obsolete]
     private IMessagingService? _service;
     private IServiceProvider? _serviceProvider;
 
@@ -90,6 +91,7 @@ public class MessagingServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Start the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting Messaging service");
@@ -127,6 +129,7 @@ public class MessagingServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Running phase - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -151,6 +154,7 @@ public class MessagingServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Shutdown the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;

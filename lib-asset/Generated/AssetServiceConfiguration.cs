@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Asset;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(AssetService))]
+[Obsolete]
 public class AssetServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

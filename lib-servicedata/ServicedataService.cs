@@ -17,6 +17,7 @@ namespace BeyondImmersion.BannouService.Servicedata;
 /// Provides a minimal registry of game services (games/applications) that users can subscribe to.
 /// </summary>
 [DaprService("servicedata", typeof(IServicedataService), lifetime: ServiceLifetime.Singleton)]
+[Obsolete]
 public partial class ServicedataService : IServicedataService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -29,6 +30,7 @@ public partial class ServicedataService : IServicedataService
     private const string SERVICE_STUB_INDEX_PREFIX = "service-stub:";
     private const string SERVICE_LIST_KEY = "service-list";
 
+    [Obsolete]
     public ServicedataService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,

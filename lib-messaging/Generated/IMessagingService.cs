@@ -8,6 +8,7 @@ namespace BeyondImmersion.BannouService.Messaging;
 /// <summary>
 /// Service interface for Messaging API
 /// </summary>
+[Obsolete]
 public partial interface IMessagingService : IDaprService
 {
     /// <summary>

@@ -21,7 +21,7 @@ info:
     - Processing pipeline for textures, models, audio, behaviors
 
 servers:
-- url: http://localhost:3500/v1.0/invoke/bannou/method
+- url: http://localhost:5012
   description: Dapr sidecar endpoint
 
 paths:

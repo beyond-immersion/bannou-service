@@ -1,7 +1,8 @@
 using BeyondImmersion.BannouService.Asset.Models;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Orchestrator;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
-using Dapr.Client;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -13,14 +14,13 @@ namespace BeyondImmersion.BannouService.Asset.Processing;
 public sealed class AssetProcessingWorker : BackgroundService
 {
     private readonly AssetProcessorRegistry _processorRegistry;
-    private readonly DaprClient _daprClient;
+    private readonly IStateStore<AssetMetadata> _stateStore;
+    private readonly IMessageBus _messageBus;
     private readonly IAssetStorageProvider _storageProvider;
     private readonly IOrchestratorClient _orchestratorClient;
     private readonly AssetServiceConfiguration _configuration;
     private readonly ILogger<AssetProcessingWorker> _logger;
 
-    private const string STATE_STORE = "asset-statestore";
-    private const string PUBSUB_NAME = "bannou-pubsub";
     private const string ASSET_PREFIX = "asset:";
 
     /// <summary>
@@ -28,14 +28,17 @@ public sealed class AssetProcessingWorker : BackgroundService
     /// </summary>
     public AssetProcessingWorker(
         AssetProcessorRegistry processorRegistry,
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         IAssetStorageProvider storageProvider,
         IOrchestratorClient orchestratorClient,
         AssetServiceConfiguration configuration,
         ILogger<AssetProcessingWorker> logger)
     {
         _processorRegistry = processorRegistry ?? throw new ArgumentNullException(nameof(processorRegistry));
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        ArgumentNullException.ThrowIfNull(stateStoreFactory);
+        _stateStore = stateStoreFactory.GetStore<AssetMetadata>("asset-statestore");
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _storageProvider = storageProvider ?? throw new ArgumentNullException(nameof(storageProvider));
         _orchestratorClient = orchestratorClient ?? throw new ArgumentNullException(nameof(orchestratorClient));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -49,7 +52,7 @@ public sealed class AssetProcessingWorker : BackgroundService
             "Asset processing worker started. Worker pool: {WorkerPool}",
             _configuration.WorkerPool ?? "default");
 
-        // The worker receives jobs via Dapr pub/sub subscription
+        // The worker receives jobs via MassTransit pub/sub subscription
         // The actual job processing is done in HandleProcessingJob
         // This background service just keeps the worker alive
 
@@ -73,7 +76,7 @@ public sealed class AssetProcessingWorker : BackgroundService
 
     /// <summary>
     /// Handles a processing job received via pub/sub.
-    /// Called by the Dapr event controller.
+    /// Called by the event controller.
     /// </summary>
     public async Task<bool> HandleProcessingJobAsync(
         AssetProcessingJobEvent job,
@@ -164,10 +167,7 @@ public sealed class AssetProcessingWorker : BackgroundService
 
         try
         {
-            var existingMetadata = await _daprClient.GetStateAsync<AssetMetadata>(
-                STATE_STORE,
-                stateKey,
-                cancellationToken: cancellationToken);
+            var existingMetadata = await _stateStore.GetAsync(stateKey, cancellationToken);
 
             if (existingMetadata == null)
             {
@@ -181,11 +181,7 @@ public sealed class AssetProcessingWorker : BackgroundService
                 : ProcessingStatus.Failed;
             existingMetadata.Updated_at = DateTimeOffset.UtcNow;
 
-            await _daprClient.SaveStateAsync(
-                STATE_STORE,
-                stateKey,
-                existingMetadata,
-                cancellationToken: cancellationToken);
+            await _stateStore.SaveAsync(stateKey, existingMetadata, null, cancellationToken);
 
             _logger.LogDebug(
                 "Updated metadata for asset {AssetId}: Status={Status}",
@@ -251,11 +247,7 @@ public sealed class AssetProcessingWorker : BackgroundService
                 };
 
                 // Publish to session-specific channel for WebSocket delivery
-                await _daprClient.PublishEventAsync(
-                    PUBSUB_NAME,
-                    $"CONNECT_{job.SessionId}",
-                    completionEvent,
-                    cancellationToken);
+                await _messageBus.PublishAsync($"CONNECT_{job.SessionId}", completionEvent, null, cancellationToken);
             }
             else
             {
@@ -269,11 +261,7 @@ public sealed class AssetProcessingWorker : BackgroundService
                     ErrorCode = result.ErrorCode ?? "UNKNOWN_ERROR"
                 };
 
-                await _daprClient.PublishEventAsync(
-                    PUBSUB_NAME,
-                    $"CONNECT_{job.SessionId}",
-                    failureEvent,
-                    cancellationToken);
+                await _messageBus.PublishAsync($"CONNECT_{job.SessionId}", failureEvent, null, cancellationToken);
             }
         }
         catch (Exception ex)
@@ -302,11 +290,7 @@ public sealed class AssetProcessingWorker : BackgroundService
                 ErrorCode = "PROCESSING_EXCEPTION"
             };
 
-            await _daprClient.PublishEventAsync(
-                PUBSUB_NAME,
-                $"CONNECT_{job.SessionId}",
-                failureEvent,
-                cancellationToken);
+            await _messageBus.PublishAsync($"CONNECT_{job.SessionId}", failureEvent, null, cancellationToken);
         }
         catch (Exception ex)
         {

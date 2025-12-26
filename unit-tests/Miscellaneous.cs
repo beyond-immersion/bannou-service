@@ -52,6 +52,7 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
 
     private Miscellaneous(CollectionFixture collectionContext) => TestCollectionContext = collectionContext;
 
+    [Obsolete]
     public Miscellaneous(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;

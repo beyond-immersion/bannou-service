@@ -15,6 +15,7 @@ public class RelationshipServicePlugin : BaseBannouPlugin
     public override string PluginName => "relationship";
     public override string DisplayName => "Relationship Service";
 
+    [Obsolete]
     private IRelationshipService? _service;
     private IServiceProvider? _serviceProvider;
 
@@ -49,6 +50,7 @@ public class RelationshipServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Start the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting service");
@@ -83,6 +85,7 @@ public class RelationshipServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Running phase - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -106,6 +109,7 @@ public class RelationshipServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Shutdown the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;

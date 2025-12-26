@@ -19,6 +19,7 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
     /// <summary>
     /// Attribute attached to the service.
     /// </summary>
+    [Obsolete]
     public DaprServiceAttribute? ServiceAttribute { get; }
 
     /// <summary>
@@ -31,6 +32,7 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
     /// Initializes a new instance of the ServiceConfigurationAttribute for app-level configuration (no associated service).
     /// </summary>
     /// <param name="envPrefix">The prefix for environment variables used by this configuration.</param>
+    [Obsolete]
     public ServiceConfigurationAttribute(string? envPrefix = null)
     {
         ServiceImplementationType = null;
@@ -43,6 +45,7 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
     /// </summary>
     /// <param name="serviceImplementation">The service implementation type this configuration is for (required).</param>
     /// <param name="envPrefix">The prefix for environment variables used by this configuration.</param>
+    [Obsolete]
     public ServiceConfigurationAttribute(Type serviceImplementation, string? envPrefix = null)
     {
         if (serviceImplementation == null)

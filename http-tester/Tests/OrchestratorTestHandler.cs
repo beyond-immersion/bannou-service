@@ -1,5 +1,7 @@
 using BeyondImmersion.BannouService.Orchestrator;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Collections.Concurrent;
@@ -77,7 +79,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
 
             var response = await orchestratorClient.GetInfrastructureHealthAsync(new InfrastructureHealthRequest());
 
@@ -117,7 +119,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
 
             var response = await orchestratorClient.GetServicesHealthAsync(new ServiceHealthRequest());
 
@@ -145,7 +147,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
 
             var response = await orchestratorClient.GetBackendsAsync(new ListBackendsRequest());
 
@@ -179,7 +181,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
 
             var response = await orchestratorClient.GetStatusAsync(new GetStatusRequest());
 
@@ -209,7 +211,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
 
             var response = await orchestratorClient.GetPresetsAsync(new ListPresetsRequest());
 
@@ -237,7 +239,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
             var response = await orchestratorClient.GetInfrastructureHealthAsync(new InfrastructureHealthRequest());
 
             if (response.Components == null || response.Components.Count == 0)
@@ -285,7 +287,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
             var response = await orchestratorClient.GetBackendsAsync(new ListBackendsRequest());
 
             // At least one backend should be available (Docker Compose at minimum)
@@ -329,7 +331,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
             var response = await orchestratorClient.GetStatusAsync(new GetStatusRequest());
 
             // Should have a timestamp
@@ -366,7 +368,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
             var response = await orchestratorClient.GetPresetsAsync(new ListPresetsRequest());
 
             if (response.Presets == null || response.Presets.Count == 0)
@@ -407,7 +409,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
 
             // Request recommendation for bannou - this MUST exist since we're testing against it
             var request = new ShouldRestartServiceRequest
@@ -466,7 +468,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
 
             var request = new ShouldRestartServiceRequest
             {
@@ -510,7 +512,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
 
             // Get status for the main "bannou" container - this MUST exist since we're testing against it
             var response = await orchestratorClient.GetContainerStatusAsync(new GetContainerStatusRequest { AppName = "bannou" });
@@ -562,7 +564,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
             var unknownContainer = $"unknown-container-{Guid.NewGuid():N}";
 
             try
@@ -600,7 +602,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
 
             var response = await orchestratorClient.GetServiceRoutingAsync(new GetServiceRoutingRequest());
 
@@ -637,7 +639,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
 
             var response = await orchestratorClient.GetServiceRoutingAsync(new GetServiceRoutingRequest());
 
@@ -686,7 +688,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
             var response = await orchestratorClient.GetConfigVersionAsync(new GetConfigVersionRequest());
 
             // Verify required fields
@@ -715,7 +717,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
 
             // First check if there's previous config
             var versionInfo = await orchestratorClient.GetConfigVersionAsync(new GetConfigVersionRequest());
@@ -760,7 +762,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
 
             // Request logs for main service container
             var response = await orchestratorClient.GetLogsAsync(new GetLogsRequest
@@ -800,7 +802,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
 
             // Request exactly 5 log lines
             var response = await orchestratorClient.GetLogsAsync(new GetLogsRequest
@@ -846,7 +848,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
 
             // First check what backends are available
             var backends = await orchestratorClient.GetBackendsAsync(new ListBackendsRequest());
@@ -934,7 +936,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
     {
         try
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = Program.ServiceProvider!.GetRequiredService<IOrchestratorClient>();
 
             // Use a minimal clean request that's safe for testing
             var request = new CleanRequest

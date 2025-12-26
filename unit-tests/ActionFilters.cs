@@ -10,6 +10,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
 {
     private CollectionFixture TestCollectionContext { get; }
 
+    [Obsolete]
     public ActionFilters(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
@@ -95,6 +96,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     public Dictionary<string, List<string>>? CustomDelimeterProperty { get; set; }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_CustomNameAndDelimeter()
     {
         var propertyName = nameof(CustomNameAndDelimeterProperty);
@@ -170,6 +172,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_CustomName()
     {
         var propertyName = nameof(CustomNameProperty);
@@ -245,6 +248,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_CustomDelimeter()
     {
         var propertyName = nameof(CustomDelimeterProperty);
@@ -316,6 +320,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_EnumerableKVPEnumerable()
     {
         var propertyName = nameof(EnumerableKVPEnumerableProperty);
@@ -393,6 +398,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_EnumerableKVPList()
     {
         var propertyName = nameof(EnumerableKVPListProperty);
@@ -470,6 +476,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_EnumerableKVPArray()
     {
         var propertyName = nameof(EnumerableKVPArrayProperty);
@@ -547,6 +554,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_EnumerableKVP()
     {
         var propertyName = nameof(EnumerableKVPProperty);
@@ -594,6 +602,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_DictionaryEnumerable()
     {
         var propertyName = nameof(DictionaryEnumerableProperty);
@@ -671,6 +680,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_DictionaryArray()
     {
         var propertyName = nameof(DictionaryArrayProperty);
@@ -748,6 +758,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_DictionaryList()
     {
         var propertyName = nameof(DictionaryListProperty);
@@ -825,6 +836,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_Dictionary()
     {
         var propertyName = nameof(DictionaryProperty);
@@ -872,6 +884,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_EnumerableTupleEnumerable()
     {
         var propertyName = nameof(EnumerableTupleEnumerableProperty);
@@ -949,6 +962,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_EnumerableTupleList()
     {
         var propertyName = nameof(EnumerableTupleListProperty);
@@ -1026,6 +1040,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_EnumerableTupleArray()
     {
         var propertyName = nameof(EnumerableTupleArrayProperty);
@@ -1103,6 +1118,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_ArrayTupleEnumerable()
     {
         var propertyName = nameof(ArrayTupleEnumerableProperty);
@@ -1180,6 +1196,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_ArrayTupleList()
     {
         var propertyName = nameof(ArrayTupleListProperty);
@@ -1257,6 +1274,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_ArrayTupleArray()
     {
         var propertyName = nameof(ArrayTupleArrayProperty);
@@ -1334,6 +1352,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_ListTupleEnumerable()
     {
         var propertyName = nameof(ListTupleEnumerableProperty);
@@ -1411,6 +1430,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_ListTupleList()
     {
         var propertyName = nameof(ListTupleListProperty);
@@ -1488,6 +1508,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_ListTupleArray()
     {
         var propertyName = nameof(ListTupleArrayProperty);
@@ -1565,6 +1586,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_TupleEnumerable()
     {
         var propertyName = nameof(EnumerableTupleProperty);
@@ -1612,6 +1634,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_TupleArray()
     {
         var propertyName = nameof(ArrayTupleProperty);
@@ -1659,6 +1682,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_TupleList()
     {
         var propertyName = nameof(ListTupleProperty);
@@ -1706,6 +1730,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_Enumerable()
     {
         var propertyName = nameof(EnumerableProperty);
@@ -1753,6 +1778,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_Array()
     {
         var propertyName = nameof(ArrayProperty);
@@ -1800,6 +1826,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    [Obsolete]
     public void ActionFilters_HeaderArray_List()
     {
         var propertyName = nameof(ListProperty);

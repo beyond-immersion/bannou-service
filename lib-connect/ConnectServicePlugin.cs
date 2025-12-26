@@ -16,6 +16,7 @@ public class ConnectServicePlugin : BaseBannouPlugin
     public override string PluginName => "connect";
     public override string DisplayName => "Connect Service";
 
+    [Obsolete]
     private IConnectService? _service;
     private IServiceProvider? _serviceProvider;
 
@@ -68,6 +69,7 @@ public class ConnectServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Start the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting service");
@@ -103,6 +105,7 @@ public class ConnectServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Running phase - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
@@ -127,6 +130,7 @@ public class ConnectServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Shutdown the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_service == null) return;

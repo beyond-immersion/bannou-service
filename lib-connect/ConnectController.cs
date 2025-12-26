@@ -11,9 +11,11 @@ namespace BeyondImmersion.BannouService.Connect;
 /// </summary>
 public class ConnectController : ConnectControllerBase
 {
+    [Obsolete]
     private readonly IConnectService _connectService;
     private readonly ILogger<ConnectController> _logger;
 
+    [Obsolete]
     public ConnectController(IConnectService connectService, ILogger<ConnectController> logger) : base(connectService)
     {
         _connectService = connectService;
@@ -40,6 +42,7 @@ public class ConnectController : ConnectControllerBase
     /// Common WebSocket connection handling logic.
     /// Validates JWT, accepts WebSocket upgrade, and initiates binary protocol communication.
     /// </summary>
+    [Obsolete]
     private async Task<IActionResult> HandleWebSocketConnectionAsync(
         string authorization,
         CancellationToken cancellationToken = default)

@@ -8,6 +8,7 @@ namespace BeyondImmersion.BannouService.Species;
 /// <summary>
 /// Service interface for Species API
 /// </summary>
+[Obsolete]
 public partial interface ISpeciesService : IDaprService
 {
     /// <summary>

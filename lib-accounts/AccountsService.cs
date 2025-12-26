@@ -18,6 +18,7 @@ namespace BeyondImmersion.BannouService.Accounts;
 /// Uses IStateStoreFactory for persistence.
 /// </summary>
 [DaprService("accounts", typeof(IAccountsService), lifetime: ServiceLifetime.Scoped)]
+[Obsolete]
 public partial class AccountsService : IAccountsService
 {
     private readonly ILogger<AccountsService> _logger;
@@ -35,6 +36,7 @@ public partial class AccountsService : IAccountsService
     private const string ACCOUNT_UPDATED_TOPIC = "account.updated";
     private const string ACCOUNT_DELETED_TOPIC = "account.deleted";
 
+    [Obsolete]
     public AccountsService(
         ILogger<AccountsService> logger,
         AccountsServiceConfiguration configuration,

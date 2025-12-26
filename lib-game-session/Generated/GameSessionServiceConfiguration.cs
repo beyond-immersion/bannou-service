@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(GameSessionService))]
+[Obsolete]
 public class GameSessionServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

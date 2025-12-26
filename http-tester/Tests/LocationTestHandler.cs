@@ -1,6 +1,8 @@
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -58,7 +60,7 @@ public class LocationTestHandler : IServiceTestHandler
     /// <summary>
     /// Helper method to create a test realm for location tests.
     /// </summary>
-    private static async Task<RealmResponse> CreateTestRealmAsync(RealmClient realmClient, string suffix)
+    private static async Task<RealmResponse> CreateTestRealmAsync(IRealmClient realmClient, string suffix)
     {
         return await realmClient.CreateRealmAsync(new CreateRealmRequest
         {
@@ -72,8 +74,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             // Create a realm for the location
             var realm = await CreateTestRealmAsync(realmClient, "CREATE");
@@ -114,8 +116,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             var realm = await CreateTestRealmAsync(realmClient, "GET");
 
@@ -155,8 +157,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             var realm = await CreateTestRealmAsync(realmClient, "GETCODE");
 
@@ -198,8 +200,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             var realm = await CreateTestRealmAsync(realmClient, "UPDATE");
 
@@ -245,8 +247,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             var realm = await CreateTestRealmAsync(realmClient, "DELETE");
 
@@ -303,8 +305,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             var realm = await CreateTestRealmAsync(realmClient, "LIST");
 
@@ -345,8 +347,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             var realm = await CreateTestRealmAsync(realmClient, "LISTREALM");
 
@@ -387,8 +389,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             var realm = await CreateTestRealmAsync(realmClient, "ROOT");
 
@@ -433,8 +435,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             var realm = await CreateTestRealmAsync(realmClient, "SETPARENT");
 
@@ -485,8 +487,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             var realm = await CreateTestRealmAsync(realmClient, "REMOVEPARENT");
 
@@ -540,8 +542,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             var realm = await CreateTestRealmAsync(realmClient, "LISTBYPARENT");
 
@@ -592,8 +594,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             var realm = await CreateTestRealmAsync(realmClient, "ANCESTORS");
 
@@ -656,8 +658,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             var realm = await CreateTestRealmAsync(realmClient, "DESCENDANTS");
 
@@ -720,8 +722,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             var realm = await CreateTestRealmAsync(realmClient, "DEPRECATE");
 
@@ -763,8 +765,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             var realm = await CreateTestRealmAsync(realmClient, "UNDEPRECATE");
 
@@ -807,8 +809,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             var realm = await CreateTestRealmAsync(realmClient, "EXISTS");
 
@@ -858,7 +860,7 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var locationClient = new LocationClient();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             try
             {
@@ -887,8 +889,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             var realm = await CreateTestRealmAsync(realmClient, "DUPCODE");
 
@@ -934,8 +936,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
 
             // Create a realm for seeding (using a unique code for the seed request)
             var realmCode = $"SEED_REALM_{DateTime.Now.Ticks}";
@@ -990,8 +992,8 @@ public class LocationTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
-            var locationClient = new LocationClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
+            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
             var testId = DateTime.Now.Ticks;
 
             // Step 1: Create realm

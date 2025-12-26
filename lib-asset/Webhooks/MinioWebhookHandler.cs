@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Asset.Models;
-using Dapr.Client;
+using BeyondImmersion.BannouService.Messaging.Services;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -12,21 +13,22 @@ namespace BeyondImmersion.BannouService.Asset.Webhooks;
 /// </summary>
 public class MinioWebhookHandler
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStore<UploadSession> _stateStore;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<MinioWebhookHandler> _logger;
     private readonly AssetServiceConfiguration _configuration;
 
-    private const string STATE_STORE = "asset-statestore";
-    private const string PUBSUB_NAME = "bannou-pubsub";
     private const string UPLOAD_SESSION_PREFIX = "upload:";
-    private const string ASSET_PREFIX = "asset:";
 
     public MinioWebhookHandler(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         ILogger<MinioWebhookHandler> logger,
         AssetServiceConfiguration configuration)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        ArgumentNullException.ThrowIfNull(stateStoreFactory);
+        _stateStore = stateStoreFactory.GetStore<UploadSession>("asset-statestore");
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
@@ -113,10 +115,8 @@ public class MinioWebhookHandler
         }
 
         // Look up the upload session
-        var session = await _daprClient.GetStateAsync<UploadSession>(
-            STATE_STORE,
-            $"{UPLOAD_SESSION_PREFIX}{uploadId:N}")
-            .ConfigureAwait(false);
+        var stateKey = $"{UPLOAD_SESSION_PREFIX}{uploadId:N}";
+        var session = await _stateStore.GetAsync(stateKey).ConfigureAwait(false);
 
         if (session == null)
         {
@@ -129,11 +129,7 @@ public class MinioWebhookHandler
         session.UploadedSize = size;
         session.IsComplete = true;
 
-        await _daprClient.SaveStateAsync(
-            STATE_STORE,
-            $"{UPLOAD_SESSION_PREFIX}{uploadId:N}",
-            session)
-            .ConfigureAwait(false);
+        await _stateStore.SaveAsync(stateKey, session).ConfigureAwait(false);
 
         _logger.LogInformation("MinIO webhook: Upload completed for session {UploadId}, size={Size}, etag={ETag}",
             uploadId, size, etag);
@@ -150,11 +146,7 @@ public class MinioWebhookHandler
             Timestamp = DateTimeOffset.UtcNow
         };
 
-        await _daprClient.PublishEventAsync(
-            PUBSUB_NAME,
-            "asset.upload.completed",
-            uploadNotification)
-            .ConfigureAwait(false);
+        await _messageBus.PublishAsync("asset.upload.completed", uploadNotification).ConfigureAwait(false);
 
         _logger.LogDebug("MinIO webhook: Published upload completion event for {UploadId}", uploadId);
     }

@@ -8,6 +8,7 @@ namespace BeyondImmersion.BannouService.Mesh;
 /// <summary>
 /// Service interface for Mesh API
 /// </summary>
+[Obsolete]
 public partial interface IMeshService : IDaprService
 {
     /// <summary>

@@ -18,6 +18,7 @@ public class AuthServicePlugin : BaseBannouPlugin
     public override string PluginName => "auth";
     public override string DisplayName => "Auth Service";
 
+    [Obsolete]
     private IAuthService? _authService;
     private IServiceProvider? _serviceProvider;
 
@@ -71,6 +72,7 @@ public class AuthServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Start the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task<bool> OnStartAsync()
     {
         Logger?.LogInformation("Starting service");
@@ -107,6 +109,7 @@ public class AuthServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Running phase - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnRunningAsync()
     {
         if (_authService == null) return;
@@ -131,6 +134,7 @@ public class AuthServicePlugin : BaseBannouPlugin
     /// <summary>
     /// Shutdown the service - calls existing IDaprService lifecycle if present.
     /// </summary>
+    [Obsolete]
     protected override async Task OnShutdownAsync()
     {
         if (_authService == null) return;

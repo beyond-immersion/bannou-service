@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Messaging;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(MessagingService))]
+[Obsolete]
 public class MessagingServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

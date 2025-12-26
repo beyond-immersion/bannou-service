@@ -13,6 +13,7 @@ namespace BeyondImmersion.BannouService.Testing;
 /// Implements IDaprService to test centralized service resolution.
 /// </summary>
 [DaprService("testing", interfaceType: typeof(ITestingService), priority: false, lifetime: ServiceLifetime.Scoped)]
+[Obsolete]
 public partial class TestingService : ITestingService
 {
     private readonly ILogger<TestingService> _logger;
@@ -20,6 +21,7 @@ public partial class TestingService : ITestingService
     private readonly IMessageBus _messageBus;
     private readonly IClientEventPublisher _clientEventPublisher;
 
+    [Obsolete]
     public TestingService(
         ILogger<TestingService> logger,
         TestingServiceConfiguration configuration,
@@ -333,6 +335,7 @@ public partial class TestingService : ITestingService
 /// <summary>
 /// Testing service interface for dependency injection.
 /// </summary>
+[Obsolete]
 public interface ITestingService : IDaprService
 {
     Task<(StatusCodes, TestResponse?)> RunTestAsync(string testName, CancellationToken cancellationToken = default);

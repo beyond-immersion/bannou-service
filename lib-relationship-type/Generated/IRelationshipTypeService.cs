@@ -8,6 +8,7 @@ namespace BeyondImmersion.BannouService.RelationshipType;
 /// <summary>
 /// Service interface for RelationshipType API
 /// </summary>
+[Obsolete]
 public partial interface IRelationshipTypeService : IDaprService
 {
     /// <summary>

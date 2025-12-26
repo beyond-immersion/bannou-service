@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(OrchestratorService))]
+[Obsolete]
 public class OrchestratorServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

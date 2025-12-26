@@ -8,9 +8,11 @@ namespace BeyondImmersion.BannouService.Controllers;
 public interface IDaprController
 {
     private static (Type, DaprControllerAttribute)[] _controllers;
+
     /// <summary>
     /// Gets the full list of dapr controllers.
     /// </summary>
+    [Obsolete]
     public static (Type, DaprControllerAttribute)[] Controllers
     {
         get
@@ -36,6 +38,7 @@ public interface IDaprController
     /// <summary>
     /// Gets the full list of non-service dapr API controllers.
     /// </summary>
+    [Obsolete]
     public static (Type, DaprControllerAttribute)[] NonServiceControllers
     {
         get => [.. Controllers.Where(t => t.Item2?.InterfaceType == null)];
@@ -44,6 +47,7 @@ public interface IDaprController
     /// <summary>
     /// Gets the full list of service dapr API controllers.
     /// </summary>
+    [Obsolete]
     public static (Type, DaprControllerAttribute)[] ServiceControllers
     {
         get => [.. Controllers.Where(t => t.Item2?.InterfaceType != null)];
@@ -52,6 +56,7 @@ public interface IDaprController
     /// <summary>
     /// Gets the full list of enabled service dapr API controllers.
     /// </summary>
+    [Obsolete]
     public static (Type, DaprControllerAttribute)[] EnabledServiceControllers
     {
         get
@@ -61,7 +66,7 @@ public interface IDaprController
                     if (t.Item2?.InterfaceType == null)
                         return false;
 
-                    (Type, Type, DaprServiceAttribute)? serviceInfo = IDaprService.GetServiceInfo(t.Item2.InterfaceType);
+                    (Type, Type, DaprServiceAttribute)? serviceInfo = ((Type, Type, DaprServiceAttribute)?)IDaprService.GetServiceInfo(t.Item2.InterfaceType);
                     return serviceInfo != null && !IDaprService.IsDisabled(serviceInfo.Value.Item3.Name);
                 })];
         }
@@ -70,6 +75,7 @@ public interface IDaprController
     /// <summary>
     /// Gets the full list of associated controllers to the given service interface.
     /// </summary>
+    [Obsolete]
     public static (Type, DaprControllerAttribute)[] FindForInterface<T>()
         where T : class, IDaprService
         => FindForInterface(typeof(T));
@@ -77,6 +83,7 @@ public interface IDaprController
     /// <summary>
     /// Gets the full list of associated controllers to the given service implementation.
     /// </summary>
+    [Obsolete]
     public static (Type, DaprControllerAttribute)[] FindForImplementation<T>()
         where T : class, IDaprService
         => FindForImplementation(typeof(T));
@@ -84,6 +91,7 @@ public interface IDaprController
     /// <summary>
     /// Gets the full list of associated controllers to a given service interface.
     /// </summary>
+    [Obsolete]
     public static (Type, DaprControllerAttribute)[] FindForInterface(Type interfaceType)
     {
         if (!typeof(IDaprService).IsAssignableFrom(interfaceType))
@@ -98,6 +106,7 @@ public interface IDaprController
     /// <summary>
     /// Gets the full list of associated controllers to a given service implementation.
     /// </summary>
+    [Obsolete]
     public static (Type, DaprControllerAttribute)[] FindForImplementation(Type implementationType)
     {
         if (!typeof(IDaprService).IsAssignableFrom(implementationType))

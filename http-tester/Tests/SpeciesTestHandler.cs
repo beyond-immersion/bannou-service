@@ -1,6 +1,8 @@
 using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -48,7 +50,7 @@ public class SpeciesTestHandler : IServiceTestHandler
     /// </summary>
     private static async Task<RealmResponse> CreateTestRealmAsync(string suffix)
     {
-        var realmClient = new RealmClient();
+        var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
         return await realmClient.CreateRealmAsync(new CreateRealmRequest
         {
             Code = $"SPECIES_TEST_{DateTime.Now.Ticks}_{suffix}",
@@ -61,7 +63,7 @@ public class SpeciesTestHandler : IServiceTestHandler
     {
         try
         {
-            var speciesClient = new SpeciesClient();
+            var speciesClient = Program.ServiceProvider!.GetRequiredService<ISpeciesClient>();
 
             // Create without realm association for basic creation test
             var createRequest = new CreateSpeciesRequest
@@ -95,7 +97,7 @@ public class SpeciesTestHandler : IServiceTestHandler
     {
         try
         {
-            var speciesClient = new SpeciesClient();
+            var speciesClient = Program.ServiceProvider!.GetRequiredService<ISpeciesClient>();
 
             // Create a species first
             var createRequest = new CreateSpeciesRequest
@@ -131,7 +133,7 @@ public class SpeciesTestHandler : IServiceTestHandler
     {
         try
         {
-            var speciesClient = new SpeciesClient();
+            var speciesClient = Program.ServiceProvider!.GetRequiredService<ISpeciesClient>();
 
             // Create a species first
             var code = $"CODE_SPECIES_{DateTime.Now.Ticks}";
@@ -165,7 +167,7 @@ public class SpeciesTestHandler : IServiceTestHandler
     {
         try
         {
-            var speciesClient = new SpeciesClient();
+            var speciesClient = Program.ServiceProvider!.GetRequiredService<ISpeciesClient>();
 
             // Create a species
             var createRequest = new CreateSpeciesRequest
@@ -207,7 +209,7 @@ public class SpeciesTestHandler : IServiceTestHandler
     {
         try
         {
-            var speciesClient = new SpeciesClient();
+            var speciesClient = Program.ServiceProvider!.GetRequiredService<ISpeciesClient>();
 
             // Create a species
             var createRequest = new CreateSpeciesRequest
@@ -253,7 +255,7 @@ public class SpeciesTestHandler : IServiceTestHandler
     {
         try
         {
-            var speciesClient = new SpeciesClient();
+            var speciesClient = Program.ServiceProvider!.GetRequiredService<ISpeciesClient>();
 
             // Create some species
             for (int i = 0; i < 3; i++)
@@ -290,7 +292,7 @@ public class SpeciesTestHandler : IServiceTestHandler
             // Create a real realm first
             var realm = await CreateTestRealmAsync("ADD");
 
-            var speciesClient = new SpeciesClient();
+            var speciesClient = Program.ServiceProvider!.GetRequiredService<ISpeciesClient>();
 
             // Create a species
             var species = await speciesClient.CreateSpeciesAsync(new CreateSpeciesRequest
@@ -329,7 +331,7 @@ public class SpeciesTestHandler : IServiceTestHandler
             var realm1 = await CreateTestRealmAsync("REMOVE1");
             var realm2 = await CreateTestRealmAsync("REMOVE2");
 
-            var speciesClient = new SpeciesClient();
+            var speciesClient = Program.ServiceProvider!.GetRequiredService<ISpeciesClient>();
 
             // Create a species with realm associations
             var species = await speciesClient.CreateSpeciesAsync(new CreateSpeciesRequest
@@ -371,7 +373,7 @@ public class SpeciesTestHandler : IServiceTestHandler
             // Create a real realm first
             var realm = await CreateTestRealmAsync("LIST");
 
-            var speciesClient = new SpeciesClient();
+            var speciesClient = Program.ServiceProvider!.GetRequiredService<ISpeciesClient>();
 
             // Create species with the specific realm
             for (int i = 0; i < 3; i++)
@@ -409,7 +411,7 @@ public class SpeciesTestHandler : IServiceTestHandler
     {
         try
         {
-            var speciesClient = new SpeciesClient();
+            var speciesClient = Program.ServiceProvider!.GetRequiredService<ISpeciesClient>();
 
             try
             {
@@ -438,7 +440,7 @@ public class SpeciesTestHandler : IServiceTestHandler
     {
         try
         {
-            var speciesClient = new SpeciesClient();
+            var speciesClient = Program.ServiceProvider!.GetRequiredService<ISpeciesClient>();
 
             var code = $"DUPLICATE_SPECIES_{DateTime.Now.Ticks}";
 
@@ -478,7 +480,7 @@ public class SpeciesTestHandler : IServiceTestHandler
     {
         try
         {
-            var speciesClient = new SpeciesClient();
+            var speciesClient = Program.ServiceProvider!.GetRequiredService<ISpeciesClient>();
 
             var seedRequest = new SeedSpeciesRequest
             {
@@ -524,7 +526,7 @@ public class SpeciesTestHandler : IServiceTestHandler
             // Create a real realm first for lifecycle test
             var realm = await CreateTestRealmAsync("LIFECYCLE");
 
-            var speciesClient = new SpeciesClient();
+            var speciesClient = Program.ServiceProvider!.GetRequiredService<ISpeciesClient>();
             var testId = DateTime.Now.Ticks;
 
             // Step 1: Create species

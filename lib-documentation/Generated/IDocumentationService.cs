@@ -8,6 +8,7 @@ namespace BeyondImmersion.BannouService.Documentation;
 /// <summary>
 /// Service interface for Documentation API
 /// </summary>
+[Obsolete]
 public partial interface IDocumentationService : IDaprService
 {
     /// <summary>

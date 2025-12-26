@@ -42,6 +42,7 @@ public class PluginLoader
     private readonly Dictionary<string, Assembly> _loadedAssemblies = new();
 
     // Resolved service instances for enabled plugins only
+    [Obsolete]
     private readonly Dictionary<string, IDaprService> _resolvedServices = new();
 
     // WebApplication reference for service startup (stored during ConfigureApplication)
@@ -86,6 +87,7 @@ public class PluginLoader
     /// <param name="pluginsDirectory">Root plugins directory</param>
     /// <param name="requestedPlugins">List of specific plugins to load, or null for all</param>
     /// <returns>Number of enabled plugins successfully loaded</returns>
+    [Obsolete]
     public async Task<int?> DiscoverAndLoadPluginsAsync(string pluginsDirectory, IList<string>? requestedPlugins = null)
     {
         _logger.LogInformation("Discovering plugins in: {PluginsDirectory}", pluginsDirectory);
@@ -193,6 +195,7 @@ public class PluginLoader
     /// </summary>
     /// <param name="serviceName">Name of the service (e.g., "auth", "accounts")</param>
     /// <returns>True if service should be enabled, false if disabled</returns>
+    [Obsolete]
     private bool IsServiceEnabled(string serviceName)
     {
         if (string.IsNullOrWhiteSpace(serviceName))
@@ -284,6 +287,7 @@ public class PluginLoader
     /// This includes ALL client types (even from disabled plugins) and service types from enabled plugins only.
     /// Also scans the host assembly (bannou-service) for centralized client types.
     /// </summary>
+    [Obsolete]
     private void DiscoverTypesForRegistration()
     {
         _logger.LogInformation("Discovering types for DI registration from {AssemblyCount} plugin assemblies + host assembly", _loadedAssemblies.Count);
@@ -367,6 +371,7 @@ public class PluginLoader
     /// Discover service types using IDaprService interface and DaprServiceAttribute.
     /// Pure interface/attribute-based discovery from the specific assembly.
     /// </summary>
+    [Obsolete]
     private void DiscoverServiceTypes(Assembly assembly, string pluginName)
     {
         var serviceTypes = assembly.GetTypes()
@@ -401,6 +406,7 @@ public class PluginLoader
     /// Configuration lifetimes match their corresponding service lifetimes.
     /// Pure attribute-based discovery - configurations must have ServiceImplementationType specified.
     /// </summary>
+    [Obsolete]
     private void DiscoverConfigurationTypes(Assembly assembly, string pluginName)
     {
         _logger.LogInformation("Discovering configuration types in assembly {AssemblyName} for plugin {PluginName}", assembly.GetName().Name, pluginName);
@@ -668,6 +674,7 @@ public class PluginLoader
     /// This happens AFTER the web application is built and DI container is ready.
     /// </summary>
     /// <param name="serviceProvider">Service provider to resolve services from</param>
+    [Obsolete]
     public void ResolveServices(IServiceProvider serviceProvider)
     {
         _logger.LogInformation("Centrally resolving services for {EnabledCount} enabled plugins", _enabledPlugins.Count);
@@ -721,6 +728,7 @@ public class PluginLoader
     /// <summary>
     /// Extract service name from a service type using DaprService attribute.
     /// </summary>
+    [Obsolete]
     private string? GetServiceNameFromType(Type serviceType)
     {
         var daprServiceAttr = serviceType.GetCustomAttribute<DaprServiceAttribute>();
@@ -733,6 +741,7 @@ public class PluginLoader
     /// </summary>
     /// <param name="pluginName">Name of the plugin</param>
     /// <returns>Resolved service instance or null if not found</returns>
+    [Obsolete]
     public IDaprService? GetResolvedService(string pluginName)
     {
         return _resolvedServices.GetValueOrDefault(pluginName);
@@ -851,6 +860,7 @@ public class PluginLoader
     /// their failure causes immediate startup failure.
     /// </summary>
     /// <returns>True if all plugins and services initialized successfully</returns>
+    [Obsolete]
     public async Task<bool> InitializeAsync()
     {
         _logger.LogInformation("🚀 Initializing {EnabledCount} enabled plugins", _enabledPlugins.Count);
@@ -946,6 +956,7 @@ public class PluginLoader
     /// This should be called AFTER Dapr connectivity is confirmed to ensure events are delivered.
     /// </summary>
     /// <returns>True if all permissions were registered successfully</returns>
+    [Obsolete]
     public async Task<bool> RegisterServicePermissionsAsync()
     {
         _logger.LogInformation("Registering service permissions for {ServiceCount} services: {ServiceNames}",
@@ -968,14 +979,14 @@ public class PluginLoader
                         _logger.LogInformation("Permissions registered successfully for service: {PluginName} (attempt {Attempt})", pluginName, attempt);
                         break;
                     }
-                    catch (Dapr.DaprException daprEx) when (attempt < maxAttempts)
+                    catch (HttpRequestException httpEx) when (attempt < maxAttempts)
                     {
-                        _logger.LogWarning(daprEx, "Permission registration retry {Attempt}/{Max} for {PluginName}", attempt, maxAttempts, pluginName);
+                        _logger.LogWarning(httpEx, "Permission registration retry {Attempt}/{Max} for {PluginName}", attempt, maxAttempts, pluginName);
                         await Task.Delay(TimeSpan.FromMilliseconds(500));
                     }
-                    catch (Grpc.Core.RpcException rpcEx) when (attempt < maxAttempts)
+                    catch (TimeoutException timeoutEx) when (attempt < maxAttempts)
                     {
-                        _logger.LogWarning(rpcEx, "Permission registration retry {Attempt}/{Max} for {PluginName}", attempt, maxAttempts, pluginName);
+                        _logger.LogWarning(timeoutEx, "Permission registration retry {Attempt}/{Max} for {PluginName}", attempt, maxAttempts, pluginName);
                         await Task.Delay(TimeSpan.FromMilliseconds(500));
                     }
                 }
@@ -1030,6 +1041,7 @@ public class PluginLoader
     /// <summary>
     /// Invoke running methods for enabled plugins and resolved services.
     /// </summary>
+    [Obsolete]
     public async Task InvokeRunningAsync()
     {
         _logger.LogInformation("Invoking running methods for {EnabledCount} enabled plugins", _enabledPlugins.Count);
@@ -1068,6 +1080,7 @@ public class PluginLoader
     /// <summary>
     /// Shutdown enabled plugins and resolved services gracefully.
     /// </summary>
+    [Obsolete]
     public async Task ShutdownAsync()
     {
         _logger.LogInformation("Shutting down {EnabledCount} enabled plugins", _enabledPlugins.Count);

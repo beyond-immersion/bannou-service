@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Permissions;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(PermissionsService))]
+[Obsolete]
 public class PermissionsServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

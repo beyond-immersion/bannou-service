@@ -1,5 +1,7 @@
 using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -47,7 +49,7 @@ public class RealmTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
 
             var createRequest = new CreateRealmRequest
             {
@@ -82,7 +84,7 @@ public class RealmTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
 
             // Create a realm first
             var createRequest = new CreateRealmRequest
@@ -118,7 +120,7 @@ public class RealmTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
 
             // Create a realm first
             var code = $"CODE_REALM_{DateTime.Now.Ticks}";
@@ -152,7 +154,7 @@ public class RealmTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
 
             // Create a realm
             var createRequest = new CreateRealmRequest
@@ -194,7 +196,7 @@ public class RealmTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
 
             // Create a realm
             var createRequest = new CreateRealmRequest
@@ -247,7 +249,7 @@ public class RealmTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
 
             // Create some realms
             for (int i = 0; i < 3; i++)
@@ -281,7 +283,7 @@ public class RealmTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
 
             // Create a realm
             var realm = await realmClient.CreateRealmAsync(new CreateRealmRequest
@@ -319,7 +321,7 @@ public class RealmTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
 
             // Create and deprecate a realm
             var realm = await realmClient.CreateRealmAsync(new CreateRealmRequest
@@ -358,7 +360,7 @@ public class RealmTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
 
             // Create a realm
             var realm = await realmClient.CreateRealmAsync(new CreateRealmRequest
@@ -404,7 +406,7 @@ public class RealmTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
 
             try
             {
@@ -433,7 +435,7 @@ public class RealmTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
 
             var code = $"DUPLICATE_REALM_{DateTime.Now.Ticks}";
 
@@ -473,7 +475,7 @@ public class RealmTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
 
             var seedRequest = new SeedRealmsRequest
             {
@@ -518,7 +520,7 @@ public class RealmTestHandler : IServiceTestHandler
     {
         try
         {
-            var realmClient = new RealmClient();
+            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
             var testId = DateTime.Now.Ticks;
 
             // Step 1: Create realm

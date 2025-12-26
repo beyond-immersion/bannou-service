@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Subscriptions;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(typeof(SubscriptionsService))]
+[Obsolete]
 public class SubscriptionsServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
