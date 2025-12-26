@@ -34,6 +34,24 @@ public class MeshServiceConfiguration : IServiceConfiguration
     public string RedisKeyPrefix { get; set; } = "mesh:";
 
     /// <summary>
+    /// Total timeout in seconds for Redis connection establishment including retries
+    /// Environment variable: MESH_REDIS_CONNECTION_TIMEOUT_SECONDS
+    /// </summary>
+    public int RedisConnectionTimeoutSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Maximum number of Redis connection retry attempts
+    /// Environment variable: MESH_REDIS_CONNECT_RETRY_COUNT
+    /// </summary>
+    public int RedisConnectRetryCount { get; set; } = 5;
+
+    /// <summary>
+    /// Timeout in milliseconds for synchronous Redis operations
+    /// Environment variable: MESH_REDIS_SYNC_TIMEOUT_MS
+    /// </summary>
+    public int RedisSyncTimeoutMs { get; set; } = 5000;
+
+    /// <summary>
     /// Recommended interval between heartbeats
     /// Environment variable: MESH_HEARTBEAT_INTERVAL_SECONDS
     /// </summary>

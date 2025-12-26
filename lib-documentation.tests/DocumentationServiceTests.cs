@@ -478,17 +478,17 @@ public class DocumentationServiceTests
             SearchTerm = "test query"
         };
 
-        _mockSearchIndexService.Setup(x => x.Search(
-            TEST_NAMESPACE, "test query", null, It.IsAny<int>()))
-            .Returns(new List<SearchResult>());
+        _mockSearchIndexService.Setup(x => x.SearchAsync(
+            TEST_NAMESPACE, "test query", null, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<SearchResult>());
 
         // Act
         var (status, _) = await _service.SearchDocumentationAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        _mockSearchIndexService.Verify(x => x.Search(
-            TEST_NAMESPACE, "test query", null, It.IsAny<int>()), Times.Once);
+        _mockSearchIndexService.Verify(x => x.SearchAsync(
+            TEST_NAMESPACE, "test query", null, It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -501,17 +501,17 @@ public class DocumentationServiceTests
             Query = "how do I start"
         };
 
-        _mockSearchIndexService.Setup(x => x.Query(
-            TEST_NAMESPACE, "how do I start", null, It.IsAny<int>(), It.IsAny<double>()))
-            .Returns(new List<SearchResult>());
+        _mockSearchIndexService.Setup(x => x.QueryAsync(
+            TEST_NAMESPACE, "how do I start", null, It.IsAny<int>(), It.IsAny<double>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<SearchResult>());
 
         // Act
         var (status, _) = await _service.QueryDocumentationAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        _mockSearchIndexService.Verify(x => x.Query(
-            TEST_NAMESPACE, "how do I start", null, It.IsAny<int>(), It.IsAny<double>()), Times.Once);
+        _mockSearchIndexService.Verify(x => x.QueryAsync(
+            TEST_NAMESPACE, "how do I start", null, It.IsAny<int>(), It.IsAny<double>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

@@ -1,6 +1,6 @@
 # Generated Configuration Reference
 
-> **Auto-generated**: 2025-12-26 02:47:45
+> **Auto-generated**: 2025-12-26 05:01:32
 > **Source**: `schemas/*-configuration.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -155,6 +155,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_REDIS_CONNECTION_STRING` | string | `localhost:6379` | Redis connection string for service registry storage |
 | `MESH_REDIS_KEY_PREFIX` | string | `mesh:` | Prefix for all mesh-related Redis keys |
 | `MESH_RETRY_DELAY_MILLISECONDS` | int | `100` | Initial delay between retries (doubles on each retry) |
+| `MESH_USE_LOCAL_ROUTING` | bool | `false` | Use local-only routing instead of Redis. All calls route to ... |
 
 ### Messaging
 
@@ -176,6 +177,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESSAGING_RABBITMQ_VHOST` | string | `/` | RabbitMQ virtual host |
 | `MESSAGING_RETRY_DELAY_MS` | int | `5000` | Delay between retry attempts in milliseconds |
 | `MESSAGING_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts before dead-lettering |
+| `MESSAGING_USE_INMEMORY` | bool | `false` | Use in-memory messaging instead of RabbitMQ. Messages are NO... |
 | `MESSAGING_USE_MASSTRANSIT` | bool | `true` | Use MassTransit wrapper (true) or direct RabbitMQ.Client (fa... |
 
 ### Orchestrator
@@ -242,6 +244,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ENABLE_TRACING` | bool | `true` | Enable distributed tracing for state operations |
 | `MYSQL_CONNECTION_STRING` | string | **REQUIRED** | MySQL connection string for MySQL-backed state stores |
 | `REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string (host:port format) for Redis-backed ... |
+| `STATE_USE_INMEMORY` | bool | `false` | Use in-memory storage instead of Redis/MySQL. Data is NOT pe... |
 
 ### Subscriptions
 
@@ -275,9 +278,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 155
+- **Total properties**: 158
 - **Required (no default)**: 31
-- **Optional (has default)**: 124
+- **Optional (has default)**: 127
 
 ## Environment Variable Naming Convention
 

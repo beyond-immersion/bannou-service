@@ -1005,16 +1005,17 @@ public class MeshRedisManagerTests
 /// <summary>
 /// Tests for MeshInvocationClient - the HTTP-based service invocation client
 /// for service-to-service communication via lib-mesh infrastructure.
+/// Uses IMeshRedisManager directly to avoid circular dependency with generated clients.
 /// </summary>
 public class MeshInvocationClientTests : IDisposable
 {
-    private readonly Mock<IMeshClient> _mockMeshClient;
+    private readonly Mock<IMeshRedisManager> _mockRedisManager;
     private readonly Mock<ILogger<MeshInvocationClient>> _mockLogger;
     private MeshInvocationClient? _client;
 
     public MeshInvocationClientTests()
     {
-        _mockMeshClient = new Mock<IMeshClient>();
+        _mockRedisManager = new Mock<IMeshRedisManager>();
         _mockLogger = new Mock<ILogger<MeshInvocationClient>>();
     }
 
@@ -1026,7 +1027,7 @@ public class MeshInvocationClientTests : IDisposable
     private MeshInvocationClient CreateClient()
     {
         _client = new MeshInvocationClient(
-            _mockMeshClient.Object,
+            _mockRedisManager.Object,
             _mockLogger.Object);
         return _client;
     }
@@ -1042,14 +1043,14 @@ public class MeshInvocationClientTests : IDisposable
     }
 
     [Fact]
-    public void Constructor_WithNullMeshClient_ShouldThrowArgumentNullException()
+    public void Constructor_WithNullRedisManager_ShouldThrowArgumentNullException()
     {
         // Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new MeshInvocationClient(
             null!,
             _mockLogger.Object));
 
-        Assert.Equal("meshClient", exception.ParamName);
+        Assert.Equal("redisManager", exception.ParamName);
     }
 
     [Fact]
@@ -1057,7 +1058,7 @@ public class MeshInvocationClientTests : IDisposable
     {
         // Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new MeshInvocationClient(
-            _mockMeshClient.Object,
+            _mockRedisManager.Object,
             null!));
 
         Assert.Equal("logger", exception.ParamName);
@@ -1157,9 +1158,9 @@ public class MeshInvocationClientTests : IDisposable
         // Arrange
         var client = CreateClient();
 
-        _mockMeshClient
-            .Setup(x => x.GetRouteAsync(It.IsAny<GetRouteRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ApiException("No endpoints available", 503, null, new Dictionary<string, IEnumerable<string>>(), null));
+        _mockRedisManager
+            .Setup(x => x.GetEndpointsForAppIdAsync(It.IsAny<string>(), It.IsAny<bool>()))
+            .ReturnsAsync(new List<MeshEndpoint>()); // Return empty list for no endpoints
 
         var request = client.CreateInvokeMethodRequest(HttpMethod.Get, "non-existent-app", "test/endpoint");
 
@@ -1181,11 +1182,11 @@ public class MeshInvocationClientTests : IDisposable
         // Arrange
         var client = CreateClient();
 
-        _mockMeshClient
-            .Setup(x => x.GetRouteAsync(It.IsAny<GetRouteRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GetRouteResponse
+        _mockRedisManager
+            .Setup(x => x.GetEndpointsForAppIdAsync(It.IsAny<string>(), It.IsAny<bool>()))
+            .ReturnsAsync(new List<MeshEndpoint>
             {
-                Endpoint = new MeshEndpoint { AppId = "bannou", Host = "localhost", Port = 8080 }
+                new MeshEndpoint { AppId = "bannou", Host = "localhost", Port = 8080 }
             });
 
         // Act
@@ -1201,9 +1202,9 @@ public class MeshInvocationClientTests : IDisposable
         // Arrange
         var client = CreateClient();
 
-        _mockMeshClient
-            .Setup(x => x.GetRouteAsync(It.IsAny<GetRouteRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ApiException("Not found", 404, null, new Dictionary<string, IEnumerable<string>>(), null));
+        _mockRedisManager
+            .Setup(x => x.GetEndpointsForAppIdAsync(It.IsAny<string>(), It.IsAny<bool>()))
+            .ReturnsAsync(new List<MeshEndpoint>()); // Return empty list
 
         // Act
         var result = await client.IsServiceAvailableAsync("non-existent", CancellationToken.None);

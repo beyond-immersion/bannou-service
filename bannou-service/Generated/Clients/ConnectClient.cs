@@ -122,7 +122,13 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
     /// <summary>
     /// Service name used for app-id resolution. Extracted from class name.
     /// </summary>
-    private static readonly string ServiceName = "connect";
+    private static readonly string _serviceName = "connect";
+
+    /// <summary>
+    /// The name of the service this client communicates with.
+    /// Implements IServiceClient.ServiceName.
+    /// </summary>
+    public string ServiceName => _serviceName;
 
     public ConnectClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<ConnectClient>? logger = null)
     {

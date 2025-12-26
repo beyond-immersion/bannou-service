@@ -332,17 +332,17 @@ test-unit:
 # Uses minimal service configuration (TESTING service only) - no databases, no ingress
 # Stack: base + test + test.infrastructure (minimal dependencies)
 test-infrastructure:
-	@echo "🚀 Running infrastructure tests (TESTING service only - minimal deps)..."
+	@echo "🚀 Running infrastructure tests (TESTING service only - no external deps)..."
 	docker compose -p bannou-test-infra \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.infrastructure.yml" \
-		build --no-cache
+		build --no-cache bannou
 	docker compose -p bannou-test-infra \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.infrastructure.yml" \
-		up --exit-code-from=bannou-infra-tester
+		up --no-deps --exit-code-from=bannou-infra-tester bannou bannou-infra-tester
 	docker compose -p bannou-test-infra \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.test.yml" \

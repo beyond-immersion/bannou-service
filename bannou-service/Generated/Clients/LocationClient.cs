@@ -252,7 +252,13 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
     /// <summary>
     /// Service name used for app-id resolution. Extracted from class name.
     /// </summary>
-    private static readonly string ServiceName = "location";
+    private static readonly string _serviceName = "location";
+
+    /// <summary>
+    /// The name of the service this client communicates with.
+    /// Implements IServiceClient.ServiceName.
+    /// </summary>
+    public string ServiceName => _serviceName;
 
     public LocationClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<LocationClient>? logger = null)
     {

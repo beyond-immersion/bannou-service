@@ -120,7 +120,13 @@ public partial class BehaviorClient : IBehaviorClient, BeyondImmersion.BannouSer
     /// <summary>
     /// Service name used for app-id resolution. Extracted from class name.
     /// </summary>
-    private static readonly string ServiceName = "behavior";
+    private static readonly string _serviceName = "behavior";
+
+    /// <summary>
+    /// The name of the service this client communicates with.
+    /// Implements IServiceClient.ServiceName.
+    /// </summary>
+    public string ServiceName => _serviceName;
 
     public BehaviorClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<BehaviorClient>? logger = null)
     {

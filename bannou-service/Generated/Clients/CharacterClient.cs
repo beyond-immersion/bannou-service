@@ -96,7 +96,13 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
     /// <summary>
     /// Service name used for app-id resolution. Extracted from class name.
     /// </summary>
-    private static readonly string ServiceName = "character";
+    private static readonly string _serviceName = "character";
+
+    /// <summary>
+    /// The name of the service this client communicates with.
+    /// Implements IServiceClient.ServiceName.
+    /// </summary>
+    public string ServiceName => _serviceName;
 
     public CharacterClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<CharacterClient>? logger = null)
     {

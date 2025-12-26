@@ -89,7 +89,7 @@ public class SearchIndexServiceTests
     #region IndexDocument Tests
 
     [Fact]
-    public void IndexDocument_WithValidData_ShouldAddToIndex()
+    public async Task IndexDocument_WithValidData_ShouldAddToIndex()
     {
         // Arrange
         var docId = Guid.NewGuid();
@@ -103,7 +103,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, docId, title, slug, content, category, tags);
 
         // Assert - verify by searching
-        var results = _service.Search(TEST_NAMESPACE, "getting started", maxResults: 10);
+        var results = await _service.SearchAsync(TEST_NAMESPACE, "getting started", maxResults: 10);
         Assert.Single(results);
         Assert.Equal(docId, results[0].DocumentId);
         Assert.Equal(title, results[0].Title);
@@ -111,7 +111,7 @@ public class SearchIndexServiceTests
     }
 
     [Fact]
-    public void IndexDocument_WithNullContent_ShouldStillIndex()
+    public async Task IndexDocument_WithNullContent_ShouldStillIndex()
     {
         // Arrange
         var docId = Guid.NewGuid();
@@ -122,13 +122,13 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, docId, title, slug, null, "general", null);
 
         // Assert - verify by searching title
-        var results = _service.Search(TEST_NAMESPACE, "empty content", maxResults: 10);
+        var results = await _service.SearchAsync(TEST_NAMESPACE, "empty content", maxResults: 10);
         Assert.Single(results);
         Assert.Equal(docId, results[0].DocumentId);
     }
 
     [Fact]
-    public void IndexDocument_WithNullTags_ShouldStillIndex()
+    public async Task IndexDocument_WithNullTags_ShouldStillIndex()
     {
         // Arrange
         var docId = Guid.NewGuid();
@@ -137,12 +137,12 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, docId, "Test Doc", "test-doc", "content", "general", null);
 
         // Assert
-        var stats = _service.GetNamespaceStats(TEST_NAMESPACE);
+        var stats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
         Assert.Equal(1, stats.TotalDocuments);
     }
 
     [Fact]
-    public void IndexDocument_MultipleDocuments_ShouldIndexAll()
+    public async Task IndexDocument_MultipleDocuments_ShouldIndexAll()
     {
         // Arrange & Act
         var doc1Id = Guid.NewGuid();
@@ -154,7 +154,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, doc3Id, "Third Document", "third", "Content three", "tutorials", new[] { "tag1", "tag3" });
 
         // Assert
-        var stats = _service.GetNamespaceStats(TEST_NAMESPACE);
+        var stats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
         Assert.Equal(3, stats.TotalDocuments);
         Assert.Equal(2, stats.DocumentsByCategory["tutorials"]);
         Assert.Equal(1, stats.DocumentsByCategory["guides"]);
@@ -165,7 +165,7 @@ public class SearchIndexServiceTests
     #region Search Tests
 
     [Fact]
-    public void Search_WithExactMatch_ShouldReturnHighScore()
+    public async Task Search_WithExactMatch_ShouldReturnHighScore()
     {
         // Arrange
         var docId = Guid.NewGuid();
@@ -173,7 +173,7 @@ public class SearchIndexServiceTests
             "Learn about authentication and authorization", "security", null);
 
         // Act
-        var results = _service.Search(TEST_NAMESPACE, "authentication", maxResults: 10);
+        var results = await _service.SearchAsync(TEST_NAMESPACE, "authentication", maxResults: 10);
 
         // Assert
         Assert.Single(results);
@@ -182,7 +182,7 @@ public class SearchIndexServiceTests
     }
 
     [Fact]
-    public void Search_WithPrefixMatch_ShouldReturnLowerScore()
+    public async Task Search_WithPrefixMatch_ShouldReturnLowerScore()
     {
         // Arrange
         var docId = Guid.NewGuid();
@@ -190,7 +190,7 @@ public class SearchIndexServiceTests
             "Learn about authentication", "security", null);
 
         // Act - search with prefix
-        var results = _service.Search(TEST_NAMESPACE, "auth", maxResults: 10);
+        var results = await _service.SearchAsync(TEST_NAMESPACE, "auth", maxResults: 10);
 
         // Assert
         Assert.Single(results);
@@ -198,7 +198,7 @@ public class SearchIndexServiceTests
     }
 
     [Fact]
-    public void Search_WithMultipleTerms_ShouldScoreHigherForMoreMatches()
+    public async Task Search_WithMultipleTerms_ShouldScoreHigherForMoreMatches()
     {
         // Arrange
         var doc1Id = Guid.NewGuid();
@@ -213,7 +213,7 @@ public class SearchIndexServiceTests
             "Once you've started learning", "advanced", null);
 
         // Act
-        var results = _service.Search(TEST_NAMESPACE, "getting started", maxResults: 10);
+        var results = await _service.SearchAsync(TEST_NAMESPACE, "getting started", maxResults: 10);
 
         // Assert - doc1 should rank higher due to more term matches
         Assert.Equal(2, results.Count);
@@ -221,7 +221,7 @@ public class SearchIndexServiceTests
     }
 
     [Fact]
-    public void Search_WithCategoryFilter_ShouldOnlyReturnMatchingCategory()
+    public async Task Search_WithCategoryFilter_ShouldOnlyReturnMatchingCategory()
     {
         // Arrange
         var doc1Id = Guid.NewGuid();
@@ -233,7 +233,7 @@ public class SearchIndexServiceTests
             "More learning content", "guides", null);
 
         // Act
-        var results = _service.Search(TEST_NAMESPACE, "tutorial", category: "tutorials", maxResults: 10);
+        var results = await _service.SearchAsync(TEST_NAMESPACE, "tutorial", category: "tutorials", maxResults: 10);
 
         // Assert
         Assert.Single(results);
@@ -241,7 +241,7 @@ public class SearchIndexServiceTests
     }
 
     [Fact]
-    public void Search_WithMaxResults_ShouldLimitResults()
+    public async Task Search_WithMaxResults_ShouldLimitResults()
     {
         // Arrange - add 5 documents
         for (int i = 0; i < 5; i++)
@@ -251,38 +251,38 @@ public class SearchIndexServiceTests
         }
 
         // Act
-        var results = _service.Search(TEST_NAMESPACE, "common search", maxResults: 3);
+        var results = await _service.SearchAsync(TEST_NAMESPACE, "common search", maxResults: 3);
 
         // Assert
         Assert.Equal(3, results.Count);
     }
 
     [Fact]
-    public void Search_WithNoMatches_ShouldReturnEmpty()
+    public async Task Search_WithNoMatches_ShouldReturnEmpty()
     {
         // Arrange
         _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Hello World", "hello",
             "A simple document", "general", null);
 
         // Act
-        var results = _service.Search(TEST_NAMESPACE, "nonexistent term xyz", maxResults: 10);
+        var results = await _service.SearchAsync(TEST_NAMESPACE, "nonexistent term xyz", maxResults: 10);
 
         // Assert
         Assert.Empty(results);
     }
 
     [Fact]
-    public void Search_InEmptyNamespace_ShouldReturnEmpty()
+    public async Task Search_InEmptyNamespace_ShouldReturnEmpty()
     {
         // Act
-        var results = _service.Search("empty-namespace", "any term", maxResults: 10);
+        var results = await _service.SearchAsync("empty-namespace", "any term", maxResults: 10);
 
         // Assert
         Assert.Empty(results);
     }
 
     [Fact]
-    public void Search_ShouldFilterStopWords()
+    public async Task Search_ShouldFilterStopWords()
     {
         // Arrange
         var docId = Guid.NewGuid();
@@ -290,8 +290,8 @@ public class SearchIndexServiceTests
             "This is an important document with content", "general", null);
 
         // Act - search with stop words only should not match
-        var stopWordResults = _service.Search(TEST_NAMESPACE, "the is an", maxResults: 10);
-        var contentResults = _service.Search(TEST_NAMESPACE, "important", maxResults: 10);
+        var stopWordResults = await _service.SearchAsync(TEST_NAMESPACE, "the is an", maxResults: 10);
+        var contentResults = await _service.SearchAsync(TEST_NAMESPACE, "important", maxResults: 10);
 
         // Assert
         Assert.Empty(stopWordResults); // Stop words filtered
@@ -299,7 +299,7 @@ public class SearchIndexServiceTests
     }
 
     [Fact]
-    public void Search_ShouldBeCaseInsensitive()
+    public async Task Search_ShouldBeCaseInsensitive()
     {
         // Arrange
         var docId = Guid.NewGuid();
@@ -307,9 +307,9 @@ public class SearchIndexServiceTests
             "Learn about AUTHENTICATION", "security", null);
 
         // Act
-        var lowerResults = _service.Search(TEST_NAMESPACE, "authentication", maxResults: 10);
-        var upperResults = _service.Search(TEST_NAMESPACE, "AUTHENTICATION", maxResults: 10);
-        var mixedResults = _service.Search(TEST_NAMESPACE, "AuThEnTiCaTiOn", maxResults: 10);
+        var lowerResults = await _service.SearchAsync(TEST_NAMESPACE, "authentication", maxResults: 10);
+        var upperResults = await _service.SearchAsync(TEST_NAMESPACE, "AUTHENTICATION", maxResults: 10);
+        var mixedResults = await _service.SearchAsync(TEST_NAMESPACE, "AuThEnTiCaTiOn", maxResults: 10);
 
         // Assert
         Assert.Single(lowerResults);
@@ -322,7 +322,7 @@ public class SearchIndexServiceTests
     #region Query Tests
 
     [Fact]
-    public void Query_WithMinRelevanceScore_ShouldFilterLowScores()
+    public async Task Query_WithMinRelevanceScore_ShouldFilterLowScores()
     {
         // Arrange
         var doc1Id = Guid.NewGuid();
@@ -337,18 +337,18 @@ public class SearchIndexServiceTests
             "About the author", "general", null);
 
         // Act - high min score should filter out low-relevance results
-        var highThreshold = _service.Query(TEST_NAMESPACE, "auth", minRelevanceScore: 0.8, maxResults: 10);
-        var lowThreshold = _service.Query(TEST_NAMESPACE, "auth", minRelevanceScore: 0.1, maxResults: 10);
+        var highThreshold = await _service.QueryAsync(TEST_NAMESPACE, "auth", minRelevanceScore: 0.8, maxResults: 10);
+        var lowThreshold = await _service.QueryAsync(TEST_NAMESPACE, "auth", minRelevanceScore: 0.1, maxResults: 10);
 
         // Assert
         Assert.True(lowThreshold.Count >= highThreshold.Count);
     }
 
     [Fact]
-    public void Query_InEmptyNamespace_ShouldReturnEmpty()
+    public async Task Query_InEmptyNamespace_ShouldReturnEmpty()
     {
         // Act
-        var results = _service.Query("nonexistent-namespace", "any query", maxResults: 10);
+        var results = await _service.QueryAsync("nonexistent-namespace", "any query", maxResults: 10);
 
         // Assert
         Assert.Empty(results);
@@ -359,7 +359,7 @@ public class SearchIndexServiceTests
     #region GetRelatedSuggestions Tests
 
     [Fact]
-    public void GetRelatedSuggestions_ByDocumentId_ShouldReturnRelated()
+    public async Task GetRelatedSuggestions_ByDocumentId_ShouldReturnRelated()
     {
         // Arrange
         var doc1Id = Guid.NewGuid();
@@ -372,14 +372,14 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, doc3Id, "Advanced Guide", "advanced", "Content", "advanced", new[] { "expert" });
 
         // Act
-        var related = _service.GetRelatedSuggestions(TEST_NAMESPACE, doc1Id.ToString(), maxSuggestions: 5);
+        var related = await _service.GetRelatedSuggestionsAsync(TEST_NAMESPACE, doc1Id.ToString(), maxSuggestions: 5);
 
         // Assert - doc2 should be related (same category + shared tags)
         Assert.Contains(doc2Id, related);
     }
 
     [Fact]
-    public void GetRelatedSuggestions_BySlug_ShouldFindSourceDocument()
+    public async Task GetRelatedSuggestions_BySlug_ShouldFindSourceDocument()
     {
         // Arrange
         var doc1Id = Guid.NewGuid();
@@ -389,7 +389,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Related Doc", "related-doc", "Content", "tutorials", new[] { "tag1" });
 
         // Act
-        var related = _service.GetRelatedSuggestions(TEST_NAMESPACE, "source-doc", maxSuggestions: 5);
+        var related = await _service.GetRelatedSuggestionsAsync(TEST_NAMESPACE, "source-doc", maxSuggestions: 5);
 
         // Assert
         Assert.Contains(doc2Id, related);
@@ -397,7 +397,7 @@ public class SearchIndexServiceTests
     }
 
     [Fact]
-    public void GetRelatedSuggestions_WithSharedTags_ShouldScoreHigher()
+    public async Task GetRelatedSuggestions_WithSharedTags_ShouldScoreHigher()
     {
         // Arrange
         var sourceId = Guid.NewGuid();
@@ -409,14 +409,14 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, unrelatedId, "Unrelated", "unrelated", "Content", "other", new[] { "different" }); // Different
 
         // Act
-        var related = _service.GetRelatedSuggestions(TEST_NAMESPACE, sourceId.ToString(), maxSuggestions: 5);
+        var related = await _service.GetRelatedSuggestionsAsync(TEST_NAMESPACE, sourceId.ToString(), maxSuggestions: 5);
 
         // Assert - related doc should be first due to matching category + tags
         Assert.Equal(relatedId, related[0]);
     }
 
     [Fact]
-    public void GetRelatedSuggestions_WithUnknownSource_ShouldFallbackToSearch()
+    public async Task GetRelatedSuggestions_WithUnknownSource_ShouldFallbackToSearch()
     {
         // Arrange
         var docId = Guid.NewGuid();
@@ -424,17 +424,17 @@ public class SearchIndexServiceTests
             "Learn Python programming", "tutorials", null);
 
         // Act - search term that doesn't match any doc ID/slug/title exactly
-        var related = _service.GetRelatedSuggestions(TEST_NAMESPACE, "python", maxSuggestions: 5);
+        var related = await _service.GetRelatedSuggestionsAsync(TEST_NAMESPACE, "python", maxSuggestions: 5);
 
         // Assert - should fall back to search and find the Python document
         Assert.Contains(docId, related);
     }
 
     [Fact]
-    public void GetRelatedSuggestions_InEmptyNamespace_ShouldReturnEmpty()
+    public async Task GetRelatedSuggestions_InEmptyNamespace_ShouldReturnEmpty()
     {
         // Act
-        var related = _service.GetRelatedSuggestions("empty-namespace", "anything", maxSuggestions: 5);
+        var related = await _service.GetRelatedSuggestionsAsync("empty-namespace", "anything", maxSuggestions: 5);
 
         // Assert
         Assert.Empty(related);
@@ -445,7 +445,7 @@ public class SearchIndexServiceTests
     #region ListDocumentIds Tests
 
     [Fact]
-    public void ListDocumentIds_ShouldReturnAllDocuments()
+    public async Task ListDocumentIds_ShouldReturnAllDocuments()
     {
         // Arrange
         var doc1Id = Guid.NewGuid();
@@ -455,7 +455,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Doc Two", "doc-2", "Content", "general", null);
 
         // Act
-        var ids = _service.ListDocumentIds(TEST_NAMESPACE);
+        var ids = await _service.ListDocumentIdsAsync(TEST_NAMESPACE);
 
         // Assert
         Assert.Equal(2, ids.Count);
@@ -464,7 +464,7 @@ public class SearchIndexServiceTests
     }
 
     [Fact]
-    public void ListDocumentIds_WithCategoryFilter_ShouldFilterByCategory()
+    public async Task ListDocumentIds_WithCategoryFilter_ShouldFilterByCategory()
     {
         // Arrange
         var tutorialId = Guid.NewGuid();
@@ -474,7 +474,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, guideId, "Guide", "guide", "Content", "guides", null);
 
         // Act
-        var tutorialIds = _service.ListDocumentIds(TEST_NAMESPACE, category: "tutorials");
+        var tutorialIds = await _service.ListDocumentIdsAsync(TEST_NAMESPACE, category: "tutorials");
 
         // Assert
         Assert.Single(tutorialIds);
@@ -482,7 +482,7 @@ public class SearchIndexServiceTests
     }
 
     [Fact]
-    public void ListDocumentIds_WithPagination_ShouldSkipAndTake()
+    public async Task ListDocumentIds_WithPagination_ShouldSkipAndTake()
     {
         // Arrange - add 10 documents
         var allIds = new List<Guid>();
@@ -494,9 +494,9 @@ public class SearchIndexServiceTests
         }
 
         // Act
-        var page1 = _service.ListDocumentIds(TEST_NAMESPACE, skip: 0, take: 3);
-        var page2 = _service.ListDocumentIds(TEST_NAMESPACE, skip: 3, take: 3);
-        var page3 = _service.ListDocumentIds(TEST_NAMESPACE, skip: 6, take: 3);
+        var page1 = await _service.ListDocumentIdsAsync(TEST_NAMESPACE, skip: 0, take: 3);
+        var page2 = await _service.ListDocumentIdsAsync(TEST_NAMESPACE, skip: 3, take: 3);
+        var page3 = await _service.ListDocumentIdsAsync(TEST_NAMESPACE, skip: 6, take: 3);
 
         // Assert
         Assert.Equal(3, page1.Count);
@@ -509,17 +509,17 @@ public class SearchIndexServiceTests
     }
 
     [Fact]
-    public void ListDocumentIds_InEmptyNamespace_ShouldReturnEmpty()
+    public async Task ListDocumentIds_InEmptyNamespace_ShouldReturnEmpty()
     {
         // Act
-        var ids = _service.ListDocumentIds("empty-namespace");
+        var ids = await _service.ListDocumentIdsAsync("empty-namespace");
 
         // Assert
         Assert.Empty(ids);
     }
 
     [Fact]
-    public void ListDocumentIds_ShouldBeSortedByTitle()
+    public async Task ListDocumentIds_ShouldBeSortedByTitle()
     {
         // Arrange
         _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Zebra Document", "zebra", "Content", "general", null);
@@ -527,12 +527,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Mango Document", "mango", "Content", "general", null);
 
         // Act
-        var ids = _service.ListDocumentIds(TEST_NAMESPACE);
-
-        // Assert - search to verify order
-        var results = ids.Select(id => _service.Search(TEST_NAMESPACE, id.ToString().Substring(0, 8), maxResults: 1))
-            .Where(r => r.Count > 0)
-            .ToList();
+        var ids = await _service.ListDocumentIdsAsync(TEST_NAMESPACE);
 
         // Verify count is correct
         Assert.Equal(3, ids.Count);
@@ -543,7 +538,7 @@ public class SearchIndexServiceTests
     #region GetNamespaceStats Tests
 
     [Fact]
-    public void GetNamespaceStats_ShouldReturnCorrectCounts()
+    public async Task GetNamespaceStats_ShouldReturnCorrectCounts()
     {
         // Arrange
         _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Doc 1", "doc-1", "Content", "tutorials", new[] { "tag1", "tag2" });
@@ -551,7 +546,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Doc 3", "doc-3", "Content", "guides", new[] { "tag3" });
 
         // Act
-        var stats = _service.GetNamespaceStats(TEST_NAMESPACE);
+        var stats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
 
         // Assert
         Assert.Equal(3, stats.TotalDocuments);
@@ -561,10 +556,10 @@ public class SearchIndexServiceTests
     }
 
     [Fact]
-    public void GetNamespaceStats_ForEmptyNamespace_ShouldReturnZeros()
+    public async Task GetNamespaceStats_ForEmptyNamespace_ShouldReturnZeros()
     {
         // Act
-        var stats = _service.GetNamespaceStats("empty-namespace");
+        var stats = await _service.GetNamespaceStatsAsync("empty-namespace");
 
         // Assert
         Assert.Equal(0, stats.TotalDocuments);
@@ -577,25 +572,25 @@ public class SearchIndexServiceTests
     #region RemoveDocument Tests
 
     [Fact]
-    public void RemoveDocument_ShouldRemoveFromIndex()
+    public async Task RemoveDocument_ShouldRemoveFromIndex()
     {
         // Arrange
         var docId = Guid.NewGuid();
         _service.IndexDocument(TEST_NAMESPACE, docId, "To Be Removed", "to-remove", "Content", "general", new[] { "tag1" });
 
         // Verify it's indexed
-        var beforeStats = _service.GetNamespaceStats(TEST_NAMESPACE);
+        var beforeStats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
         Assert.Equal(1, beforeStats.TotalDocuments);
 
         // Act
         _service.RemoveDocument(TEST_NAMESPACE, docId);
 
         // Assert
-        var afterStats = _service.GetNamespaceStats(TEST_NAMESPACE);
+        var afterStats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
         Assert.Equal(0, afterStats.TotalDocuments);
 
         // Search should not find it
-        var searchResults = _service.Search(TEST_NAMESPACE, "removed", maxResults: 10);
+        var searchResults = await _service.SearchAsync(TEST_NAMESPACE, "removed", maxResults: 10);
         Assert.Empty(searchResults);
     }
 
@@ -619,7 +614,7 @@ public class SearchIndexServiceTests
     }
 
     [Fact]
-    public void RemoveDocument_ShouldDecrementTagCounts()
+    public async Task RemoveDocument_ShouldDecrementTagCounts()
     {
         // Arrange
         var doc1Id = Guid.NewGuid();
@@ -628,14 +623,14 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, doc1Id, "Doc 1", "doc-1", "Content", "general", new[] { "shared-tag", "unique-tag-1" });
         _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Doc 2", "doc-2", "Content", "general", new[] { "shared-tag", "unique-tag-2" });
 
-        var beforeStats = _service.GetNamespaceStats(TEST_NAMESPACE);
+        var beforeStats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
         Assert.Equal(3, beforeStats.TotalTags); // shared-tag, unique-tag-1, unique-tag-2
 
         // Act
         _service.RemoveDocument(TEST_NAMESPACE, doc1Id);
 
         // Assert
-        var afterStats = _service.GetNamespaceStats(TEST_NAMESPACE);
+        var afterStats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
         Assert.Equal(2, afterStats.TotalTags); // shared-tag (still used), unique-tag-2
     }
 
@@ -644,7 +639,7 @@ public class SearchIndexServiceTests
     #region Namespace Isolation Tests
 
     [Fact]
-    public void DifferentNamespaces_ShouldBeIsolated()
+    public async Task DifferentNamespaces_ShouldBeIsolated()
     {
         // Arrange
         var ns1DocId = Guid.NewGuid();
@@ -654,8 +649,8 @@ public class SearchIndexServiceTests
         _service.IndexDocument("namespace-2", ns2DocId, "Namespace 2 Doc", "ns2-doc", "Content for NS2", "general", null);
 
         // Act
-        var ns1Results = _service.Search("namespace-1", "namespace", maxResults: 10);
-        var ns2Results = _service.Search("namespace-2", "namespace", maxResults: 10);
+        var ns1Results = await _service.SearchAsync("namespace-1", "namespace", maxResults: 10);
+        var ns2Results = await _service.SearchAsync("namespace-2", "namespace", maxResults: 10);
 
         // Assert
         Assert.Single(ns1Results);
@@ -666,7 +661,7 @@ public class SearchIndexServiceTests
     }
 
     [Fact]
-    public void NamespaceStats_ShouldBeIsolated()
+    public async Task NamespaceStats_ShouldBeIsolated()
     {
         // Arrange
         _service.IndexDocument("namespace-a", Guid.NewGuid(), "Doc A1", "a1", "Content", "tutorials", null);
@@ -674,8 +669,8 @@ public class SearchIndexServiceTests
         _service.IndexDocument("namespace-b", Guid.NewGuid(), "Doc B1", "b1", "Content", "guides", null);
 
         // Act
-        var statsA = _service.GetNamespaceStats("namespace-a");
-        var statsB = _service.GetNamespaceStats("namespace-b");
+        var statsA = await _service.GetNamespaceStatsAsync("namespace-a");
+        var statsB = await _service.GetNamespaceStatsAsync("namespace-b");
 
         // Assert
         Assert.Equal(2, statsA.TotalDocuments);

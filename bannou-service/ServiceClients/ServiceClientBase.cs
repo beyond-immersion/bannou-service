@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.ServiceClients;
 /// Base class for all Bannou-aware service clients.
 /// Handles dynamic app-id resolution and Bannou routing.
 /// </summary>
-public abstract class BannouServiceClientBase : IBannouClient
+public abstract class ServiceClientBase : IServiceClient
 {
     /// <summary>
     /// HTTP client for making service requests.
@@ -40,7 +40,7 @@ public abstract class BannouServiceClientBase : IBannouClient
     /// <summary>
     /// Parameterless constructor for NSwag generated clients that handle their own dependency injection.
     /// </summary>
-    protected BannouServiceClientBase()
+    protected ServiceClientBase()
     {
     }
 
@@ -51,7 +51,7 @@ public abstract class BannouServiceClientBase : IBannouClient
     /// <param name="appMappingResolver">Resolver for dynamic app-id mapping.</param>
     /// <param name="logger">Logger for tracing service calls.</param>
     /// <param name="serviceName">Name of the target service.</param>
-    protected BannouServiceClientBase(
+    protected ServiceClientBase(
         HttpClient httpClient,
         IServiceAppMappingResolver appMappingResolver,
         ILogger logger,

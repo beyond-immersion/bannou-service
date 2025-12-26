@@ -129,7 +129,13 @@ public partial class GameSessionClient : IGameSessionClient, BeyondImmersion.Ban
     /// <summary>
     /// Service name used for app-id resolution. Extracted from class name.
     /// </summary>
-    private static readonly string ServiceName = "gamesession";
+    private static readonly string _serviceName = "gamesession";
+
+    /// <summary>
+    /// The name of the service this client communicates with.
+    /// Implements IServiceClient.ServiceName.
+    /// </summary>
+    public string ServiceName => _serviceName;
 
     public GameSessionClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<GameSessionClient>? logger = null)
     {

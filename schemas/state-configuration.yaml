@@ -25,6 +25,16 @@ x-service-configuration:
       type: string
       description: MySQL connection string for MySQL-backed state stores
       env: MYSQL_CONNECTION_STRING
+    ConnectionTimeoutSeconds:
+      type: integer
+      description: Total timeout in seconds for establishing Redis/MySQL connections
+      env: STATE_CONNECTION_TIMEOUT_SECONDS
+      default: 60
+    ConnectRetryCount:
+      type: integer
+      description: Maximum number of connection retry attempts
+      env: STATE_CONNECT_RETRY_COUNT
+      default: 5
     DefaultConsistency:
       type: string
       description: Default consistency level for state operations (strong or eventual)

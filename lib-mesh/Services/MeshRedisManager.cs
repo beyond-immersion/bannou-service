@@ -13,13 +13,10 @@ namespace BeyondImmersion.BannouService.Mesh.Services;
 public class MeshRedisManager : IMeshRedisManager
 {
     private readonly ILogger<MeshRedisManager> _logger;
+    private readonly MeshServiceConfiguration _config;
     private readonly string _connectionString;
     private ConnectionMultiplexer? _redis;
     private IDatabase? _database;
-
-    private const int MAX_RETRY_ATTEMPTS = 10;
-    private const int INITIAL_RETRY_DELAY_MS = 1000;
-    private const int MAX_RETRY_DELAY_MS = 60000;
 
     // Redis key patterns for mesh
     private const string ENDPOINT_KEY_PREFIX = "mesh:endpoint:";
@@ -36,6 +33,7 @@ public class MeshRedisManager : IMeshRedisManager
     public MeshRedisManager(MeshServiceConfiguration config, ILogger<MeshRedisManager> logger)
     {
         _logger = logger;
+        _config = config;
 
         if (string.IsNullOrEmpty(config.RedisConnectionString))
         {
@@ -49,20 +47,32 @@ public class MeshRedisManager : IMeshRedisManager
     /// <inheritdoc/>
     public async Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
     {
-        var retryDelay = INITIAL_RETRY_DELAY_MS;
+        // Use configurable timeouts from configuration
+        var totalTimeoutSeconds = _config.RedisConnectionTimeoutSeconds;
+        var maxRetries = _config.RedisConnectRetryCount;
+        var syncTimeoutMs = _config.RedisSyncTimeoutMs;
 
-        for (int attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++)
+        // Calculate delay per retry to fit within total timeout
+        // Reserve time for actual connection attempts (syncTimeout per attempt)
+        var totalRetryDelayMs = (totalTimeoutSeconds * 1000) - (maxRetries * syncTimeoutMs);
+        var retryDelayMs = Math.Max(1000, totalRetryDelayMs / Math.Max(1, maxRetries - 1));
+
+        _logger.LogInformation(
+            "Initializing mesh Redis connection (timeout: {TotalTimeout}s, retries: {MaxRetries})",
+            totalTimeoutSeconds, maxRetries);
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
             try
             {
-                _logger.LogInformation(
+                _logger.LogDebug(
                     "Attempting Redis connection (attempt {Attempt}/{MaxAttempts}): {ConnectionString}",
-                    attempt, MAX_RETRY_ATTEMPTS, _connectionString);
+                    attempt, maxRetries, _connectionString);
 
                 var options = ConfigurationOptions.Parse(_connectionString);
                 options.AbortOnConnectFail = false;
-                options.ConnectTimeout = 5000;
-                options.SyncTimeout = 5000;
+                options.ConnectTimeout = syncTimeoutMs;
+                options.SyncTimeout = syncTimeoutMs;
 
                 _redis = await ConnectionMultiplexer.ConnectAsync(options);
                 _database = _redis.GetDatabase();
@@ -70,7 +80,7 @@ public class MeshRedisManager : IMeshRedisManager
                 var pingTime = await _database.PingAsync();
 
                 _logger.LogInformation(
-                    "Mesh Redis connection established successfully (ping: {PingMs}ms)",
+                    "Mesh Redis connection established (ping: {PingMs}ms)",
                     pingTime.TotalMilliseconds);
 
                 return true;
@@ -78,21 +88,19 @@ public class MeshRedisManager : IMeshRedisManager
             catch (RedisConnectionException ex)
             {
                 _logger.LogWarning(
-                    ex,
-                    "Redis connection failed (attempt {Attempt}/{MaxAttempts}). Retrying in {DelayMs}ms...",
-                    attempt, MAX_RETRY_ATTEMPTS, retryDelay);
+                    "Redis connection failed (attempt {Attempt}/{MaxAttempts}): {Message}",
+                    attempt, maxRetries, ex.Message);
 
-                if (attempt < MAX_RETRY_ATTEMPTS)
+                if (attempt < maxRetries)
                 {
-                    await Task.Delay(retryDelay, cancellationToken);
-                    retryDelay = Math.Min(retryDelay * 2, MAX_RETRY_DELAY_MS);
+                    await Task.Delay(retryDelayMs, cancellationToken);
                 }
             }
         }
 
         _logger.LogError(
-            "Failed to establish Redis connection after {MaxAttempts} attempts",
-            MAX_RETRY_ATTEMPTS);
+            "Failed to establish Redis connection after {MaxAttempts} attempts within {TotalTimeout}s",
+            maxRetries, totalTimeoutSeconds);
 
         return false;
     }

@@ -271,10 +271,11 @@ public partial class ConnectService : IConnectService
     /// Gets the client capability manifest (GUID to API mappings) for the authenticated session.
     /// Each client receives unique GUIDs for security isolation.
     /// </summary>
-    public Task<(StatusCodes, ClientCapabilitiesResponse?)> GetClientCapabilitiesAsync(
+    public async Task<(StatusCodes, ClientCapabilitiesResponse?)> GetClientCapabilitiesAsync(
         GetClientCapabilitiesRequest body,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask; // Satisfy async requirement for sync method
         try
         {
             // For now, return a placeholder response until full capability system is integrated
@@ -297,12 +298,12 @@ public partial class ConnectService : IConnectService
             };
 
             _logger.LogInformation("Returning client capabilities (placeholder implementation)");
-            return Task.FromResult<(StatusCodes, ClientCapabilitiesResponse?)>((StatusCodes.OK, response));
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving client capabilities");
-            return Task.FromResult<(StatusCodes, ClientCapabilitiesResponse?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -981,7 +982,7 @@ public partial class ConnectService : IConnectService
 
             try
             {
-                // Build full mesh URL like BannouServiceClientBase does
+                // Build full mesh URL like ServiceClientBase does
                 var bannouHttpEndpoint = Environment.GetEnvironmentVariable("BANNOU_HTTP_ENDPOINT")
                     ?? throw new InvalidOperationException("BANNOU_HTTP_ENDPOINT environment variable is not set. mesh must be configured.");
                 var meshUrl = $"{bannouHttpEndpoint}/v1.0/invoke/{appId}/method/{path.TrimStart('/')}";
@@ -989,7 +990,7 @@ public partial class ConnectService : IConnectService
                 // Create HTTP request with proper headers
                 using var request = new HttpRequestMessage(new HttpMethod(httpMethod), meshUrl);
 
-                // Add bannou-app-id header for routing (like BannouServiceClientBase.PrepareRequest)
+                // Add bannou-app-id header for routing (like ServiceClientBase.PrepareRequest)
                 request.Headers.Add("bannou-app-id", appId);
                 // Use static cached Accept header to avoid per-request allocation
                 request.Headers.Accept.Add(s_jsonAcceptHeader);
@@ -1863,19 +1864,20 @@ public partial class ConnectService : IConnectService
     /// <summary>
     /// Validates that a session still exists and is valid by checking the connection manager.
     /// </summary>
-    private Task<bool> ValidateSessionAsync(string sessionId)
+    private async Task<bool> ValidateSessionAsync(string sessionId)
     {
+        await Task.CompletedTask; // Satisfy async requirement for sync method
         try
         {
             // Check if session exists in our connection manager
             // This is used for token refresh events where we only have session ID
             var connection = _connectionManager.GetConnection(sessionId);
-            return Task.FromResult(connection != null);
+            return connection != null;
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Session validation failed for {SessionId}", sessionId);
-            return Task.FromResult(false);
+            return false;
         }
     }
 
@@ -1884,12 +1886,13 @@ public partial class ConnectService : IConnectService
     /// SessionCapabilitiesEvent from Permissions service after session.connected event.
     /// This method exists for reconnection scenarios where existing mappings may be restored.
     /// </summary>
-    internal Task<Dictionary<string, Guid>> InitializeSessionCapabilitiesAsync(
+    internal async Task<Dictionary<string, Guid>> InitializeSessionCapabilitiesAsync(
         string sessionId,
         string? role = "anonymous",
         ICollection<string>? authorizations = null,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask; // Satisfy async requirement for sync method
         // Capabilities are delivered via event-driven flow:
         // 1. Connect publishes session.connected with roles/authorizations
         // 2. Permissions receives event, compiles capabilities, publishes SessionCapabilitiesEvent
@@ -1902,7 +1905,7 @@ public partial class ConnectService : IConnectService
             sessionId, role ?? "anonymous", authorizations?.Count ?? 0);
 
         // Return empty mappings - real capabilities come via SessionCapabilitiesEvent
-        return Task.FromResult(new Dictionary<string, Guid>());
+        return new Dictionary<string, Guid>();
     }
 
     /// <summary>
@@ -2647,14 +2650,14 @@ public partial class ConnectService : IConnectService
     /// Publishes an error event for unexpected/internal failures.
     /// Does NOT publish for validation errors or expected failure cases.
     /// </summary>
-    private Task PublishErrorEventAsync(
+    private async Task PublishErrorEventAsync(
         string operation,
         string errorType,
         string message,
         string? dependency = null,
         object? details = null)
     {
-        return _messageBus.TryPublishErrorAsync(
+        await _messageBus.TryPublishErrorAsync(
             serviceId: "connect",
             operation: operation,
             errorType: errorType,

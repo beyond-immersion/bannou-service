@@ -39,6 +39,24 @@ x-service-configuration:
       env: MESH_REDIS_KEY_PREFIX
       default: "mesh:"
 
+    RedisConnectionTimeoutSeconds:
+      type: integer
+      description: Total timeout in seconds for Redis connection establishment including retries
+      env: MESH_REDIS_CONNECTION_TIMEOUT_SECONDS
+      default: 60
+
+    RedisConnectRetryCount:
+      type: integer
+      description: Maximum number of Redis connection retry attempts
+      env: MESH_REDIS_CONNECT_RETRY_COUNT
+      default: 5
+
+    RedisSyncTimeoutMs:
+      type: integer
+      description: Timeout in milliseconds for synchronous Redis operations
+      env: MESH_REDIS_SYNC_TIMEOUT_MS
+      default: 5000
+
     # =========================================================================
     # Heartbeat and TTL Configuration
     # =========================================================================

@@ -271,19 +271,20 @@ public class TokenService : ITokenService
     }
 
     /// <inheritdoc/>
-    public Task<string?> ExtractSessionKeyFromJwtAsync(string jwt)
+    public async Task<string?> ExtractSessionKeyFromJwtAsync(string jwt)
     {
+        await Task.CompletedTask; // Satisfy async requirement for sync method
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var jsonToken = tokenHandler.ReadJwtToken(jwt);
             var sessionKeyClaim = jsonToken?.Claims?.FirstOrDefault(c => c.Type == "session_key");
-            return Task.FromResult(sessionKeyClaim?.Value);
+            return sessionKeyClaim?.Value;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error extracting session_key from JWT");
-            return Task.FromResult<string?>(null);
+            return null;
         }
     }
 

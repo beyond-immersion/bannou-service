@@ -2046,14 +2046,14 @@ public partial class OrchestratorService : IOrchestratorService
     /// Publishes an error event for unexpected/internal failures.
     /// Does NOT publish for validation errors or expected failure cases.
     /// </summary>
-    private Task PublishErrorEventAsync(
+    private async Task PublishErrorEventAsync(
         string operation,
         string errorType,
         string message,
         string? dependency = null,
         object? details = null)
     {
-        return _messageBus.TryPublishErrorAsync(
+        await _messageBus.TryPublishErrorAsync(
             serviceId: "orchestrator",
             operation: operation,
             errorType: errorType,

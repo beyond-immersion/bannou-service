@@ -152,6 +152,32 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    public Task InitializeAsync(CancellationToken cancellationToken = default)
+    {
+        return EnsureInitializedAsync();
+    }
+
+    /// <inheritdoc/>
+    public async Task<IStateStore<TValue>> GetStoreAsync<TValue>(string storeName, CancellationToken cancellationToken = default)
+        where TValue : class
+    {
+        ArgumentNullException.ThrowIfNull(storeName);
+
+        if (!HasStore(storeName))
+        {
+            throw new InvalidOperationException($"Store '{storeName}' is not configured");
+        }
+
+        // Ensure connections are initialized asynchronously
+        if (!_initialized)
+        {
+            await EnsureInitializedAsync();
+        }
+
+        return GetStoreInternal<TValue>(storeName);
+    }
+
+    /// <inheritdoc/>
     public IStateStore<TValue> GetStore<TValue>(string storeName)
         where TValue : class
     {
@@ -162,13 +188,28 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             throw new InvalidOperationException($"Store '{storeName}' is not configured");
         }
 
+        // Ensure connections are initialized before accessing the cache.
+        // The double-checked locking in EnsureInitializedAsync makes subsequent calls fast.
+        // This MUST happen outside GetOrAdd to avoid blocking inside the callback.
+        // WARNING: This is sync-over-async - prefer GetStoreAsync() or call InitializeAsync() at startup.
+        if (!_initialized)
+        {
+            _logger.LogWarning(
+                "GetStore called before InitializeAsync - performing sync-over-async initialization. " +
+                "Consider calling InitializeAsync() at startup or using GetStoreAsync().");
+            EnsureInitializedAsync().GetAwaiter().GetResult();
+        }
+
+        return GetStoreInternal<TValue>(storeName);
+    }
+
+    private IStateStore<TValue> GetStoreInternal<TValue>(string storeName)
+        where TValue : class
+    {
         var cacheKey = $"{storeName}:{typeof(TValue).FullName}";
 
         return (IStateStore<TValue>)_storeCache.GetOrAdd(cacheKey, _ =>
         {
-            // Ensure connections are initialized
-            EnsureInitializedAsync().GetAwaiter().GetResult();
-
             // Use in-memory store when configured (for testing/minimal infrastructure)
             if (_configuration.UseInMemory)
             {

@@ -149,11 +149,11 @@ public class BannouServiceMappingTestHandler : IServiceTestHandler
             Console.WriteLine("Testing Bannou service client routing...");
 
             var resolver = new ServiceAppMappingResolver(CreateTestLogger<ServiceAppMappingResolver>());
-            var logger = CreateTestLogger<BannouServiceClientBase>();
+            var logger = CreateTestLogger<ServiceClientBase>();
 
             // Create a mock service client base to test routing
             using var httpClient = new HttpClient();
-            var serviceClient = new TestBannouServiceClient(httpClient, resolver, logger, "accounts");
+            var serviceClient = new TestServiceClient(httpClient, resolver, logger, "accounts");
 
             // Test base URL generation
             var baseUrl = serviceClient.TestGetBaseUrl();
@@ -283,11 +283,11 @@ public class BannouServiceMappingTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Test implementation of BannouServiceClientBase for testing routing.
+    /// Test implementation of ServiceClientBase for testing routing.
     /// </summary>
-    private class TestBannouServiceClient : BannouServiceClientBase
+    private class TestServiceClient : ServiceClientBase
     {
-        public TestBannouServiceClient(
+        public TestServiceClient(
             HttpClient httpClient,
             IServiceAppMappingResolver appMappingResolver,
             ILogger logger,

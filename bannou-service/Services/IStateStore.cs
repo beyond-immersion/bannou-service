@@ -190,12 +190,26 @@ public interface IStateStoreFactory
 {
     /// <summary>
     /// Get or create a state store for the named store.
+    /// Note: If InitializeAsync() was not called, this performs sync-over-async initialization.
+    /// Prefer GetStoreAsync() for async contexts or call InitializeAsync() at startup.
     /// </summary>
     /// <typeparam name="TValue">Value type to store.</typeparam>
     /// <param name="storeName">Name of the configured store.</param>
     /// <returns>State store instance.</returns>
     /// <exception cref="InvalidOperationException">Thrown if store is not configured.</exception>
     IStateStore<TValue> GetStore<TValue>(string storeName)
+        where TValue : class;
+
+    /// <summary>
+    /// Async version of GetStore - ensures initialization completes without blocking.
+    /// Preferred over GetStore() in async contexts.
+    /// </summary>
+    /// <typeparam name="TValue">Value type to store.</typeparam>
+    /// <param name="storeName">Name of the configured store.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>State store instance.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if store is not configured.</exception>
+    Task<IStateStore<TValue>> GetStoreAsync<TValue>(string storeName, CancellationToken cancellationToken = default)
         where TValue : class;
 
     /// <summary>
@@ -241,6 +255,15 @@ public interface IStateStoreFactory
     /// <param name="storeName">Name of the store to check.</param>
     /// <returns>True if the store is configured.</returns>
     bool HasStore(string storeName);
+
+    /// <summary>
+    /// Initialize connections to backend stores (Redis, MySQL).
+    /// This should be called once at application startup for proper async initialization.
+    /// If not called, initialization happens lazily on first GetStore call (sync-over-async).
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Task that completes when initialization is done.</returns>
+    Task InitializeAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get store backend type.

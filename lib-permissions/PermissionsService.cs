@@ -1038,14 +1038,14 @@ public partial class PermissionsService : IPermissionsService
         }
     }
 
-    private Task PublishErrorEventAsync(
+    private async Task PublishErrorEventAsync(
         string operation,
         string errorType,
         string message,
         string? dependency = null,
         object? details = null)
     {
-        return _messageBus.TryPublishErrorAsync(
+        await _messageBus.TryPublishErrorAsync(
             serviceId: "permissions",
             operation: operation,
             errorType: errorType,

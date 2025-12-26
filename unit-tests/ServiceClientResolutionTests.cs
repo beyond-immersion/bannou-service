@@ -455,7 +455,7 @@ public class ServiceClientResolutionTests
 /// Example of how a service client SHOULD be implemented for distributed calls.
 /// This demonstrates the correct architecture pattern.
 /// </summary>
-public class ExampleAccountsClient : BannouServiceClientBase
+public class ExampleAccountsClient : ServiceClientBase
 {
     public ExampleAccountsClient(
         HttpClient httpClient,

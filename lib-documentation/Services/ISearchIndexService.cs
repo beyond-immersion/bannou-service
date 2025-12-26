@@ -40,8 +40,9 @@ public interface ISearchIndexService
     /// <param name="searchTerm">The search term.</param>
     /// <param name="category">Optional category filter.</param>
     /// <param name="maxResults">Maximum results to return.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of matching document IDs with relevance scores.</returns>
-    IReadOnlyList<SearchResult> Search(string namespaceId, string searchTerm, string? category = null, int maxResults = 20);
+    Task<IReadOnlyList<SearchResult>> SearchAsync(string namespaceId, string searchTerm, string? category = null, int maxResults = 20, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Performs a natural language query (more sophisticated than keyword search).
@@ -51,8 +52,9 @@ public interface ISearchIndexService
     /// <param name="category">Optional category filter.</param>
     /// <param name="maxResults">Maximum results to return.</param>
     /// <param name="minRelevanceScore">Minimum relevance score threshold.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of matching document IDs with relevance scores.</returns>
-    IReadOnlyList<SearchResult> Query(string namespaceId, string query, string? category = null, int maxResults = 20, double minRelevanceScore = 0.3);
+    Task<IReadOnlyList<SearchResult>> QueryAsync(string namespaceId, string query, string? category = null, int maxResults = 20, double minRelevanceScore = 0.3, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets suggestions for related topics based on a document or search term.
@@ -60,8 +62,9 @@ public interface ISearchIndexService
     /// <param name="namespaceId">The namespace to search in.</param>
     /// <param name="sourceValue">The source document ID or search term.</param>
     /// <param name="maxSuggestions">Maximum suggestions to return.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of suggested document IDs.</returns>
-    IReadOnlyList<Guid> GetRelatedSuggestions(string namespaceId, string sourceValue, int maxSuggestions = 5);
+    Task<IReadOnlyList<Guid>> GetRelatedSuggestionsAsync(string namespaceId, string sourceValue, int maxSuggestions = 5, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all document IDs in a namespace matching the given criteria.
@@ -70,15 +73,17 @@ public interface ISearchIndexService
     /// <param name="category">Optional category filter.</param>
     /// <param name="skip">Number of results to skip.</param>
     /// <param name="take">Number of results to take.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of document IDs.</returns>
-    IReadOnlyList<Guid> ListDocumentIds(string namespaceId, string? category = null, int skip = 0, int take = 100);
+    Task<IReadOnlyList<Guid>> ListDocumentIdsAsync(string namespaceId, string? category = null, int skip = 0, int take = 100, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets statistics for a namespace.
     /// </summary>
     /// <param name="namespaceId">The namespace to get stats for.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Namespace statistics.</returns>
-    NamespaceStats GetNamespaceStats(string namespaceId);
+    Task<NamespaceStats> GetNamespaceStatsAsync(string namespaceId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

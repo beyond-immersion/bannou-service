@@ -475,12 +475,13 @@ public partial class AuthService : IAuthService
 
 
     /// <inheritdoc/>
-    public Task<(StatusCodes, object?)> InitOAuthAsync(
+    public async Task<(StatusCodes, object?)> InitOAuthAsync(
         Provider provider,
         string redirectUri,
         string? state,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask; // Satisfy async requirement for sync method
         try
         {
             _logger.LogInformation("Initializing OAuth for provider: {Provider}", provider);
@@ -494,7 +495,7 @@ public partial class AuthService : IAuthService
                     if (string.IsNullOrWhiteSpace(_configuration.DiscordClientId))
                     {
                         _logger.LogError("Discord Client ID not configured");
-                        return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+                        return (StatusCodes.InternalServerError, null);
                     }
                     var discordRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.DiscordRedirectUri);
                     authUrl = $"https://discord.com/oauth2/authorize?client_id={_configuration.DiscordClientId}&response_type=code&redirect_uri={discordRedirectUri}&scope=identify%20email&state={encodedState}";
@@ -504,7 +505,7 @@ public partial class AuthService : IAuthService
                     if (string.IsNullOrWhiteSpace(_configuration.GoogleClientId))
                     {
                         _logger.LogError("Google Client ID not configured");
-                        return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+                        return (StatusCodes.InternalServerError, null);
                     }
                     var googleRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.GoogleRedirectUri);
                     authUrl = $"https://accounts.google.com/o/oauth2/v2/auth?client_id={_configuration.GoogleClientId}&response_type=code&redirect_uri={googleRedirectUri}&scope=openid%20email%20profile&state={encodedState}";
@@ -514,7 +515,7 @@ public partial class AuthService : IAuthService
                     if (string.IsNullOrWhiteSpace(_configuration.TwitchClientId))
                     {
                         _logger.LogError("Twitch Client ID not configured");
-                        return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+                        return (StatusCodes.InternalServerError, null);
                     }
                     var twitchRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.TwitchRedirectUri);
                     authUrl = $"https://id.twitch.tv/oauth2/authorize?client_id={_configuration.TwitchClientId}&response_type=code&redirect_uri={twitchRedirectUri}&scope=user:read:email&state={encodedState}";
@@ -522,24 +523,25 @@ public partial class AuthService : IAuthService
 
                 default:
                     _logger.LogWarning("Unknown OAuth provider: {Provider}", provider);
-                    return Task.FromResult<(StatusCodes, object?)>((StatusCodes.BadRequest, null));
+                    return (StatusCodes.BadRequest, null);
             }
 
             _logger.LogDebug("Generated OAuth URL for {Provider}: {Url}", provider, authUrl);
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, new { AuthorizationUrl = authUrl }));
+            return (StatusCodes.OK, new { AuthorizationUrl = authUrl });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error initializing OAuth for provider: {Provider}", provider);
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <inheritdoc/>
-    public Task<(StatusCodes, object?)> InitSteamAuthAsync(
+    public async Task<(StatusCodes, object?)> InitSteamAuthAsync(
         string returnUrl,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask; // Satisfy async requirement for sync method
         try
         {
             _logger.LogInformation("Steam authentication info requested");
@@ -556,12 +558,12 @@ public partial class AuthService : IAuthService
                 Documentation = "https://partner.steamgames.com/doc/features/auth#web_api"
             };
 
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, response));
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error providing Steam authentication info");
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -797,8 +799,9 @@ public partial class AuthService : IAuthService
     /// Send password reset email. Currently implements a mock that logs to console.
     /// Can be replaced with actual SMTP integration later.
     /// </summary>
-    private Task SendPasswordResetEmailAsync(string email, string resetToken, int expiresInMinutes, CancellationToken cancellationToken)
+    private async Task SendPasswordResetEmailAsync(string email, string resetToken, int expiresInMinutes, CancellationToken cancellationToken)
     {
+        await Task.CompletedTask; // Satisfy async requirement for sync method
         // Mock email implementation - logs to console
         // In production, this would integrate with SendGrid, AWS SES, or similar
         if (string.IsNullOrWhiteSpace(_configuration.PasswordResetBaseUrl))
@@ -819,8 +822,6 @@ public partial class AuthService : IAuthService
             "If you did not request this reset, please ignore this email.\n" +
             "=== END EMAIL ===",
             email, resetUrl, expiresInMinutes);
-
-        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>
@@ -1367,20 +1368,21 @@ public partial class AuthService : IAuthService
     /// <summary>
     /// Extract session_key from JWT token without full validation (for logout operations)
     /// </summary>
-    private Task<string?> ExtractSessionKeyFromJWT(string jwt)
+    private async Task<string?> ExtractSessionKeyFromJWT(string jwt)
     {
+        await Task.CompletedTask; // Satisfy async requirement for sync method
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var jsonToken = tokenHandler.ReadJwtToken(jwt);
 
             var sessionKeyClaim = jsonToken?.Claims?.FirstOrDefault(c => c.Type == "session_key");
-            return Task.FromResult(sessionKeyClaim?.Value);
+            return sessionKeyClaim?.Value;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error extracting session_key from JWT");
-            return Task.FromResult<string?>(null);
+            return null;
         }
     }
 
@@ -2529,14 +2531,14 @@ public partial class AuthService : IAuthService
     /// Publishes an error event for unexpected/internal failures.
     /// Does NOT publish for validation errors or expected failure cases.
     /// </summary>
-    private Task PublishErrorEventAsync(
+    private async Task PublishErrorEventAsync(
         string operation,
         string errorType,
         string message,
         string? dependency = null,
         object? details = null)
     {
-        return _messageBus.TryPublishErrorAsync(
+        await _messageBus.TryPublishErrorAsync(
             serviceId: "auth",
             operation: operation,
             errorType: errorType,

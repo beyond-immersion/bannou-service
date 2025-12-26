@@ -10,27 +10,31 @@ namespace BeyondImmersion.BannouService.Mesh.Services;
 
 /// <summary>
 /// HTTP-based implementation of mesh service invocation.
-/// Uses IMeshClient for endpoint resolution and HttpMessageInvoker for requests.
+/// Uses IMeshRedisManager directly for endpoint resolution to avoid circular dependencies.
+/// This is infrastructure that all generated clients depend on, so it cannot use generated clients.
 /// </summary>
 public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
 {
-    private readonly IMeshClient _meshClient;
+    private readonly IMeshRedisManager _redisManager;
     private readonly ILogger<MeshInvocationClient> _logger;
     private readonly HttpMessageInvoker _httpClient;
 
-    // Cache for endpoint resolution to reduce mesh service calls
+    // Cache for endpoint resolution to reduce Redis calls
     private readonly EndpointCache _endpointCache;
+
+    // Round-robin counter for load balancing across multiple endpoints
+    private int _roundRobinCounter;
 
     /// <summary>
     /// Creates a new MeshInvocationClient.
     /// </summary>
-    /// <param name="meshClient">Mesh client for endpoint resolution.</param>
+    /// <param name="redisManager">Redis manager for direct endpoint resolution (avoids circular dependency with generated clients).</param>
     /// <param name="logger">Logger instance.</param>
     public MeshInvocationClient(
-        IMeshClient meshClient,
+        IMeshRedisManager redisManager,
         ILogger<MeshInvocationClient> logger)
     {
-        _meshClient = meshClient ?? throw new ArgumentNullException(nameof(meshClient));
+        _redisManager = redisManager ?? throw new ArgumentNullException(nameof(redisManager));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         // Create HTTP client for outbound requests
@@ -233,19 +237,21 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
 
         try
         {
-            var routeResponse = await _meshClient.GetRouteAsync(
-                new GetRouteRequest { AppId = appId },
-                cancellationToken);
+            // Query Redis directly for healthy endpoints (avoids circular dependency with generated MeshClient)
+            var endpoints = await _redisManager.GetEndpointsForAppIdAsync(appId, includeUnhealthy: false);
 
-            if (routeResponse.Endpoint != null)
+            if (endpoints.Count == 0)
             {
-                _endpointCache.Set(appId, routeResponse.Endpoint);
-                return routeResponse.Endpoint;
+                _logger.LogWarning("No healthy endpoints available for app {AppId}", appId);
+                return null;
             }
-        }
-        catch (ApiException ex) when (ex.StatusCode == 503 || ex.StatusCode == 404)
-        {
-            _logger.LogWarning("No endpoints available for app {AppId}", appId);
+
+            // Round-robin selection for load balancing
+            var index = Interlocked.Increment(ref _roundRobinCounter) % endpoints.Count;
+            var selectedEndpoint = endpoints[index];
+
+            _endpointCache.Set(appId, selectedEndpoint);
+            return selectedEndpoint;
         }
         catch (Exception ex)
         {

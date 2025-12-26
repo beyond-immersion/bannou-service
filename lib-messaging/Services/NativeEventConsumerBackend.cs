@@ -61,6 +61,9 @@ public sealed class NativeEventConsumerBackend : IHostedService
             "Starting NativeEventConsumerBackend - found {TopicCount} topics with registered handlers",
             registeredTopics.Count);
 
+        var successCount = 0;
+        var failCount = 0;
+
         foreach (var topic in registeredTopics)
         {
             var eventType = EventSubscriptionRegistry.GetEventType(topic);
@@ -70,11 +73,14 @@ public sealed class NativeEventConsumerBackend : IHostedService
                     "Topic '{Topic}' has handlers but no event type registered in EventSubscriptionRegistry. " +
                     "Skipping subscription. Ensure EventSubscriptionRegistration.RegisterAll() is called before StartAsync.",
                     topic);
+                failCount++;
                 continue;
             }
 
             try
             {
+                _logger.LogDebug("Subscribing to topic '{Topic}' ({EventType})...", topic, eventType.Name);
+
                 // Create typed subscription using reflection
                 var method = typeof(NativeEventConsumerBackend)
                     .GetMethod(nameof(SubscribeTypedAsync), BindingFlags.NonPublic | BindingFlags.Instance);
@@ -82,6 +88,7 @@ public sealed class NativeEventConsumerBackend : IHostedService
                 if (method == null)
                 {
                     _logger.LogError("Failed to find SubscribeTypedAsync method via reflection");
+                    failCount++;
                     continue;
                 }
 
@@ -93,16 +100,20 @@ public sealed class NativeEventConsumerBackend : IHostedService
                 if (subscriptionTask == null)
                 {
                     _logger.LogError("SubscribeTypedAsync returned null for topic '{Topic}'", topic);
+                    failCount++;
                     continue;
                 }
 
                 var subscription = await subscriptionTask;
                 _subscriptions.Add(subscription);
+                successCount++;
 
-                _logger.LogInformation(
-                    "Subscribed to topic '{Topic}' with event type {EventType}",
+                _logger.LogDebug(
+                    "Subscribed to topic '{Topic}' ({EventType}) - {Current}/{Total}",
                     topic,
-                    eventType.Name);
+                    eventType.Name,
+                    successCount,
+                    registeredTopics.Count);
             }
             catch (Exception ex)
             {
@@ -111,13 +122,23 @@ public sealed class NativeEventConsumerBackend : IHostedService
                     "Failed to subscribe to topic '{Topic}' with event type {EventType}",
                     topic,
                     eventType.Name);
+                failCount++;
                 // Continue with other topics - don't fail entirely
             }
         }
 
-        _logger.LogInformation(
-            "NativeEventConsumerBackend started with {SubscriptionCount} active subscriptions",
-            _subscriptions.Count);
+        if (failCount > 0)
+        {
+            _logger.LogWarning(
+                "NativeEventConsumerBackend started with {SuccessCount} active subscriptions ({FailCount} failed)",
+                successCount, failCount);
+        }
+        else
+        {
+            _logger.LogInformation(
+                "NativeEventConsumerBackend started with {SubscriptionCount} active subscriptions",
+                successCount);
+        }
     }
 
     /// <summary>

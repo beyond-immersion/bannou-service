@@ -167,12 +167,13 @@ public partial class DocumentationService : IDocumentationService
             // Perform natural language query using search index
             // Pass category as string for filtering (or null if default enum value)
             var categoryFilter = body.Category == default ? null : body.Category.ToString();
-            var searchResults = _searchIndexService.Query(
+            var searchResults = await _searchIndexService.QueryAsync(
                 namespaceId,
                 body.Query,
                 categoryFilter,
                 maxResults,
-                minRelevance);
+                minRelevance,
+                cancellationToken);
 
             // Build response with document results
             var results = new List<DocumentResult>();
@@ -347,11 +348,12 @@ public partial class DocumentationService : IDocumentationService
 
             // Perform keyword search using search index
             var categoryFilter = body.Category == default ? null : body.Category.ToString();
-            var searchResults = _searchIndexService.Search(
+            var searchResults = await _searchIndexService.SearchAsync(
                 namespaceId,
                 body.SearchTerm,
                 categoryFilter,
-                maxResults);
+                maxResults,
+                cancellationToken);
 
             // Build response with document results
             var results = new List<DocumentResult>();
@@ -422,11 +424,12 @@ public partial class DocumentationService : IDocumentationService
 
             // Get document IDs from search index (respects category filter)
             var categoryFilter = body.Category == default ? null : body.Category.ToString();
-            var docIds = _searchIndexService.ListDocumentIds(
+            var docIds = await _searchIndexService.ListDocumentIdsAsync(
                 namespaceId,
                 categoryFilter,
                 skip,
-                take);
+                take,
+                cancellationToken);
 
             // Fetch document summaries
             var documents = new List<DocumentSummary>();
@@ -452,7 +455,7 @@ public partial class DocumentationService : IDocumentationService
             }
 
             // Get total count from namespace stats
-            var stats = _searchIndexService.GetNamespaceStats(namespaceId);
+            var stats = await _searchIndexService.GetNamespaceStatsAsync(namespaceId, cancellationToken);
             var totalCount = body.Category != default
                 ? stats.DocumentsByCategory.GetValueOrDefault(body.Category.ToString(), 0)
                 : stats.TotalDocuments;
@@ -491,10 +494,11 @@ public partial class DocumentationService : IDocumentationService
             var maxSuggestions = body.MaxSuggestions;
 
             // Get related document IDs from search index
-            var relatedIds = _searchIndexService.GetRelatedSuggestions(
+            var relatedIds = await _searchIndexService.GetRelatedSuggestionsAsync(
                 namespaceId,
                 body.SourceValue,
-                maxSuggestions);
+                maxSuggestions,
+                cancellationToken);
 
             // Fetch document summaries and build topic suggestions
             var suggestions = new List<TopicSuggestion>();
@@ -1430,7 +1434,7 @@ public partial class DocumentationService : IDocumentationService
             var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
 
             // Get stats from search index
-            var searchStats = _searchIndexService.GetNamespaceStats(namespaceId);
+            var searchStats = await _searchIndexService.GetNamespaceStatsAsync(namespaceId, cancellationToken);
 
             // Get trashcan count
             var trashListKey = $"ns-trash:{namespaceId}";

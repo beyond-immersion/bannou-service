@@ -16,13 +16,17 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
 
     private IMeshRedisManager? _redisManager;
     private bool _useLocalRouting;
+    private MeshServiceConfiguration? _cachedConfig;
 
     public override void ConfigureServices(IServiceCollection services)
     {
-        Logger?.LogDebug("Configuring service dependencies");
+        Logger?.LogDebug("Configuring mesh service dependencies");
 
         // Get configuration to check for local routing mode
-        var config = services.BuildServiceProvider().GetService<MeshServiceConfiguration>();
+        // Cache the provider to avoid multiple builds and ensure consistent config
+        var tempProvider = services.BuildServiceProvider();
+        _cachedConfig = tempProvider.GetService<MeshServiceConfiguration>();
+        var config = _cachedConfig;
         _useLocalRouting = config?.UseLocalRouting ?? false;
 
         if (_useLocalRouting)
@@ -41,11 +45,14 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
         }
 
         // Register the mesh invocation client for service-to-service calls
+        // Uses IMeshRedisManager directly (NOT IMeshClient) to avoid circular dependency:
+        // - All generated clients (AccountsClient, etc.) need IMeshInvocationClient
+        // - If MeshInvocationClient needed IMeshClient, and MeshClient needs IMeshInvocationClient = deadlock
         services.AddSingleton<IMeshInvocationClient>(sp =>
         {
-            var meshClient = sp.GetRequiredService<IMeshClient>();
+            var redisManager = sp.GetRequiredService<IMeshRedisManager>();
             var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
-            return new MeshInvocationClient(meshClient, logger);
+            return new MeshInvocationClient(redisManager, logger);
         });
 
         Logger?.LogDebug("Service dependencies configured");

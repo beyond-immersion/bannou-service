@@ -47,27 +47,30 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
         };
 
         // Add default store mappings based on service naming conventions
+        // Store names use "{service}-statestore" pattern to match service requests
         var defaultStores = new Dictionary<string, (StateBackend backend, string? prefix, bool enableSearch)>
         {
             // Redis stores (ephemeral/session data)
-            ["auth"] = (StateBackend.Redis, "auth", false),
-            ["connect"] = (StateBackend.Redis, "connect", false),
-            ["permissions"] = (StateBackend.Redis, "permissions", false),
+            ["auth-statestore"] = (StateBackend.Redis, "auth", false),
+            ["connect-statestore"] = (StateBackend.Redis, "connect", false),
+            ["permissions-statestore"] = (StateBackend.Redis, "permissions", false),
+            ["voice-statestore"] = (StateBackend.Redis, "voice", false),
+            ["asset-statestore"] = (StateBackend.Redis, "asset", false),
 
             // Redis stores with full-text search (Redis 8+ via NRedisStack)
             ["documentation-statestore"] = (StateBackend.Redis, "doc", true),
 
             // MySQL stores (durable data)
-            ["accounts"] = (StateBackend.MySql, null, false),
-            ["character"] = (StateBackend.MySql, null, false),
-            ["game-session"] = (StateBackend.MySql, null, false),
-            ["location"] = (StateBackend.MySql, null, false),
-            ["realm"] = (StateBackend.MySql, null, false),
-            ["relationship"] = (StateBackend.MySql, null, false),
-            ["relationship-type"] = (StateBackend.MySql, null, false),
-            ["servicedata"] = (StateBackend.MySql, null, false),
-            ["species"] = (StateBackend.MySql, null, false),
-            ["subscriptions"] = (StateBackend.MySql, null, false),
+            ["accounts-statestore"] = (StateBackend.MySql, null, false),
+            ["character-statestore"] = (StateBackend.MySql, null, false),
+            ["game-session-statestore"] = (StateBackend.MySql, null, false),
+            ["location-statestore"] = (StateBackend.MySql, null, false),
+            ["realm-statestore"] = (StateBackend.MySql, null, false),
+            ["relationship-statestore"] = (StateBackend.MySql, null, false),
+            ["relationship-type-statestore"] = (StateBackend.MySql, null, false),
+            ["servicedata-statestore"] = (StateBackend.MySql, null, false),
+            ["species-statestore"] = (StateBackend.MySql, null, false),
+            ["subscriptions-statestore"] = (StateBackend.MySql, null, false),
         };
 
         foreach (var (storeName, (backend, prefix, enableSearch)) in defaultStores)

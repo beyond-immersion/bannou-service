@@ -15,12 +15,17 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
     public override string PluginName => "messaging";
     public override string DisplayName => "Messaging Service";
 
+    private MessagingServiceConfiguration? _cachedConfig;
+
     public override void ConfigureServices(IServiceCollection services)
     {
         Logger?.LogDebug("Configuring messaging service dependencies");
 
         // Get configuration to read RabbitMQ settings
-        var config = services.BuildServiceProvider().GetService<MessagingServiceConfiguration>();
+        // Cache the provider to avoid multiple builds and ensure consistent config
+        var tempProvider = services.BuildServiceProvider();
+        _cachedConfig = tempProvider.GetService<MessagingServiceConfiguration>();
+        var config = _cachedConfig;
 
         // Check for in-memory mode
         if (config?.UseInMemory == true)
@@ -38,6 +43,13 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
         }
 
         // Configure MassTransit with RabbitMQ
+        var connectionTimeoutSeconds = config?.ConnectionTimeoutSeconds ?? 60;
+        var requestTimeoutSeconds = config?.RequestTimeoutSeconds ?? 30;
+
+        Logger?.LogInformation(
+            "Configuring MassTransit with connection timeout {ConnectionTimeout}s, request timeout {RequestTimeout}s",
+            connectionTimeoutSeconds, requestTimeoutSeconds);
+
         services.AddMassTransit(x =>
         {
             x.SetKebabCaseEndpointNameFormatter();
@@ -54,7 +66,12 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
                 {
                     h.Username(username);
                     h.Password(password);
+                    h.RequestedConnectionTimeout(TimeSpan.FromSeconds(connectionTimeoutSeconds));
                 });
+
+                // Set send/publish timeout
+                cfg.SendTopology.ConfigureErrorSettings = settings =>
+                    settings.SetQueueArgument("x-message-ttl", requestTimeoutSeconds * 1000);
 
                 cfg.ConfigureEndpoints(context);
             });

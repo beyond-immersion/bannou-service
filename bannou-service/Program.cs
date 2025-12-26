@@ -310,34 +310,40 @@ public static class Program
             });
 
             // Configure plugin application pipeline
+            Logger.Log(LogLevel.Debug, null, "Configuring plugin application pipeline...");
             PluginLoader?.ConfigureApplication(webApp);
 
             // Resolve services centrally for plugins
+            Logger.Log(LogLevel.Debug, null, "Resolving plugin services from DI container...");
             PluginLoader?.ResolveServices(webApp.Services);
 
             // Initialize plugins
             if (PluginLoader != null)
             {
+                Logger.Log(LogLevel.Information, null, "Initializing plugins...");
                 if (!await PluginLoader.InitializeAsync())
                 {
                     Logger.Log(LogLevel.Error, "Plugin initialization failed- exiting application.");
                     return 1;
                 }
+                Logger.Log(LogLevel.Information, null, "Plugin initialization complete.");
             }
 
             // Start plugins
             if (PluginLoader != null)
             {
+                Logger.Log(LogLevel.Information, null, "Starting plugins...");
                 if (!await PluginLoader.StartAsync())
                 {
                     Logger.Log(LogLevel.Error, "Plugin startup failed- exiting application.");
                     return 1;
                 }
+                Logger.Log(LogLevel.Information, null, "Plugin startup complete.");
             }
 
             // Event subscriptions will be handled by generated controller methods
 
-            Logger.Log(LogLevel.Information, null, "Services added and initialized successfully- WebHost starting.");
+            Logger.Log(LogLevel.Information, null, "Services added and initialized successfully- starting Kestrel WebHost on ports {HttpPort}/{HttpsPort}...", Configuration.HTTP_Web_Host_Port, Configuration.HTTPS_Web_Host_Port);
 
             // start webhost
             var webHostTask = webApp.RunAsync(ShutdownCancellationTokenSource.Token);

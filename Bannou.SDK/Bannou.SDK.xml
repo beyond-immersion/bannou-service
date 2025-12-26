@@ -4,10 +4,22 @@
         <name>Bannou.SDK</name>
     </assembly>
     <members>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceClient">
+            <summary>
+            Base marker interface for all Bannou service clients.
+            Provides explicit identification of client types for plugin discovery.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Should match the service name in the corresponding BannouServiceAttribute.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceClient`1">
             <summary>
-            Base interface for all Bannou service clients.
-            Provides fluent API methods for request configuration.
+            Generic interface for Bannou service clients with fluent API support.
+            Provides type-safe method chaining for request configuration.
             </summary>
             <typeparam name="TSelf">The concrete client type for fluent method chaining</typeparam>
         </member>
@@ -1082,9 +1094,15 @@
             <param name="body">Optional connection parameters</param>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Connect.ConnectClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Connect.ConnectClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ConnectClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Connect.ConnectClient._customHeaders">
@@ -2095,9 +2113,15 @@
             <returns>Seed operation completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Realm.RealmClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Realm.RealmClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Realm.RealmClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Realm.RealmClient._customHeaders">
@@ -2543,9 +2567,15 @@
             <returns>Upload URL generated</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Asset.AssetClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Asset.AssetClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Asset.AssetClient._customHeaders">
@@ -3023,9 +3053,15 @@
             <returns>Verification status updated successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Accounts.AccountsClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Accounts.AccountsClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.AccountsClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Accounts.AccountsClient._customHeaders">
@@ -3392,9 +3428,15 @@
             <returns>SDP answer processed, peer notified</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Voice.VoiceClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Voice.VoiceClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Voice.VoiceClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Voice.VoiceClient._customHeaders">
@@ -3923,9 +3965,15 @@
             <returns>Subscription renewed successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient._customHeaders">
@@ -4299,9 +4347,15 @@
             <returns>List of topics</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Messaging.MessagingClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Messaging.MessagingClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Messaging.MessagingClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Messaging.MessagingClient._customHeaders">
@@ -4560,9 +4614,15 @@
             <returns>Game action performed successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.GameSession.GameSessionClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.GameSession.GameSessionClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.GameSessionClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.GameSession.GameSessionClient._customHeaders">
@@ -4978,9 +5038,15 @@
             <returns>Health status retrieved</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Mesh.MeshClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Mesh.MeshClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mesh.MeshClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Mesh.MeshClient._customHeaders">
@@ -5612,9 +5678,15 @@
             <returns>Namespace statistics</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Documentation.DocumentationClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Documentation.DocumentationClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.DocumentationClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Documentation.DocumentationClient._customHeaders">
@@ -6045,9 +6117,15 @@
             <returns>Seed operation completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Species.SpeciesClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Species.SpeciesClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Species.SpeciesClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Species.SpeciesClient._customHeaders">
@@ -6620,9 +6698,15 @@
             <returns>Relationship ended successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Relationship.RelationshipClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Relationship.RelationshipClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Relationship.RelationshipClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Relationship.RelationshipClient._customHeaders">
@@ -6931,9 +7015,15 @@
             <returns>Service deleted successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Servicedata.ServicedataClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Servicedata.ServicedataClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.ServicedataClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Servicedata.ServicedataClient._customHeaders">
@@ -7326,9 +7416,15 @@
             <returns>Seed operation completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient._customHeaders">
@@ -7912,9 +8008,15 @@
             <returns>List of registered services</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Permissions.PermissionsClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Permissions.PermissionsClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Permissions.PermissionsClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Permissions.PermissionsClient._customHeaders">
@@ -8424,9 +8526,15 @@
             <returns>Subscription information retrieved</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Website.WebsiteClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Website.WebsiteClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Website.WebsiteClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Website.WebsiteClient._customHeaders">
@@ -8695,9 +8803,15 @@
             <returns>List of stores</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.State.StateClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.State.StateClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.State.StateClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.State.StateClient._customHeaders">
@@ -9172,9 +9286,15 @@
             <returns>Password reset successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Auth.AuthClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Auth.AuthClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.AuthClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Auth.AuthClient._customHeaders">
@@ -9832,9 +9952,15 @@
             <returns>Cleanup completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Orchestrator.OrchestratorClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Orchestrator.OrchestratorClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.OrchestratorClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Orchestrator.OrchestratorClient._customHeaders">
@@ -11813,9 +11939,15 @@
             <returns>Seed operation completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Location.LocationClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Location.LocationClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Location.LocationClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Location.LocationClient._customHeaders">
@@ -12422,9 +12554,15 @@
             <returns>Context variables resolved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Behavior.BehaviorClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Behavior.BehaviorClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Behavior.BehaviorClient._customHeaders">
@@ -12910,9 +13048,15 @@
             <returns>Characters retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Character.CharacterClient.ServiceName">
+        <member name="F:BeyondImmersion.BannouService.Character.CharacterClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Character.CharacterClient._customHeaders">

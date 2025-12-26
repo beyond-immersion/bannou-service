@@ -27,9 +27,20 @@ public class PluginLoader
     /// </summary>
     private static readonly HashSet<string> RequiredInfrastructurePlugins = new(StringComparer.OrdinalIgnoreCase)
     {
-        "messaging",  // lib-messaging: IMessageBus for pub/sub events
-        "state",      // lib-state: IStateStore for state management
-        "mesh"        // lib-mesh: IMeshInvocationClient for service-to-service calls
+        "state",      // lib-state: IStateStore for state management (MUST load first)
+        "messaging",  // lib-messaging: IMessageBus for pub/sub events (depends on state)
+        "mesh"        // lib-mesh: IMeshInvocationClient for service-to-service calls (depends on messaging)
+    };
+
+    /// <summary>
+    /// Loading priority for infrastructure plugins. Lower values load first.
+    /// This ensures dependencies are available before dependent plugins load.
+    /// </summary>
+    private static readonly Dictionary<string, int> InfrastructureLoadOrder = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { "state", 0 },      // First: state management foundation
+        { "messaging", 1 },  // Second: messaging depends on state being available
+        { "mesh", 2 }        // Third: mesh may depend on messaging for events
     };
 
     // All discovered plugins (enabled and disabled)
@@ -152,12 +163,19 @@ public class PluginLoader
             return null; // Indicate fatal failure
         }
 
-        // STAGE 3: Sort enabled plugins so infrastructure loads FIRST
-        // This ensures IMessageBus, IStateStore, and IMeshInvocationClient are available
-        // before other services try to use them
+        // STAGE 3: Sort enabled plugins so infrastructure loads FIRST in specific order
+        // Order: state → messaging → mesh → all other services alphabetically
+        // This ensures dependencies are available before dependent plugins load
         var sortedPlugins = _enabledPlugins
-            .OrderByDescending(p => RequiredInfrastructurePlugins.Contains(p.PluginName))
-            .ThenBy(p => p.PluginName)
+            .OrderBy(p =>
+            {
+                // Infrastructure plugins get priority order (0, 1, 2)
+                if (InfrastructureLoadOrder.TryGetValue(p.PluginName, out var order))
+                    return order;
+                // Non-infrastructure plugins get high value to sort after infrastructure
+                return 100;
+            })
+            .ThenBy(p => p.PluginName) // Alphabetical within non-infrastructure
             .ToList();
         _enabledPlugins.Clear();
         _enabledPlugins.AddRange(sortedPlugins);
@@ -344,13 +362,13 @@ public class PluginLoader
     }
 
     /// <summary>
-    /// Discover client types that implement IBannouClient interface.
+    /// Discover client types that implement IServiceClient interface.
     /// Pure interface-based discovery - no naming conventions.
     /// </summary>
     private void DiscoverClientTypes(Assembly assembly, string pluginName)
     {
         var clientTypes = assembly.GetTypes()
-            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IBannouClient).IsAssignableFrom(t))
+            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IServiceClient).IsAssignableFrom(t))
             .ToList();
 
         foreach (var clientType in clientTypes)

@@ -190,16 +190,11 @@ public class RedisSearchIndexService : ISearchIndexService
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<SearchResult> Search(string namespaceId, string searchTerm, string? category = null, int maxResults = 20)
-    {
-        return SearchAsync(namespaceId, searchTerm, category, maxResults).GetAwaiter().GetResult();
-    }
-
-    private async Task<IReadOnlyList<SearchResult>> SearchAsync(string namespaceId, string searchTerm, string? category, int maxResults)
+    public async Task<IReadOnlyList<SearchResult>> SearchAsync(string namespaceId, string searchTerm, string? category = null, int maxResults = 20, CancellationToken cancellationToken = default)
     {
         try
         {
-            await EnsureIndexExistsAsync(namespaceId, CancellationToken.None);
+            await EnsureIndexExistsAsync(namespaceId, cancellationToken);
 
             if (!_stateStoreFactory.SupportsSearch(STATE_STORE))
             {
@@ -238,7 +233,7 @@ public class RedisSearchIndexService : ISearchIndexService
                     WithScores = true,
                     SortBy = null // Sort by relevance
                 },
-                CancellationToken.None);
+                cancellationToken);
 
             // Convert to SearchResult format
             var results = result.Items.Select(item => new SearchResult(
@@ -261,23 +256,18 @@ public class RedisSearchIndexService : ISearchIndexService
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<SearchResult> Query(string namespaceId, string query, string? category = null, int maxResults = 20, double minRelevanceScore = 0.3)
+    public async Task<IReadOnlyList<SearchResult>> QueryAsync(string namespaceId, string query, string? category = null, int maxResults = 20, double minRelevanceScore = 0.3, CancellationToken cancellationToken = default)
     {
-        var results = Search(namespaceId, query, category, maxResults * 2);
+        var results = await SearchAsync(namespaceId, query, category, maxResults * 2, cancellationToken);
         return results.Where(r => r.RelevanceScore >= minRelevanceScore).Take(maxResults).ToList();
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<Guid> GetRelatedSuggestions(string namespaceId, string sourceValue, int maxSuggestions = 5)
-    {
-        return GetRelatedSuggestionsAsync(namespaceId, sourceValue, maxSuggestions).GetAwaiter().GetResult();
-    }
-
-    private async Task<IReadOnlyList<Guid>> GetRelatedSuggestionsAsync(string namespaceId, string sourceValue, int maxSuggestions)
+    public async Task<IReadOnlyList<Guid>> GetRelatedSuggestionsAsync(string namespaceId, string sourceValue, int maxSuggestions = 5, CancellationToken cancellationToken = default)
     {
         try
         {
-            await EnsureIndexExistsAsync(namespaceId, CancellationToken.None);
+            await EnsureIndexExistsAsync(namespaceId, cancellationToken);
 
             if (!_stateStoreFactory.SupportsSearch(STATE_STORE))
             {
@@ -285,7 +275,7 @@ public class RedisSearchIndexService : ISearchIndexService
             }
 
             // Use search to find related documents
-            var searchResults = await SearchAsync(namespaceId, sourceValue, null, maxSuggestions);
+            var searchResults = await SearchAsync(namespaceId, sourceValue, null, maxSuggestions, cancellationToken);
             return searchResults.Select(r => r.DocumentId).ToList();
         }
         catch (Exception ex)
@@ -297,16 +287,11 @@ public class RedisSearchIndexService : ISearchIndexService
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<Guid> ListDocumentIds(string namespaceId, string? category = null, int skip = 0, int take = 100)
-    {
-        return ListDocumentIdsAsync(namespaceId, category, skip, take).GetAwaiter().GetResult();
-    }
-
-    private async Task<IReadOnlyList<Guid>> ListDocumentIdsAsync(string namespaceId, string? category, int skip, int take)
+    public async Task<IReadOnlyList<Guid>> ListDocumentIdsAsync(string namespaceId, string? category = null, int skip = 0, int take = 100, CancellationToken cancellationToken = default)
     {
         try
         {
-            await EnsureIndexExistsAsync(namespaceId, CancellationToken.None);
+            await EnsureIndexExistsAsync(namespaceId, cancellationToken);
 
             if (!_stateStoreFactory.SupportsSearch(STATE_STORE))
             {
@@ -338,7 +323,7 @@ public class RedisSearchIndexService : ISearchIndexService
                     Limit = take,
                     SortBy = "title"
                 },
-                CancellationToken.None);
+                cancellationToken);
 
             return result.Items.Select(item => item.Value.DocumentId).ToList();
         }
@@ -350,16 +335,11 @@ public class RedisSearchIndexService : ISearchIndexService
     }
 
     /// <inheritdoc />
-    public NamespaceStats GetNamespaceStats(string namespaceId)
-    {
-        return GetNamespaceStatsAsync(namespaceId).GetAwaiter().GetResult();
-    }
-
-    private async Task<NamespaceStats> GetNamespaceStatsAsync(string namespaceId)
+    public async Task<NamespaceStats> GetNamespaceStatsAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
         try
         {
-            await EnsureIndexExistsAsync(namespaceId, CancellationToken.None);
+            await EnsureIndexExistsAsync(namespaceId, cancellationToken);
 
             if (!_stateStoreFactory.SupportsSearch(STATE_STORE))
             {
@@ -369,7 +349,7 @@ public class RedisSearchIndexService : ISearchIndexService
             var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(STATE_STORE);
             var indexName = GetIndexName(namespaceId);
 
-            var indexInfo = await searchStore.GetIndexInfoAsync(indexName, CancellationToken.None);
+            var indexInfo = await searchStore.GetIndexInfoAsync(indexName, cancellationToken);
             if (indexInfo == null)
             {
                 return new NamespaceStats(0, new Dictionary<string, int>(), 0);

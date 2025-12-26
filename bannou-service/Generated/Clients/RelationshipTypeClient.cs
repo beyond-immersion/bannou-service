@@ -205,7 +205,13 @@ public partial class RelationshipTypeClient : IRelationshipTypeClient, BeyondImm
     /// <summary>
     /// Service name used for app-id resolution. Extracted from class name.
     /// </summary>
-    private static readonly string ServiceName = "relationshiptype";
+    private static readonly string _serviceName = "relationshiptype";
+
+    /// <summary>
+    /// The name of the service this client communicates with.
+    /// Implements IServiceClient.ServiceName.
+    /// </summary>
+    public string ServiceName => _serviceName;
 
     public RelationshipTypeClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<RelationshipTypeClient>? logger = null)
     {

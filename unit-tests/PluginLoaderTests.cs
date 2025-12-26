@@ -951,31 +951,31 @@ public class PluginLoaderTests
     }
 
     /// <summary>
-    /// Tests that client discovery uses IBannouClient interface without fallbacks.
+    /// Tests that client discovery uses IServiceClient interface without fallbacks.
     /// </summary>
     [Fact]
-    public void InterfaceBasedClientDiscovery_ShouldRequireIBannouClientInterface()
+    public void InterfaceBasedClientDiscovery_ShouldRequireIServiceClientInterface()
     {
         // Arrange
         var testingAssembly = typeof(TestService).Assembly;  // This assembly
 
         // Act - Test client discovery logic (similar to PluginLoader.DiscoverClientTypes)
         var discoveredClients = testingAssembly.GetTypes()
-            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IBannouClient).IsAssignableFrom(t))
+            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IServiceClient).IsAssignableFrom(t))
             .ToList();
 
-        // Assert - Should only find types that implement IBannouClient
+        // Assert - Should only find types that implement IServiceClient
         foreach (var clientType in discoveredClients)
         {
-            Assert.True(typeof(IBannouClient).IsAssignableFrom(clientType));
+            Assert.True(typeof(IServiceClient).IsAssignableFrom(clientType));
             Assert.False(clientType.IsInterface);
             Assert.False(clientType.IsAbstract);
         }
 
-        // Verify that types ending in "Client" but not implementing IBannouClient are NOT discovered
+        // Verify that types ending in "Client" but not implementing IServiceClient are NOT discovered
         var nonClientTypes = testingAssembly.GetTypes()
             .Where(t => !t.IsInterface && !t.IsAbstract && t.Name.EndsWith("Client"))
-            .Where(t => !typeof(IBannouClient).IsAssignableFrom(t))
+            .Where(t => !typeof(IServiceClient).IsAssignableFrom(t))
             .ToList();
 
         foreach (var nonClientType in nonClientTypes)
@@ -1054,9 +1054,9 @@ public class PluginLoaderTests
             .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IServiceConfiguration).IsAssignableFrom(t))
             .ToList();
 
-        // 3. Client Discovery - should find clients with IBannouClient interface
+        // 3. Client Discovery - should find clients with IServiceClient interface
         var clientTypes = testingAssembly.GetTypes()
-            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IBannouClient).IsAssignableFrom(t))
+            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IServiceClient).IsAssignableFrom(t))
             .ToList();
 
         // Assert - Verify discovery worked based on interfaces/attributes, not naming
@@ -1234,7 +1234,7 @@ public class PluginLoaderTests
         var conventionOnlyTypes = currentAssembly.GetTypes()
             .Where(t => !t.IsInterface && !t.IsAbstract)
             .Where(t => t.Name.EndsWith("Service") || t.Name.EndsWith("Client") || t.Name.EndsWith("Configuration"))
-            .Where(t => !typeof(IBannouService).IsAssignableFrom(t) && !typeof(IBannouClient).IsAssignableFrom(t) && !typeof(IServiceConfiguration).IsAssignableFrom(t))
+            .Where(t => !typeof(IBannouService).IsAssignableFrom(t) && !typeof(IServiceClient).IsAssignableFrom(t) && !typeof(IServiceConfiguration).IsAssignableFrom(t))
             .ToList();
 
         // Act - Test interface-based discovery
@@ -1243,7 +1243,7 @@ public class PluginLoaderTests
             .ToList();
 
         var clientsViaInterface = currentAssembly.GetTypes()
-            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IBannouClient).IsAssignableFrom(t))
+            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IServiceClient).IsAssignableFrom(t))
             .ToList();
 
         var configurationsViaInterface = currentAssembly.GetTypes()
@@ -1266,7 +1266,7 @@ public class PluginLoaderTests
 
         foreach (var client in clientsViaInterface)
         {
-            Assert.True(typeof(IBannouClient).IsAssignableFrom(client));
+            Assert.True(typeof(IServiceClient).IsAssignableFrom(client));
         }
 
         foreach (var config in configurationsViaInterface)
