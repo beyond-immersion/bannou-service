@@ -2,7 +2,6 @@ using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -10,71 +9,55 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Test handler for authorization/authentication-related API endpoints using generated clients.
 /// Tests the auth service APIs directly via NSwag-generated AuthClient.
 /// </summary>
-public class AuthTestHandler : IServiceTestHandler
+public class AuthTestHandler : BaseHttpTestHandler
 {
-    public ServiceTest[] GetServiceTests()
-    {
-        return new[]
+    public override ServiceTest[] GetServiceTests() =>
+    [
+        // Core authentication flows
+        new ServiceTest(TestCompleteAuthFlow, "CompleteAuthFlow", "Auth", "Test complete registration → login → connect flow"),
+        new ServiceTest(TestRegisterFlow, "RegisterFlow", "Auth", "Test user registration flow"),
+        new ServiceTest(TestDuplicateRegistration, "DuplicateRegistration", "Auth", "Test duplicate username registration fails"),
+        new ServiceTest(TestLoginFlow, "LoginFlow", "Auth", "Test complete login flow"),
+        new ServiceTest(TestInvalidLogin, "InvalidLogin", "Auth", "Test login with invalid credentials fails"),
+
+        // Token operations
+        new ServiceTest(TestTokenValidation, "TokenValidation", "Auth", "Test access token validation"),
+        new ServiceTest(TestTokenRefresh, "TokenRefresh", "Auth", "Test token refresh functionality"),
+
+        // Third-party authentication
+        new ServiceTest(TestOAuthFlow, "OAuthFlow", "Auth", "Test OAuth provider authentication flow"),
+        new ServiceTest(TestSteamAuthFlow, "SteamAuthFlow", "Auth", "Test Steam Session Ticket authentication flow"),
+
+        // Session management
+        new ServiceTest(TestGetSessions, "GetSessions", "Auth", "Test session retrieval functionality"),
+        new ServiceTest(TestLogout, "Logout", "Auth", "Test logout invalidates session"),
+        new ServiceTest(TestLogoutAllSessions, "LogoutAllSessions", "Auth", "Test logout all sessions"),
+        new ServiceTest(TestTerminateSession, "TerminateSession", "Auth", "Test terminate specific session"),
+
+        // Password reset
+        new ServiceTest(TestPasswordResetRequest, "PasswordResetRequest", "Auth", "Test password reset request"),
+        new ServiceTest(TestPasswordResetConfirm, "PasswordResetConfirm", "Auth", "Test password reset confirmation"),
+
+        // Session validation isolation tests (for debugging 401 issues)
+        new ServiceTest(TestSessionValidationAfterMultipleLogins, "SessionAfterLogins", "Auth", "Test session remains valid after creating additional sessions"),
+        new ServiceTest(TestSessionValidationRoundTrip, "SessionRoundTrip", "Auth", "Test session validates immediately after creation"),
+        new ServiceTest(TestSessionValidationWithDelay, "SessionWithDelay", "Auth", "Test session validates after short delay"),
+        new ServiceTest(TestMultipleSessionsSameUser, "MultipleSessions", "Auth", "Test multiple concurrent sessions for same user"),
+        new ServiceTest(TestSessionExpiresAtReturned, "SessionExpiresAt", "Auth", "Test session validation returns valid RemainingTime"),
+    ];
+
+    private static Task<TestResult> TestRegisterFlow(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            // Core authentication flows
-            new ServiceTest(TestCompleteAuthFlow, "CompleteAuthFlow", "Auth", "Test complete registration → login → connect flow"),
-            new ServiceTest(TestRegisterFlow, "RegisterFlow", "Auth", "Test user registration flow"),
-            new ServiceTest(TestDuplicateRegistration, "DuplicateRegistration", "Auth", "Test duplicate username registration fails"),
-            new ServiceTest(TestLoginFlow, "LoginFlow", "Auth", "Test complete login flow"),
-            new ServiceTest(TestInvalidLogin, "InvalidLogin", "Auth", "Test login with invalid credentials fails"),
-
-            // Token operations
-            new ServiceTest(TestTokenValidation, "TokenValidation", "Auth", "Test access token validation"),
-            new ServiceTest(TestTokenRefresh, "TokenRefresh", "Auth", "Test token refresh functionality"),
-
-            // Third-party authentication
-            new ServiceTest(TestOAuthFlow, "OAuthFlow", "Auth", "Test OAuth provider authentication flow"),
-            new ServiceTest(TestSteamAuthFlow, "SteamAuthFlow", "Auth", "Test Steam Session Ticket authentication flow"),
-
-            // Session management
-            new ServiceTest(TestGetSessions, "GetSessions", "Auth", "Test session retrieval functionality"),
-            new ServiceTest(TestLogout, "Logout", "Auth", "Test logout invalidates session"),
-            new ServiceTest(TestLogoutAllSessions, "LogoutAllSessions", "Auth", "Test logout all sessions"),
-            new ServiceTest(TestTerminateSession, "TerminateSession", "Auth", "Test terminate specific session"),
-
-            // Password reset
-            new ServiceTest(TestPasswordResetRequest, "PasswordResetRequest", "Auth", "Test password reset request"),
-            new ServiceTest(TestPasswordResetConfirm, "PasswordResetConfirm", "Auth", "Test password reset confirmation"),
-
-            // Session validation isolation tests (for debugging 401 issues)
-            new ServiceTest(TestSessionValidationAfterMultipleLogins, "SessionAfterLogins", "Auth", "Test session remains valid after creating additional sessions"),
-            new ServiceTest(TestSessionValidationRoundTrip, "SessionRoundTrip", "Auth", "Test session validates immediately after creation"),
-            new ServiceTest(TestSessionValidationWithDelay, "SessionWithDelay", "Auth", "Test session validates after short delay"),
-            new ServiceTest(TestMultipleSessionsSameUser, "MultipleSessions", "Auth", "Test multiple concurrent sessions for same user"),
-            new ServiceTest(TestSessionExpiresAtReturned, "SessionExpiresAt", "Auth", "Test session validation returns valid RemainingTime"),
-        };
-    }
-
-    /// <summary>
-    /// Gets a service client from the dependency injection container.
-    /// </summary>
-    private static T GetServiceClient<T>() where T : class
-    {
-        if (Program.ServiceProvider == null)
-            throw new InvalidOperationException("Service provider not initialized");
-
-        return Program.ServiceProvider.GetRequiredService<T>();
-    }
-
-    private static async Task<TestResult> TestRegisterFlow(ITestClient client, string[] args)
-    {
-        try
-        {
-            // Get AuthClient from dependency injection container
             var authClient = GetServiceClient<IAuthClient>();
 
-            var testUsername = $"regtest_{DateTime.Now.Ticks}";
+            var testUsername = GenerateTestId("regtest");
 
             var registerRequest = new RegisterRequest
             {
                 Username = testUsername,
                 Password = "TestPassword123!",
-                Email = $"{testUsername}@example.com"
+                Email = GenerateTestEmail("regtest")
             };
 
             var response = await authClient.RegisterAsync(registerRequest);
@@ -83,31 +66,21 @@ public class AuthTestHandler : IServiceTestHandler
                 return TestResult.Failed("Registration succeeded but no access token returned");
 
             return TestResult.Successful($"Registration flow completed successfully for user {testUsername}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Registration failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "User registration");
 
-    private static async Task<TestResult> TestLoginFlow(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestLoginFlow(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            // Get AuthClient from dependency injection container
             var authClient = GetServiceClient<IAuthClient>();
 
             // First register a test user
-            var testUsername = $"logintest_{DateTime.Now.Ticks}";
+            var testUsername = GenerateTestId("logintest");
+            var email = GenerateTestEmail("logintest");
             var registerRequest = new RegisterRequest
             {
                 Username = testUsername,
                 Password = "TestPassword123!",
-                Email = $"{testUsername}@example.com"
+                Email = email
             };
 
             await authClient.RegisterAsync(registerRequest);
@@ -115,7 +88,7 @@ public class AuthTestHandler : IServiceTestHandler
             // Then try to login
             var loginRequest = new LoginRequest
             {
-                Email = $"{testUsername}@example.com",
+                Email = email,
                 Password = "TestPassword123!"
             };
             var loginResponse = await authClient.LoginAsync(loginRequest);
@@ -124,25 +97,13 @@ public class AuthTestHandler : IServiceTestHandler
                 return TestResult.Failed("Login succeeded but no access token returned");
 
             return TestResult.Successful($"Login flow completed successfully for user {testUsername}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Login failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "User login");
 
-    private static async Task<TestResult> TestTokenValidation(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestTokenValidation(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            // Get AuthClient from dependency injection container
             var authClient = GetServiceClient<IAuthClient>();
 
-            // ValidateTokenAsync now uses header-based token authentication
             try
             {
                 var validationResponse = await ((IServiceClient<AuthClient>)authClient)
@@ -158,21 +119,13 @@ public class AuthTestHandler : IServiceTestHandler
             {
                 return TestResult.Successful("Token validation correctly handled bad request");
             }
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Token validation");
 
-    private static async Task<TestResult> TestTokenRefresh(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestTokenRefresh(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            // Get AuthClient from dependency injection container
             var authClient = GetServiceClient<IAuthClient>();
 
-            // Test token refresh with a dummy refresh token
             var refreshRequest = new RefreshRequest
             {
                 RefreshToken = "dummy-refresh-token"
@@ -189,21 +142,13 @@ public class AuthTestHandler : IServiceTestHandler
             {
                 return TestResult.Successful("Token refresh correctly rejected invalid refresh token");
             }
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Token refresh");
 
-    private static async Task<TestResult> TestOAuthFlow(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestOAuthFlow(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            // Get AuthClient from dependency injection container
             var authClient = GetServiceClient<IAuthClient>();
 
-            // Test OAuth callback with mock data
             var oauthRequest = new OAuthCallbackRequest
             {
                 Code = "mock-oauth-code",
@@ -220,26 +165,16 @@ public class AuthTestHandler : IServiceTestHandler
             {
                 return TestResult.Successful("OAuth flow correctly handled invalid mock data");
             }
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "OAuth flow");
 
-    private static async Task<TestResult> TestSteamAuthFlow(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSteamAuthFlow(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            // Get AuthClient from dependency injection container
             var authClient = GetServiceClient<IAuthClient>();
 
-            // Test Steam verification with mock Session Ticket data
-            // Note: SteamID is no longer in the request - it comes from Steam's API response
-            // When MockProviders=true, the service will use MockSteamId from configuration
             var steamRequest = new SteamVerifyRequest
             {
-                Ticket = "140000006A7B3C8E0123456789ABCDEF", // Mock hex-encoded ticket
+                Ticket = "140000006A7B3C8E0123456789ABCDEF",
                 DeviceInfo = new DeviceInfo
                 {
                     DeviceType = DeviceInfoDeviceType.Desktop,
@@ -256,25 +191,13 @@ public class AuthTestHandler : IServiceTestHandler
             }
             catch (ApiException ex) when (ex.StatusCode == 401)
             {
-                // 401 with mock ticket proves endpoint works - ticket was validated and rejected
                 return TestResult.Successful("Steam auth correctly rejected invalid ticket");
             }
-            catch (ApiException ex)
-            {
-                return TestResult.Failed($"Steam auth failed: {ex.StatusCode} - {ex.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Steam auth");
 
-    private static async Task<TestResult> TestGetSessions(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetSessions(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            // Get AuthClient from dependency injection container
             var authClient = GetServiceClient<IAuthClient>();
 
             try
@@ -288,28 +211,22 @@ public class AuthTestHandler : IServiceTestHandler
             {
                 return TestResult.Successful("Get sessions correctly required authentication");
             }
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get sessions");
 
-    private static async Task<TestResult> TestCompleteAuthFlow(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCompleteAuthFlow(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            // Get clients from dependency injection container
             var authClient = GetServiceClient<IAuthClient>();
             var connectClient = GetServiceClient<IConnectClient>();
 
             // Step 1: Register a new user
-            var testUsername = $"completetest_{DateTime.Now.Ticks}";
+            var testUsername = GenerateTestId("completetest");
+            var email = GenerateTestEmail("completetest");
             var registerRequest = new RegisterRequest
             {
                 Username = testUsername,
                 Password = "TestPassword123!",
-                Email = $"{testUsername}@example.com"
+                Email = email
             };
 
             var registerResponse = await authClient.RegisterAsync(registerRequest);
@@ -319,7 +236,7 @@ public class AuthTestHandler : IServiceTestHandler
             // Step 2: Login with the same credentials
             var loginRequest = new LoginRequest
             {
-                Email = $"{testUsername}@example.com",
+                Email = email,
                 Password = "TestPassword123!"
             };
             var loginResponse = await authClient.LoginAsync(loginRequest);
@@ -340,106 +257,68 @@ public class AuthTestHandler : IServiceTestHandler
                 return TestResult.Failed("Token validation succeeded but no SessionId returned");
 
             return TestResult.Successful($"Complete auth flow tested successfully for user {testUsername}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Complete auth flow failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception in complete auth flow: {ex.Message}", ex);
-        }
-    }
+        }, "Complete auth flow");
 
-    private static async Task<TestResult> TestDuplicateRegistration(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDuplicateRegistration(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
-            var testUsername = $"duptest_{DateTime.Now.Ticks}";
+            var testUsername = GenerateTestId("duptest");
+            var email = GenerateTestEmail("duptest");
 
             var registerRequest = new RegisterRequest
             {
                 Username = testUsername,
                 Password = "TestPassword123!",
-                Email = $"{testUsername}@example.com"
+                Email = email
             };
 
             // First registration should succeed
             await authClient.RegisterAsync(registerRequest);
 
             // Second registration with same username should fail
-            try
-            {
-                await authClient.RegisterAsync(registerRequest);
-                return TestResult.Failed("Duplicate registration should have failed but succeeded");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 409)
-            {
-                return TestResult.Successful("Duplicate registration correctly rejected with 409 Conflict");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 400)
-            {
-                return TestResult.Successful("Duplicate registration correctly rejected with 400 Bad Request");
-            }
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+            return await ExecuteExpectingAnyStatusAsync(
+                async () => await authClient.RegisterAsync(registerRequest),
+                [409, 400],
+                "Duplicate registration");
+        }, "Duplicate registration");
 
-    private static async Task<TestResult> TestInvalidLogin(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestInvalidLogin(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
             var loginRequest = new LoginRequest
             {
-                Email = $"nonexistent_{DateTime.Now.Ticks}@example.com",
+                Email = GenerateTestEmail("nonexistent"),
                 Password = "WrongPassword123!"
             };
 
-            try
-            {
-                await authClient.LoginAsync(loginRequest);
-                return TestResult.Failed("Login with invalid credentials should have failed but succeeded");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 401)
-            {
-                return TestResult.Successful("Invalid credentials correctly rejected with 401 Unauthorized");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 400 || ex.StatusCode == 404)
-            {
-                return TestResult.Successful($"Invalid credentials correctly rejected with {ex.StatusCode}");
-            }
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+            return await ExecuteExpectingAnyStatusAsync(
+                async () => await authClient.LoginAsync(loginRequest),
+                [401, 400, 404],
+                "Invalid credentials");
+        }, "Invalid login");
 
-    private static async Task<TestResult> TestLogout(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestLogout(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
             // First register and login to get a token
-            var testUsername = $"logouttest_{DateTime.Now.Ticks}";
+            var testUsername = GenerateTestId("logouttest");
+            var email = GenerateTestEmail("logouttest");
             var registerRequest = new RegisterRequest
             {
                 Username = testUsername,
                 Password = "TestPassword123!",
-                Email = $"{testUsername}@example.com"
+                Email = email
             };
             await authClient.RegisterAsync(registerRequest);
 
             var loginRequest = new LoginRequest
             {
-                Email = $"{testUsername}@example.com",
+                Email = email,
                 Password = "TestPassword123!"
             };
             var loginResponse = await authClient.LoginAsync(loginRequest);
@@ -451,32 +330,27 @@ public class AuthTestHandler : IServiceTestHandler
                 .WithAuthorization(accessToken)
                 .LogoutAsync(logoutRequest);
             return TestResult.Successful("Logout completed successfully");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Logout");
 
-    private static async Task<TestResult> TestLogoutAllSessions(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestLogoutAllSessions(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
             // First register and login to get a token
-            var testUsername = $"logoutalltest_{DateTime.Now.Ticks}";
+            var testUsername = GenerateTestId("logoutalltest");
+            var email = GenerateTestEmail("logoutalltest");
             var registerRequest = new RegisterRequest
             {
                 Username = testUsername,
                 Password = "TestPassword123!",
-                Email = $"{testUsername}@example.com"
+                Email = email
             };
             await authClient.RegisterAsync(registerRequest);
 
             var loginRequest = new LoginRequest
             {
-                Email = $"{testUsername}@example.com",
+                Email = email,
                 Password = "TestPassword123!"
             };
             var loginResponse = await authClient.LoginAsync(loginRequest);
@@ -488,32 +362,27 @@ public class AuthTestHandler : IServiceTestHandler
                 .WithAuthorization(accessToken)
                 .LogoutAsync(logoutRequest);
             return TestResult.Successful("Logout all sessions completed successfully");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Logout all sessions");
 
-    private static async Task<TestResult> TestTerminateSession(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestTerminateSession(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
             // First register and login to get a token
-            var testUsername = $"terminatetest_{DateTime.Now.Ticks}";
+            var testUsername = GenerateTestId("terminatetest");
+            var email = GenerateTestEmail("terminatetest");
             var registerRequest = new RegisterRequest
             {
                 Username = testUsername,
                 Password = "TestPassword123!",
-                Email = $"{testUsername}@example.com"
+                Email = email
             };
             await authClient.RegisterAsync(registerRequest);
 
             var loginRequest = new LoginRequest
             {
-                Email = $"{testUsername}@example.com",
+                Email = email,
                 Password = "TestPassword123!"
             };
             var loginResponse = await authClient.LoginAsync(loginRequest);
@@ -530,89 +399,50 @@ public class AuthTestHandler : IServiceTestHandler
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
             {
-                // 404 proves endpoint works - it correctly reports session doesn't exist
                 return TestResult.Successful("Session termination correctly returned 404 for non-existent session");
             }
-            catch (ApiException ex)
-            {
-                return TestResult.Failed($"Session termination failed: {ex.StatusCode} - {ex.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Terminate session");
 
-    private static async Task<TestResult> TestPasswordResetRequest(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestPasswordResetRequest(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
-            // Request password reset for a test email
             var resetRequest = new PasswordResetRequest
             {
-                Email = $"passwordreset_{DateTime.Now.Ticks}@example.com"
+                Email = GenerateTestEmail("passwordreset")
             };
 
             // Password reset should always succeed (security: don't reveal if email exists)
             await authClient.RequestPasswordResetAsync(resetRequest);
             return TestResult.Successful("Password reset request completed successfully");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Password reset request");
 
-    private static async Task<TestResult> TestPasswordResetConfirm(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestPasswordResetConfirm(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
 
-            // Try to confirm password reset with invalid token (should fail)
             var confirmRequest = new PasswordResetConfirmRequest
             {
                 Token = "invalid-reset-token",
                 NewPassword = "NewSecurePassword123!"
             };
 
-            try
-            {
-                await authClient.ConfirmPasswordResetAsync(confirmRequest);
-                return TestResult.Failed("Password reset with invalid token should have failed");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 400 || ex.StatusCode == 401 || ex.StatusCode == 404)
-            {
-                // Rejecting invalid token proves the endpoint works
-                return TestResult.Successful("Password reset correctly rejected invalid token");
-            }
-            catch (ApiException ex)
-            {
-                return TestResult.Failed($"Password reset confirm failed unexpectedly: {ex.StatusCode} - {ex.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+            return await ExecuteExpectingAnyStatusAsync(
+                async () => await authClient.ConfirmPasswordResetAsync(confirmRequest),
+                [400, 401, 404],
+                "Invalid reset token");
+        }, "Password reset confirm");
 
     #region Session Validation Isolation Tests
 
-    /// <summary>
-    /// Test that validates a session remains valid even after creating additional sessions.
-    /// This tests the scenario where multiple logins for the same user don't invalidate existing sessions.
-    /// </summary>
-    private static async Task<TestResult> TestSessionValidationAfterMultipleLogins(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSessionValidationAfterMultipleLogins(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
-            var testUsername = $"multilogin_{DateTime.Now.Ticks}";
-            var email = $"{testUsername}@example.com";
+            var testUsername = GenerateTestId("multilogin");
+            var email = GenerateTestEmail("multilogin");
             var password = "TestPassword123!";
 
             // Step 1: Register user
@@ -668,38 +498,26 @@ public class AuthTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"All 3 sessions remain valid after multiple logins. RemainingTime: A={validationA3.RemainingTime}s, B={validationB2.RemainingTime}s, C={validationC.RemainingTime}s");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Session validation after multiple logins");
 
-    /// <summary>
-    /// Test immediate validation round-trip after session creation.
-    /// </summary>
-    private static async Task<TestResult> TestSessionValidationRoundTrip(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSessionValidationRoundTrip(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
-            var testUsername = $"roundtrip_{DateTime.Now.Ticks}";
+            var testUsername = GenerateTestId("roundtrip");
+            var email = GenerateTestEmail("roundtrip");
 
             // Register and login
             await authClient.RegisterAsync(new RegisterRequest
             {
                 Username = testUsername,
                 Password = "TestPassword123!",
-                Email = $"{testUsername}@example.com"
+                Email = email
             });
 
             var loginResponse = await authClient.LoginAsync(new LoginRequest
             {
-                Email = $"{testUsername}@example.com",
+                Email = email,
                 Password = "TestPassword123!"
             });
 
@@ -715,38 +533,26 @@ public class AuthTestHandler : IServiceTestHandler
                 return TestResult.Failed($"RemainingTime is invalid: {validation.RemainingTime}");
 
             return TestResult.Successful($"Immediate round-trip validation succeeded. SessionId: {validation.SessionId}, RemainingTime: {validation.RemainingTime}s");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Session validation round-trip");
 
-    /// <summary>
-    /// Test session validation after a short delay to detect timing-related issues.
-    /// </summary>
-    private static async Task<TestResult> TestSessionValidationWithDelay(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSessionValidationWithDelay(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
-            var testUsername = $"delay_{DateTime.Now.Ticks}";
+            var testUsername = GenerateTestId("delay");
+            var email = GenerateTestEmail("delay");
 
             // Register and login
             await authClient.RegisterAsync(new RegisterRequest
             {
                 Username = testUsername,
                 Password = "TestPassword123!",
-                Email = $"{testUsername}@example.com"
+                Email = email
             });
 
             var loginResponse = await authClient.LoginAsync(new LoginRequest
             {
-                Email = $"{testUsername}@example.com",
+                Email = email,
                 Password = "TestPassword123!"
             });
 
@@ -774,27 +580,14 @@ public class AuthTestHandler : IServiceTestHandler
                 return TestResult.Failed($"RemainingTime increased after delay: {remainingTime1} -> {remainingTime2}");
 
             return TestResult.Successful($"Session remains valid after 2s delay. RemainingTime: {remainingTime1} -> {remainingTime2}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Session validation with delay");
 
-    /// <summary>
-    /// Test that multiple concurrent sessions for the same user all remain valid.
-    /// </summary>
-    private static async Task<TestResult> TestMultipleSessionsSameUser(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestMultipleSessionsSameUser(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
-            var testUsername = $"multisession_{DateTime.Now.Ticks}";
-            var email = $"{testUsername}@example.com";
+            var testUsername = GenerateTestId("multisession");
+            var email = GenerateTestEmail("multisession");
             var password = "TestPassword123!";
 
             // Register user
@@ -829,38 +622,26 @@ public class AuthTestHandler : IServiceTestHandler
 
             var remainingTimes = validations.Select(v => v.RemainingTime).ToList();
             return TestResult.Successful($"All 5 concurrent sessions valid. RemainingTimes: {string.Join(", ", remainingTimes)}s");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Multiple sessions same user");
 
-    /// <summary>
-    /// Test that session validation returns a valid RemainingTime (ExpiresAt was deserialized correctly).
-    /// </summary>
-    private static async Task<TestResult> TestSessionExpiresAtReturned(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSessionExpiresAtReturned(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
-            var testUsername = $"expiresat_{DateTime.Now.Ticks}";
+            var testUsername = GenerateTestId("expiresat");
+            var email = GenerateTestEmail("expiresat");
 
             // Register and login
             await authClient.RegisterAsync(new RegisterRequest
             {
                 Username = testUsername,
                 Password = "TestPassword123!",
-                Email = $"{testUsername}@example.com"
+                Email = email
             });
 
             var loginResponse = await authClient.LoginAsync(new LoginRequest
             {
-                Email = $"{testUsername}@example.com",
+                Email = email,
                 Password = "TestPassword123!"
             });
 
@@ -880,7 +661,7 @@ public class AuthTestHandler : IServiceTestHandler
                 return TestResult.Failed($"RemainingTime suspiciously high: {validation.RemainingTime}s (might be timestamp error)");
 
             // Expected: ~3600 seconds (60 minutes default expiration)
-            var expectedMinSeconds = 3500; // Allow some tolerance
+            var expectedMinSeconds = 3500;
             var expectedMaxSeconds = 3700;
 
             if (validation.RemainingTime < expectedMinSeconds || validation.RemainingTime > expectedMaxSeconds)
@@ -889,16 +670,7 @@ public class AuthTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"RemainingTime: {validation.RemainingTime}s (correctly around 60 minutes as expected)");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Session expires at returned");
 
     #endregion
 }

@@ -2,7 +2,6 @@ using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
 using LibOrchestrator;
 using LibOrchestrator.Backends;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -10,22 +9,15 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 
 /// <summary>
 /// Plugin wrapper for Orchestrator service enabling plugin-based discovery and lifecycle management.
-/// Bridges existing IBannouService implementation with the new Plugin system.
 /// </summary>
-public class OrchestratorServicePlugin : BaseBannouPlugin
+public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorService>
 {
     public override string PluginName => "orchestrator";
     public override string DisplayName => "Orchestrator Service";
 
-    private IOrchestratorService? _service;
-    private IServiceProvider? _serviceProvider;
-
     /// <summary>
     /// Validate that this plugin should be loaded based on environment configuration.
-    /// CRITICAL: Orchestrator can ONLY run on the "bannou" app-id. This is a fundamental
-    /// architectural constraint - the orchestrator is the control plane that manages all
-    /// other service instances. It must never be deployed to a different app-id as it would
-    /// create control plane instability (e.g., TeardownAsync could tear down itself).
+    /// CRITICAL: Orchestrator can ONLY run on the "bannou" app-id.
     /// </summary>
     protected override bool OnValidatePlugin()
     {
@@ -43,26 +35,17 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
         {
             Logger?.LogCritical(
                 "FATAL: Orchestrator service can ONLY run on '{DefaultAppId}' app-id, not '{CurrentAppId}'. " +
-                "The orchestrator is the control plane that manages all other services - it must remain on the " +
-                "primary 'bannou' instance to prevent control plane instability. " +
-                "To run orchestrator APIs, ensure BANNOU_APP_ID is set to '{DefaultAppId}' or unset (defaults to 'bannou').",
-                AppConstants.DEFAULT_APP_NAME, currentAppId, AppConstants.DEFAULT_APP_NAME);
+                "The orchestrator is the control plane that manages all other services.",
+                AppConstants.DEFAULT_APP_NAME, currentAppId);
 
             throw new InvalidOperationException(
-                $"Orchestrator service can ONLY run on '{AppConstants.DEFAULT_APP_NAME}' app-id, not '{currentAppId}'. " +
-                "This is a fundamental architectural constraint to prevent control plane instability.");
+                $"Orchestrator service can ONLY run on '{AppConstants.DEFAULT_APP_NAME}' app-id, not '{currentAppId}'.");
         }
 
-        Logger?.LogInformation(
-            "Orchestrator service validated: running on '{AppId}' (control plane)",
-            currentAppId);
-
+        Logger?.LogInformation("Orchestrator service validated: running on '{AppId}' (control plane)", currentAppId);
         return true;
     }
 
-    /// <summary>
-    /// Configure services for dependency injection - mimics existing [BannouService] registration.
-    /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
         if (!OnValidatePlugin())
@@ -76,146 +59,52 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
         // Register HttpClientFactory for BackendDetector (Portainer/Kubernetes API calls)
         services.AddHttpClient();
 
-        // NOTE: OrchestratorServiceConfiguration registration is handled by the centralized PluginLoader
-        // based on the [ServiceConfiguration] attribute. The managers read env vars directly
-        // to avoid DI lifetime conflicts.
-
         // Register orchestrator helper classes as Singletons to maintain persistent connections
-        // These manage Redis connections that should persist across requests
         services.AddSingleton<IOrchestratorRedisManager, OrchestratorRedisManager>();
         services.AddSingleton<IOrchestratorEventManager, OrchestratorEventManager>();
         services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
         services.AddSingleton<ISmartRestartManager, SmartRestartManager>();
         services.AddSingleton<IBackendDetector, BackendDetector>();
 
-        // Register the service implementation (existing pattern from [BannouService] attribute)
+        // Register the service implementation
         services.AddScoped<IOrchestratorService, OrchestratorService>();
         services.AddScoped<OrchestratorService>();
 
         Logger?.LogInformation("Orchestrator service dependencies configured");
     }
 
-    /// <summary>
-    /// Configure application pipeline - handles controller registration.
-    /// </summary>
-    public override void ConfigureApplication(WebApplication app)
-    {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("Orchestrator service disabled, skipping application configuration");
-            return;
-        }
-
-        Logger?.LogInformation("Configuring Orchestrator service application pipeline");
-
-        // The generated OrchestratorController should already be discovered via standard ASP.NET Core controller discovery
-        // since we're not excluding the assembly like we did with IBannouController approach
-
-        // Store service provider for lifecycle management
-        _serviceProvider = app.Services;
-
-        Logger?.LogInformation("Orchestrator service application pipeline configured");
-    }
-
-    /// <summary>
-    /// Start the service - initializes infrastructure connections and calls existing IBannouService lifecycle if present.
-    /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
         if (!OnValidatePlugin()) return true;
 
         Logger?.LogInformation("Starting Orchestrator service");
 
-        try
+        // Initialize Redis connection (Singleton services, no scope needed)
+        var redisManager = ServiceProvider?.GetService<IOrchestratorRedisManager>();
+
+        if (redisManager != null)
         {
-            // Initialize Redis connection (Singleton services, no scope needed)
-            var redisManager = _serviceProvider?.GetService<IOrchestratorRedisManager>();
-
-            if (redisManager != null)
+            Logger?.LogInformation("Initializing Redis connection for orchestrator...");
+            var redisInitialized = await redisManager.InitializeAsync();
+            if (!redisInitialized)
             {
-                Logger?.LogInformation("Initializing Redis connection for orchestrator...");
-                var redisInitialized = await redisManager.InitializeAsync();
-                if (!redisInitialized)
-                {
-                    Logger?.LogWarning("Redis connection initialization failed - health checks will report unhealthy");
-                }
+                Logger?.LogWarning("Redis connection initialization failed - health checks will report unhealthy");
             }
-
-            // Get service instance from DI container with proper scope handling
-            // Note: CreateScope() is required for Scoped services to avoid "Cannot resolve scoped service from root provider" error
-            using var scope = _serviceProvider?.CreateScope();
-            _service = scope?.ServiceProvider.GetService<IOrchestratorService>();
-
-            if (_service == null)
-            {
-                Logger?.LogError("Failed to resolve IOrchestratorService from DI container");
-                return false;
-            }
-
-            // Call existing IBannouService.OnStartAsync if the service implements it
-            if (_service is IBannouService bannouService)
-            {
-                Logger?.LogDebug("Calling IBannouService.OnStartAsync for Orchestrator service");
-                await bannouService.OnStartAsync(CancellationToken.None);
-            }
-
-            Logger?.LogInformation("Orchestrator service started successfully");
-            return true;
         }
-        catch (Exception ex)
-        {
-            Logger?.LogError(ex, "Failed to start Orchestrator service");
-            return false;
-        }
+
+        // Call base to resolve service and call IBannouService.OnStartAsync
+        return await base.OnStartAsync();
     }
 
-    /// <summary>
-    /// Running phase - calls existing IBannouService lifecycle if present.
-    /// </summary>
     protected override async Task OnRunningAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
-
-        Logger?.LogDebug("Orchestrator service running");
-
-        try
-        {
-            // Call existing IBannouService.OnRunningAsync if the service implements it
-            if (_service is IBannouService bannouService)
-            {
-                Logger?.LogDebug("Calling IBannouService.OnRunningAsync for Orchestrator service");
-                await bannouService.OnRunningAsync(CancellationToken.None);
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger?.LogWarning(ex, "Exception during Orchestrator service running phase");
-        }
+        if (!OnValidatePlugin()) return;
+        await base.OnRunningAsync();
     }
 
-    /// <summary>
-    /// Shutdown the service - calls existing IBannouService lifecycle if present.
-    /// </summary>
     protected override async Task OnShutdownAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
-
-        Logger?.LogInformation("Shutting down Orchestrator service");
-
-        try
-        {
-            // Call existing IBannouService.OnShutdownAsync if the service implements it
-            if (_service is IBannouService bannouService)
-            {
-                Logger?.LogDebug("Calling IBannouService.OnShutdownAsync for Orchestrator service");
-                await bannouService.OnShutdownAsync();
-            }
-
-            Logger?.LogInformation("Orchestrator service shutdown complete");
-        }
-        catch (Exception ex)
-        {
-            Logger?.LogWarning(ex, "Exception during Orchestrator service shutdown");
-        }
+        if (!OnValidatePlugin()) return;
+        await base.OnShutdownAsync();
     }
 }

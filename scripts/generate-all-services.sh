@@ -7,16 +7,12 @@
 
 set -e  # Exit on any error
 
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
 # Change to scripts directory to ensure all relative paths work correctly
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
+
+# Source common utilities
+source "./common.sh"
 
 # Parse arguments
 REQUESTED_SERVICE=""

@@ -123,51 +123,7 @@ public abstract class BannouServiceClientBase : IBannouClient
     /// </summary>
     protected virtual void PrepareRequest(HttpClient client, HttpRequestMessage request, string url)
     {
-        // Ensure bannou-app-id header is set if not already present
-        if (!request.Headers.Contains("bannou-app-id"))
-        {
-            string appId;
-
-            // If full dependencies available, use dynamic resolution
-            if (_appMappingResolver != null && _serviceName != null)
-            {
-                appId = _appMappingResolver.GetAppIdForService(_serviceName);
-                _logger?.LogTrace("Service {ServiceName} routing to app-id {AppId} (full constructor)", _serviceName, appId);
-            }
-            else
-            {
-                // Fallback for parameterless constructor - always use "bannou" (matches BaseUrl)
-                appId = "bannou";
-                _logger?.LogTrace("Service {ServiceName} using fallback app-id {AppId} (parameterless constructor)", ServiceName, appId);
-            }
-
-            request.Headers.Add("bannou-app-id", appId);
-            _logger?.LogTrace("Added bannou-app-id header: {AppId} for URL: {Url}", appId, url);
-        }
-
-        // Apply authorization header if set
-        if (!string.IsNullOrEmpty(_authorizationHeader))
-        {
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer",
-                _authorizationHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
-                    ? _authorizationHeader.Substring(7)
-                    : _authorizationHeader);
-            _logger?.LogTrace("Added Authorization header for service {ServiceName}", ServiceName);
-        }
-
-        // Apply custom headers
-        foreach (var header in _customHeaders)
-        {
-            if (!request.Headers.Contains(header.Key))
-            {
-                request.Headers.Add(header.Key, header.Value);
-                _logger?.LogTrace("Added custom header {HeaderName}: {HeaderValue} for service {ServiceName}",
-                    header.Key, header.Value, ServiceName);
-            }
-        }
-
-        // Clear headers after applying them (one-time use)
-        ClearHeaders();
+        PrepareRequestCore(request, url);
     }
 
     /// <summary>
@@ -175,6 +131,16 @@ public abstract class BannouServiceClientBase : IBannouClient
     /// Works with both full constructor and parameterless constructor.
     /// </summary>
     protected virtual void PrepareRequest(HttpClient client, HttpRequestMessage request, StringBuilder urlBuilder)
+    {
+        PrepareRequestCore(request, urlBuilder.ToString());
+    }
+
+    /// <summary>
+    /// Core implementation of request preparation. Applies routing headers, authorization, and custom headers.
+    /// </summary>
+    /// <param name="request">The HTTP request message to prepare.</param>
+    /// <param name="url">The target URL (for logging purposes).</param>
+    private void PrepareRequestCore(HttpRequestMessage request, string url)
     {
         // Ensure bannou-app-id header is set if not already present
         if (!request.Headers.Contains("bannou-app-id"))
@@ -195,7 +161,7 @@ public abstract class BannouServiceClientBase : IBannouClient
             }
 
             request.Headers.Add("bannou-app-id", appId);
-            _logger?.LogTrace("Added bannou-app-id header: {AppId} for URL builder: {Url}", appId, urlBuilder.ToString());
+            _logger?.LogTrace("Added bannou-app-id header: {AppId} for URL: {Url}", appId, url);
         }
 
         // Apply authorization header if set

@@ -1,0 +1,185 @@
+#!/bin/bash
+
+# =============================================================================
+# Common Utilities for Bannou Generation Scripts
+# =============================================================================
+# This file provides shared functions used across all generation scripts.
+# Source this file at the beginning of each script:
+#   source "$(dirname "$0")/common.sh"
+#
+# Available functions:
+#   - to_pascal_case <string>     : Convert hyphenated-name to PascalCase
+#   - find_nswag_exe              : Find NSwag executable, returns path
+#   - ensure_dotnet_root          : Ensure DOTNET_ROOT environment variable is set
+#   - log_info <message>          : Print blue info message
+#   - log_success <message>       : Print green success message
+#   - log_warn <message>          : Print yellow warning message
+#   - log_error <message>         : Print red error message
+# =============================================================================
+
+# Colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# -----------------------------------------------------------------------------
+# Logging Functions
+# -----------------------------------------------------------------------------
+
+log_info() {
+    echo -e "${BLUE}$1${NC}"
+}
+
+log_success() {
+    echo -e "${GREEN}$1${NC}"
+}
+
+log_warn() {
+    echo -e "${YELLOW}$1${NC}"
+}
+
+log_error() {
+    echo -e "${RED}$1${NC}"
+}
+
+# -----------------------------------------------------------------------------
+# String Conversion Functions
+# -----------------------------------------------------------------------------
+
+# Convert hyphenated names to PascalCase
+# Usage: SERVICE_PASCAL=$(to_pascal_case "my-service-name")
+# Output: MyServiceName
+to_pascal_case() {
+    local input="$1"
+    echo "$input" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))} 1' | sed 's/ //g'
+}
+
+# Convert hyphenated names to camelCase
+# Usage: SERVICE_CAMEL=$(to_camel_case "my-service-name")
+# Output: myServiceName
+to_camel_case() {
+    local input="$1"
+    local pascal=$(to_pascal_case "$input")
+    echo "$(echo "${pascal:0:1}" | tr '[:upper:]' '[:lower:]')${pascal:1}"
+}
+
+# -----------------------------------------------------------------------------
+# NSwag Functions
+# -----------------------------------------------------------------------------
+
+# Find NSwag executable
+# Usage: NSWAG_EXE=$(find_nswag_exe)
+# Returns: Path to NSwag executable, or empty string if not found
+find_nswag_exe() {
+    # On Linux/macOS, prefer the global dotnet tool over Windows executables
+    if [[ "$OSTYPE" == "linux-gnu"* ]] || [[ "$OSTYPE" == "darwin"* ]]; then
+        local nswag_global=$(which nswag 2>/dev/null)
+        if [ -n "$nswag_global" ]; then
+            echo "$nswag_global"
+            return 0
+        fi
+    fi
+
+    # Windows or fallback: try MSBuild package paths first
+    local possible_paths=(
+        "$HOME/.nuget/packages/nswag.msbuild/14.2.0/tools/Net90/dotnet-nswag.exe"
+        "$HOME/.nuget/packages/nswag.msbuild/14.1.0/tools/Net90/dotnet-nswag.exe"
+        "$HOME/.nuget/packages/nswag.msbuild/14.0.7/tools/Net90/dotnet-nswag.exe"
+        "$(find $HOME/.nuget/packages/nswag.msbuild -name "dotnet-nswag.exe" 2>/dev/null | head -1)"
+        "$(which nswag 2>/dev/null)"
+    )
+
+    for path in "${possible_paths[@]}"; do
+        if [ -n "$path" ] && [ -f "$path" ]; then
+            # On Linux, skip .exe files as they won't execute
+            if [[ "$OSTYPE" == "linux-gnu"* ]] && [[ "$path" == *.exe ]]; then
+                continue
+            fi
+            echo "$path"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+# Require NSwag executable - exits script if not found
+# Usage: require_nswag
+# Sets: NSWAG_EXE variable
+require_nswag() {
+    NSWAG_EXE=$(find_nswag_exe)
+    if [ -z "$NSWAG_EXE" ]; then
+        log_error "NSwag executable not found"
+        log_error "Install NSwag with: dotnet tool install -g NSwag.ConsoleCore"
+        exit 1
+    fi
+    log_success "Found NSwag at: $NSWAG_EXE"
+}
+
+# -----------------------------------------------------------------------------
+# .NET Functions
+# -----------------------------------------------------------------------------
+
+# Ensure DOTNET_ROOT is set for NSwag global tool to work properly
+# Usage: ensure_dotnet_root
+# Sets: DOTNET_ROOT environment variable
+ensure_dotnet_root() {
+    if [ -z "$DOTNET_ROOT" ]; then
+        # Try to find dotnet installation
+        if [ -d "/usr/local/share/dotnet" ]; then
+            export DOTNET_ROOT="/usr/local/share/dotnet"
+        elif [ -d "/usr/share/dotnet" ]; then
+            export DOTNET_ROOT="/usr/share/dotnet"
+        elif command -v dotnet >/dev/null 2>&1; then
+            # Get dotnet installation path
+            DOTNET_PATH=$(dirname "$(readlink -f "$(which dotnet)")")
+            export DOTNET_ROOT="$DOTNET_PATH"
+        fi
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# Schema Validation Functions
+# -----------------------------------------------------------------------------
+
+# Validate that a schema file exists
+# Usage: validate_schema_file "$SCHEMA_FILE"
+# Exits with error if file doesn't exist
+validate_schema_file() {
+    local schema_file="$1"
+    if [ ! -f "$schema_file" ]; then
+        log_error "Schema file not found: $schema_file"
+        exit 1
+    fi
+}
+
+# Validate command line arguments for service generation
+# Usage: validate_service_args "$@"
+# Expects at least 1 argument (service name)
+validate_service_args() {
+    if [ $# -lt 1 ]; then
+        log_error "Usage: $0 <service-name> [schema-file]"
+        echo "Example: $0 accounts"
+        echo "Example: $0 accounts ../schemas/accounts-api.yaml"
+        exit 1
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# Directory Functions
+# -----------------------------------------------------------------------------
+
+# Get the directory where this script is located
+# Usage: SCRIPT_DIR=$(get_script_dir)
+get_script_dir() {
+    echo "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+}
+
+# Get the repository root directory
+# Usage: REPO_ROOT=$(get_repo_root)
+get_repo_root() {
+    local script_dir=$(get_script_dir)
+    echo "$(cd "$script_dir/.." && pwd)"
+}

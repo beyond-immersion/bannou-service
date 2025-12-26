@@ -5,21 +5,18 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Http.Headers;
-using Yarp.ReverseProxy.Forwarder;
 
 namespace BeyondImmersion.BannouService.Mesh.Services;
 
 /// <summary>
-/// YARP-based implementation of mesh service invocation.
-/// Uses IMeshClient for endpoint resolution and IHttpForwarder for request forwarding.
+/// HTTP-based implementation of mesh service invocation.
+/// Uses IMeshClient for endpoint resolution and HttpMessageInvoker for requests.
 /// </summary>
 public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
 {
     private readonly IMeshClient _meshClient;
-    private readonly IHttpForwarder _forwarder;
     private readonly ILogger<MeshInvocationClient> _logger;
     private readonly HttpMessageInvoker _httpClient;
-    private readonly ForwarderRequestConfig _requestConfig;
 
     // Cache for endpoint resolution to reduce mesh service calls
     private readonly EndpointCache _endpointCache;
@@ -28,17 +25,12 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// Creates a new MeshInvocationClient.
     /// </summary>
     /// <param name="meshClient">Mesh client for endpoint resolution.</param>
-    /// <param name="forwarder">YARP HTTP forwarder.</param>
     /// <param name="logger">Logger instance.</param>
-    /// <param name="httpClientFactory">Optional HTTP client factory.</param>
     public MeshInvocationClient(
         IMeshClient meshClient,
-        IHttpForwarder forwarder,
-        ILogger<MeshInvocationClient> logger,
-        IHttpClientFactory? httpClientFactory = null)
+        ILogger<MeshInvocationClient> logger)
     {
         _meshClient = meshClient ?? throw new ArgumentNullException(nameof(meshClient));
-        _forwarder = forwarder ?? throw new ArgumentNullException(nameof(forwarder));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         // Create HTTP client for outbound requests
@@ -53,11 +45,6 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
             ConnectTimeout = TimeSpan.FromSeconds(10)
         };
         _httpClient = new HttpMessageInvoker(handler);
-
-        _requestConfig = new ForwarderRequestConfig
-        {
-            ActivityTimeout = TimeSpan.FromSeconds(30)
-        };
 
         _endpointCache = new EndpointCache(TimeSpan.FromSeconds(5));
     }

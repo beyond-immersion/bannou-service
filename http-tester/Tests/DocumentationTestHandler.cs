@@ -1,7 +1,6 @@
 using BeyondImmersion.BannouService.Documentation;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -9,54 +8,50 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Test handler for documentation API endpoints using generated clients.
 /// Tests the documentation service APIs directly via NSwag-generated DocumentationClient.
 /// </summary>
-public class DocumentationTestHandler : IServiceTestHandler
+public class DocumentationTestHandler : BaseHttpTestHandler
 {
     private const string TEST_NAMESPACE = "test-docs";
 
-    public ServiceTest[] GetServiceTests()
-    {
-        return new[]
+    public override ServiceTest[] GetServiceTests() =>
+    [
+        // CRUD operations
+        new ServiceTest(TestCreateDocument, "CreateDocument", "Documentation", "Test document creation"),
+        new ServiceTest(TestGetDocument, "GetDocument", "Documentation", "Test document retrieval by ID"),
+        new ServiceTest(TestGetDocumentBySlug, "GetDocumentBySlug", "Documentation", "Test document retrieval by slug"),
+        new ServiceTest(TestUpdateDocument, "UpdateDocument", "Documentation", "Test document update"),
+        new ServiceTest(TestDeleteDocument, "DeleteDocument", "Documentation", "Test document soft-delete to trashcan"),
+        new ServiceTest(TestListDocuments, "ListDocuments", "Documentation", "Test listing documents"),
+
+        // Query and search operations
+        new ServiceTest(TestQueryDocumentation, "QueryDocumentation", "Documentation", "Test natural language query"),
+        new ServiceTest(TestSearchDocumentation, "SearchDocumentation", "Documentation", "Test keyword search"),
+        new ServiceTest(TestSuggestRelatedTopics, "SuggestRelatedTopics", "Documentation", "Test related topic suggestions"),
+
+        // Trashcan operations
+        new ServiceTest(TestRecoverDocument, "RecoverDocument", "Documentation", "Test document recovery from trashcan"),
+        new ServiceTest(TestListTrashcan, "ListTrashcan", "Documentation", "Test listing trashcan contents"),
+        new ServiceTest(TestPurgeTrashcan, "PurgeTrashcan", "Documentation", "Test permanent trashcan purge"),
+
+        // Bulk operations
+        new ServiceTest(TestBulkUpdateDocuments, "BulkUpdateDocuments", "Documentation", "Test bulk metadata update"),
+        new ServiceTest(TestBulkDeleteDocuments, "BulkDeleteDocuments", "Documentation", "Test bulk soft-delete"),
+        new ServiceTest(TestImportDocumentation, "ImportDocumentation", "Documentation", "Test document import"),
+
+        // Statistics
+        new ServiceTest(TestGetNamespaceStats, "GetNamespaceStats", "Documentation", "Test namespace statistics"),
+
+        // Error handling
+        new ServiceTest(TestGetNonExistentDocument, "GetNonExistentDocument", "Documentation", "Test 404 for non-existent document"),
+        new ServiceTest(TestDuplicateSlugConflict, "DuplicateSlugConflict", "Documentation", "Test 409 for duplicate slug"),
+
+        // Complete lifecycle
+        new ServiceTest(TestCompleteDocumentLifecycle, "CompleteDocumentLifecycle", "Documentation", "Test complete document lifecycle with trashcan"),
+    ];
+
+    private static Task<TestResult> TestCreateDocument(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            // CRUD operations
-            new ServiceTest(TestCreateDocument, "CreateDocument", "Documentation", "Test document creation"),
-            new ServiceTest(TestGetDocument, "GetDocument", "Documentation", "Test document retrieval by ID"),
-            new ServiceTest(TestGetDocumentBySlug, "GetDocumentBySlug", "Documentation", "Test document retrieval by slug"),
-            new ServiceTest(TestUpdateDocument, "UpdateDocument", "Documentation", "Test document update"),
-            new ServiceTest(TestDeleteDocument, "DeleteDocument", "Documentation", "Test document soft-delete to trashcan"),
-            new ServiceTest(TestListDocuments, "ListDocuments", "Documentation", "Test listing documents"),
-
-            // Query and search operations
-            new ServiceTest(TestQueryDocumentation, "QueryDocumentation", "Documentation", "Test natural language query"),
-            new ServiceTest(TestSearchDocumentation, "SearchDocumentation", "Documentation", "Test keyword search"),
-            new ServiceTest(TestSuggestRelatedTopics, "SuggestRelatedTopics", "Documentation", "Test related topic suggestions"),
-
-            // Trashcan operations
-            new ServiceTest(TestRecoverDocument, "RecoverDocument", "Documentation", "Test document recovery from trashcan"),
-            new ServiceTest(TestListTrashcan, "ListTrashcan", "Documentation", "Test listing trashcan contents"),
-            new ServiceTest(TestPurgeTrashcan, "PurgeTrashcan", "Documentation", "Test permanent trashcan purge"),
-
-            // Bulk operations
-            new ServiceTest(TestBulkUpdateDocuments, "BulkUpdateDocuments", "Documentation", "Test bulk metadata update"),
-            new ServiceTest(TestBulkDeleteDocuments, "BulkDeleteDocuments", "Documentation", "Test bulk soft-delete"),
-            new ServiceTest(TestImportDocumentation, "ImportDocumentation", "Documentation", "Test document import"),
-
-            // Statistics
-            new ServiceTest(TestGetNamespaceStats, "GetNamespaceStats", "Documentation", "Test namespace statistics"),
-
-            // Error handling
-            new ServiceTest(TestGetNonExistentDocument, "GetNonExistentDocument", "Documentation", "Test 404 for non-existent document"),
-            new ServiceTest(TestDuplicateSlugConflict, "DuplicateSlugConflict", "Documentation", "Test 409 for duplicate slug"),
-
-            // Complete lifecycle
-            new ServiceTest(TestCompleteDocumentLifecycle, "CompleteDocumentLifecycle", "Documentation", "Test complete document lifecycle with trashcan"),
-        };
-    }
-
-    private static async Task<TestResult> TestCreateDocument(ITestClient client, string[] args)
-    {
-        try
-        {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
 
             var createRequest = new CreateDocumentRequest
             {
@@ -77,22 +72,12 @@ public class DocumentationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Slug mismatch: expected '{createRequest.Slug}', got '{response.Slug}'");
 
             return TestResult.Successful($"Created document: ID={response.DocumentId}, Slug={response.Slug}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Create failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Create document");
 
-    private static async Task<TestResult> TestGetDocument(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetDocument(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
 
             // Create a document first
             var createRequest = new CreateDocumentRequest
@@ -119,22 +104,12 @@ public class DocumentationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Title mismatch: expected '{createRequest.Title}', got '{response.Document.Title}'");
 
             return TestResult.Successful($"Retrieved document: ID={response.Document.DocumentId}, Title={response.Document.Title}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get document");
 
-    private static async Task<TestResult> TestGetDocumentBySlug(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetDocumentBySlug(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
 
             // Create a document first
             var slug = $"slug-test-{DateTime.Now.Ticks}";
@@ -159,22 +134,12 @@ public class DocumentationTestHandler : IServiceTestHandler
                 return TestResult.Failed("ID mismatch when fetching by slug");
 
             return TestResult.Successful($"Retrieved document by slug: ID={response.Document.DocumentId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get by slug failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get document by slug");
 
-    private static async Task<TestResult> TestUpdateDocument(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestUpdateDocument(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
 
             // Create a document
             var createRequest = new CreateDocumentRequest
@@ -210,22 +175,12 @@ public class DocumentationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Title not updated: expected 'Updated Title', got '{getResponse.Document.Title}'");
 
             return TestResult.Successful($"Updated document: ID={updateResponse.DocumentId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Update failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Update document");
 
-    private static async Task<TestResult> TestDeleteDocument(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDeleteDocument(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
 
             // Create a document
             var createRequest = new CreateDocumentRequest
@@ -263,22 +218,12 @@ public class DocumentationTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"Deleted document to trashcan: ID={created.DocumentId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Delete failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Delete document");
 
-    private static async Task<TestResult> TestListDocuments(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestListDocuments(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"list-test-{DateTime.Now.Ticks}";
 
             // Create some documents with category (required for filtering)
@@ -306,22 +251,12 @@ public class DocumentationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected at least 3 documents, got {response.Documents?.Count ?? 0}");
 
             return TestResult.Successful($"Listed {response.Documents.Count} documents (TotalCount: {response.TotalCount})");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"List failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "List documents");
 
-    private static async Task<TestResult> TestQueryDocumentation(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestQueryDocumentation(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"query-test-{DateTime.Now.Ticks}";
 
             // Create a document with specific content
@@ -344,22 +279,12 @@ public class DocumentationTestHandler : IServiceTestHandler
                 return TestResult.Failed("Query returned null results");
 
             return TestResult.Successful($"Query returned {response.TotalResults} results");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Query failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Query documentation");
 
-    private static async Task<TestResult> TestSearchDocumentation(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSearchDocumentation(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"search-test-{DateTime.Now.Ticks}";
 
             // Create documents with searchable content
@@ -382,22 +307,12 @@ public class DocumentationTestHandler : IServiceTestHandler
                 return TestResult.Failed("Search returned null results");
 
             return TestResult.Successful($"Search found {response.TotalResults} results");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Search failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Search documentation");
 
-    private static async Task<TestResult> TestSuggestRelatedTopics(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSuggestRelatedTopics(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"suggest-test-{DateTime.Now.Ticks}";
 
             // Create related documents
@@ -433,22 +348,12 @@ public class DocumentationTestHandler : IServiceTestHandler
                 return TestResult.Failed("Suggestions returned null");
 
             return TestResult.Successful($"Got {response.Suggestions.Count} suggestions");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Suggest failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Suggest related topics");
 
-    private static async Task<TestResult> TestRecoverDocument(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestRecoverDocument(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
 
             // Create and delete a document
             var created = await docClient.CreateDocumentAsync(new CreateDocumentRequest
@@ -486,22 +391,12 @@ public class DocumentationTestHandler : IServiceTestHandler
                 return TestResult.Failed("Retrieved document ID mismatch after recovery");
 
             return TestResult.Successful($"Recovered document: ID={response.DocumentId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Recover failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Recover document");
 
-    private static async Task<TestResult> TestListTrashcan(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestListTrashcan(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"trashcan-list-{DateTime.Now.Ticks}";
 
             // Create and delete some documents
@@ -535,22 +430,12 @@ public class DocumentationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected at least 3 trashcan items, got {response.Items?.Count ?? 0}");
 
             return TestResult.Successful($"Listed {response.Items.Count} trashcan items");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"List trashcan failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "List trashcan");
 
-    private static async Task<TestResult> TestPurgeTrashcan(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestPurgeTrashcan(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"purge-test-{DateTime.Now.Ticks}";
 
             // Create and delete a document
@@ -595,22 +480,12 @@ public class DocumentationTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"Purged {response.PurgedCount} documents permanently");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Purge failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Purge trashcan");
 
-    private static async Task<TestResult> TestBulkUpdateDocuments(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestBulkUpdateDocuments(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"bulk-update-{DateTime.Now.Ticks}";
 
             // Create some documents
@@ -641,22 +516,12 @@ public class DocumentationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected 3 succeeded, got {response.Succeeded.Count}");
 
             return TestResult.Successful($"Bulk updated {response.Succeeded.Count} documents");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Bulk update failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Bulk update documents");
 
-    private static async Task<TestResult> TestBulkDeleteDocuments(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestBulkDeleteDocuments(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"bulk-delete-{DateTime.Now.Ticks}";
 
             // Create some documents
@@ -684,22 +549,12 @@ public class DocumentationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected 3 succeeded, got {response.Succeeded.Count}");
 
             return TestResult.Successful($"Bulk deleted {response.Succeeded.Count} documents");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Bulk delete failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Bulk delete documents");
 
-    private static async Task<TestResult> TestImportDocumentation(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestImportDocumentation(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"import-test-{DateTime.Now.Ticks}";
 
             // Import documents
@@ -731,22 +586,12 @@ public class DocumentationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected 2 imported, got {importedCount}");
 
             return TestResult.Successful($"Imported {response.Created} created, {response.Updated} updated");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Import failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Import documentation");
 
-    private static async Task<TestResult> TestGetNamespaceStats(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetNamespaceStats(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
             var testNamespace = $"stats-test-{DateTime.Now.Ticks}";
 
             // Create some documents
@@ -773,52 +618,26 @@ public class DocumentationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected at least 3 documents, got {response.DocumentCount}");
 
             return TestResult.Successful($"Stats: {response.DocumentCount} documents, {response.TrashcanCount} in trashcan");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get stats failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get namespace stats");
 
-    private static async Task<TestResult> TestGetNonExistentDocument(ITestClient client, string[] args)
-    {
-        try
-        {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
-
-            try
+    private static Task<TestResult> TestGetNonExistentDocument(ITestClient client, string[] args) =>
+        ExecuteExpectingStatusAsync(
+            async () =>
             {
+                var docClient = GetServiceClient<IDocumentationClient>();
                 await docClient.GetDocumentAsync(new GetDocumentRequest
                 {
                     Namespace = TEST_NAMESPACE,
                     DocumentId = Guid.NewGuid()
                 });
-                return TestResult.Failed("Expected 404 for non-existent document");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                return TestResult.Successful("Correctly returned 404 for non-existent document");
-            }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+            },
+            404,
+            "Get non-existent document");
 
-    private static async Task<TestResult> TestDuplicateSlugConflict(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDuplicateSlugConflict(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
             var slug = $"duplicate-test-{DateTime.Now.Ticks}";
 
             // Create first document
@@ -830,7 +649,7 @@ public class DocumentationTestHandler : IServiceTestHandler
                 Content = "First content"
             });
 
-            // Try to create second with same slug
+            // Try to create second with same slug - expect 409
             try
             {
                 await docClient.CreateDocumentAsync(new CreateDocumentRequest
@@ -846,22 +665,12 @@ public class DocumentationTestHandler : IServiceTestHandler
             {
                 return TestResult.Successful("Correctly returned 409 for duplicate slug");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Duplicate slug conflict");
 
-    private static async Task<TestResult> TestCompleteDocumentLifecycle(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCompleteDocumentLifecycle(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var docClient = Program.ServiceProvider!.GetRequiredService<IDocumentationClient>();
+            var docClient = GetServiceClient<IDocumentationClient>();
             var testId = DateTime.Now.Ticks;
             var testNamespace = $"lifecycle-{testId}";
 
@@ -990,14 +799,5 @@ public class DocumentationTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful("Complete document lifecycle test passed");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Lifecycle test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Complete document lifecycle");
 }

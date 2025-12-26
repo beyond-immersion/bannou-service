@@ -6,14 +6,10 @@
 
 set -e
 
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-BLUE='\033[0;34m'
-NC='\033[0m'
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source common utilities
+source "$SCRIPT_DIR/common.sh"
 SCHEMAS_DIR="${SCRIPT_DIR}/../schemas"
 OUTPUT_FILE="${SCRIPT_DIR}/../bannou-service/Generated/EventSubscriptionRegistration.Generated.cs"
 

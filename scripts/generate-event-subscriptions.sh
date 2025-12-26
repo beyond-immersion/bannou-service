@@ -9,12 +9,12 @@
 
 set -e
 
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+# Change to scripts directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+# Source common utilities
+source "./common.sh"
 
 if [ $# -lt 2 ]; then
     echo -e "${RED}Usage: $0 <service-name> <schema-file>${NC}"
@@ -25,14 +25,7 @@ SERVICE_NAME="$1"
 SCHEMA_FILE="$2"
 
 # Determine the events yaml file path
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EVENTS_SCHEMA="${SCRIPT_DIR}/../schemas/${SERVICE_NAME}-events.yaml"
-
-# Helper function to convert to PascalCase
-to_pascal_case() {
-    local input="$1"
-    echo "$input" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))} 1' | sed 's/ //g'
-}
 
 # Helper function to convert topic to route name (e.g., "session.connected" -> "handle-session-connected")
 topic_to_route() {

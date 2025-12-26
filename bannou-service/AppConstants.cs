@@ -44,11 +44,6 @@ public static class AppConstants
     /// </summary>
     public const int DEFAULT_BANNOU_HTTP_PORT = 3500;
 
-    /// <summary>
-    /// Default gRPC port (legacy constant name, kept for compatibility).
-    /// </summary>
-    public const int DEFAULT_DAPR_GRPC_PORT = 50001;
-
     // ==========================================================================
     // Environment Variable Names (for documented Tenet 21 exceptions)
     // ==========================================================================
@@ -65,9 +60,4 @@ public static class AppConstants
     /// </summary>
     public const string ENV_BANNOU_HTTP_ENDPOINT = "BANNOU_HTTP_ENDPOINT";
 
-    /// <summary>
-    /// Environment variable for gRPC endpoint (legacy env var name). This is a Tenet 21 exception -
-    /// needed to bootstrap infrastructure before configuration system initializes.
-    /// </summary>
-    public const string ENV_DAPR_GRPC_ENDPOINT = "DAPR_GRPC_ENDPOINT";
 }

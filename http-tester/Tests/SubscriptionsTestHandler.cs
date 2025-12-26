@@ -1,10 +1,8 @@
-using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Servicedata;
-using BeyondImmersion.BannouService.Subscriptions;
 using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Subscriptions;
 using BeyondImmersion.BannouService.Testing;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -12,26 +10,23 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Test handler for Subscriptions service API endpoints.
 /// Tests subscription management operations via NSwag-generated SubscriptionsClient.
 /// </summary>
-public class SubscriptionsTestHandler : IServiceTestHandler
+public class SubscriptionsTestHandler : BaseHttpTestHandler
 {
-    public ServiceTest[] GetServiceTests()
-    {
-        return new[]
-        {
-            // Core CRUD operations
-            new ServiceTest(TestCreateSubscription, "CreateSubscription", "Subscriptions", "Test subscription creation endpoint"),
-            new ServiceTest(TestGetSubscription, "GetSubscription", "Subscriptions", "Test subscription retrieval by ID"),
-            new ServiceTest(TestGetAccountSubscriptions, "GetAccountSubscriptions", "Subscriptions", "Test subscription listing for account"),
-            new ServiceTest(TestGetCurrentSubscriptions, "GetCurrentSubscriptions", "Subscriptions", "Test active subscription authorization strings"),
-            new ServiceTest(TestUpdateSubscription, "UpdateSubscription", "Subscriptions", "Test subscription update endpoint"),
-            new ServiceTest(TestCancelSubscription, "CancelSubscription", "Subscriptions", "Test subscription cancellation endpoint"),
-            new ServiceTest(TestRenewSubscription, "RenewSubscription", "Subscriptions", "Test subscription renewal endpoint"),
+    public override ServiceTest[] GetServiceTests() =>
+    [
+        // Core CRUD operations
+        new ServiceTest(TestCreateSubscription, "CreateSubscription", "Subscriptions", "Test subscription creation endpoint"),
+        new ServiceTest(TestGetSubscription, "GetSubscription", "Subscriptions", "Test subscription retrieval by ID"),
+        new ServiceTest(TestGetAccountSubscriptions, "GetAccountSubscriptions", "Subscriptions", "Test subscription listing for account"),
+        new ServiceTest(TestGetCurrentSubscriptions, "GetCurrentSubscriptions", "Subscriptions", "Test active subscription authorization strings"),
+        new ServiceTest(TestUpdateSubscription, "UpdateSubscription", "Subscriptions", "Test subscription update endpoint"),
+        new ServiceTest(TestCancelSubscription, "CancelSubscription", "Subscriptions", "Test subscription cancellation endpoint"),
+        new ServiceTest(TestRenewSubscription, "RenewSubscription", "Subscriptions", "Test subscription renewal endpoint"),
 
-            // Validation tests
-            new ServiceTest(TestCreateSubscriptionServiceNotFound, "CreateSubscriptionServiceNotFound", "Subscriptions", "Test 404 when service doesn't exist"),
-            new ServiceTest(TestCreateSubscriptionDuplicate, "CreateSubscriptionDuplicate", "Subscriptions", "Test conflict on duplicate active subscription"),
-        };
-    }
+        // Validation tests
+        new ServiceTest(TestCreateSubscriptionServiceNotFound, "CreateSubscriptionServiceNotFound", "Subscriptions", "Test 404 when service doesn't exist"),
+        new ServiceTest(TestCreateSubscriptionDuplicate, "CreateSubscriptionDuplicate", "Subscriptions", "Test conflict on duplicate active subscription"),
+    ];
 
     /// <summary>
     /// Helper to create a test service for subscription tests.
@@ -63,13 +58,12 @@ public class SubscriptionsTestHandler : IServiceTestHandler
         return await accountsClient.CreateAccountAsync(createRequest);
     }
 
-    private static async Task<TestResult> TestCreateSubscription(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCreateSubscription(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
-            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
-            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
+            var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
+            var servicedataClient = GetServiceClient<IServicedataClient>();
+            var accountsClient = GetServiceClient<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testStubName = $"sub-create-{testId}";
@@ -118,24 +112,14 @@ public class SubscriptionsTestHandler : IServiceTestHandler
             await servicedataClient.DeleteServiceAsync(new DeleteServiceRequest { ServiceId = serviceResponse.ServiceId });
 
             return TestResult.Successful($"Subscription created successfully: ID={response.SubscriptionId}, Service={response.StubName}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Subscription creation failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Create subscription");
 
-    private static async Task<TestResult> TestGetSubscription(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetSubscription(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
-            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
-            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
+            var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
+            var servicedataClient = GetServiceClient<IServicedataClient>();
+            var accountsClient = GetServiceClient<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testStubName = $"sub-get-{testId}";
@@ -174,24 +158,14 @@ public class SubscriptionsTestHandler : IServiceTestHandler
             await servicedataClient.DeleteServiceAsync(new DeleteServiceRequest { ServiceId = serviceResponse.ServiceId });
 
             return TestResult.Successful($"Subscription retrieved successfully: ID={response.SubscriptionId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Subscription retrieval failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get subscription");
 
-    private static async Task<TestResult> TestGetAccountSubscriptions(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetAccountSubscriptions(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
-            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
-            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
+            var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
+            var servicedataClient = GetServiceClient<IServicedataClient>();
+            var accountsClient = GetServiceClient<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testStubName = $"sub-list-{testId}";
@@ -230,24 +204,14 @@ public class SubscriptionsTestHandler : IServiceTestHandler
             await servicedataClient.DeleteServiceAsync(new DeleteServiceRequest { ServiceId = serviceResponse.ServiceId });
 
             return TestResult.Successful($"Account subscriptions retrieved: {response.Subscriptions.Count} subscription(s)");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Account subscriptions retrieval failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get account subscriptions");
 
-    private static async Task<TestResult> TestGetCurrentSubscriptions(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetCurrentSubscriptions(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
-            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
-            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
+            var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
+            var servicedataClient = GetServiceClient<IServicedataClient>();
+            var accountsClient = GetServiceClient<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testStubName = $"sub-current-{testId}";
@@ -282,7 +246,6 @@ public class SubscriptionsTestHandler : IServiceTestHandler
             }
 
             // Check authorization string format (should be "stubname:authorized")
-            var expectedAuth = $"{testStubName.ToLowerInvariant()}:authorized";
             var hasExpectedAuth = response.Authorizations.Any(a => a.Contains(testStubName.ToLowerInvariant()));
 
             // Clean up
@@ -294,24 +257,14 @@ public class SubscriptionsTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected authorization containing '{testStubName.ToLowerInvariant()}', got: {string.Join(", ", response.Authorizations)}");
 
             return TestResult.Successful($"Current subscriptions retrieved: {response.Authorizations.Count} authorization(s)");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Current subscriptions retrieval failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get current subscriptions");
 
-    private static async Task<TestResult> TestUpdateSubscription(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestUpdateSubscription(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
-            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
-            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
+            var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
+            var servicedataClient = GetServiceClient<IServicedataClient>();
+            var accountsClient = GetServiceClient<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testStubName = $"sub-update-{testId}";
@@ -346,24 +299,14 @@ public class SubscriptionsTestHandler : IServiceTestHandler
             await servicedataClient.DeleteServiceAsync(new DeleteServiceRequest { ServiceId = serviceResponse.ServiceId });
 
             return TestResult.Successful($"Subscription updated successfully: ID={response.SubscriptionId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Subscription update failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Update subscription");
 
-    private static async Task<TestResult> TestCancelSubscription(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCancelSubscription(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
-            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
-            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
+            var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
+            var servicedataClient = GetServiceClient<IServicedataClient>();
+            var accountsClient = GetServiceClient<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testStubName = $"sub-cancel-{testId}";
@@ -402,24 +345,14 @@ public class SubscriptionsTestHandler : IServiceTestHandler
             await servicedataClient.DeleteServiceAsync(new DeleteServiceRequest { ServiceId = serviceResponse.ServiceId });
 
             return TestResult.Successful($"Subscription cancelled successfully: ID={response.SubscriptionId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Subscription cancellation failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Cancel subscription");
 
-    private static async Task<TestResult> TestRenewSubscription(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestRenewSubscription(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
-            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
-            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
+            var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
+            var servicedataClient = GetServiceClient<IServicedataClient>();
+            var accountsClient = GetServiceClient<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testStubName = $"sub-renew-{testId}";
@@ -461,23 +394,13 @@ public class SubscriptionsTestHandler : IServiceTestHandler
             await servicedataClient.DeleteServiceAsync(new DeleteServiceRequest { ServiceId = serviceResponse.ServiceId });
 
             return TestResult.Successful($"Subscription renewed successfully: ID={response.SubscriptionId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Subscription renewal failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Renew subscription");
 
-    private static async Task<TestResult> TestCreateSubscriptionServiceNotFound(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCreateSubscriptionServiceNotFound(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
-            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
+            var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
+            var accountsClient = GetServiceClient<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testUsername = $"subtest-notfound-{testId}";
@@ -506,24 +429,14 @@ public class SubscriptionsTestHandler : IServiceTestHandler
                 await accountsClient.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountResponse.AccountId });
                 return TestResult.Successful("Correctly returned 404 for non-existent service");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Service not found test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Create subscription for non-existent service");
 
-    private static async Task<TestResult> TestCreateSubscriptionDuplicate(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCreateSubscriptionDuplicate(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var subscriptionsClient = Program.ServiceProvider!.GetRequiredService<ISubscriptionsClient>();
-            var servicedataClient = Program.ServiceProvider!.GetRequiredService<IServicedataClient>();
-            var accountsClient = Program.ServiceProvider!.GetRequiredService<IAccountsClient>();
+            var subscriptionsClient = GetServiceClient<ISubscriptionsClient>();
+            var servicedataClient = GetServiceClient<IServicedataClient>();
+            var accountsClient = GetServiceClient<IAccountsClient>();
 
             var testId = DateTime.Now.Ticks;
             var testStubName = $"sub-dup-{testId}";
@@ -566,14 +479,5 @@ public class SubscriptionsTestHandler : IServiceTestHandler
                 await servicedataClient.DeleteServiceAsync(new DeleteServiceRequest { ServiceId = serviceResponse.ServiceId });
                 return TestResult.Successful("Correctly returned Conflict (409) for duplicate active subscription");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Duplicate subscription test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Create duplicate subscription");
 }

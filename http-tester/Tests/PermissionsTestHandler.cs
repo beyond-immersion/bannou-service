@@ -1,8 +1,8 @@
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
-using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
@@ -11,74 +11,70 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Test handler for permissions service API endpoints, including event subscription tests.
 /// Tests both direct API calls and event-driven permission updates via RabbitMQ/MassTransit.
 /// </summary>
-public class PermissionsTestHandler : IServiceTestHandler
+public class PermissionsTestHandler : BaseHttpTestHandler
 {
-    public ServiceTest[] GetServiceTests()
-    {
-        return new[]
-        {
-            // Core Permission Registration Tests
-            new ServiceTest(TestRegisterServicePermissions, "RegisterServicePermissions", "Permissions", "Test direct service permission registration"),
-            new ServiceTest(TestRegisterMultipleServicesPermissions, "RegisterMultipleServices", "Permissions", "Test registering permissions for multiple services"),
-            new ServiceTest(TestRegisterServiceWithMultipleStates, "RegisterMultipleStates", "Permissions", "Test registering service with multiple states"),
-            new ServiceTest(TestRegisterServiceWithMultipleRoles, "RegisterMultipleRoles", "Permissions", "Test registering service with multiple roles"),
+    public override ServiceTest[] GetServiceTests() =>
+    [
+        // Core Permission Registration Tests
+        new ServiceTest(TestRegisterServicePermissions, "RegisterServicePermissions", "Permissions", "Test direct service permission registration"),
+        new ServiceTest(TestRegisterMultipleServicesPermissions, "RegisterMultipleServices", "Permissions", "Test registering permissions for multiple services"),
+        new ServiceTest(TestRegisterServiceWithMultipleStates, "RegisterMultipleStates", "Permissions", "Test registering service with multiple states"),
+        new ServiceTest(TestRegisterServiceWithMultipleRoles, "RegisterMultipleRoles", "Permissions", "Test registering service with multiple roles"),
 
-            // Capability Lookup Tests
-            new ServiceTest(TestGetCapabilitiesExistingSession, "GetCapabilitiesExisting", "Permissions", "Test getting capabilities for existing session"),
-            new ServiceTest(TestGetCapabilitiesNonExistentSession, "GetCapabilitiesNonExistent", "Permissions", "Test getting capabilities for non-existent session"),
-            new ServiceTest(TestGetCapabilitiesFilteredByService, "GetCapabilitiesFiltered", "Permissions", "Test getting capabilities filtered by service IDs"),
+        // Capability Lookup Tests
+        new ServiceTest(TestGetCapabilitiesExistingSession, "GetCapabilitiesExisting", "Permissions", "Test getting capabilities for existing session"),
+        new ServiceTest(TestGetCapabilitiesNonExistentSession, "GetCapabilitiesNonExistent", "Permissions", "Test getting capabilities for non-existent session"),
+        new ServiceTest(TestGetCapabilitiesFilteredByService, "GetCapabilitiesFiltered", "Permissions", "Test getting capabilities filtered by service IDs"),
 
-            // API Validation Tests
-            new ServiceTest(TestValidateApiAccessAllowed, "ValidateApiAccessAllowed", "Permissions", "Test API access validation when access is allowed"),
-            new ServiceTest(TestValidateApiAccessDenied, "ValidateApiAccessDenied", "Permissions", "Test API access validation when access is denied"),
-            new ServiceTest(TestValidateApiAccessUnknownService, "ValidateApiAccessUnknown", "Permissions", "Test API access validation for unknown service"),
+        // API Validation Tests
+        new ServiceTest(TestValidateApiAccessAllowed, "ValidateApiAccessAllowed", "Permissions", "Test API access validation when access is allowed"),
+        new ServiceTest(TestValidateApiAccessDenied, "ValidateApiAccessDenied", "Permissions", "Test API access validation when access is denied"),
+        new ServiceTest(TestValidateApiAccessUnknownService, "ValidateApiAccessUnknown", "Permissions", "Test API access validation for unknown service"),
 
-            // Session State Management Tests
-            new ServiceTest(TestUpdateSessionState, "UpdateSessionState", "Permissions", "Test updating session state for a service"),
-            new ServiceTest(TestUpdateSessionStateTransition, "UpdateSessionStateTransition", "Permissions", "Test session state transitions trigger permission changes"),
-            new ServiceTest(TestUpdateSessionRole, "UpdateSessionRole", "Permissions", "Test updating session role"),
-            new ServiceTest(TestUpdateSessionRoleAffectsAllServices, "UpdateRoleAffectsAll", "Permissions", "Test role update affects all service permissions"),
+        // Session State Management Tests
+        new ServiceTest(TestUpdateSessionState, "UpdateSessionState", "Permissions", "Test updating session state for a service"),
+        new ServiceTest(TestUpdateSessionStateTransition, "UpdateSessionStateTransition", "Permissions", "Test session state transitions trigger permission changes"),
+        new ServiceTest(TestUpdateSessionRole, "UpdateSessionRole", "Permissions", "Test updating session role"),
+        new ServiceTest(TestUpdateSessionRoleAffectsAllServices, "UpdateRoleAffectsAll", "Permissions", "Test role update affects all service permissions"),
 
-            // Clear Session State Tests
-            new ServiceTest(TestClearSessionStateUnconditional, "ClearSessionStateUnconditional", "Permissions", "Test clearing session state unconditionally"),
-            new ServiceTest(TestClearSessionStateWithMatchingFilter, "ClearSessionStateMatchingFilter", "Permissions", "Test clearing session state when filter matches"),
-            new ServiceTest(TestClearSessionStateWithNonMatchingFilter, "ClearSessionStateNonMatchingFilter", "Permissions", "Test clearing session state when filter doesn't match"),
-            new ServiceTest(TestClearSessionStateNonExistent, "ClearSessionStateNonExistent", "Permissions", "Test clearing state for service with no state set"),
+        // Clear Session State Tests
+        new ServiceTest(TestClearSessionStateUnconditional, "ClearSessionStateUnconditional", "Permissions", "Test clearing session state unconditionally"),
+        new ServiceTest(TestClearSessionStateWithMatchingFilter, "ClearSessionStateMatchingFilter", "Permissions", "Test clearing session state when filter matches"),
+        new ServiceTest(TestClearSessionStateWithNonMatchingFilter, "ClearSessionStateNonMatchingFilter", "Permissions", "Test clearing session state when filter doesn't match"),
+        new ServiceTest(TestClearSessionStateNonExistent, "ClearSessionStateNonExistent", "Permissions", "Test clearing state for service with no state set"),
 
-            // Session Info Tests
-            new ServiceTest(TestGetSessionInfo, "GetSessionInfo", "Permissions", "Test getting complete session information"),
-            new ServiceTest(TestGetSessionInfoNonExistent, "GetSessionInfoNonExistent", "Permissions", "Test getting session info for non-existent session"),
+        // Session Info Tests
+        new ServiceTest(TestGetSessionInfo, "GetSessionInfo", "Permissions", "Test getting complete session information"),
+        new ServiceTest(TestGetSessionInfoNonExistent, "GetSessionInfoNonExistent", "Permissions", "Test getting session info for non-existent session"),
 
-            // Admin vs User Role Tests
-            new ServiceTest(TestAdminRoleCapabilities, "AdminRoleCapabilities", "Permissions", "Test admin role receives admin-level permissions"),
-            new ServiceTest(TestUserRoleCapabilities, "UserRoleCapabilities", "Permissions", "Test user role receives user-level permissions"),
-            new ServiceTest(TestRoleEscalation, "RoleEscalation", "Permissions", "Test role escalation from user to admin"),
+        // Admin vs User Role Tests
+        new ServiceTest(TestAdminRoleCapabilities, "AdminRoleCapabilities", "Permissions", "Test admin role receives admin-level permissions"),
+        new ServiceTest(TestUserRoleCapabilities, "UserRoleCapabilities", "Permissions", "Test user role receives user-level permissions"),
+        new ServiceTest(TestRoleEscalation, "RoleEscalation", "Permissions", "Test role escalation from user to admin"),
 
-            // State-Based Permission Tests
-            new ServiceTest(TestStateBasedPermissionEscalation, "StateBasedEscalation", "Permissions", "Test setting game-session:in_game state grants additional permissions"),
-            new ServiceTest(TestDefaultVsInGameState, "DefaultVsInGame", "Permissions", "Test difference between default and game-session:in_game state permissions"),
+        // State-Based Permission Tests
+        new ServiceTest(TestStateBasedPermissionEscalation, "StateBasedEscalation", "Permissions", "Test setting game-session:in_game state grants additional permissions"),
+        new ServiceTest(TestDefaultVsInGameState, "DefaultVsInGame", "Permissions", "Test difference between default and game-session:in_game state permissions"),
 
-            // RabbitMQ/MassTransit Event Tests
-            new ServiceTest(TestEventSubscription, "EventSubscription", "Permissions", "Test RabbitMQ pubsub event subscription for service registration"),
-            new ServiceTest(TestSessionStateChangeEvent, "SessionStateChangeEvent", "Permissions", "Test RabbitMQ pubsub event subscription for session state changes"),
+        // RabbitMQ/MassTransit Event Tests
+        new ServiceTest(TestEventSubscription, "EventSubscription", "Permissions", "Test RabbitMQ pubsub event subscription for service registration"),
+        new ServiceTest(TestSessionStateChangeEvent, "SessionStateChangeEvent", "Permissions", "Test RabbitMQ pubsub event subscription for session state changes"),
 
-            // Phase 6: Session Connection Event Tests (activeConnections tracking)
-            new ServiceTest(TestSessionConnectedEvent, "SessionConnectedEvent", "Permissions", "Test session.connected event adds session to activeConnections"),
-            new ServiceTest(TestSessionConnectedEventWithRoles, "SessionConnectedWithRoles", "Permissions", "Test session.connected event stores roles for capability compilation"),
-            new ServiceTest(TestSessionDisconnectedEvent, "SessionDisconnectedEvent", "Permissions", "Test session.disconnected event removes session from activeConnections"),
-            new ServiceTest(TestSessionDisconnectedReconnectable, "SessionDisconnectedReconn", "Permissions", "Test session.disconnected with reconnectable flag preserves activeSessions"),
-        };
-    }
+        // Phase 6: Session Connection Event Tests (activeConnections tracking)
+        new ServiceTest(TestSessionConnectedEvent, "SessionConnectedEvent", "Permissions", "Test session.connected event adds session to activeConnections"),
+        new ServiceTest(TestSessionConnectedEventWithRoles, "SessionConnectedWithRoles", "Permissions", "Test session.connected event stores roles for capability compilation"),
+        new ServiceTest(TestSessionDisconnectedEvent, "SessionDisconnectedEvent", "Permissions", "Test session.disconnected event removes session from activeConnections"),
+        new ServiceTest(TestSessionDisconnectedReconnectable, "SessionDisconnectedReconn", "Permissions", "Test session.disconnected with reconnectable flag preserves activeSessions"),
+    ];
 
     /// <summary>
     /// Test direct service permission registration via API.
     /// This establishes a baseline that the Permissions service works.
     /// </summary>
-    private static async Task<TestResult> TestRegisterServicePermissions(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestRegisterServicePermissions(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testServiceId = $"test-service-direct-{Guid.NewGuid():N}";
 
             var permissionMatrix = new ServicePermissionMatrix
@@ -104,25 +100,15 @@ public class PermissionsTestHandler : IServiceTestHandler
             {
                 return TestResult.Failed($"Service permission registration returned success=false");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Permission registration failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Register service permissions");
 
     /// <summary>
     /// Test registering permissions for multiple services.
     /// </summary>
-    private static async Task<TestResult> TestRegisterMultipleServicesPermissions(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestRegisterMultipleServicesPermissions(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"multi-svc-{Guid.NewGuid():N}";
 
             // Register first service
@@ -164,25 +150,15 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Failed("Failed to register second service");
 
             return TestResult.Successful($"Successfully registered multiple services: {service1Id}, {service2Id}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Multiple service registration failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Register multiple services");
 
     /// <summary>
     /// Test registering service with multiple states (in_lobby, default, in_game).
     /// </summary>
-    private static async Task<TestResult> TestRegisterServiceWithMultipleStates(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestRegisterServiceWithMultipleStates(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testServiceId = $"multi-state-svc-{Guid.NewGuid():N}";
 
             var permissionMatrix = new ServicePermissionMatrix
@@ -213,25 +189,15 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Successful($"Service with multiple states registered: {testServiceId}, 3 states defined");
             }
             return TestResult.Failed("Registration returned success=false");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Multi-state registration failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Register multiple states");
 
     /// <summary>
     /// Test registering service with multiple roles (guest, user, admin).
     /// </summary>
-    private static async Task<TestResult> TestRegisterServiceWithMultipleRoles(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestRegisterServiceWithMultipleRoles(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testServiceId = $"multi-role-svc-{Guid.NewGuid():N}";
 
             var permissionMatrix = new ServicePermissionMatrix
@@ -256,25 +222,15 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Successful($"Service with multiple roles registered: {testServiceId}, 3 roles defined");
             }
             return TestResult.Failed("Registration returned success=false");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Multi-role registration failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Register multiple roles");
 
     /// <summary>
     /// Test getting capabilities for an existing session.
     /// </summary>
-    private static async Task<TestResult> TestGetCapabilitiesExistingSession(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetCapabilitiesExistingSession(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testServiceId = $"cap-test-svc-{Guid.NewGuid():N}";
             var testSessionId = $"cap-test-session-{Guid.NewGuid():N}";
 
@@ -324,25 +280,15 @@ public class PermissionsTestHandler : IServiceTestHandler
 
             var methods = capabilities.Permissions[testServiceId];
             return TestResult.Successful($"Got capabilities for session {testSessionId}: {methods.Count} methods from {capabilities.Permissions.Count} services");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get capabilities failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get capabilities existing session");
 
     /// <summary>
     /// Test getting capabilities for a non-existent session returns NotFound.
     /// </summary>
-    private static async Task<TestResult> TestGetCapabilitiesNonExistentSession(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetCapabilitiesNonExistentSession(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var nonExistentSessionId = $"nonexistent-{Guid.NewGuid():N}";
 
             try
@@ -364,25 +310,15 @@ public class PermissionsTestHandler : IServiceTestHandler
             {
                 return TestResult.Successful("Non-existent session correctly returned 404 NotFound");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Unexpected API error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get capabilities non-existent session");
 
     /// <summary>
     /// Test getting capabilities filtered by specific service IDs.
     /// </summary>
-    private static async Task<TestResult> TestGetCapabilitiesFilteredByService(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetCapabilitiesFilteredByService(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"filter-test-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var service1Id = $"{testPrefix}-svc1";
@@ -449,25 +385,15 @@ public class PermissionsTestHandler : IServiceTestHandler
             // Check if filtering worked (may not be implemented on server side)
             var serviceCount = capabilities.Permissions.Count;
             return TestResult.Successful($"Filtered capabilities returned {serviceCount} service(s)");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Filtered capabilities failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get capabilities filtered");
 
     /// <summary>
     /// Test API access validation returns allowed=true when access is permitted.
     /// </summary>
-    private static async Task<TestResult> TestValidateApiAccessAllowed(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestValidateApiAccessAllowed(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"validate-allowed-{Guid.NewGuid():N}";
             var testServiceId = $"{testPrefix}-svc";
             var testSessionId = $"{testPrefix}-session";
@@ -513,25 +439,15 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Successful($"API access correctly validated as allowed for {testMethod}");
             }
             return TestResult.Failed($"API access should be allowed but was denied. Reason: {validation.Reason}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Validation API failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Validate API access allowed");
 
     /// <summary>
     /// Test API access validation returns allowed=false when access is denied.
     /// </summary>
-    private static async Task<TestResult> TestValidateApiAccessDenied(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestValidateApiAccessDenied(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"validate-denied-{Guid.NewGuid():N}";
             var testServiceId = $"{testPrefix}-svc";
             var testSessionId = $"{testPrefix}-session";
@@ -578,25 +494,15 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Successful($"API access correctly denied for {deniedMethod}");
             }
             return TestResult.Failed("API access should be denied but was allowed");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Validation API failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Validate API access denied");
 
     /// <summary>
     /// Test API access validation for unknown service.
     /// </summary>
-    private static async Task<TestResult> TestValidateApiAccessUnknownService(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestValidateApiAccessUnknownService(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testSessionId = $"unknown-svc-test-{Guid.NewGuid():N}";
             var unknownServiceId = $"nonexistent-service-{Guid.NewGuid():N}";
 
@@ -620,25 +526,15 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Successful("Access to unknown service correctly denied");
             }
             return TestResult.Failed("Access to unknown service should be denied");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Validation API failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Validate unknown service");
 
     /// <summary>
     /// Test updating session state for a service.
     /// </summary>
-    private static async Task<TestResult> TestUpdateSessionState(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestUpdateSessionState(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testSessionId = $"state-update-{Guid.NewGuid():N}";
             var testServiceId = $"state-svc-{Guid.NewGuid():N}";
 
@@ -657,25 +553,15 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Successful($"Session state updated to 'in_lobby' for session {testSessionId}");
             }
             return TestResult.Failed($"Session state update failed: {response.Message}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Session state update API failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Update session state");
 
     /// <summary>
     /// Test that session state transitions trigger permission recompilation.
     /// </summary>
-    private static async Task<TestResult> TestUpdateSessionStateTransition(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestUpdateSessionStateTransition(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"transition-{Guid.NewGuid():N}";
             var testServiceId = $"{testPrefix}-svc";
             var testSessionId = $"{testPrefix}-session";
@@ -753,25 +639,15 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Successful($"State transition completed: lobby={lobbyMethodCount}, in_game={gameMethodCount} methods");
             }
             return TestResult.Failed($"State transition did not update permissions as expected: lobby={lobbyMethodCount}, in_game={gameMethodCount}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"State transition test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "State transition");
 
     /// <summary>
     /// Test updating session role.
     /// </summary>
-    private static async Task<TestResult> TestUpdateSessionRole(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestUpdateSessionRole(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testSessionId = $"role-update-{Guid.NewGuid():N}";
 
             var roleUpdate = new SessionRoleUpdate
@@ -788,25 +664,15 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Successful($"Session role updated to 'admin' for session {testSessionId}");
             }
             return TestResult.Failed($"Session role update failed: {response.Message}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Session role update API failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Update session role");
 
     /// <summary>
     /// Test that role update affects permissions across all services.
     /// </summary>
-    private static async Task<TestResult> TestUpdateSessionRoleAffectsAllServices(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestUpdateSessionRoleAffectsAllServices(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"role-all-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var service1Id = $"{testPrefix}-svc1";
@@ -903,25 +769,15 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Successful($"Role upgrade affected all services: user={userTotalMethods} methods, admin={adminTotalMethods} methods");
             }
             return TestResult.Failed($"Role upgrade did not increase permissions as expected");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Role affects all test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Role affects all services");
 
     /// <summary>
     /// Test clearing session state unconditionally (no states filter).
     /// </summary>
-    private static async Task<TestResult> TestClearSessionStateUnconditional(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestClearSessionStateUnconditional(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"clear-state-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -993,25 +849,15 @@ public class PermissionsTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"State cleared unconditionally: {clearResponse.Message}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Clear state API failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Clear state unconditional");
 
     /// <summary>
     /// Test clearing session state when the filter matches the current state.
     /// </summary>
-    private static async Task<TestResult> TestClearSessionStateWithMatchingFilter(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestClearSessionStateWithMatchingFilter(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"clear-match-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1059,25 +905,15 @@ public class PermissionsTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"State cleared with matching filter: {clearResponse.Message}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Clear state API failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Clear state matching filter");
 
     /// <summary>
     /// Test clearing session state when the filter does not match the current state.
     /// </summary>
-    private static async Task<TestResult> TestClearSessionStateWithNonMatchingFilter(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestClearSessionStateWithNonMatchingFilter(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"clear-nomatch-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1130,25 +966,15 @@ public class PermissionsTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"State preserved when filter didn't match: {clearResponse.Message}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Clear state API failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Clear state non-matching filter");
 
     /// <summary>
     /// Test clearing state for a service that has no state set.
     /// </summary>
-    private static async Task<TestResult> TestClearSessionStateNonExistent(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestClearSessionStateNonExistent(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"clear-nostate-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1178,25 +1004,15 @@ public class PermissionsTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"Clearing non-existent state handled gracefully: {clearResponse.Message}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Clear state API failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Clear non-existent state");
 
     /// <summary>
     /// Test getting complete session information.
     /// </summary>
-    private static async Task<TestResult> TestGetSessionInfo(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetSessionInfo(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"session-info-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1250,25 +1066,15 @@ public class PermissionsTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"Got session info: role={sessionInfo.Role}, states={sessionInfo.States.Count}, version={sessionInfo.Version}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get session info failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get session info");
 
     /// <summary>
     /// Test getting session info for non-existent session returns NotFound.
     /// </summary>
-    private static async Task<TestResult> TestGetSessionInfoNonExistent(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetSessionInfoNonExistent(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var nonExistentSessionId = $"nonexistent-session-{Guid.NewGuid():N}";
 
             try
@@ -1290,25 +1096,15 @@ public class PermissionsTestHandler : IServiceTestHandler
             {
                 return TestResult.Successful("Non-existent session correctly returned 404 NotFound");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Unexpected API error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get session info non-existent");
 
     /// <summary>
     /// Test that admin role receives admin-level permissions.
     /// </summary>
-    private static async Task<TestResult> TestAdminRoleCapabilities(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestAdminRoleCapabilities(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"admin-cap-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1357,25 +1153,15 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Admin role missing admin-only method. Got: [{string.Join(", ", methods)}]");
             }
             return TestResult.Failed("Admin session has no permissions for test service");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Admin capabilities test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Admin role capabilities");
 
     /// <summary>
     /// Test that user role receives only user-level permissions.
     /// </summary>
-    private static async Task<TestResult> TestUserRoleCapabilities(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestUserRoleCapabilities(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"user-cap-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1431,25 +1217,15 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Failed($"User role has unexpected permissions: [{string.Join(", ", methods)}]");
             }
             return TestResult.Failed("User session has no permissions for test service");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"User capabilities test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "User role capabilities");
 
     /// <summary>
     /// Test role escalation from user to admin increases permissions.
     /// </summary>
-    private static async Task<TestResult> TestRoleEscalation(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestRoleEscalation(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"escalation-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1525,28 +1301,15 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Successful($"Role escalation completed: user={userMethodCount}, admin={adminMethodCount} methods");
             }
             return TestResult.Failed($"Role escalation did not increase permissions: user={userMethodCount}, admin={adminMethodCount}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Role escalation test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Role escalation");
 
     /// <summary>
     /// Test that setting game-session:in_game state grants additional permissions.
-    /// This validates the state-based permission system where:
-    /// - "default" state endpoints are always accessible (no state requirements)
-    /// - "game-session:in_game" state endpoints require the state to be explicitly set
     /// </summary>
-    private static async Task<TestResult> TestStateBasedPermissionEscalation(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestStateBasedPermissionEscalation(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"state-esc-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1624,28 +1387,15 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Successful($"State-based escalation increased permissions: before={beforeMethodCount}, after={afterMethodCount}");
             }
             return TestResult.Failed($"State-based escalation did not add permissions: before={beforeMethodCount}, after={afterMethodCount}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"State-based escalation test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "State-based escalation");
 
     /// <summary>
     /// Test the clear difference between default and game-session:in_game state permissions.
-    /// Validates that the permission system correctly distinguishes between:
-    /// - Endpoints with states: {} (empty) - stored at "default" state key
-    /// - Endpoints with states: {game-session: in_game} - stored at "game-session:in_game" state key
     /// </summary>
-    private static async Task<TestResult> TestDefaultVsInGameState(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDefaultVsInGameState(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"state-diff-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
@@ -1714,36 +1464,22 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Successful($"State difference validated: without state={beforeMethodCount}, with game-session:in_game={afterMethodCount}");
             }
             return TestResult.Failed($"State difference test failed: before={beforeMethodCount}, after={afterMethodCount} (expected 0 → 2)");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"State difference test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Default vs in_game state");
 
     /// <summary>
     /// Test pub/sub event subscription for service registration.
-    /// This tests the full eventing flow:
-    /// 1. Publish ServiceRegistrationEvent via IMessageBus
-    /// 2. MassTransit routes to PermissionsService's event handler
-    /// 3. Verify the service was registered by querying capabilities
     /// </summary>
-    private static async Task<TestResult> TestEventSubscription(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestEventSubscription(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             // Get IMessageBus from the service provider
-            var messageBus = Program.ServiceProvider?.GetService<IMessageBus>();
+            var messageBus = Program.ServiceProvider?.GetService(typeof(IMessageBus)) as IMessageBus;
             if (messageBus == null)
             {
                 return TestResult.Failed("IMessageBus not available from service provider");
             }
 
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testServiceId = $"test-service-event-{Guid.NewGuid():N}";
             var testSessionId = $"test-session-{Guid.NewGuid():N}";
 
@@ -1784,7 +1520,6 @@ public class PermissionsTestHandler : IServiceTestHandler
             Console.WriteLine("  Event published via IMessageBus, waiting for processing...");
 
             // Wait for event to be processed
-            // MassTransit pubsub is async, so we need to wait a bit for the event to be delivered and processed
             await Task.Delay(2000);
 
             // Create a test session with the service state so we can query capabilities
@@ -1853,37 +1588,22 @@ public class PermissionsTestHandler : IServiceTestHandler
                     $"This indicates the RabbitMQ event subscription may not be working. " +
                     $"Available services: [{string.Join(", ", capabilities.Permissions.Keys)}]");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API error during event test: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Event subscription");
 
     /// <summary>
     /// Test pub/sub event subscription for session state changes.
-    /// This tests the full flow:
-    /// 1. Register a service with permissions
-    /// 2. Create a session
-    /// 3. Publish a session state change event via IMessageBus
-    /// 4. Verify the session state was updated
     /// </summary>
-    private static async Task<TestResult> TestSessionStateChangeEvent(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSessionStateChangeEvent(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             // Get IMessageBus from the service provider
-            var messageBus = Program.ServiceProvider?.GetService<IMessageBus>();
+            var messageBus = Program.ServiceProvider?.GetService(typeof(IMessageBus)) as IMessageBus;
             if (messageBus == null)
             {
                 return TestResult.Failed("IMessageBus not available from service provider");
             }
 
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testServiceId = $"test-service-state-{Guid.NewGuid():N}";
             var testSessionId = $"test-session-state-{Guid.NewGuid():N}";
 
@@ -2008,33 +1728,21 @@ public class PermissionsTestHandler : IServiceTestHandler
                     $"Session state change event not reflected in capabilities. " +
                     $"Initial: {initialMethodCount} methods, Updated: {updatedMethodCount} methods");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API error during state change test: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Session state change event");
 
     /// <summary>
-    /// Test that session.connected event adds session to activeConnections
-    /// and triggers initial capability delivery.
-    /// Phase 6: This event ensures RabbitMQ exchange exists before publishing.
+    /// Test that session.connected event adds session to activeConnections.
     /// </summary>
-    private static async Task<TestResult> TestSessionConnectedEvent(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSessionConnectedEvent(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var messageBus = Program.ServiceProvider?.GetService<IMessageBus>();
+            var messageBus = Program.ServiceProvider?.GetService(typeof(IMessageBus)) as IMessageBus;
             if (messageBus == null)
             {
                 return TestResult.Failed("IMessageBus not available from service provider");
             }
 
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"session-connected-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testAccountId = $"{testPrefix}-account";
@@ -2055,7 +1763,6 @@ public class PermissionsTestHandler : IServiceTestHandler
             });
 
             // Step 2: Publish session.connected event via IMessageBus using strongly-typed model
-            // This simulates Connect service notifying Permissions that WebSocket is established
             var sessionConnectedEvent = new SessionConnectedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -2107,32 +1814,21 @@ public class PermissionsTestHandler : IServiceTestHandler
 
             return TestResult.Failed(
                 $"session.connected event may not have been processed - session has no capabilities or role");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Session connected event");
 
     /// <summary>
     /// Test that session.connected event properly stores roles from JWT for capability compilation.
-    /// Phase 6: Roles passed in event enable capability compilation without API calls from Connect.
     /// </summary>
-    private static async Task<TestResult> TestSessionConnectedEventWithRoles(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSessionConnectedEventWithRoles(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var messageBus = Program.ServiceProvider?.GetService<IMessageBus>();
+            var messageBus = Program.ServiceProvider?.GetService(typeof(IMessageBus)) as IMessageBus;
             if (messageBus == null)
             {
                 return TestResult.Failed("IMessageBus not available from service provider");
             }
 
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"session-roles-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testAccountId = $"{testPrefix}-account";
@@ -2207,32 +1903,21 @@ public class PermissionsTestHandler : IServiceTestHandler
 
             return TestResult.Failed(
                 $"session.connected with roles may not have processed correctly. Role: {sessionInfo.Role}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Session connected with roles");
 
     /// <summary>
     /// Test that session.disconnected event removes session from activeConnections.
-    /// Phase 6: This prevents publishing to non-existent RabbitMQ exchanges.
     /// </summary>
-    private static async Task<TestResult> TestSessionDisconnectedEvent(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSessionDisconnectedEvent(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var messageBus = Program.ServiceProvider?.GetService<IMessageBus>();
+            var messageBus = Program.ServiceProvider?.GetService(typeof(IMessageBus)) as IMessageBus;
             if (messageBus == null)
             {
                 return TestResult.Failed("IMessageBus not available from service provider");
             }
 
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"session-disconnect-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testAccountId = $"{testPrefix}-account";
@@ -2279,12 +1964,7 @@ public class PermissionsTestHandler : IServiceTestHandler
             await messageBus.PublishAsync("session.disconnected", disconnectEvent);
             await Task.Delay(1500);
 
-            // Step 3: The session is removed from activeConnections
-            // We can verify this by noting that the session still exists (in activeSessions)
-            // but is no longer in activeConnections (won't receive client events)
-            // For this HTTP test, we verify the event handler completed successfully
-            // by checking the session info is still available (session data preserved)
-
+            // Step 3: Verify the event handler completed successfully
             try
             {
                 var sessionInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
@@ -2293,7 +1973,6 @@ public class PermissionsTestHandler : IServiceTestHandler
                 });
 
                 // Session info should still exist (session data preserved)
-                // but session removed from activeConnections (internal state)
                 return TestResult.Successful(
                     $"session.disconnected event processed: session {testSessionId} data preserved " +
                     $"(role: {sessionInfo.Role}), removed from activeConnections");
@@ -2304,32 +1983,21 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Successful(
                     $"session.disconnected event processed: session {testSessionId} fully cleaned up");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Session disconnected event");
 
     /// <summary>
     /// Test that session.disconnected with reconnectable=true preserves session in activeSessions.
-    /// Phase 6: Reconnectable sessions keep their capabilities but are removed from activeConnections.
     /// </summary>
-    private static async Task<TestResult> TestSessionDisconnectedReconnectable(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSessionDisconnectedReconnectable(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var messageBus = Program.ServiceProvider?.GetService<IMessageBus>();
+            var messageBus = Program.ServiceProvider?.GetService(typeof(IMessageBus)) as IMessageBus;
             if (messageBus == null)
             {
                 return TestResult.Failed("IMessageBus not available from service provider");
             }
 
-            var permissionsClient = Program.ServiceProvider!.GetRequiredService<IPermissionsClient>();
+            var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"session-reconn-{Guid.NewGuid():N}";
             var testSessionId = $"{testPrefix}-session";
             var testAccountId = $"{testPrefix}-account";
@@ -2419,14 +2087,5 @@ public class PermissionsTestHandler : IServiceTestHandler
 
             return TestResult.Failed(
                 $"Reconnectable session may not have preserved data properly. Role: {sessionInfo.Role}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Session disconnected reconnectable");
 }

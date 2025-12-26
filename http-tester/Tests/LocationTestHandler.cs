@@ -2,7 +2,6 @@ using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -13,55 +12,53 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Note: Location APIs test service-to-service communication via mesh.
 /// These tests validate hierarchical location management with real datastores.
 /// </summary>
-public class LocationTestHandler : IServiceTestHandler
+public class LocationTestHandler : BaseHttpTestHandler
 {
-    public ServiceTest[] GetServiceTests()
-    {
-        return new[]
-        {
-            // CRUD operations
-            new ServiceTest(TestCreateLocation, "CreateLocation", "Location", "Test location creation"),
-            new ServiceTest(TestGetLocation, "GetLocation", "Location", "Test location retrieval by ID"),
-            new ServiceTest(TestGetLocationByCode, "GetLocationByCode", "Location", "Test location retrieval by code and realm"),
-            new ServiceTest(TestUpdateLocation, "UpdateLocation", "Location", "Test location update"),
-            new ServiceTest(TestDeleteLocation, "DeleteLocation", "Location", "Test location deletion"),
+    public override ServiceTest[] GetServiceTests() =>
+    [
+        // CRUD operations
+        new ServiceTest(TestCreateLocation, "CreateLocation", "Location", "Test location creation"),
+        new ServiceTest(TestGetLocation, "GetLocation", "Location", "Test location retrieval by ID"),
+        new ServiceTest(TestGetLocationByCode, "GetLocationByCode", "Location", "Test location retrieval by code and realm"),
+        new ServiceTest(TestUpdateLocation, "UpdateLocation", "Location", "Test location update"),
+        new ServiceTest(TestDeleteLocation, "DeleteLocation", "Location", "Test location deletion"),
 
-            // Listing operations
-            new ServiceTest(TestListLocations, "ListLocations", "Location", "Test listing all locations"),
-            new ServiceTest(TestListLocationsByRealm, "ListLocationsByRealm", "Location", "Test listing locations by realm"),
-            new ServiceTest(TestListRootLocations, "ListRootLocations", "Location", "Test listing root locations in realm"),
+        // Listing operations
+        new ServiceTest(TestListLocations, "ListLocations", "Location", "Test listing all locations"),
+        new ServiceTest(TestListLocationsByRealm, "ListLocationsByRealm", "Location", "Test listing locations by realm"),
+        new ServiceTest(TestListRootLocations, "ListRootLocations", "Location", "Test listing root locations in realm"),
 
-            // Hierarchy operations
-            new ServiceTest(TestSetLocationParent, "SetLocationParent", "Location", "Test setting location parent"),
-            new ServiceTest(TestRemoveLocationParent, "RemoveLocationParent", "Location", "Test removing location parent"),
-            new ServiceTest(TestListLocationsByParent, "ListLocationsByParent", "Location", "Test listing child locations"),
-            new ServiceTest(TestGetLocationAncestors, "GetLocationAncestors", "Location", "Test getting location ancestors"),
-            new ServiceTest(TestGetLocationDescendants, "GetLocationDescendants", "Location", "Test getting location descendants"),
+        // Hierarchy operations
+        new ServiceTest(TestSetLocationParent, "SetLocationParent", "Location", "Test setting location parent"),
+        new ServiceTest(TestRemoveLocationParent, "RemoveLocationParent", "Location", "Test removing location parent"),
+        new ServiceTest(TestListLocationsByParent, "ListLocationsByParent", "Location", "Test listing child locations"),
+        new ServiceTest(TestGetLocationAncestors, "GetLocationAncestors", "Location", "Test getting location ancestors"),
+        new ServiceTest(TestGetLocationDescendants, "GetLocationDescendants", "Location", "Test getting location descendants"),
 
-            // Deprecation operations
-            new ServiceTest(TestDeprecateLocation, "DeprecateLocation", "Location", "Test deprecating a location"),
-            new ServiceTest(TestUndeprecateLocation, "UndeprecateLocation", "Location", "Test restoring a deprecated location"),
+        // Deprecation operations
+        new ServiceTest(TestDeprecateLocation, "DeprecateLocation", "Location", "Test deprecating a location"),
+        new ServiceTest(TestUndeprecateLocation, "UndeprecateLocation", "Location", "Test restoring a deprecated location"),
 
-            // Validation endpoint
-            new ServiceTest(TestLocationExists, "LocationExists", "Location", "Test location existence check"),
+        // Validation endpoint
+        new ServiceTest(TestLocationExists, "LocationExists", "Location", "Test location existence check"),
 
-            // Error handling
-            new ServiceTest(TestGetNonExistentLocation, "GetNonExistentLocation", "Location", "Test 404 for non-existent location"),
-            new ServiceTest(TestDuplicateCodeConflict, "Location_DuplicateCodeConflict", "Location", "Test 409 for duplicate code in realm"),
+        // Error handling
+        new ServiceTest(TestGetNonExistentLocation, "GetNonExistentLocation", "Location", "Test 404 for non-existent location"),
+        new ServiceTest(TestDuplicateCodeConflict, "Location_DuplicateCodeConflict", "Location", "Test 409 for duplicate code in realm"),
 
-            // Seed operation
-            new ServiceTest(TestSeedLocations, "SeedLocations", "Location", "Test seeding locations"),
+        // Seed operation
+        new ServiceTest(TestSeedLocations, "SeedLocations", "Location", "Test seeding locations"),
 
-            // Complete lifecycle
-            new ServiceTest(TestCompleteLocationLifecycle, "CompleteLocationLifecycle", "Location", "Test complete location lifecycle with hierarchy"),
-        };
-    }
+        // Complete lifecycle
+        new ServiceTest(TestCompleteLocationLifecycle, "CompleteLocationLifecycle", "Location", "Test complete location lifecycle with hierarchy"),
+    ];
 
     /// <summary>
     /// Helper method to create a test realm for location tests.
     /// </summary>
-    private static async Task<RealmResponse> CreateTestRealmAsync(IRealmClient realmClient, string suffix)
+    private static async Task<RealmResponse> CreateTestRealmAsync(string suffix)
     {
+        var realmClient = GetServiceClient<IRealmClient>();
         return await realmClient.CreateRealmAsync(new CreateRealmRequest
         {
             Code = $"LOC_TEST_REALM_{DateTime.Now.Ticks}_{suffix}",
@@ -70,15 +67,13 @@ public class LocationTestHandler : IServiceTestHandler
         });
     }
 
-    private static async Task<TestResult> TestCreateLocation(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCreateLocation(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
             // Create a realm for the location
-            var realm = await CreateTestRealmAsync(realmClient, "CREATE");
+            var realm = await CreateTestRealmAsync("CREATE");
 
             var createRequest = new CreateLocationRequest
             {
@@ -101,25 +96,14 @@ public class LocationTestHandler : IServiceTestHandler
                 return TestResult.Failed("Realm ID mismatch");
 
             return TestResult.Successful($"Created location: ID={response.LocationId}, Code={response.Code}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Create failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Create location");
 
-    private static async Task<TestResult> TestGetLocation(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetLocation(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync(realmClient, "GET");
+            var realm = await CreateTestRealmAsync("GET");
 
             // Create a location first
             var createRequest = new CreateLocationRequest
@@ -142,25 +126,14 @@ public class LocationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Name mismatch: expected '{createRequest.Name}', got '{response.Name}'");
 
             return TestResult.Successful($"Retrieved location: ID={response.LocationId}, Code={response.Code}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get location");
 
-    private static async Task<TestResult> TestGetLocationByCode(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetLocationByCode(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync(realmClient, "GETCODE");
+            var realm = await CreateTestRealmAsync("GETCODE");
 
             // Create a location first
             var code = $"CODE_LOC_{DateTime.Now.Ticks}";
@@ -185,25 +158,14 @@ public class LocationTestHandler : IServiceTestHandler
                 return TestResult.Failed("ID mismatch when fetching by code");
 
             return TestResult.Successful($"Retrieved location by code: ID={response.LocationId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get by code failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get location by code");
 
-    private static async Task<TestResult> TestUpdateLocation(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestUpdateLocation(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync(realmClient, "UPDATE");
+            var realm = await CreateTestRealmAsync("UPDATE");
 
             // Create a location
             var createRequest = new CreateLocationRequest
@@ -229,28 +191,17 @@ public class LocationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Name not updated: expected 'Updated Location Name', got '{response.Name}'");
 
             if (response.Description != "Updated description")
-                return TestResult.Failed($"Description not updated");
+                return TestResult.Failed("Description not updated");
 
             return TestResult.Successful($"Updated location: ID={response.LocationId}, Name={response.Name}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Update failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Update location");
 
-    private static async Task<TestResult> TestDeleteLocation(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDeleteLocation(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync(realmClient, "DELETE");
+            var realm = await CreateTestRealmAsync("DELETE");
 
             // Create a location
             var createRequest = new CreateLocationRequest
@@ -290,28 +241,17 @@ public class LocationTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"Deleted location: ID={created.LocationId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Delete failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Delete location");
 
-    private static async Task<TestResult> TestListLocations(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestListLocations(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync(realmClient, "LIST");
+            var realm = await CreateTestRealmAsync("LIST");
 
             // Create some locations
-            for (int i = 0; i < 3; i++)
+            for (var i = 0; i < 3; i++)
             {
                 await locationClient.CreateLocationAsync(new CreateLocationRequest
                 {
@@ -332,28 +272,17 @@ public class LocationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected at least 3 locations, got {response.Locations?.Count ?? 0}");
 
             return TestResult.Successful($"Listed {response.Locations.Count} locations in realm");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"List failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "List locations");
 
-    private static async Task<TestResult> TestListLocationsByRealm(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestListLocationsByRealm(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync(realmClient, "LISTREALM");
+            var realm = await CreateTestRealmAsync("LISTREALM");
 
             // Create locations in the realm
-            for (int i = 0; i < 3; i++)
+            for (var i = 0; i < 3; i++)
             {
                 await locationClient.CreateLocationAsync(new CreateLocationRequest
                 {
@@ -374,28 +303,17 @@ public class LocationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected at least 3 locations in realm, got {response.Locations?.Count ?? 0}");
 
             return TestResult.Successful($"Listed {response.Locations.Count} locations in realm");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"List by realm failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "List locations by realm");
 
-    private static async Task<TestResult> TestListRootLocations(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestListRootLocations(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync(realmClient, "ROOT");
+            var realm = await CreateTestRealmAsync("ROOT");
 
             // Create root locations (no parent)
-            for (int i = 0; i < 3; i++)
+            for (var i = 0; i < 3; i++)
             {
                 await locationClient.CreateLocationAsync(new CreateLocationRequest
                 {
@@ -420,25 +338,14 @@ public class LocationTestHandler : IServiceTestHandler
                 return TestResult.Failed("Some locations have non-zero depth");
 
             return TestResult.Successful($"Listed {response.Locations.Count} root locations");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"List root locations failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "List root locations");
 
-    private static async Task<TestResult> TestSetLocationParent(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSetLocationParent(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync(realmClient, "SETPARENT");
+            var realm = await CreateTestRealmAsync("SETPARENT");
 
             // Create parent location
             var parent = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -472,25 +379,14 @@ public class LocationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected depth 1, got {response.Depth}");
 
             return TestResult.Successful($"Set parent: child={child.LocationId}, parent={parent.LocationId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Set parent failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Set location parent");
 
-    private static async Task<TestResult> TestRemoveLocationParent(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestRemoveLocationParent(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync(realmClient, "REMOVEPARENT");
+            var realm = await CreateTestRealmAsync("REMOVEPARENT");
 
             // Create parent location
             var parent = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -527,25 +423,14 @@ public class LocationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Depth should be 0 after removing parent, got {response.Depth}");
 
             return TestResult.Successful($"Removed parent from location {child.LocationId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Remove parent failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Remove location parent");
 
-    private static async Task<TestResult> TestListLocationsByParent(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestListLocationsByParent(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync(realmClient, "LISTBYPARENT");
+            var realm = await CreateTestRealmAsync("LISTBYPARENT");
 
             // Create parent location
             var parent = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -557,7 +442,7 @@ public class LocationTestHandler : IServiceTestHandler
             });
 
             // Create child locations
-            for (int i = 0; i < 3; i++)
+            for (var i = 0; i < 3; i++)
             {
                 await locationClient.CreateLocationAsync(new CreateLocationRequest
                 {
@@ -579,25 +464,14 @@ public class LocationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected at least 3 children, got {response.Locations?.Count ?? 0}");
 
             return TestResult.Successful($"Listed {response.Locations.Count} child locations");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"List by parent failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "List locations by parent");
 
-    private static async Task<TestResult> TestGetLocationAncestors(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetLocationAncestors(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync(realmClient, "ANCESTORS");
+            var realm = await CreateTestRealmAsync("ANCESTORS");
 
             // Create hierarchy: Region -> City -> District
             var region = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -643,25 +517,14 @@ public class LocationTestHandler : IServiceTestHandler
                 return TestResult.Failed("Second ancestor should be region");
 
             return TestResult.Successful($"Got {response.Locations.Count} ancestors");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get ancestors failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get location ancestors");
 
-    private static async Task<TestResult> TestGetLocationDescendants(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetLocationDescendants(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync(realmClient, "DESCENDANTS");
+            var realm = await CreateTestRealmAsync("DESCENDANTS");
 
             // Create hierarchy: Region -> 2 Cities -> 2 Districts each
             var region = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -672,7 +535,7 @@ public class LocationTestHandler : IServiceTestHandler
                 LocationType = LocationType.REGION
             });
 
-            for (int i = 0; i < 2; i++)
+            for (var i = 0; i < 2; i++)
             {
                 var city = await locationClient.CreateLocationAsync(new CreateLocationRequest
                 {
@@ -683,7 +546,7 @@ public class LocationTestHandler : IServiceTestHandler
                     ParentLocationId = region.LocationId
                 });
 
-                for (int j = 0; j < 2; j++)
+                for (var j = 0; j < 2; j++)
                 {
                     await locationClient.CreateLocationAsync(new CreateLocationRequest
                     {
@@ -707,25 +570,14 @@ public class LocationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected 6 descendants, got {response.Locations?.Count ?? 0}");
 
             return TestResult.Successful($"Got {response.Locations.Count} descendants");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get descendants failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get location descendants");
 
-    private static async Task<TestResult> TestDeprecateLocation(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDeprecateLocation(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync(realmClient, "DEPRECATE");
+            var realm = await CreateTestRealmAsync("DEPRECATE");
 
             // Create a location
             var location = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -750,25 +602,14 @@ public class LocationTestHandler : IServiceTestHandler
                 return TestResult.Failed("Deprecation reason not set");
 
             return TestResult.Successful($"Deprecated location: ID={location.LocationId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Deprecate failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Deprecate location");
 
-    private static async Task<TestResult> TestUndeprecateLocation(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestUndeprecateLocation(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync(realmClient, "UNDEPRECATE");
+            var realm = await CreateTestRealmAsync("UNDEPRECATE");
 
             // Create and deprecate a location
             var location = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -794,25 +635,14 @@ public class LocationTestHandler : IServiceTestHandler
                 return TestResult.Failed("Location should not be deprecated after undeprecation");
 
             return TestResult.Successful($"Undeprecated location: ID={location.LocationId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Undeprecate failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Undeprecate location");
 
-    private static async Task<TestResult> TestLocationExists(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestLocationExists(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync(realmClient, "EXISTS");
+            var realm = await CreateTestRealmAsync("EXISTS");
 
             // Create a location
             var location = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -845,54 +675,27 @@ public class LocationTestHandler : IServiceTestHandler
                 return TestResult.Failed("Non-existent location should not exist");
 
             return TestResult.Successful("Location existence check passed");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Exists check failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Check location existence");
 
-    private static async Task<TestResult> TestGetNonExistentLocation(ITestClient client, string[] args)
-    {
-        try
-        {
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
-
-            try
+    private static Task<TestResult> TestGetNonExistentLocation(ITestClient client, string[] args) =>
+        ExecuteExpectingStatusAsync(
+            async () =>
             {
+                var locationClient = GetServiceClient<ILocationClient>();
                 await locationClient.GetLocationAsync(new GetLocationRequest
                 {
                     LocationId = Guid.NewGuid()
                 });
-                return TestResult.Failed("Expected 404 for non-existent location");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                return TestResult.Successful("Correctly returned 404 for non-existent location");
-            }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+            },
+            404,
+            "Get non-existent location");
 
-    private static async Task<TestResult> TestDuplicateCodeConflict(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDuplicateCodeConflict(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync(realmClient, "DUPCODE");
+            var realm = await CreateTestRealmAsync("DUPCODE");
 
             var code = $"DUPLICATE_LOC_{DateTime.Now.Ticks}";
 
@@ -905,39 +708,27 @@ public class LocationTestHandler : IServiceTestHandler
                 LocationType = LocationType.CITY
             });
 
-            // Try to create second with same code in same realm
-            try
-            {
-                await locationClient.CreateLocationAsync(new CreateLocationRequest
+            // Try to create second with same code in same realm - expect 409
+            return await ExecuteExpectingStatusAsync(
+                async () =>
                 {
-                    Code = code,
-                    Name = "Second Location",
-                    RealmId = realm.RealmId,
-                    LocationType = LocationType.CITY
-                });
-                return TestResult.Failed("Expected 409 for duplicate code");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 409)
-            {
-                return TestResult.Successful("Correctly returned 409 for duplicate code");
-            }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+                    await locationClient.CreateLocationAsync(new CreateLocationRequest
+                    {
+                        Code = code,
+                        Name = "Second Location",
+                        RealmId = realm.RealmId,
+                        LocationType = LocationType.CITY
+                    });
+                },
+                409,
+                "Duplicate code");
+        }, "Duplicate code conflict");
 
-    private static async Task<TestResult> TestSeedLocations(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSeedLocations(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var realmClient = GetServiceClient<IRealmClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
 
             // Create a realm for seeding (using a unique code for the seed request)
             var realmCode = $"SEED_REALM_{DateTime.Now.Ticks}";
@@ -949,8 +740,8 @@ public class LocationTestHandler : IServiceTestHandler
 
             var seedRequest = new SeedLocationsRequest
             {
-                Locations = new List<SeedLocation>
-                {
+                Locations =
+                [
                     new SeedLocation
                     {
                         Code = $"SEED_REGION_{DateTime.Now.Ticks}",
@@ -967,7 +758,7 @@ public class LocationTestHandler : IServiceTestHandler
                         RealmCode = realmCode,
                         LocationType = LocationType.CITY
                     }
-                },
+                ],
                 UpdateExisting = false
             };
 
@@ -977,23 +768,13 @@ public class LocationTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected 2 created, got {response.Created}");
 
             return TestResult.Successful($"Seed completed: Created={response.Created}, Updated={response.Updated}, Skipped={response.Skipped}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Seed failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Seed locations");
 
-    private static async Task<TestResult> TestCompleteLocationLifecycle(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCompleteLocationLifecycle(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = Program.ServiceProvider!.GetRequiredService<IRealmClient>();
-            var locationClient = Program.ServiceProvider!.GetRequiredService<ILocationClient>();
+            var realmClient = GetServiceClient<IRealmClient>();
+            var locationClient = GetServiceClient<ILocationClient>();
             var testId = DateTime.Now.Ticks;
 
             // Step 1: Create realm
@@ -1111,14 +892,5 @@ public class LocationTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful("Complete location lifecycle test passed");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Lifecycle test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Complete location lifecycle");
 }

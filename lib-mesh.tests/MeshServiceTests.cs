@@ -3,7 +3,6 @@ using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Mesh.Services;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
-using Yarp.ReverseProxy.Forwarder;
 
 namespace BeyondImmersion.BannouService.Mesh.Tests;
 
@@ -1004,20 +1003,18 @@ public class MeshRedisManagerTests
 }
 
 /// <summary>
-/// Tests for MeshInvocationClient - the YARP-based service invocation client
+/// Tests for MeshInvocationClient - the HTTP-based service invocation client
 /// for service-to-service communication via lib-mesh infrastructure.
 /// </summary>
 public class MeshInvocationClientTests : IDisposable
 {
     private readonly Mock<IMeshClient> _mockMeshClient;
-    private readonly Mock<IHttpForwarder> _mockForwarder;
     private readonly Mock<ILogger<MeshInvocationClient>> _mockLogger;
     private MeshInvocationClient? _client;
 
     public MeshInvocationClientTests()
     {
         _mockMeshClient = new Mock<IMeshClient>();
-        _mockForwarder = new Mock<IHttpForwarder>();
         _mockLogger = new Mock<ILogger<MeshInvocationClient>>();
     }
 
@@ -1030,7 +1027,6 @@ public class MeshInvocationClientTests : IDisposable
     {
         _client = new MeshInvocationClient(
             _mockMeshClient.Object,
-            _mockForwarder.Object,
             _mockLogger.Object);
         return _client;
     }
@@ -1051,22 +1047,9 @@ public class MeshInvocationClientTests : IDisposable
         // Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new MeshInvocationClient(
             null!,
-            _mockForwarder.Object,
             _mockLogger.Object));
 
         Assert.Equal("meshClient", exception.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullForwarder_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new MeshInvocationClient(
-            _mockMeshClient.Object,
-            null!,
-            _mockLogger.Object));
-
-        Assert.Equal("forwarder", exception.ParamName);
     }
 
     [Fact]
@@ -1075,7 +1058,6 @@ public class MeshInvocationClientTests : IDisposable
         // Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new MeshInvocationClient(
             _mockMeshClient.Object,
-            _mockForwarder.Object,
             null!));
 
         Assert.Equal("logger", exception.ParamName);

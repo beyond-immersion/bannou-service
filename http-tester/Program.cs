@@ -11,8 +11,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Yarp.ReverseProxy.Forwarder;
-
 namespace BeyondImmersion.BannouService.HttpTester;
 
 /// <summary>
@@ -193,9 +191,6 @@ public class Program
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Mesh.IMeshClient, BeyondImmersion.BannouService.Mesh.MeshClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Asset.IAssetClient, BeyondImmersion.BannouService.Asset.AssetClient>();
             // Note: TestingTestHandler uses direct HTTP calls, not a generated client
-
-            // Add YARP HTTP forwarder for MeshInvocationClient
-            serviceCollection.AddHttpForwarder();
 
             // Register MeshInvocationClient for service-to-service calls
             serviceCollection.AddSingleton<IMeshInvocationClient, MeshInvocationClient>();

@@ -3,7 +3,6 @@ using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.RelationshipType;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -15,40 +14,36 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// These tests validate entity-to-entity relationship management with composite uniqueness,
 /// bidirectional support, and soft-delete capability.
 /// </summary>
-public class RelationshipTestHandler : IServiceTestHandler
+public class RelationshipTestHandler : BaseHttpTestHandler
 {
-    public ServiceTest[] GetServiceTests()
-    {
-        return new[]
+    public override ServiceTest[] GetServiceTests() =>
+    [
+        // CRUD operations
+        new ServiceTest(TestCreateRelationship, "CreateRelationship", "Relationship", "Test relationship creation"),
+        new ServiceTest(TestGetRelationship, "GetRelationship", "Relationship", "Test relationship retrieval by ID"),
+        new ServiceTest(TestUpdateRelationship, "UpdateRelationship", "Relationship", "Test relationship metadata update"),
+        new ServiceTest(TestEndRelationship, "EndRelationship", "Relationship", "Test ending a relationship (soft delete)"),
+
+        // List operations
+        new ServiceTest(TestListRelationshipsByEntity, "ListRelationshipsByEntity", "Relationship", "Test listing relationships for an entity"),
+        new ServiceTest(TestGetRelationshipsBetween, "GetRelationshipsBetween", "Relationship", "Test getting relationships between two entities"),
+        new ServiceTest(TestListRelationshipsByType, "ListRelationshipsByType", "Relationship", "Test listing relationships by type"),
+
+        // Error handling
+        new ServiceTest(TestGetNonExistentRelationship, "GetNonExistentRelationship", "Relationship", "Test 404 for non-existent relationship"),
+        new ServiceTest(TestDuplicateCompositeKeyConflict, "DuplicateCompositeKeyConflict", "Relationship", "Test 409 for duplicate composite key"),
+
+        // Complete lifecycle
+        new ServiceTest(TestCompleteRelationshipLifecycle, "CompleteRelationshipLifecycle", "Relationship", "Test complete relationship lifecycle"),
+    ];
+
+    private static Task<TestResult> TestCreateRelationship(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            // CRUD operations
-            new ServiceTest(TestCreateRelationship, "CreateRelationship", "Relationship", "Test relationship creation"),
-            new ServiceTest(TestGetRelationship, "GetRelationship", "Relationship", "Test relationship retrieval by ID"),
-            new ServiceTest(TestUpdateRelationship, "UpdateRelationship", "Relationship", "Test relationship metadata update"),
-            new ServiceTest(TestEndRelationship, "EndRelationship", "Relationship", "Test ending a relationship (soft delete)"),
-
-            // List operations
-            new ServiceTest(TestListRelationshipsByEntity, "ListRelationshipsByEntity", "Relationship", "Test listing relationships for an entity"),
-            new ServiceTest(TestGetRelationshipsBetween, "GetRelationshipsBetween", "Relationship", "Test getting relationships between two entities"),
-            new ServiceTest(TestListRelationshipsByType, "ListRelationshipsByType", "Relationship", "Test listing relationships by type"),
-
-            // Error handling
-            new ServiceTest(TestGetNonExistentRelationship, "GetNonExistentRelationship", "Relationship", "Test 404 for non-existent relationship"),
-            new ServiceTest(TestDuplicateCompositeKeyConflict, "DuplicateCompositeKeyConflict", "Relationship", "Test 409 for duplicate composite key"),
-
-            // Complete lifecycle
-            new ServiceTest(TestCompleteRelationshipLifecycle, "CompleteRelationshipLifecycle", "Relationship", "Test complete relationship lifecycle"),
-        };
-    }
-
-    private static async Task<TestResult> TestCreateRelationship(ITestClient client, string[] args)
-    {
-        try
-        {
-            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
+            var relationshipClient = GetServiceClient<IRelationshipClient>();
 
             // Create a relationship type first (we need a valid type ID)
-            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {
@@ -80,28 +75,18 @@ public class RelationshipTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Entity2Id mismatch: expected '{createRequest.Entity2Id}', got '{response.Entity2Id}'");
 
             if (response.RelationshipTypeId != createRequest.RelationshipTypeId)
-                return TestResult.Failed($"RelationshipTypeId mismatch");
+                return TestResult.Failed("RelationshipTypeId mismatch");
 
             return TestResult.Successful($"Created relationship: ID={response.RelationshipId}, Entity1={response.Entity1Type}, Entity2={response.Entity2Type}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Create failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Create relationship");
 
-    private static async Task<TestResult> TestGetRelationship(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetRelationship(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
+            var relationshipClient = GetServiceClient<IRelationshipClient>();
 
             // Create a relationship type first
-            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {
@@ -129,28 +114,18 @@ public class RelationshipTestHandler : IServiceTestHandler
                 return TestResult.Failed("ID mismatch");
 
             if (response.Entity1Id != createRequest.Entity1Id)
-                return TestResult.Failed($"Entity1Id mismatch");
+                return TestResult.Failed("Entity1Id mismatch");
 
             return TestResult.Successful($"Retrieved relationship: ID={response.RelationshipId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get relationship");
 
-    private static async Task<TestResult> TestUpdateRelationship(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestUpdateRelationship(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
+            var relationshipClient = GetServiceClient<IRelationshipClient>();
 
             // Create a relationship type first
-            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {
@@ -198,25 +173,15 @@ public class RelationshipTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"Updated relationship: ID={response.RelationshipId}, Metadata type={response.Metadata.GetType().Name}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Update failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Update relationship");
 
-    private static async Task<TestResult> TestEndRelationship(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestEndRelationship(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
+            var relationshipClient = GetServiceClient<IRelationshipClient>();
 
             // Create a relationship type first
-            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {
@@ -252,25 +217,15 @@ public class RelationshipTestHandler : IServiceTestHandler
                 return TestResult.Failed("EndedAt should be set after ending relationship");
 
             return TestResult.Successful($"Ended relationship: ID={created.RelationshipId}, EndedAt={getResponse.EndedAt}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"End failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "End relationship");
 
-    private static async Task<TestResult> TestListRelationshipsByEntity(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestListRelationshipsByEntity(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
+            var relationshipClient = GetServiceClient<IRelationshipClient>();
 
             // Create a relationship type
-            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {
@@ -304,25 +259,15 @@ public class RelationshipTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected at least 3 relationships, got {response.Relationships?.Count ?? 0}");
 
             return TestResult.Successful($"Listed {response.Relationships.Count} relationships for entity {entityId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"List by entity failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "List relationships by entity");
 
-    private static async Task<TestResult> TestGetRelationshipsBetween(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetRelationshipsBetween(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
+            var relationshipClient = GetServiceClient<IRelationshipClient>();
 
             // Create relationship types
-            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
             var type1 = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {
@@ -373,25 +318,15 @@ public class RelationshipTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected at least 2 relationships, got {response.Relationships?.Count ?? 0}");
 
             return TestResult.Successful($"Found {response.Relationships.Count} relationships between entities");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get between failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get relationships between");
 
-    private static async Task<TestResult> TestListRelationshipsByType(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestListRelationshipsByType(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
+            var relationshipClient = GetServiceClient<IRelationshipClient>();
 
             // Create a relationship type
-            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {
@@ -423,54 +358,28 @@ public class RelationshipTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected at least 3 relationships, got {response.Relationships?.Count ?? 0}");
 
             return TestResult.Successful($"Listed {response.Relationships.Count} relationships of type {typeResponse.RelationshipTypeId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"List by type failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "List relationships by type");
 
-    private static async Task<TestResult> TestGetNonExistentRelationship(ITestClient client, string[] args)
-    {
-        try
-        {
-            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
-
-            try
+    private static Task<TestResult> TestGetNonExistentRelationship(ITestClient client, string[] args) =>
+        ExecuteExpectingStatusAsync(
+            async () =>
             {
+                var relationshipClient = GetServiceClient<IRelationshipClient>();
                 await relationshipClient.GetRelationshipAsync(new GetRelationshipRequest
                 {
                     RelationshipId = Guid.NewGuid()
                 });
-                return TestResult.Failed("Expected 404 for non-existent relationship");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                return TestResult.Successful("Correctly returned 404 for non-existent relationship");
-            }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+            },
+            404,
+            "Get non-existent relationship");
 
-    private static async Task<TestResult> TestDuplicateCompositeKeyConflict(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDuplicateCompositeKeyConflict(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
+            var relationshipClient = GetServiceClient<IRelationshipClient>();
 
             // Create a relationship type
-            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {
@@ -511,27 +420,17 @@ public class RelationshipTestHandler : IServiceTestHandler
             {
                 return TestResult.Successful("Correctly returned 409 for duplicate composite key");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Duplicate composite key conflict");
 
-    private static async Task<TestResult> TestCompleteRelationshipLifecycle(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCompleteRelationshipLifecycle(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var relationshipClient = Program.ServiceProvider!.GetRequiredService<IRelationshipClient>();
+            var relationshipClient = GetServiceClient<IRelationshipClient>();
             var testId = DateTime.Now.Ticks;
 
             // Step 1: Create a relationship type
             Console.WriteLine("  Step 1: Creating relationship type...");
-            var relationshipTypeClient = Program.ServiceProvider!.GetRequiredService<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
                 new RelationshipType.CreateRelationshipTypeRequest
                 {
@@ -639,14 +538,5 @@ public class RelationshipTestHandler : IServiceTestHandler
                 return TestResult.Failed("EndedAt should be set after ending");
 
             return TestResult.Successful("Complete relationship lifecycle test passed");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Lifecycle test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Complete relationship lifecycle");
 }

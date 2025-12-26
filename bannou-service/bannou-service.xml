@@ -72,11 +72,6 @@
             Default HTTP port for service mesh communication.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.BannouService.AppConstants.DEFAULT_DAPR_GRPC_PORT">
-            <summary>
-            Default gRPC port (legacy constant name, kept for compatibility).
-            </summary>
-        </member>
         <member name="F:BeyondImmersion.BannouService.AppConstants.ENV_BANNOU_APP_ID">
             <summary>
             Environment variable for app ID (legacy env var name). Used by PermissionRegistration and
@@ -87,12 +82,6 @@
             <summary>
             Environment variable for mesh HTTP endpoint. This is a Tenet 21 exception -
             needed to bootstrap mesh client before configuration system initializes.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.AppConstants.ENV_DAPR_GRPC_ENDPOINT">
-            <summary>
-            Environment variable for gRPC endpoint (legacy env var name). This is a Tenet 21 exception -
-            needed to bootstrap infrastructure before configuration system initializes.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Attributes.BannouControllerAttribute">
@@ -16688,6 +16677,48 @@
             <param name="expectedPluginName">Expected name of the plugin</param>
             <returns>Loaded plugin instance or null if loading failed</returns>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Plugins.StandardServicePlugin`1">
+            <summary>
+            Generic base class for standard service plugins that eliminates lifecycle boilerplate.
+            Most service plugins only need to specify PluginName/DisplayName and optionally
+            override ConfigureServices to add extra DI registrations.
+            </summary>
+            <typeparam name="TService">The service interface type (e.g., ICharacterService)</typeparam>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Plugins.StandardServicePlugin`1.Service">
+            <summary>
+            The resolved service instance, available after OnStartAsync completes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Plugins.StandardServicePlugin`1.ServiceProvider">
+            <summary>
+            The service provider, available after ConfigureApplication completes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.StandardServicePlugin`1.ConfigureApplication(Microsoft.AspNetCore.Builder.WebApplication)">
+            <summary>
+            Configure application pipeline - stores service provider for lifecycle management.
+            Override to add custom pipeline configuration, but call base.ConfigureApplication first.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.StandardServicePlugin`1.OnStartAsync">
+            <summary>
+            Start the service - resolves service from DI and calls IBannouService.OnStartAsync if implemented.
+            Override to add custom startup logic (e.g., Redis initialization), but call base.OnStartAsync.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.StandardServicePlugin`1.OnRunningAsync">
+            <summary>
+            Running phase - calls IBannouService.OnRunningAsync if the service implements it.
+            Override to add custom running logic, but call base.OnRunningAsync.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.StandardServicePlugin`1.OnShutdownAsync">
+            <summary>
+            Shutdown the service - calls IBannouService.OnShutdownAsync if the service implements it.
+            Override to add custom shutdown logic, but call base.OnShutdownAsync.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Program">
             <summary>
             Main program class for the Bannou service platform.
@@ -16918,6 +16949,13 @@
             Prepares the HTTP request with URL builder for Bannou routing and custom headers.
             Works with both full constructor and parameterless constructor.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase.PrepareRequestCore(System.Net.Http.HttpRequestMessage,System.String)">
+            <summary>
+            Core implementation of request preparation. Applies routing headers, authorization, and custom headers.
+            </summary>
+            <param name="request">The HTTP request message to prepare.</param>
+            <param name="url">The target URL (for logging purposes).</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.ServiceClients.BannouServiceClientBase.ProcessResponse(System.Net.Http.HttpClient,System.Net.Http.HttpResponseMessage)">
             <summary>

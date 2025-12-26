@@ -1,7 +1,6 @@
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
-using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http.Headers;
 using System.Text;
 
@@ -15,37 +14,34 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// to avoid triggering the asset processor pipeline which is not yet implemented.
 /// Processing only triggers for: large files (>50MB) AND processable types (image/*, model/*, audio/*).
 /// </summary>
-public class AssetTestHandler : IServiceTestHandler
+public class AssetTestHandler : BaseHttpTestHandler
 {
     // Shared HttpClient for uploading to MinIO pre-signed URLs
     private static readonly HttpClient _uploadClient = new();
 
-    public ServiceTest[] GetServiceTests()
-    {
-        return new[]
-        {
-            // Upload flow tests
-            new ServiceTest(TestRequestUpload, "RequestUpload", "Asset", "Test requesting pre-signed upload URL"),
-            new ServiceTest(TestCompleteUploadFlow, "CompleteUploadFlow", "Asset", "Test full upload flow: request → upload to MinIO → complete"),
+    public override ServiceTest[] GetServiceTests() =>
+    [
+        // Upload flow tests
+        new ServiceTest(TestRequestUpload, "RequestUpload", "Asset", "Test requesting pre-signed upload URL"),
+        new ServiceTest(TestCompleteUploadFlow, "CompleteUploadFlow", "Asset", "Test full upload flow: request → upload to MinIO → complete"),
 
-            // Asset retrieval tests
-            new ServiceTest(TestGetAsset, "GetAsset", "Asset", "Test retrieving asset metadata with download URL"),
-            new ServiceTest(TestListAssetVersions, "ListAssetVersions", "Asset", "Test listing asset version history"),
-            new ServiceTest(TestSearchAssets, "SearchAssets", "Asset", "Test searching assets by tags and type"),
+        // Asset retrieval tests
+        new ServiceTest(TestGetAsset, "GetAsset", "Asset", "Test retrieving asset metadata with download URL"),
+        new ServiceTest(TestListAssetVersions, "ListAssetVersions", "Asset", "Test listing asset version history"),
+        new ServiceTest(TestSearchAssets, "SearchAssets", "Asset", "Test searching assets by tags and type"),
 
-            // Bundle tests
-            new ServiceTest(TestCreateBundle, "CreateBundle", "Asset", "Test creating bundle from uploaded assets"),
-            new ServiceTest(TestGetBundle, "GetBundle", "Asset", "Test retrieving bundle with download URL"),
-            new ServiceTest(TestRequestBundleUpload, "RequestBundleUpload", "Asset", "Test requesting bundle upload URL"),
+        // Bundle tests
+        new ServiceTest(TestCreateBundle, "CreateBundle", "Asset", "Test creating bundle from uploaded assets"),
+        new ServiceTest(TestGetBundle, "GetBundle", "Asset", "Test retrieving bundle with download URL"),
+        new ServiceTest(TestRequestBundleUpload, "RequestBundleUpload", "Asset", "Test requesting bundle upload URL"),
 
-            // Error handling tests
-            new ServiceTest(TestGetNonExistentAsset, "GetNonExistentAsset", "Asset", "Test 404 for non-existent asset"),
-            new ServiceTest(TestGetNonExistentBundle, "GetNonExistentBundle", "Asset", "Test 404 for non-existent bundle"),
+        // Error handling tests
+        new ServiceTest(TestGetNonExistentAsset, "GetNonExistentAsset", "Asset", "Test 404 for non-existent asset"),
+        new ServiceTest(TestGetNonExistentBundle, "GetNonExistentBundle", "Asset", "Test 404 for non-existent bundle"),
 
-            // Complete lifecycle test
-            new ServiceTest(TestCompleteAssetLifecycle, "CompleteAssetLifecycle", "Asset", "Test complete asset lifecycle: upload → search → bundle → download"),
-        };
-    }
+        // Complete lifecycle test
+        new ServiceTest(TestCompleteAssetLifecycle, "CompleteAssetLifecycle", "Asset", "Test complete asset lifecycle: upload → search → bundle → download"),
+    ];
 
     /// <summary>
     /// Helper to upload a test asset and return its metadata.
@@ -91,11 +87,10 @@ public class AssetTestHandler : IServiceTestHandler
         return await client.CompleteUploadAsync(completeRequest);
     }
 
-    private static async Task<TestResult> TestRequestUpload(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestRequestUpload(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
+            var assetClient = GetServiceClient<IAssetClient>();
 
             var request = new UploadRequest
             {
@@ -122,22 +117,12 @@ public class AssetTestHandler : IServiceTestHandler
                 return TestResult.Failed("Expiration time is in the past");
 
             return TestResult.Successful($"Upload URL generated: ID={response.Upload_id}, Expires={response.Expires_at}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Request upload failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Request upload");
 
-    private static async Task<TestResult> TestCompleteUploadFlow(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCompleteUploadFlow(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
+            var assetClient = GetServiceClient<IAssetClient>();
 
             var metadata = await UploadTestAsset(assetClient, "complete-flow");
 
@@ -151,22 +136,12 @@ public class AssetTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected processing status 'Complete', got '{metadata.Processing_status}'");
 
             return TestResult.Successful($"Upload completed: AssetID={metadata.Asset_id}, ContentHash={metadata.Content_hash}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Upload flow failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Complete upload flow");
 
-    private static async Task<TestResult> TestGetAsset(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetAsset(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
+            var assetClient = GetServiceClient<IAssetClient>();
 
             // First upload a test asset
             var uploadedMetadata = await UploadTestAsset(assetClient, "get-asset");
@@ -192,22 +167,12 @@ public class AssetTestHandler : IServiceTestHandler
                 return TestResult.Failed("Download URL expiration is in the past");
 
             return TestResult.Successful($"Asset retrieved: ID={response.Asset_id}, VersionID={response.Version_id}, Size={response.Size}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get asset failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get asset");
 
-    private static async Task<TestResult> TestListAssetVersions(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestListAssetVersions(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
+            var assetClient = GetServiceClient<IAssetClient>();
 
             // First upload a test asset
             var uploadedMetadata = await UploadTestAsset(assetClient, "list-versions");
@@ -234,22 +199,12 @@ public class AssetTestHandler : IServiceTestHandler
                 return TestResult.Failed("Total version count should be at least 1");
 
             return TestResult.Successful($"Listed {response.Versions.Count} version(s) for asset {response.Asset_id} (Total: {response.Total})");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"List versions failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "List asset versions");
 
-    private static async Task<TestResult> TestSearchAssets(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSearchAssets(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
+            var assetClient = GetServiceClient<IAssetClient>();
 
             // First upload a test asset with specific tags
             var uploadedMetadata = await UploadTestAsset(assetClient, "search-test");
@@ -278,22 +233,12 @@ public class AssetTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Uploaded asset {uploadedMetadata.Asset_id} not found in search results");
 
             return TestResult.Successful($"Search found {response.Assets.Count} asset(s) (Total: {response.Total}), including uploaded asset");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Search assets failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Search assets");
 
-    private static async Task<TestResult> TestCreateBundle(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCreateBundle(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
+            var assetClient = GetServiceClient<IAssetClient>();
 
             // Upload two test assets for bundling
             var asset1 = await UploadTestAsset(assetClient, "bundle-asset-1");
@@ -322,22 +267,12 @@ public class AssetTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Unexpected bundle status: {response.Status}");
 
             return TestResult.Successful($"Bundle created: ID={response.Bundle_id}, Status={response.Status}, EstimatedSize={response.Estimated_size}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Create bundle failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Create bundle");
 
-    private static async Task<TestResult> TestGetBundle(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetBundle(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
+            var assetClient = GetServiceClient<IAssetClient>();
 
             // First create a bundle
             var asset1 = await UploadTestAsset(assetClient, "get-bundle-asset-1");
@@ -378,22 +313,12 @@ public class AssetTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected 2 assets in bundle, got {response.Asset_count}");
 
             return TestResult.Successful($"Bundle retrieved: ID={response.Bundle_id}, Version={response.Version}, Assets={response.Asset_count}, Size={response.Size}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get bundle failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get bundle");
 
-    private static async Task<TestResult> TestRequestBundleUpload(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestRequestBundleUpload(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
+            var assetClient = GetServiceClient<IAssetClient>();
 
             var request = new BundleUploadRequest
             {
@@ -419,85 +344,39 @@ public class AssetTestHandler : IServiceTestHandler
                 return TestResult.Failed("Expiration time is in the past");
 
             return TestResult.Successful($"Bundle upload URL generated: ID={response.Upload_id}, Expires={response.Expires_at}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Request bundle upload failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Request bundle upload");
 
-    private static async Task<TestResult> TestGetNonExistentAsset(ITestClient client, string[] args)
-    {
-        try
-        {
-            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
-
-            var request = new GetAssetRequest
+    private static Task<TestResult> TestGetNonExistentAsset(ITestClient client, string[] args) =>
+        ExecuteExpectingStatusAsync(
+            async () =>
             {
-                Asset_id = $"nonexistent-asset-{Guid.NewGuid()}"
-            };
+                var assetClient = GetServiceClient<IAssetClient>();
+                await assetClient.GetAssetAsync(new GetAssetRequest
+                {
+                    Asset_id = $"nonexistent-asset-{Guid.NewGuid()}"
+                });
+            },
+            404,
+            "Get non-existent asset");
 
-            try
+    private static Task<TestResult> TestGetNonExistentBundle(ITestClient client, string[] args) =>
+        ExecuteExpectingStatusAsync(
+            async () =>
             {
-                await assetClient.GetAssetAsync(request);
-                return TestResult.Failed("Expected 404 for non-existent asset, but request succeeded");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                return TestResult.Successful("Correctly returned 404 for non-existent asset");
-            }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+                var assetClient = GetServiceClient<IAssetClient>();
+                await assetClient.GetBundleAsync(new GetBundleRequest
+                {
+                    Bundle_id = $"nonexistent-bundle-{Guid.NewGuid()}",
+                    Format = BundleFormat.Bannou
+                });
+            },
+            404,
+            "Get non-existent bundle");
 
-    private static async Task<TestResult> TestGetNonExistentBundle(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCompleteAssetLifecycle(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
-
-            var request = new GetBundleRequest
-            {
-                Bundle_id = $"nonexistent-bundle-{Guid.NewGuid()}",
-                Format = BundleFormat.Bannou
-            };
-
-            try
-            {
-                await assetClient.GetBundleAsync(request);
-                return TestResult.Failed("Expected 404 for non-existent bundle, but request succeeded");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                return TestResult.Successful("Correctly returned 404 for non-existent bundle");
-            }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
-
-    private static async Task<TestResult> TestCompleteAssetLifecycle(ITestClient client, string[] args)
-    {
-        try
-        {
-            var assetClient = Program.ServiceProvider!.GetRequiredService<IAssetClient>();
+            var assetClient = GetServiceClient<IAssetClient>();
 
             // Step 1: Upload multiple assets
             Console.WriteLine("  Step 1: Uploading test assets...");
@@ -561,14 +440,5 @@ public class AssetTestHandler : IServiceTestHandler
             Console.WriteLine($"  Bundle size: {bundleWithUrl.Size} bytes, Assets: {bundleWithUrl.Asset_count}");
 
             return TestResult.Successful($"Complete lifecycle test passed: 3 assets uploaded, bundled, and retrieved");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Lifecycle test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Complete asset lifecycle");
 }

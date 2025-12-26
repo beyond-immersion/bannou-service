@@ -1,7 +1,6 @@
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -12,39 +11,35 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Note: GameSession APIs assume player identity comes from JWT authentication context.
 /// These tests use the service-to-service (internal) path which bypasses JWT auth for testing.
 /// </summary>
-public class GameSessionTestHandler : IServiceTestHandler
+public class GameSessionTestHandler : BaseHttpTestHandler
 {
-    public ServiceTest[] GetServiceTests()
-    {
-        return new[]
+    public override ServiceTest[] GetServiceTests() =>
+    [
+        // Core CRUD operations
+        new ServiceTest(TestCreateGameSession, "CreateGameSession", "GameSession", "Test game session creation endpoint"),
+        new ServiceTest(TestGetGameSession, "GetGameSession", "GameSession", "Test game session retrieval endpoint"),
+        new ServiceTest(TestListGameSessions, "ListGameSessions", "GameSession", "Test game session listing endpoint"),
+
+        // Session lifecycle operations
+        new ServiceTest(TestJoinGameSession, "JoinGameSession", "GameSession", "Test joining a game session"),
+        new ServiceTest(TestLeaveGameSession, "LeaveGameSession", "GameSession", "Test leaving a game session"),
+        new ServiceTest(TestKickPlayer, "KickPlayer", "GameSession", "Test kicking a player from session"),
+
+        // Game actions and chat
+        new ServiceTest(TestSendChatMessage, "SendChatMessage", "GameSession", "Test sending chat message to session"),
+        new ServiceTest(TestPerformGameAction, "PerformGameAction", "GameSession", "Test performing game action in session"),
+
+        // Error handling tests
+        new ServiceTest(TestGetNonExistentSession, "GetNonExistentSession", "GameSession", "Test 404 for non-existent session"),
+
+        // Complete lifecycle test
+        new ServiceTest(TestCompleteSessionLifecycle, "CompleteSessionLifecycle", "GameSession", "Test complete session lifecycle: create → join → action → leave"),
+    ];
+
+    private static Task<TestResult> TestCreateGameSession(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            // Core CRUD operations
-            new ServiceTest(TestCreateGameSession, "CreateGameSession", "GameSession", "Test game session creation endpoint"),
-            new ServiceTest(TestGetGameSession, "GetGameSession", "GameSession", "Test game session retrieval endpoint"),
-            new ServiceTest(TestListGameSessions, "ListGameSessions", "GameSession", "Test game session listing endpoint"),
-
-            // Session lifecycle operations
-            new ServiceTest(TestJoinGameSession, "JoinGameSession", "GameSession", "Test joining a game session"),
-            new ServiceTest(TestLeaveGameSession, "LeaveGameSession", "GameSession", "Test leaving a game session"),
-            new ServiceTest(TestKickPlayer, "KickPlayer", "GameSession", "Test kicking a player from session"),
-
-            // Game actions and chat
-            new ServiceTest(TestSendChatMessage, "SendChatMessage", "GameSession", "Test sending chat message to session"),
-            new ServiceTest(TestPerformGameAction, "PerformGameAction", "GameSession", "Test performing game action in session"),
-
-            // Error handling tests
-            new ServiceTest(TestGetNonExistentSession, "GetNonExistentSession", "GameSession", "Test 404 for non-existent session"),
-
-            // Complete lifecycle test
-            new ServiceTest(TestCompleteSessionLifecycle, "CompleteSessionLifecycle", "GameSession", "Test complete session lifecycle: create → join → action → leave"),
-        };
-    }
-
-    private static async Task<TestResult> TestCreateGameSession(ITestClient client, string[] args)
-    {
-        try
-        {
-            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
+            var gameSessionClient = GetServiceClient<IGameSessionClient>();
 
             var createRequest = new CreateGameSessionRequest
             {
@@ -63,22 +58,12 @@ public class GameSessionTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Session name mismatch: expected '{createRequest.SessionName}', got '{response.SessionName}'");
 
             return TestResult.Successful($"Game session created successfully: ID={response.SessionId}, Name={response.SessionName}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Session creation failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Create game session");
 
-    private static async Task<TestResult> TestGetGameSession(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetGameSession(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
+            var gameSessionClient = GetServiceClient<IGameSessionClient>();
 
             // First create a test session
             var createRequest = new CreateGameSessionRequest
@@ -106,22 +91,12 @@ public class GameSessionTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Session name mismatch: expected '{createRequest.SessionName}', got '{response.SessionName}'");
 
             return TestResult.Successful($"Game session retrieved successfully: ID={response.SessionId}, Name={response.SessionName}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Session retrieval failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get game session");
 
-    private static async Task<TestResult> TestListGameSessions(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestListGameSessions(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
+            var gameSessionClient = GetServiceClient<IGameSessionClient>();
 
             // Create a few test sessions first
             for (int i = 0; i < 3; i++)
@@ -149,22 +124,12 @@ public class GameSessionTestHandler : IServiceTestHandler
                 return TestResult.Failed("List response returned null sessions array");
 
             return TestResult.Successful($"Listed {response.Sessions.Count} game sessions (Total: {response.TotalCount})");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Session listing failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "List game sessions");
 
-    private static async Task<TestResult> TestJoinGameSession(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestJoinGameSession(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
+            var gameSessionClient = GetServiceClient<IGameSessionClient>();
 
             // First create a test session
             var createRequest = new CreateGameSessionRequest
@@ -193,22 +158,12 @@ public class GameSessionTestHandler : IServiceTestHandler
                 return TestResult.Failed("Join response indicated failure");
 
             return TestResult.Successful($"Successfully joined game session: SessionID={createResponse.SessionId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Session join failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Join game session");
 
-    private static async Task<TestResult> TestLeaveGameSession(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestLeaveGameSession(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
+            var gameSessionClient = GetServiceClient<IGameSessionClient>();
 
             // Create and join a session first
             var createRequest = new CreateGameSessionRequest
@@ -231,22 +186,12 @@ public class GameSessionTestHandler : IServiceTestHandler
             await gameSessionClient.LeaveGameSessionAsync(leaveRequest);
 
             return TestResult.Successful($"Successfully left game session: SessionID={createResponse.SessionId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Session leave failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Leave game session");
 
-    private static async Task<TestResult> TestKickPlayer(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestKickPlayer(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
+            var gameSessionClient = GetServiceClient<IGameSessionClient>();
 
             // Create a session
             var createRequest = new CreateGameSessionRequest
@@ -284,22 +229,12 @@ public class GameSessionTestHandler : IServiceTestHandler
             await gameSessionClient.KickPlayerAsync(kickRequest);
 
             return TestResult.Successful($"Successfully kicked player: SessionID={createResponse.SessionId}, KickedPlayerID={playerToKick}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Kick player failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Kick player");
 
-    private static async Task<TestResult> TestSendChatMessage(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSendChatMessage(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
+            var gameSessionClient = GetServiceClient<IGameSessionClient>();
 
             // Create a session first
             var createRequest = new CreateGameSessionRequest
@@ -324,22 +259,12 @@ public class GameSessionTestHandler : IServiceTestHandler
             await gameSessionClient.SendChatMessageAsync(chatRequest);
 
             return TestResult.Successful($"Chat message sent successfully to session {createResponse.SessionId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Send chat message failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Send chat message");
 
-    private static async Task<TestResult> TestPerformGameAction(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestPerformGameAction(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
+            var gameSessionClient = GetServiceClient<IGameSessionClient>();
 
             // Create a session first
             var createRequest = new CreateGameSessionRequest
@@ -371,53 +296,25 @@ public class GameSessionTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Game action failed");
 
             return TestResult.Successful($"Game action performed successfully: ActionID={response.ActionId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Perform game action failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Perform game action");
 
-    private static async Task<TestResult> TestGetNonExistentSession(ITestClient client, string[] args)
-    {
-        try
-        {
-            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
-
-            var getRequest = new GetGameSessionRequest
+    private static Task<TestResult> TestGetNonExistentSession(ITestClient client, string[] args) =>
+        ExecuteExpectingStatusAsync(
+            async () =>
             {
-                SessionId = Guid.NewGuid() // Non-existent session ID
-            };
+                var gameSessionClient = GetServiceClient<IGameSessionClient>();
+                await gameSessionClient.GetGameSessionAsync(new GetGameSessionRequest
+                {
+                    SessionId = Guid.NewGuid()
+                });
+            },
+            404,
+            "Get non-existent session");
 
-            try
-            {
-                await gameSessionClient.GetGameSessionAsync(getRequest);
-                return TestResult.Failed("Expected 404 for non-existent session, but request succeeded");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                return TestResult.Successful("Correctly returned 404 for non-existent session");
-            }
-        }
-        catch (ApiException ex)
+    private static Task<TestResult> TestCompleteSessionLifecycle(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            return TestResult.Failed($"Unexpected error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
-
-    private static async Task<TestResult> TestCompleteSessionLifecycle(ITestClient client, string[] args)
-    {
-        try
-        {
-            var gameSessionClient = Program.ServiceProvider!.GetRequiredService<IGameSessionClient>();
+            var gameSessionClient = GetServiceClient<IGameSessionClient>();
 
             // Step 1: Create session
             var createRequest = new CreateGameSessionRequest
@@ -463,14 +360,5 @@ public class GameSessionTestHandler : IServiceTestHandler
             Console.WriteLine($"  Step 6: Session verified (Status: {getResponse.Status})");
 
             return TestResult.Successful($"Complete session lifecycle test passed for session {createResponse.SessionId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Lifecycle test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Complete session lifecycle");
 }
