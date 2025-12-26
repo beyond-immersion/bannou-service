@@ -76,11 +76,6 @@ public static class Program
     }
 
     /// <summary>
-    /// Shared dapr client interface, used by all enabled service handlers.
-    /// </summary>
-    public static DaprClient DaprClient { get; private set; }
-
-    /// <summary>
     /// Plugin loader for managing service plugins.
     /// </summary>
     public static PluginLoader PluginLoader { get; private set; }
@@ -89,6 +84,12 @@ public static class Program
     /// Service heartbeat manager for publishing instance health to orchestrator.
     /// </summary>
     public static ServiceHeartbeatManager? HeartbeatManager { get; private set; }
+
+    /// <summary>
+    /// Mesh invocation client for service-to-service HTTP communication.
+    /// Replaces DaprClient for service invocation.
+    /// </summary>
+    public static IMeshInvocationClient? MeshInvocationClient { get; private set; }
 
     /// <summary>
     /// Token source for initiating a clean shutdown.
@@ -108,30 +109,6 @@ public static class Program
         }
 
         Logger.Log(LogLevel.Information, null, "Configuration built and validated.");
-
-        // build the dapr client
-        var daprClientBuilder = new DaprClientBuilder()
-            .UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig);
-
-        // Configure Dapr gRPC endpoint from environment variable (for containerized environments)
-        var daprGrpcEndpoint = Environment.GetEnvironmentVariable("DAPR_GRPC_ENDPOINT");
-        if (!string.IsNullOrEmpty(daprGrpcEndpoint))
-        {
-            daprClientBuilder.UseGrpcEndpoint(daprGrpcEndpoint);
-            Logger.Log(LogLevel.Information, null, $"Using Dapr gRPC endpoint from environment: {daprGrpcEndpoint}");
-        }
-
-        // Configure Dapr HTTP endpoint from environment variable (for containerized environments)
-        var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT");
-        if (!string.IsNullOrEmpty(daprHttpEndpoint))
-        {
-            daprClientBuilder.UseHttpEndpoint(daprHttpEndpoint);
-            Logger.Log(LogLevel.Information, null, $"Using Dapr HTTP endpoint from environment: {daprHttpEndpoint}");
-        }
-
-        DaprClient = daprClientBuilder.Build();
-
-        // Note: Dapr readiness check moved to after web server startup to avoid circular dependency
 
         // load the plugins
         if (!await LoadPlugins())
@@ -395,18 +372,21 @@ public static class Program
                 using var heartbeatLoggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
                 var heartbeatLogger = heartbeatLoggerFactory.CreateLogger<ServiceHeartbeatManager>();
                 var mappingResolver = webApp.Services.GetRequiredService<IServiceAppMappingResolver>();
-                HeartbeatManager = new ServiceHeartbeatManager(DaprClient, heartbeatLogger, PluginLoader, mappingResolver, Configuration);
+                var messageBus = webApp.Services.GetRequiredService<IMessageBus>();
+                HeartbeatManager = new ServiceHeartbeatManager(messageBus, heartbeatLogger, PluginLoader, mappingResolver, Configuration);
 
-                // Wait for Dapr connectivity using heartbeat publishing as the test
-                // This replaces the old WaitForDaprReadiness() - publishing a heartbeat proves both
-                // Dapr sidecar connectivity AND RabbitMQ pub/sub readiness
-                Logger.Log(LogLevel.Information, null, "Waiting for Dapr pub/sub connectivity via startup heartbeat...");
-                if (!await HeartbeatManager.WaitForDaprConnectivityAsync(
+                // Initialize mesh invocation client for service-to-service communication
+                MeshInvocationClient = webApp.Services.GetService<IMeshInvocationClient>();
+
+                // Wait for message bus connectivity using heartbeat publishing as the test
+                // Publishing a heartbeat proves RabbitMQ pub/sub readiness
+                Logger.Log(LogLevel.Information, null, "Waiting for message bus connectivity via startup heartbeat...");
+                if (!await HeartbeatManager.WaitForConnectivityAsync(
                     maxRetries: Configuration.Dapr_Readiness_Timeout > 0 ? 30 : 1,
                     retryDelayMs: 2000,
                     ShutdownCancellationTokenSource.Token))
                 {
-                    Logger.Log(LogLevel.Error, null, "Dapr pub/sub connectivity check failed - exiting application.");
+                    Logger.Log(LogLevel.Error, null, "Message bus connectivity check failed - exiting application.");
                     return 1;
                 }
 
@@ -496,8 +476,6 @@ public static class Program
             // perform cleanup
             if (webApp != null)
                 await webApp.DisposeAsync();
-
-            DaprClient?.Dispose();
         }
 
         Logger.Log(LogLevel.Debug, null, "Application shutdown complete.");
@@ -725,21 +703,20 @@ public static class Program
         WebApplication webApp,
         CancellationToken cancellationToken)
     {
-        const string StateStore = "connect-statestore";
+        const string StateStoreName = "connect-statestore";
         const string MappingsKey = "service-mappings:all";
 
         try
         {
-            if (DaprClient == null)
+            var stateStoreFactory = webApp.Services.GetService<IStateStoreFactory>();
+            if (stateStoreFactory == null)
             {
-                Logger.Log(LogLevel.Warning, null, "DaprClient not available, skipping persisted mappings load");
+                Logger.Log(LogLevel.Warning, null, "IStateStoreFactory not available, skipping persisted mappings load");
                 return;
             }
 
-            var mappings = await DaprClient.GetStateAsync<Dictionary<string, string>>(
-                StateStore,
-                MappingsKey,
-                cancellationToken: cancellationToken);
+            var stateStore = stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreName);
+            var mappings = await stateStore.GetAsync(MappingsKey, cancellationToken);
 
             if (mappings != null && mappings.Count > 0)
             {

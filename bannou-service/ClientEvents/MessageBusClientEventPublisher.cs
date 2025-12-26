@@ -1,4 +1,4 @@
-using Dapr.Client;
+using BeyondImmersion.BannouService.Messaging;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -6,28 +6,23 @@ using System.Runtime.Serialization;
 namespace BeyondImmersion.BannouService.ClientEvents;
 
 /// <summary>
-/// Dapr-based implementation of IClientEventPublisher.
-/// Publishes client events to session-specific RabbitMQ topics.
+/// Message bus implementation of IClientEventPublisher.
+/// Publishes client events to session-specific RabbitMQ topics via MassTransit.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Uses Dapr pub/sub to publish to dynamic topics (CONNECT_SESSION_{sessionId}).
-/// Dapr's RabbitMQ component creates fanout exchanges for each topic automatically.
+/// Uses IMessageBus to publish to dynamic topics (CONNECT_SESSION_{sessionId}).
+/// RabbitMQ creates fanout exchanges for each topic automatically.
 /// </para>
 /// <para>
 /// The Connect service uses direct RabbitMQ to subscribe to these exchanges
-/// because Dapr doesn't support dynamic runtime subscriptions.
+/// because MassTransit doesn't support dynamic runtime subscriptions.
 /// </para>
 /// </remarks>
-public class DaprClientEventPublisher : IClientEventPublisher
+public class MessageBusClientEventPublisher : IClientEventPublisher
 {
-    private readonly DaprClient _daprClient;
-    private readonly ILogger<DaprClientEventPublisher> _logger;
-
-    /// <summary>
-    /// Standard pub/sub component name for Bannou services.
-    /// </summary>
-    private const string PUBSUB_NAME = "bannou-pubsub";
+    private readonly IMessageBus _messageBus;
+    private readonly ILogger<MessageBusClientEventPublisher> _logger;
 
     /// <summary>
     /// Prefix for session-specific topics.
@@ -35,13 +30,13 @@ public class DaprClientEventPublisher : IClientEventPublisher
     private const string SESSION_TOPIC_PREFIX = "CONNECT_SESSION_";
 
     /// <summary>
-    /// Creates a new DaprClientEventPublisher.
+    /// Creates a new MessageBusClientEventPublisher.
     /// </summary>
-    /// <param name="daprClient">Dapr client for publishing events.</param>
+    /// <param name="messageBus">Message bus for publishing events.</param>
     /// <param name="logger">Logger for event operations.</param>
-    public DaprClientEventPublisher(DaprClient daprClient, ILogger<DaprClientEventPublisher> logger)
+    public MessageBusClientEventPublisher(IMessageBus messageBus, ILogger<MessageBusClientEventPublisher> logger)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -73,7 +68,7 @@ public class DaprClientEventPublisher : IClientEventPublisher
 
         try
         {
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, topic, eventData, cancellationToken);
+            await _messageBus.PublishAsync(topic, eventData, cancellationToken: cancellationToken);
 
             _logger.LogDebug(
                 "Published client event {EventName} to session {SessionId}",
@@ -127,7 +122,7 @@ public class DaprClientEventPublisher : IClientEventPublisher
                 var topic = $"{SESSION_TOPIC_PREFIX}{sessionId}";
                 try
                 {
-                    await _daprClient.PublishEventAsync(PUBSUB_NAME, topic, eventData, cancellationToken);
+                    await _messageBus.PublishAsync(topic, eventData, cancellationToken: cancellationToken);
                     Interlocked.Increment(ref successCount);
 
                     _logger.LogDebug(

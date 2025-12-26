@@ -34,6 +34,9 @@ public class StateServicePlugin : BaseBannouPlugin
         });
         services.AddSingleton<IStateStoreFactory, StateStoreFactory>();
 
+        // Register distributed lock provider (used by Permissions service and others for thread-safe operations)
+        services.AddSingleton<IDistributedLockProvider, Services.RedisDistributedLockProvider>();
+
         Logger?.LogDebug("State service dependencies configured");
     }
 

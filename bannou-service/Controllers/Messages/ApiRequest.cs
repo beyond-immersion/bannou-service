@@ -92,14 +92,20 @@ public class ApiRequest : ApiMessage
             else
                 requestUrl = $"{method}";
 
-            HttpRequestMessage requestMsg = Program.DaprClient.CreateInvokeMethodRequest(httpMethod.ToObject(), coordinatorService, requestUrl, [], this);
+            if (Program.MeshInvocationClient == null)
+            {
+                throw new InvalidOperationException("MeshInvocationClient not initialized");
+            }
+
+            HttpRequestMessage requestMsg = Program.MeshInvocationClient.CreateInvokeMethodRequest(httpMethod.ToObject(), coordinatorService, requestUrl);
+            requestMsg.Content = new StringContent(BannouJson.Serialize(this), System.Text.Encoding.UTF8, System.Net.Mime.MediaTypeNames.Application.Json);
             requestMsg.AddPropertyHeaders(this);
 
             if (additionalHeaders != null)
                 foreach (var headerKVP in additionalHeaders)
                     requestMsg.Headers.Add(headerKVP.Key, headerKVP.Value);
 
-            await Program.DaprClient.InvokeMethodAsync(requestMsg, Program.ShutdownCancellationTokenSource.Token);
+            await Program.MeshInvocationClient.InvokeMethodWithResponseAsync(requestMsg, Program.ShutdownCancellationTokenSource.Token);
             Response = new()
             {
                 StatusCode = System.Net.HttpStatusCode.OK,

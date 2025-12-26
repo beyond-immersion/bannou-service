@@ -1,24 +1,22 @@
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
 /// Manages heartbeat publishing for all services in a bannou instance.
-/// Publishes aggregated heartbeats via Dapr pub/sub on startup and periodically.
+/// Publishes aggregated heartbeats via message bus on startup and periodically.
 /// </summary>
 public class ServiceHeartbeatManager : IAsyncDisposable
 {
-    private readonly DaprClient _daprClient;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<ServiceHeartbeatManager> _logger;
     private readonly PluginLoader _pluginLoader;
-    private readonly HttpClient _httpClient;
     private readonly IServiceAppMappingResolver _mappingResolver;
 
     private Timer? _heartbeatTimer;
@@ -32,20 +30,13 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     private readonly ConcurrentDictionary<string, string> _suppressedServices = new();
 
     /// <summary>
-    /// Dapr HTTP endpoint for metadata API queries.
-    /// Supports standalone container architecture (e.g., "http://bannou-dapr:3500").
-    /// </summary>
-    private readonly string _daprHttpEndpoint;
-
-    /// <summary>
     /// Unique instance identifier for this bannou application instance.
     /// Used for log correlation across distributed systems.
     /// </summary>
     public Guid InstanceId { get; } = Guid.NewGuid();
 
     /// <summary>
-    /// The Dapr app-id for this instance. Resolved from environment variables.
-    /// Order: DAPR_APP_ID -> APP_ID -> "bannou" default
+    /// The app-id for this instance. Resolved from configuration.
     /// </summary>
     public string AppId { get; }
 
@@ -63,57 +54,29 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     public bool PermissionHeartbeatEnabled { get; }
 
     /// <summary>
-    /// The pub/sub component name for heartbeat events.
-    /// </summary>
-    private const string PUBSUB_NAME = "bannou-pubsub";
-
-    /// <summary>
     /// The topic name for heartbeat events.
     /// </summary>
     private const string HEARTBEAT_TOPIC = "bannou-service-heartbeats";
 
     /// <inheritdoc/>
     public ServiceHeartbeatManager(
-        DaprClient daprClient,
+        IMessageBus messageBus,
         ILogger<ServiceHeartbeatManager> logger,
         PluginLoader pluginLoader,
         IServiceAppMappingResolver mappingResolver,
         AppConfiguration configuration)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _pluginLoader = pluginLoader ?? throw new ArgumentNullException(nameof(pluginLoader));
         _mappingResolver = mappingResolver ?? throw new ArgumentNullException(nameof(mappingResolver));
         ArgumentNullException.ThrowIfNull(configuration);
-        _httpClient = new HttpClient();
 
         // Subscribe to mapping changes to suppress/resume heartbeats for services routed elsewhere
         _mappingResolver.MappingChanged += OnMappingChanged;
 
-        // Resolve app-id from configuration, falling back to env vars for Dapr bootstrap
-        // DAPR_APP_ID is a legitimate Tenet 21 exception - it's a Dapr bootstrap variable
-        // that must be read before configuration is available in some contexts.
-        AppId = configuration.DaprAppId
-            ?? Environment.GetEnvironmentVariable("DAPR_APP_ID")
-            ?? Environment.GetEnvironmentVariable("APP_ID")
-            ?? AppConstants.DEFAULT_APP_NAME;
-
-        // Get Dapr HTTP endpoint for standalone container architecture
-        // DAPR_HTTP_ENDPOINT and DAPR_HTTP_PORT are legitimate Tenet 21 exceptions -
-        // they're Dapr bootstrap variables needed for Dapr client communication.
-        var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT");
-        if (!string.IsNullOrEmpty(daprHttpEndpoint))
-        {
-            // Use the full endpoint URL
-            _daprHttpEndpoint = daprHttpEndpoint.TrimEnd('/');
-        }
-        else
-        {
-            // Fall back to localhost with port for sidecar mode
-            var daprPortStr = Environment.GetEnvironmentVariable("DAPR_HTTP_PORT");
-            var daprHttpPort = int.TryParse(daprPortStr, out var port) && port > 0 ? port : 3500;
-            _daprHttpEndpoint = $"http://localhost:{daprHttpPort}";
-        }
+        // Resolve app-id from configuration
+        AppId = configuration.DaprAppId ?? AppConstants.DEFAULT_APP_NAME;
 
         // Get heartbeat settings from configuration (Tenet 21 compliant)
         HeartbeatIntervalSeconds = configuration.HeartbeatIntervalSeconds > 0
@@ -128,11 +91,11 @@ public class ServiceHeartbeatManager : IAsyncDisposable
 
     /// <summary>
     /// Publish startup heartbeats for all enabled services.
-    /// This serves as both a heartbeat announcement and Dapr pub/sub connectivity check.
+    /// This serves as both a heartbeat announcement and message bus connectivity check.
     /// Should be called after all plugins are initialized and started.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>True if heartbeat published successfully (Dapr is ready), false otherwise</returns>
+    /// <returns>True if heartbeat published successfully, false otherwise</returns>
     public async Task<bool> PublishStartupHeartbeatAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Publishing startup heartbeat for {Count} enabled services...",
@@ -142,11 +105,10 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         {
             var heartbeat = BuildHeartbeatEvent(ServiceHeartbeatEventStatus.Healthy);
 
-            await _daprClient.PublishEventAsync(
-                PUBSUB_NAME,
+            await _messageBus.PublishAsync(
                 HEARTBEAT_TOPIC,
                 heartbeat,
-                cancellationToken);
+                cancellationToken: cancellationToken);
 
             _logger.LogInformation(
                 "✅ Startup heartbeat published successfully: AppId={AppId}, Services=[{Services}]",
@@ -157,73 +119,50 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Failed to publish startup heartbeat - Dapr pub/sub may not be ready");
+            _logger.LogError(ex, "❌ Failed to publish startup heartbeat - message bus may not be ready");
             return false;
         }
     }
 
     /// <summary>
-    /// Wait for Dapr connectivity by attempting to publish heartbeats with retries.
-    /// This blocks startup until Dapr sidecar is ready to send AND receive events.
-    /// Verifies both publishing capability and subscription registration.
+    /// Wait for message bus connectivity by attempting to publish heartbeats with retries.
+    /// This blocks startup until the message bus is ready.
     /// </summary>
     /// <param name="maxRetries">Maximum number of retry attempts</param>
     /// <param name="retryDelayMs">Delay between retries in milliseconds</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>True if Dapr is ready (publish + subscriptions), false if all retries exhausted</returns>
-    public async Task<bool> WaitForDaprConnectivityAsync(
+    /// <returns>True if message bus is ready, false if all retries exhausted</returns>
+    public async Task<bool> WaitForConnectivityAsync(
         int maxRetries = 30,
         int retryDelayMs = 2000,
         CancellationToken cancellationToken = default)
     {
-        // Discover expected subscriptions from plugin assemblies
-        var expectedSubscriptions = DiscoverExpectedSubscriptions();
         _logger.LogInformation(
-            "Waiting for Dapr connectivity (max {MaxRetries} attempts, {Delay}ms between retries). Expected subscriptions: [{Subscriptions}]",
-            maxRetries, retryDelayMs, string.Join(", ", expectedSubscriptions));
+            "Waiting for message bus connectivity (max {MaxRetries} attempts, {Delay}ms between retries)",
+            maxRetries, retryDelayMs);
 
         for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
             try
             {
-                // Step 1: Attempt to publish startup heartbeat (proves outbound works)
                 var publishSuccess = await PublishStartupHeartbeatAsync(cancellationToken);
-                if (!publishSuccess)
+                if (publishSuccess)
                 {
-                    _logger.LogWarning("Dapr publish check failed on attempt {Attempt}", attempt);
-                    if (attempt < maxRetries)
-                        await Task.Delay(retryDelayMs, cancellationToken);
-                    continue;
-                }
-
-                // Step 2: Verify subscriptions are registered (proves inbound works)
-                if (expectedSubscriptions.Count == 0)
-                {
-                    // No subscriptions expected - publish success is enough
-                    _logger.LogInformation("✅ Dapr connectivity confirmed on attempt {Attempt} (no subscriptions expected)", attempt);
+                    _logger.LogInformation("✅ Message bus connectivity confirmed on attempt {Attempt}", attempt);
                     return true;
                 }
 
-                var subscriptionsReady = await VerifySubscriptionsRegisteredAsync(expectedSubscriptions, cancellationToken);
-                if (subscriptionsReady)
-                {
-                    _logger.LogInformation("✅ Dapr connectivity confirmed on attempt {Attempt} (publish + subscriptions ready)", attempt);
-                    return true;
-                }
-
-                _logger.LogWarning(
-                    "Dapr publish succeeded but subscriptions not ready on attempt {Attempt}/{MaxRetries}",
-                    attempt, maxRetries);
+                _logger.LogWarning("Message bus publish check failed on attempt {Attempt}", attempt);
             }
             catch (OperationCanceledException)
             {
-                _logger.LogWarning("Dapr connectivity check cancelled");
+                _logger.LogWarning("Connectivity check cancelled");
                 return false;
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(
-                    "Dapr connectivity attempt {Attempt}/{MaxRetries} failed: {Error}",
+                    "Connectivity attempt {Attempt}/{MaxRetries} failed: {Error}",
                     attempt, maxRetries, ex.Message);
             }
 
@@ -233,133 +172,8 @@ public class ServiceHeartbeatManager : IAsyncDisposable
             }
         }
 
-        _logger.LogError("❌ Dapr connectivity check failed after {MaxRetries} attempts", maxRetries);
+        _logger.LogError("❌ Message bus connectivity check failed after {MaxRetries} attempts", maxRetries);
         return false;
-    }
-
-    /// <summary>
-    /// Discover expected pub/sub subscriptions by scanning plugin assemblies for [Topic] attributes.
-    /// </summary>
-    /// <returns>Set of topic names that should be registered with Dapr</returns>
-    private HashSet<string> DiscoverExpectedSubscriptions()
-    {
-        var subscriptions = new HashSet<string>();
-
-        _logger.LogDebug("Starting subscription discovery for {PluginCount} enabled plugins", _pluginLoader.EnabledPlugins.Count());
-
-        foreach (var plugin in _pluginLoader.EnabledPlugins)
-        {
-            try
-            {
-                var assembly = plugin.GetType().Assembly;
-                _logger.LogDebug("Scanning plugin '{Plugin}' assembly: {Assembly}", plugin.PluginName, assembly.FullName);
-
-                var typesWithTopicMethods = 0;
-                // Scan all types in the assembly for [Topic] attributes on methods
-                foreach (var type in assembly.GetTypes())
-                {
-                    var methodsWithTopics = 0;
-                    foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Instance))
-                    {
-                        // Check for Dapr.TopicAttribute
-                        var topicAttr = method.GetCustomAttributes()
-                            .FirstOrDefault(a => a.GetType().FullName == "Dapr.TopicAttribute");
-
-                        if (topicAttr != null)
-                        {
-                            methodsWithTopics++;
-                            // Get the topic name from the attribute (second constructor parameter)
-                            var topicProp = topicAttr.GetType().GetProperty("Name");
-                            var topic = topicProp?.GetValue(topicAttr) as string;
-
-                            if (!string.IsNullOrEmpty(topic))
-                            {
-                                subscriptions.Add(topic);
-                                _logger.LogInformation("✅ Discovered subscription topic '{Topic}' from {Type}.{Method} in plugin '{Plugin}'",
-                                    topic, type.Name, method.Name, plugin.PluginName);
-                            }
-                            else
-                            {
-                                _logger.LogWarning("Found [Topic] attribute on {Type}.{Method} but topic name was null/empty", type.Name, method.Name);
-                            }
-                        }
-                    }
-                    if (methodsWithTopics > 0)
-                    {
-                        typesWithTopicMethods++;
-                    }
-                }
-                _logger.LogDebug("Plugin '{Plugin}': Scanned {TypeCount} types, found {TopicTypeCount} types with [Topic] methods",
-                    plugin.PluginName, assembly.GetTypes().Length, typesWithTopicMethods);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error scanning plugin {Plugin} for subscriptions", plugin.PluginName);
-            }
-        }
-
-        _logger.LogInformation("📋 Subscription discovery complete: Found {Count} expected topics: [{Topics}]",
-            subscriptions.Count, string.Join(", ", subscriptions.OrderBy(t => t)));
-
-        return subscriptions;
-    }
-
-    /// <summary>
-    /// Verify that expected subscriptions are registered with Dapr by querying the metadata API.
-    /// </summary>
-    /// <param name="expectedTopics">Set of topic names that should be registered</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>True if all expected subscriptions are registered, false otherwise</returns>
-    private async Task<bool> VerifySubscriptionsRegisteredAsync(
-        HashSet<string> expectedTopics,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            // Query Dapr metadata API (using endpoint for standalone container support)
-            var metadataUrl = $"{_daprHttpEndpoint}/v1.0/metadata";
-            var response = await _httpClient.GetAsync(metadataUrl, cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning("Failed to query Dapr metadata API: {StatusCode}", response.StatusCode);
-                return false;
-            }
-
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            var metadata = BannouJson.Deserialize<DaprMetadataResponse>(content);
-
-            if (metadata?.Subscriptions == null || metadata.Subscriptions.Count == 0)
-            {
-                _logger.LogDebug("Dapr metadata shows no subscriptions registered yet");
-                return false;
-            }
-
-            // Check if all expected topics are in the registered subscriptions
-            var registeredTopics = metadata.Subscriptions
-                .Select(s => s.Topic)
-                .Where(t => !string.IsNullOrEmpty(t))
-                .ToHashSet();
-
-            var missingTopics = expectedTopics.Except(registeredTopics).ToList();
-
-            if (missingTopics.Count > 0)
-            {
-                _logger.LogDebug("Missing subscriptions: [{Missing}]. Registered: [{Registered}]",
-                    string.Join(", ", missingTopics),
-                    string.Join(", ", registeredTopics));
-                return false;
-            }
-
-            _logger.LogInformation("✅ All expected subscriptions registered: [{Topics}]",
-                string.Join(", ", expectedTopics));
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error verifying Dapr subscriptions");
-            return false;
-        }
     }
 
     /// <summary>
@@ -396,8 +210,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         {
             var heartbeat = BuildHeartbeatEvent(DetermineOverallStatus());
 
-            await _daprClient.PublishEventAsync(
-                PUBSUB_NAME,
+            await _messageBus.PublishAsync(
                 HEARTBEAT_TOPIC,
                 heartbeat);
 
@@ -455,11 +268,10 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         {
             var heartbeat = BuildHeartbeatEvent(ServiceHeartbeatEventStatus.Shutting_down);
 
-            await _daprClient.PublishEventAsync(
-                PUBSUB_NAME,
+            await _messageBus.PublishAsync(
                 HEARTBEAT_TOPIC,
                 heartbeat,
-                cancellationToken);
+                cancellationToken: cancellationToken);
 
             _logger.LogInformation("Shutdown heartbeat published successfully");
         }
@@ -696,40 +508,6 @@ public class ServiceHeartbeatManager : IAsyncDisposable
             _heartbeatTimer = null;
         }
 
-        _httpClient.Dispose();
         _logger.LogDebug("ServiceHeartbeatManager disposed");
     }
-}
-
-/// <summary>
-/// Response model for Dapr metadata API (/v1.0/metadata).
-/// Only includes fields needed for subscription verification.
-/// </summary>
-internal class DaprMetadataResponse
-{
-    /// <summary>
-    /// List of registered pub/sub subscriptions.
-    /// </summary>
-    public List<DaprSubscriptionInfo>? Subscriptions { get; set; }
-}
-
-/// <summary>
-/// Subscription information from Dapr metadata.
-/// </summary>
-internal class DaprSubscriptionInfo
-{
-    /// <summary>
-    /// The pub/sub component name (e.g., "bannou-pubsub").
-    /// </summary>
-    public string? PubsubName { get; set; }
-
-    /// <summary>
-    /// The topic name (e.g., "account.deleted").
-    /// </summary>
-    public string? Topic { get; set; }
-
-    /// <summary>
-    /// The subscription type (PROGRAMMATIC or DECLARATIVE).
-    /// </summary>
-    public string? Type { get; set; }
 }

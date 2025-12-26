@@ -39,7 +39,7 @@ public class ClientEventRabbitMQSubscriber : IAsyncDisposable
 
     /// <summary>
     /// Prefix for session-specific topics/exchanges.
-    /// Must match DaprClientEventPublisher.SESSION_TOPIC_PREFIX.
+    /// Must match MessageBusClientEventPublisher.SESSION_TOPIC_PREFIX.
     /// </summary>
     private const string SESSION_TOPIC_PREFIX = "CONNECT_SESSION_";
 
