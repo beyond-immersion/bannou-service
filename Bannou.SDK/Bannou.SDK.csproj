@@ -106,6 +106,7 @@
       <Compile Include="../bannou-service/Generated/Events/CharacterEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/DocumentationEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/RealmLifecycleEvents.cs" />
+      <Compile Include="../bannou-service/Generated/Events/ConnectEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/RelationshipEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/CommonEventsModels.cs" />
       <Compile Include="../lib-asset/Generated/AssetClientEventsModels.cs" />

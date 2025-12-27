@@ -1,6 +1,6 @@
 # Generated Configuration Reference
 
-> **Auto-generated**: 2025-12-26 18:21:24
+> **Auto-generated**: 2025-12-26 20:01:05
 > **Source**: `schemas/*-configuration.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -44,7 +44,7 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `AUTH_CONNECT_URL` | string | `ws://localhost:5014/connect` | URL to the Connect service for WebSocket connections |
+| `AUTH_CONNECT_URL` | string | **REQUIRED** | URL to the Connect service for WebSocket connections. REQUIR... |
 | `AUTH_DISCORD_CLIENT_ID` | string | **REQUIRED** | Discord OAuth client ID |
 | `AUTH_DISCORD_CLIENT_SECRET` | string | **REQUIRED** | Discord OAuth client secret |
 | `AUTH_DISCORD_REDIRECT_URI` | string | **REQUIRED** | Discord OAuth redirect URI |
@@ -152,7 +152,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_LOAD_THRESHOLD_PERCENT` | int | `80` | Load percentage above which an endpoint is considered high-l... |
 | `MESH_MAX_RETRIES` | int | `3` | Maximum retry attempts for failed service calls |
 | `MESH_METRICS_ENABLED` | bool | `true` | Whether to collect routing metrics |
-| `MESH_REDIS_CONNECTION_STRING` | string | `localhost:6379` | Redis connection string for service registry storage |
+| `MESH_REDIS_CONNECTION_STRING` | string | **REQUIRED** | Redis connection string for service registry storage. REQUIR... |
 | `MESH_REDIS_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Total timeout in seconds for Redis connection establishment ... |
 | `MESH_REDIS_CONNECT_RETRY_COUNT` | int | `5` | Maximum number of Redis connection retry attempts |
 | `MESH_REDIS_KEY_PREFIX` | string | `mesh:` | Prefix for all mesh-related Redis keys |
@@ -286,8 +286,8 @@ This document lists all configuration options defined in Bannou's configuration 
 ## Configuration Summary
 
 - **Total properties**: 165
-- **Required (no default)**: 31
-- **Optional (has default)**: 134
+- **Required (no default)**: 33
+- **Optional (has default)**: 132
 
 ## Environment Variable Naming Convention
 
