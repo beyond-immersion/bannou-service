@@ -98,7 +98,7 @@ public partial class OrchestratorService : IOrchestratorService
 
         // Register event handlers via partial class (OrchestratorServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
+        RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>

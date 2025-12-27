@@ -146,6 +146,9 @@ public class Program
                 builder.SetMinimumLevel(LogLevel.Information);
             });
 
+            // Register AppConfiguration required by ServiceAppMappingResolver
+            serviceCollection.AddSingleton<BeyondImmersion.BannouService.Configuration.AppConfiguration>();
+
             // Configure MassTransit with RabbitMQ for pub/sub communication
             var rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "rabbitmq";
             var rabbitPort = ushort.Parse(Environment.GetEnvironmentVariable("RABBITMQ_PORT") ?? "5672");
