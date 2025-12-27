@@ -152,6 +152,39 @@ public class WebSocketConnectionManager
     }
 
     /// <summary>
+    /// Sends a message to all connected admin sessions.
+    /// Filters connections by checking for "admin" role in ConnectionState.UserRoles.
+    /// </summary>
+    public async Task<int> SendToAdminsAsync(BinaryMessage message, CancellationToken cancellationToken = default)
+    {
+        var adminConnections = _connections.Values
+            .Where(c => c.WebSocket.State == WebSocketState.Open &&
+                        c.ConnectionState.UserRoles?.Any(r =>
+                            r.Equals("admin", StringComparison.OrdinalIgnoreCase)) == true)
+            .ToList();
+
+        if (adminConnections.Count == 0)
+        {
+            return 0;
+        }
+
+        var tasks = adminConnections.Select(c => SendMessageAsync(c.SessionId, message, cancellationToken));
+        var results = await Task.WhenAll(tasks);
+        return results.Count(r => r);
+    }
+
+    /// <summary>
+    /// Gets the count of connected admin sessions.
+    /// </summary>
+    public int GetAdminConnectionCount()
+    {
+        return _connections.Values.Count(c =>
+            c.WebSocket.State == WebSocketState.Open &&
+            c.ConnectionState.UserRoles?.Any(r =>
+                r.Equals("admin", StringComparison.OrdinalIgnoreCase)) == true);
+    }
+
+    /// <summary>
     /// Cleanup expired connections and pending messages.
     /// </summary>
     private void CleanupExpiredConnections(object? state)

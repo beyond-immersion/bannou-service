@@ -5,15 +5,13 @@ info:
     Event models for Mesh service RabbitMQ pub/sub.
     Mesh publishes endpoint lifecycle events and subscribes to heartbeats.
   version: 1.0.0
-
-# Event subscriptions - mesh listens to service heartbeats for health updates
-x-event-subscriptions:
-  - topic: bannou-service-heartbeats
-    event: ServiceHeartbeatEvent
-    handler: HandleServiceHeartbeat
-  - topic: bannou-full-service-mappings
-    event: FullServiceMappingsEvent
-    handler: HandleServiceMappings
+  x-event-subscriptions:
+    - topic: bannou-service-heartbeats
+      event: ServiceHeartbeatEvent
+      handler: HandleServiceHeartbeat
+    - topic: bannou-full-service-mappings
+      event: FullServiceMappingsEvent
+      handler: HandleServiceMappings
 
 paths: {}
 

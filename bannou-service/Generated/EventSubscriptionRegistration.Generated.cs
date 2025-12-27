@@ -29,12 +29,17 @@ public static class EventSubscriptionRegistration
 
         // From connect-events.yaml
         EventSubscriptionRegistry.Register<SessionInvalidatedEvent>("session.invalidated");
+        EventSubscriptionRegistry.Register<ServiceErrorEvent>("service.error");
 
         // From game-session-events.yaml
         EventSubscriptionRegistry.Register<SessionConnectedEvent>("session.connected");
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
         EventSubscriptionRegistry.Register<SessionReconnectedEvent>("session.reconnected");
         EventSubscriptionRegistry.Register<SubscriptionUpdatedEvent>("subscription.updated");
+
+        // From mesh-events.yaml
+        EventSubscriptionRegistry.Register<ServiceHeartbeatEvent>("bannou-service-heartbeats");
+        EventSubscriptionRegistry.Register<FullServiceMappingsEvent>("bannou-full-service-mappings");
 
         // From permissions-events.yaml
         EventSubscriptionRegistry.Register<ServiceRegistrationEvent>("permissions.service-registered");
