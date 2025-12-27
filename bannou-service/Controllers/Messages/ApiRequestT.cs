@@ -3,40 +3,13 @@ using System.Reflection;
 namespace BeyondImmersion.BannouService.Controllers.Messages;
 
 /// <summary>
-/// The basic API controller request payload model.
+/// Generic API controller request payload model with typed response support.
+/// Used for header property transfer between requests and responses.
+/// This class is retained for the CreateResponse functionality used in unit tests.
 /// </summary>
 public class ApiRequest<T> : ApiRequest
     where T : ApiResponse, new()
 {
-    /// <summary>
-    /// The typed response from the API request.
-    /// </summary>
-    public new T? Response { get; protected set; }
-
-    /// <summary>
-    /// Executes an API request with typed response handling.
-    /// </summary>
-    /// <param name="service">The target service name.</param>
-    /// <param name="method">The method to invoke.</param>
-    /// <param name="additionalHeaders">Optional additional headers.</param>
-    /// <param name="httpMethod">The HTTP method to use.</param>
-    /// <returns>True if the request was successful, false otherwise.</returns>
-    public new virtual async Task<bool> ExecuteRequest(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
-    {
-        var result = await ExecuteRequest_INTERNAL<T>(service, method, additionalHeaders, httpMethod);
-
-        if (base.Response != null)
-        {
-            try
-            {
-                this.Response = base.Response as T;
-            }
-            catch { }
-        }
-
-        return result;
-    }
-
     /// <summary>
     /// Creates a response instance and copies header properties from the request.
     /// </summary>

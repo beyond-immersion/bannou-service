@@ -1,7 +1,8 @@
 using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -16,17 +17,41 @@ public class AccountsServiceTests
 {
     private readonly Mock<ILogger<AccountsService>> _mockLogger;
     private readonly AccountsServiceConfiguration _configuration;
-    private readonly Mock<DaprClient> _mockDaprClient;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<AccountModel>> _mockAccountStore;
+    private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<IStateStore<List<AuthMethodInfo>>> _mockAuthMethodsStore;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+
+    private const string ACCOUNTS_STATE_STORE = "accounts-statestore";
 
     public AccountsServiceTests()
     {
         _mockLogger = new Mock<ILogger<AccountsService>>();
         _configuration = new AccountsServiceConfiguration();
-        _mockDaprClient = new Mock<DaprClient>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockAccountStore = new Mock<IStateStore<AccountModel>>();
+        _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockStringStore = new Mock<IStateStore<string>>();
+        _mockAuthMethodsStore = new Mock<IStateStore<List<AuthMethodInfo>>>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup default factory returns
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<AccountModel>(ACCOUNTS_STATE_STORE))
+            .Returns(_mockAccountStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<List<string>>(ACCOUNTS_STATE_STORE))
+            .Returns(_mockListStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<string>(ACCOUNTS_STATE_STORE))
+            .Returns(_mockStringStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<List<AuthMethodInfo>>(ACCOUNTS_STATE_STORE))
+            .Returns(_mockAuthMethodsStore.Object);
     }
 
     [Fact]
@@ -36,8 +61,8 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockEventConsumer.Object);
 
         Assert.NotNull(service);
@@ -127,8 +152,8 @@ public class AccountsServiceTests
         return new AccountsService(
             _mockLogger.Object,
             configuration,
-            _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockEventConsumer.Object);
     }
 
@@ -145,28 +170,40 @@ public class AccountsServiceTests
             PasswordHash = "hashed_password"
         };
 
-        // Mock GetStateAsync for accounts-list (used by AddAccountToIndexAsync)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                "accounts-statestore",
-                "accounts-list",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+        // Mock email index lookup (returns null - email doesn't exist)
+        _mockStringStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k.StartsWith("email-index-")),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync((string?)null);
+
+        // Mock GetWithETagAsync for accounts-list (used by AddAccountToIndexAsync)
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(
+                "accounts-list",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                "accounts-statestore",
+        _mockAccountStore
+            .Setup(s => s.SaveAsync(
                 It.Is<string>(k => k.StartsWith("account-")),
                 It.IsAny<AccountModel>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, AccountModel, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedAccount = data);
+            .Callback<string, AccountModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedAccount = data)
+            .ReturnsAsync("etag-1");
+
+        // Mock list save
+        _mockListStore
+            .Setup(s => s.SaveAsync(
+                "accounts-list",
+                It.IsAny<List<string>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -195,28 +232,40 @@ public class AccountsServiceTests
             PasswordHash = "hashed_password"
         };
 
-        // Mock GetStateAsync for accounts-list (used by AddAccountToIndexAsync)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                "accounts-statestore",
-                "accounts-list",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+        // Mock email index lookup (returns null - email doesn't exist)
+        _mockStringStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k.StartsWith("email-index-")),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync((string?)null);
+
+        // Mock GetWithETagAsync for accounts-list
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(
+                "accounts-list",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                "accounts-statestore",
+        _mockAccountStore
+            .Setup(s => s.SaveAsync(
                 It.Is<string>(k => k.StartsWith("account-")),
                 It.IsAny<AccountModel>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, AccountModel, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedAccount = data);
+            .Callback<string, AccountModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedAccount = data)
+            .ReturnsAsync("etag-1");
+
+        // Mock list save
+        _mockListStore
+            .Setup(s => s.SaveAsync(
+                "accounts-list",
+                It.IsAny<List<string>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -248,24 +297,19 @@ public class AccountsServiceTests
             UpdatedAt = DateTimeOffset.UtcNow
         };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<AccountModel>(
-                "accounts-statestore",
+        _mockAccountStore
+            .Setup(s => s.GetAsync(
                 $"account-{accountId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(accountModel);
 
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                "accounts-statestore",
+        _mockAccountStore
+            .Setup(s => s.SaveAsync(
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync("etag-1");
 
         // Act
         var (status, _) = await service.UpdatePasswordHashAsync(new UpdatePasswordRequest
@@ -276,10 +320,10 @@ public class AccountsServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            "bannou-pubsub",
+        _mockMessageBus.Verify(m => m.PublishAsync(
             "account.updated",
             It.IsAny<AccountUpdatedEvent>(),
+            It.IsAny<PublishOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -300,24 +344,19 @@ public class AccountsServiceTests
             UpdatedAt = DateTimeOffset.UtcNow
         };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<AccountModel>(
-                "accounts-statestore",
+        _mockAccountStore
+            .Setup(s => s.GetAsync(
                 $"account-{accountId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(accountModel);
 
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                "accounts-statestore",
+        _mockAccountStore
+            .Setup(s => s.SaveAsync(
                 $"account-{accountId}",
                 It.IsAny<AccountModel>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync("etag-1");
 
         // Act
         var (status, _) = await service.UpdateVerificationStatusAsync(new UpdateVerificationRequest
@@ -328,10 +367,10 @@ public class AccountsServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            "bannou-pubsub",
+        _mockMessageBus.Verify(m => m.PublishAsync(
             "account.updated",
             It.IsAny<AccountUpdatedEvent>(),
+            It.IsAny<PublishOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -348,28 +387,40 @@ public class AccountsServiceTests
             PasswordHash = "hashed_password"
         };
 
-        // Mock GetStateAsync for accounts-list (used by AddAccountToIndexAsync)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                "accounts-statestore",
-                "accounts-list",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+        // Mock email index lookup (returns null - email doesn't exist)
+        _mockStringStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k.StartsWith("email-index-")),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync((string?)null);
+
+        // Mock GetWithETagAsync for accounts-list
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(
+                "accounts-list",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                "accounts-statestore",
+        _mockAccountStore
+            .Setup(s => s.SaveAsync(
                 It.Is<string>(k => k.StartsWith("account-")),
                 It.IsAny<AccountModel>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, AccountModel, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedAccount = data);
+            .Callback<string, AccountModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedAccount = data)
+            .ReturnsAsync("etag-1");
+
+        // Mock list save
+        _mockListStore
+            .Setup(s => s.SaveAsync(
+                "accounts-list",
+                It.IsAny<List<string>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -402,28 +453,40 @@ public class AccountsServiceTests
             PasswordHash = "hashed_password"
         };
 
-        // Mock GetStateAsync for accounts-list (used by AddAccountToIndexAsync)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                "accounts-statestore",
-                "accounts-list",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+        // Mock email index lookup (returns null - email doesn't exist)
+        _mockStringStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k.StartsWith("email-index-")),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync((string?)null);
+
+        // Mock GetWithETagAsync for accounts-list
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(
+                "accounts-list",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                "accounts-statestore",
+        _mockAccountStore
+            .Setup(s => s.SaveAsync(
                 It.Is<string>(k => k.StartsWith("account-")),
                 It.IsAny<AccountModel>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, AccountModel, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedAccount = data);
+            .Callback<string, AccountModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedAccount = data)
+            .ReturnsAsync("etag-1");
+
+        // Mock list save
+        _mockListStore
+            .Setup(s => s.SaveAsync(
+                "accounts-list",
+                It.IsAny<List<string>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -449,28 +512,40 @@ public class AccountsServiceTests
             Roles = new List<string> { "moderator", "editor" }
         };
 
-        // Mock GetStateAsync for accounts-list (used by AddAccountToIndexAsync)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                "accounts-statestore",
-                "accounts-list",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+        // Mock email index lookup (returns null - email doesn't exist)
+        _mockStringStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k.StartsWith("email-index-")),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync((string?)null);
+
+        // Mock GetWithETagAsync for accounts-list
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(
+                "accounts-list",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                "accounts-statestore",
+        _mockAccountStore
+            .Setup(s => s.SaveAsync(
                 It.Is<string>(k => k.StartsWith("account-")),
                 It.IsAny<AccountModel>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, AccountModel, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedAccount = data);
+            .Callback<string, AccountModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedAccount = data)
+            .ReturnsAsync("etag-1");
+
+        // Mock list save
+        _mockListStore
+            .Setup(s => s.SaveAsync(
+                "accounts-list",
+                It.IsAny<List<string>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -504,28 +579,40 @@ public class AccountsServiceTests
             Roles = new List<string> { "admin" } // Already has admin
         };
 
-        // Mock GetStateAsync for accounts-list (used by AddAccountToIndexAsync)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                "accounts-statestore",
-                "accounts-list",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+        // Mock email index lookup (returns null - email doesn't exist)
+        _mockStringStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k.StartsWith("email-index-")),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
+            .ReturnsAsync((string?)null);
+
+        // Mock GetWithETagAsync for accounts-list
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(
+                "accounts-list",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string>(), (string?)null));
 
         // Track what's saved
         AccountModel? savedAccount = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                "accounts-statestore",
+        _mockAccountStore
+            .Setup(s => s.SaveAsync(
                 It.Is<string>(k => k.StartsWith("account-")),
                 It.IsAny<AccountModel>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, AccountModel, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedAccount = data);
+            .Callback<string, AccountModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedAccount = data)
+            .ReturnsAsync("etag-1");
+
+        // Mock list save
+        _mockListStore
+            .Setup(s => s.SaveAsync(
+                "accounts-list",
+                It.IsAny<List<string>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -555,8 +642,8 @@ public class AccountsServiceTests
         Assert.Throws<ArgumentNullException>(() => new AccountsService(
             null!,
             _configuration,
-            _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockEventConsumer.Object));
     }
 
@@ -567,20 +654,20 @@ public class AccountsServiceTests
         Assert.Throws<ArgumentNullException>(() => new AccountsService(
             _mockLogger.Object,
             null!,
-            _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockEventConsumer.Object));
     }
 
     [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrow()
+    public void Constructor_WithNullStateStoreFactory_ShouldThrow()
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AccountsService(
             _mockLogger.Object,
             _configuration,
             null!,
-            _mockErrorEventEmitter.Object,
+            _mockMessageBus.Object,
             _mockEventConsumer.Object));
     }
 
@@ -595,9 +682,16 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockEventConsumer.Object);
+
+        // Mock empty accounts list
+        _mockListStore
+            .Setup(s => s.GetAsync(
+                "accounts-list",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest());
@@ -615,9 +709,16 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockEventConsumer.Object);
+
+        // Mock empty accounts list
+        _mockListStore
+            .Setup(s => s.GetAsync(
+                "accounts-list",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { Page = -5 });
@@ -635,9 +736,16 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockEventConsumer.Object);
+
+        // Mock empty accounts list
+        _mockListStore
+            .Setup(s => s.GetAsync(
+                "accounts-list",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { PageSize = -10 });
@@ -655,9 +763,16 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockEventConsumer.Object);
+
+        // Mock empty accounts list
+        _mockListStore
+            .Setup(s => s.GetAsync(
+                "accounts-list",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { Page = 0 });
@@ -679,8 +794,8 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockEventConsumer.Object);
 
         var request = new CreateAccountRequest
@@ -689,6 +804,38 @@ public class AccountsServiceTests
             DisplayName = "New User",
             PasswordHash = "hashed_password"
         };
+
+        // Mock email index lookup (returns null - email doesn't exist)
+        _mockStringStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k.StartsWith("email-index-")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Mock GetWithETagAsync for accounts-list
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(
+                "accounts-list",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string>(), (string?)null));
+
+        // Mock account save
+        _mockAccountStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<AccountModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        // Mock list save
+        _mockListStore
+            .Setup(s => s.SaveAsync(
+                "accounts-list",
+                It.IsAny<List<string>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -708,8 +855,8 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockEventConsumer.Object);
 
         var request = new CreateAccountRequest
@@ -719,6 +866,37 @@ public class AccountsServiceTests
             PasswordHash = "hashed_password",
             EmailVerified = true
         };
+
+        // Mock email index lookup
+        _mockStringStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k.StartsWith("email-index-")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Mock GetWithETagAsync for accounts-list
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(
+                "accounts-list",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string>(), (string?)null));
+
+        // Mock saves
+        _mockAccountStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<AccountModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockListStore
+            .Setup(s => s.SaveAsync(
+                "accounts-list",
+                It.IsAny<List<string>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -736,8 +914,8 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockEventConsumer.Object);
 
         var request = new CreateAccountRequest
@@ -747,6 +925,37 @@ public class AccountsServiceTests
             PasswordHash = "hashed_password"
             // EmailVerified not set
         };
+
+        // Mock email index lookup
+        _mockStringStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k.StartsWith("email-index-")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Mock GetWithETagAsync for accounts-list
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(
+                "accounts-list",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string>(), (string?)null));
+
+        // Mock saves
+        _mockAccountStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<AccountModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockListStore
+            .Setup(s => s.SaveAsync(
+                "accounts-list",
+                It.IsAny<List<string>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
@@ -764,9 +973,40 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockEventConsumer.Object);
+
+        // Mock email index lookup
+        _mockStringStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k.StartsWith("email-index-")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Mock GetWithETagAsync for accounts-list
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(
+                "accounts-list",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string>(), (string?)null));
+
+        // Mock saves
+        _mockAccountStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<AccountModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockListStore
+            .Setup(s => s.SaveAsync(
+                "accounts-list",
+                It.IsAny<List<string>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         var accountIds = new List<Guid>();
 
@@ -797,9 +1037,40 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockEventConsumer.Object);
+
+        // Mock email index lookup
+        _mockStringStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k.StartsWith("email-index-")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Mock GetWithETagAsync for accounts-list
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(
+                "accounts-list",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string>(), (string?)null));
+
+        // Mock saves
+        _mockAccountStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<AccountModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockListStore
+            .Setup(s => s.SaveAsync(
+                "accounts-list",
+                It.IsAny<List<string>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Truncate to second precision to match Unix timestamp storage
         var beforeCreation = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
@@ -833,8 +1104,8 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object,
-            _mockErrorEventEmitter.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockEventConsumer.Object);
 
         var request = new CreateAccountRequest
@@ -843,6 +1114,37 @@ public class AccountsServiceTests
             DisplayName = "Auth Methods Test",
             PasswordHash = "hashed_password"
         };
+
+        // Mock email index lookup
+        _mockStringStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k.StartsWith("email-index-")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Mock GetWithETagAsync for accounts-list
+        _mockListStore
+            .Setup(s => s.GetWithETagAsync(
+                "accounts-list",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<string>(), (string?)null));
+
+        // Mock saves
+        _mockAccountStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<AccountModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockListStore
+            .Setup(s => s.SaveAsync(
+                "accounts-list",
+                It.IsAny<List<string>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
 
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);

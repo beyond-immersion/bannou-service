@@ -1,6 +1,6 @@
 -- Queue Authentication Handler
 -- Validates queue tokens and API access
--- Based on API-DESIGN.md security requirements
+-- Based on docs/BANNOU_DESIGN.md security architecture
 
 local redis = require "resty.redis"
 local cjson = require "cjson"

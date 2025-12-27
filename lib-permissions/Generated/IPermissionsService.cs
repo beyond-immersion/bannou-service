@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.Permissions;
 /// <summary>
 /// Service interface for Permissions API
 /// </summary>
-public partial interface IPermissionsService : IDaprService
+public partial interface IPermissionsService : IBannouService
 {
     /// <summary>
     /// GetCapabilities operation

@@ -1,0 +1,102 @@
+openapi: 3.0.3
+info:
+  title: Game Session Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for game-session service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: game-session-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    GameSessionCreatedEvent:
+      type: object
+      description: Published to game-session.created when a gamesession is created
+      required:
+      - eventId
+      - timestamp
+      - sessionId
+      - gameType
+      - status
+      - createdAt
+      properties:
+        eventId: &id001
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp: &id002
+          type: string
+          format: date-time
+          description: When this event occurred
+        sessionId: &id003
+          type: string
+        gameType: &id004
+          type: string
+        sessionName: &id005
+          type: string
+        status: &id006
+          type: string
+        maxPlayers: &id007
+          type: integer
+        currentPlayers: &id008
+          type: integer
+        isPrivate: &id009
+          type: boolean
+        owner: &id010
+          type: string
+          format: uuid
+        createdAt: &id011
+          type: string
+          format: date-time
+    GameSessionUpdatedEvent:
+      type: object
+      description: Published to game-session.updated when a gamesession is updated
+      required:
+      - eventId
+      - timestamp
+      - sessionId
+      - gameType
+      - status
+      - createdAt
+      - changedFields
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        sessionId: *id003
+        gameType: *id004
+        sessionName: *id005
+        status: *id006
+        maxPlayers: *id007
+        currentPlayers: *id008
+        isPrivate: *id009
+        owner: *id010
+        createdAt: *id011
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    GameSessionDeletedEvent:
+      type: object
+      description: Published to game-session.deleted when a gamesession is deleted
+      required:
+      - eventId
+      - timestamp
+      - sessionId
+      - gameType
+      - status
+      - createdAt
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        sessionId: *id003
+        gameType: *id004
+        sessionName: *id005
+        status: *id006
+        maxPlayers: *id007
+        currentPlayers: *id008
+        isPrivate: *id009
+        owner: *id010
+        createdAt: *id011
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

@@ -1,0 +1,52 @@
+# State Service Configuration Schema
+# Defines connection settings for Redis and MySQL state stores
+openapi: 3.0.3
+info:
+  title: State Service Configuration
+  description: "Configuration schema for State service.\nProperties are bound to environment variables with STATE_ prefix."
+  version: 1.0.0
+paths: {}
+
+# Flat configuration properties for environment variable binding (Tenet 21)
+# Note: env keys use underscores where property names have case changes
+# e.g., RedisConnectionString -> REDIS_CONNECTION_STRING (normalizes back correctly)
+x-service-configuration:
+  properties:
+    UseInMemory:
+      type: boolean
+      description: "Use in-memory storage instead of Redis/MySQL. Data is NOT persisted. ONLY for testing/minimal infrastructure."
+      env: STATE_USE_INMEMORY
+      default: false
+    RedisConnectionString:
+      type: string
+      description: Redis connection string (host:port format) for Redis-backed state stores
+      env: REDIS_CONNECTION_STRING
+    MySqlConnectionString:
+      type: string
+      description: MySQL connection string for MySQL-backed state stores
+      env: MYSQL_CONNECTION_STRING
+    ConnectionTimeoutSeconds:
+      type: integer
+      description: Total timeout in seconds for establishing Redis/MySQL connections
+      env: STATE_CONNECTION_TIMEOUT_SECONDS
+      default: 60
+    ConnectRetryCount:
+      type: integer
+      description: Maximum number of connection retry attempts
+      env: STATE_CONNECT_RETRY_COUNT
+      default: 5
+    DefaultConsistency:
+      type: string
+      description: Default consistency level for state operations (strong or eventual)
+      env: DEFAULT_CONSISTENCY
+      default: "strong"
+    EnableMetrics:
+      type: boolean
+      description: Enable metrics collection for state operations
+      env: ENABLE_METRICS
+      default: true
+    EnableTracing:
+      type: boolean
+      description: Enable distributed tracing for state operations
+      env: ENABLE_TRACING
+      default: true

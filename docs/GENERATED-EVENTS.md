@@ -1,6 +1,6 @@
 # Generated Events Reference
 
-> **Auto-generated**: 2025-12-23 05:34:44
+> **Auto-generated**: 2025-12-27 13:47:07
 > **Source**: `schemas/*-events.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -21,6 +21,29 @@ This document lists all events defined in Bannou's event schemas.
 | `SessionDisconnectedEvent` | Session | `session.disconnected` | Published by Connect service when a WebSocket conn... |
 | `SessionReconnectedEvent` | Session | `session-reconnected` | Published by Connect service when a WebSocket sess... |
 
+### Asset
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `AssetProcessingCompletedEvent` | Custom | `asset-processing-completed` | Event published when asset processing completes |
+| `AssetProcessingQueuedEvent` | Custom | `asset-processing-queued` | Event published when an asset is queued for proces... |
+| `AssetReadyEvent` | Custom | `asset-ready` | Event published when an asset is fully processed a... |
+| `AssetUploadCompletedEvent` | Custom | `asset-upload-completed` | Event published when an upload is completed and fi... |
+| `AssetUploadRequestedEvent` | Custom | `asset-upload-requested` | Event published when a new upload is initiated via... |
+| `BundleCreatedEvent` | Lifecycle (Created) | `bundle.created` | Event published when a bundle is successfully crea... |
+
+### Asset (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `AssetProcessingCompleteEvent` | Custom | `asset-processing-complete` | Sent when asset processing (e.g., texture mipmaps,... |
+| `AssetProcessingFailedEvent` | Custom | `asset-processing-failed` | Sent when asset processing fails. Includes retry i... |
+| `AssetReadyEvent` | Custom | `asset-ready` | Final notification that an asset is ready for use. |
+| `AssetUploadCompleteEvent` | Custom | `asset-upload-complete` | Sent when an asset upload has completed (success o... |
+| `BundleCreationCompleteEvent` | Custom | `bundle-creation-complete` | Sent when bundle creation from asset_ids completes... |
+| `BundleValidationCompleteEvent` | Custom | `bundle-validation-complete` | Sent when a bundle upload has been validated and p... |
+| `BundleValidationFailedEvent` | Custom | `bundle-validation-failed` | Sent when bundle validation fails. Includes detail... |
+
 ### Auth
 
 | Event | Type | Likely Topic | Description |
@@ -38,6 +61,8 @@ This document lists all events defined in Bannou's event schemas.
 | `CapabilityManifestEvent` | Custom | `capability-manifest` | Sent to client when their available API capabiliti... |
 | `DisconnectNotificationEvent` | Custom | `disconnect-notification` | Sent to client before WebSocket connection is clos... |
 | `SessionCapabilitiesEvent` | Custom | `session-capabilities` | Internal event carrying compiled capabilities from... |
+| `ShortcutPublishedEvent` | Custom | `shortcut-published` | Published by services to create or update a sessio... |
+| `ShortcutRevokedEvent` | Expiration | `shortcut.revoked` | Published by services to remove shortcuts. |
 | `SystemErrorEvent` | Error | `system.error` | Generic error notification sent to client. |
 | `SystemNotificationEvent` | Custom | `system-notification` | Generic notification event for system-level messag... |
 
@@ -51,6 +76,13 @@ This document lists all events defined in Bannou's event schemas.
 | `DocumentationQueriedEvent` | Custom | `documentation-queried` | Published when documentation is queried with natur... |
 | `DocumentationSearchedEvent` | Custom | `documentation-searched` | Published when documentation is searched with keyw... |
 
+### Game Session
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `GameSessionPlayerJoinedEvent` | Custom | `game-session-player-joined` | Published when a player joins a game session |
+| `GameSessionPlayerLeftEvent` | Custom | `game-session-player-left` | Published when a player leaves a game session |
+
 ### Game Session (client)
 
 | Event | Type | Likely Topic | Description |
@@ -63,6 +95,29 @@ This document lists all events defined in Bannou's event schemas.
 | `PlayerLeftEvent` | Custom | `player-left` | Sent to all session participants when a player lea... |
 | `SessionStateChangedEvent` | Custom | `session-state-changed` | Sent to all session participants when the session ... |
 
+### Mesh
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `MeshEndpointDeregisteredEvent` | Registration | `mesh-endpoint-deregistered` | Published when an endpoint is removed from the ser... |
+| `MeshEndpointRegisteredEvent` | Registration | `mesh-endpoint.registered` | Published when a new endpoint is registered in the... |
+| `MeshEndpointStatusChangedEvent` | Custom | `mesh-endpoint-status-changed` | Published when an endpoint's health status changes... |
+| `MeshRoutingTableUpdatedEvent` | Lifecycle (Updated) | `mesh-routing-table.updated` | Published when the routing table changes. |
+
+### Messaging
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `MessagePublishedEvent` | Custom | `message-published` | Internal event for message tracking/debugging |
+| `SubscriptionCreatedEvent` | Lifecycle (Created) | `subscription.created` | Published when a dynamic subscription is created |
+| `SubscriptionRemovedEvent` | Custom | `subscription-removed` | Published when a subscription is removed |
+
+### Orchestrator
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `OrchestratorHealthPingEvent` | Custom | `orchestrator-health-ping` | Simple health ping event published to verify pub/s... |
+
 ### Permissions
 
 | Event | Type | Likely Topic | Description |
@@ -71,6 +126,14 @@ This document lists all events defined in Bannou's event schemas.
 | `PermissionRecompileRequest` | Custom | `permission-recompile-request` | Request to trigger bulk permission recompilation. |
 | `RedisOperationEvent` | Custom | `redis-operation` | Internal event for Redis operation tracking and mo... |
 | `SessionStateChangeEvent` | Custom | `session-state-change` | Published by services when a session's state chang... |
+
+### State
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `StateChangedEvent` | Custom | `state-changed` | Published when state changes (optional, for debugg... |
+| `StoreHealthEvent` | Custom | `store-health` | Published for store health monitoring |
+| `StoreMigrationEvent` | Custom | `store-migration` | Published during store migration operations (e.g.,... |
 
 ### Subscriptions
 

@@ -112,7 +112,7 @@ Before understanding the specific test types, you must understand the strict iso
 - Testing service-specific business logic in isolation
 
 **Use `lib-testing/`** when:
-- Testing infrastructure components (Docker, Dapr, basic connectivity)
+- Testing infrastructure components (Docker, Redis, RabbitMQ, basic connectivity)
 - Testing core framework functionality with minimal service load
 - Validating that the basic service loading mechanism works
 - NEVER for testing specific service functionality
@@ -219,7 +219,7 @@ DAEMON_MODE=true dotnet run --project edge-tester --configuration Release
 - Basic Docker Compose service health (databases, message queues)
 - Core framework configuration binding mechanism (using test-specific config classes)
 - Service plugin loading infrastructure (TestingService only)
-- Dapr component connectivity and health
+- Redis and RabbitMQ connectivity and health
 
 **What Infrastructure Tests CANNOT Test**:
 - Real service configurations from other plugins (AuthServiceConfiguration, etc.)

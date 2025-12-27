@@ -10,43 +10,43 @@ public class Services : IClassFixture<CollectionFixture>
 
     private class Service_Invalid { }
 
-    [DaprService("ServiceTests.InvalidTest")]
+    [BannouService("ServiceTests.InvalidTest")]
     private class Service_Invalid_Attribute { }
 
-    private class Service : IDaprService { }
+    private class Service : IBannouService { }
 
-    [DaprService("ServiceTests.Test")]
-    private class Service_Attribute : IDaprService { }
-
-    /// <summary>
-    /// Service for testing priority overrides using attributes.
-    /// </summary>
-    [DaprService("ServiceTests.PriorityTest", interfaceType: typeof(Service_Priority_1))]
-    private class Service_Priority_1 : IDaprService { }
+    [BannouService("ServiceTests.Test")]
+    private class Service_Attribute : IBannouService { }
 
     /// <summary>
     /// Service for testing priority overrides using attributes.
     /// </summary>
-    [DaprService("ServiceTests.PriorityTest", interfaceType: typeof(Service_Priority_1), priority: true)]
-    private class Service_Priority_2 : IDaprService { }
+    [BannouService("ServiceTests.PriorityTest", interfaceType: typeof(Service_Priority_1))]
+    private class Service_Priority_1 : IBannouService { }
+
+    /// <summary>
+    /// Service for testing priority overrides using attributes.
+    /// </summary>
+    [BannouService("ServiceTests.PriorityTest", interfaceType: typeof(Service_Priority_1), priority: true)]
+    private class Service_Priority_2 : IBannouService { }
 
     /// <summary>
     /// Service for testing implicit overrides using attributes.
     /// </summary>
-    [DaprService("ServiceTests.OverrideTest", interfaceType: typeof(Service_Override_1))]
-    private class Service_Override_1 : IDaprService { }
+    [BannouService("ServiceTests.OverrideTest", interfaceType: typeof(Service_Override_1))]
+    private class Service_Override_1 : IBannouService { }
 
     /// <summary>
     /// Service for testing implicit overrides using attributes.
     /// </summary>
-    [DaprService("ServiceTests.OverrideTest", interfaceType: typeof(Service_Override_1))]
+    [BannouService("ServiceTests.OverrideTest", interfaceType: typeof(Service_Override_1))]
     private class Service_Override_2 : Service_Override_1 { }
 
     /// <summary>
     /// Service for testing implicit overrides without using attributes.
     /// </summary>
-    [DaprService("ServiceTests.OverrideNoAttrTest", interfaceType: typeof(Service_Override_NoAttribute_1))]
-    private class Service_Override_NoAttribute_1 : IDaprService { }
+    [BannouService("ServiceTests.OverrideNoAttrTest", interfaceType: typeof(Service_Override_NoAttribute_1))]
+    private class Service_Override_NoAttribute_1 : IBannouService { }
 
     /// <summary>
     /// Service for testing implicit overrides without using attributes.
@@ -56,13 +56,13 @@ public class Services : IClassFixture<CollectionFixture>
     /// <summary>
     /// Service for testing implicit overrides using attributes.
     /// </summary>
-    [DaprService("ServiceTests.PriorityOverrideTest", interfaceType: typeof(Service_PriorityAndOverride_1), priority: true)]
-    private class Service_PriorityAndOverride_1 : IDaprService { }
+    [BannouService("ServiceTests.PriorityOverrideTest", interfaceType: typeof(Service_PriorityAndOverride_1), priority: true)]
+    private class Service_PriorityAndOverride_1 : IBannouService { }
 
     /// <summary>
     /// Service for testing implicit overrides using attributes.
     /// </summary>
-    [DaprService("ServiceTests.PriorityOverrideTest", interfaceType: typeof(Service_PriorityAndOverride_1))]
+    [BannouService("ServiceTests.PriorityOverrideTest", interfaceType: typeof(Service_PriorityAndOverride_1))]
     private class Service_PriorityAndOverride_2 : Service_PriorityAndOverride_1 { }
 
     [ServiceConfiguration(typeof(Service_Attribute))]
@@ -71,11 +71,11 @@ public class Services : IClassFixture<CollectionFixture>
         public string? Property { get; set; }
     }
 
-    [DaprService("ServiceTests.test_required")]
-    private class Service_Required : IDaprService { }
+    [BannouService("ServiceTests.test_required")]
+    private class Service_Required : IBannouService { }
 
-    [DaprService("ServiceTests.test_multiple_required")]
-    private class Service_MultipleRequired : IDaprService { }
+    [BannouService("ServiceTests.test_multiple_required")]
+    private class Service_MultipleRequired : IBannouService { }
 
     [ServiceConfiguration(typeof(Service_Required))]
     private class Configuration_Required : BaseServiceConfiguration
@@ -87,15 +87,17 @@ public class Services : IClassFixture<CollectionFixture>
     [ServiceConfiguration(typeof(Service_MultipleRequired))]
     private class Configuration_MultipleRequired_A : BaseServiceConfiguration
     {
+        // PropertyA binds from PROPERTY_A env var (normalized to PascalCase)
         [ConfigRequired(AllowEmptyStrings = false)]
-        public string? Property_A { get; set; }
+        public string? PropertyA { get; set; }
     }
 
     [ServiceConfiguration(typeof(Service_MultipleRequired))]
     private class Configuration_MultipleRequired_B : BaseServiceConfiguration
     {
+        // PropertyB binds from PROPERTY_B env var (normalized to PascalCase)
         [ConfigRequired(AllowEmptyStrings = false)]
-        public string? Property_B { get; set; }
+        public string? PropertyB { get; set; }
     }
 
     public Services(CollectionFixture collectionContext, ITestOutputHelper output)
@@ -114,7 +116,7 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void Services_GetServiceName_FromService()
     {
-        IDaprService testService = new Service();
+        IBannouService testService = new Service();
         Assert.Null(testService.GetName());
 
         testService = new Service_Attribute();
@@ -125,13 +127,13 @@ public class Services : IClassFixture<CollectionFixture>
     public void Services_AnyServiceEnabled()
     {
         // Test that at least one service is available - use Services property to check
-        Assert.True(IDaprService.Services.Length > 0, "At least one service should be available");
+        Assert.True(IBannouService.Services.Length > 0, "At least one service should be available");
     }
 
     [Fact]
     public void Services_ServiceEnabled_NoAttribute()
     {
-        IDaprService testService = new Service();
+        IBannouService testService = new Service();
         Assert.False(testService.IsDisabled());
 
         try
@@ -152,7 +154,7 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void Services_ServiceEnabled()
     {
-        IDaprService testService = new Service_Attribute();
+        IBannouService testService = new Service_Attribute();
         Assert.False(testService.IsDisabled());
 
         try
@@ -169,13 +171,13 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void Services_ServiceEnabled_Default()
     {
-        Assert.False(IDaprService.IsDisabled(typeof(Service_Attribute)));
+        Assert.False(IBannouService.IsDisabled(typeof(Service_Attribute)));
     }
 
     [Fact]
     public void Services_ServiceEnabled_BadType()
     {
-        _ = Assert.Throws<InvalidCastException>(() => IDaprService.IsDisabled(typeof(Service_Invalid)));
+        _ = Assert.Throws<InvalidCastException>(() => IBannouService.IsDisabled(typeof(Service_Invalid)));
     }
 
     [Fact]
@@ -184,7 +186,7 @@ public class Services : IClassFixture<CollectionFixture>
         try
         {
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "false");
-            Assert.False(IDaprService.IsDisabled(typeof(Service_Attribute)));
+            Assert.False(IBannouService.IsDisabled(typeof(Service_Attribute)));
         }
         finally
         {
@@ -194,7 +196,7 @@ public class Services : IClassFixture<CollectionFixture>
         try
         {
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "true");
-            Assert.True(IDaprService.IsDisabled(typeof(Service_Attribute)));
+            Assert.True(IBannouService.IsDisabled(typeof(Service_Attribute)));
         }
         finally
         {
@@ -208,7 +210,7 @@ public class Services : IClassFixture<CollectionFixture>
         try
         {
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "false");
-            Assert.False(IDaprService.IsDisabled<Service_Attribute>());
+            Assert.False(IBannouService.IsDisabled<Service_Attribute>());
         }
         finally
         {
@@ -218,7 +220,7 @@ public class Services : IClassFixture<CollectionFixture>
         try
         {
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "true");
-            Assert.True(IDaprService.IsDisabled<Service_Attribute>());
+            Assert.True(IBannouService.IsDisabled<Service_Attribute>());
         }
         finally
         {
@@ -232,7 +234,7 @@ public class Services : IClassFixture<CollectionFixture>
         try
         {
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "false");
-            Assert.False(IDaprService.IsDisabled("ServiceTests.Test"));
+            Assert.False(IBannouService.IsDisabled("ServiceTests.Test"));
         }
         finally
         {
@@ -242,7 +244,7 @@ public class Services : IClassFixture<CollectionFixture>
         try
         {
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "true");
-            Assert.True(IDaprService.IsDisabled("ServiceTests.Test"));
+            Assert.True(IBannouService.IsDisabled("ServiceTests.Test"));
         }
         finally
         {
@@ -263,44 +265,44 @@ public class Services : IClassFixture<CollectionFixture>
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_DISABLED", null);
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_MULTIPLEREQUIRED_SERVICE_DISABLED", null);
 
-            Assert.DoesNotContain(IDaprService.Services, t => t.Item1 == typeof(Service));
-            Assert.Contains(IDaprService.Services, t => t.Item1 == typeof(Service_Attribute));
-            Assert.Contains(IDaprService.Services, t => t.Item1 == typeof(Service_Required));
-            Assert.Contains(IDaprService.Services, t => t.Item1 == typeof(Service_MultipleRequired));
+            Assert.DoesNotContain(IBannouService.Services, t => t.Item1 == typeof(Service));
+            Assert.Contains(IBannouService.Services, t => t.Item1 == typeof(Service_Attribute));
+            Assert.Contains(IBannouService.Services, t => t.Item1 == typeof(Service_Required));
+            Assert.Contains(IBannouService.Services, t => t.Item1 == typeof(Service_MultipleRequired));
 
             Environment.SetEnvironmentVariable("SERVICES_ENABLED", "true");
-            Program.Configuration.Services_Enabled = true;
-            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(Service));
-            Assert.Contains(IDaprService.EnabledServices, t => t.Item1 == typeof(Service_Attribute));
-            Assert.Contains(IDaprService.EnabledServices, t => t.Item1 == typeof(Service_Required));
-            Assert.Contains(IDaprService.EnabledServices, t => t.Item1 == typeof(Service_MultipleRequired));
+            Program.Configuration.ServicesEnabled = true;
+            Assert.DoesNotContain(IBannouService.EnabledServices, t => t.Item1 == typeof(Service));
+            Assert.Contains(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_Attribute));
+            Assert.Contains(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_Required));
+            Assert.Contains(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_MultipleRequired));
 
             Environment.SetEnvironmentVariable("SERVICES_ENABLED", "false");
-            Program.Configuration.Services_Enabled = false;
-            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(Service));
-            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(Service_Attribute));
-            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(Service_Required));
-            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(Service_MultipleRequired));
+            Program.Configuration.ServicesEnabled = false;
+            Assert.DoesNotContain(IBannouService.EnabledServices, t => t.Item1 == typeof(Service));
+            Assert.DoesNotContain(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_Attribute));
+            Assert.DoesNotContain(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_Required));
+            Assert.DoesNotContain(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_MultipleRequired));
         }
         finally
         {
             Environment.SetEnvironmentVariable("SERVICES_ENABLED", null);
-            Program.Configuration.Services_Enabled = true;
+            Program.Configuration.ServicesEnabled = true;
         }
 
         try
         {
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "true");
-            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(Service));
-            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(Service_Attribute));
+            Assert.DoesNotContain(IBannouService.EnabledServices, t => t.Item1 == typeof(Service));
+            Assert.DoesNotContain(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_Attribute));
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "false");
-            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(Service));
-            Assert.Contains(IDaprService.EnabledServices, t => t.Item1 == typeof(Service_Attribute));
+            Assert.DoesNotContain(IBannouService.EnabledServices, t => t.Item1 == typeof(Service));
+            Assert.Contains(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_Attribute));
 
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_DISABLED", "true");
-            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(Service_Required));
+            Assert.DoesNotContain(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_Required));
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_DISABLED", "false");
-            Assert.Contains(IDaprService.EnabledServices, t => t.Item1 == typeof(Service_Required));
+            Assert.Contains(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_Required));
         }
         finally
         {
@@ -313,7 +315,7 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void Services_FindAll_TestOverride_MostDerivedType()
     {
-        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.GetServiceInfo("ServiceTests.OverrideTest");
+        (Type, Type, BannouServiceAttribute)? locateService = IBannouService.GetServiceInfo("ServiceTests.OverrideTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(Service_Override_2), locateService.Value.Item2);
     }
@@ -321,7 +323,7 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void Services_FindAll_TestOverride_MostDerivedType_NoAttribute()
     {
-        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.GetServiceInfo("ServiceTests.OverrideNoAttrTest");
+        (Type, Type, BannouServiceAttribute)? locateService = IBannouService.GetServiceInfo("ServiceTests.OverrideNoAttrTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(Service_Override_NoAttribute_2), locateService.Value.Item2);
     }
@@ -329,7 +331,7 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void Services_FindAll_TestOverride_Priority()
     {
-        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.GetServiceInfo("ServiceTests.PriorityTest");
+        (Type, Type, BannouServiceAttribute)? locateService = IBannouService.GetServiceInfo("ServiceTests.PriorityTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(Service_Priority_2), locateService.Value.Item2);
     }
@@ -337,7 +339,7 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void Services_FindAll_TestOverride_PriorityOverMostDerivedType()
     {
-        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.GetServiceInfo("ServiceTests.PriorityOverrideTest");
+        (Type, Type, BannouServiceAttribute)? locateService = IBannouService.GetServiceInfo("ServiceTests.PriorityOverrideTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(Service_PriorityAndOverride_1), locateService.Value.Item2);
     }

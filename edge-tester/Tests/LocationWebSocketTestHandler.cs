@@ -47,7 +47,7 @@ public class LocationWebSocketTestHandler : IServiceTestHandler
                     description = "Test realm for location tests",
                     category = "test"
                 },
-                timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
             var responseJson = JsonNode.Parse(response.GetRawText())?.AsObject();
             var realmIdStr = responseJson?["realmId"]?.GetValue<string>();
@@ -100,7 +100,7 @@ public class LocationWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/location/list-by-realm",
                         new { realmId = realmIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var responseJson = JsonNode.Parse(response.GetRawText())?.AsObject();
                     var hasLocationsArray = responseJson?["locations"] != null &&
@@ -179,7 +179,7 @@ public class LocationWebSocketTestHandler : IServiceTestHandler
                             description = "Created via WebSocket edge test",
                             locationType = "city"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var locationIdStr = createJson?["locationId"]?.GetValue<string>();
@@ -199,7 +199,7 @@ public class LocationWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/location/get",
                         new { locationId = locationIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var getJson = JsonNode.Parse(getResponse.GetRawText())?.AsObject();
                     var retrievedId = getJson?["locationId"]?.GetValue<string>();
@@ -276,7 +276,7 @@ public class LocationWebSocketTestHandler : IServiceTestHandler
                             description = "Lifecycle test location",
                             locationType = "region"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var locationIdStr = createJson?["locationId"]?.GetValue<string>();
@@ -298,7 +298,7 @@ public class LocationWebSocketTestHandler : IServiceTestHandler
                             name = $"Updated Lifecycle Test {locationCode}",
                             description = "Updated description"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var updateJson = JsonNode.Parse(updateResponse.GetRawText())?.AsObject();
                     var updatedName = updateJson?["name"]?.GetValue<string>();
@@ -319,7 +319,7 @@ public class LocationWebSocketTestHandler : IServiceTestHandler
                             locationId = locationIdStr,
                             reason = "WebSocket lifecycle test"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var deprecateJson = JsonNode.Parse(deprecateResponse.GetRawText())?.AsObject();
                     var isDeprecated = deprecateJson?["isDeprecated"]?.GetValue<bool>() ?? false;
@@ -336,7 +336,7 @@ public class LocationWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/location/undeprecate",
                         new { locationId = locationIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var undeprecateJson = JsonNode.Parse(undeprecateResponse.GetRawText())?.AsObject();
                     var isUndeprecated = !(undeprecateJson?["isDeprecated"]?.GetValue<bool>() ?? true);
@@ -414,7 +414,7 @@ public class LocationWebSocketTestHandler : IServiceTestHandler
                             description = "Parent location for hierarchy test",
                             locationType = "region"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var parentJson = JsonNode.Parse(parentResponse.GetRawText())?.AsObject();
                     var parentIdStr = parentJson?["locationId"]?.GetValue<string>();
@@ -439,7 +439,7 @@ public class LocationWebSocketTestHandler : IServiceTestHandler
                             locationType = "city",
                             parentLocationId = parentIdStr
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var childJson = JsonNode.Parse(childResponse.GetRawText())?.AsObject();
                     var childIdStr = childJson?["locationId"]?.GetValue<string>();
@@ -464,7 +464,7 @@ public class LocationWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/location/list-by-parent",
                         new { parentLocationId = parentIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var listJson = JsonNode.Parse(listResponse.GetRawText())?.AsObject();
                     var locationsArray = listJson?["locations"]?.AsArray();
@@ -484,7 +484,7 @@ public class LocationWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/location/list-root",
                         new { realmId = realmIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var rootsJson = JsonNode.Parse(rootsResponse.GetRawText())?.AsObject();
                     var rootsArray = rootsJson?["locations"]?.AsArray();

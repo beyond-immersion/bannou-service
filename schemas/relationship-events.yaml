@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Relationship Service Events
   description: |
-    Event models for Relationship service RabbitMQ pub/sub via Dapr.
+    Event models for Relationship service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
   version: 1.0.0
 

@@ -1,9 +1,9 @@
 #!/bin/sh
 
 # Infrastructure Integration Tests
-# Tests MINIMAL infrastructure: bannou + dapr + placement + rabbitmq
+# Tests MINIMAL infrastructure: bannou + rabbitmq + redis
 # NO databases, NO OpenResty - just core Bannou service infrastructure
-# Uses Docker DNS for service discovery (standalone Dapr containers)
+# Uses Docker DNS for service discovery
 
 set -e
 
@@ -11,9 +11,8 @@ echo "🧪 Running minimal infrastructure integration tests..."
 
 # Service hosts - use Docker DNS names (passed via environment or defaults)
 BANNOU_HOST="${BANNOU_HOST:-bannou}"
-DAPR_HOST="${DAPR_HOST:-bannou-dapr}"
 
-echo "   Using BANNOU_HOST=$BANNOU_HOST, DAPR_HOST=$DAPR_HOST"
+echo "   Using BANNOU_HOST=$BANNOU_HOST"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -54,15 +53,7 @@ run_test "TESTING plugin enabled" "curl --verbose --fail --max-time 10 http://${
 echo "🔍 Testing TESTING Plugin..."
 run_test "TESTING plugin execution" "curl --verbose --fail --max-time 10 http://${BANNOU_HOST}:80/testing/run"
 
-# Test 4: Dapr sidecar availability (via Docker DNS - standalone container)
-echo "🔍 Testing Dapr Sidecar..."
-run_test "Dapr health endpoint" "curl --verbose --fail --max-time 5 http://${DAPR_HOST}:3500/v1.0/healthz"
-
-# Test 5: Dapr can reach placement service (via service name on default bridge)
-echo "🔍 Testing Dapr Placement Connectivity..."
-run_test "Dapr metadata (verifies placement)" "curl --verbose --fail --max-time 5 http://${DAPR_HOST}:3500/v1.0/metadata"
-
-# Test 6: Configuration validation
+# Test 4: Configuration validation
 echo "🔍 Testing Configuration..."
 run_test "Environment variables accessible" "test -n \"$SERVICE_DOMAIN\" || echo 'SERVICE_DOMAIN not set, using defaults'"
 

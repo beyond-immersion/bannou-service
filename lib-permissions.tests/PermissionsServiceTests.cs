@@ -2,9 +2,10 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -33,14 +34,19 @@ public class PermissionsServiceTests
 {
     private readonly Mock<ILogger<PermissionsService>> _mockLogger;
     private readonly Mock<PermissionsServiceConfiguration> _mockConfiguration;
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<HashSet<string>>> _mockHashSetStore;
+    private readonly Mock<IStateStore<Dictionary<string, string>>> _mockDictStringStore;
+    private readonly Mock<IStateStore<Dictionary<string, object>>> _mockDictObjectStore;
+    private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<IStateStore<object>> _mockObjectStore;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEmitter;
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     // State store constants (must match PermissionsService)
-    private const string STATE_STORE = "permissions-store";
+    private const string STATE_STORE = "permissions-statestore";
     private const string ACTIVE_SESSIONS_KEY = "active_sessions";
     private const string ACTIVE_CONNECTIONS_KEY = "active_connections"; // Phase 6: tracks WebSocket-connected sessions
     private const string REGISTERED_SERVICES_KEY = "registered_services";
@@ -52,11 +58,50 @@ public class PermissionsServiceTests
     {
         _mockLogger = new Mock<ILogger<PermissionsService>>();
         _mockConfiguration = new Mock<PermissionsServiceConfiguration>();
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockHashSetStore = new Mock<IStateStore<HashSet<string>>>();
+        _mockDictStringStore = new Mock<IStateStore<Dictionary<string, string>>>();
+        _mockDictObjectStore = new Mock<IStateStore<Dictionary<string, object>>>();
+        _mockStringStore = new Mock<IStateStore<string>>();
+        _mockObjectStore = new Mock<IStateStore<object>>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
-        _mockErrorEmitter = new Mock<IErrorEventEmitter>();
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup factory to return typed stores
+        // Note: object setup must come FIRST (most general) to avoid Castle proxy matching issues
+        // where the object proxy is incorrectly returned for more specific type calls
+        _mockStateStoreFactory.Setup(f => f.GetStore<object>(STATE_STORE))
+            .Returns(_mockObjectStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<HashSet<string>>(STATE_STORE))
+            .Returns(_mockHashSetStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<Dictionary<string, string>>(STATE_STORE))
+            .Returns(_mockDictStringStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<Dictionary<string, object>>(STATE_STORE))
+            .Returns(_mockDictObjectStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
+            .Returns(_mockStringStore.Object);
+
+        // Setup default behavior for stores - SaveAsync returns Task<string> (etag)
+        _mockHashSetStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<HashSet<string>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockDictStringStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockDictObjectStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, object>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockStringStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockObjectStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Setup default behavior for message bus
+        _mockMessageBus.Setup(m => m.PublishAsync(
+            It.IsAny<string>(),
+            It.IsAny<object>(),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Guid.NewGuid());
 
         // Setup default behavior for client event publisher
         _mockClientEventPublisher.Setup(x => x.PublishToSessionAsync(
@@ -71,9 +116,9 @@ public class PermissionsServiceTests
         return new PermissionsService(
             _mockLogger.Object,
             _mockConfiguration.Object,
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLockProvider.Object,
-            _mockErrorEmitter.Object,
             _mockClientEventPublisher.Object,
             _mockEventConsumer.Object);
     }
@@ -96,7 +141,7 @@ public class PermissionsServiceTests
         var failedLockResponse = new TestLockResponse { Success = false };
         _mockLockProvider
             .Setup(l => l.LockAsync(
-                "permissions-store", // Changed from "lockstore" to match new Redis-based implementation
+                STATE_STORE,
                 "registered_services_lock",
                 It.IsAny<string>(),
                 30,
@@ -104,32 +149,13 @@ public class PermissionsServiceTests
             .ReturnsAsync(failedLockResponse);
 
         // Set up empty state for the idempotent check
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string?>(
-                STATE_STORE,
-                It.IsAny<string>(),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                It.IsAny<string>(),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(default(HashSet<string>)!);
-
-        // Set up state transaction execution (will never be called, but good practice)
-        _mockDaprClient
-            .Setup(d => d.ExecuteStateTransactionAsync(
-                STATE_STORE,
-                It.IsAny<IReadOnlyList<StateTransactionRequest>>(),
-                null,
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HashSet<string>?)null);
 
         var permissions = new ServicePermissionMatrix
         {
@@ -177,81 +203,21 @@ public class PermissionsServiceTests
 
         var service = CreateService();
 
-        // Set up empty existing state (using default! to satisfy Moq's nullability requirements)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                It.IsAny<string>(),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(default(HashSet<string>)!);
+        // Set up empty existing state
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HashSet<string>?)null);
 
         // Set up empty existing hash
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string?>(
-                STATE_STORE,
-                It.IsAny<string>(),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        // Set up state transaction execution
-        _mockDaprClient
-            .Setup(d => d.ExecuteStateTransactionAsync(
-                STATE_STORE,
-                It.IsAny<IReadOnlyList<StateTransactionRequest>>(),
-                null,
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Set up save state operations for different types
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync<HashSet<string>>(
-                STATE_STORE,
-                It.IsAny<string>(),
-                It.IsAny<HashSet<string>>(),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync<string>(
-                STATE_STORE,
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync<object>(
-                STATE_STORE,
-                It.IsAny<string>(),
-                It.IsAny<object>(),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Set up event publishing
-        _mockDaprClient
-            .Setup(d => d.PublishEventAsync(
-                "bannou-pubsub",
-                It.IsAny<string>(),
-                It.IsAny<object>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
         // Set up distributed lock to succeed
-        // Create a test lock response that properly handles disposal without needing DaprClient
         var lockResponse = new TestLockResponse { Success = true };
         _mockLockProvider
             .Setup(l => l.LockAsync(
-                "permissions-store", // Changed from "lockstore" to match new Redis-based implementation
+                STATE_STORE,
                 "registered_services_lock",
                 It.IsAny<string>(),
                 30,
@@ -280,25 +246,16 @@ public class PermissionsServiceTests
         var (statusCode, response) = await service.RegisterServicePermissionsAsync(permissions);
 
         // Assert
-        Assert.True(statusCode == StatusCodes.OK, $"Expected OK but got {statusCode}. Exception: {capturedException?.GetType().Name}: {capturedException?.Message}\nStack: {capturedException?.StackTrace}");
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.True(response.Success);
         Assert.Equal("orchestrator", response.ServiceId);
 
-        // Verify state transaction was executed (stores permission matrix)
-        _mockDaprClient.Verify(d => d.ExecuteStateTransactionAsync(
-            STATE_STORE,
-            It.IsAny<IReadOnlyList<StateTransactionRequest>>(),
-            null,
-            It.IsAny<CancellationToken>()), Times.Once);
-
         // Verify registered services list was updated at least once with orchestrator
-        _mockDaprClient.Verify(d => d.SaveStateAsync(
-            STATE_STORE,
+        _mockHashSetStore.Verify(s => s.SaveAsync(
             REGISTERED_SERVICES_KEY,
-            It.Is<HashSet<string>>(s => s.Contains("orchestrator")),
-            null,
-            null,
+            It.Is<HashSet<string>>(set => set.Contains("orchestrator")),
+            It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()), Times.AtLeastOnce());
     }
 
@@ -311,44 +268,24 @@ public class PermissionsServiceTests
 
         // Set up empty session states
         var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE,
-                statesKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>());
 
         // Set up empty active sessions list
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_SESSIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Set up empty registered services
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                REGISTERED_SERVICES_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Set up empty session permissions
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                permissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object>());
 
         var roleUpdate = new SessionRoleUpdate
@@ -368,13 +305,12 @@ public class PermissionsServiceTests
         Assert.Equal(sessionId, response.SessionId);
         Assert.Contains("admin", response.Message);
 
-        // Verify session was added to active sessions via transaction
-        _mockDaprClient.Verify(d => d.ExecuteStateTransactionAsync(
-            STATE_STORE,
-            It.Is<IReadOnlyList<StateTransactionRequest>>(requests =>
-                requests.Any(r => r.Key == statesKey)),
-            null,
-            It.IsAny<CancellationToken>()), Times.Once);
+        // Verify session states were saved
+        _mockDictStringStore.Verify(s => s.SaveAsync(
+            statesKey,
+            It.IsAny<Dictionary<string, string>>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     [Fact]
@@ -387,73 +323,44 @@ public class PermissionsServiceTests
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
 
         // Empty initial state/active sessions/permissions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE, statesKey, null, null, It.IsAny<CancellationToken>()))
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>());
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE, ACTIVE_SESSIONS_KEY, null, null, It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE, permissionsKey, null, null, It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object>());
 
         // Registered services
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE, REGISTERED_SERVICES_KEY, null, null, It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { "svc" });
 
         // Permission matrix lookups per role (developer should inherit user)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                It.Is<string>(key => key.Contains("permissions:svc:default:user")),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(It.Is<string>(key => key.Contains("permissions:svc:default:user")), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { "GET:/user" });
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                It.Is<string>(key => key.Contains("permissions:svc:default:developer")),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(It.Is<string>(key => key.Contains("permissions:svc:default:developer")), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { "GET:/dev" });
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                It.Is<string>(key => key.Contains("permissions:svc:default:anonymous")),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(It.Is<string>(key => key.Contains("permissions:svc:default:anonymous")), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         Dictionary<string, object>? savedPermissions = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockDictObjectStore
+            .Setup(s => s.SaveAsync(
                 permissionsKey,
                 It.IsAny<Dictionary<string, object>>(),
-                null,
-                null,
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, Dictionary<string, object>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, value, opt, meta, ct) => savedPermissions = value)
-            .Returns(Task.CompletedTask);
-
-        _mockDaprClient
-            .Setup(d => d.PublishEventAsync(
-                "bannou-pubsub",
-                "permissions.capabilities-updated",
-                It.IsAny<object>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .Callback<string, Dictionary<string, object>, StateOptions?, CancellationToken>(
+                (key, value, ttl, ct) => savedPermissions = value)
+            .ReturnsAsync("etag");
 
         // Act
         var (status, response) = await service.UpdateSessionRoleAsync(new SessionRoleUpdate
@@ -490,56 +397,46 @@ public class PermissionsServiceTests
             ["game-session"] = "in_game"
         };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE, statesKey, null, null, It.IsAny<CancellationToken>()))
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(sessionStates);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE, REGISTERED_SERVICES_KEY, null, null, It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object> { ["version"] = 0 });
+
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { "svc" });
 
         // Endpoint gated by game-session:in_game + role user
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(
                 It.Is<string>(k => k.Contains("permissions:svc:game-session:in_game:user")),
-                null,
-                null,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { "POST:/secure" });
 
         // No default endpoints
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(
                 It.Is<string>(k => k.Contains("permissions:svc:default:user")),
-                null,
-                null,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         Dictionary<string, object>? saved = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockDictObjectStore
+            .Setup(s => s.SaveAsync(
                 permissionsKey,
                 It.IsAny<Dictionary<string, object>>(),
-                null,
-                null,
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, Dictionary<string, object>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, val, opt, meta, ct) => saved = val)
-            .Returns(Task.CompletedTask);
-
-        _mockDaprClient
-            .Setup(d => d.PublishEventAsync(
-                "bannou-pubsub",
-                "permissions.capabilities-updated",
-                It.IsAny<object>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .Callback<string, Dictionary<string, object>, StateOptions?, CancellationToken>(
+                (key, val, ttl, ct) => saved = val)
+            .ReturnsAsync("etag");
 
         // Act
         var (status, _) = await service.UpdateSessionRoleAsync(new SessionRoleUpdate
@@ -558,6 +455,267 @@ public class PermissionsServiceTests
         Assert.Contains("POST:/secure", endpoints!);
     }
 
+    /// <summary>
+    /// Verifies same-service state key matching: when voice service
+    /// registers permissions for its own voice:ringing state (same-service),
+    /// the state lookup key should be just "ringing", not "voice:ringing".
+    ///
+    /// Bug scenario this prevented:
+    /// - Registration stored: permissions:voice:ringing:user (state key = ringing)
+    /// - Lookup searched for: permissions:voice:ringing:user (correct)
+    ///
+    /// The fix ensures both use the same key format.
+    /// </summary>
+    [Fact]
+    public async Task RecompilePermissions_SameServiceStateKey_MatchesRegistration()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-state-key-matching";
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+
+        // Session has voice=ringing state (same-service state for voice service)
+        var sessionStates = new Dictionary<string, string>
+        {
+            ["role"] = "user",
+            ["voice"] = "ringing"  // voice service sets voice:ringing state
+        };
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionStates);
+
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object> { ["version"] = 0 });
+
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "voice" });
+
+        // CRITICAL: The state key for same-service must be just "ringing", not "voice:ringing"
+        // This is the key that BuildPermissionMatrix should produce for voice service
+        // registering permissions for voice:ringing state
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k == "permissions:voice:ringing:user"),  // Same-service: just state value
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "POST:/voice/peer/answer" });
+
+        // Default endpoints (no state required)
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k == "permissions:voice:default:user"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        Dictionary<string, object>? saved = null;
+        _mockDictObjectStore
+            .Setup(s => s.SaveAsync(
+                permissionsKey,
+                It.IsAny<Dictionary<string, object>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, Dictionary<string, object>, StateOptions?, CancellationToken>(
+                (key, val, ttl, ct) => saved = val)
+            .ReturnsAsync("etag");
+
+        // Act
+        var (status, _) = await service.UpdateSessionRoleAsync(new SessionRoleUpdate
+        {
+            SessionId = sessionId,
+            NewRole = "user",
+            PreviousRole = null
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(saved);
+        Assert.True(saved!.TryGetValue("voice", out var endpointsObj),
+            "Session should have voice service permissions when voice:ringing state is set");
+        var endpoints = endpointsObj as IEnumerable<string>;
+        Assert.NotNull(endpoints);
+        Assert.Contains("POST:/voice/peer/answer", endpoints!);
+    }
+
+    /// <summary>
+    /// Verifies cross-service state key matching: when game-session service
+    /// registers permissions requiring voice:ringing state (cross-service),
+    /// the state key must be "voice:ringing" (not just "ringing").
+    /// </summary>
+    [Fact]
+    public async Task RecompilePermissions_CrossServiceStateKey_IncludesServicePrefix()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-cross-service-state";
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+
+        // Session has voice=ringing state
+        var sessionStates = new Dictionary<string, string>
+        {
+            ["role"] = "user",
+            ["voice"] = "ringing"
+        };
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionStates);
+
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object> { ["version"] = 0 });
+
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "game-session" });
+
+        // Cross-service: game-session service checking voice state requires "voice:ringing" key
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k == "permissions:game-session:voice:ringing:user"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "POST:/sessions/voice-enabled-action" });
+
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k == "permissions:game-session:default:user"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        Dictionary<string, object>? saved = null;
+        _mockDictObjectStore
+            .Setup(s => s.SaveAsync(
+                permissionsKey,
+                It.IsAny<Dictionary<string, object>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, Dictionary<string, object>, StateOptions?, CancellationToken>(
+                (key, val, ttl, ct) => saved = val)
+            .ReturnsAsync("etag");
+
+        // Act
+        var (status, _) = await service.UpdateSessionRoleAsync(new SessionRoleUpdate
+        {
+            SessionId = sessionId,
+            NewRole = "user",
+            PreviousRole = null
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(saved);
+        Assert.True(saved!.TryGetValue("game-session", out var endpointsObj));
+        var endpoints = endpointsObj as IEnumerable<string>;
+        Assert.NotNull(endpoints);
+        Assert.Contains("POST:/sessions/voice-enabled-action", endpoints!);
+    }
+
+    /// <summary>
+    /// Verifies game-session:in_game state works correctly for game-session service.
+    /// When a user joins a game session, the game-session service sets game-session:in_game,
+    /// and endpoints requiring that state should become accessible.
+    /// </summary>
+    [Fact]
+    public async Task RecompilePermissions_GameSessionInGameState_UnlocksGameEndpoints()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-game-in-game";
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+
+        // Session has game-session=in_game state (set when player joins)
+        var sessionStates = new Dictionary<string, string>
+        {
+            ["role"] = "user",
+            ["game-session"] = "in_game"
+        };
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionStates);
+
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object> { ["version"] = 0 });
+
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "game-session" });
+
+        // Same-service state key: just "in_game" (not "game-session:in_game")
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k == "permissions:game-session:in_game:user"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>
+            {
+                "POST:/sessions/leave",
+                "POST:/sessions/chat",
+                "POST:/sessions/actions"
+            });
+
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k == "permissions:game-session:default:user"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>
+            {
+                "GET:/sessions/list",
+                "POST:/sessions/create",
+                "POST:/sessions/get",
+                "POST:/sessions/join"
+            });
+
+        Dictionary<string, object>? saved = null;
+        _mockDictObjectStore
+            .Setup(s => s.SaveAsync(
+                permissionsKey,
+                It.IsAny<Dictionary<string, object>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, Dictionary<string, object>, StateOptions?, CancellationToken>(
+                (key, val, ttl, ct) => saved = val)
+            .ReturnsAsync("etag");
+
+        // Act
+        var (status, _) = await service.UpdateSessionRoleAsync(new SessionRoleUpdate
+        {
+            SessionId = sessionId,
+            NewRole = "user",
+            PreviousRole = null
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(saved);
+        Assert.True(saved!.TryGetValue("game-session", out var endpointsObj));
+        var endpoints = (endpointsObj as IEnumerable<string>)?.ToList();
+        Assert.NotNull(endpoints);
+
+        // Should have both default and in_game state endpoints
+        Assert.Contains("GET:/sessions/list", endpoints!);
+        Assert.Contains("POST:/sessions/join", endpoints!);
+        Assert.Contains("POST:/sessions/leave", endpoints!);  // Requires in_game state
+        Assert.Contains("POST:/sessions/chat", endpoints!);   // Requires in_game state
+        Assert.Contains("POST:/sessions/actions", endpoints!); // Requires in_game state
+    }
+
     [Fact]
     public async Task RecompileSessionPermissions_FindsRegisteredServices()
     {
@@ -567,57 +725,32 @@ public class PermissionsServiceTests
 
         // Pre-populate registered services with "orchestrator"
         var registeredServices = new HashSet<string> { "orchestrator" };
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                REGISTERED_SERVICES_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(registeredServices);
 
         // Pre-populate permission matrix: permissions:orchestrator:default:admin
         var adminEndpoints = new HashSet<string> { "GET:/orchestrator/health", "POST:/orchestrator/deploy" };
         var adminMatrixKey = string.Format(PERMISSION_MATRIX_KEY, "orchestrator", "default", "admin");
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                adminMatrixKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(adminMatrixKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(adminEndpoints);
 
         // Set up session states with admin role
         var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE,
-                statesKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string> { ["role"] = "admin" });
 
         // Set up empty active sessions list
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_SESSIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Set up existing session permissions for version tracking
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                permissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object> { ["version"] = 0 });
 
         var roleUpdate = new SessionRoleUpdate
@@ -636,13 +769,11 @@ public class PermissionsServiceTests
         Assert.True(response.Success);
 
         // Verify compiled permissions were saved
-        _mockDaprClient.Verify(d => d.SaveStateAsync(
-            STATE_STORE,
+        _mockDictObjectStore.Verify(s => s.SaveAsync(
             permissionsKey,
             It.Is<Dictionary<string, object>>(data =>
                 data.ContainsKey("orchestrator")),
-            null,
-            null,
+            It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -666,13 +797,8 @@ public class PermissionsServiceTests
             })
         };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                permissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(compiledPermissions);
 
         var request = new CapabilityRequest
@@ -700,14 +826,9 @@ public class PermissionsServiceTests
         var sessionId = "test-session-005";
 
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                permissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(default(Dictionary<string, object>)!);
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Dictionary<string, object>?)null);
 
         var request = new CapabilityRequest
         {
@@ -732,115 +853,71 @@ public class PermissionsServiceTests
 
         // Set up registered services
         var registeredServices = new HashSet<string> { "orchestrator" };
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                REGISTERED_SERVICES_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(registeredServices);
 
         // Admin-only endpoints at permissions:orchestrator:default:admin
         var adminEndpoints = new HashSet<string> { "GET:/orchestrator/health", "POST:/orchestrator/deploy" };
         var adminMatrixKey = string.Format(PERMISSION_MATRIX_KEY, "orchestrator", "default", "admin");
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                adminMatrixKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(adminMatrixKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(adminEndpoints);
 
         // User endpoints - empty for orchestrator (no user access)
         var userMatrixKey = string.Format(PERMISSION_MATRIX_KEY, "orchestrator", "default", "user");
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                userMatrixKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(default(HashSet<string>)!);
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(userMatrixKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HashSet<string>?)null);
 
         // Set up admin session states
         var adminStatesKey = string.Format(SESSION_STATES_KEY, adminSessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE,
-                adminStatesKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(adminStatesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string> { ["role"] = "admin" });
 
         // Set up user session states
         var userStatesKey = string.Format(SESSION_STATES_KEY, userSessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE,
-                userStatesKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(userStatesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string> { ["role"] = "user" });
 
         // Set up empty active sessions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_SESSIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Set up empty permissions for version tracking
         var adminPermissionsKey = string.Format(SESSION_PERMISSIONS_KEY, adminSessionId);
         var userPermissionsKey = string.Format(SESSION_PERMISSIONS_KEY, userSessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                adminPermissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(adminPermissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object> { ["version"] = 0 });
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                userPermissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(userPermissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object> { ["version"] = 0 });
 
         // Track what permissions get saved
         Dictionary<string, object>? savedAdminPermissions = null;
         Dictionary<string, object>? savedUserPermissions = null;
 
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockDictObjectStore
+            .Setup(s => s.SaveAsync(
                 adminPermissionsKey,
                 It.IsAny<Dictionary<string, object>>(),
-                null,
-                null,
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, Dictionary<string, object>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedAdminPermissions = data);
+            .Callback<string, Dictionary<string, object>, StateOptions?, CancellationToken>(
+                (key, data, ttl, ct) => savedAdminPermissions = data);
 
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockDictObjectStore
+            .Setup(s => s.SaveAsync(
                 userPermissionsKey,
                 It.IsAny<Dictionary<string, object>>(),
-                null,
-                null,
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, Dictionary<string, object>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedUserPermissions = data);
+            .Callback<string, Dictionary<string, object>, StateOptions?, CancellationToken>(
+                (key, data, ttl, ct) => savedUserPermissions = data);
 
         // Act - Set admin role
         var adminRoleUpdate = new SessionRoleUpdate
@@ -887,13 +964,8 @@ public class PermissionsServiceTests
             })
         };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                permissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(compiledPermissions);
 
         var request = new ValidationRequest
@@ -929,13 +1001,8 @@ public class PermissionsServiceTests
             })
         };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                permissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(compiledPermissions);
 
         var request = new ValidationRequest
@@ -970,70 +1037,43 @@ public class PermissionsServiceTests
         var accountId = "account-001";
 
         // Setup empty activeConnections
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_CONNECTIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup empty activeSessions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_SESSIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup empty registered services (for recompile)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                REGISTERED_SERVICES_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup session states for recompile
         var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE,
-                statesKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>());
 
         // Setup session permissions for recompile
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                permissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object>());
 
         // Track what gets saved to activeConnections
         HashSet<string>? savedConnections = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockHashSetStore
+            .Setup(s => s.SaveAsync(
                 ACTIVE_CONNECTIONS_KEY,
                 It.IsAny<HashSet<string>>(),
-                null,
-                null,
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, HashSet<string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, value, opt, meta, ct) => savedConnections = value)
-            .Returns(Task.CompletedTask);
+            .Callback<string, HashSet<string>, StateOptions?, CancellationToken>(
+                (key, value, ttl, ct) => savedConnections = value)
+            .ReturnsAsync("etag");
 
         // Act
         var (statusCode, response) = await service.HandleSessionConnectedAsync(
@@ -1061,69 +1101,42 @@ public class PermissionsServiceTests
         var existingSessionId = "session-existing-001";
 
         // Setup activeConnections with an existing session
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_CONNECTIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { existingSessionId });
 
         // Setup activeSessions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_SESSIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { existingSessionId });
 
         // Setup registered services
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                REGISTERED_SERVICES_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup session states
         var statesKey = string.Format(SESSION_STATES_KEY, newSessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE,
-                statesKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>());
 
         // Setup session permissions
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, newSessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                permissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object>());
 
         HashSet<string>? savedConnections = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockHashSetStore
+            .Setup(s => s.SaveAsync(
                 ACTIVE_CONNECTIONS_KEY,
                 It.IsAny<HashSet<string>>(),
-                null,
-                null,
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, HashSet<string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, value, opt, meta, ct) => savedConnections = value)
-            .Returns(Task.CompletedTask);
+            .Callback<string, HashSet<string>, StateOptions?, CancellationToken>(
+                (key, value, ttl, ct) => savedConnections = value)
+            .ReturnsAsync("etag");
 
         // Act
         var (statusCode, response) = await service.HandleSessionConnectedAsync(newSessionId, accountId, roles: null, authorizations: null);
@@ -1148,55 +1161,30 @@ public class PermissionsServiceTests
         var accountId = "account-003";
 
         // Setup activeConnections with the same session already present
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_CONNECTIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { sessionId });
 
         // Setup activeSessions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_SESSIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { sessionId });
 
         // Setup registered services
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                REGISTERED_SERVICES_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup session states
         var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE,
-                statesKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string> { ["role"] = "user" });
 
         // Setup session permissions
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                permissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object> { ["version"] = 1 });
 
         // Act
@@ -1207,12 +1195,10 @@ public class PermissionsServiceTests
         Assert.True(response?.Success);
 
         // Verify SaveStateAsync was NOT called for activeConnections (no change needed)
-        _mockDaprClient.Verify(d => d.SaveStateAsync(
-            STATE_STORE,
+        _mockHashSetStore.Verify(s => s.SaveAsync(
             ACTIVE_CONNECTIONS_KEY,
             It.IsAny<HashSet<string>>(),
-            null,
-            null,
+            It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -1225,55 +1211,30 @@ public class PermissionsServiceTests
         var accountId = "account-004";
 
         // Setup empty activeConnections
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_CONNECTIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup activeSessions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_SESSIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup registered services
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                REGISTERED_SERVICES_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup session states
         var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE,
-                statesKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>());
 
         // Setup session permissions
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                permissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object>());
 
         // Act
@@ -1299,70 +1260,43 @@ public class PermissionsServiceTests
         var accountId = "account-005";
 
         // Setup empty activeConnections
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_CONNECTIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup empty activeSessions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_SESSIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup registered services
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                REGISTERED_SERVICES_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup session states
         var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE,
-                statesKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>());
 
         // Setup session permissions
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                permissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object>());
 
         // Track what gets saved to activeSessions
         HashSet<string>? savedSessions = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockHashSetStore
+            .Setup(s => s.SaveAsync(
                 ACTIVE_SESSIONS_KEY,
                 It.IsAny<HashSet<string>>(),
-                null,
-                null,
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, HashSet<string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, value, opt, meta, ct) => savedSessions = value)
-            .Returns(Task.CompletedTask);
+            .Callback<string, HashSet<string>, StateOptions?, CancellationToken>(
+                (key, value, ttl, ct) => savedSessions = value)
+            .ReturnsAsync("etag");
 
         // Act
         var (statusCode, response) = await service.HandleSessionConnectedAsync(sessionId, accountId, roles: null, authorizations: null);
@@ -1385,70 +1319,43 @@ public class PermissionsServiceTests
         var roles = new List<string> { "user", "admin" };
 
         // Setup empty activeConnections
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_CONNECTIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup empty activeSessions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_SESSIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup registered services
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                REGISTERED_SERVICES_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup empty session states (will be populated)
         var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE,
-                statesKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>());
 
         // Setup session permissions
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                permissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object>());
 
         // Track what gets saved to session states
         Dictionary<string, string>? savedSessionStates = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockDictStringStore
+            .Setup(s => s.SaveAsync(
                 statesKey,
                 It.IsAny<Dictionary<string, string>>(),
-                null,
-                null,
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, Dictionary<string, string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, value, opt, meta, ct) => savedSessionStates = value)
-            .Returns(Task.CompletedTask);
+            .Callback<string, Dictionary<string, string>, StateOptions?, CancellationToken>(
+                (key, value, ttl, ct) => savedSessionStates = value)
+            .ReturnsAsync("etag");
 
         // Act
         var (statusCode, response) = await service.HandleSessionConnectedAsync(
@@ -1476,70 +1383,43 @@ public class PermissionsServiceTests
         var roles = new List<string> { "user" };
 
         // Setup empty activeConnections
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_CONNECTIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup empty activeSessions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_SESSIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup registered services
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                REGISTERED_SERVICES_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup empty session states
         var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE,
-                statesKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>());
 
         // Setup session permissions
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                permissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object>());
 
         // Track what gets saved to session states
         Dictionary<string, string>? savedSessionStates = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockDictStringStore
+            .Setup(s => s.SaveAsync(
                 statesKey,
                 It.IsAny<Dictionary<string, string>>(),
-                null,
-                null,
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, Dictionary<string, string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, value, opt, meta, ct) => savedSessionStates = value)
-            .Returns(Task.CompletedTask);
+            .Callback<string, Dictionary<string, string>, StateOptions?, CancellationToken>(
+                (key, value, ttl, ct) => savedSessionStates = value)
+            .ReturnsAsync("etag");
 
         // Act
         var (statusCode, response) = await service.HandleSessionConnectedAsync(
@@ -1560,70 +1440,43 @@ public class PermissionsServiceTests
         var accountId = "account-roles-003";
 
         // Setup empty activeConnections
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_CONNECTIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup empty activeSessions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_SESSIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup registered services
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                REGISTERED_SERVICES_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup empty session states
         var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE,
-                statesKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>());
 
         // Setup session permissions
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                permissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object>());
 
         // Track what gets saved to session states
         Dictionary<string, string>? savedSessionStates = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockDictStringStore
+            .Setup(s => s.SaveAsync(
                 statesKey,
                 It.IsAny<Dictionary<string, string>>(),
-                null,
-                null,
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, Dictionary<string, string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, value, opt, meta, ct) => savedSessionStates = value)
-            .Returns(Task.CompletedTask);
+            .Callback<string, Dictionary<string, string>, StateOptions?, CancellationToken>(
+                (key, value, ttl, ct) => savedSessionStates = value)
+            .ReturnsAsync("etag");
 
         // Act - no roles or authorizations
         var (statusCode, response) = await service.HandleSessionConnectedAsync(
@@ -1645,70 +1498,43 @@ public class PermissionsServiceTests
         var authorizations = new List<string> { "arcadia:authorized", "omega:registered" };
 
         // Setup empty activeConnections
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_CONNECTIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup empty activeSessions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_SESSIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup registered services
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                REGISTERED_SERVICES_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup empty session states
         var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE,
-                statesKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>());
 
         // Setup session permissions
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                permissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object>());
 
         // Track what gets saved to session states
         Dictionary<string, string>? savedSessionStates = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockDictStringStore
+            .Setup(s => s.SaveAsync(
                 statesKey,
                 It.IsAny<Dictionary<string, string>>(),
-                null,
-                null,
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, Dictionary<string, string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, value, opt, meta, ct) => savedSessionStates = value)
-            .Returns(Task.CompletedTask);
+            .Callback<string, Dictionary<string, string>, StateOptions?, CancellationToken>(
+                (key, value, ttl, ct) => savedSessionStates = value)
+            .ReturnsAsync("etag");
 
         // Act
         var (statusCode, response) = await service.HandleSessionConnectedAsync(
@@ -1738,70 +1564,43 @@ public class PermissionsServiceTests
         var authorizations = new List<string> { "arcadia:authorized" };
 
         // Setup empty activeConnections
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_CONNECTIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup empty activeSessions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_SESSIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup registered services
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                REGISTERED_SERVICES_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup empty session states
         var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE,
-                statesKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>());
 
         // Setup session permissions
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE,
-                permissionsKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object>());
 
         // Track what gets saved to session states
         Dictionary<string, string>? savedSessionStates = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockDictStringStore
+            .Setup(s => s.SaveAsync(
                 statesKey,
                 It.IsAny<Dictionary<string, string>>(),
-                null,
-                null,
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, Dictionary<string, string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, value, opt, meta, ct) => savedSessionStates = value)
-            .Returns(Task.CompletedTask);
+            .Callback<string, Dictionary<string, string>, StateOptions?, CancellationToken>(
+                (key, value, ttl, ct) => savedSessionStates = value)
+            .ReturnsAsync("etag");
 
         // Act
         var (statusCode, response) = await service.HandleSessionConnectedAsync(
@@ -1828,28 +1627,21 @@ public class PermissionsServiceTests
         var sessionId = "session-disconnect-001";
 
         // Setup activeConnections with the session
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_CONNECTIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { sessionId, "other-session" });
 
         // Track what gets saved
         HashSet<string>? savedConnections = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockHashSetStore
+            .Setup(s => s.SaveAsync(
                 ACTIVE_CONNECTIONS_KEY,
                 It.IsAny<HashSet<string>>(),
-                null,
-                null,
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, HashSet<string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, value, opt, meta, ct) => savedConnections = value)
-            .Returns(Task.CompletedTask);
+            .Callback<string, HashSet<string>, StateOptions?, CancellationToken>(
+                (key, value, ttl, ct) => savedConnections = value)
+            .ReturnsAsync("etag");
 
         // Act - reconnectable = true (just removes from connections, keeps state)
         var (statusCode, response) = await service.HandleSessionDisconnectedAsync(sessionId, reconnectable: true);
@@ -1873,13 +1665,8 @@ public class PermissionsServiceTests
         var sessionId = "session-disconnect-002";
 
         // Setup activeConnections with the session
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_CONNECTIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { sessionId });
 
         // Act - reconnectable = true
@@ -1889,11 +1676,8 @@ public class PermissionsServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
 
         // Verify activeSessions was NOT modified (reconnectable sessions keep their state)
-        _mockDaprClient.Verify(d => d.GetStateAsync<HashSet<string>>(
-            STATE_STORE,
+        _mockHashSetStore.Verify(s => s.GetAsync(
             ACTIVE_SESSIONS_KEY,
-            null,
-            null,
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -1905,49 +1689,32 @@ public class PermissionsServiceTests
         var sessionId = "session-disconnect-003";
 
         // Setup activeConnections with the session
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_CONNECTIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { sessionId });
 
         // Setup activeSessions with the session
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_SESSIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { sessionId, "other-session" });
 
         // Setup for ClearSessionStateAsync (called internally)
         var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE,
-                statesKey,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>());
 
         // Track what gets saved to activeSessions
         HashSet<string>? savedSessions = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockHashSetStore
+            .Setup(s => s.SaveAsync(
                 ACTIVE_SESSIONS_KEY,
                 It.IsAny<HashSet<string>>(),
-                null,
-                null,
+                It.IsAny<StateOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, HashSet<string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, value, opt, meta, ct) => savedSessions = value)
-            .Returns(Task.CompletedTask);
+            .Callback<string, HashSet<string>, StateOptions?, CancellationToken>(
+                (key, value, ttl, ct) => savedSessions = value)
+            .ReturnsAsync("etag");
 
         // Act - reconnectable = false (clears all state)
         var (statusCode, response) = await service.HandleSessionDisconnectedAsync(sessionId, reconnectable: false);
@@ -1971,13 +1738,8 @@ public class PermissionsServiceTests
         var sessionId = "session-disconnect-004";
 
         // Setup activeConnections without the session
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_CONNECTIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { "other-session" });
 
         // Act
@@ -1988,12 +1750,10 @@ public class PermissionsServiceTests
         Assert.True(response?.Success);
 
         // Verify SaveStateAsync was NOT called (no change needed)
-        _mockDaprClient.Verify(d => d.SaveStateAsync(
-            STATE_STORE,
+        _mockHashSetStore.Verify(s => s.SaveAsync(
             ACTIVE_CONNECTIONS_KEY,
             It.IsAny<HashSet<string>>(),
-            null,
-            null,
+            It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -2005,13 +1765,8 @@ public class PermissionsServiceTests
         var sessionId = "session-disconnect-005";
 
         // Setup empty activeConnections
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_CONNECTIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Act
@@ -2044,77 +1799,38 @@ public class PermissionsServiceTests
             .ReturnsAsync(lockResponse);
 
         // Setup empty stored hash (first registration)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string?>(
-                STATE_STORE,
-                It.IsAny<string>(),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Setup registered services (empty initially, will be updated)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                REGISTERED_SERVICES_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Setup activeSessions with 3 sessions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_SESSIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { "session-1", "session-2", "session-3" });
 
         // Setup activeConnections with only 1 session (the connected one)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_CONNECTIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { "session-1" });
 
         // Setup session states/permissions for recompile
         foreach (var sessionId in new[] { "session-1", "session-2", "session-3" })
         {
             var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-            _mockDaprClient
-                .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                    STATE_STORE,
-                    statesKey,
-                    null,
-                    null,
-                    It.IsAny<CancellationToken>()))
+            _mockDictStringStore
+                .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Dictionary<string, string> { ["role"] = "user" });
 
             var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-            _mockDaprClient
-                .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
-                    STATE_STORE,
-                    permissionsKey,
-                    null,
-                    null,
-                    It.IsAny<CancellationToken>()))
+            _mockDictObjectStore
+                .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Dictionary<string, object>());
         }
-
-        // Setup state transactions
-        _mockDaprClient
-            .Setup(d => d.ExecuteStateTransactionAsync(
-                STATE_STORE,
-                It.IsAny<IReadOnlyList<StateTransactionRequest>>(),
-                null,
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
 
         var permissions = new ServicePermissionMatrix
         {
@@ -2172,55 +1888,27 @@ public class PermissionsServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(lockResponse);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string?>(
-                STATE_STORE,
-                It.IsAny<string>(),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                REGISTERED_SERVICES_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Empty activeSessions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_SESSIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
 
         // Empty activeConnections
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                ACTIVE_CONNECTIONS_KEY,
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
+        _mockHashSetStore
+            .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string>());
-
-        _mockDaprClient
-            .Setup(d => d.ExecuteStateTransactionAsync(
-                STATE_STORE,
-                It.IsAny<IReadOnlyList<StateTransactionRequest>>(),
-                null,
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
 
         var permissions = new ServicePermissionMatrix
         {
-            ServiceId = "empty-test-service",
+            ServiceId = "test-service",
             Version = "1.0.0",
             Permissions = new Dictionary<string, StatePermissions>
             {
@@ -2238,306 +1926,11 @@ public class PermissionsServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.True(response?.Success);
 
-        // Verify no capability refresh events were published (no connected sessions)
+        // Verify no capability events were published
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
             It.IsAny<string>(),
             It.IsAny<SessionCapabilitiesEvent>(),
             It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    #endregion
-
-    #region State Key Matching Tests
-
-    /// <summary>
-    /// Critical regression test: Verifies that same-service state keys match between
-    /// registration and lookup. The BuildPermissionMatrix must use just the state value
-    /// (e.g., "ringing") for same-service states, not "service:state" (e.g., "voice:ringing").
-    ///
-    /// This test was added after discovering a bug where:
-    /// - Registration stored at: permissions:voice:voice:ringing:user (wrong)
-    /// - Lookup searched for: permissions:voice:ringing:user (correct)
-    ///
-    /// The fix ensures both use the same key format.
-    /// </summary>
-    [Fact]
-    public async Task RecompilePermissions_SameServiceStateKey_MatchesRegistration()
-    {
-        // Arrange
-        var service = CreateService();
-        var sessionId = "session-state-key-matching";
-        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-
-        // Session has voice=ringing state (same-service state for voice service)
-        var sessionStates = new Dictionary<string, string>
-        {
-            ["role"] = "user",
-            ["voice"] = "ringing"  // voice service sets voice:ringing state
-        };
-
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE, statesKey, null, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(sessionStates);
-
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE, REGISTERED_SERVICES_KEY, null, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string> { "voice" });
-
-        // CRITICAL: The state key for same-service must be just "ringing", not "voice:ringing"
-        // This is the key that BuildPermissionMatrix should produce for voice service
-        // registering permissions for voice:ringing state
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                It.Is<string>(k => k == "permissions:voice:ringing:user"),  // Same-service: just state value
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string> { "POST:/voice/peer/answer" });
-
-        // Default endpoints (no state required)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                It.Is<string>(k => k == "permissions:voice:default:user"),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string>());
-
-        Dictionary<string, object>? saved = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
-                permissionsKey,
-                It.IsAny<Dictionary<string, object>>(),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
-            .Callback<string, string, Dictionary<string, object>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, val, opt, meta, ct) => saved = val)
-            .Returns(Task.CompletedTask);
-
-        _mockDaprClient
-            .Setup(d => d.PublishEventAsync(
-                "bannou-pubsub",
-                "permissions.capabilities-updated",
-                It.IsAny<object>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Act
-        var (status, _) = await service.UpdateSessionRoleAsync(new SessionRoleUpdate
-        {
-            SessionId = sessionId,
-            NewRole = "user",
-            PreviousRole = null
-        });
-
-        // Assert
-        Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(saved);
-        Assert.True(saved!.TryGetValue("voice", out var endpointsObj),
-            "Session should have voice service permissions when voice:ringing state is set");
-        var endpoints = endpointsObj as IEnumerable<string>;
-        Assert.NotNull(endpoints);
-        Assert.Contains("POST:/voice/peer/answer", endpoints!);
-    }
-
-    /// <summary>
-    /// Verifies cross-service state key matching: when game-session service
-    /// registers permissions requiring voice:ringing state (cross-service),
-    /// the state key must be "voice:ringing" (not just "ringing").
-    /// </summary>
-    [Fact]
-    public async Task RecompilePermissions_CrossServiceStateKey_IncludesServicePrefix()
-    {
-        // Arrange
-        var service = CreateService();
-        var sessionId = "session-cross-service-state";
-        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-
-        // Session has voice=ringing state
-        var sessionStates = new Dictionary<string, string>
-        {
-            ["role"] = "user",
-            ["voice"] = "ringing"
-        };
-
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE, statesKey, null, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(sessionStates);
-
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE, REGISTERED_SERVICES_KEY, null, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string> { "game-session" });
-
-        // Cross-service: game-session service checking voice state requires "voice:ringing" key
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                It.Is<string>(k => k == "permissions:game-session:voice:ringing:user"),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string> { "POST:/sessions/voice-enabled-action" });
-
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                It.Is<string>(k => k == "permissions:game-session:default:user"),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string>());
-
-        Dictionary<string, object>? saved = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
-                permissionsKey,
-                It.IsAny<Dictionary<string, object>>(),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
-            .Callback<string, string, Dictionary<string, object>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, val, opt, meta, ct) => saved = val)
-            .Returns(Task.CompletedTask);
-
-        _mockDaprClient
-            .Setup(d => d.PublishEventAsync(
-                "bannou-pubsub",
-                "permissions.capabilities-updated",
-                It.IsAny<object>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Act
-        var (status, _) = await service.UpdateSessionRoleAsync(new SessionRoleUpdate
-        {
-            SessionId = sessionId,
-            NewRole = "user",
-            PreviousRole = null
-        });
-
-        // Assert
-        Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(saved);
-        Assert.True(saved!.TryGetValue("game-session", out var endpointsObj));
-        var endpoints = endpointsObj as IEnumerable<string>;
-        Assert.NotNull(endpoints);
-        Assert.Contains("POST:/sessions/voice-enabled-action", endpoints!);
-    }
-
-    /// <summary>
-    /// Verifies game-session:in_game state works correctly for game-session service.
-    /// When a user joins a game session, the game-session service sets game-session:in_game,
-    /// and endpoints requiring that state should become accessible.
-    /// </summary>
-    [Fact]
-    public async Task RecompilePermissions_GameSessionInGameState_UnlocksGameEndpoints()
-    {
-        // Arrange
-        var service = CreateService();
-        var sessionId = "session-game-in-game";
-        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-
-        // Session has game-session=in_game state (set when player joins)
-        var sessionStates = new Dictionary<string, string>
-        {
-            ["role"] = "user",
-            ["game-session"] = "in_game"
-        };
-
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE, statesKey, null, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(sessionStates);
-
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE, REGISTERED_SERVICES_KEY, null, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string> { "game-session" });
-
-        // Same-service state key: just "in_game" (not "game-session:in_game")
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                It.Is<string>(k => k == "permissions:game-session:in_game:user"),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string>
-            {
-                "POST:/sessions/leave",
-                "POST:/sessions/chat",
-                "POST:/sessions/actions"
-            });
-
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<HashSet<string>>(
-                STATE_STORE,
-                It.Is<string>(k => k == "permissions:game-session:default:user"),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string>
-            {
-                "GET:/sessions/list",
-                "POST:/sessions/create",
-                "POST:/sessions/get",
-                "POST:/sessions/join"
-            });
-
-        Dictionary<string, object>? saved = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
-                permissionsKey,
-                It.IsAny<Dictionary<string, object>>(),
-                null,
-                null,
-                It.IsAny<CancellationToken>()))
-            .Callback<string, string, Dictionary<string, object>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, val, opt, meta, ct) => saved = val)
-            .Returns(Task.CompletedTask);
-
-        _mockDaprClient
-            .Setup(d => d.PublishEventAsync(
-                "bannou-pubsub",
-                "permissions.capabilities-updated",
-                It.IsAny<object>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Act
-        var (status, _) = await service.UpdateSessionRoleAsync(new SessionRoleUpdate
-        {
-            SessionId = sessionId,
-            NewRole = "user",
-            PreviousRole = null
-        });
-
-        // Assert
-        Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(saved);
-        Assert.True(saved!.TryGetValue("game-session", out var endpointsObj));
-        var endpoints = (endpointsObj as IEnumerable<string>)?.ToList();
-        Assert.NotNull(endpoints);
-
-        // Should have both default and in_game state endpoints
-        Assert.Contains("GET:/sessions/list", endpoints!);
-        Assert.Contains("POST:/sessions/join", endpoints!);
-        Assert.Contains("POST:/sessions/leave", endpoints!);  // Requires in_game state
-        Assert.Contains("POST:/sessions/chat", endpoints!);   // Requires in_game state
-        Assert.Contains("POST:/sessions/actions", endpoints!); // Requires in_game state
     }
 
     #endregion

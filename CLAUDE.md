@@ -141,12 +141,12 @@ Reference the Makefile in the repository root for all available commands and est
 - **Enum Consolidation**: Use shared enum definitions in `components/schemas` section with `$ref` references to avoid duplication (e.g., Provider enum)
 - **$ref Resolution**: Interface generation properly handles `$ref` enum parameters - never fallback to string types
 - **Duplicate Prevention**: Fix schema duplications at source rather than using exclusions in generation scripts
-- **⚠️ CRITICAL - `servers` URL**: ALL schemas MUST use `bannou` as the app-id:
+- **⚠️ CRITICAL - `servers` URL**: ALL schemas MUST use the base endpoint:
   ```yaml
   servers:
-    - url: http://localhost:3500/v1.0/invoke/bannou/method  # ✅ CORRECT - always use "bannou"
+    - url: http://localhost:5012
   ```
-  NSwag generates controller route prefixes from this URL. Dapr preserves the full path (does NOT strip the prefix), so if a schema uses a different app-id (e.g., `game-session`), the generated controller route won't match what clients send → 404 errors. See `docs/BANNOU_DESIGN.md` for full explanation.
+  NSwag generates controller route prefixes from this URL. Using direct paths ensures generated routes match what clients send.
 
 **Required Workflow**:
 1. **Schema First**: Edit OpenAPI YAML in `/schemas/` directory
@@ -158,7 +158,7 @@ Reference the Makefile in the repository root for all available commands and est
 - **Services Return Tuples**: `(StatusCodes, ResponseModel?)` using custom enum
 - **Never Edit Generated Files**: Any `*/Generated/` or `.Generated.cs` files are auto-generated
 - **Use Generated Clients**: Service-to-service calls use NSwag-generated clients, not direct interfaces
-- **Dapr-First Patterns**: Use DaprClient for state/events, never Entity Framework directly
+- **Infrastructure Libs Pattern**: Use lib-state, lib-messaging, and lib-mesh for all infrastructure (never direct Redis/RabbitMQ/HTTP)
 - **Controller = Service Wrapper**: Generated controllers are just wrappers around service implementations
 
 ### Shared Class Architecture (MANDATORY)
@@ -252,7 +252,6 @@ BANNOU_HTTP_Web_Host_Port=5012    # Service-specific with prefix
 BANNOU_HTTPS_Web_Host_Port=5013
 
 # Service Configuration
-BANNOU_EmulateDapr=True           # Enables Dapr emulation for local development
 SERVICE_DOMAIN=example.com
 
 # Database Configuration
@@ -290,10 +289,11 @@ AUTH_JWT_EXPIRATION_MINUTES=60
 ### Service Implementation Pattern
 ```csharp
 // ONLY manual file - implements generated interface
-[DaprService("service-name", typeof(IServiceInterface), lifetime: ServiceLifetime.Scoped)]
+[BannouService("service-name", typeof(IServiceInterface), lifetime: ServiceLifetime.Scoped)]
 public class ServiceNameService : IServiceNameService // Implement generated interface
 {
-    private readonly DaprClient _daprClient;           // Required for all services
+    private readonly IStateStore<ServiceModel> _stateStore;  // lib-state
+    private readonly IMessageBus _messageBus;                 // lib-messaging
     private readonly ILogger<ServiceNameService> _logger;
     private readonly ServiceNameServiceConfiguration _configuration; // Generated config class
 }
@@ -302,25 +302,25 @@ public class ServiceNameService : IServiceNameService // Implement generated int
 Configuration classes are generated in `Generated/` from schema - never edit manually.
 
 ### **MANDATORY**: Complex Service Implementation
-**When implementing complex service patterns or debugging service issues**, you MUST reference the detailed development procedures documentation for complete Dapr patterns, service client examples, event publishing patterns, and architectural implementation details.
+**When implementing complex service patterns or debugging service issues**, you MUST reference the detailed development procedures documentation for complete infrastructure lib patterns, service client examples, event publishing patterns, and architectural implementation details.
 
-### Dapr Integration Patterns
-**State Management**:
+### Infrastructure Lib Patterns
+**State Management (lib-state)**:
 ```csharp
-private const string STATE_STORE = "{service-name}-store";
-await _daprClient.SaveStateAsync(STATE_STORE, key, data);
-var data = await _daprClient.GetStateAsync<ModelType>(STATE_STORE, key);
+_stateStore = stateStoreFactory.Create<ServiceModel>("service-name");
+await _stateStore.SaveAsync(key, data);
+var data = await _stateStore.GetAsync(key);
 ```
 
-**Event Publishing**:
+**Event Publishing (lib-messaging)**:
 ```csharp
-await _daprClient.PublishEventAsync("bannou-pubsub", "event-topic", eventModel);
+await _messageBus.PublishAsync("event.topic", eventModel);
 ```
 
 ### Assembly Loading & Service Discovery
 - **Default Routing**: All services route to "bannou" (omnipotent default)
-- **Production**: Event-driven service-to-app-id mapping via RabbitMQ
-- **Service Attributes**: `[DaprService]` enables automatic discovery and DI registration
+- **Production**: Event-driven service-to-app-id mapping via Redis routing tables
+- **Service Attributes**: `[BannouService]` enables automatic discovery and DI registration
 
 ## Arcadia Game Integration
 
@@ -339,7 +339,7 @@ await _daprClient.PublishEventAsync("bannou-pubsub", "event-topic", eventModel);
 ### Common Issues
 - **Generated file errors**: Fix underlying schema, never edit generated files directly
 - **Line ending issues**: Run `make format` after code generation
-- **Service registration**: Verify `[DaprService]` and `[ServiceConfiguration]` attributes
+- **Service registration**: Verify `[BannouService]` and `[ServiceConfiguration]` attributes
 - **Build failures**: Check schema syntax in `/schemas/` directory
 - **Enum duplicate errors**: Use consolidated enum definitions in schema `components/schemas` with `$ref` references
 - **Parameter type mismatches**: Ensure interface generation properly handles `$ref` parameters (Provider not string)
@@ -387,7 +387,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 **Orchestrator Tasks**: See `docs/ORCHESTRATOR-SERVICE-DESIGN.md`
 - Required for: Deployment topology, preset creation, service discovery patterns, container orchestration
-- Key patterns: Standalone Dapr sidecars, ExtraHosts IP injection, Redis heartbeat system
+- Key patterns: ExtraHosts IP injection, Redis heartbeat system, mesh routing
 
 ### Additional References:
 **CI/CD Pipeline**: `/NUGET-SETUP.md` - 10-step CI pipeline, NuGet publishing, compatibility testing  

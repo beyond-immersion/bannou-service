@@ -49,8 +49,8 @@ info:
   title: Example Service API
   version: 1.0.0
 servers:
-  - url: http://localhost:3500/v1.0/invoke/bannou/method
-    description: Dapr sidecar endpoint
+  - url: http://localhost:5012
+    description: Bannou service endpoint
 
 paths:
   /example/greet:
@@ -117,19 +117,22 @@ Edit the service implementation file (the only manual file):
 // lib-example/ExampleService.cs
 namespace BeyondImmersion.Bannou.Example;
 
-[DaprService("example", typeof(IExampleService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("example", typeof(IExampleService), lifetime: ServiceLifetime.Scoped)]
 public class ExampleService : IExampleService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStore<ExampleModel> _stateStore;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<ExampleService> _logger;
     private readonly ExampleServiceConfiguration _configuration;
 
     public ExampleService(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         ILogger<ExampleService> logger,
         ExampleServiceConfiguration configuration)
     {
-        _daprClient = daprClient;
+        _stateStore = stateStoreFactory.Create<ExampleModel>("example");
+        _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
     }
@@ -161,7 +164,7 @@ public class ExampleService : IExampleService
 **Key patterns**:
 - Services return `(StatusCodes, ResponseModel?)` tuples
 - Use `StatusCodes` enum, not HTTP status codes directly
-- All infrastructure access goes through `DaprClient`
+- All infrastructure access goes through the three infrastructure libs (lib-state, lib-messaging, lib-mesh)
 
 ### Step 4: Enable and Test
 
@@ -183,31 +186,49 @@ make test-edge                # WebSocket tests
 
 ### State Management
 
-Use Dapr state stores for data persistence:
+Use `lib-state` for data persistence (supports Redis and MySQL backends):
 
 ```csharp
-private const string STATE_STORE = "example-statestore";
+// In service constructor
+private readonly IStateStore<MyModel> _stateStore;
+
+public MyService(IStateStoreFactory stateStoreFactory)
+{
+    _stateStore = stateStoreFactory.Create<MyModel>("my-service");
+}
 
 // Save
-await _daprClient.SaveStateAsync(STATE_STORE, key, data, cancellationToken: ct);
+await _stateStore.SaveAsync(key, data, cancellationToken: ct);
 
 // Get
-var data = await _daprClient.GetStateAsync<ModelType>(STATE_STORE, key, cancellationToken: ct);
+var data = await _stateStore.GetAsync(key, ct);
 
 // Delete
-await _daprClient.DeleteStateAsync(STATE_STORE, key, cancellationToken: ct);
+await _stateStore.DeleteAsync(key, ct);
+
+// Optimistic concurrency with ETags
+var (value, etag) = await _stateStore.GetWithETagAsync(key, ct);
+var saved = await _stateStore.TrySaveAsync(key, modifiedValue, etag, ct);
 ```
 
-State store configuration is in `/provisioning/dapr/components/`.
+State store backend is configured via `IStateStoreFactory` service configuration.
 
 ### Event Publishing
 
-Publish events for other services to consume:
+Use `lib-messaging` to publish events for other services to consume:
 
 ```csharp
-await _daprClient.PublishEventAsync(
-    "bannou-pubsub",           // Pub/sub component name
-    "example-event-topic",      // Topic
+// In service
+private readonly IMessageBus _messageBus;
+
+public MyService(IMessageBus messageBus)
+{
+    _messageBus = messageBus;
+}
+
+// Publish event
+await _messageBus.PublishAsync(
+    "example.action",           // Topic/routing key
     new ExampleEvent { ... },   // Event data
     cancellationToken: ct
 );
@@ -215,22 +236,24 @@ await _daprClient.PublishEventAsync(
 
 ### Event Subscription
 
-Subscribe to events from other services:
+Subscribe to events via `lib-messaging`:
 
 ```csharp
-[Topic("bannou-pubsub", "account-deleted")]
-[HttpPost("handle-account-deleted")]
-public async Task<IActionResult> HandleAccountDeleted(
-    [FromBody] AccountDeletedEvent eventData)
-{
-    // Handle the event
-    return Ok();
-}
+// Static subscription (survives restarts)
+await _messageSubscriber.SubscribeAsync<AccountDeletedEvent>(
+    "account.deleted",
+    async (evt, ct) => await HandleAccountDeletedAsync(evt, ct));
+
+// Dynamic subscription (per-session, disposable)
+var sub = await _messageSubscriber.SubscribeDynamicAsync<MyEvent>(
+    "session.events",
+    async (evt, ct) => await HandleEventAsync(evt, ct));
+// Later: await sub.DisposeAsync();
 ```
 
 ### Service-to-Service Calls
 
-Call other services using generated clients:
+Call other services using generated clients (which use `lib-mesh` internally):
 
 ```csharp
 private readonly IAuthClient _authClient;
@@ -250,7 +273,22 @@ public async Task<(StatusCodes, SomeResponse?)> SomeMethodAsync(...)
 }
 ```
 
-Generated clients handle Dapr routing automatically via `ServiceAppMappingResolver`.
+Generated clients use mesh service resolution for routing, supporting both monolith ("bannou") and distributed deployment topologies.
+
+For direct mesh invocation without generated clients:
+
+```csharp
+private readonly IMeshInvocationClient _meshClient;
+
+public async Task<SomeResponse> CallServiceAsync(SomeRequest request, CancellationToken ct)
+{
+    return await _meshClient.InvokeMethodAsync<SomeRequest, SomeResponse>(
+        "service-name",
+        "method-name",
+        request,
+        ct);
+}
+```
 
 ## POST-Only API Pattern
 

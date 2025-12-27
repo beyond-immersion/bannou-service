@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.Behavior;
 /// <summary>
 /// Service interface for Behavior API
 /// </summary>
-public partial interface IBehaviorService : IDaprService
+public partial interface IBehaviorService : IBannouService
 {
     /// <summary>
     /// CompileAbmlBehavior operation

@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.GameSession;
 public partial class GameSessionService
 {
     /// <summary>
-    /// Registers event consumers for Dapr pub/sub events this service handles.
+    /// Registers event consumers for Bannou pub/sub events this service handles.
     /// Called from the main service constructor.
     /// </summary>
     /// <param name="eventConsumer">The event consumer for registering handlers.</param>

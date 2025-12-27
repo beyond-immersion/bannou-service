@@ -42,8 +42,8 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
             return null;
         }
 
-        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
         var uniqueId = Guid.NewGuid().ToString("N")[..12];
         var testEmail = $"{testPrefix}_{uniqueId}@test.local";
         var testPassword = $"{testPrefix}Test123!";
@@ -162,7 +162,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                             description = "Test game service for shortcut flow",
                             serviceType = "game"
                         },
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(5));
 
                     string? serviceId = null;
                     if (serviceResponse.IsSuccess)
@@ -179,7 +179,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                             "POST",
                             "/servicedata/services/list",
                             new { },
-                            timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                            timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
                         var listJson = System.Text.Json.Nodes.JsonNode.Parse(listResponse.GetRawText())?.AsObject();
                         var services = listJson?["services"]?.AsArray();
                         if (services != null)
@@ -222,7 +222,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/accounts/by-email",
                         new { email = authResult.Value.email },
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(5));
 
                     if (!accountLookupResponse.IsSuccess)
                     {
@@ -250,7 +250,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                             serviceId = serviceId,
                             durationDays = 30
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var subJson = System.Text.Json.Nodes.JsonNode.Parse(subResponse.GetRawText())?.AsObject();
                     var subscriptionId = subJson?["subscriptionId"]?.GetValue<string>();
@@ -295,7 +295,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                         "SHORTCUT",
                         "join_game_arcadia",
                         new { }, // Empty payload - server injects the bound data
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(5));
 
                     if (!joinResponse.IsSuccess)
                     {

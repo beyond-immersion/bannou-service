@@ -104,7 +104,21 @@ public enum StatusCodes
     /// </summary>
     MessageTooLarge = 413,
     /// <summary>
+    /// Too many requests - rate limited or pool exhausted (429).
+    /// </summary>
+    TooManyRequests = 429,
+    /// <summary>
     /// Internal server error (500).
     /// </summary>
-    InternalServerError = 500
+    InternalServerError = 500,
+    /// <summary>
+    /// Method not implemented (501).
+    /// Used for stub services that are planned but not yet implemented.
+    /// </summary>
+    NotImplemented = 501,
+    /// <summary>
+    /// Service temporarily unavailable (503).
+    /// Used when a required dependency or subsystem is not available.
+    /// </summary>
+    ServiceUnavailable = 503
 }

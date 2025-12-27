@@ -25,6 +25,15 @@ public class ServiceClientResolutionTests
     }
 
     /// <summary>
+    /// Helper to set up common test services including AppConfiguration.
+    /// </summary>
+    private static void AddTestServices(ServiceCollection services)
+    {
+        services.AddLogging();
+        services.AddSingleton<AppConfiguration>();
+    }
+
+    /// <summary>
     /// Tests that AddAllBannouServiceClients correctly registers service app mapping resolver.
     /// This is the foundation for distributed service routing.
     /// </summary>
@@ -33,10 +42,10 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
 
-        // Act
-        services.AddAllBannouServiceClients();
+        // Act - Use ServiceClientsDependencyInjection which registers both resolver and clients
+        ServiceClientsDependencyInjection.AddAllBannouServiceClients(services);
         var serviceProvider = services.BuildServiceProvider();
 
         // Assert
@@ -54,7 +63,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -76,7 +85,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -105,7 +114,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -134,7 +143,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -160,7 +169,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -197,7 +206,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -233,7 +242,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -254,7 +263,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -291,7 +300,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -325,7 +334,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -383,8 +392,9 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddAllBannouServiceClients();
+        AddTestServices(services);
+        // Use ServiceClientsDependencyInjection which registers both resolver and clients
+        ServiceClientsDependencyInjection.AddAllBannouServiceClients(services);
 
         // Mock HTTP client factory
         var mockHttpClient = new HttpClient();
@@ -405,16 +415,11 @@ public class ServiceClientResolutionTests
         // Verify routing behavior
         var accountsAppId = resolver.GetAppIdForService("accounts");
         Assert.Equal("bannou", accountsAppId); // Development default
-
-        // This demonstrates the correct call pattern:
-        // var httpClient = httpClientFactory.CreateClient("AuthService");
-        // var baseUrl = $"http://localhost:3500/v1.0/invoke/{accountsAppId}/method";
-        // var response = await httpClient.PostAsync($"{baseUrl}/api/accounts/create", content);
     }
 
     /// <summary>
     /// Tests that the service client registration can discover client types by naming convention.
-    /// This validates the AddAllDaprServiceClients reflection-based discovery.
+    /// This validates the AddAllBannouServiceClients reflection-based discovery.
     /// </summary>
     [Fact]
     public void ServiceClientDiscovery_FindsClientTypesByNamingConvention()
@@ -422,7 +427,7 @@ public class ServiceClientResolutionTests
         // Arrange
         var assembly = typeof(ServiceClientExtensions).Assembly;
 
-        // Act - Simulate the discovery logic from AddAllDaprServiceClients
+        // Act - Simulate the discovery logic from AddAllBannouServiceClients
         var clientTypes = assembly.GetTypes()
             .Where(t => t.IsClass && !t.IsAbstract && t.Name.EndsWith("Client"))
             .ToList();
@@ -448,69 +453,4 @@ public class ServiceClientResolutionTests
             }
         }
     }
-}
-
-/// <summary>
-/// Example of how a service client SHOULD be implemented for distributed calls.
-/// This demonstrates the correct architecture pattern.
-/// </summary>
-public class ExampleAccountsClient : DaprServiceClientBase
-{
-    public ExampleAccountsClient(
-        HttpClient httpClient,
-        IServiceAppMappingResolver appMappingResolver,
-        ILogger<ExampleAccountsClient> logger)
-        : base(httpClient, appMappingResolver, logger, "accounts")
-    {
-    }
-
-    /// <summary>
-    /// Example of correct service-to-service call using Dapr routing.
-    /// </summary>
-    public async Task<CreateAccountResponse?> CreateAccountAsync(CreateAccountRequest request)
-    {
-        try
-        {
-            if (_httpClient == null)
-                throw new InvalidOperationException("HttpClient is not available");
-
-            // Use base class BaseUrl property which handles app-id resolution
-            var jsonContent = new StringContent(
-                BannouJson.Serialize(request),
-                System.Text.Encoding.UTF8,
-                "application/json");
-
-            var response = await _httpClient.PostAsync($"{BaseUrl}/api/accounts/create", jsonContent);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var responseContent = await response.Content.ReadAsStringAsync();
-                return BannouJson.Deserialize<CreateAccountResponse>(responseContent);
-            }
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error calling accounts service");
-            return null;
-        }
-    }
-}
-
-/// <summary>
-/// Mock request/response models for testing
-/// </summary>
-public class CreateAccountRequest
-{
-    public string Email { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-}
-
-public class CreateAccountResponse
-{
-    public string AccountId { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; }
 }

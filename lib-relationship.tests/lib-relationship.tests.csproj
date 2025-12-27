@@ -22,12 +22,13 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Moq" Version="4.20.72" />
-    <!-- Dapr.Client, Logging.Abstractions, Mvc.Core come from lib-relationship → bannou-service -->
+    <!-- Logging.Abstractions, Mvc.Core come from lib-relationship → bannou-service -->
   </ItemGroup>
 
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-relationship -->
     <ProjectReference Include="../lib-relationship/lib-relationship.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
   </ItemGroup>
 
 </Project>

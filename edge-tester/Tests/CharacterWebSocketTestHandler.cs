@@ -46,7 +46,7 @@ public class CharacterWebSocketTestHandler : IServiceTestHandler
                     description = "Test realm for character tests",
                     category = "test"
                 },
-                timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
             var responseJson = JsonNode.Parse(response.GetRawText())?.AsObject();
             var realmIdStr = responseJson?["realmId"]?.GetValue<string>();
@@ -86,7 +86,7 @@ public class CharacterWebSocketTestHandler : IServiceTestHandler
                     category = "test",
                     realmIds = new[] { realmId }  // Associate species with the realm
                 },
-                timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
             var responseJson = JsonNode.Parse(response.GetRawText())?.AsObject();
             var speciesIdStr = responseJson?["speciesId"]?.GetValue<string>();
@@ -199,7 +199,7 @@ public class CharacterWebSocketTestHandler : IServiceTestHandler
                             birthDate = DateTimeOffset.UtcNow,
                             status = "alive"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var characterIdStr = createJson?["characterId"]?.GetValue<string>();
@@ -219,7 +219,7 @@ public class CharacterWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/character/get",
                         new { characterId = characterIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var getJson = JsonNode.Parse(getResponse.GetRawText())?.AsObject();
                     var retrievedId = getJson?["characterId"]?.GetValue<string>();
@@ -304,7 +304,7 @@ public class CharacterWebSocketTestHandler : IServiceTestHandler
                             birthDate = DateTimeOffset.UtcNow,
                             status = "alive"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var characterIdStr = createJson?["characterId"]?.GetValue<string>();
@@ -325,7 +325,7 @@ public class CharacterWebSocketTestHandler : IServiceTestHandler
                             characterId = characterIdStr,
                             name = $"Updated {uniqueName}"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var updateJson = JsonNode.Parse(updateResponse.GetRawText())?.AsObject();
                     var updatedName = updateJson?["name"]?.GetValue<string>();
@@ -347,7 +347,7 @@ public class CharacterWebSocketTestHandler : IServiceTestHandler
                             status = "dead",
                             deathDate = DateTimeOffset.UtcNow
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var deathJson = JsonNode.Parse(deathResponse.GetRawText())?.AsObject();
                     var statusStr = deathJson?["status"]?.GetValue<string>();
@@ -364,7 +364,7 @@ public class CharacterWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/character/delete",
                         new { characterId = characterIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     Console.WriteLine($"   Character deleted successfully");
 
@@ -425,7 +425,7 @@ public class CharacterWebSocketTestHandler : IServiceTestHandler
                 method,
                 path,
                 requestBody,
-                timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
 
             var responseJson = response.GetRawText();
             Console.WriteLine($"   Received response: {responseJson.Substring(0, Math.Min(500, responseJson.Length))}...");

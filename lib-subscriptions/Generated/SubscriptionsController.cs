@@ -27,7 +27,7 @@ namespace BeyondImmersion.BannouService.Subscriptions;
 using System = global::System;
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public interface ISubscriptionsController : BeyondImmersion.BannouService.Controllers.IDaprController
+public interface ISubscriptionsController : BeyondImmersion.BannouService.Controllers.IBannouController
 {
 
     /// <summary>
@@ -116,7 +116,6 @@ public interface ISubscriptionsController : BeyondImmersion.BannouService.Contro
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-[Microsoft.AspNetCore.Mvc.Route("v1.0/invoke/bannou/method")]
 
 public partial class SubscriptionsController : Microsoft.AspNetCore.Mvc.ControllerBase
 {

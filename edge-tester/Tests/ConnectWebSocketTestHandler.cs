@@ -24,8 +24,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return null;
         }
 
-        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
         var uniqueId = Guid.NewGuid().ToString("N")[..12];
         var testEmail = $"{testPrefix}_{uniqueId}@test.local";
         var testPassword = $"{testPrefix}Test123!";
@@ -210,7 +210,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         Console.WriteLine($"📡 Connecting to WebSocket: {serverUri}");
 
         using var webSocket = new ClientWebSocket();
@@ -265,7 +265,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         using var webSocket = new ClientWebSocket();
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
 
@@ -374,7 +374,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         using var webSocket = new ClientWebSocket();
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
 
@@ -387,7 +387,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             Console.WriteLine("📥 Waiting for capability manifest to be pushed by server...");
 
             var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
             try
             {
@@ -474,7 +474,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         using var webSocket = new ClientWebSocket();
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
 
@@ -526,7 +526,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             await webSocket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None);
 
             // Wait for Response message, skipping any Event messages
-            var responseResult = await WaitForResponseMessage(webSocket, TimeSpan.FromSeconds(15));
+            var responseResult = await WaitForResponseMessage(webSocket, TimeSpan.FromSeconds(5));
 
             if (responseResult == null)
             {
@@ -639,7 +639,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         var testEmail = $"{testUsername}@test.local";
         var testPassword = "WebSocketDeleteTest123!";
 
-        var registerUrl = $"http://{Program.Configuration.OpenResty_Host}:{Program.Configuration.OpenResty_Port}/auth/register";
+        var registerUrl = $"http://{Program.Configuration.OpenRestyHost}:{Program.Configuration.OpenRestyPort}/auth/register";
         var registerContent = new JsonObject
         {
             ["username"] = testUsername,
@@ -701,7 +701,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
         // Step 2: Establish user's WebSocket connection (this is the one we expect to be disconnected)
         Console.WriteLine("📋 Step 2: Establishing user's WebSocket connection...");
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         using var userWebSocket = new ClientWebSocket();
         userWebSocket.Options.SetRequestHeader("Authorization", "Bearer " + userAccessToken);
 
@@ -827,7 +827,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         // Step 5: Wait for user's WebSocket to be closed by the server
         Console.WriteLine("📋 Step 5: Waiting for server to close user's WebSocket connection...");
         var receiveBuffer = new ArraySegment<byte>(new byte[4096]);
-        using var receiveCts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        using var receiveCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
         try
         {
@@ -954,7 +954,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         string? reconnectionToken = null;
 
         // Step 1: Initial connection
@@ -1089,7 +1089,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 if (!disconnectNotificationReceived)
                 {
                     Console.WriteLine("⚠️ Did not receive disconnect_notification before WebSocket closed");
-                    Console.WriteLine("   Check that DaprSessionManager is properly registered and state store is available");
+                    Console.WriteLine("   Check that BannouSessionManager is properly registered and state store is available");
                 }
             }
         }
@@ -1100,7 +1100,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         if (string.IsNullOrEmpty(reconnectionToken))
         {
             Console.WriteLine("❌ FAIL: No reconnection token received - disconnect_notification was not sent");
-            Console.WriteLine("   This indicates session management is not working (check DaprSessionManager registration)");
+            Console.WriteLine("   This indicates session management is not working (check BannouSessionManager registration)");
             return false;
         }
 
@@ -1184,8 +1184,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
 
         // Step 1: Create a dedicated test account to avoid interfering with other tests
         Console.WriteLine("📋 Step 1: Creating dedicated test account for subsume test...");
@@ -1225,7 +1225,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
 
         // Step 2: Establish first WebSocket connection
         Console.WriteLine("📋 Step 2: Establishing first WebSocket connection...");
@@ -1426,7 +1426,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
     /// </summary>
     private static async Task<Guid> ReceiveCapabilityManifestAndFindAccountDeleteGuid(ClientWebSocket webSocket)
     {
-        var overallTimeout = TimeSpan.FromSeconds(30);
+        var overallTimeout = TimeSpan.FromSeconds(10);
         var startTime = DateTime.UtcNow;
         var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
 
@@ -1510,7 +1510,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
     private static async Task<(Guid serviceGuid, string method, string path)> ReceiveCapabilityManifestAndFindAnyServiceGuid(
         ClientWebSocket webSocket)
     {
-        var overallTimeout = TimeSpan.FromSeconds(15);
+        var overallTimeout = TimeSpan.FromSeconds(5);
         var startTime = DateTime.UtcNow;
         var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
 
@@ -1593,7 +1593,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         string method,
         string path)
     {
-        var overallTimeout = TimeSpan.FromSeconds(30);
+        var overallTimeout = TimeSpan.FromSeconds(10);
         var startTime = DateTime.UtcNow;
         var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
 
@@ -1861,8 +1861,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
 
         // Step 1: Create a dedicated test account
         Console.WriteLine("   Step 1: Creating dedicated test account...");
@@ -1946,7 +1946,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 "POST",
                 "/testing/debug/path",
                 new { }, // Empty body
-                timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
             // Verify we got a valid response with expected fields
             var hasPath = response.TryGetProperty("Path", out var pathProp) ||
@@ -2042,8 +2042,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
 
         // Create dedicated test account for this test
         Console.WriteLine("   Creating dedicated test account...");
@@ -2084,7 +2084,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         }
 
         // Connect via raw WebSocket to observe manifest directly
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         using var webSocket = new ClientWebSocket();
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
 
@@ -2171,7 +2171,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
     /// </summary>
     private async Task<Guid> ReceiveAndCacheAllGuids(ClientWebSocket webSocket, string method, string path)
     {
-        var overallTimeout = TimeSpan.FromSeconds(30);
+        var overallTimeout = TimeSpan.FromSeconds(10);
         var startTime = DateTime.UtcNow;
         var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
 

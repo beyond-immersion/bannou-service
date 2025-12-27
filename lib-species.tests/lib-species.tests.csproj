@@ -22,13 +22,15 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Moq" Version="4.20.72" />
-    <!-- Dapr.Client, Logging.Abstractions, Mvc.Core come from lib-species → bannou-service -->
+    <!-- Logging.Abstractions, Mvc.Core come from lib-species → bannou-service -->
   </ItemGroup>
 
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-species -->
     <ProjectReference Include="../lib-species/lib-species.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
     <ProjectReference Include="../lib-testing/lib-testing.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,5 @@
-using Dapr.Client;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
@@ -8,11 +9,11 @@ namespace BeyondImmersion.BannouService.Documentation.Services;
 /// <summary>
 /// In-memory search index with thread-safe operations.
 /// Uses ConcurrentDictionary per Tenet 9 (Multi-Instance Safety).
-/// Rebuilt on startup from Dapr state store.
+/// Rebuilt on startup from lib-state store.
 /// </summary>
 public partial class SearchIndexService : ISearchIndexService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<SearchIndexService> _logger;
     private readonly DocumentationServiceConfiguration _configuration;
 
@@ -27,17 +28,25 @@ public partial class SearchIndexService : ISearchIndexService
     /// <summary>
     /// Creates a new instance of the SearchIndexService.
     /// </summary>
-    /// <param name="daprClient">The Dapr client for state operations.</param>
+    /// <param name="stateStoreFactory">The state store factory for state operations.</param>
     /// <param name="logger">The logger instance.</param>
     /// <param name="configuration">The service configuration.</param>
     public SearchIndexService(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
         ILogger<SearchIndexService> logger,
         DocumentationServiceConfiguration configuration)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+    }
+
+    /// <inheritdoc />
+    public Task EnsureIndexExistsAsync(string namespaceId, CancellationToken cancellationToken = default)
+    {
+        // In-memory index is created on first use, no pre-creation needed
+        _indices.GetOrAdd(namespaceId, _ => new NamespaceIndex());
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -53,7 +62,8 @@ public partial class SearchIndexService : ISearchIndexService
 
         // Load document list from state store
         var docListKey = $"ns-docs:{namespaceId}";
-        var documentIds = await _daprClient.GetStateAsync<List<Guid>>(STATE_STORE, docListKey, cancellationToken: cancellationToken);
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var documentIds = await listStore.GetAsync(docListKey, cancellationToken);
 
         if (documentIds == null || documentIds.Count == 0)
         {
@@ -62,12 +72,14 @@ public partial class SearchIndexService : ISearchIndexService
         }
 
         var indexedCount = 0;
+        var docStore = _stateStoreFactory.GetStore<DocumentIndexData>(STATE_STORE);
         foreach (var docId in documentIds)
         {
             try
             {
-                var docKey = $"doc:{namespaceId}:{docId}";
-                var doc = await _daprClient.GetStateAsync<DocumentIndexData>(STATE_STORE, docKey, cancellationToken: cancellationToken);
+                // Key without "doc:" prefix since store already prepends it via KeyPrefix config
+                var docKey = $"{namespaceId}:{docId}";
+                var doc = await docStore.GetAsync(docKey, cancellationToken);
 
                 if (doc != null)
                 {
@@ -105,61 +117,61 @@ public partial class SearchIndexService : ISearchIndexService
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<SearchResult> Search(string namespaceId, string searchTerm, string? category = null, int maxResults = 20)
+    public Task<IReadOnlyList<SearchResult>> SearchAsync(string namespaceId, string searchTerm, string? category = null, int maxResults = 20, CancellationToken cancellationToken = default)
     {
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
         {
-            return Array.Empty<SearchResult>();
+            return Task.FromResult<IReadOnlyList<SearchResult>>(Array.Empty<SearchResult>());
         }
 
-        return nsIndex.Search(searchTerm, category, maxResults);
+        return Task.FromResult<IReadOnlyList<SearchResult>>(nsIndex.Search(searchTerm, category, maxResults));
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<SearchResult> Query(string namespaceId, string query, string? category = null, int maxResults = 20, double minRelevanceScore = 0.3)
+    public Task<IReadOnlyList<SearchResult>> QueryAsync(string namespaceId, string query, string? category = null, int maxResults = 20, double minRelevanceScore = 0.3, CancellationToken cancellationToken = default)
     {
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
         {
-            return Array.Empty<SearchResult>();
+            return Task.FromResult<IReadOnlyList<SearchResult>>(Array.Empty<SearchResult>());
         }
 
         // For now, query uses the same logic as search but with relevance filtering
         // Future: Add semantic/AI-based query processing when enabled
         var results = nsIndex.Search(query, category, maxResults * 2);
-        return results.Where(r => r.RelevanceScore >= minRelevanceScore).Take(maxResults).ToList();
+        return Task.FromResult<IReadOnlyList<SearchResult>>(results.Where(r => r.RelevanceScore >= minRelevanceScore).Take(maxResults).ToList());
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<Guid> GetRelatedSuggestions(string namespaceId, string sourceValue, int maxSuggestions = 5)
+    public Task<IReadOnlyList<Guid>> GetRelatedSuggestionsAsync(string namespaceId, string sourceValue, int maxSuggestions = 5, CancellationToken cancellationToken = default)
     {
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
         {
-            return Array.Empty<Guid>();
+            return Task.FromResult<IReadOnlyList<Guid>>(Array.Empty<Guid>());
         }
 
-        return nsIndex.GetRelated(sourceValue, maxSuggestions);
+        return Task.FromResult<IReadOnlyList<Guid>>(nsIndex.GetRelated(sourceValue, maxSuggestions));
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<Guid> ListDocumentIds(string namespaceId, string? category = null, int skip = 0, int take = 100)
+    public Task<IReadOnlyList<Guid>> ListDocumentIdsAsync(string namespaceId, string? category = null, int skip = 0, int take = 100, CancellationToken cancellationToken = default)
     {
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
         {
-            return Array.Empty<Guid>();
+            return Task.FromResult<IReadOnlyList<Guid>>(Array.Empty<Guid>());
         }
 
-        return nsIndex.ListDocuments(category, skip, take);
+        return Task.FromResult<IReadOnlyList<Guid>>(nsIndex.ListDocuments(category, skip, take));
     }
 
     /// <inheritdoc />
-    public NamespaceStats GetNamespaceStats(string namespaceId)
+    public Task<NamespaceStats> GetNamespaceStatsAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
         {
-            return new NamespaceStats(0, new Dictionary<string, int>(), 0);
+            return Task.FromResult(new NamespaceStats(0, new Dictionary<string, int>(), 0));
         }
 
-        return nsIndex.GetStats();
+        return Task.FromResult(nsIndex.GetStats());
     }
 
     /// <summary>

@@ -25,6 +25,9 @@ services:
       # Routing Redis on default (internal) network - service name resolution
       - REDIS_HOST=routing-redis
       - REDIS_PORT=6379
+      # Asset state Redis (same as bannou-redis) for token validation
+      - ASSET_REDIS_HOST=bannou-redis
+      - ASSET_REDIS_PORT=6379
       - SERVICE_DOMAIN=${SERVICE_DOMAIN}
     networks:
       - default   # Internal network - reach bannou, routing-redis via service names
@@ -39,7 +42,7 @@ services:
 
   # Redis for OpenResty routing state and service heartbeats
   routing-redis:
-    image: redis:7-alpine
+    image: redis:latest
     command: redis-server --appendonly yes
     volumes:
       - routing-redis-data:/data

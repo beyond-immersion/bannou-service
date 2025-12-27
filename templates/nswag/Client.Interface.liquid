@@ -1,6 +1,6 @@
 {% template Client.Class.Annotations %}
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "{{ ToolchainVersion }}")]
-{{ ClientClassAccessModifier }} partial interface I{{ Class }}{% if HasBaseClass and BaseClass contains "DaprServiceClientBase" %} : BeyondImmersion.BannouService.ServiceClients.IServiceClient<{{ Class }}>{% endif %}
+{{ ClientClassAccessModifier }} partial interface I{{ Class }}{% if HasBaseClass and BaseClass contains "ServiceClientBase" %} : BeyondImmersion.BannouService.ServiceClients.IServiceClient<{{ Class }}>{% endif %}
 {
 {% for operation in Operations -%}
 

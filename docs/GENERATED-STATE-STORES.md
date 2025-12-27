@@ -1,31 +1,15 @@
 # Generated State Store Reference
 
-> **Auto-generated**: 2025-12-23 05:34:44
-> **Source**: `provisioning/dapr/components/*.yaml`
+> **Auto-generated**: 2025-12-27 13:47:07
+> **Source**: `provisioning/state-stores/*.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
-This document lists all Dapr state store components used in Bannou.
+This document lists all state store components used in Bannou.
 
 ## State Store Components
 
 | Component Name | Backend | Service | Purpose |
 |----------------|---------|---------|---------|
-| `accounts-statestore` | MySQL | Accounts | Persistent queryable data |
-| `auth-statestore` | Redis | Auth | Session/token state (ephemeral) |
-| `character-statestore` | MySQL | Character | Persistent queryable data |
-| `connect-statestore` | Redis | Connect | WebSocket session state |
-| `documentation-statestore` | Redis | Documentation | Service-specific state |
-| `game-session-statestore` | Redis | Game-session | Active game session state |
-| `location-statestore` | MySQL | Location | Persistent queryable data |
-| `permissions-store` | Redis | Permissions | Permission cache and session capabilities |
-| `realm-statestore` | MySQL | Realm | Persistent queryable data |
-| `relationship-statestore` | MySQL | Relationship | Persistent queryable data |
-| `relationship-type-statestore` | MySQL | Relationship-type | Persistent queryable data |
-| `servicedata-statestore` | MySQL | Servicedata | Persistent queryable data |
-| `species-statestore` | MySQL | Species | Persistent queryable data |
-| `statestore` | Redis | Statestore | Service-specific state |
-| `subscriptions-statestore` | MySQL | Subscriptions | Persistent queryable data |
-| `voice-statestore` | Redis | Voice | Service-specific state |
 
 ## Naming Conventions
 
@@ -36,7 +20,7 @@ This document lists all Dapr state store components used in Bannou.
 
 ## Deployment Flexibility
 
-Dapr component abstraction means multiple logical state stores can share physical
+The state store abstraction means multiple logical state stores can share physical
 Redis/MySQL instances in simple deployments, while production deployments can map
 to dedicated infrastructure without code changes.
 

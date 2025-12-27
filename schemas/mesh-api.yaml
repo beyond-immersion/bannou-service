@@ -1,0 +1,865 @@
+openapi: 3.0.0
+info:
+  title: Bannou Mesh Service API
+  description: |
+    Native service mesh plugin providing direct service-to-service invocation
+    natively. Replaces mesh invocation with YARP-based
+    HTTP routing and Redis-backed service discovery.
+
+    **Architecture Overview**:
+    - Service endpoints are registered in Redis with health/load metadata
+    - IMeshClient provides service invocation API (drop-in mesh client)
+    - Load balancing across multiple instances of same app-id
+    - Health-aware routing excludes degraded/unavailable instances
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support
+    zero-copy WebSocket routing. See docs/BANNOU_DESIGN.md for rationale.
+
+    **Internal Service**: These endpoints are for service-to-service communication.
+    WebSocket clients should not directly access mesh endpoints.
+  version: 1.0.0
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (during migration)
+
+paths:
+  # =============================================================================
+  # Service Discovery Endpoints
+  # =============================================================================
+  /mesh/endpoints/get:
+    post:
+      summary: Get endpoints for a service
+      description: |
+        Returns all healthy endpoints for the specified app-id.
+        Used by IMeshClient to resolve target hosts for service invocation.
+      operationId: getEndpoints
+      tags:
+      - Service Discovery
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEndpointsRequest'
+      responses:
+        '200':
+          description: Endpoints retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEndpointsResponse'
+        '404':
+          description: No endpoints found for app-id
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetEndpointsRequest\"\
+        ,\n  \"$defs\": {\n    \"GetEndpointsRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request to
+        get endpoints for a service\",\n      \"required\": [\n        \"appId\"\n      ],\n      \"properties\": {\n    \
+        \    \"appId\": {\n          \"type\": \"string\",\n          \"description\": \"App-id to get endpoints for\"\n \
+        \       },\n        \"includeUnhealthy\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n   \
+        \       \"description\": \"If true, include degraded/unavailable endpoints\"\n        },\n        \"serviceName\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Optional filter by specific service name\"\n  \
+        \      }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetEndpointsResponse\"\
+        ,\n  \"$defs\": {\n    \"GetEndpointsResponse\": {\n      \"type\": \"object\",\n      \"description\": \"Response
+        containing endpoints for a service\",\n      \"required\": [\n        \"appId\",\n        \"endpoints\"\n      ],\n\
+        \      \"properties\": {\n        \"appId\": {\n          \"type\": \"string\"\n        },\n        \"endpoints\"\
+        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/MeshEndpoint\"\n    \
+        \      }\n        },\n        \"healthyCount\": {\n          \"type\": \"integer\",\n          \"description\": \"\
+        Number of healthy endpoints\"\n        },\n        \"totalCount\": {\n          \"type\": \"integer\",\n         \
+        \ \"description\": \"Total number of endpoints (including unhealthy)\"\n        }\n      }\n    },\n    \"MeshEndpoint\"\
+        : {\n      \"type\": \"object\",\n      \"description\": \"A service endpoint in the mesh\",\n      \"required\":
+        [\n        \"instanceId\",\n        \"appId\",\n        \"host\",\n        \"port\",\n        \"status\"\n      ],\n\
+        \      \"properties\": {\n        \"instanceId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\
+        ,\n          \"description\": \"Unique identifier for this instance\"\n        },\n        \"appId\": {\n        \
+        \  \"type\": \"string\",\n          \"description\": \"Bannou app-id (e.g., \\\"bannou\\\", \\\"bannou-npc-01\\\"\
+        )\"\n        },\n        \"host\": {\n          \"type\": \"string\",\n          \"description\": \"Hostname or IP
+        address\"\n        },\n        \"port\": {\n          \"type\": \"integer\",\n          \"description\": \"Service
+        port (typically 80)\"\n        },\n        \"status\": {\n          \"$ref\": \"#/$defs/EndpointStatus\"\n       \
+        \ },\n        \"loadPercent\": {\n          \"type\": \"number\",\n          \"format\": \"float\",\n          \"\
+        description\": \"Current load as percentage (0-100)\",\n          \"default\": 0\n        },\n        \"maxConnections\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Maximum concurrent connections\"\n        },\n\
+        \        \"currentConnections\": {\n          \"type\": \"integer\",\n          \"description\": \"Current active
+        connections\"\n        },\n        \"services\": {\n          \"type\": \"array\",\n          \"items\": {\n     \
+        \       \"type\": \"string\"\n          },\n          \"description\": \"List of service names hosted on this endpoint\"\
+        \n        },\n        \"lastSeen\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n   \
+        \       \"description\": \"Last heartbeat timestamp\"\n        },\n        \"registeredAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When endpoint was first registered\"\
+        \n        }\n      }\n    },\n    \"EndpointStatus\": {\n      \"type\": \"string\",\n      \"description\": \"Health
+        status of an endpoint\",\n      \"enum\": [\n        \"Healthy\",\n        \"Degraded\",\n        \"Unavailable\"\
+        ,\n        \"ShuttingDown\"\n      ]\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Get endpoints for a service\",\n  \"description\": \"Returns all healthy
+        endpoints for the specified app-id.\\nUsed by IMeshClient to resolve target hosts for service invocation.\\n\",\n\
+        \  \"tags\": [\n    \"Service Discovery\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getEndpoints\"\n}"
+  /mesh/endpoints/list:
+    post:
+      summary: List all registered endpoints
+      description: |
+        Returns all registered service endpoints across all app-ids.
+        Admin-only endpoint for monitoring and debugging.
+      operationId: listEndpoints
+      tags:
+      - Service Discovery
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListEndpointsRequest'
+      responses:
+        '200':
+          description: All endpoints retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEndpointsResponse'
+
+  # =============================================================================
+  # Service Registration Endpoints
+  # =============================================================================
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListEndpointsRequest\"\
+        ,\n  \"$defs\": {\n    \"ListEndpointsRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request
+        to list all endpoints\",\n      \"properties\": {\n        \"statusFilter\": {\n          \"$ref\": \"#/$defs/EndpointStatus\"\
+        \n        },\n        \"appIdFilter\": {\n          \"type\": \"string\",\n          \"description\": \"Optional filter
+        by app-id prefix\"\n        }\n      }\n    },\n    \"EndpointStatus\": {\n      \"type\": \"string\",\n      \"description\"\
+        : \"Health status of an endpoint\",\n      \"enum\": [\n        \"Healthy\",\n        \"Degraded\",\n        \"Unavailable\"\
+        ,\n        \"ShuttingDown\"\n      ]\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListEndpointsResponse\"\
+        ,\n  \"$defs\": {\n    \"ListEndpointsResponse\": {\n      \"type\": \"object\",\n      \"description\": \"Response
+        containing all endpoints\",\n      \"required\": [\n        \"endpoints\",\n        \"summary\"\n      ],\n      \"\
+        properties\": {\n        \"endpoints\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"\
+        $ref\": \"#/$defs/MeshEndpoint\"\n          }\n        },\n        \"summary\": {\n          \"$ref\": \"#/$defs/EndpointSummary\"\
+        \n        }\n      }\n    },\n    \"MeshEndpoint\": {\n      \"type\": \"object\",\n      \"description\": \"A service
+        endpoint in the mesh\",\n      \"required\": [\n        \"instanceId\",\n        \"appId\",\n        \"host\",\n \
+        \       \"port\",\n        \"status\"\n      ],\n      \"properties\": {\n        \"instanceId\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier for this instance\"\
+        \n        },\n        \"appId\": {\n          \"type\": \"string\",\n          \"description\": \"Bannou app-id (e.g.,
+        \\\"bannou\\\", \\\"bannou-npc-01\\\")\"\n        },\n        \"host\": {\n          \"type\": \"string\",\n     \
+        \     \"description\": \"Hostname or IP address\"\n        },\n        \"port\": {\n          \"type\": \"integer\"\
+        ,\n          \"description\": \"Service port (typically 80)\"\n        },\n        \"status\": {\n          \"$ref\"\
+        : \"#/$defs/EndpointStatus\"\n        },\n        \"loadPercent\": {\n          \"type\": \"number\",\n          \"\
+        format\": \"float\",\n          \"description\": \"Current load as percentage (0-100)\",\n          \"default\": 0\n\
+        \        },\n        \"maxConnections\": {\n          \"type\": \"integer\",\n          \"description\": \"Maximum
+        concurrent connections\"\n        },\n        \"currentConnections\": {\n          \"type\": \"integer\",\n      \
+        \    \"description\": \"Current active connections\"\n        },\n        \"services\": {\n          \"type\": \"\
+        array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"List
+        of service names hosted on this endpoint\"\n        },\n        \"lastSeen\": {\n          \"type\": \"string\",\n\
+        \          \"format\": \"date-time\",\n          \"description\": \"Last heartbeat timestamp\"\n        },\n     \
+        \   \"registeredAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        : \"When endpoint was first registered\"\n        }\n      }\n    },\n    \"EndpointStatus\": {\n      \"type\": \"\
+        string\",\n      \"description\": \"Health status of an endpoint\",\n      \"enum\": [\n        \"Healthy\",\n   \
+        \     \"Degraded\",\n        \"Unavailable\",\n        \"ShuttingDown\"\n      ]\n    },\n    \"EndpointSummary\"\
+        : {\n      \"type\": \"object\",\n      \"description\": \"Summary statistics for endpoints\",\n      \"properties\"\
+        : {\n        \"totalEndpoints\": {\n          \"type\": \"integer\"\n        },\n        \"healthyCount\": {\n   \
+        \       \"type\": \"integer\"\n        },\n        \"degradedCount\": {\n          \"type\": \"integer\"\n       \
+        \ },\n        \"unavailableCount\": {\n          \"type\": \"integer\"\n        },\n        \"uniqueAppIds\": {\n\
+        \          \"type\": \"integer\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"List all registered endpoints\",\n  \"description\": \"Returns all registered
+        service endpoints across all app-ids.\\nAdmin-only endpoint for monitoring and debugging.\\n\",\n  \"tags\": [\n \
+        \   \"Service Discovery\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"listEndpoints\"\n}"
+  /mesh/register:
+    post:
+      summary: Register a service endpoint
+      description: |
+        Registers this instance's endpoint in the service mesh.
+        Called during service startup to announce availability.
+        Endpoint TTL is refreshed on each heartbeat.
+      operationId: registerEndpoint
+      tags:
+      - Registration
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterEndpointRequest'
+      responses:
+        '201':
+          description: Endpoint registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterEndpointResponse'
+        '400':
+          description: Invalid registration data
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RegisterEndpointRequest\"\
+        ,\n  \"$defs\": {\n    \"RegisterEndpointRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request
+        to register a service endpoint\",\n      \"required\": [\n        \"instanceId\",\n        \"appId\",\n        \"\
+        host\",\n        \"port\"\n      ],\n      \"properties\": {\n        \"instanceId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier for this instance\"\n        },\n\
+        \        \"appId\": {\n          \"type\": \"string\",\n          \"description\": \"App-id for this instance\"\n\
+        \        },\n        \"host\": {\n          \"type\": \"string\",\n          \"description\": \"Hostname or IP address
+        to register\"\n        },\n        \"port\": {\n          \"type\": \"integer\",\n          \"default\": 80,\n   \
+        \       \"description\": \"Service port\"\n        },\n        \"services\": {\n          \"type\": \"array\",\n \
+        \         \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"List of service
+        names hosted on this endpoint\"\n        },\n        \"maxConnections\": {\n          \"type\": \"integer\",\n   \
+        \       \"default\": 1000,\n          \"description\": \"Maximum concurrent connections\"\n        },\n        \"\
+        metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\
+        \n          },\n          \"description\": \"Optional metadata key-value pairs\"\n        }\n      }\n    }\n  }\n\
+        }"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RegisterEndpointResponse\"\
+        ,\n  \"$defs\": {\n    \"RegisterEndpointResponse\": {\n      \"type\": \"object\",\n      \"description\": \"Response
+        after registering endpoint\",\n      \"required\": [\n        \"success\",\n        \"endpoint\"\n      ],\n     \
+        \ \"properties\": {\n        \"success\": {\n          \"type\": \"boolean\"\n        },\n        \"endpoint\": {\n\
+        \          \"$ref\": \"#/$defs/MeshEndpoint\"\n        },\n        \"ttlSeconds\": {\n          \"type\": \"integer\"\
+        ,\n          \"description\": \"TTL for the registration (requires heartbeat refresh)\"\n        }\n      }\n    },\n\
+        \    \"MeshEndpoint\": {\n      \"type\": \"object\",\n      \"description\": \"A service endpoint in the mesh\",\n\
+        \      \"required\": [\n        \"instanceId\",\n        \"appId\",\n        \"host\",\n        \"port\",\n      \
+        \  \"status\"\n      ],\n      \"properties\": {\n        \"instanceId\": {\n          \"type\": \"string\",\n   \
+        \       \"format\": \"uuid\",\n          \"description\": \"Unique identifier for this instance\"\n        },\n  \
+        \      \"appId\": {\n          \"type\": \"string\",\n          \"description\": \"Bannou app-id (e.g., \\\"bannou\\\
+        \", \\\"bannou-npc-01\\\")\"\n        },\n        \"host\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Hostname or IP address\"\n        },\n        \"port\": {\n          \"type\": \"integer\",\n          \"description\"\
+        : \"Service port (typically 80)\"\n        },\n        \"status\": {\n          \"$ref\": \"#/$defs/EndpointStatus\"\
+        \n        },\n        \"loadPercent\": {\n          \"type\": \"number\",\n          \"format\": \"float\",\n    \
+        \      \"description\": \"Current load as percentage (0-100)\",\n          \"default\": 0\n        },\n        \"\
+        maxConnections\": {\n          \"type\": \"integer\",\n          \"description\": \"Maximum concurrent connections\"\
+        \n        },\n        \"currentConnections\": {\n          \"type\": \"integer\",\n          \"description\": \"Current
+        active connections\"\n        },\n        \"services\": {\n          \"type\": \"array\",\n          \"items\": {\n\
+        \            \"type\": \"string\"\n          },\n          \"description\": \"List of service names hosted on this
+        endpoint\"\n        },\n        \"lastSeen\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
+        ,\n          \"description\": \"Last heartbeat timestamp\"\n        },\n        \"registeredAt\": {\n          \"\
+        type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When endpoint was first registered\"\
+        \n        }\n      }\n    },\n    \"EndpointStatus\": {\n      \"type\": \"string\",\n      \"description\": \"Health
+        status of an endpoint\",\n      \"enum\": [\n        \"Healthy\",\n        \"Degraded\",\n        \"Unavailable\"\
+        ,\n        \"ShuttingDown\"\n      ]\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Register a service endpoint\",\n  \"description\": \"Registers this instance's
+        endpoint in the service mesh.\\nCalled during service startup to announce availability.\\nEndpoint TTL is refreshed
+        on each heartbeat.\\n\",\n  \"tags\": [\n    \"Registration\"\n  ],\n  \"deprecated\": false,\n  \"operationId\":
+        \"registerEndpoint\"\n}"
+  /mesh/deregister:
+    post:
+      summary: Deregister a service endpoint
+      description: |
+        Removes this instance's endpoint from the service mesh.
+        Called during graceful shutdown.
+      operationId: deregisterEndpoint
+      tags:
+      - Registration
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeregisterEndpointRequest'
+      responses:
+        '204':
+          description: Endpoint deregistered successfully
+        '404':
+          description: Endpoint not found
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/DeregisterEndpointRequest\"\
+        ,\n  \"$defs\": {\n    \"DeregisterEndpointRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request
+        to deregister an endpoint\",\n      \"required\": [\n        \"instanceId\"\n      ],\n      \"properties\": {\n \
+        \       \"instanceId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Instance to deregister\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n  \"summary\": \"Deregister a service endpoint\",\n  \"description\": \"Removes this instance's
+        endpoint from the service mesh.\\nCalled during graceful shutdown.\\n\",\n  \"tags\": [\n    \"Registration\"\n  ],\n\
+        \  \"deprecated\": false,\n  \"operationId\": \"deregisterEndpoint\"\n}"
+  /mesh/heartbeat:
+    post:
+      summary: Update endpoint health and load
+      description: |
+        Refreshes endpoint TTL and updates health/load metrics.
+        Should be called periodically (default: every 30 seconds).
+      operationId: heartbeat
+      tags:
+      - Registration
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HeartbeatRequest'
+      responses:
+        '200':
+          description: Heartbeat processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeartbeatResponse'
+        '404':
+          description: Endpoint not registered
+
+  # =============================================================================
+  # Routing and Load Balancing
+  # =============================================================================
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/HeartbeatRequest\"\
+        ,\n  \"$defs\": {\n    \"HeartbeatRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Heartbeat to
+        refresh endpoint TTL and update metrics\",\n      \"required\": [\n        \"instanceId\"\n      ],\n      \"properties\"\
+        : {\n        \"instanceId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n    \
+        \    \"status\": {\n          \"$ref\": \"#/$defs/EndpointStatus\"\n        },\n        \"loadPercent\": {\n     \
+        \     \"type\": \"number\",\n          \"format\": \"float\",\n          \"description\": \"Current load (0-100)\"\
+        \n        },\n        \"currentConnections\": {\n          \"type\": \"integer\",\n          \"description\": \"Current
+        active connections\"\n        },\n        \"issues\": {\n          \"type\": \"array\",\n          \"items\": {\n\
+        \            \"type\": \"string\"\n          },\n          \"description\": \"List of non-critical issues\"\n    \
+        \    }\n      }\n    },\n    \"EndpointStatus\": {\n      \"type\": \"string\",\n      \"description\": \"Health status
+        of an endpoint\",\n      \"enum\": [\n        \"Healthy\",\n        \"Degraded\",\n        \"Unavailable\",\n    \
+        \    \"ShuttingDown\"\n      ]\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/HeartbeatResponse\"\
+        ,\n  \"$defs\": {\n    \"HeartbeatResponse\": {\n      \"type\": \"object\",\n      \"description\": \"Response after
+        heartbeat processed\",\n      \"required\": [\n        \"success\"\n      ],\n      \"properties\": {\n        \"\
+        success\": {\n          \"type\": \"boolean\"\n        },\n        \"nextHeartbeatSeconds\": {\n          \"type\"\
+        : \"integer\",\n          \"description\": \"Recommended seconds until next heartbeat\"\n        },\n        \"ttlSeconds\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Remaining TTL for registration\"\n        }\n\
+        \      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Update endpoint health and load\",\n  \"description\": \"Refreshes endpoint
+        TTL and updates health/load metrics.\\nShould be called periodically (default: every 30 seconds).\\n\",\n  \"tags\"\
+        : [\n    \"Registration\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"heartbeat\"\n}"
+  /mesh/route:
+    post:
+      summary: Get optimal endpoint for routing
+      description: |
+        Returns a single endpoint for the specified app-id, selected by the
+        configured load balancing algorithm (round-robin, least-connections, weighted).
+      operationId: getRoute
+      tags:
+      - Routing
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRouteRequest'
+      responses:
+        '200':
+          description: Route selected successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRouteResponse'
+        '404':
+          description: No healthy endpoints available for the requested app-id
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetRouteRequest\"\
+        ,\n  \"$defs\": {\n    \"GetRouteRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request to get
+        optimal route for a service call\",\n      \"required\": [\n        \"appId\"\n      ],\n      \"properties\": {\n\
+        \        \"appId\": {\n          \"type\": \"string\",\n          \"description\": \"Target app-id to route to\"\n\
+        \        },\n        \"serviceName\": {\n          \"type\": \"string\",\n          \"description\": \"Optional service
+        name for affinity routing\"\n        },\n        \"algorithm\": {\n          \"$ref\": \"#/$defs/LoadBalancerAlgorithm\"\
+        \n        }\n      }\n    },\n    \"LoadBalancerAlgorithm\": {\n      \"type\": \"string\",\n      \"description\"\
+        : \"Load balancing algorithm\",\n      \"enum\": [\n        \"RoundRobin\",\n        \"LeastConnections\",\n     \
+        \   \"Weighted\",\n        \"Random\"\n      ]\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetRouteResponse\"\
+        ,\n  \"$defs\": {\n    \"GetRouteResponse\": {\n      \"type\": \"object\",\n      \"description\": \"Selected route
+        for service call\",\n      \"required\": [\n        \"endpoint\"\n      ],\n      \"properties\": {\n        \"endpoint\"\
+        : {\n          \"$ref\": \"#/$defs/MeshEndpoint\"\n        },\n        \"alternates\": {\n          \"type\": \"array\"\
+        ,\n          \"items\": {\n            \"$ref\": \"#/$defs/MeshEndpoint\"\n          },\n          \"description\"\
+        : \"Alternative endpoints if primary fails\"\n        }\n      }\n    },\n    \"MeshEndpoint\": {\n      \"type\"\
+        : \"object\",\n      \"description\": \"A service endpoint in the mesh\",\n      \"required\": [\n        \"instanceId\"\
+        ,\n        \"appId\",\n        \"host\",\n        \"port\",\n        \"status\"\n      ],\n      \"properties\": {\n\
+        \        \"instanceId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
+        : \"Unique identifier for this instance\"\n        },\n        \"appId\": {\n          \"type\": \"string\",\n   \
+        \       \"description\": \"Bannou app-id (e.g., \\\"bannou\\\", \\\"bannou-npc-01\\\")\"\n        },\n        \"host\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Hostname or IP address\"\n        },\n        \"\
+        port\": {\n          \"type\": \"integer\",\n          \"description\": \"Service port (typically 80)\"\n        },\n\
+        \        \"status\": {\n          \"$ref\": \"#/$defs/EndpointStatus\"\n        },\n        \"loadPercent\": {\n \
+        \         \"type\": \"number\",\n          \"format\": \"float\",\n          \"description\": \"Current load as percentage
+        (0-100)\",\n          \"default\": 0\n        },\n        \"maxConnections\": {\n          \"type\": \"integer\",\n\
+        \          \"description\": \"Maximum concurrent connections\"\n        },\n        \"currentConnections\": {\n  \
+        \        \"type\": \"integer\",\n          \"description\": \"Current active connections\"\n        },\n        \"\
+        services\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n        \
+        \  },\n          \"description\": \"List of service names hosted on this endpoint\"\n        },\n        \"lastSeen\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Last heartbeat
+        timestamp\"\n        },\n        \"registeredAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
+        ,\n          \"description\": \"When endpoint was first registered\"\n        }\n      }\n    },\n    \"EndpointStatus\"\
+        : {\n      \"type\": \"string\",\n      \"description\": \"Health status of an endpoint\",\n      \"enum\": [\n  \
+        \      \"Healthy\",\n        \"Degraded\",\n        \"Unavailable\",\n        \"ShuttingDown\"\n      ]\n    }\n \
+        \ }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Get optimal endpoint for routing\",\n  \"description\": \"Returns a single
+        endpoint for the specified app-id, selected by the\\nconfigured load balancing algorithm (round-robin, least-connections,
+        weighted).\\n\",\n  \"tags\": [\n    \"Routing\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getRoute\"\n\
+        }"
+  /mesh/mappings:
+    post:
+      summary: Get service-to-app-id mappings
+      description: |
+        Returns the current service name to app-id mapping table.
+        Used by ServiceAppMappingResolver for distributed deployment.
+      operationId: getMappings
+      tags:
+      - Routing
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetMappingsRequest'
+      responses:
+        '200':
+          description: Mappings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMappingsResponse'
+
+  # =============================================================================
+  # Health and Diagnostics
+  # =============================================================================
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetMappingsRequest\"\
+        ,\n  \"$defs\": {\n    \"GetMappingsRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request to
+        get service-to-app-id mappings\",\n      \"properties\": {\n        \"serviceNameFilter\": {\n          \"type\":
+        \"string\",\n          \"description\": \"Optional filter by service name prefix\"\n        }\n      }\n    }\n  }\n\
+        }"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetMappingsResponse\"\
+        ,\n  \"$defs\": {\n    \"GetMappingsResponse\": {\n      \"type\": \"object\",\n      \"description\": \"Current service
+        mappings\",\n      \"required\": [\n        \"mappings\",\n        \"version\"\n      ],\n      \"properties\": {\n\
+        \        \"mappings\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\"\
+        : \"string\"\n          },\n          \"description\": \"Map of serviceName -> appId\"\n        },\n        \"defaultAppId\"\
+        : {\n          \"type\": \"string\",\n          \"default\": \"bannou\",\n          \"description\": \"Default app-id
+        when no mapping exists\"\n        },\n        \"version\": {\n          \"type\": \"integer\",\n          \"format\"\
+        : \"int64\",\n          \"description\": \"Mapping version for change detection\"\n        }\n      }\n    }\n  }\n\
+        }"
+      x-endpoint-info-json: "{\n  \"summary\": \"Get service-to-app-id mappings\",\n  \"description\": \"Returns the current
+        service name to app-id mapping table.\\nUsed by ServiceAppMappingResolver for distributed deployment.\\n\",\n  \"\
+        tags\": [\n    \"Routing\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getMappings\"\n}"
+  /mesh/health:
+    post:
+      summary: Get mesh health status
+      description: |
+        Returns overall health of the service mesh including:
+        - Total registered endpoints
+        - Healthy/degraded/unavailable counts
+        - Redis connectivity status
+      operationId: getHealth
+      tags:
+      - Diagnostics
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetHealthRequest'
+      responses:
+        '200':
+          description: Health status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeshHealthResponse'
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetHealthRequest\"\
+        ,\n  \"$defs\": {\n    \"GetHealthRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request for
+        mesh health status\",\n      \"properties\": {\n        \"includeEndpoints\": {\n          \"type\": \"boolean\",\n\
+        \          \"default\": false,\n          \"description\": \"Include full endpoint list in response\"\n        }\n\
+        \      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/MeshHealthResponse\"\
+        ,\n  \"$defs\": {\n    \"MeshHealthResponse\": {\n      \"type\": \"object\",\n      \"description\": \"Overall mesh
+        health status\",\n      \"required\": [\n        \"status\",\n        \"summary\"\n      ],\n      \"properties\"\
+        : {\n        \"status\": {\n          \"$ref\": \"#/$defs/EndpointStatus\"\n        },\n        \"summary\": {\n \
+        \         \"$ref\": \"#/$defs/EndpointSummary\"\n        },\n        \"redisConnected\": {\n          \"type\": \"\
+        boolean\",\n          \"description\": \"Whether Redis connection is healthy\"\n        },\n        \"lastUpdateTime\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"uptime\": {\n   \
+        \       \"type\": \"string\",\n          \"description\": \"Mesh service uptime (e.g., \\\"2d 5h 30m\\\")\"\n    \
+        \    },\n        \"endpoints\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"\
+        #/$defs/MeshEndpoint\"\n          },\n          \"description\": \"Full endpoint list (only if includeEndpoints=true)\"\
+        \n        }\n      }\n    },\n    \"EndpointStatus\": {\n      \"type\": \"string\",\n      \"description\": \"Health
+        status of an endpoint\",\n      \"enum\": [\n        \"Healthy\",\n        \"Degraded\",\n        \"Unavailable\"\
+        ,\n        \"ShuttingDown\"\n      ]\n    },\n    \"EndpointSummary\": {\n      \"type\": \"object\",\n      \"description\"\
+        : \"Summary statistics for endpoints\",\n      \"properties\": {\n        \"totalEndpoints\": {\n          \"type\"\
+        : \"integer\"\n        },\n        \"healthyCount\": {\n          \"type\": \"integer\"\n        },\n        \"degradedCount\"\
+        : {\n          \"type\": \"integer\"\n        },\n        \"unavailableCount\": {\n          \"type\": \"integer\"\
+        \n        },\n        \"uniqueAppIds\": {\n          \"type\": \"integer\"\n        }\n      }\n    },\n    \"MeshEndpoint\"\
+        : {\n      \"type\": \"object\",\n      \"description\": \"A service endpoint in the mesh\",\n      \"required\":
+        [\n        \"instanceId\",\n        \"appId\",\n        \"host\",\n        \"port\",\n        \"status\"\n      ],\n\
+        \      \"properties\": {\n        \"instanceId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\
+        ,\n          \"description\": \"Unique identifier for this instance\"\n        },\n        \"appId\": {\n        \
+        \  \"type\": \"string\",\n          \"description\": \"Bannou app-id (e.g., \\\"bannou\\\", \\\"bannou-npc-01\\\"\
+        )\"\n        },\n        \"host\": {\n          \"type\": \"string\",\n          \"description\": \"Hostname or IP
+        address\"\n        },\n        \"port\": {\n          \"type\": \"integer\",\n          \"description\": \"Service
+        port (typically 80)\"\n        },\n        \"status\": {\n          \"$ref\": \"#/$defs/EndpointStatus\"\n       \
+        \ },\n        \"loadPercent\": {\n          \"type\": \"number\",\n          \"format\": \"float\",\n          \"\
+        description\": \"Current load as percentage (0-100)\",\n          \"default\": 0\n        },\n        \"maxConnections\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Maximum concurrent connections\"\n        },\n\
+        \        \"currentConnections\": {\n          \"type\": \"integer\",\n          \"description\": \"Current active
+        connections\"\n        },\n        \"services\": {\n          \"type\": \"array\",\n          \"items\": {\n     \
+        \       \"type\": \"string\"\n          },\n          \"description\": \"List of service names hosted on this endpoint\"\
+        \n        },\n        \"lastSeen\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n   \
+        \       \"description\": \"Last heartbeat timestamp\"\n        },\n        \"registeredAt\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When endpoint was first registered\"\
+        \n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Get mesh health status\",\n  \"description\": \"Returns overall health of
+        the service mesh including:\\n- Total registered endpoints\\n- Healthy/degraded/unavailable counts\\n- Redis connectivity
+        status\\n\",\n  \"tags\": [\n    \"Diagnostics\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getHealth\"\
+        \n}"
+components:
+  schemas:
+    # =========================================================================
+    # Core Models
+    # =========================================================================
+    MeshEndpoint:
+      type: object
+      description: A service endpoint in the mesh
+      required:
+      - instanceId
+      - appId
+      - host
+      - port
+      - status
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Unique identifier for this instance
+        appId:
+          type: string
+          description: Bannou app-id (e.g., "bannou", "bannou-npc-01")
+        host:
+          type: string
+          description: Hostname or IP address
+        port:
+          type: integer
+          description: Service port (typically 80)
+        status:
+          $ref: '#/components/schemas/EndpointStatus'
+        loadPercent:
+          type: number
+          format: float
+          description: Current load as percentage (0-100)
+          default: 0
+        maxConnections:
+          type: integer
+          description: Maximum concurrent connections
+        currentConnections:
+          type: integer
+          description: Current active connections
+        services:
+          type: array
+          items:
+            type: string
+          description: List of service names hosted on this endpoint
+        lastSeen:
+          type: string
+          format: date-time
+          description: Last heartbeat timestamp
+        registeredAt:
+          type: string
+          format: date-time
+          description: When endpoint was first registered
+
+    EndpointStatus:
+      type: string
+      description: Health status of an endpoint
+      enum:
+      - Healthy
+      - Degraded
+      - Unavailable
+      - ShuttingDown
+
+    LoadBalancerAlgorithm:
+      type: string
+      description: Load balancing algorithm
+      enum:
+      - RoundRobin
+      - LeastConnections
+      - Weighted
+      - Random
+
+    # =========================================================================
+    # Service Discovery
+    # =========================================================================
+    GetEndpointsRequest:
+      type: object
+      description: Request to get endpoints for a service
+      required:
+      - appId
+      properties:
+        appId:
+          type: string
+          description: App-id to get endpoints for
+        includeUnhealthy:
+          type: boolean
+          default: false
+          description: If true, include degraded/unavailable endpoints
+        serviceName:
+          type: string
+          description: Optional filter by specific service name
+
+    GetEndpointsResponse:
+      type: object
+      description: Response containing endpoints for a service
+      required:
+      - appId
+      - endpoints
+      properties:
+        appId:
+          type: string
+        endpoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/MeshEndpoint'
+        healthyCount:
+          type: integer
+          description: Number of healthy endpoints
+        totalCount:
+          type: integer
+          description: Total number of endpoints (including unhealthy)
+
+    ListEndpointsRequest:
+      type: object
+      description: Request to list all endpoints
+      properties:
+        statusFilter:
+          $ref: '#/components/schemas/EndpointStatus'
+        appIdFilter:
+          type: string
+          description: Optional filter by app-id prefix
+
+    ListEndpointsResponse:
+      type: object
+      description: Response containing all endpoints
+      required:
+      - endpoints
+      - summary
+      properties:
+        endpoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/MeshEndpoint'
+        summary:
+          $ref: '#/components/schemas/EndpointSummary'
+
+    EndpointSummary:
+      type: object
+      description: Summary statistics for endpoints
+      properties:
+        totalEndpoints:
+          type: integer
+        healthyCount:
+          type: integer
+        degradedCount:
+          type: integer
+        unavailableCount:
+          type: integer
+        uniqueAppIds:
+          type: integer
+
+    # =========================================================================
+    # Registration
+    # =========================================================================
+    RegisterEndpointRequest:
+      type: object
+      description: Request to register a service endpoint
+      required:
+      - instanceId
+      - appId
+      - host
+      - port
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Unique identifier for this instance
+        appId:
+          type: string
+          description: App-id for this instance
+        host:
+          type: string
+          description: Hostname or IP address to register
+        port:
+          type: integer
+          default: 80
+          description: Service port
+        services:
+          type: array
+          items:
+            type: string
+          description: List of service names hosted on this endpoint
+        maxConnections:
+          type: integer
+          default: 1000
+          description: Maximum concurrent connections
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: Optional metadata key-value pairs
+
+    RegisterEndpointResponse:
+      type: object
+      description: Response after registering endpoint
+      required:
+      - success
+      - endpoint
+      properties:
+        success:
+          type: boolean
+        endpoint:
+          $ref: '#/components/schemas/MeshEndpoint'
+        ttlSeconds:
+          type: integer
+          description: TTL for the registration (requires heartbeat refresh)
+
+    DeregisterEndpointRequest:
+      type: object
+      description: Request to deregister an endpoint
+      required:
+      - instanceId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Instance to deregister
+
+    HeartbeatRequest:
+      type: object
+      description: Heartbeat to refresh endpoint TTL and update metrics
+      required:
+      - instanceId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/EndpointStatus'
+        loadPercent:
+          type: number
+          format: float
+          description: Current load (0-100)
+        currentConnections:
+          type: integer
+          description: Current active connections
+        issues:
+          type: array
+          items:
+            type: string
+          description: List of non-critical issues
+
+    HeartbeatResponse:
+      type: object
+      description: Response after heartbeat processed
+      required:
+      - success
+      properties:
+        success:
+          type: boolean
+        nextHeartbeatSeconds:
+          type: integer
+          description: Recommended seconds until next heartbeat
+        ttlSeconds:
+          type: integer
+          description: Remaining TTL for registration
+
+    # =========================================================================
+    # Routing
+    # =========================================================================
+    GetRouteRequest:
+      type: object
+      description: Request to get optimal route for a service call
+      required:
+      - appId
+      properties:
+        appId:
+          type: string
+          description: Target app-id to route to
+        serviceName:
+          type: string
+          description: Optional service name for affinity routing
+        algorithm:
+          $ref: '#/components/schemas/LoadBalancerAlgorithm'
+
+    GetRouteResponse:
+      type: object
+      description: Selected route for service call
+      required:
+      - endpoint
+      properties:
+        endpoint:
+          $ref: '#/components/schemas/MeshEndpoint'
+        alternates:
+          type: array
+          items:
+            $ref: '#/components/schemas/MeshEndpoint'
+          description: Alternative endpoints if primary fails
+
+    GetMappingsRequest:
+      type: object
+      description: Request to get service-to-app-id mappings
+      properties:
+        serviceNameFilter:
+          type: string
+          description: Optional filter by service name prefix
+
+    GetMappingsResponse:
+      type: object
+      description: Current service mappings
+      required:
+      - mappings
+      - version
+      properties:
+        mappings:
+          type: object
+          additionalProperties:
+            type: string
+          description: Map of serviceName -> appId
+        defaultAppId:
+          type: string
+          default: bannou
+          description: Default app-id when no mapping exists
+        version:
+          type: integer
+          format: int64
+          description: Mapping version for change detection
+
+    # =========================================================================
+    # Health and Diagnostics
+    # =========================================================================
+    GetHealthRequest:
+      type: object
+      description: Request for mesh health status
+      properties:
+        includeEndpoints:
+          type: boolean
+          default: false
+          description: Include full endpoint list in response
+
+    MeshHealthResponse:
+      type: object
+      description: Overall mesh health status
+      required:
+      - status
+      - summary
+      properties:
+        status:
+          $ref: '#/components/schemas/EndpointStatus'
+        summary:
+          $ref: '#/components/schemas/EndpointSummary'
+        redisConnected:
+          type: boolean
+          description: Whether Redis connection is healthy
+        lastUpdateTime:
+          type: string
+          format: date-time
+        uptime:
+          type: string
+          description: Mesh service uptime (e.g., "2d 5h 30m")
+        endpoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/MeshEndpoint'
+          description: Full endpoint list (only if includeEndpoints=true)

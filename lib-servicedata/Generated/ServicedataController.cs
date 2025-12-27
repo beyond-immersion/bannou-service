@@ -27,7 +27,7 @@ namespace BeyondImmersion.BannouService.Servicedata;
 using System = global::System;
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public interface IServicedataController : BeyondImmersion.BannouService.Controllers.IDaprController
+public interface IServicedataController : BeyondImmersion.BannouService.Controllers.IBannouController
 {
 
     /// <summary>
@@ -93,7 +93,6 @@ public interface IServicedataController : BeyondImmersion.BannouService.Controll
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-[Microsoft.AspNetCore.Mvc.Route("v1.0/invoke/bannou/method")]
 
 public partial class ServicedataController : Microsoft.AspNetCore.Mvc.ControllerBase
 {

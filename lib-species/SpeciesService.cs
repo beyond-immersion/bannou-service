@@ -3,9 +3,10 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
@@ -20,42 +21,41 @@ namespace BeyondImmersion.BannouService.Species;
 /// Manages species definitions for characters in the Arcadia game world.
 /// Species are realm-specific, allowing different realms to have distinct populations.
 /// </summary>
-[DaprService("species", typeof(ISpeciesService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("species", typeof(ISpeciesService), lifetime: ServiceLifetime.Scoped)]
 public partial class SpeciesService : ISpeciesService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<SpeciesService> _logger;
     private readonly SpeciesServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly ICharacterClient _characterClient;
     private readonly IRealmClient _realmClient;
 
     private const string STATE_STORE = "species-statestore";
-    private const string PUBSUB_NAME = "bannou-pubsub";
     private const string SPECIES_KEY_PREFIX = "species:";
     private const string CODE_INDEX_PREFIX = "code-index:";
     private const string REALM_INDEX_PREFIX = "realm-index:";
     private const string ALL_SPECIES_KEY = "all-species";
 
     public SpeciesService(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         ILogger<SpeciesService> logger,
         SpeciesServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
         ICharacterClient characterClient,
         IRealmClient realmClient,
         IEventConsumer eventConsumer)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _characterClient = characterClient ?? throw new ArgumentNullException(nameof(characterClient));
         _realmClient = realmClient ?? throw new ArgumentNullException(nameof(realmClient));
 
         // Register event handlers via partial class (SpeciesServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     #region Key Building Helpers
@@ -86,9 +86,9 @@ public partial class SpeciesService : ISpeciesService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Could not validate realm {RealmId} - proceeding with operation", realmId);
-            // If RealmService is unavailable, allow the operation with a warning
-            return (true, true);
+            _logger.LogError(ex, "Could not validate realm {RealmId} - failing operation (fail closed)", realmId);
+            // If RealmService is unavailable, fail the operation - don't assume realm is valid
+            throw new InvalidOperationException($"Cannot validate realm {realmId}: RealmService unavailable", ex);
         }
     }
 
@@ -131,7 +131,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogInformation("Getting species by ID: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
-            var model = await _daprClient.GetStateAsync<SpeciesModel>(STATE_STORE, speciesKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
@@ -144,9 +144,9 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting species: {SpeciesId}", body.SpeciesId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "GetSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/get",
+                dependency: "state", endpoint: "post:/species/get",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -161,7 +161,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogInformation("Getting species by code: {Code}", body.Code);
 
             var codeIndexKey = BuildCodeIndexKey(body.Code);
-            var speciesId = await _daprClient.GetStateAsync<string>(STATE_STORE, codeIndexKey, cancellationToken: cancellationToken);
+            var speciesId = await _stateStoreFactory.GetStore<string>(STATE_STORE).GetAsync(codeIndexKey, cancellationToken: cancellationToken);
 
             if (string.IsNullOrEmpty(speciesId))
             {
@@ -170,7 +170,7 @@ public partial class SpeciesService : ISpeciesService
             }
 
             var speciesKey = BuildSpeciesKey(speciesId);
-            var model = await _daprClient.GetStateAsync<SpeciesModel>(STATE_STORE, speciesKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
@@ -183,9 +183,9 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting species by code: {Code}", body.Code);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "GetSpeciesByCode", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/get-by-code",
+                dependency: "state", endpoint: "post:/species/get-by-code",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -200,7 +200,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogInformation("Listing all species with filters - Category: {Category}, IsPlayable: {IsPlayable}",
                 body.Category, body.IsPlayable);
 
-            var allSpeciesIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, ALL_SPECIES_KEY, cancellationToken: cancellationToken);
+            var allSpeciesIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(ALL_SPECIES_KEY, cancellationToken: cancellationToken);
 
             if (allSpeciesIds == null || allSpeciesIds.Count == 0)
             {
@@ -257,9 +257,9 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing species");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "ListSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/list",
+                dependency: "state", endpoint: "post:/species/list",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -282,7 +282,7 @@ public partial class SpeciesService : ISpeciesService
             }
 
             var realmIndexKey = BuildRealmIndexKey(body.RealmId.ToString());
-            var speciesIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, realmIndexKey, cancellationToken: cancellationToken);
+            var speciesIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(realmIndexKey, cancellationToken: cancellationToken);
 
             if (speciesIds == null || speciesIds.Count == 0)
             {
@@ -328,9 +328,9 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing species by realm: {RealmId}", body.RealmId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "ListSpeciesByRealm", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/list-by-realm",
+                dependency: "state", endpoint: "post:/species/list-by-realm",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -352,7 +352,7 @@ public partial class SpeciesService : ISpeciesService
 
             // Check if code already exists
             var codeIndexKey = BuildCodeIndexKey(code);
-            var existingId = await _daprClient.GetStateAsync<string>(STATE_STORE, codeIndexKey, cancellationToken: cancellationToken);
+            var existingId = await _stateStoreFactory.GetStore<string>(STATE_STORE).GetAsync(codeIndexKey, cancellationToken: cancellationToken);
 
             if (!string.IsNullOrEmpty(existingId))
             {
@@ -402,17 +402,18 @@ public partial class SpeciesService : ISpeciesService
 
             // Save the model
             var speciesKey = BuildSpeciesKey(speciesId.ToString());
-            await _daprClient.SaveStateAsync(STATE_STORE, speciesKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
 
             // Update code index
-            await _daprClient.SaveStateAsync(STATE_STORE, codeIndexKey, speciesId.ToString(), cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<string>(STATE_STORE).SaveAsync(codeIndexKey, speciesId.ToString(), cancellationToken: cancellationToken);
 
             // Update all-species list
-            var allSpeciesIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, ALL_SPECIES_KEY, cancellationToken: cancellationToken) ?? new List<string>();
+            var allSpeciesStore = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+            var allSpeciesIds = await allSpeciesStore.GetAsync(ALL_SPECIES_KEY, cancellationToken) ?? new List<string>();
             if (!allSpeciesIds.Contains(speciesId.ToString()))
             {
                 allSpeciesIds.Add(speciesId.ToString());
-                await _daprClient.SaveStateAsync(STATE_STORE, ALL_SPECIES_KEY, allSpeciesIds, cancellationToken: cancellationToken);
+                await allSpeciesStore.SaveAsync(ALL_SPECIES_KEY, allSpeciesIds, cancellationToken: cancellationToken);
             }
 
             // Update realm indexes
@@ -430,9 +431,9 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating species: {Code}", body.Code);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "CreateSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/create",
+                dependency: "state", endpoint: "post:/species/create",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -447,7 +448,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogInformation("Updating species: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
-            var model = await _daprClient.GetStateAsync<SpeciesModel>(STATE_STORE, speciesKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
@@ -502,7 +503,7 @@ public partial class SpeciesService : ISpeciesService
             if (changedFields.Count > 0)
             {
                 model.UpdatedAt = DateTimeOffset.UtcNow;
-                await _daprClient.SaveStateAsync(STATE_STORE, speciesKey, model, cancellationToken: cancellationToken);
+                await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
 
                 // Publish species updated event
                 await PublishSpeciesUpdatedEventAsync(model, changedFields, cancellationToken);
@@ -514,9 +515,9 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating species: {SpeciesId}", body.SpeciesId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "UpdateSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/update",
+                dependency: "state", endpoint: "post:/species/update",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -531,7 +532,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogInformation("Deleting species: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
-            var model = await _daprClient.GetStateAsync<SpeciesModel>(STATE_STORE, speciesKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
@@ -555,22 +556,23 @@ public partial class SpeciesService : ISpeciesService
             }
             catch (Exception ex)
             {
-                // If CharacterService is unavailable, log and allow deletion with warning
-                _logger.LogWarning(ex, "Could not verify character usage for species {Code} - proceeding with deletion", model.Code);
+                // If CharacterService is unavailable, fail the operation - could cause data integrity issues
+                _logger.LogError(ex, "Could not verify character usage for species {Code} - failing deletion (fail closed)", model.Code);
+                throw new InvalidOperationException($"Cannot verify character usage for species {model.Code}: CharacterService unavailable", ex);
             }
 
             // Delete the model
-            await _daprClient.DeleteStateAsync(STATE_STORE, speciesKey, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).DeleteAsync(speciesKey, cancellationToken);
 
             // Delete code index
             var codeIndexKey = BuildCodeIndexKey(model.Code);
-            await _daprClient.DeleteStateAsync(STATE_STORE, codeIndexKey, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<string>(STATE_STORE).DeleteAsync(codeIndexKey, cancellationToken);
 
             // Remove from all-species list
-            var allSpeciesIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, ALL_SPECIES_KEY, cancellationToken: cancellationToken) ?? new List<string>();
+            var allSpeciesIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(ALL_SPECIES_KEY, cancellationToken: cancellationToken) ?? new List<string>();
             if (allSpeciesIds.Remove(body.SpeciesId.ToString()))
             {
-                await _daprClient.SaveStateAsync(STATE_STORE, ALL_SPECIES_KEY, allSpeciesIds, cancellationToken: cancellationToken);
+                await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).SaveAsync(ALL_SPECIES_KEY, allSpeciesIds, cancellationToken: cancellationToken);
             }
 
             // Remove from realm indexes
@@ -588,9 +590,9 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting species: {SpeciesId}", body.SpeciesId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "DeleteSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/delete",
+                dependency: "state", endpoint: "post:/species/delete",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -623,7 +625,7 @@ public partial class SpeciesService : ISpeciesService
             }
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
-            var model = await _daprClient.GetStateAsync<SpeciesModel>(STATE_STORE, speciesKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
@@ -641,7 +643,7 @@ public partial class SpeciesService : ISpeciesService
             model.RealmIds.Add(realmIdStr);
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _daprClient.SaveStateAsync(STATE_STORE, speciesKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
             await AddToRealmIndexAsync(body.SpeciesId.ToString(), realmIdStr, cancellationToken);
 
             await PublishSpeciesUpdatedEventAsync(model, new[] { "realmIds" }, cancellationToken);
@@ -652,9 +654,9 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error adding species to realm");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "AddSpeciesToRealm", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/add-to-realm",
+                dependency: "state", endpoint: "post:/species/add-to-realm",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -669,7 +671,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogInformation("Removing species {SpeciesId} from realm {RealmId}", body.SpeciesId, body.RealmId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
-            var model = await _daprClient.GetStateAsync<SpeciesModel>(STATE_STORE, speciesKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
@@ -706,15 +708,16 @@ public partial class SpeciesService : ISpeciesService
             }
             catch (Exception ex)
             {
-                // If CharacterService is unavailable, log and allow removal with warning
-                _logger.LogWarning(ex, "Could not verify character usage for species {Code} in realm {RealmId} - proceeding with removal",
+                // If CharacterService is unavailable, fail the operation - could cause data integrity issues
+                _logger.LogError(ex, "Could not verify character usage for species {Code} in realm {RealmId} - failing removal (fail closed)",
                     model.Code, body.RealmId);
+                throw new InvalidOperationException($"Cannot verify character usage for species {model.Code} in realm {body.RealmId}: CharacterService unavailable", ex);
             }
 
             model.RealmIds.Remove(realmIdStr);
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _daprClient.SaveStateAsync(STATE_STORE, speciesKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
             await RemoveFromRealmIndexAsync(body.SpeciesId.ToString(), realmIdStr, cancellationToken);
 
             await PublishSpeciesUpdatedEventAsync(model, new[] { "realmIds" }, cancellationToken);
@@ -725,9 +728,9 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing species from realm");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "RemoveSpeciesFromRealm", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/remove-from-realm",
+                dependency: "state", endpoint: "post:/species/remove-from-realm",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -757,7 +760,7 @@ public partial class SpeciesService : ISpeciesService
                 {
                     var code = seedSpecies.Code.ToUpperInvariant();
                     var codeIndexKey = BuildCodeIndexKey(code);
-                    var existingId = await _daprClient.GetStateAsync<string>(STATE_STORE, codeIndexKey, cancellationToken: cancellationToken);
+                    var existingId = await _stateStoreFactory.GetStore<string>(STATE_STORE).GetAsync(codeIndexKey, cancellationToken: cancellationToken);
 
                     if (!string.IsNullOrEmpty(existingId))
                     {
@@ -765,7 +768,7 @@ public partial class SpeciesService : ISpeciesService
                         {
                             // Update existing
                             var speciesKey = BuildSpeciesKey(existingId);
-                            var existingModel = await _daprClient.GetStateAsync<SpeciesModel>(STATE_STORE, speciesKey, cancellationToken: cancellationToken);
+                            var existingModel = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
                             if (existingModel != null)
                             {
@@ -779,7 +782,7 @@ public partial class SpeciesService : ISpeciesService
                                 if (seedSpecies.Metadata != null) existingModel.Metadata = seedSpecies.Metadata;
                                 existingModel.UpdatedAt = DateTimeOffset.UtcNow;
 
-                                await _daprClient.SaveStateAsync(STATE_STORE, speciesKey, existingModel, cancellationToken: cancellationToken);
+                                await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).SaveAsync(speciesKey, existingModel, cancellationToken: cancellationToken);
                                 updated++;
                                 _logger.LogDebug("Updated existing species: {Code}", code);
                             }
@@ -841,9 +844,9 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error seeding species");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "SeedSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/seed",
+                dependency: "state", endpoint: "post:/species/seed",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -862,7 +865,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogInformation("Deprecating species: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
-            var model = await _daprClient.GetStateAsync<SpeciesModel>(STATE_STORE, speciesKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
@@ -881,7 +884,7 @@ public partial class SpeciesService : ISpeciesService
             model.DeprecationReason = body.Reason;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _daprClient.SaveStateAsync(STATE_STORE, speciesKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
 
             // Publish species updated event with deprecation fields
             await PublishSpeciesUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
@@ -892,9 +895,9 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deprecating species: {SpeciesId}", body.SpeciesId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "DeprecateSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/deprecate",
+                dependency: "state", endpoint: "post:/species/deprecate",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -909,7 +912,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogInformation("Undeprecating species: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
-            var model = await _daprClient.GetStateAsync<SpeciesModel>(STATE_STORE, speciesKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
@@ -928,7 +931,7 @@ public partial class SpeciesService : ISpeciesService
             model.DeprecationReason = null;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _daprClient.SaveStateAsync(STATE_STORE, speciesKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
 
             // Publish species updated event with deprecation fields cleared
             await PublishSpeciesUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
@@ -939,9 +942,9 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error undeprecating species: {SpeciesId}", body.SpeciesId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "UndeprecateSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/undeprecate",
+                dependency: "state", endpoint: "post:/species/undeprecate",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -957,7 +960,7 @@ public partial class SpeciesService : ISpeciesService
 
             // Verify source exists and is deprecated
             var sourceKey = BuildSpeciesKey(body.SourceSpeciesId.ToString());
-            var sourceModel = await _daprClient.GetStateAsync<SpeciesModel>(STATE_STORE, sourceKey, cancellationToken: cancellationToken);
+            var sourceModel = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(sourceKey, cancellationToken: cancellationToken);
 
             if (sourceModel == null)
             {
@@ -973,7 +976,7 @@ public partial class SpeciesService : ISpeciesService
 
             // Verify target exists
             var targetKey = BuildSpeciesKey(body.TargetSpeciesId.ToString());
-            var targetModel = await _daprClient.GetStateAsync<SpeciesModel>(STATE_STORE, targetKey, cancellationToken: cancellationToken);
+            var targetModel = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(targetKey, cancellationToken: cancellationToken);
 
             if (targetModel == null)
             {
@@ -1053,9 +1056,9 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error merging species {SourceId} into {TargetId}", body.SourceSpeciesId, body.TargetSpeciesId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "species", "MergeSpecies", "unexpected_exception", ex.Message,
-                dependency: "dapr-state", endpoint: "post:/species/merge",
+                dependency: "state", endpoint: "post:/species/merge",
                 details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
@@ -1073,25 +1076,14 @@ public partial class SpeciesService : ISpeciesService
         }
 
         var keys = speciesIds.Select(BuildSpeciesKey).ToList();
-        var bulkResults = await _daprClient.GetBulkStateAsync(STATE_STORE, keys, parallelism: 10, cancellationToken: cancellationToken);
+        var bulkResults = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetBulkAsync(keys, cancellationToken);
 
         var speciesList = new List<SpeciesModel>();
-        foreach (var result in bulkResults)
+        foreach (var (key, model) in bulkResults)
         {
-            if (!string.IsNullOrEmpty(result.Value))
+            if (model != null)
             {
-                try
-                {
-                    var model = BannouJson.Deserialize<SpeciesModel>(result.Value);
-                    if (model != null)
-                    {
-                        speciesList.Add(model);
-                    }
-                }
-                catch (JsonException ex)
-                {
-                    _logger.LogWarning(ex, "Failed to deserialize species: {Key}", result.Key);
-                }
+                speciesList.Add(model);
             }
         }
 
@@ -1101,23 +1093,23 @@ public partial class SpeciesService : ISpeciesService
     private async Task AddToRealmIndexAsync(string speciesId, string realmId, CancellationToken cancellationToken)
     {
         var realmIndexKey = BuildRealmIndexKey(realmId);
-        var speciesIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, realmIndexKey, cancellationToken: cancellationToken) ?? new List<string>();
+        var speciesIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(realmIndexKey, cancellationToken: cancellationToken) ?? new List<string>();
 
         if (!speciesIds.Contains(speciesId))
         {
             speciesIds.Add(speciesId);
-            await _daprClient.SaveStateAsync(STATE_STORE, realmIndexKey, speciesIds, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).SaveAsync(realmIndexKey, speciesIds, cancellationToken: cancellationToken);
         }
     }
 
     private async Task RemoveFromRealmIndexAsync(string speciesId, string realmId, CancellationToken cancellationToken)
     {
         var realmIndexKey = BuildRealmIndexKey(realmId);
-        var speciesIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, realmIndexKey, cancellationToken: cancellationToken) ?? new List<string>();
+        var speciesIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(realmIndexKey, cancellationToken: cancellationToken) ?? new List<string>();
 
         if (speciesIds.Remove(speciesId))
         {
-            await _daprClient.SaveStateAsync(STATE_STORE, realmIndexKey, speciesIds, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).SaveAsync(realmIndexKey, speciesIds, cancellationToken: cancellationToken);
         }
     }
 
@@ -1166,7 +1158,7 @@ public partial class SpeciesService : ISpeciesService
                 IsPlayable = model.IsPlayable
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, "species.created", eventModel, cancellationToken);
+            await _messageBus.PublishAsync("species.created", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published species.created event for {SpeciesId}", model.SpeciesId);
         }
         catch (Exception ex)
@@ -1205,7 +1197,7 @@ public partial class SpeciesService : ISpeciesService
                 ChangedFields = changedFields.ToList()
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, "species.updated", eventModel, cancellationToken);
+            await _messageBus.PublishAsync("species.updated", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published species.updated event for {SpeciesId} with changed fields: {ChangedFields}",
                 model.SpeciesId, string.Join(", ", changedFields));
         }
@@ -1244,7 +1236,7 @@ public partial class SpeciesService : ISpeciesService
                 DeletedReason = deletedReason
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, "species.deleted", eventModel, cancellationToken);
+            await _messageBus.PublishAsync("species.deleted", eventModel, cancellationToken: cancellationToken);
             _logger.LogDebug("Published species.deleted event for {SpeciesId}", model.SpeciesId);
         }
         catch (Exception ex)
@@ -1264,7 +1256,7 @@ public partial class SpeciesService : ISpeciesService
     public async Task RegisterServicePermissionsAsync()
     {
         _logger.LogInformation("Registering Species service permissions...");
-        await SpeciesPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+        await SpeciesPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
     }
 
     #endregion

@@ -1,4 +1,3 @@
-using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Servicedata;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
@@ -9,32 +8,28 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Test handler for ServiceData service API endpoints.
 /// Tests game service registry CRUD operations via NSwag-generated ServicedataClient.
 /// </summary>
-public class ServicedataTestHandler : IServiceTestHandler
+public class ServicedataTestHandler : BaseHttpTestHandler
 {
-    public ServiceTest[] GetServiceTests()
-    {
-        return new[]
-        {
-            // Core CRUD operations
-            new ServiceTest(TestCreateService, "CreateService", "ServiceData", "Test service creation endpoint"),
-            new ServiceTest(TestGetServiceById, "GetServiceById", "ServiceData", "Test service retrieval by ID"),
-            new ServiceTest(TestGetServiceByStubName, "GetServiceByStubName", "ServiceData", "Test service retrieval by stub name"),
-            new ServiceTest(TestListServices, "ListServices", "ServiceData", "Test service listing endpoint"),
-            new ServiceTest(TestUpdateService, "UpdateService", "ServiceData", "Test service update endpoint"),
-            new ServiceTest(TestDeleteService, "DeleteService", "ServiceData", "Test service deletion endpoint"),
+    public override ServiceTest[] GetServiceTests() =>
+    [
+        // Core CRUD operations
+        new ServiceTest(TestCreateService, "CreateService", "ServiceData", "Test service creation endpoint"),
+        new ServiceTest(TestGetServiceById, "GetServiceById", "ServiceData", "Test service retrieval by ID"),
+        new ServiceTest(TestGetServiceByStubName, "GetServiceByStubName", "ServiceData", "Test service retrieval by stub name"),
+        new ServiceTest(TestListServices, "ListServices", "ServiceData", "Test service listing endpoint"),
+        new ServiceTest(TestUpdateService, "UpdateService", "ServiceData", "Test service update endpoint"),
+        new ServiceTest(TestDeleteService, "DeleteService", "ServiceData", "Test service deletion endpoint"),
 
-            // Validation tests
-            new ServiceTest(TestCreateServiceDuplicateStubName, "CreateServiceDuplicateStubName", "ServiceData", "Test conflict on duplicate stub name"),
-            new ServiceTest(TestListServicesActiveOnly, "ListServicesActiveOnly", "ServiceData", "Test active-only filter on list"),
-        };
-    }
+        // Validation tests
+        new ServiceTest(TestCreateServiceDuplicateStubName, "CreateServiceDuplicateStubName", "ServiceData", "Test conflict on duplicate stub name"),
+        new ServiceTest(TestListServicesActiveOnly, "ListServicesActiveOnly", "ServiceData", "Test active-only filter on list"),
+    ];
 
-    private static async Task<TestResult> TestCreateService(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCreateService(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var servicedataClient = new ServicedataClient();
-            var testStubName = $"test-service-{DateTime.Now.Ticks}";
+            var servicedataClient = GetServiceClient<IServicedataClient>();
+            var testStubName = GenerateTestId("test-service");
 
             var createRequest = new CreateServiceRequest
             {
@@ -56,23 +51,13 @@ public class ServicedataTestHandler : IServiceTestHandler
             await servicedataClient.DeleteServiceAsync(new DeleteServiceRequest { ServiceId = response.ServiceId });
 
             return TestResult.Successful($"Service created successfully: ID={response.ServiceId}, StubName={response.StubName}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Service creation failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Create service");
 
-    private static async Task<TestResult> TestGetServiceById(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetServiceById(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var servicedataClient = new ServicedataClient();
-            var testStubName = $"get-by-id-{DateTime.Now.Ticks}";
+            var servicedataClient = GetServiceClient<IServicedataClient>();
+            var testStubName = GenerateTestId("get-by-id");
 
             // First create a test service
             var createRequest = new CreateServiceRequest
@@ -102,23 +87,13 @@ public class ServicedataTestHandler : IServiceTestHandler
             await servicedataClient.DeleteServiceAsync(new DeleteServiceRequest { ServiceId = serviceId });
 
             return TestResult.Successful($"Service retrieved by ID successfully: ID={response.ServiceId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Service retrieval by ID failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get service by ID");
 
-    private static async Task<TestResult> TestGetServiceByStubName(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetServiceByStubName(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var servicedataClient = new ServicedataClient();
-            var testStubName = $"get-by-stub-{DateTime.Now.Ticks}";
+            var servicedataClient = GetServiceClient<IServicedataClient>();
+            var testStubName = GenerateTestId("get-by-stub");
 
             // First create a test service
             var createRequest = new CreateServiceRequest
@@ -145,25 +120,15 @@ public class ServicedataTestHandler : IServiceTestHandler
             await servicedataClient.DeleteServiceAsync(new DeleteServiceRequest { ServiceId = serviceId });
 
             return TestResult.Successful($"Service retrieved by stub name successfully: StubName={response.StubName}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Service retrieval by stub name failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get service by stub name");
 
-    private static async Task<TestResult> TestListServices(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestListServices(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var servicedataClient = new ServicedataClient();
+            var servicedataClient = GetServiceClient<IServicedataClient>();
 
             // Create a test service to ensure list is not empty
-            var testStubName = $"list-test-{DateTime.Now.Ticks}";
+            var testStubName = GenerateTestId("list-test");
             var createResponse = await servicedataClient.CreateServiceAsync(new CreateServiceRequest
             {
                 StubName = testStubName,
@@ -184,23 +149,13 @@ public class ServicedataTestHandler : IServiceTestHandler
             await servicedataClient.DeleteServiceAsync(new DeleteServiceRequest { ServiceId = createResponse.ServiceId });
 
             return TestResult.Successful($"Service listing successful: Found {response.TotalCount} services");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Service listing failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "List services");
 
-    private static async Task<TestResult> TestUpdateService(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestUpdateService(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var servicedataClient = new ServicedataClient();
-            var testStubName = $"update-test-{DateTime.Now.Ticks}";
+            var servicedataClient = GetServiceClient<IServicedataClient>();
+            var testStubName = GenerateTestId("update-test");
 
             // Create a test service
             var createResponse = await servicedataClient.CreateServiceAsync(new CreateServiceRequest
@@ -242,23 +197,13 @@ public class ServicedataTestHandler : IServiceTestHandler
             await servicedataClient.DeleteServiceAsync(new DeleteServiceRequest { ServiceId = serviceId });
 
             return TestResult.Successful($"Service updated successfully: ID={response.ServiceId}, NewDisplayName={response.DisplayName}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Service update failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Update service");
 
-    private static async Task<TestResult> TestDeleteService(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDeleteService(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var servicedataClient = new ServicedataClient();
-            var testStubName = $"delete-test-{DateTime.Now.Ticks}";
+            var servicedataClient = GetServiceClient<IServicedataClient>();
+            var testStubName = GenerateTestId("delete-test");
 
             // Create a service to delete
             var createResponse = await servicedataClient.CreateServiceAsync(new CreateServiceRequest
@@ -287,23 +232,13 @@ public class ServicedataTestHandler : IServiceTestHandler
                 // Expected behavior
                 return TestResult.Successful($"Service deleted successfully: ID={serviceId}");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Service deletion failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Delete service");
 
-    private static async Task<TestResult> TestCreateServiceDuplicateStubName(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCreateServiceDuplicateStubName(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var servicedataClient = new ServicedataClient();
-            var testStubName = $"duplicate-test-{DateTime.Now.Ticks}";
+            var servicedataClient = GetServiceClient<IServicedataClient>();
+            var testStubName = GenerateTestId("duplicate-test");
 
             // Create first service
             var createResponse = await servicedataClient.CreateServiceAsync(new CreateServiceRequest
@@ -336,23 +271,13 @@ public class ServicedataTestHandler : IServiceTestHandler
                 await servicedataClient.DeleteServiceAsync(new DeleteServiceRequest { ServiceId = createResponse.ServiceId });
                 return TestResult.Successful("Correctly returned Conflict (409) for duplicate stub name");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Duplicate stub name test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Duplicate stub name conflict");
 
-    private static async Task<TestResult> TestListServicesActiveOnly(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestListServicesActiveOnly(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var servicedataClient = new ServicedataClient();
-            var testPrefix = $"active-filter-{DateTime.Now.Ticks}";
+            var servicedataClient = GetServiceClient<IServicedataClient>();
+            var testPrefix = GenerateTestId("active-filter");
 
             // Create an active service
             var activeResponse = await servicedataClient.CreateServiceAsync(new CreateServiceRequest
@@ -390,14 +315,5 @@ public class ServicedataTestHandler : IServiceTestHandler
             await servicedataClient.DeleteServiceAsync(new DeleteServiceRequest { ServiceId = inactiveResponse.ServiceId });
 
             return TestResult.Successful($"Active-only filter working: ActiveOnly={activeOnlyResponse.TotalCount}, All={allResponse.TotalCount}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Active-only filter test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Active-only filter");
 }

@@ -1,4 +1,4 @@
-using Dapr.Client;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Events;
@@ -10,14 +10,9 @@ namespace BeyondImmersion.BannouService.Events;
 public abstract class EventPublisherBase
 {
     /// <summary>
-    /// Standard pub/sub component name for all Bannou services.
+    /// Message bus for publishing events.
     /// </summary>
-    protected const string PUBSUB_NAME = "bannou-pubsub";
-
-    /// <summary>
-    /// Dapr client for publishing events.
-    /// </summary>
-    protected readonly DaprClient DaprClient;
+    protected readonly IMessageBus MessageBus;
 
     /// <summary>
     /// Logger for event publishing operations.
@@ -27,11 +22,11 @@ public abstract class EventPublisherBase
     /// <summary>
     /// Creates an event publisher with the specified dependencies.
     /// </summary>
-    /// <param name="daprClient">Dapr client for publishing.</param>
+    /// <param name="messageBus">Message bus for publishing.</param>
     /// <param name="logger">Logger for event operations.</param>
-    protected EventPublisherBase(DaprClient daprClient, ILogger logger)
+    protected EventPublisherBase(IMessageBus messageBus, ILogger logger)
     {
-        DaprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        MessageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         Logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -51,7 +46,7 @@ public abstract class EventPublisherBase
     {
         try
         {
-            await DaprClient.PublishEventAsync(PUBSUB_NAME, topic, eventData, cancellationToken);
+            await MessageBus.PublishAsync(topic, eventData);
             Logger.LogDebug("Published event to {Topic}: {EventType}", topic, typeof(TEvent).Name);
             return true;
         }

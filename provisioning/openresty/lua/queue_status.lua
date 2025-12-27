@@ -1,6 +1,6 @@
 -- Queue Status Handler
 -- Implements queue position and wait time estimation
--- Based on API-DESIGN.md queue system requirements
+-- Based on docs/BANNOU_DESIGN.md queue system architecture
 
 local redis = require "resty.redis"
 local cjson = require "cjson"

@@ -27,7 +27,7 @@ namespace BeyondImmersion.BannouService.GameSession;
 using System = global::System;
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public interface IGameSessionController : BeyondImmersion.BannouService.Controllers.IDaprController
+public interface IGameSessionController : BeyondImmersion.BannouService.Controllers.IBannouController
 {
 
     /// <summary>
@@ -122,7 +122,6 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-[Microsoft.AspNetCore.Mvc.Route("v1.0/invoke/bannou/method")]
 
 public partial class GameSessionController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
@@ -541,6 +540,11 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
           "type": "boolean",
           "default": false
         },
+        "ownerId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Account ID of the session owner. If not provided, defaults to caller's account."
+        },
         "gameSettings": {
           "type": "object",
           "additionalProperties": true
@@ -908,13 +912,19 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     "JoinGameSessionRequest": {
       "type": "object",
       "required": [
-        "sessionId"
+        "sessionId",
+        "accountId"
       ],
       "properties": {
         "sessionId": {
           "type": "string",
           "format": "uuid",
           "description": "ID of the game session to join"
+        },
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Account ID of the player joining. Provided by shortcut system or authenticated caller."
         },
         "password": {
           "type": "string",
@@ -1113,13 +1123,19 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       "type": "object",
       "description": "Request to leave a game session",
       "required": [
-        "sessionId"
+        "sessionId",
+        "accountId"
       ],
       "properties": {
         "sessionId": {
           "type": "string",
           "format": "uuid",
           "description": "ID of the game session to leave"
+        },
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Account ID of the player leaving. Provided by shortcut system or authenticated caller."
         }
       }
     }

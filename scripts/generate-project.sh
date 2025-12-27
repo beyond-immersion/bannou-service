@@ -5,15 +5,12 @@
 
 set -e  # Exit on any error
 
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+# Source common utilities
+source "$(dirname "$0")/common.sh"
 
 # Validate arguments
 if [ $# -lt 1 ]; then
-    echo -e "${RED}Usage: $0 <service-name> [schema-file]${NC}"
+    log_error "Usage: $0 <service-name> [schema-file]"
     echo "Example: $0 accounts"
     echo "Example: $0 accounts ../schemas/accounts-api.yaml"
     exit 1
@@ -21,12 +18,6 @@ fi
 
 SERVICE_NAME="$1"
 SCHEMA_FILE="${2:-../schemas/${SERVICE_NAME}-api.yaml}"
-
-# Helper function to convert hyphenated names to PascalCase
-to_pascal_case() {
-    local input="$1"
-    echo "$input" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))} 1' | sed 's/ //g'
-}
 
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
 SERVICE_DIR="../lib-${SERVICE_NAME}"
@@ -79,7 +70,7 @@ if [ ! -f "$PROJECT_FILE" ]; then
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Only packages NOT provided by bannou-service - Dapr.Client, NSwag, etc. come transitively -->
+    <!-- Only packages NOT provided by bannou-service - NSwag, etc. come transitively -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
   </ItemGroup>

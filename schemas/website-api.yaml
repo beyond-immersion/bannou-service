@@ -4,8 +4,8 @@ info:
   description: Public-facing website service for registration, information, and account management
   version: 1.0.0
 servers:
-- url: http://localhost:3500/v1.0/invoke/bannou/method
-  description: Dapr sidecar endpoint
+- url: http://localhost:5012
+  description: Bannou service endpoint
 
 paths:
   /website/status:

@@ -23,12 +23,13 @@
     </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.2" />
     <PackageReference Include="Moq" Version="4.20.72" />
-    <!-- Dapr.Client, Logging.Abstractions come from lib-servicedata → bannou-service -->
+    <!-- Logging.Abstractions come from lib-servicedata → bannou-service -->
   </ItemGroup>
 
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-servicedata -->
     <ProjectReference Include="../lib-servicedata/lib-servicedata.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
   </ItemGroup>
 
 </Project>

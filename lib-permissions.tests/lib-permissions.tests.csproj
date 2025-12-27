@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../lib-permissions/lib-permissions.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
   </ItemGroup>
 
 </Project>

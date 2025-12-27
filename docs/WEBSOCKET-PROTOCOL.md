@@ -256,7 +256,7 @@ Standard WebSocket close with optional reason code.
 1. Client sends binary message with service GUID (31-byte header)
 2. Connect service extracts GUID (zero-copy)
 3. Looks up service name from GUID mapping
-4. Routes to Dapr service via service invocation
+4. Routes to service via mesh invocation
 5. Returns response with 16-byte header and same Message ID
 
 ### Client-to-Client (P2P)

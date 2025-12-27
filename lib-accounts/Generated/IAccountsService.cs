@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.Accounts;
 /// <summary>
 /// Service interface for Accounts API
 /// </summary>
-public partial interface IAccountsService : IDaprService
+public partial interface IAccountsService : IBannouService
 {
     /// <summary>
     /// ListAccounts operation

@@ -11,12 +11,12 @@ info:
     are browser-facing redirect flows, not WebSocket-routed. The browser navigates to
     these URLs directly for OAuth provider authentication.
 
-    See API-DESIGN.md for architectural rationale.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
   version: 4.0.0
   # NOTE: Event subscriptions and publications are in auth-events.yaml
 servers:
-- url: http://localhost:3500/v1.0/invoke/bannou/method
-  description: Dapr sidecar endpoint
+- url: http://localhost:5012
+  description: Bannou service endpoint
 
 paths:
   /auth/login:
@@ -27,7 +27,7 @@ paths:
       - Authentication
       x-permissions:
       - role: anonymous
-        states: {}    # Allow re-login when already authenticated
+        states: {}
       requestBody:
         required: true
         content:
@@ -252,8 +252,8 @@ paths:
                 $ref: '#/components/schemas/AuthResponse'
         '401':
           description: Invalid or expired Steam ticket
-        '503':
-          description: Steam API unavailable
+        '500':
+          description: Steam API unavailable or internal error
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SteamVerifyRequest\"\
         ,\n  \"$defs\": {\n    \"SteamVerifyRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Request to

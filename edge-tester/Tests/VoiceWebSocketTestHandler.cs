@@ -76,8 +76,8 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
             return null;
         }
 
-        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
         var uniqueId = Guid.NewGuid().ToString("N")[..12];
         var testEmail = $"{testPrefix}_{uniqueId}@test.local";
         var testPassword = $"{testPrefix}Test123!";
@@ -177,7 +177,7 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
                 "POST",
                 "/sessions/create",
                 createRequest,
-                timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
             var sessionIdStr = response.TryGetProperty("sessionId", out var idProp) ? idProp.GetString() : null;
             if (string.IsNullOrEmpty(sessionIdStr))
@@ -279,7 +279,7 @@ a=rtpmap:111 opus/48000/2";
                     "POST",
                     "/sessions/join",
                     joinRequest,
-                    timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                 var joinSuccess = joinResponse.TryGetProperty("success", out var successProp) && successProp.GetBoolean();
                 if (!joinSuccess)
@@ -374,7 +374,7 @@ a=rtpmap:111 opus/48000/2";
                     "POST",
                     "/sessions/join",
                     joinRequest1,
-                    timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                 var join1Success = joinResponse1.TryGetProperty("success", out var s1) && s1.GetBoolean();
                 if (!join1Success)
@@ -415,7 +415,7 @@ a=rtpmap:111 opus/48000/2";
                     "POST",
                     "/sessions/join",
                     joinRequest2,
-                    timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                 var join2Success = joinResponse2.TryGetProperty("success", out var s2) && s2.GetBoolean();
                 if (!join2Success)
@@ -512,10 +512,10 @@ a=rtpmap:111 opus/48000/2";
                 var joinRequest2 = new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() };
 
                 var join1 = (await client1.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/join", joinRequest1, timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                    "POST", "/sessions/join", joinRequest1, timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                 var join2 = (await client2.InvokeAsync<JoinGameSessionRequest, JsonElement>(
-                    "POST", "/sessions/join", joinRequest2, timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                    "POST", "/sessions/join", joinRequest2, timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                 var success1 = join1.TryGetProperty("success", out var s1) && s1.GetBoolean();
                 var success2 = join2.TryGetProperty("success", out var s2) && s2.GetBoolean();
@@ -597,7 +597,7 @@ a=rtpmap:111 opus/48000/2";
                             "POST",
                             "/voice/peer/answer",
                             answerRequest,
-                            timeout: TimeSpan.FromSeconds(15));
+                            timeout: TimeSpan.FromSeconds(5));
 
                         Console.WriteLine("   SDP answer sent successfully");
                         answerSent = true;
@@ -749,7 +749,7 @@ a=rtpmap:111 opus/48000/2";
                 var join1 = (await client1.InvokeAsync<JoinGameSessionRequest, JsonElement>(
                     "POST", "/sessions/join",
                     new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
-                    timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                 if (!(join1.TryGetProperty("success", out var s1) && s1.GetBoolean()))
                 {
@@ -763,7 +763,7 @@ a=rtpmap:111 opus/48000/2";
                 var join2 = (await client2.InvokeAsync<JoinGameSessionRequest, JsonElement>(
                     "POST", "/sessions/join",
                     new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
-                    timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                 if (!(join2.TryGetProperty("success", out var s2) && s2.GetBoolean()))
                 {
@@ -787,7 +787,7 @@ a=rtpmap:111 opus/48000/2";
                 var join3 = (await client3.InvokeAsync<JoinGameSessionRequest, JsonElement>(
                     "POST", "/sessions/join",
                     new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
-                    timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                 if (!(join3.TryGetProperty("success", out var s3) && s3.GetBoolean()))
                 {
@@ -815,7 +815,7 @@ a=rtpmap:111 opus/48000/2";
                 // Wait for tier upgrade events on Clients 1 & 2 only
                 // Client 3 triggered the upgrade but joins directly into scaled mode (no upgrade event needed)
                 Console.WriteLine("   Waiting for tier upgrade events on existing P2P clients (1 & 2)...");
-                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(15));
+                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(5));
                 var existingClientUpgrades = Task.WhenAll(
                     tierUpgrade1Received.Task,
                     tierUpgrade2Received.Task);
@@ -971,7 +971,7 @@ a=rtpmap:111 opus/48000/2";
                 var join3 = (await client3.InvokeAsync<JoinGameSessionRequest, JsonElement>(
                     "POST", "/sessions/join",
                     new JoinGameSessionRequest { SessionId = sessionId, VoiceEndpoint = CreateMockVoiceEndpoint() },
-                    timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                 if (!(join3.TryGetProperty("success", out var s3) && s3.GetBoolean()))
                 {

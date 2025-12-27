@@ -8,9 +8,7 @@ runs:
       shell: bash
       run: |
         echo "🔧 Building Docker image with all services for HTTP integration testing..."
-        echo "📋 Service-to-service testing via Dapr (no ingress - uses generated clients)..."
-        export DAPR_COMPONENTS_HOST_PATH="$(pwd)/provisioning/dapr/components-http-test"
-        echo "DAPR_COMPONENTS_HOST_PATH=${DAPR_COMPONENTS_HOST_PATH}"
+        echo "📋 Service-to-service testing via mesh (no ingress - uses generated clients)..."
         docker compose -p bannou-ci-http \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \
@@ -21,9 +19,7 @@ runs:
     - name: Execute HTTP Integration Tests
       shell: bash
       run: |
-        echo "🔗 Running HTTP integration tests via Dapr service invocation..."
-        export DAPR_COMPONENTS_HOST_PATH="$(pwd)/provisioning/dapr/components-http-test"
-        echo "DAPR_COMPONENTS_HOST_PATH=${DAPR_COMPONENTS_HOST_PATH}"
+        echo "🔗 Running HTTP integration tests via mesh service invocation..."
         # Start all services in detached mode
         docker compose -p bannou-ci-http \
           -f "./provisioning/docker-compose.yml" \
@@ -62,14 +58,6 @@ runs:
           -f "./provisioning/docker-compose.test.yml" \
           -f "./provisioning/docker-compose.test.http.yml" \
           logs bannou || echo "Failed to get bannou logs"
-        echo ""
-        echo "=== DAPR SIDECAR LOGS (ALL) ==="
-        docker compose -p bannou-ci-http \
-          -f "./provisioning/docker-compose.yml" \
-          -f "./provisioning/docker-compose.services.yml" \
-          -f "./provisioning/docker-compose.test.yml" \
-          -f "./provisioning/docker-compose.test.http.yml" \
-          logs bannou-dapr || echo "Failed to get dapr sidecar logs"
         echo ""
         echo "=== RABBITMQ LOGS (last 500) ==="
         docker compose -p bannou-ci-http \

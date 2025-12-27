@@ -21,17 +21,17 @@ public interface IContainerOrchestrator : IDisposable
     Task<(bool Available, string Message)> CheckAvailabilityAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets the status of a container/pod by its Dapr app name.
+    /// Gets the status of a container/pod by its Bannou app name.
     /// </summary>
-    /// <param name="appName">The Dapr app-id to look up</param>
+    /// <param name="appName">The app-id to look up</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Container status information</returns>
     Task<ContainerStatus> GetContainerStatusAsync(string appName, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Restarts a container/pod/service by its Dapr app name.
+    /// Restarts a container/pod/service by its Bannou app name.
     /// </summary>
-    /// <param name="appName">The Dapr app-id to restart</param>
+    /// <param name="appName">The app-id to restart</param>
     /// <param name="request">Restart request with priority and grace period</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the restart operation</returns>
@@ -48,9 +48,9 @@ public interface IContainerOrchestrator : IDisposable
     Task<IReadOnlyList<ContainerStatus>> ListContainersAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets logs from a container/pod by its Dapr app name.
+    /// Gets logs from a container/pod by its Bannou app name.
     /// </summary>
-    /// <param name="appName">The Dapr app-id to get logs from</param>
+    /// <param name="appName">The app-id to get logs from</param>
     /// <param name="tail">Number of lines to retrieve (default 100)</param>
     /// <param name="since">Only return logs since this time</param>
     /// <param name="cancellationToken">Cancellation token</param>
@@ -65,7 +65,7 @@ public interface IContainerOrchestrator : IDisposable
     /// Deploys a service using the specified configuration.
     /// </summary>
     /// <param name="serviceName">The logical service name (e.g., "auth", "accounts")</param>
-    /// <param name="appId">The Dapr app-id for this service instance</param>
+    /// <param name="appId">The app-id for this service instance</param>
     /// <param name="environment">Environment variables for the service</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the deployment operation</returns>
@@ -76,9 +76,9 @@ public interface IContainerOrchestrator : IDisposable
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Tears down (stops and removes) a service by its Dapr app name.
+    /// Tears down (stops and removes) a service by its Bannou app name.
     /// </summary>
-    /// <param name="appName">The Dapr app-id to tear down</param>
+    /// <param name="appName">The app-id to tear down</param>
     /// <param name="removeVolumes">Whether to remove associated volumes</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the teardown operation</returns>
@@ -90,7 +90,7 @@ public interface IContainerOrchestrator : IDisposable
     /// <summary>
     /// Scales a service to the specified number of instances.
     /// </summary>
-    /// <param name="appName">The Dapr app-id to scale</param>
+    /// <param name="appName">The app-id to scale</param>
     /// <param name="replicas">Desired number of instances</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the scale operation</returns>
@@ -116,7 +116,7 @@ public class DeployServiceResult
     /// <summary>Whether the deployment was successful.</summary>
     public bool Success { get; set; }
 
-    /// <summary>The Dapr app-id of the deployed service.</summary>
+    /// <summary>The app-id of the deployed service.</summary>
     public string AppId { get; set; } = string.Empty;
 
     /// <summary>Container ID of the deployed service (if applicable).</summary>
@@ -134,7 +134,7 @@ public class TeardownServiceResult
     /// <summary>Whether the teardown was successful.</summary>
     public bool Success { get; set; }
 
-    /// <summary>The Dapr app-id of the torn down service.</summary>
+    /// <summary>The app-id of the torn down service.</summary>
     public string AppId { get; set; } = string.Empty;
 
     /// <summary>Container IDs that were stopped.</summary>
@@ -155,7 +155,7 @@ public class ScaleServiceResult
     /// <summary>Whether the scale operation was successful.</summary>
     public bool Success { get; set; }
 
-    /// <summary>The Dapr app-id of the scaled service.</summary>
+    /// <summary>The app-id of the scaled service.</summary>
     public string AppId { get; set; } = string.Empty;
 
     /// <summary>Previous number of instances.</summary>

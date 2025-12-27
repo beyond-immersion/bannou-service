@@ -27,7 +27,7 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 using System = global::System;
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public interface IOrchestratorController : BeyondImmersion.BannouService.Controllers.IDaprController
+public interface IOrchestratorController : BeyondImmersion.BannouService.Controllers.IBannouController
 {
 
     /// <summary>
@@ -38,10 +38,10 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// Validates connectivity and health of core infrastructure components:
     /// <br/>- Redis (direct connection via StackExchange.Redis)
     /// <br/>- RabbitMQ (direct connection via RabbitMQ.Client)
-    /// <br/>- Dapr Placement service
+    /// <br/>-
     /// </remarks>
 
-    /// <returns>Infrastructure health status</returns>
+    /// <returns>Infrastructure health status (check response body for component health)</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InfrastructureHealthResponse>> GetInfrastructureHealthAsync(InfrastructureHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
@@ -125,7 +125,7 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>Presets define service combinations and configuration for specific use cases.
     /// <br/>
     /// <br/>Built-in presets:
-    /// <br/>- `local-development`: All services in single container with Dapr
+    /// <br/>- `local-development`: All services in single container with mesh infrastructure
     /// <br/>- `local-testing`: Test environment with infrastructure services
     /// <br/>- `integration-http`: HTTP integration testing preset
     /// <br/>- `integration-edge`: WebSocket/edge testing preset
@@ -170,7 +170,7 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// </summary>
 
     /// <remarks>
-    /// Returns the current service-to-app-id routing mappings used for Dapr service invocation.
+    /// Returns the current service-to-app-id routing mappings used for mesh service invocation through lib-mesh.
     /// <br/>This is the authoritative source of truth for how services are routed in the current deployment.
     /// <br/>
     /// <br/>In development, all services route to "bannou" by default. In production, services may be
@@ -343,10 +343,79 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfigVersionResponse>> GetConfigVersionAsync(GetConfigVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Acquire a processor from a pool
+    /// </summary>
+
+    /// <remarks>
+    /// Requests an available processor instance from the specified pool type.
+    /// <br/>Returns the app-id of an available processor or 429 if none available.
+    /// <br/>The processor is marked as busy until explicitly released.
+    /// </remarks>
+
+    /// <returns>Processor acquired successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AcquireProcessorResponse>> AcquireProcessorAsync(AcquireProcessorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Release a processor back to the pool
+    /// </summary>
+
+    /// <remarks>
+    /// Releases a previously acquired processor, making it available for other requests.
+    /// <br/>Should be called when processing is complete or on error cleanup.
+    /// </remarks>
+
+    /// <returns>Processor released successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ReleaseProcessorResponse>> ReleaseProcessorAsync(ReleaseProcessorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get processing pool status
+    /// </summary>
+
+    /// <remarks>
+    /// Returns current status of a processing pool including:
+    /// <br/>- Total instances (running and available)
+    /// <br/>- Current utilization
+    /// <br/>- Queue depth (waiting requests)
+    /// <br/>- Recent processing metrics
+    /// </remarks>
+
+    /// <returns>Pool status retrieved</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PoolStatusResponse>> GetPoolStatusAsync(GetPoolStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Scale a processing pool
+    /// </summary>
+
+    /// <remarks>
+    /// Manually adjust the size of a processing pool.
+    /// <br/>Can scale up (add instances) or scale down (remove idle instances).
+    /// <br/>Respects min/max constraints from pool configuration.
+    /// </remarks>
+
+    /// <returns>Pool scaled successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScalePoolResponse>> ScalePoolAsync(ScalePoolRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Cleanup idle processing pool instances
+    /// </summary>
+
+    /// <remarks>
+    /// Scales pool back to minimum instances by removing idle processors.
+    /// <br/>Used for resource reclamation during low-activity periods.
+    /// </remarks>
+
+    /// <returns>Cleanup completed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupPoolResponse>> CleanupPoolAsync(CleanupPoolRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-[Microsoft.AspNetCore.Mvc.Route("v1.0/invoke/bannou/method")]
 
 public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
@@ -404,9 +473,9 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     /// Validates connectivity and health of core infrastructure components:
     /// <br/>- Redis (direct connection via StackExchange.Redis)
     /// <br/>- RabbitMQ (direct connection via RabbitMQ.Client)
-    /// <br/>- Dapr Placement service
+    /// <br/>-
     /// </remarks>
-    /// <returns>Infrastructure health status</returns>
+    /// <returns>Infrastructure health status (check response body for component health)</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/health/infrastructure")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InfrastructureHealthResponse>> GetInfrastructureHealth([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] InfrastructureHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
@@ -511,7 +580,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     /// <br/>Presets define service combinations and configuration for specific use cases.
     /// <br/>
     /// <br/>Built-in presets:
-    /// <br/>- `local-development`: All services in single container with Dapr
+    /// <br/>- `local-development`: All services in single container with mesh infrastructure
     /// <br/>- `local-testing`: Test environment with infrastructure services
     /// <br/>- `integration-http`: HTTP integration testing preset
     /// <br/>- `integration-edge`: WebSocket/edge testing preset
@@ -564,7 +633,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     /// Get current service-to-app-id routing mappings
     /// </summary>
     /// <remarks>
-    /// Returns the current service-to-app-id routing mappings used for Dapr service invocation.
+    /// Returns the current service-to-app-id routing mappings used for mesh service invocation through lib-mesh.
     /// <br/>This is the authoritative source of truth for how services are routed in the current deployment.
     /// <br/>
     /// <br/>In development, all services route to "bannou" by default. In production, services may be
@@ -778,6 +847,96 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         return ConvertToActionResult(statusCode, result);
     }
 
+    /// <summary>
+    /// Acquire a processor from a pool
+    /// </summary>
+    /// <remarks>
+    /// Requests an available processor instance from the specified pool type.
+    /// <br/>Returns the app-id of an available processor or 429 if none available.
+    /// <br/>The processor is marked as busy until explicitly released.
+    /// </remarks>
+    /// <returns>Processor acquired successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/acquire")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AcquireProcessorResponse>> AcquireProcessor([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AcquireProcessorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.AcquireProcessorAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Release a processor back to the pool
+    /// </summary>
+    /// <remarks>
+    /// Releases a previously acquired processor, making it available for other requests.
+    /// <br/>Should be called when processing is complete or on error cleanup.
+    /// </remarks>
+    /// <returns>Processor released successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/release")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ReleaseProcessorResponse>> ReleaseProcessor([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ReleaseProcessorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ReleaseProcessorAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Get processing pool status
+    /// </summary>
+    /// <remarks>
+    /// Returns current status of a processing pool including:
+    /// <br/>- Total instances (running and available)
+    /// <br/>- Current utilization
+    /// <br/>- Queue depth (waiting requests)
+    /// <br/>- Recent processing metrics
+    /// </remarks>
+    /// <returns>Pool status retrieved</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/status")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PoolStatusResponse>> GetPoolStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetPoolStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetPoolStatusAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Scale a processing pool
+    /// </summary>
+    /// <remarks>
+    /// Manually adjust the size of a processing pool.
+    /// <br/>Can scale up (add instances) or scale down (remove idle instances).
+    /// <br/>Respects min/max constraints from pool configuration.
+    /// </remarks>
+    /// <returns>Pool scaled successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/scale")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScalePoolResponse>> ScalePool([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ScalePoolRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ScalePoolAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Cleanup idle processing pool instances
+    /// </summary>
+    /// <remarks>
+    /// Scales pool back to minimum instances by removing idle processors.
+    /// <br/>Used for resource reclamation during low-activity periods.
+    /// </remarks>
+    /// <returns>Cleanup completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/cleanup")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupPoolResponse>> CleanupPool([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupPoolRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.CleanupPoolAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
 
     #region Meta Endpoints for GetInfrastructureHealth
 
@@ -879,7 +1038,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     private static readonly string _GetInfrastructureHealth_Info = """
 {
   "summary": "Check infrastructure component health",
-  "description": "Validates connectivity and health of core infrastructure components:\n- Redis (direct connection via StackExchange.Redis)\ n- RabbitMQ (direct connection via RabbitMQ.Client)\n- Dapr Placement service\n",
+  "description": "Validates connectivity and health of core infrastructure components:\n- Redis (direct connection via StackExchange.Redis)\ n- RabbitMQ (direct connection via RabbitMQ.Client)\n- \n",
   "tags": [],
   "deprecated": false,
   "operationId": "GetInfrastructureHealth"
@@ -1011,7 +1170,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "appId": {
           "type": "string",
-          "description": "Dapr app-id (e.g., \"bannou\", \"npc-omega-01\")"
+          "description": "App-id for mesh routing (e.g., \"bannou\", \"npc-omega-01\")"
         },
         "status": {
           "type": "string",
@@ -1677,14 +1836,14 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           },
           "description": "Node-specific environment overrides"
         },
-        "daprEnabled": {
+        "meshEnabled": {
           "type": "boolean",
           "default": true,
-          "description": "Whether to attach Dapr sidecar"
+          "description": "Whether mesh routing is enabled"
         },
-        "daprAppId": {
+        "appId": {
           "type": "string",
-          "description": "Dapr app-id override (default derives from node name)"
+          "description": "App-id override for mesh routing (default derives from node name)"
         }
       }
     },
@@ -1720,10 +1879,6 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "mysql": {
           "$ref": "#/$defs/InfraServiceConfig"
-        },
-        "placement": {
-          "$ref": "#/$defs/InfraServiceConfig",
-          "description": "Dapr placement service"
         },
         "ingress": {
           "$ref": "#/$defs/IngressConfig"
@@ -1803,7 +1958,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         "swarm",
         "compose"
       ],
-      "description": "Container orchestration backend type.\ nPriority order: kubernetes > portainer > swarm > compose\n"
+      "description": "Container orchestration backend type.\nPriority order: kubernetes > portainer > swarm > compose\n"
     }
   }
 }
@@ -1812,7 +1967,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     private static readonly string _GetPresets_Info = """
 {
   "summary": "List available deployment presets",
-  "description": "Returns all available deployment presets from the orchestrator's preset directory.\nPresets define service combinations and configuration for specific use cases.\n\nBuilt-in presets:\n- `local-development`: All services in single container with Dapr\ n- `local-testing`: Test environment with infrastructure services\n- `integration-http`: HTTP integration testing preset\n- `integration-edge`: WebSocket/edge testing preset\n- `split-auth-accounts`: Auth and Accounts in separate containers\n- `distributed-npc`: NPC processing distributed across nodes\n",
+  "description": "Returns all available deployment presets from the orchestrator's preset directory.\nPresets define service combinations and configuration for specific use cases.\n\nBuilt-in presets:\n- `local-development`: All services in single container with mesh infrastructure\n- `local-testing`: Test environment with infrastructure services\n- `integration-http`: HTTP integration testing preset\n- `integration-edge`: WebSocket/edge testing preset\n- `split-auth-accounts`: Auth and Accounts in separate containers\n- `distributed-npc`: NPC processing distributed across nodes\n",
   "tags": [],
   "deprecated": false,
   "operationId": "GetPresets"
@@ -1958,14 +2113,14 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           },
           "description": "Node-specific environment overrides"
         },
-        "daprEnabled": {
+        "meshEnabled": {
           "type": "boolean",
           "default": true,
-          "description": "Whether to attach Dapr sidecar"
+          "description": "Whether mesh routing is enabled"
         },
-        "daprAppId": {
+        "appId": {
           "type": "string",
-          "description": "Dapr app-id override (default derives from node name)"
+          "description": "App-id override for mesh routing (default derives from node name)"
         }
       }
     },
@@ -2001,10 +2156,6 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "mysql": {
           "$ref": "#/$defs/InfraServiceConfig"
-        },
-        "placement": {
-          "$ref": "#/$defs/InfraServiceConfig",
-          "description": "Dapr placement service"
         },
         "ingress": {
           "$ref": "#/$defs/IngressConfig"
@@ -2093,7 +2244,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         "force",
         "clean"
       ],
-      "description": "Deployment mode:\n- graceful: Wait for connections to drain\ n- force: Apply immediately\n- clean: Tear down and rebuild\n"
+      "description": "Deployment mode:\n- graceful: Wait for connections to drain\n- force: Apply immediately\ n- clean: Tear down and rebuild\n"
     }
   }
 }
@@ -2218,14 +2369,14 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           },
           "description": "Node-specific environment overrides"
         },
-        "daprEnabled": {
+        "meshEnabled": {
           "type": "boolean",
           "default": true,
-          "description": "Whether to attach Dapr sidecar"
+          "description": "Whether mesh routing is enabled"
         },
-        "daprAppId": {
+        "appId": {
           "type": "string",
-          "description": "Dapr app-id override (default derives from node name)"
+          "description": "App-id override for mesh routing (default derives from node name)"
         }
       }
     },
@@ -2261,10 +2412,6 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "mysql": {
           "$ref": "#/$defs/InfraServiceConfig"
-        },
-        "placement": {
-          "$ref": "#/$defs/InfraServiceConfig",
-          "description": "Dapr placement service"
         },
         "ingress": {
           "$ref": "#/$defs/IngressConfig"
@@ -2475,7 +2622,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Map of service names to Dapr app-id routing destinations.\nExample: { \"accounts\": \"bannou\", \"behavior\": \"npc-processing-01\" }\n"
+          "description": "Map of service names to Bannou app-id routing destinations.\nExample: { \"accounts\": \"bannou\", \"behavior\": \"npc-processing-01\" }\n"
         },
         "defaultAppId": {
           "type": "string",
@@ -2506,7 +2653,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     private static readonly string _GetServiceRouting_Info = """
 {
   "summary": "Get current service-to-app-id routing mappings",
-  "description": "Returns the current service-to-app-id routing mappings used for Dapr service invocation.\nThis is the authoritative source of truth for how services are routed in the current deployment.\n\nIn development, all services route to \"bannou\" by default. In production, services may be\ndistributed across multiple app-ids based on deployment topology.\n\n**Use Cases**:\n- Services querying routing on startup\n- Debugging service communication issues\ n- Monitoring deployment topology\n",
+  "description": "Returns the current service-to-app-id routing mappings used for mesh service invocation through lib-mesh.\nThis is the authoritative source of truth for how services are routed in the current deployment.\n\nIn development, all services route to \"bannou\" by default. In production, services may be\ndistributed across multiple app-ids based on deployment topology.\n\n**Use Cases**:\n- Services querying routing on startup\n- Debugging service communication issues\n- Monitoring deployment topology\n",
   "tags": [],
   "deprecated": false,
   "operationId": "GetServiceRouting"
@@ -2695,14 +2842,14 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           },
           "description": "Node-specific environment overrides"
         },
-        "daprEnabled": {
+        "meshEnabled": {
           "type": "boolean",
           "default": true,
-          "description": "Whether to attach Dapr sidecar"
+          "description": "Whether mesh routing is enabled"
         },
-        "daprAppId": {
+        "appId": {
           "type": "string",
-          "description": "Dapr app-id override (default derives from node name)"
+          "description": "App-id override for mesh routing (default derives from node name)"
         }
       }
     },
@@ -2738,10 +2885,6 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "mysql": {
           "$ref": "#/$defs/InfraServiceConfig"
-        },
-        "placement": {
-          "$ref": "#/$defs/InfraServiceConfig",
-          "description": "Dapr placement service"
         },
         "ingress": {
           "$ref": "#/$defs/IngressConfig"
@@ -3592,14 +3735,14 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           },
           "description": "Node-specific environment overrides"
         },
-        "daprEnabled": {
+        "meshEnabled": {
           "type": "boolean",
           "default": true,
-          "description": "Whether to attach Dapr sidecar"
+          "description": "Whether mesh routing is enabled"
         },
-        "daprAppId": {
+        "appId": {
           "type": "string",
-          "description": "Dapr app-id override (default derives from node name)"
+          "description": "App-id override for mesh routing (default derives from node name)"
         }
       }
     },
@@ -3631,7 +3774,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         "force",
         "clean"
       ],
-      "description": "Deployment mode:\n- graceful: Wait for connections to drain\n- force: Apply immediately\ n- clean: Tear down and rebuild\n"
+      "description": "Deployment mode:\n- graceful: Wait for connections to drain\n- force: Apply immediately\n- clean: Tear down and rebuild\n"
     }
   }
 }
@@ -3751,14 +3894,14 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           },
           "description": "Node-specific environment overrides"
         },
-        "daprEnabled": {
+        "meshEnabled": {
           "type": "boolean",
           "default": true,
-          "description": "Whether to attach Dapr sidecar"
+          "description": "Whether mesh routing is enabled"
         },
-        "daprAppId": {
+        "appId": {
           "type": "string",
-          "description": "Dapr app-id override (default derives from node name)"
+          "description": "App-id override for mesh routing (default derives from node name)"
         }
       }
     },
@@ -3794,10 +3937,6 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         },
         "mysql": {
           "$ref": "#/$defs/InfraServiceConfig"
-        },
-        "placement": {
-          "$ref": "#/$defs/InfraServiceConfig",
-          "description": "Dapr placement service"
         },
         "ingress": {
           "$ref": "#/$defs/IngressConfig"
@@ -3941,7 +4080,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       "properties": {
         "appName": {
           "type": "string",
-          "description": "Container's Dapr app name (e.g., \"bannou\", \"npc-omega\")"
+          "description": "Container's app-id for mesh routing (e.g., \"bannou\", \"npc-omega\")"
         },
         "reason": {
           "type": "string",
@@ -4085,7 +4224,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       "properties": {
         "appName": {
           "type": "string",
-          "description": "Container's Dapr app name"
+          "description": "Container's app-id for mesh routing"
         }
       }
     }
@@ -4108,7 +4247,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
       "properties": {
         "appName": {
           "type": "string",
-          "description": "Container's Dapr app name"
+          "description": "Container's app-id for mesh routing"
         },
         "status": {
           "type": "string",
@@ -4499,6 +4638,652 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
             _GetConfigVersion_Info,
             _GetConfigVersion_RequestSchema,
             _GetConfigVersion_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for AcquireProcessor
+
+    private static readonly string _AcquireProcessor_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AcquireProcessorRequest",
+  "$defs": {
+    "AcquireProcessorRequest": {
+      "type": "object",
+      "required": [
+        "pool_type"
+      ],
+      "properties": {
+        "pool_type": {
+          "type": "string",
+          "description": "Type of processing pool (e.g., \"asset-processor\", \"texture-processor\")"
+        },
+        "priority": {
+          "type": "integer",
+          "default": 0,
+          "description": "Request priority (higher = more urgent)"
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "default": 300,
+          "description": "How long the lease is valid for"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Optional metadata about the processing job"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _AcquireProcessor_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/AcquireProcessorResponse",
+  "$defs": {
+    "AcquireProcessorResponse": {
+      "type": "object",
+      "required": [
+        "processor_id",
+        "app_id",
+        "lease_id",
+        "expires_at"
+      ],
+      "properties": {
+        "processor_id": {
+          "type": "string",
+          "description": "Unique identifier for this processor instance"
+        },
+        "app_id": {
+          "type": "string",
+          "description": "App-id for mesh service invocation to this processor"
+        },
+        "lease_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique lease identifier (used for release)"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the lease expires (must release before this)"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _AcquireProcessor_Info = """
+{
+  "summary": "Acquire a processor from a pool",
+  "description": "Requests an available processor instance from the specified pool type.\nReturns the app-id of an available processor or 429 if none available.\ nThe processor is marked as busy until explicitly released.\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "AcquireProcessor"
+}
+""";
+
+    /// <summary>Returns endpoint information for AcquireProcessor</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/acquire/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AcquireProcessor_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/acquire",
+            _AcquireProcessor_Info));
+
+    /// <summary>Returns request schema for AcquireProcessor</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/acquire/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AcquireProcessor_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/acquire",
+            "request-schema",
+            _AcquireProcessor_RequestSchema));
+
+    /// <summary>Returns response schema for AcquireProcessor</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/acquire/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AcquireProcessor_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/acquire",
+            "response-schema",
+            _AcquireProcessor_ResponseSchema));
+
+    /// <summary>Returns full schema for AcquireProcessor</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/acquire/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AcquireProcessor_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/acquire",
+            _AcquireProcessor_Info,
+            _AcquireProcessor_RequestSchema,
+            _AcquireProcessor_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ReleaseProcessor
+
+    private static readonly string _ReleaseProcessor_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ReleaseProcessorRequest",
+  "$defs": {
+    "ReleaseProcessorRequest": {
+      "type": "object",
+      "required": [
+        "lease_id"
+      ],
+      "properties": {
+        "lease_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "The lease ID returned from AcquireProcessor"
+        },
+        "success": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether the processing completed successfully"
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Optional processing metrics (duration, items processed, etc.)"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ReleaseProcessor_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ReleaseProcessorResponse",
+  "$defs": {
+    "ReleaseProcessorResponse": {
+      "type": "object",
+      "required": [
+        "released"
+      ],
+      "properties": {
+        "released": {
+          "type": "boolean",
+          "description": "Whether the processor was successfully released"
+        },
+        "processor_id": {
+          "type": "string",
+          "description": "ID of the released processor"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ReleaseProcessor_Info = """
+{
+  "summary": "Release a processor back to the pool",
+  "description": "Releases a previously acquired processor, making it available for other requests.\nShould be called when processing is complete or on error cleanup.\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "ReleaseProcessor"
+}
+""";
+
+    /// <summary>Returns endpoint information for ReleaseProcessor</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/release/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ReleaseProcessor_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/release",
+            _ReleaseProcessor_Info));
+
+    /// <summary>Returns request schema for ReleaseProcessor</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/release/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ReleaseProcessor_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/release",
+            "request-schema",
+            _ReleaseProcessor_RequestSchema));
+
+    /// <summary>Returns response schema for ReleaseProcessor</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/release/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ReleaseProcessor_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/release",
+            "response-schema",
+            _ReleaseProcessor_ResponseSchema));
+
+    /// <summary>Returns full schema for ReleaseProcessor</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/release/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ReleaseProcessor_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/release",
+            _ReleaseProcessor_Info,
+            _ReleaseProcessor_RequestSchema,
+            _ReleaseProcessor_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetPoolStatus
+
+    private static readonly string _GetPoolStatus_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GetPoolStatusRequest",
+  "$defs": {
+    "GetPoolStatusRequest": {
+      "type": "object",
+      "required": [
+        "pool_type"
+      ],
+      "properties": {
+        "pool_type": {
+          "type": "string",
+          "description": "Type of processing pool to query"
+        },
+        "include_metrics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include recent processing metrics"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetPoolStatus_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/PoolStatusResponse",
+  "$defs": {
+    "PoolStatusResponse": {
+      "type": "object",
+      "required": [
+        "pool_type",
+        "total_instances",
+        "available_instances",
+        "busy_instances",
+        "utilization"
+      ],
+      "properties": {
+        "pool_type": {
+          "type": "string",
+          "description": "Pool type"
+        },
+        "total_instances": {
+          "type": "integer",
+          "description": "Total processor instances in the pool"
+        },
+        "available_instances": {
+          "type": "integer",
+          "description": "Instances ready to accept work"
+        },
+        "busy_instances": {
+          "type": "integer",
+          "description": "Instances currently processing"
+        },
+        "queue_depth": {
+          "type": "integer",
+          "description": "Number of requests waiting for a processor"
+        },
+        "utilization": {
+          "type": "number",
+          "format": "float",
+          "description": "Current utilization percentage (0.0 to 1.0)"
+        },
+        "min_instances": {
+          "type": "integer",
+          "description": "Minimum configured instances"
+        },
+        "max_instances": {
+          "type": "integer",
+          "description": "Maximum configured instances"
+        },
+        "scale_up_threshold": {
+          "type": "number",
+          "format": "float",
+          "description": "Utilization threshold for auto-scale-up"
+        },
+        "recent_metrics": {
+          "$ref": "#/$defs/PoolMetrics"
+        }
+      }
+    },
+    "PoolMetrics": {
+      "type": "object",
+      "properties": {
+        "jobs_completed_1h": {
+          "type": "integer",
+          "description": "Jobs completed in the last hour"
+        },
+        "jobs_failed_1h": {
+          "type": "integer",
+          "description": "Jobs failed in the last hour"
+        },
+        "avg_processing_time_ms": {
+          "type": "integer",
+          "description": "Average processing time in milliseconds"
+        },
+        "last_scale_event": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the pool was last scaled"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetPoolStatus_Info = """
+{
+  "summary": "Get processing pool status",
+  "description": "Returns current status of a processing pool including:\n- Total instances (running and available)\n- Current utilization\n- Queue depth (waiting requests)\n- Recent processing metrics\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "GetPoolStatus"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetPoolStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/status/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetPoolStatus_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/status",
+            _GetPoolStatus_Info));
+
+    /// <summary>Returns request schema for GetPoolStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/status/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetPoolStatus_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/status",
+            "request-schema",
+            _GetPoolStatus_RequestSchema));
+
+    /// <summary>Returns response schema for GetPoolStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/status/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetPoolStatus_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/status",
+            "response-schema",
+            _GetPoolStatus_ResponseSchema));
+
+    /// <summary>Returns full schema for GetPoolStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/status/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetPoolStatus_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/status",
+            _GetPoolStatus_Info,
+            _GetPoolStatus_RequestSchema,
+            _GetPoolStatus_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ScalePool
+
+    private static readonly string _ScalePool_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ScalePoolRequest",
+  "$defs": {
+    "ScalePoolRequest": {
+      "type": "object",
+      "required": [
+        "pool_type",
+        "target_instances"
+      ],
+      "properties": {
+        "pool_type": {
+          "type": "string",
+          "description": "Type of processing pool to scale"
+        },
+        "target_instances": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Desired number of instances"
+        },
+        "force": {
+          "type": "boolean",
+          "default": false,
+          "description": "Force scale even if it would interrupt processing"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ScalePool_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ScalePoolResponse",
+  "$defs": {
+    "ScalePoolResponse": {
+      "type": "object",
+      "required": [
+        "pool_type",
+        "previous_instances",
+        "current_instances"
+      ],
+      "properties": {
+        "pool_type": {
+          "type": "string",
+          "description": "Pool type that was scaled"
+        },
+        "previous_instances": {
+          "type": "integer",
+          "description": "Instance count before scaling"
+        },
+        "current_instances": {
+          "type": "integer",
+          "description": "Instance count after scaling"
+        },
+        "scaled_up": {
+          "type": "integer",
+          "description": "Number of instances added"
+        },
+        "scaled_down": {
+          "type": "integer",
+          "description": "Number of instances removed"
+        },
+        "message": {
+          "type": "string",
+          "description": "Status message"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ScalePool_Info = """
+{
+  "summary": "Scale a processing pool",
+  "description": "Manually adjust the size of a processing pool.\nCan scale up (add instances) or scale down (remove idle instances).\nRespects min/max constraints from pool configuration.\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "ScalePool"
+}
+""";
+
+    /// <summary>Returns endpoint information for ScalePool</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/scale/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ScalePool_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/scale",
+            _ScalePool_Info));
+
+    /// <summary>Returns request schema for ScalePool</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/scale/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ScalePool_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/scale",
+            "request-schema",
+            _ScalePool_RequestSchema));
+
+    /// <summary>Returns response schema for ScalePool</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/scale/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ScalePool_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/scale",
+            "response-schema",
+            _ScalePool_ResponseSchema));
+
+    /// <summary>Returns full schema for ScalePool</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/scale/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ScalePool_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/scale",
+            _ScalePool_Info,
+            _ScalePool_RequestSchema,
+            _ScalePool_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CleanupPool
+
+    private static readonly string _CleanupPool_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CleanupPoolRequest",
+  "$defs": {
+    "CleanupPoolRequest": {
+      "type": "object",
+      "required": [
+        "pool_type"
+      ],
+      "properties": {
+        "pool_type": {
+          "type": "string",
+          "description": "Type of processing pool to cleanup"
+        },
+        "preserve_minimum": {
+          "type": "boolean",
+          "default": true,
+          "description": "Keep at least min_instances running"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CleanupPool_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CleanupPoolResponse",
+  "$defs": {
+    "CleanupPoolResponse": {
+      "type": "object",
+      "required": [
+        "pool_type",
+        "instances_removed"
+      ],
+      "properties": {
+        "pool_type": {
+          "type": "string",
+          "description": "Pool type that was cleaned up"
+        },
+        "instances_removed": {
+          "type": "integer",
+          "description": "Number of idle instances removed"
+        },
+        "current_instances": {
+          "type": "integer",
+          "description": "Instance count after cleanup"
+        },
+        "message": {
+          "type": "string",
+          "description": "Status message"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CleanupPool_Info = """
+{
+  "summary": "Cleanup idle processing pool instances",
+  "description": "Scales pool back to minimum instances by removing idle processors.\nUsed for resource reclamation during low-activity periods.\n",
+  "tags": [],
+  "deprecated": false,
+  "operationId": "CleanupPool"
+}
+""";
+
+    /// <summary>Returns endpoint information for CleanupPool</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/cleanup/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupPool_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/cleanup",
+            _CleanupPool_Info));
+
+    /// <summary>Returns request schema for CleanupPool</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/cleanup/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupPool_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/cleanup",
+            "request-schema",
+            _CleanupPool_RequestSchema));
+
+    /// <summary>Returns response schema for CleanupPool</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/cleanup/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupPool_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/cleanup",
+            "response-schema",
+            _CleanupPool_ResponseSchema));
+
+    /// <summary>Returns full schema for CleanupPool</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/processing-pool/cleanup/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupPool_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Orchestrator",
+            "Post",
+            "orchestrator/processing-pool/cleanup",
+            _CleanupPool_Info,
+            _CleanupPool_RequestSchema,
+            _CleanupPool_ResponseSchema));
 
     #endregion
 

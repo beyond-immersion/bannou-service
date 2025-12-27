@@ -1,8 +1,8 @@
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -10,41 +10,38 @@ namespace BeyondImmersion.BannouService.Testing;
 
 /// <summary>
 /// Testing service implementation that exercises the plugin system properly.
-/// Implements IDaprService to test centralized service resolution.
+/// Implements IBannouService to test centralized service resolution.
 /// </summary>
-[DaprService("testing", interfaceType: typeof(ITestingService), priority: false, lifetime: ServiceLifetime.Scoped)]
+[BannouService("testing", interfaceType: typeof(ITestingService), priority: false, lifetime: ServiceLifetime.Scoped)]
 public partial class TestingService : ITestingService
 {
     private readonly ILogger<TestingService> _logger;
     private readonly TestingServiceConfiguration _configuration;
-    private readonly DaprClient _daprClient;
+    private readonly IMessageBus _messageBus;
     private readonly IClientEventPublisher _clientEventPublisher;
-    private readonly IErrorEventEmitter _errorEventEmitter;
 
     public TestingService(
         ILogger<TestingService> logger,
         TestingServiceConfiguration configuration,
-        DaprClient daprClient,
+        IMessageBus messageBus,
         IClientEventPublisher clientEventPublisher,
-        IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
 
-        // Required by Tenet 6 - calls default IDaprService.RegisterEventConsumers() no-op
+        // Required by Tenet 6 - calls default IBannouService.RegisterEventConsumers() no-op
         // Must cast to interface to access default interface implementation
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>
     /// Simple test method to verify service is working.
     /// </summary>
-    public Task<(StatusCodes, TestResponse?)> RunTestAsync(string testName, CancellationToken cancellationToken = default)
+    public async Task<(StatusCodes, TestResponse?)> RunTestAsync(string testName, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -58,19 +55,29 @@ public partial class TestingService : ITestingService
                 Timestamp = DateTime.UtcNow
             };
 
-            return Task.FromResult<(StatusCodes, TestResponse?)>((StatusCodes.OK, response));
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error running test: {TestName}", testName);
-            return Task.FromResult<(StatusCodes, TestResponse?)>((StatusCodes.InternalServerError, null));
+            await _messageBus.TryPublishErrorAsync(
+                "testing",
+                "RunTest",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "testing",
+                endpoint: "post:/testing/run",
+                details: new { TestName = testName },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Test method to verify configuration is working.
     /// </summary>
-    public Task<(StatusCodes, ConfigTestResponse?)> TestConfigurationAsync(CancellationToken cancellationToken = default)
+    public async Task<(StatusCodes, ConfigTestResponse?)> TestConfigurationAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -83,12 +90,22 @@ public partial class TestingService : ITestingService
                 Timestamp = DateTime.UtcNow
             };
 
-            return Task.FromResult<(StatusCodes, ConfigTestResponse?)>((StatusCodes.OK, response));
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error testing configuration");
-            return Task.FromResult<(StatusCodes, ConfigTestResponse?)>((StatusCodes.InternalServerError, null));
+            await _messageBus.TryPublishErrorAsync(
+                "testing",
+                "TestConfiguration",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "testing",
+                endpoint: "post:/testing/config",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -96,7 +113,7 @@ public partial class TestingService : ITestingService
     /// Test method to validate dependency injection health and null safety patterns.
     /// This test validates the fixes for null-forgiving operators and constructor issues.
     /// </summary>
-    public Task<(StatusCodes, DependencyTestResponse?)> TestDependencyInjectionHealthAsync(CancellationToken cancellationToken = default)
+    public async Task<(StatusCodes, DependencyTestResponse?)> TestDependencyInjectionHealthAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -127,7 +144,7 @@ public partial class TestingService : ITestingService
             try
             {
                 // Access a property on configuration to validate it's properly constructed
-                var _ = _configuration.Force_Service_ID; // Safe to access, validates object integrity
+                var _ = _configuration.ForceServiceId; // Safe to access, validates object integrity
                 configWorks = true;
             }
             catch (Exception ex)
@@ -147,12 +164,22 @@ public partial class TestingService : ITestingService
                 Timestamp = DateTime.UtcNow
             };
 
-            return Task.FromResult<(StatusCodes, DependencyTestResponse?)>((StatusCodes.OK, response));
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error testing dependency injection health");
-            return Task.FromResult<(StatusCodes, DependencyTestResponse?)>((StatusCodes.InternalServerError, null));
+            await _messageBus.TryPublishErrorAsync(
+                "testing",
+                "TestDependencyInjectionHealth",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "testing",
+                endpoint: "post:/testing/dependency-health",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -165,7 +192,7 @@ public partial class TestingService : ITestingService
     /// <param name="request">Optional ping request with client timestamp and sequence</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Ping response with timing information</returns>
-    public Task<(StatusCodes, PingResponse?)> PingAsync(
+    public async Task<(StatusCodes, PingResponse?)> PingAsync(
         PingRequest? request,
         CancellationToken cancellationToken = default)
     {
@@ -186,12 +213,22 @@ public partial class TestingService : ITestingService
             var processingTime = DateTimeOffset.UtcNow - serverReceiveTime;
             response.ServerProcessingTimeMs = processingTime.TotalMilliseconds;
 
-            return Task.FromResult<(StatusCodes, PingResponse?)>((StatusCodes.OK, response));
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing ping request");
-            return Task.FromResult<(StatusCodes, PingResponse?)>((StatusCodes.InternalServerError, null));
+            await _messageBus.TryPublishErrorAsync(
+                "testing",
+                "Ping",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "testing",
+                endpoint: "post:/testing/ping",
+                details: new { Sequence = request?.Sequence },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -287,7 +324,7 @@ public partial class TestingService : ITestingService
     public async Task RegisterServicePermissionsAsync()
     {
         _logger.LogInformation("Registering Testing service permissions...");
-        await TestingPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+        await TestingPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
     }
 
     #endregion
@@ -296,7 +333,7 @@ public partial class TestingService : ITestingService
 /// <summary>
 /// Testing service interface for dependency injection.
 /// </summary>
-public interface ITestingService : IDaprService
+public interface ITestingService : IBannouService
 {
     Task<(StatusCodes, TestResponse?)> RunTestAsync(string testName, CancellationToken cancellationToken = default);
     Task<(StatusCodes, ConfigTestResponse?)> TestConfigurationAsync(CancellationToken cancellationToken = default);

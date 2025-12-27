@@ -8,12 +8,12 @@ namespace BeyondImmersion.BannouService.Permissions;
 
 /// <summary>
 /// Partial class for PermissionsService event handling.
-/// Contains event consumer registration and handler implementations for ALL Dapr pub/sub events.
+/// Contains event consumer registration and handler implementations for all pub/sub events.
 /// </summary>
 public partial class PermissionsService
 {
     /// <summary>
-    /// Registers event consumers for Dapr pub/sub events this service handles.
+    /// Registers event consumers for pub/sub events this service handles.
     /// Called from the main service constructor.
     /// </summary>
     /// <param name="eventConsumer">The event consumer for registering handlers.</param>
@@ -150,11 +150,13 @@ public partial class PermissionsService
             {
                 _logger.LogError("Failed to register permissions for service {ServiceId}: {StatusCode}",
                     evt.ServiceId, result.Item1);
+                _ = PublishErrorEventAsync("HandleServiceRegistration", "registration_failed", $"Failed to register permissions: {result.Item1}", details: new { evt.ServiceId, StatusCode = result.Item1 });
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling service registration event for {ServiceId}", evt.ServiceId);
+            _ = PublishErrorEventAsync("HandleServiceRegistration", ex.GetType().Name, ex.Message, details: new { evt.ServiceId });
         }
     }
 
@@ -193,6 +195,7 @@ public partial class PermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling session state change event for {SessionId}", evt.SessionId);
+            _ = PublishErrorEventAsync("HandleSessionStateChange", ex.GetType().Name, ex.Message, details: new { evt.SessionId, evt.ServiceId });
         }
     }
 
@@ -280,6 +283,7 @@ public partial class PermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process session.updated event for {SessionId}", evt.SessionId);
+            _ = PublishErrorEventAsync("HandleSessionUpdated", ex.GetType().Name, ex.Message, details: new { evt.SessionId });
         }
     }
 
@@ -354,6 +358,7 @@ public partial class PermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process session.connected event for {SessionId}", evt.SessionId);
+            _ = PublishErrorEventAsync("HandleSessionConnectedEvent", ex.GetType().Name, ex.Message, details: new { evt.SessionId });
         }
     }
 
@@ -390,6 +395,7 @@ public partial class PermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process session.disconnected event for {SessionId}", evt.SessionId);
+            _ = PublishErrorEventAsync("HandleSessionDisconnectedEvent", ex.GetType().Name, ex.Message, details: new { evt.SessionId });
         }
     }
 

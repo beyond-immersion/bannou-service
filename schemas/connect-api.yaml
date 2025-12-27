@@ -7,7 +7,7 @@ info:
 
     **POST-Only API Pattern**: This API uses POST for all service operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
-    See API-DESIGN.md for architectural rationale.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
 
     **Exception**: The `/connect` WebSocket endpoint uses GET/POST for the HTTP upgrade handshake,
     which is required by the WebSocket protocol specification.
@@ -17,7 +17,7 @@ info:
     - Bi-directional real-time messaging between clients and services
     - Binary protocol with message flags, channels, and service routing
     - Client reconnection and session management
-    - Integration with Dapr service mesh for service-to-service communication
+    - Integration with Bannou mesh for service-to-service communication
     - Redis-backed connection state management
 
     ## Connection Protocol
@@ -26,13 +26,13 @@ info:
 
     - **Message Flags**: Control message behavior (binary, encrypted, compressed, high priority, events vs RPC)
     - **Channel System**: Support for sequential message processing on specific channels
-    - **Service Routing**: Route messages to appropriate Dapr services via GUID-based service lookup
+    - **Service Routing**: Route messages to appropriate Bannou services via GUID-based service lookup
     - **Bi-directional RPC**: Services can make RPC calls back to connected clients
     - **Reconnection Support**: Clients can reconnect to existing sessions within a configurable time window
 
 servers:
-- url: http://localhost:3500/v1.0/invoke/bannou/method
-  description: Dapr sidecar endpoint (internal only)
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
 
 paths:
   /internal/proxy:
@@ -664,7 +664,7 @@ components:
         - 0x04 (Compressed): Message payload is compressed (gzip)
         - 0x08 (HighPriority): Deliver at high priority, skip to front of queues
         - 0x10 (Event): Fire-and-forget message, no response expected
-        - 0x20 (Client): Route to another WebSocket client (not a Dapr service)
+        - 0x20 (Client): Route to another WebSocket client (not a Bannou service)
         - 0x40 (Response): Message is a response to an RPC (not a new request)
         - 0x80 (Reserved): Reserved for future use
       minimum: 0

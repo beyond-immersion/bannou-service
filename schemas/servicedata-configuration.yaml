@@ -9,6 +9,6 @@ x-service-configuration:
     # State Store Configuration
     StateStoreName:
       type: string
-      description: Dapr state store name for service data
+      description: State store name for service data
       env: SERVICEDATA_STATE_STORE_NAME
       default: "servicedata-statestore"

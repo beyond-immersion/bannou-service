@@ -72,16 +72,21 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
 
         // Generate deterministic password using SHA256(sessionId:roomId:salt)
         // Using sessionId instead of accountId to support multiple sessions per account
-        var salt = _configuration.SipPasswordSalt ?? "bannou-voice-default-salt";
+        if (string.IsNullOrWhiteSpace(_configuration.SipPasswordSalt))
+        {
+            throw new InvalidOperationException(
+                "VOICE_SIP_PASSWORD_SALT is required for SIP credential generation. " +
+                "All service instances must share the same salt for voice credentials to work correctly.");
+        }
+        var salt = _configuration.SipPasswordSalt;
         var input = $"{sessionId}:{roomId}:{salt}";
         var passwordHash = ComputeSha256Hash(input);
 
         // Username is the session ID (safe, not sensitive)
         var username = $"voice-{sessionId[..Math.Min(8, sessionId.Length)]}";
 
-        // Conference URI based on room ID
-        var sipDomain = _configuration.SipDomain ?? "voice.bannou";
-        var conferenceUri = $"sip:room-{roomId}@{sipDomain}";
+        // Conference URI based on room ID (SipDomain has default in configuration)
+        var conferenceUri = $"sip:room-{roomId}@{_configuration.SipDomain}";
 
         // Credentials expire with session (default 24h)
         var expiresAt = DateTimeOffset.UtcNow.AddHours(24);
@@ -92,7 +97,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
 
         return new SipCredentials
         {
-            Registrar = $"sip:{_configuration.KamailioHost ?? "localhost"}:{_configuration.KamailioRpcPort}",
+            Registrar = $"sip:{_configuration.KamailioHost}:{_configuration.KamailioRpcPort}",
             Username = username,
             Password = passwordHash[..32], // Use first 32 chars for password
             ConferenceUri = conferenceUri,

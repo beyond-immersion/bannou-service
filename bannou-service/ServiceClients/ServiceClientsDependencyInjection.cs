@@ -6,13 +6,13 @@ namespace BeyondImmersion.BannouService.ServiceClients;
 
 /// <summary>
 /// Extension methods for registering all service client infrastructure.
-/// This includes Dapr service clients, event handling, and service mapping.
+/// This includes Bannou service clients, event handling, and service mapping.
 /// </summary>
 public static class ServiceClientsDependencyInjection
 {
     /// <summary>
     /// Registers the complete Bannou service client infrastructure.
-    /// Includes Dapr clients, service mapping, events, and lifecycle management.
+    /// Includes Bannou clients, service mapping, events, and lifecycle management.
     /// </summary>
     public static IServiceCollection AddBannouServiceClients(this IServiceCollection services)
     {
@@ -26,13 +26,13 @@ public static class ServiceClientsDependencyInjection
     }
 
     /// <summary>
-    /// Registers all discovered Dapr service clients automatically.
+    /// Registers all discovered Bannou service clients automatically.
     /// Uses reflection to find all {Service}Client classes and registers them with DI.
     /// </summary>
     public static IServiceCollection AddAllBannouServiceClients(this IServiceCollection services)
     {
         services.AddBannouServiceClients();
-        services.AddAllDaprServiceClients();
+        ServiceClientExtensions.AddAllBannouServiceClients(services);
 
         return services;
     }
@@ -45,7 +45,7 @@ public static class ServiceClientsDependencyInjection
         params (Type clientType, Type interfaceType, string serviceName)[] clientConfigurations)
     {
         services.AddBannouServiceClients();
-        services.AddDaprServiceClients(clientConfigurations);
+        services.AddBannouServiceClients(clientConfigurations);
 
         return services;
     }

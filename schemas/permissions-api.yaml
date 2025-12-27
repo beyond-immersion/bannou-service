@@ -6,12 +6,12 @@ info:
 
     **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
-    See API-DESIGN.md for architectural rationale.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
   version: 3.0.0
   # NOTE: Event subscriptions moved to permissions-events.yaml (x-event-subscriptions)
 servers:
-- url: http://localhost:3500/v1.0/invoke/bannou/method
-  description: Dapr sidecar endpoint (internal only)
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
 
 paths:
   /permissions/capabilities:
@@ -21,6 +21,7 @@ paths:
       operationId: getCapabilities
       tags:
       - Permission Lookup
+      x-permissions: []  # Internal only - not exposed to WebSocket clients
       requestBody:
         required: true
         content:
@@ -59,6 +60,7 @@ paths:
       operationId: validateApiAccess
       tags:
       - Permission Validation
+      x-permissions: []  # Internal only - not exposed to WebSocket clients
       requestBody:
         required: true
         content:
@@ -95,6 +97,7 @@ paths:
       operationId: registerServicePermissions
       tags:
       - Service Management
+      x-permissions: []  # Internal only - not exposed to WebSocket clients
       requestBody:
         required: true
         content:
@@ -192,6 +195,7 @@ paths:
       operationId: updateSessionRole
       tags:
       - Session Management
+      x-permissions: []  # Internal only - not exposed to WebSocket clients
       requestBody:
         required: true
         content:
@@ -237,6 +241,7 @@ paths:
       operationId: clearSessionState
       tags:
       - Session Management
+      x-permissions: []  # Internal only - not exposed to WebSocket clients
       requestBody:
         required: true
         content:
@@ -284,6 +289,7 @@ paths:
       operationId: getSessionInfo
       tags:
       - Session Management
+      x-permissions: []  # Internal only - not exposed to WebSocket clients
       requestBody:
         required: true
         content:
@@ -329,7 +335,7 @@ paths:
         appearing in this list means it has completed startup and registered its
         API permissions, indicating it's ready to handle requests.
 
-        For service-to-service calls (via Dapr), this endpoint is unrestricted.
+        For service-to-service calls (via mesh), this endpoint is unrestricted.
         For client calls through WebSocket/Connect, only admin users can access it.
       operationId: getRegisteredServices
       tags:
@@ -374,7 +380,7 @@ paths:
       x-endpoint-info-json: "{\n  \"summary\": \"List all registered services\",\n  \"description\": \"Returns list of all
         services that have registered their permissions.\\nThis endpoint is used by testers to wait for service readiness
         - a service\\nappearing in this list means it has completed startup and registered its\\nAPI permissions, indicating
-        it's ready to handle requests.\\n\\nFor service-to-service calls (via Dapr), this endpoint is unrestricted.\\nFor
+        it's ready to handle requests.\\n\\nFor service-to-service calls (via mesh), this endpoint is unrestricted.\\nFor
         client calls through WebSocket/Connect, only admin users can access it.\\n\",\n  \"tags\": [\n    \"Service Management\"\
         \n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getRegisteredServices\"\n}"
 components:

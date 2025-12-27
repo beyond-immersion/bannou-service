@@ -117,6 +117,38 @@ public static class BannouJson
     {
         return JsonSerializer.SerializeToElement(value, Options);
     }
+
+    /// <summary>
+    /// Apply Bannou's standard JSON serializer settings to an existing options object.
+    /// Use this when configuring external libraries (MassTransit, etc.) that provide their own options.
+    /// </summary>
+    /// <param name="target">The options object to configure</param>
+    /// <returns>The configured options object for fluent chaining</returns>
+    public static JsonSerializerOptions ApplyBannouSettings(JsonSerializerOptions target)
+    {
+        target.AllowTrailingCommas = Options.AllowTrailingCommas;
+        target.DefaultIgnoreCondition = Options.DefaultIgnoreCondition;
+        target.IgnoreReadOnlyFields = Options.IgnoreReadOnlyFields;
+        target.IgnoreReadOnlyProperties = Options.IgnoreReadOnlyProperties;
+        target.IncludeFields = Options.IncludeFields;
+        target.MaxDepth = Options.MaxDepth;
+        target.NumberHandling = Options.NumberHandling;
+        target.PropertyNameCaseInsensitive = Options.PropertyNameCaseInsensitive;
+        target.ReadCommentHandling = Options.ReadCommentHandling;
+        target.UnknownTypeHandling = Options.UnknownTypeHandling;
+        target.WriteIndented = Options.WriteIndented;
+
+        // Add converters (avoid duplicates)
+        foreach (var converter in Options.Converters)
+        {
+            if (!target.Converters.Any(c => c.GetType() == converter.GetType()))
+            {
+                target.Converters.Add(converter);
+            }
+        }
+
+        return target;
+    }
 }
 
 /// <summary>

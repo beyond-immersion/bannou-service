@@ -1,5 +1,3 @@
-using System.Net.Http;
-using System.Text.Json;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Testing;
 
@@ -8,118 +6,83 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// <summary>
 /// Test handler for the Testing service HTTP API endpoints.
 /// Tests debugging and infrastructure validation endpoints.
-/// These tests are critical for validating routing behavior and diagnosing Dapr path handling.
+/// These tests are critical for validating routing behavior and diagnosing mesh path handling.
+///
+/// Note: This handler uses direct HttpClient instead of generated service clients
+/// because it tests low-level routing behavior that requires explicit URL control.
 /// </summary>
-public class TestingTestHandler : IServiceTestHandler
+public class TestingTestHandler : BaseHttpTestHandler
 {
     private static readonly HttpClient _httpClient = new();
     private static readonly string _baseUrl;
-    private const string DAPR_PREFIX = "/v1.0/invoke/bannou/method";
 
     static TestingTestHandler()
     {
         // Get base URL from environment or default to localhost
-        // Note: When connecting via Dapr sidecar, paths must include /v1.0/invoke/{appId}/method/ prefix
-        var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT") ?? "http://localhost:5012";
-        _baseUrl = daprHttpEndpoint;
+        var bannouHttpEndpoint = Environment.GetEnvironmentVariable("BANNOU_HTTP_ENDPOINT") ?? "http://bannou:80";
+        _baseUrl = bannouHttpEndpoint;
     }
 
-    public ServiceTest[] GetServiceTests()
-    {
-        return new[]
+    public override ServiceTest[] GetServiceTests() =>
+    [
+        // Health Check Tests
+        new ServiceTest(TestHealthEndpoint, "Health", "Testing", "Test testing service health endpoint"),
+
+        // Debug Path Tests - Critical for routing validation
+        new ServiceTest(TestDebugPathEndpoint, "DebugPath", "Testing", "Test debug path endpoint returns routing info"),
+        new ServiceTest(TestDebugPathReceivedPath, "PathReceived", "Testing", "Verify controller receives expected path"),
+        new ServiceTest(TestDebugPathWithCatchAll, "PathCatchAll", "Testing", "Test debug path with catch-all segment"),
+        new ServiceTest(TestDebugPathControllerRoute, "ControllerRoute", "Testing", "Verify controller route attribute value"),
+        new ServiceTest(TestDebugPathMeshHeaders, "MeshHeaders", "Testing", "Check for mesh-related headers in request"),
+
+        // Routing Architecture Tests
+        new ServiceTest(TestDirectVsMeshRouting, "DirectVsMesh", "Testing", "Compare direct vs mesh routing paths"),
+        new ServiceTest(TestPathWithDifferentPrefixes, "PathPrefixes", "Testing", "Test paths with various prefixes"),
+    ];
+
+    private static Task<TestResult> TestHealthEndpoint(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            // Health Check Tests
-            new ServiceTest(TestHealthEndpoint, "Health", "Testing", "Test testing service health endpoint"),
-
-            // Debug Path Tests - Critical for routing validation
-            new ServiceTest(TestDebugPathEndpoint, "DebugPath", "Testing", "Test debug path endpoint returns routing info"),
-            new ServiceTest(TestDebugPathReceivedPath, "PathReceived", "Testing", "Verify controller receives expected path"),
-            new ServiceTest(TestDebugPathWithCatchAll, "PathCatchAll", "Testing", "Test debug path with catch-all segment"),
-            new ServiceTest(TestDebugPathControllerRoute, "ControllerRoute", "Testing", "Verify controller route attribute value"),
-            new ServiceTest(TestDebugPathDaprHeaders, "DaprHeaders", "Testing", "Check for Dapr-related headers in request"),
-
-            // Routing Architecture Tests
-            new ServiceTest(TestDirectVsDaprRouting, "DirectVsDapr", "Testing", "Compare direct vs Dapr routing paths"),
-            new ServiceTest(TestPathWithDifferentPrefixes, "PathPrefixes", "Testing", "Test paths with various prefixes"),
-        };
-    }
-
-    /// <summary>
-    /// Test the health endpoint is accessible.
-    /// </summary>
-    private static async Task<TestResult> TestHealthEndpoint(ITestClient client, string[] args)
-    {
-        try
-        {
-            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/health");
+            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/health");
 
             if (!response.IsSuccessStatusCode)
-            {
                 return TestResult.Failed($"Health endpoint returned {response.StatusCode}");
-            }
 
             var content = await response.Content.ReadAsStringAsync();
             return TestResult.Successful($"Health endpoint OK - {content}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Health check failed: {ex.Message}");
-        }
-    }
+        }, "Health endpoint");
 
-    /// <summary>
-    /// Test the debug path endpoint returns routing information.
-    /// </summary>
-    private static async Task<TestResult> TestDebugPathEndpoint(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDebugPathEndpoint(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path");
+            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
 
             if (!response.IsSuccessStatusCode)
-            {
                 return TestResult.Failed($"Debug path endpoint returned {response.StatusCode}");
-            }
 
             var content = await response.Content.ReadAsStringAsync();
             var debugInfo = BannouJson.Deserialize<RoutingDebugInfo>(content);
 
             if (debugInfo == null)
-            {
                 return TestResult.Failed("Failed to deserialize debug info");
-            }
 
             return TestResult.Successful(
                 $"Debug path endpoint OK - Path: {debugInfo.Path}, ControllerRoute: {debugInfo.ControllerRoute}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Debug path check failed: {ex.Message}");
-        }
-    }
+        }, "Debug path endpoint");
 
-    /// <summary>
-    /// Verify the controller receives the expected path format.
-    /// This is the key test for understanding Dapr path stripping behavior.
-    /// </summary>
-    private static async Task<TestResult> TestDebugPathReceivedPath(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDebugPathReceivedPath(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path");
+            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
 
             if (!response.IsSuccessStatusCode)
-            {
                 return TestResult.Failed($"Debug path endpoint returned {response.StatusCode}");
-            }
 
             var content = await response.Content.ReadAsStringAsync();
             var debugInfo = BannouJson.Deserialize<RoutingDebugInfo>(content);
 
             if (debugInfo == null)
-            {
                 return TestResult.Failed("Failed to deserialize debug info");
-            }
 
             // Log all the path information for debugging
             var pathDetails = new List<string>
@@ -130,53 +93,33 @@ public class TestingTestHandler : IServiceTestHandler
                 $"ControllerRoute={debugInfo.ControllerRoute}"
             };
 
-            // The key insight: what path does the controller actually receive?
-            // If Dapr strips /v1.0/invoke/bannou/method/, the path should be just /testing/debug/path
-            // If Dapr preserves it, the path would be /v1.0/invoke/bannou/method/testing/debug/path
             var receivedPath = debugInfo.Path;
 
-            if (receivedPath.Contains("/v1.0/invoke/"))
+            if (receivedPath.StartsWith("/testing/"))
             {
-                return TestResult.Successful($"Path INCLUDES Dapr prefix (Dapr NOT stripping): {string.Join(", ", pathDetails)}");
-            }
-            else if (receivedPath.StartsWith("/testing/"))
-            {
-                return TestResult.Successful($"Path EXCLUDES Dapr prefix (Dapr IS stripping): {string.Join(", ", pathDetails)}");
+                return TestResult.Successful($"Path correctly uses direct routing: {string.Join(", ", pathDetails)}");
             }
             else
             {
-                return TestResult.Successful($"Unexpected path format: {string.Join(", ", pathDetails)}");
+                return TestResult.Failed($"Unexpected path format (expected /testing/...): {string.Join(", ", pathDetails)}");
             }
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Path check failed: {ex.Message}");
-        }
-    }
+        }, "Path received check");
 
-    /// <summary>
-    /// Test debug path with catch-all segment to see full path routing.
-    /// </summary>
-    private static async Task<TestResult> TestDebugPathWithCatchAll(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDebugPathWithCatchAll(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             // Test with a nested path to see what the catch-all captures
             var testPath = "some/nested/path/segments";
-            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path/{testPath}");
+            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path/{testPath}");
 
             if (!response.IsSuccessStatusCode)
-            {
                 return TestResult.Failed($"Debug path catch-all returned {response.StatusCode}");
-            }
 
             var content = await response.Content.ReadAsStringAsync();
             var debugInfo = BannouJson.Deserialize<RoutingDebugInfo>(content);
 
             if (debugInfo == null)
-            {
                 return TestResult.Failed("Failed to deserialize debug info");
-            }
 
             var catchAllSegment = debugInfo.CatchAllSegment;
 
@@ -193,193 +136,110 @@ public class TestingTestHandler : IServiceTestHandler
             {
                 return TestResult.Successful($"Catch-all captured different value: expected='{testPath}', got='{catchAllSegment}', Path={debugInfo.Path}");
             }
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Catch-all path check failed: {ex.Message}");
-        }
-    }
+        }, "Path catch-all");
 
-    /// <summary>
-    /// Verify the controller route attribute value matches expected pattern.
-    /// </summary>
-    private static async Task<TestResult> TestDebugPathControllerRoute(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDebugPathControllerRoute(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path");
+            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
 
             if (!response.IsSuccessStatusCode)
-            {
                 return TestResult.Failed($"Debug path endpoint returned {response.StatusCode}");
-            }
 
             var content = await response.Content.ReadAsStringAsync();
             var debugInfo = BannouJson.Deserialize<RoutingDebugInfo>(content);
 
             if (debugInfo == null)
-            {
                 return TestResult.Failed("Failed to deserialize debug info");
-            }
 
             var controllerRoute = debugInfo.ControllerRoute;
 
-            // TestingController uses [Route("testing")] - not the Dapr route prefix
-            // Generated controllers use [Route("v1.0/invoke/bannou/method")]
             if (controllerRoute == "testing")
             {
-                return TestResult.Successful($"Controller route is 'testing' (manual controller pattern)");
-            }
-            else if (controllerRoute.Contains("v1.0/invoke"))
-            {
-                return TestResult.Successful($"Controller route includes Dapr prefix: '{controllerRoute}' (generated controller pattern)");
+                return TestResult.Successful($"Controller route is 'testing' (correct direct routing)");
             }
             else
             {
                 return TestResult.Successful($"Controller route: '{controllerRoute}'");
             }
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Controller route check failed: {ex.Message}");
-        }
-    }
+        }, "Controller route check");
 
-    /// <summary>
-    /// Check for Dapr-related headers in the request.
-    /// </summary>
-    private static async Task<TestResult> TestDebugPathDaprHeaders(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDebugPathMeshHeaders(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path");
+            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
 
             if (!response.IsSuccessStatusCode)
-            {
                 return TestResult.Failed($"Debug path endpoint returned {response.StatusCode}");
-            }
 
             var content = await response.Content.ReadAsStringAsync();
             var debugInfo = BannouJson.Deserialize<RoutingDebugInfo>(content);
 
             if (debugInfo == null)
-            {
                 return TestResult.Failed("Failed to deserialize debug info");
-            }
 
             var headers = debugInfo.Headers ?? new Dictionary<string, string>();
-            var daprHeaders = headers.Where(h =>
-                h.Key.StartsWith("dapr-", StringComparison.OrdinalIgnoreCase) ||
+            var routingHeaders = headers.Where(h =>
+                h.Key.StartsWith("bannou-", StringComparison.OrdinalIgnoreCase) ||
                 h.Key.StartsWith("traceparent", StringComparison.OrdinalIgnoreCase) ||
                 h.Key.StartsWith("tracestate", StringComparison.OrdinalIgnoreCase)
             ).ToList();
 
-            if (daprHeaders.Count == 0)
+            if (routingHeaders.Count == 0)
             {
-                return TestResult.Successful("No Dapr headers present (direct HTTP call, not through Dapr sidecar)");
+                return TestResult.Successful("No routing headers present (direct HTTP call, not through mesh)");
             }
             else
             {
-                var headerList = string.Join(", ", daprHeaders.Select(h => $"{h.Key}={h.Value}"));
-                return TestResult.Successful($"Dapr headers found: {headerList}");
+                var headerList = string.Join(", ", routingHeaders.Select(h => $"{h.Key}={h.Value}"));
+                return TestResult.Successful($"routing headers found: {headerList}");
             }
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Header check failed: {ex.Message}");
-        }
-    }
+        }, "Mesh headers check");
 
-    /// <summary>
-    /// Compare direct HTTP call vs Dapr-routed call path behavior.
-    /// </summary>
-    private static async Task<TestResult> TestDirectVsDaprRouting(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDirectVsMeshRouting(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            // Call through Dapr sidecar with proper prefix
-            var directResponse = await _httpClient.GetAsync($"{_baseUrl}{DAPR_PREFIX}/testing/debug/path");
+            var directResponse = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
 
             if (!directResponse.IsSuccessStatusCode)
-            {
                 return TestResult.Failed($"Direct call returned {directResponse.StatusCode}");
-            }
 
             var directContent = await directResponse.Content.ReadAsStringAsync();
             var directInfo = BannouJson.Deserialize<RoutingDebugInfo>(directContent);
 
             if (directInfo == null)
-            {
                 return TestResult.Failed("Failed to deserialize direct call response");
-            }
 
-            // Try Dapr-prefixed path (if Dapr is configured and running)
-            var daprPort = Environment.GetEnvironmentVariable("DAPR_HTTP_PORT") ?? "3500";
-            var daprUrl = $"http://localhost:{daprPort}/v1.0/invoke/bannou/method/testing/debug/path";
+            return TestResult.Successful($"Direct routing works: path={directInfo.Path}");
+        }, "Direct routing");
 
-            try
-            {
-                var daprResponse = await _httpClient.GetAsync(daprUrl);
-
-                if (daprResponse.IsSuccessStatusCode)
-                {
-                    var daprContent = await daprResponse.Content.ReadAsStringAsync();
-                    var daprInfo = BannouJson.Deserialize<RoutingDebugInfo>(daprContent);
-
-                    if (daprInfo != null)
-                    {
-                        return TestResult.Successful(
-                            $"Direct path: {directInfo.Path}, Dapr path: {daprInfo.Path} - " +
-                            $"Routes {(directInfo.Path == daprInfo.Path ? "MATCH" : "DIFFER")}");
-                    }
-                }
-
-                return TestResult.Successful($"Direct path works ({directInfo.Path}), Dapr call returned {daprResponse.StatusCode}");
-            }
-            catch
-            {
-                // Dapr sidecar might not be available in test environment
-                return TestResult.Successful($"Direct path: {directInfo.Path} (Dapr sidecar not reachable for comparison)");
-            }
-        }
-        catch (Exception ex)
+    private static Task<TestResult> TestPathWithDifferentPrefixes(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            return TestResult.Failed($"Direct vs Dapr test failed: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Test paths with various prefixes to understand routing behavior.
-    /// </summary>
-    private static async Task<TestResult> TestPathWithDifferentPrefixes(ITestClient client, string[] args)
-    {
-        try
-        {
+            // Test direct path (should work) and legacy prefixed path (should 404)
             var testPaths = new[]
             {
-                "/testing/debug/path",
-                "/v1.0/invoke/bannou/method/testing/debug/path"
+                ("/testing/debug/path", true),  // Direct path - expected to succeed
+                ("/v1.0/invoke/bannou/method/testing/debug/path", false)  // Legacy prefixed path - should 404
             };
 
             var results = new List<string>();
 
-            foreach (var testPath in testPaths)
+            foreach (var (testPath, shouldSucceed) in testPaths)
             {
                 try
                 {
                     var url = $"{_baseUrl}{testPath}";
                     var response = await _httpClient.GetAsync(url);
+                    var succeeded = response.IsSuccessStatusCode;
 
-                    if (response.IsSuccessStatusCode)
+                    if (succeeded == shouldSucceed)
                     {
-                        var content = await response.Content.ReadAsStringAsync();
-                        var info = BannouJson.Deserialize<RoutingDebugInfo>(content);
-
-                        results.Add($"[{testPath}] => {response.StatusCode}, received: {info?.Path}");
+                        results.Add($"[{testPath}] => {response.StatusCode} (expected)");
                     }
                     else
                     {
-                        results.Add($"[{testPath}] => {response.StatusCode}");
+                        results.Add($"[{testPath}] => {response.StatusCode} (UNEXPECTED - expected {(shouldSucceed ? "success" : "404")})");
                     }
                 }
                 catch (Exception pathEx)
@@ -389,12 +249,7 @@ public class TestingTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"Path tests: {string.Join(" | ", results)}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Path prefix test failed: {ex.Message}");
-        }
-    }
+        }, "Path prefixes");
 
     /// <summary>
     /// Response model matching TestingController.RoutingDebugInfo.

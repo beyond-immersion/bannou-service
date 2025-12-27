@@ -2,14 +2,14 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 
 [assembly: InternalsVisibleTo("lib-character.tests")]
 
@@ -21,13 +21,13 @@ namespace BeyondImmersion.BannouService.Character;
 /// Uses realm-based partitioning for scalability.
 /// Note: Character relationships are managed by the separate Relationship service.
 /// </summary>
-[DaprService("character", typeof(ICharacterService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("character", typeof(ICharacterService), lifetime: ServiceLifetime.Scoped)]
 public partial class CharacterService : ICharacterService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<CharacterService> _logger;
     private readonly CharacterServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly IRealmClient _realmClient;
     private readonly ISpeciesClient _speciesClient;
 
@@ -38,8 +38,7 @@ public partial class CharacterService : ICharacterService
     private const string CHARACTER_KEY_PREFIX = "character:";
     private const string REALM_INDEX_KEY_PREFIX = "realm-index:";
 
-    // Pub/Sub
-    private const string PUBSUB_NAME = "bannou-pubsub";
+    // Event topics
     private const string CHARACTER_CREATED_TOPIC = "character.created";
     private const string CHARACTER_UPDATED_TOPIC = "character.updated";
     private const string CHARACTER_DELETED_TOPIC = "character.deleted";
@@ -47,24 +46,24 @@ public partial class CharacterService : ICharacterService
     private const string CHARACTER_REALM_LEFT_TOPIC = "character.realm.left";
 
     public CharacterService(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         ILogger<CharacterService> logger,
         CharacterServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
         IRealmClient realmClient,
         ISpeciesClient speciesClient,
         IEventConsumer eventConsumer)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _realmClient = realmClient ?? throw new ArgumentNullException(nameof(realmClient));
         _speciesClient = speciesClient ?? throw new ArgumentNullException(nameof(speciesClient));
 
         // Register event handlers via partial class (CharacterServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     #region Character CRUD Operations
@@ -126,11 +125,8 @@ public partial class CharacterService : ICharacterService
             var characterKey = BuildCharacterKey(body.RealmId.ToString(), characterId.ToString());
 
             // Save character to state store
-            await _daprClient.SaveStateAsync(
-                CHARACTER_STATE_STORE,
-                characterKey,
-                character,
-                cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<CharacterModel>(CHARACTER_STATE_STORE)
+                .SaveAsync(characterKey, character, cancellationToken: cancellationToken);
 
             // Add to realm index for efficient listing
             await AddCharacterToRealmIndexAsync(body.RealmId.ToString(), characterId.ToString(), cancellationToken);
@@ -149,7 +145,7 @@ public partial class CharacterService : ICharacterService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating character: {Name}", body.Name);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "character",
                 "CreateCharacter",
                 "unexpected_exception",
@@ -185,7 +181,7 @@ public partial class CharacterService : ICharacterService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting character: {CharacterId}", body.CharacterId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "character",
                 "GetCharacter",
                 "unexpected_exception",
@@ -255,11 +251,8 @@ public partial class CharacterService : ICharacterService
 
             // Save updated character
             var characterKey = BuildCharacterKey(character.RealmId, character.CharacterId);
-            await _daprClient.SaveStateAsync(
-                CHARACTER_STATE_STORE,
-                characterKey,
-                character,
-                cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<CharacterModel>(CHARACTER_STATE_STORE)
+                .SaveAsync(characterKey, character, cancellationToken: cancellationToken);
 
             _logger.LogInformation("Character updated: {CharacterId}", body.CharacterId);
 
@@ -277,7 +270,7 @@ public partial class CharacterService : ICharacterService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating character: {CharacterId}", body.CharacterId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "character",
                 "UpdateCharacter",
                 "unexpected_exception",
@@ -311,10 +304,8 @@ public partial class CharacterService : ICharacterService
             var characterKey = BuildCharacterKey(realmId, character.CharacterId);
 
             // Delete character from state store
-            await _daprClient.DeleteStateAsync(
-                CHARACTER_STATE_STORE,
-                characterKey,
-                cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<CharacterModel>(CHARACTER_STATE_STORE)
+                .DeleteAsync(characterKey, cancellationToken);
 
             // Remove from realm index
             await RemoveCharacterFromRealmIndexAsync(realmId, character.CharacterId, cancellationToken);
@@ -335,7 +326,7 @@ public partial class CharacterService : ICharacterService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting character: {CharacterId}", body.CharacterId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "character",
                 "DeleteCharacter",
                 "unexpected_exception",
@@ -390,7 +381,7 @@ public partial class CharacterService : ICharacterService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing characters");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "character",
                 "ListCharacters",
                 "unexpected_exception",
@@ -426,7 +417,7 @@ public partial class CharacterService : ICharacterService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting characters by realm: {RealmId}", body.RealmId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "character",
                 "GetCharactersByRealm",
                 "unexpected_exception",
@@ -469,9 +460,9 @@ public partial class CharacterService : ICharacterService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Could not validate realm {RealmId} - proceeding with operation", realmId);
-            // If RealmService is unavailable, allow the operation with a warning
-            return (true, true);
+            _logger.LogError(ex, "Could not validate realm {RealmId} - failing operation (fail closed)", realmId);
+            // If RealmService is unavailable, fail the operation - don't assume realm is valid
+            throw new InvalidOperationException($"Cannot validate realm {realmId}: RealmService unavailable", ex);
         }
     }
 
@@ -501,9 +492,9 @@ public partial class CharacterService : ICharacterService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Could not validate species {SpeciesId} - proceeding with operation", speciesId);
-            // If SpeciesService is unavailable, allow the operation with a warning
-            return (true, true);
+            _logger.LogError(ex, "Could not validate species {SpeciesId} - failing operation (fail closed)", speciesId);
+            // If SpeciesService is unavailable, fail the operation - don't assume species is valid
+            throw new InvalidOperationException($"Cannot validate species {speciesId}: SpeciesService unavailable", ex);
         }
     }
 
@@ -514,10 +505,8 @@ public partial class CharacterService : ICharacterService
         // Use global character index to find realm for character ID lookup
         // Global index is maintained by AddCharacterToRealmIndexAsync/RemoveCharacterFromRealmIndexAsync
         var globalIndexKey = $"character-global-index:{characterId}";
-        var realmId = await _daprClient.GetStateAsync<string>(
-            CHARACTER_STATE_STORE,
-            globalIndexKey,
-            cancellationToken: cancellationToken);
+        var realmId = await _stateStoreFactory.GetStore<string>(CHARACTER_STATE_STORE)
+            .GetAsync(globalIndexKey, cancellationToken);
 
         if (string.IsNullOrEmpty(realmId))
         {
@@ -526,10 +515,8 @@ public partial class CharacterService : ICharacterService
         }
 
         var characterKey = BuildCharacterKey(realmId, characterId);
-        return await _daprClient.GetStateAsync<CharacterModel>(
-            CHARACTER_STATE_STORE,
-            characterKey,
-            cancellationToken: cancellationToken);
+        return await _stateStoreFactory.GetStore<CharacterModel>(CHARACTER_STATE_STORE)
+            .GetAsync(characterKey, cancellationToken);
     }
 
     private async Task<(StatusCodes, CharacterListResponse?)> GetCharactersByRealmInternalAsync(
@@ -542,10 +529,8 @@ public partial class CharacterService : ICharacterService
     {
         // Step 1: Get character IDs from realm index (single query)
         var realmIndexKey = BuildRealmIndexKey(realmId);
-        var characterIds = await _daprClient.GetStateAsync<List<string>>(
-            CHARACTER_STATE_STORE,
-            realmIndexKey,
-            cancellationToken: cancellationToken) ?? new List<string>();
+        var characterIds = await _stateStoreFactory.GetStore<List<string>>(CHARACTER_STATE_STORE)
+            .GetAsync(realmIndexKey, cancellationToken) ?? new List<string>();
 
         if (characterIds.Count == 0)
         {
@@ -566,20 +551,13 @@ public partial class CharacterService : ICharacterService
             .ToList();
 
         // Step 3: Bulk load all characters (single query instead of N queries)
-        var bulkResults = await _daprClient.GetBulkStateAsync(
-            CHARACTER_STATE_STORE,
-            keys,
-            parallelism: 10,
-            cancellationToken: cancellationToken);
+        var bulkResults = await _stateStoreFactory.GetStore<CharacterModel>(CHARACTER_STATE_STORE)
+            .GetBulkAsync(keys, cancellationToken);
 
-        // Step 4: Deserialize and filter
+        // Step 4: Filter results
         var filteredCharacters = new List<CharacterModel>();
-        foreach (var result in bulkResults)
+        foreach (var (_, character) in bulkResults)
         {
-            if (string.IsNullOrEmpty(result.Value))
-                continue;
-
-            var character = BannouJson.Deserialize<CharacterModel>(result.Value);
             if (character == null)
                 continue;
 
@@ -617,49 +595,90 @@ public partial class CharacterService : ICharacterService
     private async Task AddCharacterToRealmIndexAsync(string realmId, string characterId, CancellationToken cancellationToken)
     {
         var realmIndexKey = BuildRealmIndexKey(realmId);
-        var stateEntry = await _daprClient.GetStateEntryAsync<List<string>>(
-            CHARACTER_STATE_STORE,
-            realmIndexKey,
-            cancellationToken: cancellationToken);
+        var store = _stateStoreFactory.GetStore<List<string>>(CHARACTER_STATE_STORE);
 
-        var characterIds = stateEntry.Value ?? new List<string>();
-        if (!characterIds.Contains(characterId))
+        // Retry loop for optimistic concurrency
+        const int maxRetries = 3;
+        for (int retry = 0; retry < maxRetries; retry++)
         {
-            characterIds.Add(characterId);
-            stateEntry.Value = characterIds;
-            await stateEntry.SaveAsync(cancellationToken: cancellationToken);
+            var (characterIds, etag) = await store.GetWithETagAsync(realmIndexKey, cancellationToken);
+            characterIds ??= new List<string>();
+
+            if (!characterIds.Contains(characterId))
+            {
+                characterIds.Add(characterId);
+
+                // If no prior value (null etag), just save directly
+                if (etag == null)
+                {
+                    await store.SaveAsync(realmIndexKey, characterIds, cancellationToken: cancellationToken);
+                    break;
+                }
+
+                // Otherwise use optimistic concurrency
+                if (await store.TrySaveAsync(realmIndexKey, characterIds, etag, cancellationToken))
+                    break;
+
+                // Retry on conflict
+                if (retry < maxRetries - 1)
+                {
+                    _logger.LogDebug("Realm index update conflict, retrying ({Retry}/{MaxRetries})", retry + 1, maxRetries);
+                    continue;
+                }
+                throw new InvalidOperationException($"Failed to update realm index after {maxRetries} retries");
+            }
+            else
+            {
+                // Already in the list, no update needed
+                break;
+            }
         }
 
         // Also add to global index for ID-based lookups
         var globalIndexKey = $"character-global-index:{characterId}";
-        await _daprClient.SaveStateAsync(
-            CHARACTER_STATE_STORE,
-            globalIndexKey,
-            realmId,
-            cancellationToken: cancellationToken);
+        await _stateStoreFactory.GetStore<string>(CHARACTER_STATE_STORE)
+            .SaveAsync(globalIndexKey, realmId, cancellationToken: cancellationToken);
     }
 
     private async Task RemoveCharacterFromRealmIndexAsync(string realmId, string characterId, CancellationToken cancellationToken)
     {
         var realmIndexKey = BuildRealmIndexKey(realmId);
-        var stateEntry = await _daprClient.GetStateEntryAsync<List<string>>(
-            CHARACTER_STATE_STORE,
-            realmIndexKey,
-            cancellationToken: cancellationToken);
+        var store = _stateStoreFactory.GetStore<List<string>>(CHARACTER_STATE_STORE);
 
-        var characterIds = stateEntry.Value ?? new List<string>();
-        if (characterIds.Remove(characterId))
+        // Retry loop for optimistic concurrency
+        const int maxRetries = 3;
+        for (int retry = 0; retry < maxRetries; retry++)
         {
-            stateEntry.Value = characterIds;
-            await stateEntry.SaveAsync(cancellationToken: cancellationToken);
+            var (characterIds, etag) = await store.GetWithETagAsync(realmIndexKey, cancellationToken);
+
+            // If list doesn't exist, nothing to remove
+            if (characterIds == null || etag == null)
+                break;
+
+            if (characterIds.Remove(characterId))
+            {
+                if (await store.TrySaveAsync(realmIndexKey, characterIds, etag, cancellationToken))
+                    break;
+
+                // Retry on conflict
+                if (retry < maxRetries - 1)
+                {
+                    _logger.LogDebug("Realm index update conflict, retrying ({Retry}/{MaxRetries})", retry + 1, maxRetries);
+                    continue;
+                }
+                throw new InvalidOperationException($"Failed to update realm index after {maxRetries} retries");
+            }
+            else
+            {
+                // Not in the list, no update needed
+                break;
+            }
         }
 
         // Remove from global index
         var globalIndexKey = $"character-global-index:{characterId}";
-        await _daprClient.DeleteStateAsync(
-            CHARACTER_STATE_STORE,
-            globalIndexKey,
-            cancellationToken: cancellationToken);
+        await _stateStoreFactory.GetStore<string>(CHARACTER_STATE_STORE)
+            .DeleteAsync(globalIndexKey, cancellationToken);
     }
 
     private static CharacterResponse MapToCharacterResponse(CharacterModel model)
@@ -697,7 +716,7 @@ public partial class CharacterService : ICharacterService
                 BirthDate = character.BirthDate
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, CHARACTER_CREATED_TOPIC, eventModel);
+            await _messageBus.PublishAsync(CHARACTER_CREATED_TOPIC, eventModel);
             _logger.LogDebug("Published CharacterCreatedEvent for character: {CharacterId}", character.CharacterId);
         }
         catch (Exception ex)
@@ -720,7 +739,7 @@ public partial class CharacterService : ICharacterService
                 ChangedFields = changedFields.ToList()
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, CHARACTER_UPDATED_TOPIC, eventModel);
+            await _messageBus.PublishAsync(CHARACTER_UPDATED_TOPIC, eventModel);
             _logger.LogDebug("Published CharacterUpdatedEvent for character: {CharacterId}", characterId);
         }
         catch (Exception ex)
@@ -742,7 +761,7 @@ public partial class CharacterService : ICharacterService
                 Name = character.Name
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, CHARACTER_DELETED_TOPIC, eventModel);
+            await _messageBus.PublishAsync(CHARACTER_DELETED_TOPIC, eventModel);
             _logger.LogDebug("Published CharacterDeletedEvent for character: {CharacterId}", character.CharacterId);
         }
         catch (Exception ex)
@@ -764,7 +783,7 @@ public partial class CharacterService : ICharacterService
                 PreviousRealmId = previousRealmId
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, CHARACTER_REALM_JOINED_TOPIC, eventModel);
+            await _messageBus.PublishAsync(CHARACTER_REALM_JOINED_TOPIC, eventModel);
             _logger.LogDebug("Published CharacterRealmJoinedEvent for character: {CharacterId}", characterId);
         }
         catch (Exception ex)
@@ -786,7 +805,7 @@ public partial class CharacterService : ICharacterService
                 Reason = reason
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, CHARACTER_REALM_LEFT_TOPIC, eventModel);
+            await _messageBus.PublishAsync(CHARACTER_REALM_LEFT_TOPIC, eventModel);
             _logger.LogDebug("Published CharacterRealmLeftEvent for character: {CharacterId}", characterId);
         }
         catch (Exception ex)
@@ -807,7 +826,7 @@ public partial class CharacterService : ICharacterService
         _logger.LogInformation("Registering Character service permissions...");
         try
         {
-            await CharacterPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+            await CharacterPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
             _logger.LogInformation("Character service permissions registered via event");
         }
         catch (Exception ex)
@@ -823,7 +842,7 @@ public partial class CharacterService : ICharacterService
 #region Internal Models
 
 /// <summary>
-/// Character data model for Dapr state storage
+/// Character data model for lib-state storage.
 /// </summary>
 internal class CharacterModel
 {
@@ -833,7 +852,7 @@ internal class CharacterModel
     public string SpeciesId { get; set; } = string.Empty;
     public CharacterStatus Status { get; set; } = CharacterStatus.Alive;
 
-    // Store as DateTimeOffset directly - Dapr handles serialization
+    // Store as DateTimeOffset directly - lib-state handles serialization
     public DateTimeOffset BirthDate { get; set; }
     public DateTimeOffset? DeathDate { get; set; }
     public DateTimeOffset CreatedAt { get; set; }

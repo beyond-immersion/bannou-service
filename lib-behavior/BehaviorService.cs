@@ -15,26 +15,26 @@ namespace BeyondImmersion.BannouService.Behavior;
 /// Note: This service is not yet implemented - planned for future release.
 /// Methods return placeholder responses until implementation is complete.
 /// </summary>
-[DaprService("behavior", typeof(IBehaviorService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("behavior", typeof(IBehaviorService), lifetime: ServiceLifetime.Scoped)]
 public partial class BehaviorService : IBehaviorService
 {
     private readonly ILogger<BehaviorService> _logger;
     private readonly BehaviorServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
+    private readonly IMessageBus _messageBus;
 
     public BehaviorService(
         ILogger<BehaviorService> logger,
         BehaviorServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
+        IMessageBus messageBus,
         IEventConsumer eventConsumer)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
 
         // Register event handlers via partial class (BehaviorServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>
@@ -45,12 +45,12 @@ public partial class BehaviorService : IBehaviorService
         try
         {
             _logger.LogWarning("Method CompileAbmlBehaviorAsync called but not implemented");
-            return (StatusCodes.OK, null);
+            return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error compiling ABML behavior");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "behavior",
                 operation: "CompileAbmlBehavior",
                 errorType: ex.GetType().Name,
@@ -69,12 +69,12 @@ public partial class BehaviorService : IBehaviorService
         try
         {
             _logger.LogWarning("Method CompileBehaviorStackAsync called but not implemented");
-            return (StatusCodes.OK, null);
+            return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error compiling behavior stack");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "behavior",
                 operation: "CompileBehaviorStack",
                 errorType: ex.GetType().Name,
@@ -93,12 +93,12 @@ public partial class BehaviorService : IBehaviorService
         try
         {
             _logger.LogWarning("Method ValidateAbmlAsync called but not implemented");
-            return (StatusCodes.OK, null);
+            return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating ABML");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "behavior",
                 operation: "ValidateAbml",
                 errorType: ex.GetType().Name,
@@ -117,12 +117,12 @@ public partial class BehaviorService : IBehaviorService
         try
         {
             _logger.LogWarning("Method GetCachedBehaviorAsync called but not implemented for: {BehaviorId}", body.BehaviorId);
-            return (StatusCodes.OK, null);
+            return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving cached behavior");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "behavior",
                 operation: "GetCachedBehavior",
                 errorType: ex.GetType().Name,
@@ -142,12 +142,12 @@ public partial class BehaviorService : IBehaviorService
         try
         {
             _logger.LogWarning("Method ResolveContextVariablesAsync called but not implemented");
-            return (StatusCodes.OK, null);
+            return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error resolving context variables");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "behavior",
                 operation: "ResolveContextVariables",
                 errorType: ex.GetType().Name,
@@ -166,12 +166,12 @@ public partial class BehaviorService : IBehaviorService
         try
         {
             _logger.LogWarning("Method InvalidateCachedBehaviorAsync called but not implemented for: {BehaviorId}", body.BehaviorId);
-            return (StatusCodes.OK, null);
+            return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error invalidating cached behavior: {BehaviorId}", body.BehaviorId);
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 serviceId: "behavior",
                 operation: "InvalidateCachedBehavior",
                 errorType: ex.GetType().Name,

@@ -14,7 +14,7 @@ namespace BeyondImmersion.BannouService.Documentation;
 public partial class DocumentationService
 {
     /// <summary>
-    /// Registers event consumers for Dapr pub/sub events this service handles.
+    /// Registers event consumers for pub/sub events this service handles.
     /// Called from the main service constructor.
     /// </summary>
     /// <param name="eventConsumer">The event consumer for registering handlers.</param>

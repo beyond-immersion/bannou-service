@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Documentation Service Events
   description: |
-    Event models for Documentation service RabbitMQ pub/sub via Dapr.
+    Event models for Documentation service RabbitMQ pub/sub via MassTransit.
     Contains documentation-specific events and subscription/publication declarations.
   version: 1.0.0
   # Minimal event subscriptions - sessions use TTL cleanup, no external events needed

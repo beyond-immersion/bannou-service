@@ -6,22 +6,18 @@
 
 set -e  # Exit on any error
 
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Source common utilities
+source "$(dirname "$0")/common.sh"
 
 # Validate arguments
 if [ $# -lt 1 ]; then
-    echo -e "${RED}Usage: $0 <service-name> [components...]${NC}"
+    log_error "Usage: $0 <service-name> [components...]"
     echo ""
     echo "Available components:"
     echo "  project        - Create service plugin project structure"
     echo "  models         - Generate models/DTOs from schema"
     echo "  controller     - Generate controller from schema"
-    echo "  client         - Generate service client for Dapr calls"
+    echo "  client         - Generate service client for mesh calls"
     echo "  interface      - Generate service interface from controller"
     echo "  config         - Generate service configuration class"
     echo "  implementation - Generate service implementation template"
@@ -42,12 +38,6 @@ shift # Remove service name from arguments
 
 # Default to 'all' if no components specified
 COMPONENTS=("${@:-all}")
-
-# Helper function to convert hyphenated names to PascalCase
-to_pascal_case() {
-    local input="$1"
-    echo "$input" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))} 1' | sed 's/ //g'
-}
 
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
 SCHEMA_FILE="../schemas/${SERVICE_NAME}-api.yaml"

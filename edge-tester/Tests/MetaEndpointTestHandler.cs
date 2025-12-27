@@ -45,8 +45,8 @@ public class MetaEndpointTestHandler : IServiceTestHandler
             return null;
         }
 
-        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
         var uniqueId = Guid.NewGuid().ToString("N")[..12];
         var testEmail = $"{testPrefix}_{uniqueId}@test.local";
         var testPassword = $"{testPrefix}Test123!";
@@ -108,7 +108,7 @@ public class MetaEndpointTestHandler : IServiceTestHandler
             return null;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         var webSocket = new ClientWebSocket();
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
 
@@ -461,8 +461,8 @@ public class MetaEndpointTestHandler : IServiceTestHandler
             return false;
         }
 
-        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
 
         // Test that meta endpoints for NGINX-exposed routes are NOT accessible
         // /auth/register is exposed via NGINX, but /auth/register/meta/schema should NOT be
@@ -535,7 +535,7 @@ public class MetaEndpointTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         using var webSocket = new ClientWebSocket();
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
 

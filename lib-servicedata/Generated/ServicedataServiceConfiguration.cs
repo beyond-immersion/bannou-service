@@ -9,15 +9,15 @@ namespace BeyondImmersion.BannouService.Servicedata;
 /// Configuration class for Servicedata service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(ServicedataService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(ServicedataService))]
 public class ServicedataServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Dapr state store name for service data
-    /// Environment variable: SERVICEDATA_STATE_STORE_NAME or BANNOU_SERVICEDATA_STATE_STORE_NAME
+    /// State store name for service data
+    /// Environment variable: SERVICEDATA_STATE_STORE_NAME
     /// </summary>
     public string StateStoreName { get; set; } = "servicedata-statestore";
 

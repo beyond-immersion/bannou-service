@@ -1,0 +1,43 @@
+openapi: 3.0.3
+info:
+  title: Orchestrator Service Events
+  description: |
+    Event models for Orchestrator service RabbitMQ pub/sub.
+    Used for internal health checks and orchestration events.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Service heartbeats from all bannou instances - used for deployment validation
+    - topic: bannou-service-heartbeats
+      event: ServiceHeartbeatEvent
+      handler: HandleServiceHeartbeat
+
+paths: {}
+
+components:
+  schemas:
+    # =========================================================================
+    # Health Check Events
+    # =========================================================================
+    OrchestratorHealthPingEvent:
+      type: object
+      description: |
+        Simple health ping event published to verify pub/sub path is active.
+        Used by infrastructure health checks.
+      required:
+        - eventId
+        - timestamp
+        - status
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this health ping
+        timestamp:
+          type: string
+          format: date-time
+          description: When the health ping was sent
+        status:
+          type: string
+          enum: [ok, degraded, checking]
+          description: Current health status
+          default: ok

@@ -9,15 +9,15 @@ namespace BeyondImmersion.BannouService.Realm;
 /// Configuration class for Realm service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(RealmService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(RealmService))]
 public class RealmServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
     /// Enable/disable Realm service
-    /// Environment variable: ENABLED or BANNOU_ENABLED
+    /// Environment variable: ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

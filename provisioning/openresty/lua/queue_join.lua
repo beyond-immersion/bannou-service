@@ -1,6 +1,6 @@
 -- Queue Join Handler
 -- Implements queue joining with capacity checking and position assignment
--- Based on API-DESIGN.md queue system requirements
+-- Based on docs/BANNOU_DESIGN.md queue system architecture
 
 local redis = require "resty.redis"
 local cjson = require "cjson"

@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../lib-connect/lib-connect.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
   </ItemGroup>
 
 </Project>

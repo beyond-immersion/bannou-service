@@ -2,11 +2,12 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
+using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
-using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -24,9 +25,12 @@ namespace BeyondImmersion.BannouService.Character.Tests;
 /// </summary>
 public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfiguration>
 {
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<CharacterModel>> _mockCharacterStore;
+    private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<CharacterService>> _mockLogger;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IRealmClient> _mockRealmClient;
     private readonly Mock<ISpeciesClient> _mockSpeciesClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
@@ -38,12 +42,26 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
 
     public CharacterServiceTests()
     {
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockCharacterStore = new Mock<IStateStore<CharacterModel>>();
+        _mockStringStore = new Mock<IStateStore<string>>();
+        _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<CharacterService>>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockRealmClient = new Mock<IRealmClient>();
         _mockSpeciesClient = new Mock<ISpeciesClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup factory to return typed stores
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<CharacterModel>(STATE_STORE))
+            .Returns(_mockCharacterStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<string>(STATE_STORE))
+            .Returns(_mockStringStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<List<string>>(STATE_STORE))
+            .Returns(_mockListStore.Object);
 
         // Default realm validation to pass (realm exists and is active)
         _mockRealmClient
@@ -66,10 +84,10 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     private CharacterService CreateService()
     {
         return new CharacterService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockRealmClient.Object,
             _mockSpeciesClient.Object,
             _mockEventConsumer.Object);
@@ -104,45 +122,52 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     }
 
     [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrow()
+    public void Constructor_WithNullStateStoreFactory_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(null!, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
+            new CharacterService(null!, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullMessageBus_ShouldThrow()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            new CharacterService(_mockStateStoreFactory.Object, null!, _mockLogger.Object, Configuration, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
     public void Constructor_WithNullLogger_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockDaprClient.Object, null!, Configuration, _mockErrorEventEmitter.Object, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
+            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, null!, Configuration, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
     public void Constructor_WithNullConfiguration_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockDaprClient.Object, _mockLogger.Object, null!, _mockErrorEventEmitter.Object, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullErrorEventEmitter_ShouldThrow()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockDaprClient.Object, _mockLogger.Object, Configuration, null!, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
+            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, null!, _mockRealmClient.Object, _mockSpeciesClient.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
     public void Constructor_WithNullRealmClient_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockDaprClient.Object, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, null!, _mockSpeciesClient.Object, _mockEventConsumer.Object));
+            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, null!, _mockSpeciesClient.Object, _mockEventConsumer.Object));
     }
 
     [Fact]
     public void Constructor_WithNullSpeciesClient_ShouldThrow()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new CharacterService(_mockDaprClient.Object, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object, _mockRealmClient.Object, null!, _mockEventConsumer.Object));
+            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockRealmClient.Object, null!, _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullEventConsumer_ShouldThrow()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            new CharacterService(_mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, Configuration, _mockRealmClient.Object, _mockSpeciesClient.Object, null!));
     }
 
     #endregion
@@ -159,15 +184,13 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         var request = new GetCharacterRequest { CharacterId = characterId };
 
         // Setup global index lookup
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
-                STATE_STORE, $"character-global-index:{characterId}", null, null, default))
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(realmId.ToString());
 
         // Setup character retrieval
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<CharacterModel>(
-                STATE_STORE, $"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", null, null, default))
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterModel
             {
                 CharacterId = characterId.ToString(),
@@ -199,10 +222,9 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         var request = new GetCharacterRequest { CharacterId = characterId };
 
         // Setup global index to return null (character doesn't exist)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
-                STATE_STORE, $"character-global-index:{characterId}", null, null, default))
-            .Returns(Task.FromResult<string?>(null));
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
 
         // Act
         var (status, response) = await service.GetCharacterAsync(request);
@@ -213,15 +235,14 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     }
 
     [Fact]
-    public async Task GetCharacterAsync_WhenDaprFails_ShouldReturnInternalServerError()
+    public async Task GetCharacterAsync_WhenStoreFails_ShouldReturnInternalServerError()
     {
         // Arrange
         var service = CreateService();
         var request = new GetCharacterRequest { CharacterId = Guid.NewGuid() };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
-                STATE_STORE, It.IsAny<string>(), null, null, default))
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("State store unavailable"));
 
         // Act
@@ -251,15 +272,13 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         };
 
         // Setup global index lookup
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
-                STATE_STORE, $"character-global-index:{characterId}", null, null, default))
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(realmId.ToString());
 
         // Setup character retrieval
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<CharacterModel>(
-                STATE_STORE, $"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", null, null, default))
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterModel
             {
                 CharacterId = characterId.ToString(),
@@ -281,11 +300,11 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         Assert.Equal("Updated Name", response.Name);
         Assert.Equal(CharacterStatus.Dead, response.Status);
 
-        // Verify update event published
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            PUBSUB_NAME,
+        // Verify update event published via IMessageBus
+        _mockMessageBus.Verify(m => m.PublishAsync(
             "character.updated",
             It.IsAny<CharacterUpdatedEvent>(),
+            It.IsAny<PublishOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -304,15 +323,13 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         };
 
         // Setup global index lookup
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
-                STATE_STORE, $"character-global-index:{characterId}", null, null, default))
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(realmId.ToString());
 
         // Setup character retrieval
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<CharacterModel>(
-                STATE_STORE, $"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", null, null, default))
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterModel
             {
                 CharacterId = characterId.ToString(),
@@ -342,10 +359,9 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         var service = CreateService();
         var request = new UpdateCharacterRequest { CharacterId = Guid.NewGuid(), Name = "New Name" };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
-                STATE_STORE, It.IsAny<string>(), null, null, default))
-            .Returns(Task.FromResult<string?>(null));
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
 
         // Act
         var (status, response) = await service.UpdateCharacterAsync(request);
@@ -365,15 +381,13 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         var request = new UpdateCharacterRequest { CharacterId = characterId };
 
         // Setup global index lookup
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
-                STATE_STORE, $"character-global-index:{characterId}", null, null, default))
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(realmId.ToString());
 
         // Setup character retrieval
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<CharacterModel>(
-                STATE_STORE, $"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", null, null, default))
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CharacterModel
             {
                 CharacterId = characterId.ToString(),
@@ -393,10 +407,10 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         Assert.Equal(StatusCodes.OK, status);
 
         // Verify NO update event published (no changes)
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            PUBSUB_NAME,
+        _mockMessageBus.Verify(m => m.PublishAsync(
             "character.updated",
             It.IsAny<CharacterUpdatedEvent>(),
+            It.IsAny<PublishOptions?>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -419,12 +433,11 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         };
 
         // Setup realm index
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, REALM_INDEX_KEY_PREFIX + realmId, null, null, default))
+        _mockListStore
+            .Setup(s => s.GetAsync(REALM_INDEX_KEY_PREFIX + realmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { characterId.ToString() });
 
-        // Setup bulk character retrieval
+        // Setup bulk character retrieval - IStateStore.GetBulkAsync returns IReadOnlyDictionary
         var characterModel = new CharacterModel
         {
             CharacterId = characterId.ToString(),
@@ -436,9 +449,9 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
-        SetupBulkStateAsync(new[]
+        SetupBulkStateAsync(new Dictionary<string, CharacterModel>
         {
-            CreateBulkStateItem($"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", characterModel)
+            { $"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", characterModel }
         });
 
         // Act
@@ -484,9 +497,8 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         };
 
         // Setup realm index with both characters
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, REALM_INDEX_KEY_PREFIX + realmId, null, null, default))
+        _mockListStore
+            .Setup(s => s.GetAsync(REALM_INDEX_KEY_PREFIX + realmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { aliveCharId.ToString(), deadCharId.ToString() });
 
         // Setup bulk character retrieval for both characters
@@ -512,10 +524,10 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
-        SetupBulkStateAsync(new[]
+        SetupBulkStateAsync(new Dictionary<string, CharacterModel>
         {
-            CreateBulkStateItem($"{CHARACTER_KEY_PREFIX}{realmId}:{aliveCharId}", aliveCharacter),
-            CreateBulkStateItem($"{CHARACTER_KEY_PREFIX}{realmId}:{deadCharId}", deadCharacter)
+            { $"{CHARACTER_KEY_PREFIX}{realmId}:{aliveCharId}", aliveCharacter },
+            { $"{CHARACTER_KEY_PREFIX}{realmId}:{deadCharId}", deadCharacter }
         });
 
         // Act
@@ -543,18 +555,19 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         };
 
         // Setup realm index with 5 characters
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, REALM_INDEX_KEY_PREFIX + realmId, null, null, default))
+        _mockListStore
+            .Setup(s => s.GetAsync(REALM_INDEX_KEY_PREFIX + realmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(characterIds.Select(id => id.ToString()).ToList());
 
         // Setup bulk character retrieval for all 5 characters
-        var bulkItems = characterIds.Select((charId, index) =>
+        var bulkItems = new Dictionary<string, CharacterModel>();
+        for (int i = 0; i < characterIds.Count; i++)
         {
-            var model = new CharacterModel
+            var charId = characterIds[i];
+            bulkItems[$"{CHARACTER_KEY_PREFIX}{realmId}:{charId}"] = new CharacterModel
             {
                 CharacterId = charId.ToString(),
-                Name = $"Character {index}",
+                Name = $"Character {i}",
                 RealmId = realmId.ToString(),
                 SpeciesId = Guid.NewGuid().ToString(),
                 Status = CharacterStatus.Alive,
@@ -562,8 +575,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             };
-            return CreateBulkStateItem($"{CHARACTER_KEY_PREFIX}{realmId}:{charId}", model);
-        }).ToArray();
+        }
         SetupBulkStateAsync(bulkItems);
 
         // Act
@@ -598,9 +610,8 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         };
 
         // Setup realm index
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, REALM_INDEX_KEY_PREFIX + realmId, null, null, default))
+        _mockListStore
+            .Setup(s => s.GetAsync(REALM_INDEX_KEY_PREFIX + realmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { characterId.ToString() });
 
         // Setup bulk character retrieval
@@ -615,9 +626,9 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
-        SetupBulkStateAsync(new[]
+        SetupBulkStateAsync(new Dictionary<string, CharacterModel>
         {
-            CreateBulkStateItem($"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", characterModel)
+            { $"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", characterModel }
         });
 
         // Act
@@ -648,9 +659,8 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         };
 
         // Setup realm index
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, REALM_INDEX_KEY_PREFIX + realmId, null, null, default))
+        _mockListStore
+            .Setup(s => s.GetAsync(REALM_INDEX_KEY_PREFIX + realmId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { targetCharId.ToString(), otherCharId.ToString() });
 
         // Setup bulk character retrieval for both characters
@@ -676,10 +686,10 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
-        SetupBulkStateAsync(new[]
+        SetupBulkStateAsync(new Dictionary<string, CharacterModel>
         {
-            CreateBulkStateItem($"{CHARACTER_KEY_PREFIX}{realmId}:{targetCharId}", targetCharacter),
-            CreateBulkStateItem($"{CHARACTER_KEY_PREFIX}{realmId}:{otherCharId}", otherCharacter)
+            { $"{CHARACTER_KEY_PREFIX}{realmId}:{targetCharId}", targetCharacter },
+            { $"{CHARACTER_KEY_PREFIX}{realmId}:{otherCharId}", otherCharacter }
         });
 
         // Act
@@ -712,28 +722,13 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     }
 
     /// <summary>
-    /// Creates a BulkStateItem for use in GetBulkStateAsync mocks.
+    /// Sets up GetBulkAsync mock to return the specified items as IReadOnlyDictionary.
     /// </summary>
-    private static BulkStateItem CreateBulkStateItem<T>(string key, T model)
+    private void SetupBulkStateAsync(Dictionary<string, CharacterModel> items)
     {
-        var json = BannouJson.Serialize(model);
-        return new BulkStateItem(key, json, string.Empty);
-    }
-
-    /// <summary>
-    /// Sets up GetBulkStateAsync mock to return the specified items.
-    /// </summary>
-    private void SetupBulkStateAsync(IEnumerable<BulkStateItem> items)
-    {
-        var resultList = items.ToList();
-        _mockDaprClient
-            .Setup(d => d.GetBulkStateAsync(
-                It.Is<string>(s => s == STATE_STORE),
-                It.IsAny<IReadOnlyList<string>>(),
-                It.IsAny<int?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IReadOnlyList<BulkStateItem>)resultList);
+        _mockCharacterStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, CharacterModel>)items);
     }
 
     #endregion

@@ -9,15 +9,15 @@ namespace BeyondImmersion.BannouService.Behavior;
 /// Configuration class for Behavior service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(BehaviorService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(BehaviorService))]
 public class BehaviorServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
     /// Enable/disable Behavior service
-    /// Environment variable: ENABLED or BANNOU_ENABLED
+    /// Environment variable: ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

@@ -27,8 +27,8 @@ public class ClientEventTestHandler : IServiceTestHandler
             return null;
         }
 
-        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
         var uniqueId = Guid.NewGuid().ToString("N")[..12];
         var testEmail = $"{testPrefix}_{uniqueId}@test.local";
         var testPassword = $"{testPrefix}Test123!";
@@ -157,7 +157,7 @@ public class ClientEventTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         using var webSocket = new ClientWebSocket();
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
 
@@ -169,7 +169,7 @@ public class ClientEventTestHandler : IServiceTestHandler
             // Wait for initial capability manifest to get session ID
             Console.WriteLine("Waiting for capability manifest to get session ID...");
             var receiveBuffer = new byte[65536];
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
             var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);
             if (result.Count == 0)
@@ -221,7 +221,7 @@ public class ClientEventTestHandler : IServiceTestHandler
                     "POST",
                     "/testing/publish-test-event",
                     publishRequest,
-                    timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
+                    timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
 
                 Console.WriteLine($"OK Test event published: {response.GetRawText().Substring(0, Math.Min(200, response.GetRawText().Length))}");
             }
@@ -233,7 +233,7 @@ public class ClientEventTestHandler : IServiceTestHandler
 
             // Wait for the event to be delivered via WebSocket
             Console.WriteLine("Waiting for event to be delivered via WebSocket...");
-            cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
             try
             {
@@ -263,7 +263,7 @@ public class ClientEventTestHandler : IServiceTestHandler
                     Console.WriteLine($"Received event type: {eventName} (may be capability update or other event)");
                     // This could be a capability update if the Testing service just registered permissions
                     // Try to receive another message - we MUST receive system.notification
-                    cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+                    cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
                     result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);
                     if (result.Count > 0)
                     {
@@ -333,7 +333,7 @@ public class ClientEventTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         var receiveBuffer = new byte[65536];
 
         // First connection to get session ID
@@ -349,7 +349,7 @@ public class ClientEventTestHandler : IServiceTestHandler
             Console.WriteLine("OK Initial WebSocket connected");
 
             // Get capability manifest with session ID
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             var result = await webSocket1.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);
 
             if (result.Count > 0)
@@ -415,7 +415,7 @@ public class ClientEventTestHandler : IServiceTestHandler
                 "POST",
                 "/testing/publish-test-event",
                 publishRequest,
-                timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
 
             Console.WriteLine($"OK Event published to session while disconnected: {response.GetRawText().Substring(0, Math.Min(200, response.GetRawText().Length))}");
         }
@@ -442,7 +442,7 @@ public class ClientEventTestHandler : IServiceTestHandler
             Console.WriteLine("OK Reconnection WebSocket connected");
 
             // Wait for capability manifest first, then check for queued events
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             bool receivedCapabilityManifest = false;
             bool receivedQueuedEvent = false;
 
@@ -465,7 +465,7 @@ public class ClientEventTestHandler : IServiceTestHandler
                         receivedCapabilityManifest = true;
 
                         // Now wait for the queued event
-                        cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+                        cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
                         result = await webSocket2.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);
                         if (result.Count > 0)
                         {

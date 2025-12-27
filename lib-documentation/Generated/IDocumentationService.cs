@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.Documentation;
 /// <summary>
 /// Service interface for Documentation API
 /// </summary>
-public partial interface IDocumentationService : IDaprService
+public partial interface IDocumentationService : IBannouService
 {
     /// <summary>
     /// ViewDocumentBySlug operation

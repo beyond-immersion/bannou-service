@@ -5,15 +5,12 @@
 
 set -e  # Exit on any error
 
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+# Source common utilities
+source "$(dirname "$0")/common.sh"
 
 # Validate arguments
 if [ $# -lt 1 ]; then
-    echo -e "${RED}Usage: $0 <service-name> [schema-file]${NC}"
+    log_error "Usage: $0 <service-name> [schema-file]"
     echo "Example: $0 accounts"
     echo "Example: $0 accounts ../schemas/accounts-configuration.yaml"
     exit 1
@@ -21,12 +18,6 @@ fi
 
 SERVICE_NAME="$1"
 SCHEMA_FILE="${2:-../schemas/${SERVICE_NAME}-configuration.yaml}"
-
-# Helper function to convert hyphenated names to PascalCase
-to_pascal_case() {
-    local input="$1"
-    echo "$input" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))} 1' | sed 's/ //g'
-}
 
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
 OUTPUT_DIR="../lib-${SERVICE_NAME}/Generated"
@@ -140,25 +131,25 @@ namespace BeyondImmersion.BannouService.{service_pascal};
 /// Configuration class for {service_pascal} service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof({service_pascal}Service), envPrefix: \"BANNOU_\")]
+[ServiceConfiguration(typeof({service_pascal}Service))]
 public class {service_pascal}ServiceConfiguration : IServiceConfiguration
 {{
     /// <inheritdoc />
-    public string? Force_Service_ID {{ get; set; }}
+    public string? ForceServiceId {{ get; set; }}
 ''')
 
     if config_properties:
         for prop in config_properties:
             print(f'''    /// <summary>
     /// {prop['description']}
-    /// Environment variable: {prop['env_var']} or BANNOU_{prop['env_var']}
+    /// Environment variable: {prop['env_var']}
     /// </summary>
     public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
 ''')
     else:
         print(f'''    /// <summary>
     /// Default configuration property - can be removed if not needed.
-    /// Environment variable: {service_name.upper()}_ENABLED or BANNOU_{service_name.upper()}_ENABLED
+    /// Environment variable: {service_name.upper()}_ENABLED
     /// </summary>
     public bool Enabled {{ get; set; }} = true;
 ''')

@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/ParnassianStudios/bannou-service/actions/workflows/ci.integration.yml/badge.svg?branch=master&event=push)](https://github.com/ParnassianStudios/bannou-service/actions/workflows/ci.integration.yml)
 
-Bannou is a schema-driven monoservice platform for multiplayer games. It provides a WebSocket-first edge gateway with zero-copy message routing, plugin-based service architecture, and Dapr integration for infrastructure portability. Designed to support Arcadia, a revolutionary MMORPG with 100,000+ AI-driven NPCs, Bannou scales from a single development machine to distributed production clusters without code changes.
+Bannou is a schema-driven monoservice platform for multiplayer games. It provides a WebSocket-first edge gateway with zero-copy message routing, plugin-based service architecture, and abstracted infrastructure (lib-state, lib-messaging, lib-mesh). Designed to support Arcadia, a revolutionary MMORPG with 100,000+ AI-driven NPCs, Bannou scales from a single development machine to distributed production clusters without code changes.
 
 ## Quick Start
 
@@ -36,7 +36,7 @@ make test-edge             # WebSocket protocol tests
 - **WebSocket-First**: Connect service edge gateway with 31-byte binary headers for zero-copy routing
 - **Schema-Driven**: OpenAPI specs generate controllers, models, clients, and tests—[you write only 18-35% of the code](docs/reference/AUTOMATION-ANALYSIS.md)
 - **Plugin Architecture**: Each service is an independent assembly, loadable via environment config
-- **Dapr Integration**: Portable infrastructure (databases, messaging) via Dapr components
+- **Infrastructure Abstraction**: Portable infrastructure (databases, messaging, service mesh) via lib-state, lib-messaging, and lib-mesh
 - **Monoservice Flexibility**: Same binary deploys as monolith or distributed microservices
 
 ## Essential Commands
@@ -63,7 +63,6 @@ make down-compose          # Stop and cleanup
 - [WebSocket Protocol](docs/WEBSOCKET-PROTOCOL.md) - Binary protocol specification
 - [Permissions System](docs/X-PERMISSIONS-SPECIFICATION.md) - Role-based access control schema
 - [Events Reference](docs/reference/GENERATED-EVENTS.md) - Auto-generated event documentation
-- [State Stores](docs/reference/GENERATED-STATE-STORES.md) - Dapr component reference
 - [Configuration Reference](docs/reference/CONFIGURATION.md) - Environment variables
 
 ## Project Structure
@@ -77,7 +76,7 @@ bannou-service/
 │   ├── guides/           # How-to guides
 │   ├── reference/        # Technical reference
 │   └── operations/       # CI/CD and infrastructure
-├── provisioning/         # Docker, Dapr, and deployment configs
+├── provisioning/         # Docker and deployment configs
 └── scripts/              # Code generation and build scripts
 ```
 

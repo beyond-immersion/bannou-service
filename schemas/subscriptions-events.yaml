@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Subscriptions Service Events
-  description: Event models for subscriptions service RabbitMQ pub/sub via Dapr
+  description: Event models for subscriptions service RabbitMQ pub/sub via MassTransit
   version: 1.0.0
 
 paths: {}  # Events don't have HTTP paths

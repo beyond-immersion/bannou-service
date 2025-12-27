@@ -17,45 +17,15 @@ public class PresetLoader
     /// Initializes a new instance of the PresetLoader.
     /// </summary>
     /// <param name="logger">Logger instance.</param>
-    /// <param name="presetsDirectory">Directory containing preset YAML files.</param>
-    public PresetLoader(ILogger<PresetLoader> logger, string? presetsDirectory = null)
+    /// <param name="presetsDirectory">Directory containing preset YAML files. Required - from OrchestratorServiceConfiguration.</param>
+    public PresetLoader(ILogger<PresetLoader> logger, string presetsDirectory)
     {
-        _logger = logger;
-        _presetsDirectory = presetsDirectory ?? GetDefaultPresetsDirectory();
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _presetsDirectory = presetsDirectory ?? throw new ArgumentNullException(nameof(presetsDirectory));
         _deserializer = new DeserializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .IgnoreUnmatchedProperties()
             .Build();
-    }
-
-    /// <summary>
-    /// Gets the default presets directory path.
-    /// </summary>
-    private static string GetDefaultPresetsDirectory()
-    {
-        // Check environment variable first
-        var envPath = Environment.GetEnvironmentVariable("BANNOU_PRESETS_DIR");
-        if (!string.IsNullOrEmpty(envPath) && Directory.Exists(envPath))
-        {
-            return envPath;
-        }
-
-        // Check relative to working directory
-        var relativePath = Path.Combine("provisioning", "orchestrator", "presets");
-        if (Directory.Exists(relativePath))
-        {
-            return relativePath;
-        }
-
-        // Check common container paths
-        var containerPath = "/app/provisioning/orchestrator/presets";
-        if (Directory.Exists(containerPath))
-        {
-            return containerPath;
-        }
-
-        // Fallback to relative path even if it doesn't exist
-        return relativePath;
     }
 
     /// <summary>
@@ -165,8 +135,8 @@ public class PresetLoader
                     Name = node.Name,
                     Services = node.Services ?? new List<string>(),
                     Replicas = node.Replicas ?? 1,
-                    DaprEnabled = node.DaprEnabled ?? true,
-                    DaprAppId = node.DaprAppId ?? node.Name // Default to node name if not specified
+                    MeshEnabled = node.MeshEnabled ?? true,
+                    AppId = node.AppId ?? node.Name // Default to node name if not specified
                 };
 
                 // Merge node-specific and global environment
@@ -187,6 +157,31 @@ public class PresetLoader
                     foreach (var kvp in node.Environment)
                     {
                         mergedEnv[kvp.Key] = kvp.Value;
+                    }
+                }
+
+                // CRITICAL: Translate services list to proper service enable/disable environment variables
+                // Without this, deployed containers have all services enabled by default (including
+                // services like Asset that require infrastructure like MinIO that won't be available).
+                // Set SERVICES_ENABLED=false so only explicitly listed services are enabled.
+                if (node.Services != null && node.Services.Count > 0)
+                {
+                    // Only set if not already explicitly configured
+                    if (!mergedEnv.ContainsKey("SERVICES_ENABLED"))
+                    {
+                        mergedEnv["SERVICES_ENABLED"] = "false";
+                    }
+
+                    // Enable each service listed in the preset
+                    foreach (var serviceName in node.Services)
+                    {
+                        // Convert service name to environment variable format
+                        // e.g., "auth" -> "AUTH_SERVICE_ENABLED", "game-session" -> "GAME_SESSION_SERVICE_ENABLED"
+                        var envVarName = serviceName.ToUpperInvariant().Replace("-", "_") + "_SERVICE_ENABLED";
+                        if (!mergedEnv.ContainsKey(envVarName))
+                        {
+                            mergedEnv[envVarName] = "true";
+                        }
                     }
                 }
 
@@ -280,14 +275,14 @@ public class PresetNode
     public Dictionary<string, string>? Environment { get; set; }
 
     /// <summary>
-    /// Whether Dapr sidecar is enabled.
+    /// Whether mesh routing is enabled.
     /// </summary>
-    public bool? DaprEnabled { get; set; }
+    public bool? MeshEnabled { get; set; }
 
     /// <summary>
-    /// Override Dapr app-id.
+    /// Override app-id for mesh routing.
     /// </summary>
-    public string? DaprAppId { get; set; }
+    public string? AppId { get; set; }
 }
 
 /// <summary>

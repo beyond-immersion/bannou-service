@@ -1,8 +1,9 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
@@ -13,16 +14,16 @@ using System.Threading.Tasks;
 namespace BeyondImmersion.BannouService.Accounts;
 
 /// <summary>
-/// Dapr-first implementation for Accounts service following schema-first architecture
-/// Uses Dapr state management for persistence instead of Entity Framework
+/// State-backed implementation for Accounts service following schema-first architecture.
+/// Uses IStateStoreFactory for persistence.
 /// </summary>
-[DaprService("accounts", typeof(IAccountsService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("accounts", typeof(IAccountsService), lifetime: ServiceLifetime.Scoped)]
 public partial class AccountsService : IAccountsService
 {
     private readonly ILogger<AccountsService> _logger;
     private readonly AccountsServiceConfiguration _configuration;
-    private readonly DaprClient _daprClient;
-    private readonly IErrorEventEmitter _errorEventEmitter;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IMessageBus _messageBus;
 
     private const string ACCOUNTS_STATE_STORE = "accounts-statestore"; // MySQL-backed state store
     private const string ACCOUNTS_KEY_PREFIX = "account-";
@@ -30,7 +31,6 @@ public partial class AccountsService : IAccountsService
     private const string PROVIDER_INDEX_KEY_PREFIX = "provider-index-"; // provider:externalId -> accountId
     private const string AUTH_METHODS_KEY_PREFIX = "auth-methods-"; // accountId -> List<AuthMethodInfo>
     private const string ACCOUNTS_LIST_KEY = "accounts-list"; // Sorted list of all account IDs for pagination
-    private const string PUBSUB_NAME = "bannou-pubsub";
     private const string ACCOUNT_CREATED_TOPIC = "account.created";
     private const string ACCOUNT_UPDATED_TOPIC = "account.updated";
     private const string ACCOUNT_DELETED_TOPIC = "account.deleted";
@@ -38,18 +38,18 @@ public partial class AccountsService : IAccountsService
     public AccountsService(
         ILogger<AccountsService> logger,
         AccountsServiceConfiguration configuration,
-        DaprClient daprClient,
-        IErrorEventEmitter errorEventEmitter,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         IEventConsumer eventConsumer)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
 
         // Register event handlers via partial class (AccountsServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     public async Task<(StatusCodes, AccountListResponse?)> ListAccountsAsync(
@@ -80,10 +80,8 @@ public partial class AccountsService : IAccountsService
                 page, pageSize, hasFilters);
 
             // Get the list of all account IDs (sorted by creation order)
-            var accountIds = await _daprClient.GetStateAsync<List<string>>(
-                ACCOUNTS_STATE_STORE,
-                ACCOUNTS_LIST_KEY,
-                cancellationToken: cancellationToken) ?? new List<string>();
+            var accountIdStore = _stateStoreFactory.GetStore<List<string>>(ACCOUNTS_STATE_STORE);
+            var accountIds = await accountIdStore.GetAsync(ACCOUNTS_LIST_KEY, cancellationToken) ?? new List<string>();
 
             var totalCount = accountIds.Count;
 
@@ -178,6 +176,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing accounts");
+            await PublishErrorEventAsync(
+                "ListAccounts",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.Page, body.PageSize });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -188,18 +192,14 @@ public partial class AccountsService : IAccountsService
     /// </summary>
     private async Task<AccountResponse?> LoadAccountResponseAsync(string accountId, CancellationToken cancellationToken)
     {
-        var account = await _daprClient.GetStateAsync<AccountModel>(
-            ACCOUNTS_STATE_STORE,
-            $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-            cancellationToken: cancellationToken);
+        var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNTS_STATE_STORE);
+        var account = await accountStore.GetAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", cancellationToken);
 
         if (account == null || account.DeletedAt.HasValue)
             return null;
 
-        var authMethods = await _daprClient.GetStateAsync<List<AuthMethodInfo>>(
-            ACCOUNTS_STATE_STORE,
-            $"{AUTH_METHODS_KEY_PREFIX}{accountId}",
-            cancellationToken: cancellationToken) ?? new List<AuthMethodInfo>();
+        var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(ACCOUNTS_STATE_STORE);
+        var authMethods = await authMethodsStore.GetAsync($"{AUTH_METHODS_KEY_PREFIX}{accountId}", cancellationToken) ?? new List<AuthMethodInfo>();
 
         return new AccountResponse
         {
@@ -223,10 +223,10 @@ public partial class AccountsService : IAccountsService
             _logger.LogInformation("Creating account for email: {Email}", body.Email);
 
             // Check if email already exists
-            var existingAccountId = await _daprClient.GetStateAsync<string>(
-                ACCOUNTS_STATE_STORE,
+            var emailIndexStore = _stateStoreFactory.GetStore<string>(ACCOUNTS_STATE_STORE);
+            var existingAccountId = await emailIndexStore.GetAsync(
                 $"{EMAIL_INDEX_KEY_PREFIX}{body.Email.ToLowerInvariant()}",
-                cancellationToken: cancellationToken);
+                cancellationToken);
 
             if (!string.IsNullOrEmpty(existingAccountId))
             {
@@ -270,15 +270,12 @@ public partial class AccountsService : IAccountsService
                 UpdatedAt = DateTimeOffset.UtcNow
             };
 
-            // Store in Dapr state store (replaces Entity Framework)
-            await _daprClient.SaveStateAsync(
-                ACCOUNTS_STATE_STORE,
-                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                account);
+            // Store in state store
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNTS_STATE_STORE);
+            await accountStore.SaveAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", account);
 
             // Create email index for quick lookup
-            await _daprClient.SaveStateAsync(
-                ACCOUNTS_STATE_STORE,
+            await emailIndexStore.SaveAsync(
                 $"{EMAIL_INDEX_KEY_PREFIX}{body.Email.ToLowerInvariant()}",
                 accountId.ToString());
 
@@ -309,6 +306,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating account");
+            await PublishErrorEventAsync(
+                "CreateAccount",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.Email });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -365,11 +368,9 @@ public partial class AccountsService : IAccountsService
             var accountId = body.AccountId;
             _logger.LogInformation("Retrieving account: {AccountId}", accountId);
 
-            // Get from Dapr state store (replaces Entity Framework query)
-            var account = await _daprClient.GetStateAsync<AccountModel>(
-                ACCOUNTS_STATE_STORE,
-                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                cancellationToken: cancellationToken);
+            // Get from lib-state store (replaces Entity Framework query)
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNTS_STATE_STORE);
+            var account = await accountStore.GetAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null)
             {
@@ -404,6 +405,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving account: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "GetAccount",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -418,10 +425,8 @@ public partial class AccountsService : IAccountsService
             _logger.LogInformation("Updating account: {AccountId}", accountId);
 
             // Get existing account
-            var account = await _daprClient.GetStateAsync<AccountModel>(
-                ACCOUNTS_STATE_STORE,
-                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                cancellationToken: cancellationToken);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNTS_STATE_STORE);
+            var account = await accountStore.GetAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null)
             {
@@ -454,10 +459,7 @@ public partial class AccountsService : IAccountsService
             account.UpdatedAt = DateTimeOffset.UtcNow;
 
             // Save updated account
-            await _daprClient.SaveStateAsync(
-                ACCOUNTS_STATE_STORE,
-                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                account);
+            await accountStore.SaveAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", account);
 
             _logger.LogInformation("Account updated: {AccountId}", accountId);
 
@@ -487,6 +489,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating account: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "UpdateAccount",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -501,10 +509,10 @@ public partial class AccountsService : IAccountsService
             _logger.LogInformation("Retrieving account by email: {Email}", email);
 
             // Get the account ID from email index
-            var accountId = await _daprClient.GetStateAsync<string>(
-                ACCOUNTS_STATE_STORE,
+            var emailIndexStore = _stateStoreFactory.GetStore<string>(ACCOUNTS_STATE_STORE);
+            var accountId = await emailIndexStore.GetAsync(
                 $"{EMAIL_INDEX_KEY_PREFIX}{email.ToLowerInvariant()}",
-                cancellationToken: cancellationToken);
+                cancellationToken);
 
             if (string.IsNullOrEmpty(accountId))
             {
@@ -513,10 +521,8 @@ public partial class AccountsService : IAccountsService
             }
 
             // Get the full account data
-            var account = await _daprClient.GetStateAsync<AccountModel>(
-                ACCOUNTS_STATE_STORE,
-                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                cancellationToken: cancellationToken);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNTS_STATE_STORE);
+            var account = await accountStore.GetAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null)
             {
@@ -554,6 +560,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving account by email: {Email}", body.Email);
+            await PublishErrorEventAsync(
+                "GetAccountByEmail",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.Email });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -568,10 +580,8 @@ public partial class AccountsService : IAccountsService
             _logger.LogInformation("Getting auth methods for account: {AccountId}", accountId);
 
             // Verify account exists
-            var account = await _daprClient.GetStateAsync<AccountModel>(
-                ACCOUNTS_STATE_STORE,
-                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                cancellationToken: cancellationToken);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNTS_STATE_STORE);
+            var account = await accountStore.GetAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null || account.DeletedAt.HasValue)
             {
@@ -591,6 +601,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting auth methods: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "GetAuthMethods",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -605,10 +621,8 @@ public partial class AccountsService : IAccountsService
             _logger.LogInformation("Adding auth method for account: {AccountId}, provider: {Provider}", accountId, body.Provider);
 
             // Verify account exists
-            var account = await _daprClient.GetStateAsync<AccountModel>(
-                ACCOUNTS_STATE_STORE,
-                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                cancellationToken: cancellationToken);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNTS_STATE_STORE);
+            var account = await accountStore.GetAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null || account.DeletedAt.HasValue)
             {
@@ -617,10 +631,8 @@ public partial class AccountsService : IAccountsService
 
             // Get existing auth methods
             var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
-            var authMethods = await _daprClient.GetStateAsync<List<AuthMethodInfo>>(
-                ACCOUNTS_STATE_STORE,
-                authMethodsKey,
-                cancellationToken: cancellationToken) ?? new List<AuthMethodInfo>();
+            var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(ACCOUNTS_STATE_STORE);
+            var authMethods = await authMethodsStore.GetAsync(authMethodsKey, cancellationToken) ?? new List<AuthMethodInfo>();
 
             // Check if this provider is already linked
             var existingMethod = authMethods.FirstOrDefault(m =>
@@ -644,19 +656,12 @@ public partial class AccountsService : IAccountsService
             authMethods.Add(newMethod);
 
             // Save updated auth methods
-            await _daprClient.SaveStateAsync(
-                ACCOUNTS_STATE_STORE,
-                authMethodsKey,
-                authMethods,
-                cancellationToken: cancellationToken);
+            await authMethodsStore.SaveAsync(authMethodsKey, authMethods);
 
             // Create provider index for lookup
             var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{body.Provider}:{body.ExternalId}";
-            await _daprClient.SaveStateAsync(
-                ACCOUNTS_STATE_STORE,
-                providerIndexKey,
-                accountId.ToString(),
-                cancellationToken: cancellationToken);
+            var providerIndexStore = _stateStoreFactory.GetStore<string>(ACCOUNTS_STATE_STORE);
+            await providerIndexStore.SaveAsync(providerIndexKey, accountId.ToString());
 
             _logger.LogInformation("Auth method added for account: {AccountId}, methodId: {MethodId}, provider: {Provider}",
                 accountId, methodId, body.Provider);
@@ -677,6 +682,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error adding auth method: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "AddAuthMethod",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.AccountId, body.Provider });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -710,10 +721,8 @@ public partial class AccountsService : IAccountsService
             var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{provider}:{externalId}";
 
             // Get the account ID from provider index
-            var accountId = await _daprClient.GetStateAsync<string>(
-                ACCOUNTS_STATE_STORE,
-                providerIndexKey,
-                cancellationToken: cancellationToken);
+            var providerIndexStore = _stateStoreFactory.GetStore<string>(ACCOUNTS_STATE_STORE);
+            var accountId = await providerIndexStore.GetAsync(providerIndexKey, cancellationToken);
 
             if (string.IsNullOrEmpty(accountId))
             {
@@ -722,10 +731,8 @@ public partial class AccountsService : IAccountsService
             }
 
             // Get the full account data
-            var account = await _daprClient.GetStateAsync<AccountModel>(
-                ACCOUNTS_STATE_STORE,
-                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                cancellationToken: cancellationToken);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNTS_STATE_STORE);
+            var account = await accountStore.GetAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null)
             {
@@ -761,6 +768,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting account by provider: {Provider}", body.Provider);
+            await PublishErrorEventAsync(
+                "GetAccountByProvider",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.Provider, body.ExternalId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -773,17 +786,16 @@ public partial class AccountsService : IAccountsService
         try
         {
             var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
-            var authMethods = await _daprClient.GetStateAsync<List<AuthMethodInfo>>(
-                ACCOUNTS_STATE_STORE,
-                authMethodsKey,
-                cancellationToken: cancellationToken);
+            var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(ACCOUNTS_STATE_STORE);
+            var authMethods = await authMethodsStore.GetAsync(authMethodsKey, cancellationToken);
 
             return authMethods ?? new List<AuthMethodInfo>();
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to get auth methods for account: {AccountId}", accountId);
-            return new List<AuthMethodInfo>();
+            _logger.LogError(ex, "Failed to get auth methods for account: {AccountId}", accountId);
+            _ = PublishErrorEventAsync("GetAuthMethodsForAccount", ex.GetType().Name, ex.Message, dependency: "state", details: new { AccountId = accountId });
+            throw; // Don't mask state store failures - empty list should mean "no auth methods", not "error"
         }
     }
 
@@ -799,10 +811,8 @@ public partial class AccountsService : IAccountsService
             // Handle profile update similar to account update
             try
             {
-                var account = await _daprClient.GetStateAsync<AccountModel>(
-                    ACCOUNTS_STATE_STORE,
-                    $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                    cancellationToken: cancellationToken);
+                var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNTS_STATE_STORE);
+                var account = await accountStore.GetAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", cancellationToken);
 
                 if (account == null)
                 {
@@ -817,11 +827,7 @@ public partial class AccountsService : IAccountsService
 
                 account.UpdatedAt = DateTimeOffset.UtcNow;
 
-                await _daprClient.SaveStateAsync(
-                    ACCOUNTS_STATE_STORE,
-                    $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                    account,
-                    cancellationToken: cancellationToken);
+                await accountStore.SaveAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", account);
 
                 // Get auth methods for the account
                 var authMethods = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
@@ -849,6 +855,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating profile: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "UpdateProfile",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -864,10 +876,8 @@ public partial class AccountsService : IAccountsService
             _logger.LogInformation("Deleting account: {AccountId}", accountId);
 
             // Get existing account for event publishing
-            var account = await _daprClient.GetStateAsync<AccountModel>(
-                ACCOUNTS_STATE_STORE,
-                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                cancellationToken: cancellationToken);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNTS_STATE_STORE);
+            var account = await accountStore.GetAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null)
             {
@@ -879,17 +889,11 @@ public partial class AccountsService : IAccountsService
             account.DeletedAt = DateTimeOffset.UtcNow;
 
             // Save the soft-deleted account
-            await _daprClient.SaveStateAsync(
-                ACCOUNTS_STATE_STORE,
-                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                account,
-                cancellationToken: cancellationToken);
+            await accountStore.SaveAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", account);
 
             // Remove email index
-            await _daprClient.DeleteStateAsync(
-                ACCOUNTS_STATE_STORE,
-                $"{EMAIL_INDEX_KEY_PREFIX}{account.Email.ToLowerInvariant()}",
-                cancellationToken: cancellationToken);
+            var emailIndexStore = _stateStoreFactory.GetStore<string>(ACCOUNTS_STATE_STORE);
+            await emailIndexStore.DeleteAsync($"{EMAIL_INDEX_KEY_PREFIX}{account.Email.ToLowerInvariant()}", cancellationToken);
 
             // Remove from accounts list index
             await RemoveAccountFromIndexAsync(accountId.ToString(), cancellationToken);
@@ -904,6 +908,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting account: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "DeleteAccount",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -919,10 +929,8 @@ public partial class AccountsService : IAccountsService
             _logger.LogInformation("Removing auth method {MethodId} for account: {AccountId}", methodId, accountId);
 
             // Verify account exists
-            var account = await _daprClient.GetStateAsync<AccountModel>(
-                ACCOUNTS_STATE_STORE,
-                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                cancellationToken: cancellationToken);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNTS_STATE_STORE);
+            var account = await accountStore.GetAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null || account.DeletedAt.HasValue)
             {
@@ -931,10 +939,8 @@ public partial class AccountsService : IAccountsService
 
             // Get existing auth methods
             var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
-            var authMethods = await _daprClient.GetStateAsync<List<AuthMethodInfo>>(
-                ACCOUNTS_STATE_STORE,
-                authMethodsKey,
-                cancellationToken: cancellationToken) ?? new List<AuthMethodInfo>();
+            var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(ACCOUNTS_STATE_STORE);
+            var authMethods = await authMethodsStore.GetAsync(authMethodsKey, cancellationToken) ?? new List<AuthMethodInfo>();
 
             // Find the auth method to remove
             var methodToRemove = authMethods.FirstOrDefault(m => m.MethodId == methodId);
@@ -947,18 +953,12 @@ public partial class AccountsService : IAccountsService
             authMethods.Remove(methodToRemove);
 
             // Save updated auth methods
-            await _daprClient.SaveStateAsync(
-                ACCOUNTS_STATE_STORE,
-                authMethodsKey,
-                authMethods,
-                cancellationToken: cancellationToken);
+            await authMethodsStore.SaveAsync(authMethodsKey, authMethods, cancellationToken: cancellationToken);
 
             // Remove provider index
             var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{methodToRemove.Provider}:{methodToRemove.ExternalId}";
-            await _daprClient.DeleteStateAsync(
-                ACCOUNTS_STATE_STORE,
-                providerIndexKey,
-                cancellationToken: cancellationToken);
+            var providerIndexStore = _stateStoreFactory.GetStore<string>(ACCOUNTS_STATE_STORE);
+            await providerIndexStore.DeleteAsync(providerIndexKey, cancellationToken);
 
             _logger.LogInformation("Auth method removed for account: {AccountId}, methodId: {MethodId}",
                 accountId, methodId);
@@ -970,6 +970,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing auth method: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "RemoveAuthMethod",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.AccountId, body.MethodId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -984,10 +990,8 @@ public partial class AccountsService : IAccountsService
             _logger.LogInformation("Updating password hash for account: {AccountId}", accountId);
 
             // Get existing account
-            var account = await _daprClient.GetStateAsync<AccountModel>(
-                ACCOUNTS_STATE_STORE,
-                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                cancellationToken: cancellationToken);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNTS_STATE_STORE);
+            var account = await accountStore.GetAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null)
             {
@@ -1000,11 +1004,7 @@ public partial class AccountsService : IAccountsService
             account.UpdatedAt = DateTimeOffset.UtcNow;
 
             // Save updated account
-            await _daprClient.SaveStateAsync(
-                ACCOUNTS_STATE_STORE,
-                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                account,
-                cancellationToken: cancellationToken);
+            await accountStore.SaveAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", account, cancellationToken: cancellationToken);
 
             _logger.LogInformation("Password hash updated for account: {AccountId}", accountId);
             await PublishAccountUpdatedEventAsync(account, new[] { "passwordHash" });
@@ -1014,6 +1014,12 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating password hash: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "UpdatePasswordHash",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1029,10 +1035,8 @@ public partial class AccountsService : IAccountsService
                 accountId, body.EmailVerified);
 
             // Get existing account
-            var account = await _daprClient.GetStateAsync<AccountModel>(
-                ACCOUNTS_STATE_STORE,
-                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                cancellationToken: cancellationToken);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNTS_STATE_STORE);
+            var account = await accountStore.GetAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null)
             {
@@ -1045,11 +1049,7 @@ public partial class AccountsService : IAccountsService
             account.UpdatedAt = DateTimeOffset.UtcNow;
 
             // Save updated account
-            await _daprClient.SaveStateAsync(
-                ACCOUNTS_STATE_STORE,
-                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                account,
-                cancellationToken: cancellationToken);
+            await accountStore.SaveAsync($"{ACCOUNTS_KEY_PREFIX}{accountId}", account, cancellationToken: cancellationToken);
 
             _logger.LogInformation("Verification status updated for account: {AccountId} -> {Verified}",
                 accountId, body.EmailVerified);
@@ -1060,12 +1060,18 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating verification status: {AccountId}", body.AccountId);
+            await PublishErrorEventAsync(
+                "UpdateVerificationStatus",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
-    /// Publish AccountCreatedEvent to RabbitMQ via Dapr
+    /// Publish AccountCreatedEvent to RabbitMQ via IMessageBus
     /// </summary>
     private async Task PublishAccountCreatedEventAsync(AccountModel account)
     {
@@ -1083,18 +1089,19 @@ public partial class AccountsService : IAccountsService
                 CreatedAt = account.CreatedAt
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, ACCOUNT_CREATED_TOPIC, eventModel);
+            await _messageBus.PublishAsync(ACCOUNT_CREATED_TOPIC, eventModel);
             _logger.LogDebug("Published AccountCreatedEvent for account: {AccountId}", account.AccountId);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to publish AccountCreatedEvent for account: {AccountId}", account.AccountId);
+            _ = PublishErrorEventAsync("PublishAccountCreatedEvent", ex.GetType().Name, ex.Message, dependency: "messaging", details: new { account.AccountId });
             // Don't throw - event publishing failure shouldn't break account creation
         }
     }
 
     /// <summary>
-    /// Publish AccountUpdatedEvent to RabbitMQ via Dapr.
+    /// Publish AccountUpdatedEvent to RabbitMQ via IMessageBus.
     /// Event contains the current state of the account plus which fields changed.
     /// </summary>
     private async Task PublishAccountUpdatedEventAsync(AccountModel account, IEnumerable<string> changedFields)
@@ -1115,18 +1122,19 @@ public partial class AccountsService : IAccountsService
                 ChangedFields = changedFields.ToList()
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, ACCOUNT_UPDATED_TOPIC, eventModel);
+            await _messageBus.PublishAsync(ACCOUNT_UPDATED_TOPIC, eventModel);
             _logger.LogDebug("Published AccountUpdatedEvent for account: {AccountId}", account.AccountId);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to publish AccountUpdatedEvent for account: {AccountId}", account.AccountId);
+            _ = PublishErrorEventAsync("PublishAccountUpdatedEvent", ex.GetType().Name, ex.Message, dependency: "messaging", details: new { account.AccountId });
             // Don't throw - event publishing failure shouldn't break account update
         }
     }
 
     /// <summary>
-    /// Publish AccountDeletedEvent to RabbitMQ via Dapr.
+    /// Publish AccountDeletedEvent to RabbitMQ via IMessageBus.
     /// Event contains the final state of the account before deletion.
     /// </summary>
     private async Task PublishAccountDeletedEventAsync(AccountModel account, string? deletedReason)
@@ -1150,12 +1158,13 @@ public partial class AccountsService : IAccountsService
             _logger.LogDebug("Publishing AccountDeletedEvent for account {AccountId} to topic {Topic}",
                 account.AccountId, ACCOUNT_DELETED_TOPIC);
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, ACCOUNT_DELETED_TOPIC, eventModel);
+            await _messageBus.PublishAsync(ACCOUNT_DELETED_TOPIC, eventModel);
             _logger.LogDebug("Published AccountDeletedEvent for account {AccountId}", account.AccountId);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to publish AccountDeletedEvent for account {AccountId}", account.AccountId);
+            _ = PublishErrorEventAsync("PublishAccountDeletedEvent", ex.GetType().Name, ex.Message, dependency: "messaging", details: new { account.AccountId });
             // Don't throw - event publishing failure shouldn't break account deletion
         }
     }
@@ -1164,60 +1173,100 @@ public partial class AccountsService : IAccountsService
 
     /// <summary>
     /// Adds an account ID to the accounts list index for pagination support.
+    /// Uses optimistic concurrency with retry for concurrent updates.
     /// </summary>
     private async Task AddAccountToIndexAsync(string accountId, CancellationToken cancellationToken)
     {
-        try
+        const int maxRetries = 3;
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(ACCOUNTS_STATE_STORE);
+
+        for (var attempt = 0; attempt < maxRetries; attempt++)
         {
-            var stateEntry = await _daprClient.GetStateEntryAsync<List<string>>(
-                ACCOUNTS_STATE_STORE,
-                ACCOUNTS_LIST_KEY,
-                cancellationToken: cancellationToken);
-
-            var accountIds = stateEntry.Value ?? new List<string>();
-
-            if (!accountIds.Contains(accountId))
+            try
             {
-                accountIds.Add(accountId);
-                stateEntry.Value = accountIds;
-                await stateEntry.SaveAsync(cancellationToken: cancellationToken);
+                var (accountIds, etag) = await indexStore.GetWithETagAsync(ACCOUNTS_LIST_KEY, cancellationToken);
+                accountIds ??= new List<string>();
 
-                _logger.LogDebug("Added account {AccountId} to accounts index (total: {Count})", accountId, accountIds.Count);
+                if (!accountIds.Contains(accountId))
+                {
+                    accountIds.Add(accountId);
+
+                    // Use optimistic concurrency - retry if etag mismatch
+                    var saved = string.IsNullOrEmpty(etag)
+                        ? await indexStore.SaveAsync(ACCOUNTS_LIST_KEY, accountIds, cancellationToken: cancellationToken) != null
+                        : await indexStore.TrySaveAsync(ACCOUNTS_LIST_KEY, accountIds, etag, cancellationToken);
+
+                    if (saved)
+                    {
+                        _logger.LogDebug("Added account {AccountId} to accounts index (total: {Count})", accountId, accountIds.Count);
+                        return;
+                    }
+
+                    // ETag mismatch - retry
+                    _logger.LogDebug("ETag mismatch adding {AccountId} to index, retrying (attempt {Attempt})", accountId, attempt + 1);
+                    continue;
+                }
+
+                return; // Already in list
+            }
+            catch (Exception ex) when (attempt < maxRetries - 1)
+            {
+                _logger.LogWarning(ex, "Error adding account {AccountId} to index, retrying (attempt {Attempt})", accountId, attempt + 1);
+                await Task.Delay(100 * (attempt + 1), cancellationToken);
             }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to add account {AccountId} to index", accountId);
-            throw; // Re-throw as this is critical for account creation
-        }
+
+        throw new InvalidOperationException($"Failed to add account {accountId} to index after {maxRetries} attempts");
     }
 
     /// <summary>
     /// Removes an account ID from the accounts list index.
+    /// Uses optimistic concurrency with retry for concurrent updates.
     /// </summary>
     private async Task RemoveAccountFromIndexAsync(string accountId, CancellationToken cancellationToken)
     {
-        try
+        const int maxRetries = 3;
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(ACCOUNTS_STATE_STORE);
+
+        for (var attempt = 0; attempt < maxRetries; attempt++)
         {
-            var stateEntry = await _daprClient.GetStateEntryAsync<List<string>>(
-                ACCOUNTS_STATE_STORE,
-                ACCOUNTS_LIST_KEY,
-                cancellationToken: cancellationToken);
-
-            var accountIds = stateEntry.Value ?? new List<string>();
-
-            if (accountIds.Remove(accountId))
+            try
             {
-                stateEntry.Value = accountIds;
-                await stateEntry.SaveAsync(cancellationToken: cancellationToken);
+                var (accountIds, etag) = await indexStore.GetWithETagAsync(ACCOUNTS_LIST_KEY, cancellationToken);
+                accountIds ??= new List<string>();
 
-                _logger.LogDebug("Removed account {AccountId} from accounts index (remaining: {Count})", accountId, accountIds.Count);
+                if (accountIds.Remove(accountId))
+                {
+                    // Use optimistic concurrency - retry if etag mismatch
+                    var saved = string.IsNullOrEmpty(etag)
+                        ? await indexStore.SaveAsync(ACCOUNTS_LIST_KEY, accountIds, cancellationToken: cancellationToken) != null
+                        : await indexStore.TrySaveAsync(ACCOUNTS_LIST_KEY, accountIds, etag, cancellationToken);
+
+                    if (saved)
+                    {
+                        _logger.LogDebug("Removed account {AccountId} from accounts index (remaining: {Count})", accountId, accountIds.Count);
+                        return;
+                    }
+
+                    // ETag mismatch - retry
+                    _logger.LogDebug("ETag mismatch removing {AccountId} from index, retrying (attempt {Attempt})", accountId, attempt + 1);
+                    continue;
+                }
+
+                return; // Not in list
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to remove account {AccountId} from index", accountId);
-            // Don't throw - index cleanup failure shouldn't break account deletion
+            catch (Exception ex) when (attempt < maxRetries - 1)
+            {
+                _logger.LogWarning(ex, "Error removing account {AccountId} from index, retrying (attempt {Attempt})", accountId, attempt + 1);
+                await Task.Delay(100 * (attempt + 1), cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to remove account {AccountId} from index after {MaxRetries} attempts", accountId, maxRetries);
+                _ = PublishErrorEventAsync("RemoveAccountFromIndex", ex.GetType().Name, ex.Message, dependency: "state", details: new { AccountId = accountId, MaxRetries = maxRetries });
+                // Don't throw - index cleanup failure shouldn't break account deletion
+                return;
+            }
         }
     }
 
@@ -1227,19 +1276,20 @@ public partial class AccountsService : IAccountsService
 
     /// <summary>
     /// Registers this service's API permissions with the Permissions service on startup.
-    /// Overrides the default IDaprService implementation to use generated permission data.
+    /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()
     {
         _logger.LogInformation("Registering Accounts service permissions... (starting)");
         try
         {
-            await AccountsPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+            await AccountsPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
             _logger.LogInformation("Accounts service permissions registered via event (complete)");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to register Accounts service permissions");
+            await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "permissions");
             throw;
         }
     }
@@ -1252,14 +1302,14 @@ public partial class AccountsService : IAccountsService
     /// Publishes an error event for unexpected/internal failures.
     /// Does NOT publish for validation errors or expected failure cases.
     /// </summary>
-    private Task PublishErrorEventAsync(
+    private async Task PublishErrorEventAsync(
         string operation,
         string errorType,
         string message,
         string? dependency = null,
         object? details = null)
     {
-        return _errorEventEmitter.TryPublishAsync(
+        await _messageBus.TryPublishErrorAsync(
             serviceId: "accounts",
             operation: operation,
             errorType: errorType,
@@ -1272,8 +1322,8 @@ public partial class AccountsService : IAccountsService
 }
 
 /// <summary>
-/// Account data model for Dapr state storage
-/// Replaces Entity Framework entities
+/// Account data model for lib-state storage.
+/// Replaces Entity Framework entities.
 /// </summary>
 public class AccountModel
 {
@@ -1284,7 +1334,7 @@ public class AccountModel
     public bool IsVerified { get; set; }
     public List<string> Roles { get; set; } = new List<string>(); // User roles (admin, user, etc.)
 
-    // Store as Unix epoch timestamps (long) to avoid Dapr/System.Text.Json DateTimeOffset serialization bugs
+    // Store as Unix epoch timestamps (long) to avoid System.Text.Json DateTimeOffset serialization issues
     public long CreatedAtUnix { get; set; }
     public long UpdatedAtUnix { get; set; }
     public long? DeletedAtUnix { get; set; }

@@ -25,9 +25,9 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
     private readonly DockerClient _client;
 
     /// <summary>
-    /// Label used to identify Dapr app-id on services.
+    /// Label used to identify app-id on services.
     /// </summary>
-    private const string DAPR_APP_ID_LABEL = "dapr.io/app-id";
+    private const string BANNOU_APP_ID_LABEL = "bannou.app-id";
 
     public DockerSwarmOrchestrator(ILogger<DockerSwarmOrchestrator> logger)
     {
@@ -122,7 +122,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
                 {
                     Accepted = false,
                     AppName = appName,
-                    Message = $"No Swarm service found with Dapr app-id '{appName}'"
+                    Message = $"No Swarm service found with app-id '{appName}'"
                 };
             }
 
@@ -203,7 +203,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
                 {
                     Filters = new ServiceFilter
                     {
-                        Label = new[] { DAPR_APP_ID_LABEL }
+                        Label = new[] { BANNOU_APP_ID_LABEL }
                     }
                 },
                 cancellationToken);
@@ -239,7 +239,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
             var service = await FindServiceByAppNameAsync(appName, cancellationToken);
             if (service == null)
             {
-                return $"No Swarm service found with Dapr app-id '{appName}'";
+                return $"No Swarm service found with app-id '{appName}'";
             }
 
             // GetServiceLogsAsync - see ORCHESTRATOR-SDK-REFERENCE.md
@@ -266,7 +266,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
     }
 
     /// <summary>
-    /// Finds a Swarm service by its Dapr app-id label.
+    /// Finds a Swarm service by its app-id label.
     /// </summary>
     private async Task<SwarmService?> FindServiceByAppNameAsync(
         string appName,
@@ -277,7 +277,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
             {
                 Filters = new ServiceFilter
                 {
-                    Label = new[] { $"{DAPR_APP_ID_LABEL}={appName}" }
+                    Label = new[] { $"{BANNOU_APP_ID_LABEL}={appName}" }
                 }
             },
             cancellationToken);
@@ -286,11 +286,11 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
     }
 
     /// <summary>
-    /// Extracts Dapr app-id from service labels.
+    /// Extracts app-id from service labels.
     /// </summary>
     private static string GetAppNameFromService(SwarmService service)
     {
-        if (service.Spec.Labels?.TryGetValue(DAPR_APP_ID_LABEL, out var appId) == true)
+        if (service.Spec.Labels?.TryGetValue(BANNOU_APP_ID_LABEL, out var appId) == true)
         {
             return appId;
         }
@@ -370,7 +370,10 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
             var envList = new List<string>
             {
                 $"{serviceName.ToUpperInvariant()}_SERVICE_ENABLED=true",
-                $"DAPR_APP_ID={appId}"
+                $"BANNOU_APP_ID={appId}",
+                // Required for proper service operation - not forwarded from orchestrator ENV
+                "DAEMON_MODE=true",
+                "HEARTBEAT_ENABLED=true"
             };
 
             if (environment != null)
@@ -384,7 +387,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
                 Name = $"bannou-{serviceName}-{appId}",
                 Labels = new Dictionary<string, string>
                 {
-                    [DAPR_APP_ID_LABEL] = appId,
+                    [BANNOU_APP_ID_LABEL] = appId,
                     ["bannou.service"] = serviceName
                 },
                 TaskTemplate = new TaskSpec
@@ -461,7 +464,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
                 {
                     Success = false,
                     AppId = appName,
-                    Message = $"No Swarm service found with Dapr app-id '{appName}'"
+                    Message = $"No Swarm service found with app-id '{appName}'"
                 };
             }
 
@@ -521,7 +524,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
                 {
                     Success = false,
                     AppId = appName,
-                    Message = $"No Swarm service found with Dapr app-id '{appName}'"
+                    Message = $"No Swarm service found with app-id '{appName}'"
                 };
             }
 
@@ -589,7 +592,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
         try
         {
             // In Docker Swarm mode, identify infrastructure services by label or name patterns
-            var infrastructurePatterns = new[] { "redis", "rabbitmq", "mysql", "mariadb", "postgres", "mongodb", "placement", "dapr" };
+            var infrastructurePatterns = new[] { "redis", "rabbitmq", "mysql", "mariadb", "postgres", "mongodb" };
 
             var services = await _client.Swarm.ListServicesAsync(cancellationToken: cancellationToken);
 

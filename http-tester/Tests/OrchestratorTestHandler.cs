@@ -1,10 +1,6 @@
 using BeyondImmersion.BannouService.Orchestrator;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-using System.Collections.Concurrent;
-using System.Text;
-using System.Text.Json;
 
 // Alias to resolve naming conflict with Orchestrator.TestResult
 using TestResult = BeyondImmersion.BannouService.Testing.TestResult;
@@ -15,70 +11,65 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Test handler for orchestrator service API endpoints.
 /// Tests the orchestrator service APIs directly via NSwag-generated OrchestratorClient.
 ///
-/// Note: The orchestrator service must be running with a Dapr sidecar for these tests to work.
+/// Note: The orchestrator service must be running with a mesh for these tests to work.
 /// Use: docker compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.services.yml -f provisioning/docker-compose.orchestrator.yml up
 /// </summary>
-public class OrchestratorTestHandler : IServiceTestHandler
+public class OrchestratorTestHandler : BaseHttpTestHandler
 {
-    public ServiceTest[] GetServiceTests()
-    {
-        return new[]
-        {
-            // Health Check Tests
-            new ServiceTest(TestInfrastructureHealth, "InfrastructureHealth", "Orchestrator", "Test infrastructure health check endpoint"),
-            new ServiceTest(TestServicesHealth, "ServicesHealth", "Orchestrator", "Test services health report endpoint"),
-            new ServiceTest(TestInfrastructureHealthComponentDetails, "InfraHealthComponents", "Orchestrator", "Test infrastructure health returns component details"),
+    public override ServiceTest[] GetServiceTests() =>
+    [
+        // Health Check Tests
+        new ServiceTest(TestInfrastructureHealth, "InfrastructureHealth", "Orchestrator", "Test infrastructure health check endpoint"),
+        new ServiceTest(TestServicesHealth, "ServicesHealth", "Orchestrator", "Test services health report endpoint"),
+        new ServiceTest(TestInfrastructureHealthComponentDetails, "InfraHealthComponents", "Orchestrator", "Test infrastructure health returns component details"),
 
-            // Backend Detection Tests
-            new ServiceTest(TestGetBackends, "GetBackends", "Orchestrator", "Test backend detection endpoint"),
-            new ServiceTest(TestBackendsReturnsRecommendation, "BackendsRecommendation", "Orchestrator", "Test backends returns recommended backend"),
+        // Backend Detection Tests
+        new ServiceTest(TestGetBackends, "GetBackends", "Orchestrator", "Test backend detection endpoint"),
+        new ServiceTest(TestBackendsReturnsRecommendation, "BackendsRecommendation", "Orchestrator", "Test backends returns recommended backend"),
 
-            // Environment Status Tests
-            new ServiceTest(TestGetStatus, "GetStatus", "Orchestrator", "Test environment status endpoint"),
-            new ServiceTest(TestStatusReturnsTopology, "StatusTopology", "Orchestrator", "Test status returns topology information"),
+        // Environment Status Tests
+        new ServiceTest(TestGetStatus, "GetStatus", "Orchestrator", "Test environment status endpoint"),
+        new ServiceTest(TestStatusReturnsTopology, "StatusTopology", "Orchestrator", "Test status returns topology information"),
 
-            // Presets Tests
-            new ServiceTest(TestGetPresets, "GetPresets", "Orchestrator", "Test deployment presets endpoint"),
-            new ServiceTest(TestPresetsHaveRequiredFields, "PresetsRequiredFields", "Orchestrator", "Test presets have required fields"),
+        // Presets Tests
+        new ServiceTest(TestGetPresets, "GetPresets", "Orchestrator", "Test deployment presets endpoint"),
+        new ServiceTest(TestPresetsHaveRequiredFields, "PresetsRequiredFields", "Orchestrator", "Test presets have required fields"),
 
-            // Service Restart Tests
-            new ServiceTest(TestShouldRestartService, "ShouldRestartService", "Orchestrator", "Test should-restart recommendation endpoint"),
-            new ServiceTest(TestShouldRestartServiceUnknown, "ShouldRestartUnknown", "Orchestrator", "Test should-restart for unknown service"),
+        // Service Restart Tests
+        new ServiceTest(TestShouldRestartService, "ShouldRestartService", "Orchestrator", "Test should-restart recommendation endpoint"),
+        new ServiceTest(TestShouldRestartServiceUnknown, "ShouldRestartUnknown", "Orchestrator", "Test should-restart for unknown service"),
 
-            // Container Status Tests
-            new ServiceTest(TestGetContainerStatus, "GetContainerStatus", "Orchestrator", "Test container status endpoint"),
-            new ServiceTest(TestGetContainerStatusUnknown, "ContainerStatusUnknown", "Orchestrator", "Test container status for unknown container"),
+        // Container Status Tests
+        new ServiceTest(TestGetContainerStatus, "GetContainerStatus", "Orchestrator", "Test container status endpoint"),
+        new ServiceTest(TestGetContainerStatusUnknown, "ContainerStatusUnknown", "Orchestrator", "Test container status for unknown container"),
 
-            // Service Routing Tests
-            new ServiceTest(TestGetServiceRouting, "GetServiceRouting", "Orchestrator", "Test service routing mappings endpoint"),
-            new ServiceTest(TestServiceRoutingDefaults, "ServiceRoutingDefaults", "Orchestrator", "Test service routing returns default app-id"),
+        // Service Routing Tests
+        new ServiceTest(TestGetServiceRouting, "GetServiceRouting", "Orchestrator", "Test service routing mappings endpoint"),
+        new ServiceTest(TestServiceRoutingDefaults, "ServiceRoutingDefaults", "Orchestrator", "Test service routing returns default app-id"),
 
-            // Configuration Tests
-            new ServiceTest(TestGetConfigVersion, "GetConfigVersion", "Orchestrator", "Test configuration version endpoint"),
-            new ServiceTest(TestRollbackConfigurationNoHistory, "RollbackNoHistory", "Orchestrator", "Test rollback when no previous config exists"),
+        // Configuration Tests
+        new ServiceTest(TestGetConfigVersion, "GetConfigVersion", "Orchestrator", "Test configuration version endpoint"),
+        new ServiceTest(TestRollbackConfigurationNoHistory, "RollbackNoHistory", "Orchestrator", "Test rollback when no previous config exists"),
 
-            // Logs Tests
-            new ServiceTest(TestGetLogs, "GetLogs", "Orchestrator", "Test logs retrieval endpoint"),
-            new ServiceTest(TestGetLogsWithTail, "GetLogsWithTail", "Orchestrator", "Test logs retrieval with tail parameter"),
+        // Logs Tests
+        new ServiceTest(TestGetLogs, "GetLogs", "Orchestrator", "Test logs retrieval endpoint"),
+        new ServiceTest(TestGetLogsWithTail, "GetLogsWithTail", "Orchestrator", "Test logs retrieval with tail parameter"),
 
-            // Deploy Tests (Teardown not tested - it destroys the test target)
-            new ServiceTest(TestDeployWithInvalidBackend, "DeployInvalidBackend", "Orchestrator", "Test deploy with unavailable backend fails"),
+        // Deploy Tests (Teardown not tested - it destroys the test target)
+        new ServiceTest(TestDeployWithInvalidBackend, "DeployInvalidBackend", "Orchestrator", "Test deploy with unavailable backend fails"),
 
-            // Clean Tests
-            new ServiceTest(TestCleanDryRun, "CleanDryRun", "Orchestrator", "Test clean operation with dry run"),
-        };
-    }
+        // Clean Tests
+        new ServiceTest(TestCleanDryRun, "CleanDryRun", "Orchestrator", "Test clean operation with dry run"),
+    ];
 
     /// <summary>
     /// Test the infrastructure health check endpoint.
-    /// Validates connectivity to Redis, RabbitMQ, and Dapr.
+    /// Validates connectivity to Redis and RabbitMQ.
     /// </summary>
-    private static async Task<TestResult> TestInfrastructureHealth(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestInfrastructureHealth(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
-
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetInfrastructureHealthAsync(new InfrastructureHealthRequest());
 
             if (response.Components == null || response.Components.Count == 0)
@@ -98,27 +89,16 @@ public class OrchestratorTestHandler : IServiceTestHandler
                     .Select(c => c.Name);
                 return TestResult.Failed($"Infrastructure health check: {healthyCount}/{totalCount} healthy. Unhealthy: {string.Join(", ", unhealthyComponents)}");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Infrastructure health check failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Infrastructure health check");
 
     /// <summary>
     /// Test the services health report endpoint.
     /// Returns health status of all services via Redis heartbeat monitoring.
     /// </summary>
-    private static async Task<TestResult> TestServicesHealth(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestServicesHealth(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
-
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetServicesHealthAsync(new ServiceHealthRequest());
 
             return TestResult.Successful(
@@ -126,27 +106,16 @@ public class OrchestratorTestHandler : IServiceTestHandler
                 $"{response.HealthPercentage:F1}% healthy, " +
                 $"{response.HealthyServices?.Count ?? 0} healthy, " +
                 $"{response.UnhealthyServices?.Count ?? 0} unhealthy");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Services health check failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Services health check");
 
     /// <summary>
     /// Test the backend detection endpoint.
     /// Returns available container orchestration backends (Compose, Docker, Kubernetes, etc.).
     /// </summary>
-    private static async Task<TestResult> TestGetBackends(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetBackends(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
-
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetBackendsAsync(new ListBackendsRequest());
 
             if (response.Backends == null || response.Backends.Count == 0)
@@ -160,27 +129,16 @@ public class OrchestratorTestHandler : IServiceTestHandler
                 $"Backend detection: {response.Backends.Count} backends checked, " +
                 $"recommended: {response.Recommended}, " +
                 $"available: [{string.Join(", ", availableBackends)}]");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Backend detection failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Backend detection");
 
     /// <summary>
     /// Test the environment status endpoint.
     /// Returns current deployment status including containers, services, and topology.
     /// </summary>
-    private static async Task<TestResult> TestGetStatus(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetStatus(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
-
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetStatusAsync(new GetStatusRequest());
 
             var serviceCount = response.Services?.Count ?? 0;
@@ -190,27 +148,16 @@ public class OrchestratorTestHandler : IServiceTestHandler
                 $"Environment status: deployed={response.Deployed}, " +
                 $"backend={backendType}, " +
                 $"services={serviceCount}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Environment status failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Environment status");
 
     /// <summary>
     /// Test the deployment presets endpoint.
     /// Returns available deployment presets for different use cases.
     /// </summary>
-    private static async Task<TestResult> TestGetPresets(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetPresets(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
-
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetPresetsAsync(new ListPresetsRequest());
 
             var presetCount = response.Presets?.Count ?? 0;
@@ -219,25 +166,15 @@ public class OrchestratorTestHandler : IServiceTestHandler
             return TestResult.Successful(
                 $"Deployment presets: {presetCount} presets available " +
                 $"[{string.Join(", ", presetNames)}]");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get presets failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get presets");
 
     /// <summary>
     /// Test that infrastructure health returns component details.
     /// </summary>
-    private static async Task<TestResult> TestInfrastructureHealthComponentDetails(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestInfrastructureHealthComponentDetails(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetInfrastructureHealthAsync(new InfrastructureHealthRequest());
 
             if (response.Components == null || response.Components.Count == 0)
@@ -267,25 +204,15 @@ public class OrchestratorTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"Infrastructure health components verified: {string.Join(", ", componentNames)}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Infrastructure health component check failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Infrastructure health components");
 
     /// <summary>
     /// Test that backends returns a recommended backend.
     /// </summary>
-    private static async Task<TestResult> TestBackendsReturnsRecommendation(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestBackendsReturnsRecommendation(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetBackendsAsync(new ListBackendsRequest());
 
             // At least one backend should be available (Docker Compose at minimum)
@@ -311,25 +238,15 @@ public class OrchestratorTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"Backend recommendation: {response.Recommended}, {availableBackends.Count} backends available");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Backend recommendation check failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Backend recommendation");
 
     /// <summary>
     /// Test that environment status returns topology information.
     /// </summary>
-    private static async Task<TestResult> TestStatusReturnsTopology(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestStatusReturnsTopology(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetStatusAsync(new GetStatusRequest());
 
             // Should have a timestamp
@@ -348,25 +265,15 @@ public class OrchestratorTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"Environment status: deployed={response.Deployed}, timestamp={response.Timestamp:O}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Status topology check failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Status topology");
 
     /// <summary>
     /// Test that presets have required fields.
     /// </summary>
-    private static async Task<TestResult> TestPresetsHaveRequiredFields(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestPresetsHaveRequiredFields(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetPresetsAsync(new ListPresetsRequest());
 
             if (response.Presets == null || response.Presets.Count == 0)
@@ -388,26 +295,16 @@ public class OrchestratorTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"All {response.Presets.Count} presets have required fields");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Presets field check failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Presets required fields");
 
     /// <summary>
     /// Test the should-restart service recommendation endpoint.
     /// Uses the 'bannou' service which MUST exist since we're testing against it.
     /// </summary>
-    private static async Task<TestResult> TestShouldRestartService(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestShouldRestartService(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
 
             // Request recommendation for bannou - this MUST exist since we're testing against it
             var request = new ShouldRestartServiceRequest
@@ -415,58 +312,51 @@ public class OrchestratorTestHandler : IServiceTestHandler
                 ServiceName = "bannou"
             };
 
-            var response = await orchestratorClient.ShouldRestartServiceAsync(request);
-
-            // Verify required fields are present
-            if (string.IsNullOrEmpty(response.ServiceName))
-                return TestResult.Failed("Response missing serviceName");
-
-            if (string.IsNullOrEmpty(response.CurrentStatus))
-                return TestResult.Failed("Response missing currentStatus");
-
-            if (string.IsNullOrEmpty(response.Reason))
-                return TestResult.Failed("Response missing reason");
-
-            // Bannou should report as running/healthy since we're testing against it
-            var acceptableStatuses = new[] { "running", "healthy", "available", "up" };
-            var statusLower = response.CurrentStatus.ToLower();
-            if (!acceptableStatuses.Any(s => statusLower.Contains(s)) && !response.ShouldRestart)
+            try
             {
-                // If status isn't healthy but shouldRestart is false, that's suspicious
-                return TestResult.Failed(
-                    $"Service 'bannou' status is '{response.CurrentStatus}' but shouldRestart={response.ShouldRestart}. " +
-                    $"Since we're testing against bannou, status should indicate healthy/running.");
-            }
+                var response = await orchestratorClient.ShouldRestartServiceAsync(request);
 
-            return TestResult.Successful(
-                $"Should restart '{response.ServiceName}': {response.ShouldRestart}, " +
-                $"status={response.CurrentStatus}, reason={response.Reason}");
-        }
-        catch (ApiException ex) when (ex.StatusCode == 404)
-        {
-            // The bannou service MUST exist since we're testing against it
-            return TestResult.Failed($"Service 'bannou' not found - orchestrator cannot detect its own service. Status: {ex.StatusCode}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Should restart check failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+                // Verify required fields are present
+                if (string.IsNullOrEmpty(response.ServiceName))
+                    return TestResult.Failed("Response missing serviceName");
+
+                if (string.IsNullOrEmpty(response.CurrentStatus))
+                    return TestResult.Failed("Response missing currentStatus");
+
+                if (string.IsNullOrEmpty(response.Reason))
+                    return TestResult.Failed("Response missing reason");
+
+                // Bannou should report as running/healthy since we're testing against it
+                var acceptableStatuses = new[] { "running", "healthy", "available", "up" };
+                var statusLower = response.CurrentStatus.ToLower();
+                if (!acceptableStatuses.Any(s => statusLower.Contains(s)) && !response.ShouldRestart)
+                {
+                    // If status isn't healthy but shouldRestart is false, that's suspicious
+                    return TestResult.Failed(
+                        $"Service 'bannou' status is '{response.CurrentStatus}' but shouldRestart={response.ShouldRestart}. " +
+                        $"Since we're testing against bannou, status should indicate healthy/running.");
+                }
+
+                return TestResult.Successful(
+                    $"Should restart '{response.ServiceName}': {response.ShouldRestart}, " +
+                    $"status={response.CurrentStatus}, reason={response.Reason}");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // The bannou service MUST exist since we're testing against it
+                return TestResult.Failed($"Service 'bannou' not found - orchestrator cannot detect its own service. Status: {ex.StatusCode}");
+            }
+        }, "Should restart service");
 
     /// <summary>
     /// Test should-restart for unknown service returns appropriate response.
     /// Note: Recommending restart for unknown services is valid behavior - if the service
     /// isn't known/running, restarting (starting) it is a reasonable recommendation.
     /// </summary>
-    private static async Task<TestResult> TestShouldRestartServiceUnknown(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestShouldRestartServiceUnknown(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
 
             var request = new ShouldRestartServiceRequest
             {
@@ -491,78 +381,61 @@ public class OrchestratorTestHandler : IServiceTestHandler
             {
                 return TestResult.Successful("Unknown service correctly returned 404 NotFound");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Unknown service check failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Unknown service restart check");
 
     /// <summary>
     /// Test the container status endpoint.
     /// The bannou container MUST exist since we're running tests against it.
     /// </summary>
-    private static async Task<TestResult> TestGetContainerStatus(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetContainerStatus(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
 
             // Get status for the main "bannou" container - this MUST exist since we're testing against it
-            var response = await orchestratorClient.GetContainerStatusAsync(new GetContainerStatusRequest { AppName = "bannou" });
-
-            // Verify required fields
-            if (string.IsNullOrEmpty(response.AppName))
-                return TestResult.Failed("Container status missing appName");
-
-            if (response.Timestamp == default)
-                return TestResult.Failed("Container status missing timestamp");
-
-            // Verify the container is actually running (since we're testing against it)
-            if (response.Status != ContainerStatusStatus.Running)
+            try
             {
-                return TestResult.Failed($"Container 'bannou' status is {response.Status}, expected Running");
-            }
+                var response = await orchestratorClient.GetContainerStatusAsync(new GetContainerStatusRequest { AppName = "bannou" });
 
-            // Verify we have at least one instance
-            if (response.Instances <= 0)
+                // Verify required fields
+                if (string.IsNullOrEmpty(response.AppName))
+                    return TestResult.Failed("Container status missing appName");
+
+                if (response.Timestamp == default)
+                    return TestResult.Failed("Container status missing timestamp");
+
+                // Verify the container is actually running (since we're testing against it)
+                if (response.Status != ContainerStatusStatus.Running)
+                {
+                    return TestResult.Failed($"Container 'bannou' status is {response.Status}, expected Running");
+                }
+
+                // Verify we have at least one instance
+                if (response.Instances <= 0)
+                {
+                    return TestResult.Failed($"Container 'bannou' has {response.Instances} instances, expected at least 1");
+                }
+
+                return TestResult.Successful(
+                    $"Container 'bannou': status={response.Status}, " +
+                    $"instances={response.Instances}, " +
+                    $"plugins=[{string.Join(", ", response.Plugins ?? Enumerable.Empty<string>())}]");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
             {
-                return TestResult.Failed($"Container 'bannou' has {response.Instances} instances, expected at least 1");
+                // The bannou container MUST exist since we're testing against it
+                // A 404 here indicates a real problem with the orchestrator's container detection
+                return TestResult.Failed($"Container 'bannou' not found - orchestrator cannot detect its own container. Status: {ex.StatusCode}");
             }
-
-            return TestResult.Successful(
-                $"Container 'bannou': status={response.Status}, " +
-                $"instances={response.Instances}, " +
-                $"plugins=[{string.Join(", ", response.Plugins ?? Enumerable.Empty<string>())}]");
-        }
-        catch (ApiException ex) when (ex.StatusCode == 404)
-        {
-            // The bannou container MUST exist since we're testing against it
-            // A 404 here indicates a real problem with the orchestrator's container detection
-            return TestResult.Failed($"Container 'bannou' not found - orchestrator cannot detect its own container. Status: {ex.StatusCode}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Container status failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Container status");
 
     /// <summary>
     /// Test container status for unknown container.
     /// </summary>
-    private static async Task<TestResult> TestGetContainerStatusUnknown(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetContainerStatusUnknown(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var unknownContainer = $"unknown-container-{Guid.NewGuid():N}";
 
             try
@@ -581,27 +454,16 @@ public class OrchestratorTestHandler : IServiceTestHandler
             {
                 return TestResult.Successful("Unknown container correctly returned 404 NotFound");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Unknown container check failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Unknown container status");
 
     /// <summary>
     /// Test the service routing endpoint.
-    /// Returns service-to-app-id mappings for Dapr service invocation.
+    /// Returns service-to-app-id mappings for Bannou service invocation.
     /// </summary>
-    private static async Task<TestResult> TestGetServiceRouting(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetServiceRouting(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
-
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetServiceRoutingAsync(new GetServiceRoutingRequest());
 
             // Verify required fields
@@ -618,27 +480,16 @@ public class OrchestratorTestHandler : IServiceTestHandler
                 $"Service routing: {response.TotalServices} services mapped, " +
                 $"defaultAppId='{response.DefaultAppId}', " +
                 $"deploymentId={response.DeploymentId ?? "(none)"}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Service routing check failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Service routing");
 
     /// <summary>
     /// Test that service routing returns default app-id correctly.
     /// In development mode, all services should route to "bannou".
     /// </summary>
-    private static async Task<TestResult> TestServiceRoutingDefaults(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestServiceRoutingDefaults(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
-
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetServiceRoutingAsync(new GetServiceRoutingRequest());
 
             // Default app-id should be "bannou" in development mode
@@ -668,25 +519,15 @@ public class OrchestratorTestHandler : IServiceTestHandler
             return TestResult.Successful(
                 $"Service routing defaults verified: defaultAppId='bannou', " +
                 $"{response.TotalServices} custom mappings");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Service routing defaults check failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Service routing defaults");
 
     /// <summary>
     /// Test the configuration version endpoint.
     /// </summary>
-    private static async Task<TestResult> TestGetConfigVersion(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetConfigVersion(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
             var response = await orchestratorClient.GetConfigVersionAsync(new GetConfigVersionRequest());
 
             // Verify required fields
@@ -697,25 +538,15 @@ public class OrchestratorTestHandler : IServiceTestHandler
                 $"Configuration version: {response.Version}, " +
                 $"keyCount={response.KeyCount}, " +
                 $"hasPreviousConfig={response.HasPreviousConfig}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Config version check failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Config version");
 
     /// <summary>
     /// Test configuration rollback when no previous config exists.
     /// </summary>
-    private static async Task<TestResult> TestRollbackConfigurationNoHistory(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestRollbackConfigurationNoHistory(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
 
             // First check if there's previous config
             var versionInfo = await orchestratorClient.GetConfigVersionAsync(new GetConfigVersionRequest());
@@ -742,111 +573,87 @@ public class OrchestratorTestHandler : IServiceTestHandler
             {
                 return TestResult.Successful("Rollback correctly failed with 400 when no previous config");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Rollback no-history check failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Rollback no-history");
 
     /// <summary>
     /// Test the logs retrieval endpoint.
     /// </summary>
-    private static async Task<TestResult> TestGetLogs(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetLogs(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
 
             // Request logs for main service container
-            var response = await orchestratorClient.GetLogsAsync(new GetLogsRequest
+            try
             {
-                Service = "bannou",
-                Tail = 10,
-                Follow = false
-            });
+                var response = await orchestratorClient.GetLogsAsync(new GetLogsRequest
+                {
+                    Service = "bannou",
+                    Tail = 10,
+                    Follow = false
+                });
 
-            if (response.Logs == null)
-                return TestResult.Failed("Logs response missing logs array");
+                if (response.Logs == null)
+                    return TestResult.Failed("Logs response missing logs array");
 
-            var logCount = response.Logs.Count;
-            return TestResult.Successful(
-                $"Retrieved {logCount} log entries for service 'bannou', " +
-                $"truncated={response.Truncated}");
-        }
-        catch (ApiException ex) when (ex.StatusCode == 404)
-        {
-            // The bannou service MUST exist since we're testing against it
-            return TestResult.Failed($"Service 'bannou' not found for logs - orchestrator cannot retrieve logs from its own service. Status: {ex.StatusCode}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Logs retrieval failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+                var logCount = response.Logs.Count;
+                return TestResult.Successful(
+                    $"Retrieved {logCount} log entries for service 'bannou', " +
+                    $"truncated={response.Truncated}");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // The bannou service MUST exist since we're testing against it
+                return TestResult.Failed($"Service 'bannou' not found for logs - orchestrator cannot retrieve logs from its own service. Status: {ex.StatusCode}");
+            }
+        }, "Get logs");
 
     /// <summary>
     /// Test logs retrieval with tail parameter.
     /// </summary>
-    private static async Task<TestResult> TestGetLogsWithTail(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetLogsWithTail(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
 
             // Request exactly 5 log lines
-            var response = await orchestratorClient.GetLogsAsync(new GetLogsRequest
+            try
             {
-                Service = "bannou",
-                Tail = 5,
-                Follow = false
-            });
+                var response = await orchestratorClient.GetLogsAsync(new GetLogsRequest
+                {
+                    Service = "bannou",
+                    Tail = 5,
+                    Follow = false
+                });
 
-            if (response.Logs == null)
-                return TestResult.Failed("Logs response missing logs array");
+                if (response.Logs == null)
+                    return TestResult.Failed("Logs response missing logs array");
 
-            var logCount = response.Logs.Count;
+                var logCount = response.Logs.Count;
 
-            // Should have at most 5 logs if tail is working
-            if (logCount > 5)
-            {
-                return TestResult.Failed($"Tail parameter not respected: requested 5, got {logCount}");
+                // Should have at most 5 logs if tail is working
+                if (logCount > 5)
+                {
+                    return TestResult.Failed($"Tail parameter not respected: requested 5, got {logCount}");
+                }
+
+                return TestResult.Successful($"Tail parameter working: requested 5, got {logCount} log entries");
             }
-
-            return TestResult.Successful($"Tail parameter working: requested 5, got {logCount} log entries");
-        }
-        catch (ApiException ex) when (ex.StatusCode == 404)
-        {
-            // The bannou service MUST exist since we're testing against it
-            return TestResult.Failed($"Service 'bannou' not found for logs - orchestrator cannot retrieve logs from its own service. Status: {ex.StatusCode}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Logs with tail failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // The bannou service MUST exist since we're testing against it
+                return TestResult.Failed($"Service 'bannou' not found for logs - orchestrator cannot retrieve logs from its own service. Status: {ex.StatusCode}");
+            }
+        }, "Logs with tail");
 
     /// <summary>
     /// Test deploy with an unavailable backend fails appropriately.
     /// The orchestrator should NOT silently fall back - it should fail or explicitly report the fallback.
     /// </summary>
-    private static async Task<TestResult> TestDeployWithInvalidBackend(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDeployWithInvalidBackend(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
 
             // First check what backends are available
             var backends = await orchestratorClient.GetBackendsAsync(new ListBackendsRequest());
@@ -914,27 +721,17 @@ public class OrchestratorTestHandler : IServiceTestHandler
             {
                 return TestResult.Successful($"Deploy correctly returned {ex.StatusCode} for unavailable backend {unavailableBackend.Type}");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Invalid backend test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Deploy with invalid backend");
 
     /// <summary>
     /// Test the clean operation with a dry run approach.
     /// Note: Clean operation may return 400 with success=false if nothing to clean,
     /// or if the operation isn't supported in the current configuration.
     /// </summary>
-    private static async Task<TestResult> TestCleanDryRun(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCleanDryRun(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var orchestratorClient = new OrchestratorClient();
+            var orchestratorClient = GetServiceClient<IOrchestratorClient>();
 
             // Use a minimal clean request that's safe for testing
             var request = new CleanRequest
@@ -944,38 +741,32 @@ public class OrchestratorTestHandler : IServiceTestHandler
                 OlderThan = "7d" // Only clean things older than 7 days
             };
 
-            var response = await orchestratorClient.CleanAsync(request);
-
-            if (!response.Success)
+            try
             {
-                // Clean failing is acceptable if there's nothing to clean
-                return TestResult.Successful($"Clean completed (nothing to clean or not supported): {response.Message}");
-            }
+                var response = await orchestratorClient.CleanAsync(request);
 
-            return TestResult.Successful(
-                $"Clean operation: success={response.Success}, " +
-                $"reclaimedMB={response.ReclaimedSpaceMb}, " +
-                $"removedImages={response.RemovedImages}");
-        }
-        catch (ApiException ex) when (ex.StatusCode == 400)
-        {
-            // 400 with success=false is valid when there's nothing to clean
-            return TestResult.Successful($"Clean operation returned 400 (nothing to clean)");
-        }
-        catch (ApiException ex) when (ex.StatusCode == 501)
-        {
-            // 501 Not Implemented means the endpoint needs to be implemented
-            return TestResult.Failed($"Clean operation not implemented: {ex.Message}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Clean operation failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+                if (!response.Success)
+                {
+                    // Clean failing is acceptable if there's nothing to clean
+                    return TestResult.Successful($"Clean completed (nothing to clean or not supported): {response.Message}");
+                }
+
+                return TestResult.Successful(
+                    $"Clean operation: success={response.Success}, " +
+                    $"reclaimedMB={response.ReclaimedSpaceMb}, " +
+                    $"removedImages={response.RemovedImages}");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 400)
+            {
+                // 400 with success=false is valid when there's nothing to clean
+                return TestResult.Successful($"Clean operation returned 400 (nothing to clean)");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 501)
+            {
+                // 501 Not Implemented means the endpoint needs to be implemented
+                return TestResult.Failed($"Clean operation not implemented: {ex.Message}");
+            }
+        }, "Clean dry run");
 
     // NOTE: TestDeployAndTeardown and TestDeploymentEvents removed
     // Teardown API destroys the test target (and potentially the tester), making integration testing impossible.

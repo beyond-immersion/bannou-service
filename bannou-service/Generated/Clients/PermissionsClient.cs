@@ -31,7 +31,7 @@ namespace BeyondImmersion.BannouService.Permissions;
 using System = global::System;
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial interface IPermissionsClient : BeyondImmersion.BannouService.ServiceClients.IServiceClient<PermissionsClient>
+public partial interface IPermissionsClient
 {
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -123,7 +123,7 @@ public partial interface IPermissionsClient : BeyondImmersion.BannouService.Serv
     /// <br/>appearing in this list means it has completed startup and registered its
     /// <br/>API permissions, indicating it's ready to handle requests.
     /// <br/>
-    /// <br/>For service-to-service calls (via Dapr), this endpoint is unrestricted.
+    /// <br/>For service-to-service calls (via mesh), this endpoint is unrestricted.
     /// <br/>For client calls through WebSocket/Connect, only admin users can access it.
     /// </remarks>
     /// <returns>List of registered services</returns>
@@ -132,13 +132,31 @@ public partial interface IPermissionsClient : BeyondImmersion.BannouService.Serv
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase, IPermissionsClient, BeyondImmersion.BannouService.ServiceClients.IServiceClient<PermissionsClient>
+public partial class PermissionsClient : IPermissionsClient, BeyondImmersion.BannouService.ServiceClients.IServiceClient<PermissionsClient>
 {
     // Use centralized BannouJson serialization helper
     private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = BeyondImmersion.BannouService.Configuration.BannouJson.Options;
 
-    public PermissionsClient()
+    private readonly BeyondImmersion.BannouService.Services.IMeshInvocationClient _meshClient;
+    private readonly BeyondImmersion.BannouService.Services.IServiceAppMappingResolver _resolver;
+    private readonly Microsoft.Extensions.Logging.ILogger<PermissionsClient>? _logger;
+
+    /// <summary>
+    /// Service name used for app-id resolution. Extracted from class name.
+    /// </summary>
+    private static readonly string _serviceName = "permissions";
+
+    /// <summary>
+    /// The name of the service this client communicates with.
+    /// Implements IServiceClient.ServiceName.
+    /// </summary>
+    public string ServiceName => _serviceName;
+
+    public PermissionsClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<PermissionsClient>? logger = null)
     {
+        _meshClient = meshClient ?? throw new System.ArgumentNullException(nameof(meshClient));
+        _resolver = resolver ?? throw new System.ArgumentNullException(nameof(resolver));
+        _logger = logger;
         Initialize();
     }
 
@@ -146,19 +164,31 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
 
     partial void Initialize();
 
+    #region Header Support Methods
+
     /// <summary>
-    /// Creates and configures an HttpClient instance for this service client.
-    /// Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+    /// Storage for custom headers to be applied to the next request.
     /// </summary>
-    protected virtual System.Threading.Tasks.Task<System.Net.Http.HttpClient> CreateHttpClientAsync(System.Threading.CancellationToken cancellationToken)
+    private readonly System.Collections.Generic.Dictionary<string, string> _customHeaders = new();
+
+    /// <summary>
+    /// Authorization header value for the next request.
+    /// </summary>
+    private string? _authorizationHeader;
+
+    /// <summary>
+    /// Sets a custom header for the next service request.
+    /// Headers are applied once and then cleared.
+    /// </summary>
+    /// <param name="name">Header name (e.g., "X-Custom-Header")</param>
+    /// <param name="value">Header value</param>
+    public void SetHeader(string name, string value)
     {
-        // Create HttpClient with default configuration
-        var httpClient = new System.Net.Http.HttpClient();
+        if (string.IsNullOrWhiteSpace(name))
+            throw new System.ArgumentException("Header name cannot be null or empty", nameof(name));
 
-        return System.Threading.Tasks.Task.FromResult(httpClient);
+        _customHeaders[name] = value ?? string.Empty;
     }
-
-    partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
 
     /// <summary>
     /// Sets the Authorization header for the next request.
@@ -174,12 +204,55 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
             return this;
         }
 
-        var authValue = token.StartsWith("Bearer ", System.StringComparison.OrdinalIgnoreCase)
+        _authorizationHeader = token.StartsWith("Bearer ", System.StringComparison.OrdinalIgnoreCase)
             ? token : $"Bearer {token}";
 
-        SetHeader("Authorization", authValue);
         return this;
     }
+
+    /// <summary>
+    /// Clears the Authorization header.
+    /// </summary>
+    public void ClearAuthorization()
+    {
+        _authorizationHeader = null;
+    }
+
+    /// <summary>
+    /// Clears all custom headers and authorization for a fresh request.
+    /// Called automatically after each request.
+    /// </summary>
+    private void ClearHeaders()
+    {
+        _customHeaders.Clear();
+        _authorizationHeader = null;
+    }
+
+    /// <summary>
+    /// Applies stored headers to a request message.
+    /// </summary>
+    private void ApplyHeaders(System.Net.Http.HttpRequestMessage request)
+    {
+        // Apply authorization header if set
+        if (!string.IsNullOrEmpty(_authorizationHeader))
+        {
+            var tokenValue = _authorizationHeader.StartsWith("Bearer ", System.StringComparison.OrdinalIgnoreCase)
+                ? _authorizationHeader.Substring(7)
+                : _authorizationHeader;
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", tokenValue);
+        }
+
+        // Apply custom headers
+        foreach (var header in _customHeaders)
+        {
+            if (!request.Headers.Contains(header.Key))
+            {
+                request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+        }
+    }
+
+    #endregion
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -195,31 +268,32 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
-        var disposeClient_ = true;
-        try
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "permissions/capabilities"
+        urlBuilder_.Append("permissions/capabilities");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
         {
-            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
             {
-                var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
-                var content_ = new System.Net.Http.ByteArrayContent(json_);
-                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                request_.Content = content_;
-                request_.Method = new System.Net.Http.HttpMethod("POST");
-                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                var urlBuilder_ = new System.Text.StringBuilder();
-                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
-
-                // Operation Path: "permissions/capabilities"
-                urlBuilder_.Append("permissions/capabilities");
-
-                PrepareRequest(client_, request_, urlBuilder_);
-
-                var url_ = urlBuilder_.ToString();
-                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
                 try
                 {
@@ -231,8 +305,6 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                         foreach (var item_ in response_.Content.Headers)
                             headers_[item_.Key] = item_.Value;
                     }
-
-                    ProcessResponse(client_, response_);
 
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
@@ -256,11 +328,11 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                         response_.Dispose();
                 }
             }
-        }
-        finally
-        {
-            if (disposeClient_)
-                client_.Dispose();
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
         }
     }
 
@@ -278,31 +350,32 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
-        var disposeClient_ = true;
-        try
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "permissions/validate"
+        urlBuilder_.Append("permissions/validate");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
         {
-            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
             {
-                var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
-                var content_ = new System.Net.Http.ByteArrayContent(json_);
-                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                request_.Content = content_;
-                request_.Method = new System.Net.Http.HttpMethod("POST");
-                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                var urlBuilder_ = new System.Text.StringBuilder();
-                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
-
-                // Operation Path: "permissions/validate"
-                urlBuilder_.Append("permissions/validate");
-
-                PrepareRequest(client_, request_, urlBuilder_);
-
-                var url_ = urlBuilder_.ToString();
-                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
                 try
                 {
@@ -314,8 +387,6 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                         foreach (var item_ in response_.Content.Headers)
                             headers_[item_.Key] = item_.Value;
                     }
-
-                    ProcessResponse(client_, response_);
 
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
@@ -339,11 +410,11 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                         response_.Dispose();
                 }
             }
-        }
-        finally
-        {
-            if (disposeClient_)
-                client_.Dispose();
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
         }
     }
 
@@ -361,31 +432,32 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
-        var disposeClient_ = true;
-        try
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "permissions/register-service"
+        urlBuilder_.Append("permissions/register-service");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
         {
-            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
             {
-                var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
-                var content_ = new System.Net.Http.ByteArrayContent(json_);
-                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                request_.Content = content_;
-                request_.Method = new System.Net.Http.HttpMethod("POST");
-                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                var urlBuilder_ = new System.Text.StringBuilder();
-                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
-
-                // Operation Path: "permissions/register-service"
-                urlBuilder_.Append("permissions/register-service");
-
-                PrepareRequest(client_, request_, urlBuilder_);
-
-                var url_ = urlBuilder_.ToString();
-                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
                 try
                 {
@@ -397,8 +469,6 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                         foreach (var item_ in response_.Content.Headers)
                             headers_[item_.Key] = item_.Value;
                     }
-
-                    ProcessResponse(client_, response_);
 
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
@@ -422,11 +492,11 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                         response_.Dispose();
                 }
             }
-        }
-        finally
-        {
-            if (disposeClient_)
-                client_.Dispose();
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
         }
     }
 
@@ -444,31 +514,32 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
-        var disposeClient_ = true;
-        try
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "permissions/update-session-state"
+        urlBuilder_.Append("permissions/update-session-state");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
         {
-            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
             {
-                var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
-                var content_ = new System.Net.Http.ByteArrayContent(json_);
-                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                request_.Content = content_;
-                request_.Method = new System.Net.Http.HttpMethod("POST");
-                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                var urlBuilder_ = new System.Text.StringBuilder();
-                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
-
-                // Operation Path: "permissions/update-session-state"
-                urlBuilder_.Append("permissions/update-session-state");
-
-                PrepareRequest(client_, request_, urlBuilder_);
-
-                var url_ = urlBuilder_.ToString();
-                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
                 try
                 {
@@ -480,8 +551,6 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                         foreach (var item_ in response_.Content.Headers)
                             headers_[item_.Key] = item_.Value;
                     }
-
-                    ProcessResponse(client_, response_);
 
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
@@ -505,11 +574,11 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                         response_.Dispose();
                 }
             }
-        }
-        finally
-        {
-            if (disposeClient_)
-                client_.Dispose();
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
         }
     }
 
@@ -527,31 +596,32 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
-        var disposeClient_ = true;
-        try
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "permissions/update-session-role"
+        urlBuilder_.Append("permissions/update-session-role");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
         {
-            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
             {
-                var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
-                var content_ = new System.Net.Http.ByteArrayContent(json_);
-                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                request_.Content = content_;
-                request_.Method = new System.Net.Http.HttpMethod("POST");
-                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                var urlBuilder_ = new System.Text.StringBuilder();
-                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
-
-                // Operation Path: "permissions/update-session-role"
-                urlBuilder_.Append("permissions/update-session-role");
-
-                PrepareRequest(client_, request_, urlBuilder_);
-
-                var url_ = urlBuilder_.ToString();
-                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
                 try
                 {
@@ -563,8 +633,6 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                         foreach (var item_ in response_.Content.Headers)
                             headers_[item_.Key] = item_.Value;
                     }
-
-                    ProcessResponse(client_, response_);
 
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
@@ -588,11 +656,11 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                         response_.Dispose();
                 }
             }
-        }
-        finally
-        {
-            if (disposeClient_)
-                client_.Dispose();
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
         }
     }
 
@@ -612,31 +680,32 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
-        var disposeClient_ = true;
-        try
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "permissions/clear-session-state"
+        urlBuilder_.Append("permissions/clear-session-state");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
         {
-            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
             {
-                var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
-                var content_ = new System.Net.Http.ByteArrayContent(json_);
-                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                request_.Content = content_;
-                request_.Method = new System.Net.Http.HttpMethod("POST");
-                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                var urlBuilder_ = new System.Text.StringBuilder();
-                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
-
-                // Operation Path: "permissions/clear-session-state"
-                urlBuilder_.Append("permissions/clear-session-state");
-
-                PrepareRequest(client_, request_, urlBuilder_);
-
-                var url_ = urlBuilder_.ToString();
-                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
                 try
                 {
@@ -648,8 +717,6 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                         foreach (var item_ in response_.Content.Headers)
                             headers_[item_.Key] = item_.Value;
                     }
-
-                    ProcessResponse(client_, response_);
 
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
@@ -673,11 +740,11 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                         response_.Dispose();
                 }
             }
-        }
-        finally
-        {
-            if (disposeClient_)
-                client_.Dispose();
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
         }
     }
 
@@ -695,31 +762,32 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
-        var disposeClient_ = true;
-        try
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "permissions/get-session-info"
+        urlBuilder_.Append("permissions/get-session-info");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
         {
-            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
             {
-                var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
-                var content_ = new System.Net.Http.ByteArrayContent(json_);
-                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                request_.Content = content_;
-                request_.Method = new System.Net.Http.HttpMethod("POST");
-                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                var urlBuilder_ = new System.Text.StringBuilder();
-                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
-
-                // Operation Path: "permissions/get-session-info"
-                urlBuilder_.Append("permissions/get-session-info");
-
-                PrepareRequest(client_, request_, urlBuilder_);
-
-                var url_ = urlBuilder_.ToString();
-                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
                 try
                 {
@@ -731,8 +799,6 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                         foreach (var item_ in response_.Content.Headers)
                             headers_[item_.Key] = item_.Value;
                     }
-
-                    ProcessResponse(client_, response_);
 
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
@@ -756,11 +822,11 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                         response_.Dispose();
                 }
             }
-        }
-        finally
-        {
-            if (disposeClient_)
-                client_.Dispose();
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
         }
     }
 
@@ -774,7 +840,7 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
     /// <br/>appearing in this list means it has completed startup and registered its
     /// <br/>API permissions, indicating it's ready to handle requests.
     /// <br/>
-    /// <br/>For service-to-service calls (via Dapr), this endpoint is unrestricted.
+    /// <br/>For service-to-service calls (via mesh), this endpoint is unrestricted.
     /// <br/>For client calls through WebSocket/Connect, only admin users can access it.
     /// </remarks>
     /// <returns>List of registered services</returns>
@@ -784,31 +850,32 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
-        var disposeClient_ = true;
-        try
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "permissions/services/list"
+        urlBuilder_.Append("permissions/services/list");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
         {
-            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
             {
-                var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
-                var content_ = new System.Net.Http.ByteArrayContent(json_);
-                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                request_.Content = content_;
-                request_.Method = new System.Net.Http.HttpMethod("POST");
-                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                var urlBuilder_ = new System.Text.StringBuilder();
-                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
-
-                // Operation Path: "permissions/services/list"
-                urlBuilder_.Append("permissions/services/list");
-
-                PrepareRequest(client_, request_, urlBuilder_);
-
-                var url_ = urlBuilder_.ToString();
-                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
                 try
                 {
@@ -820,8 +887,6 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                         foreach (var item_ in response_.Content.Headers)
                             headers_[item_.Key] = item_.Value;
                     }
-
-                    ProcessResponse(client_, response_);
 
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
@@ -845,11 +910,11 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                         response_.Dispose();
                 }
             }
-        }
-        finally
-        {
-            if (disposeClient_)
-                client_.Dispose();
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
         }
     }
 

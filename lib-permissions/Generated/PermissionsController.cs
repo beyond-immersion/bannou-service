@@ -27,7 +27,7 @@ namespace BeyondImmersion.BannouService.Permissions;
 using System = global::System;
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public interface IPermissionsController : BeyondImmersion.BannouService.Controllers.IDaprController
+public interface IPermissionsController : BeyondImmersion.BannouService.Controllers.IBannouController
 {
 
     /// <summary>
@@ -126,7 +126,7 @@ public interface IPermissionsController : BeyondImmersion.BannouService.Controll
     /// <br/>appearing in this list means it has completed startup and registered its
     /// <br/>API permissions, indicating it's ready to handle requests.
     /// <br/>
-    /// <br/>For service-to-service calls (via Dapr), this endpoint is unrestricted.
+    /// <br/>For service-to-service calls (via mesh), this endpoint is unrestricted.
     /// <br/>For client calls through WebSocket/Connect, only admin users can access it.
     /// </remarks>
 
@@ -137,7 +137,6 @@ public interface IPermissionsController : BeyondImmersion.BannouService.Controll
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-[Microsoft.AspNetCore.Mvc.Route("v1.0/invoke/bannou/method")]
 
 public partial class PermissionsController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
@@ -311,7 +310,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     /// <br/>appearing in this list means it has completed startup and registered its
     /// <br/>API permissions, indicating it's ready to handle requests.
     /// <br/>
-    /// <br/>For service-to-service calls (via Dapr), this endpoint is unrestricted.
+    /// <br/>For service-to-service calls (via mesh), this endpoint is unrestricted.
     /// <br/>For client calls through WebSocket/Connect, only admin users can access it.
     /// </remarks>
     /// <returns>List of registered services</returns>
@@ -1357,7 +1356,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     private static readonly string _GetRegisteredServices_Info = """
 {
   "summary": "List all registered services",
-  "description": "Returns list of all services that have registered their permissions.\nThis endpoint is used by testers to wait for service readiness - a service\nappearing in this list means it has completed startup and registered its\nAPI permissions, indicating it's ready to handle requests.\n\nFor service-to-service calls (via Dapr), this endpoint is unrestricted.\nFor client calls through WebSocket/Connect, only admin users can access it.\n",
+  "description": "Returns list of all services that have registered their permissions.\nThis endpoint is used by testers to wait for service readiness - a service\nappearing in this list means it has completed startup and registered its\nAPI permissions, indicating it's ready to handle requests.\n\nFor service-to-service calls (via mesh), this endpoint is unrestricted.\nFor client calls through WebSocket/Connect, only admin users can access it.\n",
   "tags": [
     "Service Management"
   ],

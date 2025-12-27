@@ -102,7 +102,7 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
                             category = "TEST",
                             isBidirectional = true
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var typeIdStr = createJson?["relationshipTypeId"]?.GetValue<string>();
@@ -122,7 +122,7 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/relationship-type/get",
                         new { relationshipTypeId = typeIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var getJson = JsonNode.Parse(getResponse.GetRawText())?.AsObject();
                     var retrievedId = getJson?["relationshipTypeId"]?.GetValue<string>();
@@ -190,7 +190,7 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
                             category = "FAMILY",
                             isBidirectional = false
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var parentJson = JsonNode.Parse(parentResponse.GetRawText())?.AsObject();
                     var parentIdStr = parentJson?["relationshipTypeId"]?.GetValue<string>();
@@ -216,7 +216,7 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
                             parentTypeId = parentIdStr,
                             isBidirectional = false
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var childJson = JsonNode.Parse(childResponse.GetRawText())?.AsObject();
                     var childIdStr = childJson?["relationshipTypeId"]?.GetValue<string>();
@@ -233,7 +233,7 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/relationship-type/get-children",
                         new { parentTypeId = parentIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var childrenJson = JsonNode.Parse(childrenResponse.GetRawText())?.AsObject();
                     var typesArray = childrenJson?["types"]?.AsArray();
@@ -256,7 +256,7 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
                             typeId = childIdStr,
                             ancestorTypeId = parentIdStr
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var matchJson = JsonNode.Parse(matchResponse.GetRawText())?.AsObject();
                     var matches = matchJson?["matches"]?.GetValue<bool>() ?? false;
@@ -274,7 +274,7 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/relationship-type/get-ancestors",
                         new { typeId = childIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var ancestorsJson = JsonNode.Parse(ancestorsResponse.GetRawText())?.AsObject();
                     var ancestorsArray = ancestorsJson?["types"]?.AsArray();
@@ -348,7 +348,7 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
                             category = "TEST",
                             isBidirectional = true
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var typeIdStr = createJson?["relationshipTypeId"]?.GetValue<string>();
@@ -370,7 +370,7 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
                             name = $"Updated Lifecycle Test {uniqueCode}",
                             description = "Updated description"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var updateJson = JsonNode.Parse(updateResponse.GetRawText())?.AsObject();
                     var updatedName = updateJson?["name"]?.GetValue<string>();
@@ -391,7 +391,7 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
                             relationshipTypeId = typeIdStr,
                             reason = "WebSocket lifecycle test"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var deprecateJson = JsonNode.Parse(deprecateResponse.GetRawText())?.AsObject();
                     var isDeprecated = deprecateJson?["isDeprecated"]?.GetValue<bool>() ?? false;
@@ -408,7 +408,7 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/relationship-type/undeprecate",
                         new { relationshipTypeId = typeIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var undeprecateJson = JsonNode.Parse(undeprecateResponse.GetRawText())?.AsObject();
                     var isUndeprecated = !(undeprecateJson?["isDeprecated"]?.GetValue<bool>() ?? true);
@@ -476,7 +476,7 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
                 method,
                 path,
                 requestBody,
-                timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
 
             var responseJson = response.GetRawText();
             Console.WriteLine($"📥 Received response: {responseJson.Substring(0, Math.Min(500, responseJson.Length))}...");

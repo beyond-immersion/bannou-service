@@ -3,10 +3,8 @@ info:
   title: Game Session Service Events
   description: |
     Event subscription and publication declarations for Game Session service.
-
-    This service does not define any unique event types - it subscribes to events from
-    other services and publishes events defined elsewhere (SessionStateChangeEvent from
-    permissions-events.yaml). All event types are accessed via BeyondImmersion.BannouService.Events.
+    Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle.
+    Custom events (PlayerJoined, PlayerLeft) are manually defined.
   version: 1.0.0
   x-event-subscriptions:
     # Session lifecycle events from Connect service
@@ -28,11 +26,99 @@ info:
     - topic: permissions.session-state-changed
       event: SessionStateChangeEvent
       description: Published when player enters/exits game session affecting permissions
+    # Game session lifecycle events (auto-generated)
+    - topic: game-session.created
+      event: GameSessionCreatedEvent
+      description: Published when a new game session is created
+    - topic: game-session.updated
+      event: GameSessionUpdatedEvent
+      description: Published when a game session is updated
+    - topic: game-session.deleted
+      event: GameSessionDeletedEvent
+      description: Published when a game session is deleted
+    # Custom player events (manually defined)
+    - topic: game-session.player-joined
+      event: GameSessionPlayerJoinedEvent
+      description: Published when a player joins a game session
+    - topic: game-session.player-left
+      event: GameSessionPlayerLeftEvent
+      description: Published when a player leaves a game session
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/game-session-lifecycle-events.yaml
+x-lifecycle:
+  GameSession:
+    model:
+      sessionId: { type: string, primary: true, required: true }
+      gameType: { type: string, required: true }
+      sessionName: { type: string }
+      status: { type: string, required: true }
+      maxPlayers: { type: integer }
+      currentPlayers: { type: integer }
+      isPrivate: { type: boolean }
+      owner: { type: string, format: uuid }
+      createdAt: { type: string, format: date-time, required: true }
 
 paths: {}  # Events don't have HTTP paths
 
-# NOTE: No components/schemas section - this service does not define unique event types.
-# All subscribed/published events are defined in their canonical locations:
-# - SessionConnectedEvent, SessionDisconnectedEvent, SessionReconnectedEvent: common-events.yaml
-# - SubscriptionUpdatedEvent: subscriptions-events.yaml
-# - SessionStateChangeEvent: permissions-events.yaml
+# Note: GameSessionCreatedEvent, GameSessionUpdatedEvent, GameSessionDeletedEvent
+# are auto-generated from x-lifecycle. See: schemas/Generated/game-session-lifecycle-events.yaml
+
+components:
+  schemas:
+    # =========================================================================
+    # Custom Player Participation Events (not lifecycle - manually defined)
+    # =========================================================================
+    GameSessionPlayerJoinedEvent:
+      type: object
+      description: Published when a player joins a game session
+      required:
+        - eventId
+        - timestamp
+        - sessionId
+        - accountId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the player joined
+        sessionId:
+          type: string
+          description: ID of the game session
+        accountId:
+          type: string
+          description: ID of the account that joined
+
+    GameSessionPlayerLeftEvent:
+      type: object
+      description: Published when a player leaves a game session
+      required:
+        - eventId
+        - timestamp
+        - sessionId
+        - accountId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the player left
+        sessionId:
+          type: string
+          description: ID of the game session
+        accountId:
+          type: string
+          description: ID of the account that left
+        kicked:
+          type: boolean
+          description: Whether the player was kicked (vs left voluntarily)
+          default: false
+        reason:
+          type: string
+          description: Reason for leaving/being kicked (if applicable)

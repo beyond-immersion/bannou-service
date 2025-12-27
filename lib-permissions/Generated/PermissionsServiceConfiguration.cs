@@ -9,15 +9,15 @@ namespace BeyondImmersion.BannouService.Permissions;
 /// Configuration class for Permissions service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(PermissionsService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(PermissionsService))]
 public class PermissionsServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
     /// Enable/disable Permissions service
-    /// Environment variable: ENABLED or BANNOU_ENABLED
+    /// Environment variable: ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

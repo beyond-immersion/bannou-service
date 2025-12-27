@@ -1,53 +1,15 @@
 # Edge/WebSocket Test Configuration
 # Simulates external client connecting through OpenResty edge proxy
 # Edge tester ONLY on external network (not default) to simulate real client
-# Standalone Dapr containers with mDNS (default) for service discovery
 
 services:
 
   bannou:
     env_file: ../.env.test.edge
     environment:
-      # Pass the Dapr components host path for orchestrator dynamic deployments
-      # The Makefile sets DAPR_COMPONENTS_HOST_PATH to the absolute path
-      # IMPORTANT: this must be a host path visible to the Docker daemon, not the in-container mount.
-      # Use the same host path we mount below so dynamically deployed sidecars see valid components.
-      # Note: Default path is relative to THIS compose file (in provisioning/), so ./dapr/ not ./provisioning/dapr/
-      - BANNOU_DaprComponentsHostPath=${DAPR_COMPONENTS_HOST_PATH:-./dapr/components-http-test}
+      - BANNOU_APP_ID=bannou
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"  # Docker socket for orchestrator deployment
-      # Mount the same components directory that the edge tests use so orchestrator deployments succeed
-      # Note: Default path is relative to THIS compose file (in provisioning/), so ./dapr/ not ./provisioning/dapr/
-      - "${DAPR_COMPONENTS_HOST_PATH:-./dapr/components-http-test}:/tmp/dapr-components:ro"
-
-  # Override Dapr sidecar - standalone container (NOT network_mode: service:bannou)
-  # Uses custom image that waits for infrastructure services
-  # Uses mDNS (default) for Dapr-to-Dapr service discovery
-  bannou-dapr:
-    image: bannou-dapr-wait:latest
-    build:
-      context: ./dapr
-      dockerfile: Dockerfile.dapr-wait
-    command: [
-      "--app-id", "bannou",
-      "--app-port", "80",
-      "--app-protocol", "http",
-      "--app-channel-address", "bannou",
-      "--dapr-http-port", "3500",
-      "--dapr-grpc-port", "50001",
-      "--placement-host-address", "placement:50006",
-      "--resources-path", "/components",
-      "--log-level", "debug",
-      "--enable-api-logging"
-    ]
-    volumes:
-      - "./dapr/components-http-test/:/components"
-      - "./certificates:/certificates"
-    environment:
-      - "SSL_CERT_DIR=/certificates"
-      - "RABBITMQ_HOST=rabbitmq"
-      - "RABBITMQ_PORT=5672"
-    # NO network_mode - standalone container with own IP
 
   # Edge integration tester - simulates external client
   bannou-edge-tester:

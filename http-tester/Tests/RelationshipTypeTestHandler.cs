@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.RelationshipType;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
@@ -7,47 +8,43 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Test handler for relationship type API endpoints using generated clients.
 /// Tests the relationship type service APIs directly via NSwag-generated RelationshipTypeClient.
 ///
-/// Note: RelationshipType APIs test service-to-service communication via Dapr.
+/// Note: RelationshipType APIs test service-to-service communication via mesh.
 /// These tests validate hierarchical type management with real datastores.
 /// </summary>
-public class RelationshipTypeTestHandler : IServiceTestHandler
+public class RelationshipTypeTestHandler : BaseHttpTestHandler
 {
-    public ServiceTest[] GetServiceTests()
-    {
-        return new[]
+    public override ServiceTest[] GetServiceTests() =>
+    [
+        // CRUD operations
+        new ServiceTest(TestCreateRelationshipType, "CreateRelationshipType", "RelationshipType", "Test relationship type creation"),
+        new ServiceTest(TestGetRelationshipType, "GetRelationshipType", "RelationshipType", "Test relationship type retrieval by ID"),
+        new ServiceTest(TestGetRelationshipTypeByCode, "GetRelationshipTypeByCode", "RelationshipType", "Test relationship type retrieval by code"),
+        new ServiceTest(TestUpdateRelationshipType, "UpdateRelationshipType", "RelationshipType", "Test relationship type update"),
+        new ServiceTest(TestDeleteRelationshipType, "DeleteRelationshipType", "RelationshipType", "Test relationship type deletion"),
+        new ServiceTest(TestListRelationshipTypes, "ListRelationshipTypes", "RelationshipType", "Test listing all relationship types"),
+
+        // Hierarchy operations
+        new ServiceTest(TestCreateChildType, "CreateChildType", "RelationshipType", "Test creating a child relationship type"),
+        new ServiceTest(TestGetChildTypes, "GetChildTypes", "RelationshipType", "Test getting child types"),
+        new ServiceTest(TestMatchesHierarchy, "MatchesHierarchy", "RelationshipType", "Test hierarchy matching"),
+        new ServiceTest(TestGetAncestors, "GetAncestors", "RelationshipType", "Test getting ancestors"),
+
+        // Error handling
+        new ServiceTest(TestGetNonExistentType, "GetNonExistentType", "RelationshipType", "Test 404 for non-existent type"),
+        new ServiceTest(TestDuplicateCodeConflict, "RelationshipType_DuplicateCodeConflict", "RelationshipType", "Test 409 for duplicate code"),
+        new ServiceTest(TestDeleteTypeWithChildren, "DeleteTypeWithChildren", "RelationshipType", "Test 409 when deleting type with children"),
+
+        // Seed operation
+        new ServiceTest(TestSeedRelationshipTypes, "SeedRelationshipTypes", "RelationshipType", "Test seeding relationship types"),
+
+        // Complete lifecycle
+        new ServiceTest(TestCompleteTypeLifecycle, "CompleteTypeLifecycle", "RelationshipType", "Test complete type lifecycle with hierarchy"),
+    ];
+
+    private static Task<TestResult> TestCreateRelationshipType(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            // CRUD operations
-            new ServiceTest(TestCreateRelationshipType, "CreateRelationshipType", "RelationshipType", "Test relationship type creation"),
-            new ServiceTest(TestGetRelationshipType, "GetRelationshipType", "RelationshipType", "Test relationship type retrieval by ID"),
-            new ServiceTest(TestGetRelationshipTypeByCode, "GetRelationshipTypeByCode", "RelationshipType", "Test relationship type retrieval by code"),
-            new ServiceTest(TestUpdateRelationshipType, "UpdateRelationshipType", "RelationshipType", "Test relationship type update"),
-            new ServiceTest(TestDeleteRelationshipType, "DeleteRelationshipType", "RelationshipType", "Test relationship type deletion"),
-            new ServiceTest(TestListRelationshipTypes, "ListRelationshipTypes", "RelationshipType", "Test listing all relationship types"),
-
-            // Hierarchy operations
-            new ServiceTest(TestCreateChildType, "CreateChildType", "RelationshipType", "Test creating a child relationship type"),
-            new ServiceTest(TestGetChildTypes, "GetChildTypes", "RelationshipType", "Test getting child types"),
-            new ServiceTest(TestMatchesHierarchy, "MatchesHierarchy", "RelationshipType", "Test hierarchy matching"),
-            new ServiceTest(TestGetAncestors, "GetAncestors", "RelationshipType", "Test getting ancestors"),
-
-            // Error handling
-            new ServiceTest(TestGetNonExistentType, "GetNonExistentType", "RelationshipType", "Test 404 for non-existent type"),
-            new ServiceTest(TestDuplicateCodeConflict, "RelationshipType_DuplicateCodeConflict", "RelationshipType", "Test 409 for duplicate code"),
-            new ServiceTest(TestDeleteTypeWithChildren, "DeleteTypeWithChildren", "RelationshipType", "Test 409 when deleting type with children"),
-
-            // Seed operation
-            new ServiceTest(TestSeedRelationshipTypes, "SeedRelationshipTypes", "RelationshipType", "Test seeding relationship types"),
-
-            // Complete lifecycle
-            new ServiceTest(TestCompleteTypeLifecycle, "CompleteTypeLifecycle", "RelationshipType", "Test complete type lifecycle with hierarchy"),
-        };
-    }
-
-    private static async Task<TestResult> TestCreateRelationshipType(ITestClient client, string[] args)
-    {
-        try
-        {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = GetServiceClient<IRelationshipTypeClient>();
 
             var createRequest = new CreateRelationshipTypeRequest
             {
@@ -67,22 +64,12 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Code mismatch: expected '{createRequest.Code.ToUpperInvariant()}', got '{response.Code}'");
 
             return TestResult.Successful($"Created relationship type: ID={response.RelationshipTypeId}, Code={response.Code}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Create failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Create relationship type");
 
-    private static async Task<TestResult> TestGetRelationshipType(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetRelationshipType(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = GetServiceClient<IRelationshipTypeClient>();
 
             // Create a type first
             var createRequest = new CreateRelationshipTypeRequest
@@ -103,22 +90,12 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Name mismatch: expected '{createRequest.Name}', got '{response.Name}'");
 
             return TestResult.Successful($"Retrieved type: ID={response.RelationshipTypeId}, Code={response.Code}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get relationship type");
 
-    private static async Task<TestResult> TestGetRelationshipTypeByCode(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetRelationshipTypeByCode(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = GetServiceClient<IRelationshipTypeClient>();
 
             // Create a type first
             var code = $"CODE_TEST_{DateTime.Now.Ticks}";
@@ -137,22 +114,12 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
                 return TestResult.Failed("ID mismatch when fetching by code");
 
             return TestResult.Successful($"Retrieved type by code: ID={response.RelationshipTypeId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get by code failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get relationship type by code");
 
-    private static async Task<TestResult> TestUpdateRelationshipType(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestUpdateRelationshipType(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = GetServiceClient<IRelationshipTypeClient>();
 
             // Create a type
             var createRequest = new CreateRelationshipTypeRequest
@@ -179,22 +146,12 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Description not updated");
 
             return TestResult.Successful($"Updated type: ID={response.RelationshipTypeId}, Name={response.Name}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Update failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Update relationship type");
 
-    private static async Task<TestResult> TestDeleteRelationshipType(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDeleteRelationshipType(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = GetServiceClient<IRelationshipTypeClient>();
 
             // Create a type
             var createRequest = new CreateRelationshipTypeRequest
@@ -225,22 +182,12 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"Deleted type: ID={created.RelationshipTypeId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Delete failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Delete relationship type");
 
-    private static async Task<TestResult> TestListRelationshipTypes(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestListRelationshipTypes(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = GetServiceClient<IRelationshipTypeClient>();
 
             // Create some types
             var category = $"LIST_CAT_{DateTime.Now.Ticks}";
@@ -264,22 +211,12 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected at least 3 types, got {response.Types?.Count ?? 0}");
 
             return TestResult.Successful($"Listed {response.Types.Count} types in category '{category}'");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"List failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "List relationship types");
 
-    private static async Task<TestResult> TestCreateChildType(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCreateChildType(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = GetServiceClient<IRelationshipTypeClient>();
 
             // Create parent type
             var parentRequest = new CreateRelationshipTypeRequest
@@ -307,22 +244,12 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Depth should be 1 for child, got {child.Depth}");
 
             return TestResult.Successful($"Created child type: ID={child.RelationshipTypeId}, ParentID={child.ParentTypeId}, Depth={child.Depth}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Create child failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Create child type");
 
-    private static async Task<TestResult> TestGetChildTypes(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetChildTypes(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = GetServiceClient<IRelationshipTypeClient>();
 
             // Create parent
             var parent = await typeClient.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
@@ -352,22 +279,12 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected 3 children, got {response.Types?.Count ?? 0}");
 
             return TestResult.Successful($"Retrieved {response.Types.Count} child types");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get children failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get child types");
 
-    private static async Task<TestResult> TestMatchesHierarchy(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestMatchesHierarchy(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = GetServiceClient<IRelationshipTypeClient>();
 
             // Create hierarchy: grandparent -> parent -> child
             var grandparent = await typeClient.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
@@ -414,22 +331,12 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
                 return TestResult.Failed("Self-match should return true with depth 0");
 
             return TestResult.Successful($"Hierarchy matching works: child→grandparent depth={response.Depth}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Hierarchy match failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Hierarchy matching");
 
-    private static async Task<TestResult> TestGetAncestors(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetAncestors(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = GetServiceClient<IRelationshipTypeClient>();
 
             // Create hierarchy
             var root = await typeClient.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
@@ -462,51 +369,25 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected 2 ancestors, got {response.Types?.Count ?? 0}");
 
             return TestResult.Successful($"Retrieved {response.Types.Count} ancestors for leaf type");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get ancestors failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get ancestors");
 
-    private static async Task<TestResult> TestGetNonExistentType(ITestClient client, string[] args)
-    {
-        try
-        {
-            var typeClient = new RelationshipTypeClient();
-
-            try
+    private static Task<TestResult> TestGetNonExistentType(ITestClient client, string[] args) =>
+        ExecuteExpectingStatusAsync(
+            async () =>
             {
+                var typeClient = GetServiceClient<IRelationshipTypeClient>();
                 await typeClient.GetRelationshipTypeAsync(new GetRelationshipTypeRequest
                 {
                     RelationshipTypeId = Guid.NewGuid()
                 });
-                return TestResult.Failed("Expected 404 for non-existent type");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                return TestResult.Successful("Correctly returned 404 for non-existent type");
-            }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+            },
+            404,
+            "Get non-existent type");
 
-    private static async Task<TestResult> TestDuplicateCodeConflict(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDuplicateCodeConflict(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = GetServiceClient<IRelationshipTypeClient>();
 
             var code = $"DUPLICATE_{DateTime.Now.Ticks}";
 
@@ -531,22 +412,12 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
             {
                 return TestResult.Successful("Correctly returned 409 for duplicate code");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Duplicate code conflict");
 
-    private static async Task<TestResult> TestDeleteTypeWithChildren(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDeleteTypeWithChildren(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = GetServiceClient<IRelationshipTypeClient>();
 
             // Create parent with child
             var parent = await typeClient.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
@@ -575,22 +446,12 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
             {
                 return TestResult.Successful("Correctly returned 409 when deleting type with children");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Delete type with children");
 
-    private static async Task<TestResult> TestSeedRelationshipTypes(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSeedRelationshipTypes(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = GetServiceClient<IRelationshipTypeClient>();
 
             // Capture ticks once so parent reference matches actual parent code
             var testId = DateTime.Now.Ticks;
@@ -624,22 +485,12 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected 2 created, got {response.Created}");
 
             return TestResult.Successful($"Seed completed: Created={response.Created}, Updated={response.Updated}, Skipped={response.Skipped}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Seed failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Seed relationship types");
 
-    private static async Task<TestResult> TestCompleteTypeLifecycle(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCompleteTypeLifecycle(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var typeClient = new RelationshipTypeClient();
+            var typeClient = GetServiceClient<IRelationshipTypeClient>();
             var testId = DateTime.Now.Ticks;
 
             // Step 1: Create root type
@@ -717,14 +568,5 @@ public class RelationshipTypeTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful("Complete relationship type lifecycle test passed");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Lifecycle test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Complete type lifecycle");
 }

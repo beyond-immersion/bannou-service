@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
@@ -7,51 +8,47 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Test handler for realm API endpoints using generated clients.
 /// Tests the realm service APIs directly via NSwag-generated RealmClient.
 ///
-/// Note: Realm APIs test service-to-service communication via Dapr.
+/// Note: Realm APIs test service-to-service communication via mesh.
 /// These tests validate realm management with real datastores.
 /// </summary>
-public class RealmTestHandler : IServiceTestHandler
+public class RealmTestHandler : BaseHttpTestHandler
 {
-    public ServiceTest[] GetServiceTests()
-    {
-        return new[]
+    public override ServiceTest[] GetServiceTests() =>
+    [
+        // CRUD operations
+        new ServiceTest(TestCreateRealm, "CreateRealm", "Realm", "Test realm creation"),
+        new ServiceTest(TestGetRealm, "GetRealm", "Realm", "Test realm retrieval by ID"),
+        new ServiceTest(TestGetRealmByCode, "GetRealmByCode", "Realm", "Test realm retrieval by code"),
+        new ServiceTest(TestUpdateRealm, "UpdateRealm", "Realm", "Test realm update"),
+        new ServiceTest(TestDeleteRealm, "DeleteRealm", "Realm", "Test realm deletion"),
+        new ServiceTest(TestListRealms, "ListRealms", "Realm", "Test listing all realms"),
+
+        // Deprecation operations
+        new ServiceTest(TestDeprecateRealm, "DeprecateRealm", "Realm", "Test deprecating a realm"),
+        new ServiceTest(TestUndeprecateRealm, "UndeprecateRealm", "Realm", "Test restoring a deprecated realm"),
+
+        // Validation endpoint
+        new ServiceTest(TestRealmExists, "RealmExists", "Realm", "Test realm existence check"),
+
+        // Error handling
+        new ServiceTest(TestGetNonExistentRealm, "GetNonExistentRealm", "Realm", "Test 404 for non-existent realm"),
+        new ServiceTest(TestDuplicateCodeConflict, "Realm_DuplicateCodeConflict", "Realm", "Test 409 for duplicate code"),
+
+        // Seed operation
+        new ServiceTest(TestSeedRealms, "SeedRealms", "Realm", "Test seeding realms"),
+
+        // Complete lifecycle
+        new ServiceTest(TestCompleteRealmLifecycle, "CompleteRealmLifecycle", "Realm", "Test complete realm lifecycle with deprecation"),
+    ];
+
+    private static Task<TestResult> TestCreateRealm(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            // CRUD operations
-            new ServiceTest(TestCreateRealm, "CreateRealm", "Realm", "Test realm creation"),
-            new ServiceTest(TestGetRealm, "GetRealm", "Realm", "Test realm retrieval by ID"),
-            new ServiceTest(TestGetRealmByCode, "GetRealmByCode", "Realm", "Test realm retrieval by code"),
-            new ServiceTest(TestUpdateRealm, "UpdateRealm", "Realm", "Test realm update"),
-            new ServiceTest(TestDeleteRealm, "DeleteRealm", "Realm", "Test realm deletion"),
-            new ServiceTest(TestListRealms, "ListRealms", "Realm", "Test listing all realms"),
-
-            // Deprecation operations
-            new ServiceTest(TestDeprecateRealm, "DeprecateRealm", "Realm", "Test deprecating a realm"),
-            new ServiceTest(TestUndeprecateRealm, "UndeprecateRealm", "Realm", "Test restoring a deprecated realm"),
-
-            // Validation endpoint
-            new ServiceTest(TestRealmExists, "RealmExists", "Realm", "Test realm existence check"),
-
-            // Error handling
-            new ServiceTest(TestGetNonExistentRealm, "GetNonExistentRealm", "Realm", "Test 404 for non-existent realm"),
-            new ServiceTest(TestDuplicateCodeConflict, "Realm_DuplicateCodeConflict", "Realm", "Test 409 for duplicate code"),
-
-            // Seed operation
-            new ServiceTest(TestSeedRealms, "SeedRealms", "Realm", "Test seeding realms"),
-
-            // Complete lifecycle
-            new ServiceTest(TestCompleteRealmLifecycle, "CompleteRealmLifecycle", "Realm", "Test complete realm lifecycle with deprecation"),
-        };
-    }
-
-    private static async Task<TestResult> TestCreateRealm(ITestClient client, string[] args)
-    {
-        try
-        {
-            var realmClient = new RealmClient();
+            var realmClient = GetServiceClient<IRealmClient>();
 
             var createRequest = new CreateRealmRequest
             {
-                Code = $"TEST_REALM_{DateTime.Now.Ticks}",
+                Code = GenerateTestId("TEST_REALM"),
                 Name = "Test Realm",
                 Description = "A test realm for HTTP testing",
                 Category = "TEST",
@@ -67,34 +64,21 @@ public class RealmTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Code mismatch: expected '{createRequest.Code.ToUpperInvariant()}', got '{response.Code}'");
 
             return TestResult.Successful($"Created realm: ID={response.RealmId}, Code={response.Code}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Create failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Create realm");
 
-    private static async Task<TestResult> TestGetRealm(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetRealm(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = new RealmClient();
+            var realmClient = GetServiceClient<IRealmClient>();
 
-            // Create a realm first
             var createRequest = new CreateRealmRequest
             {
-                Code = $"GET_REALM_{DateTime.Now.Ticks}",
+                Code = GenerateTestId("GET_REALM"),
                 Name = "Get Test Realm"
             };
             var created = await realmClient.CreateRealmAsync(createRequest);
 
-            // Now retrieve it
-            var getRequest = new GetRealmRequest { RealmId = created.RealmId };
-            var response = await realmClient.GetRealmAsync(getRequest);
+            var response = await realmClient.GetRealmAsync(new GetRealmRequest { RealmId = created.RealmId });
 
             if (response.RealmId != created.RealmId)
                 return TestResult.Failed("ID mismatch");
@@ -103,25 +87,14 @@ public class RealmTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Name mismatch: expected '{createRequest.Name}', got '{response.Name}'");
 
             return TestResult.Successful($"Retrieved realm: ID={response.RealmId}, Code={response.Code}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get realm");
 
-    private static async Task<TestResult> TestGetRealmByCode(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetRealmByCode(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = new RealmClient();
+            var realmClient = GetServiceClient<IRealmClient>();
 
-            // Create a realm first
-            var code = $"CODE_REALM_{DateTime.Now.Ticks}";
+            var code = GenerateTestId("CODE_REALM");
             var createRequest = new CreateRealmRequest
             {
                 Code = code,
@@ -129,41 +102,27 @@ public class RealmTestHandler : IServiceTestHandler
             };
             var created = await realmClient.CreateRealmAsync(createRequest);
 
-            // Retrieve by code
-            var getRequest = new GetRealmByCodeRequest { Code = code };
-            var response = await realmClient.GetRealmByCodeAsync(getRequest);
+            var response = await realmClient.GetRealmByCodeAsync(new GetRealmByCodeRequest { Code = code });
 
             if (response.RealmId != created.RealmId)
                 return TestResult.Failed("ID mismatch when fetching by code");
 
             return TestResult.Successful($"Retrieved realm by code: ID={response.RealmId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Get by code failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get realm by code");
 
-    private static async Task<TestResult> TestUpdateRealm(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestUpdateRealm(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = new RealmClient();
+            var realmClient = GetServiceClient<IRealmClient>();
 
-            // Create a realm
             var createRequest = new CreateRealmRequest
             {
-                Code = $"UPDATE_REALM_{DateTime.Now.Ticks}",
+                Code = GenerateTestId("UPDATE_REALM"),
                 Name = "Original Realm Name",
                 Description = "Original description"
             };
             var created = await realmClient.CreateRealmAsync(createRequest);
 
-            // Update it
             var updateRequest = new UpdateRealmRequest
             {
                 RealmId = created.RealmId,
@@ -176,30 +135,19 @@ public class RealmTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Name not updated: expected 'Updated Realm Name', got '{response.Name}'");
 
             if (response.Description != "Updated description")
-                return TestResult.Failed($"Description not updated");
+                return TestResult.Failed("Description not updated");
 
             return TestResult.Successful($"Updated realm: ID={response.RealmId}, Name={response.Name}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Update failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Update realm");
 
-    private static async Task<TestResult> TestDeleteRealm(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDeleteRealm(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = new RealmClient();
+            var realmClient = GetServiceClient<IRealmClient>();
 
-            // Create a realm
             var createRequest = new CreateRealmRequest
             {
-                Code = $"DELETE_REALM_{DateTime.Now.Ticks}",
+                Code = GenerateTestId("DELETE_REALM"),
                 Name = "Delete Test Realm"
             };
             var created = await realmClient.CreateRealmAsync(createRequest);
@@ -212,18 +160,12 @@ public class RealmTestHandler : IServiceTestHandler
             });
 
             // Delete it
-            await realmClient.DeleteRealmAsync(new DeleteRealmRequest
-            {
-                RealmId = created.RealmId
-            });
+            await realmClient.DeleteRealmAsync(new DeleteRealmRequest { RealmId = created.RealmId });
 
-            // Verify deletion
+            // Verify deletion - expect 404
             try
             {
-                await realmClient.GetRealmAsync(new GetRealmRequest
-                {
-                    RealmId = created.RealmId
-                });
+                await realmClient.GetRealmAsync(new GetRealmRequest { RealmId = created.RealmId });
                 return TestResult.Failed("Realm still exists after deletion");
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
@@ -232,65 +174,42 @@ public class RealmTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"Deleted realm: ID={created.RealmId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Delete failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Delete realm");
 
-    private static async Task<TestResult> TestListRealms(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestListRealms(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = new RealmClient();
+            var realmClient = GetServiceClient<IRealmClient>();
 
             // Create some realms
-            for (int i = 0; i < 3; i++)
+            for (var i = 0; i < 3; i++)
             {
                 await realmClient.CreateRealmAsync(new CreateRealmRequest
                 {
-                    Code = $"LIST_REALM_{DateTime.Now.Ticks}_{i}",
+                    Code = $"{GenerateTestId("LIST_REALM")}_{i}",
                     Name = $"List Test Realm {i}"
                 });
             }
 
-            // List all
             var response = await realmClient.ListRealmsAsync(new ListRealmsRequest());
 
             if (response.Realms == null || response.Realms.Count < 3)
                 return TestResult.Failed($"Expected at least 3 realms, got {response.Realms?.Count ?? 0}");
 
             return TestResult.Successful($"Listed {response.Realms.Count} realms");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"List failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "List realms");
 
-    private static async Task<TestResult> TestDeprecateRealm(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDeprecateRealm(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = new RealmClient();
+            var realmClient = GetServiceClient<IRealmClient>();
 
-            // Create a realm
             var realm = await realmClient.CreateRealmAsync(new CreateRealmRequest
             {
-                Code = $"DEPRECATE_REALM_{DateTime.Now.Ticks}",
+                Code = GenerateTestId("DEPRECATE_REALM"),
                 Name = "Deprecate Test Realm"
             });
 
-            // Deprecate it
             var response = await realmClient.DeprecateRealmAsync(new DeprecateRealmRequest
             {
                 RealmId = realm.RealmId,
@@ -304,74 +223,41 @@ public class RealmTestHandler : IServiceTestHandler
                 return TestResult.Failed("Deprecation reason not set");
 
             return TestResult.Successful($"Deprecated realm: ID={realm.RealmId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Deprecate failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Deprecate realm");
 
-    private static async Task<TestResult> TestUndeprecateRealm(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestUndeprecateRealm(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = new RealmClient();
+            var realmClient = GetServiceClient<IRealmClient>();
 
-            // Create and deprecate a realm
             var realm = await realmClient.CreateRealmAsync(new CreateRealmRequest
             {
-                Code = $"UNDEP_REALM_{DateTime.Now.Ticks}",
+                Code = GenerateTestId("UNDEP_REALM"),
                 Name = "Undeprecate Test Realm"
             });
 
-            await realmClient.DeprecateRealmAsync(new DeprecateRealmRequest
-            {
-                RealmId = realm.RealmId
-            });
+            await realmClient.DeprecateRealmAsync(new DeprecateRealmRequest { RealmId = realm.RealmId });
 
-            // Undeprecate it
-            var response = await realmClient.UndeprecateRealmAsync(new UndeprecateRealmRequest
-            {
-                RealmId = realm.RealmId
-            });
+            var response = await realmClient.UndeprecateRealmAsync(new UndeprecateRealmRequest { RealmId = realm.RealmId });
 
             if (response.IsDeprecated)
                 return TestResult.Failed("Realm should not be deprecated after undeprecation");
 
             return TestResult.Successful($"Undeprecated realm: ID={realm.RealmId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Undeprecate failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Undeprecate realm");
 
-    private static async Task<TestResult> TestRealmExists(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestRealmExists(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = new RealmClient();
+            var realmClient = GetServiceClient<IRealmClient>();
 
-            // Create a realm
             var realm = await realmClient.CreateRealmAsync(new CreateRealmRequest
             {
-                Code = $"EXISTS_REALM_{DateTime.Now.Ticks}",
+                Code = GenerateTestId("EXISTS_REALM"),
                 Name = "Exists Test Realm"
             });
 
-            // Check existence
-            var existsResponse = await realmClient.RealmExistsAsync(new RealmExistsRequest
-            {
-                RealmId = realm.RealmId
-            });
+            var existsResponse = await realmClient.RealmExistsAsync(new RealmExistsRequest { RealmId = realm.RealmId });
 
             if (!existsResponse.Exists)
                 return TestResult.Failed("Realm should exist");
@@ -379,63 +265,29 @@ public class RealmTestHandler : IServiceTestHandler
             if (!existsResponse.IsActive)
                 return TestResult.Failed("Realm should be active");
 
-            // Check non-existent realm
-            var notExistsResponse = await realmClient.RealmExistsAsync(new RealmExistsRequest
-            {
-                RealmId = Guid.NewGuid()
-            });
+            var notExistsResponse = await realmClient.RealmExistsAsync(new RealmExistsRequest { RealmId = Guid.NewGuid() });
 
             if (notExistsResponse.Exists)
                 return TestResult.Failed("Non-existent realm should not exist");
 
-            return TestResult.Successful($"Realm existence check passed");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Exists check failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+            return TestResult.Successful("Realm existence check passed");
+        }, "Realm exists");
 
-    private static async Task<TestResult> TestGetNonExistentRealm(ITestClient client, string[] args)
-    {
-        try
-        {
-            var realmClient = new RealmClient();
-
-            try
+    private static Task<TestResult> TestGetNonExistentRealm(ITestClient client, string[] args) =>
+        ExecuteExpectingStatusAsync(
+            async () =>
             {
-                await realmClient.GetRealmAsync(new GetRealmRequest
-                {
-                    RealmId = Guid.NewGuid()
-                });
-                return TestResult.Failed("Expected 404 for non-existent realm");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                return TestResult.Successful("Correctly returned 404 for non-existent realm");
-            }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+                var realmClient = GetServiceClient<IRealmClient>();
+                await realmClient.GetRealmAsync(new GetRealmRequest { RealmId = Guid.NewGuid() });
+            },
+            404,
+            "Get non-existent realm");
 
-    private static async Task<TestResult> TestDuplicateCodeConflict(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDuplicateCodeConflict(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = new RealmClient();
-
-            var code = $"DUPLICATE_REALM_{DateTime.Now.Ticks}";
+            var realmClient = GetServiceClient<IRealmClient>();
+            var code = GenerateTestId("DUPLICATE_REALM");
 
             // Create first realm
             await realmClient.CreateRealmAsync(new CreateRealmRequest
@@ -444,56 +296,44 @@ public class RealmTestHandler : IServiceTestHandler
                 Name = "First Realm"
             });
 
-            // Try to create second with same code
-            try
-            {
-                await realmClient.CreateRealmAsync(new CreateRealmRequest
+            // Try to create second with same code - expect 409
+            return await ExecuteExpectingStatusAsync(
+                async () =>
                 {
-                    Code = code,
-                    Name = "Second Realm"
-                });
-                return TestResult.Failed("Expected 409 for duplicate code");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 409)
-            {
-                return TestResult.Successful("Correctly returned 409 for duplicate code");
-            }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+                    await realmClient.CreateRealmAsync(new CreateRealmRequest
+                    {
+                        Code = code,
+                        Name = "Second Realm"
+                    });
+                },
+                409,
+                "Duplicate code");
+        }, "Duplicate code conflict");
 
-    private static async Task<TestResult> TestSeedRealms(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSeedRealms(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = new RealmClient();
+            var realmClient = GetServiceClient<IRealmClient>();
 
             var seedRequest = new SeedRealmsRequest
             {
-                Realms = new List<SeedRealm>
-                {
+                Realms =
+                [
                     new SeedRealm
                     {
-                        Code = $"SEED_OMEGA_{DateTime.Now.Ticks}",
+                        Code = GenerateTestId("SEED_OMEGA"),
                         Name = "Omega",
                         Description = "Cyberpunk world",
                         Category = "MAIN"
                     },
                     new SeedRealm
                     {
-                        Code = $"SEED_ARCADIA_{DateTime.Now.Ticks}",
+                        Code = GenerateTestId("SEED_ARCADIA"),
                         Name = "Arcadia",
                         Description = "Fantasy world",
                         Category = "MAIN"
                     }
-                },
+                ],
                 UpdateExisting = false
             };
 
@@ -503,29 +343,19 @@ public class RealmTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Expected 2 created, got {response.Created}");
 
             return TestResult.Successful($"Seed completed: Created={response.Created}, Updated={response.Updated}, Skipped={response.Skipped}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Seed failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Seed realms");
 
-    private static async Task<TestResult> TestCompleteRealmLifecycle(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCompleteRealmLifecycle(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var realmClient = new RealmClient();
-            var testId = DateTime.Now.Ticks;
+            var realmClient = GetServiceClient<IRealmClient>();
+            var testId = GenerateTestId("LIFECYCLE_REALM");
 
             // Step 1: Create realm
             Console.WriteLine("  Step 1: Creating realm...");
             var realm = await realmClient.CreateRealmAsync(new CreateRealmRequest
             {
-                Code = $"LIFECYCLE_REALM_{testId}",
+                Code = testId,
                 Name = "Lifecycle Realm",
                 Description = "Realm for lifecycle testing",
                 Category = "TEST"
@@ -544,19 +374,13 @@ public class RealmTestHandler : IServiceTestHandler
 
             // Step 3: Verify existence
             Console.WriteLine("  Step 3: Verifying existence...");
-            var exists = await realmClient.RealmExistsAsync(new RealmExistsRequest
-            {
-                RealmId = realm.RealmId
-            });
+            var exists = await realmClient.RealmExistsAsync(new RealmExistsRequest { RealmId = realm.RealmId });
             if (!exists.Exists || !exists.IsActive)
                 return TestResult.Failed("Realm should exist and be active");
 
             // Step 4: Get by code
             Console.WriteLine("  Step 4: Verifying code lookup...");
-            var byCode = await realmClient.GetRealmByCodeAsync(new GetRealmByCodeRequest
-            {
-                Code = realm.Code
-            });
+            var byCode = await realmClient.GetRealmByCodeAsync(new GetRealmByCodeRequest { Code = realm.Code });
             if (byCode.RealmId != realm.RealmId)
                 return TestResult.Failed("Code lookup returned wrong realm");
 
@@ -573,45 +397,30 @@ public class RealmTestHandler : IServiceTestHandler
 
             // Step 6: Verify inactive after deprecation
             Console.WriteLine("  Step 6: Verifying inactive status...");
-            exists = await realmClient.RealmExistsAsync(new RealmExistsRequest
-            {
-                RealmId = realm.RealmId
-            });
+            exists = await realmClient.RealmExistsAsync(new RealmExistsRequest { RealmId = realm.RealmId });
             if (!exists.Exists || exists.IsActive)
                 return TestResult.Failed("Realm should exist but be inactive after deprecation");
 
             // Step 7: Undeprecate
             Console.WriteLine("  Step 7: Undeprecating realm...");
-            realm = await realmClient.UndeprecateRealmAsync(new UndeprecateRealmRequest
-            {
-                RealmId = realm.RealmId
-            });
+            realm = await realmClient.UndeprecateRealmAsync(new UndeprecateRealmRequest { RealmId = realm.RealmId });
 
             if (realm.IsDeprecated)
                 return TestResult.Failed("Realm should not be deprecated after undeprecation");
 
             // Step 8: Deprecate again for deletion
             Console.WriteLine("  Step 8: Deprecating again for deletion...");
-            await realmClient.DeprecateRealmAsync(new DeprecateRealmRequest
-            {
-                RealmId = realm.RealmId
-            });
+            await realmClient.DeprecateRealmAsync(new DeprecateRealmRequest { RealmId = realm.RealmId });
 
             // Step 9: Delete realm
             Console.WriteLine("  Step 9: Deleting realm...");
-            await realmClient.DeleteRealmAsync(new DeleteRealmRequest
-            {
-                RealmId = realm.RealmId
-            });
+            await realmClient.DeleteRealmAsync(new DeleteRealmRequest { RealmId = realm.RealmId });
 
             // Step 10: Verify deletion
             Console.WriteLine("  Step 10: Verifying deletion...");
             try
             {
-                await realmClient.GetRealmAsync(new GetRealmRequest
-                {
-                    RealmId = realm.RealmId
-                });
+                await realmClient.GetRealmAsync(new GetRealmRequest { RealmId = realm.RealmId });
                 return TestResult.Failed("Realm still exists after deletion");
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
@@ -620,14 +429,5 @@ public class RealmTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful("Complete realm lifecycle test passed");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Lifecycle test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Complete realm lifecycle");
 }

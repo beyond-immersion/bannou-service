@@ -1,0 +1,181 @@
+openapi: 3.0.3
+info:
+  title: Mesh Service Configuration
+  description: |
+    Configuration schema for the native service mesh plugin.
+    Properties are bound to environment variables with MESH_ prefix.
+
+    **Redis Configuration**: Mesh uses Redis for service registry storage.
+    Can share Redis with Orchestrator or use dedicated instance.
+
+    **Heartbeat Configuration**: Controls endpoint TTL and health monitoring.
+
+    **Load Balancing**: Algorithm selection and routing behavior.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # =========================================================================
+    # Local Mode (for testing/minimal infrastructure)
+    # =========================================================================
+    UseLocalRouting:
+      type: boolean
+      description: "Use local-only routing instead of Redis. All calls route to local instance. ONLY for testing/minimal infrastructure."
+      env: MESH_USE_LOCAL_ROUTING
+      default: false
+
+    # =========================================================================
+    # Redis Configuration
+    # =========================================================================
+    RedisConnectionString:
+      type: string
+      description: Redis connection string for service registry storage. REQUIRED - no default value.
+      env: MESH_REDIS_CONNECTION_STRING
+      required: true
+
+    RedisKeyPrefix:
+      type: string
+      description: Prefix for all mesh-related Redis keys
+      env: MESH_REDIS_KEY_PREFIX
+      default: "mesh:"
+
+    RedisConnectionTimeoutSeconds:
+      type: integer
+      description: Total timeout in seconds for Redis connection establishment including retries
+      env: MESH_REDIS_CONNECTION_TIMEOUT_SECONDS
+      default: 60
+
+    RedisConnectRetryCount:
+      type: integer
+      description: Maximum number of Redis connection retry attempts
+      env: MESH_REDIS_CONNECT_RETRY_COUNT
+      default: 5
+
+    RedisSyncTimeoutMs:
+      type: integer
+      description: Timeout in milliseconds for synchronous Redis operations
+      env: MESH_REDIS_SYNC_TIMEOUT_MS
+      default: 5000
+
+    # =========================================================================
+    # Heartbeat and TTL Configuration
+    # =========================================================================
+    HeartbeatIntervalSeconds:
+      type: integer
+      description: Recommended interval between heartbeats
+      env: MESH_HEARTBEAT_INTERVAL_SECONDS
+      default: 30
+
+    EndpointTtlSeconds:
+      type: integer
+      description: TTL for endpoint registration (should be > 2x heartbeat interval)
+      env: MESH_ENDPOINT_TTL_SECONDS
+      default: 90
+
+    DegradationThresholdSeconds:
+      type: integer
+      description: Time without heartbeat before marking endpoint as degraded
+      env: MESH_DEGRADATION_THRESHOLD_SECONDS
+      default: 60
+
+    # =========================================================================
+    # Load Balancing Configuration
+    # =========================================================================
+    DefaultLoadBalancer:
+      type: string
+      description: Default load balancing algorithm (RoundRobin, LeastConnections, Weighted, Random)
+      env: MESH_DEFAULT_LOAD_BALANCER
+      default: "RoundRobin"
+
+    LoadThresholdPercent:
+      type: integer
+      description: Load percentage above which an endpoint is considered high-load
+      env: MESH_LOAD_THRESHOLD_PERCENT
+      default: 80
+
+    # =========================================================================
+    # Routing Configuration
+    # =========================================================================
+    DefaultAppId:
+      type: string
+      description: Default app-id when no service mapping exists (omnipotent routing)
+      env: MESH_DEFAULT_APP_ID
+      default: "bannou"
+
+    EnableServiceMappingSync:
+      type: boolean
+      description: Whether to subscribe to FullServiceMappingsEvent for routing updates
+      env: MESH_ENABLE_SERVICE_MAPPING_SYNC
+      default: true
+
+    # =========================================================================
+    # Health Check Configuration
+    # =========================================================================
+    HealthCheckEnabled:
+      type: boolean
+      description: Whether to perform active health checks on endpoints
+      env: MESH_HEALTH_CHECK_ENABLED
+      default: false
+
+    HealthCheckIntervalSeconds:
+      type: integer
+      description: Interval between active health checks
+      env: MESH_HEALTH_CHECK_INTERVAL_SECONDS
+      default: 60
+
+    HealthCheckTimeoutSeconds:
+      type: integer
+      description: Timeout for health check requests
+      env: MESH_HEALTH_CHECK_TIMEOUT_SECONDS
+      default: 5
+
+    # =========================================================================
+    # Circuit Breaker Configuration
+    # =========================================================================
+    CircuitBreakerEnabled:
+      type: boolean
+      description: Whether to enable circuit breaker for failed endpoints
+      env: MESH_CIRCUIT_BREAKER_ENABLED
+      default: true
+
+    CircuitBreakerThreshold:
+      type: integer
+      description: Number of consecutive failures before opening circuit
+      env: MESH_CIRCUIT_BREAKER_THRESHOLD
+      default: 5
+
+    CircuitBreakerResetSeconds:
+      type: integer
+      description: Seconds before attempting to close circuit
+      env: MESH_CIRCUIT_BREAKER_RESET_SECONDS
+      default: 30
+
+    # =========================================================================
+    # Retry Configuration
+    # =========================================================================
+    MaxRetries:
+      type: integer
+      description: Maximum retry attempts for failed service calls
+      env: MESH_MAX_RETRIES
+      default: 3
+
+    RetryDelayMilliseconds:
+      type: integer
+      description: Initial delay between retries (doubles on each retry)
+      env: MESH_RETRY_DELAY_MILLISECONDS
+      default: 100
+
+    # =========================================================================
+    # Logging and Diagnostics
+    # =========================================================================
+    EnableDetailedLogging:
+      type: boolean
+      description: Whether to log detailed routing decisions
+      env: MESH_ENABLE_DETAILED_LOGGING
+      default: false
+
+    MetricsEnabled:
+      type: boolean
+      description: Whether to collect routing metrics
+      env: MESH_METRICS_ENABLED
+      default: true

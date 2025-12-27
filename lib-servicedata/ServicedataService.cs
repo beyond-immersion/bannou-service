@@ -1,8 +1,9 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
@@ -15,34 +16,34 @@ namespace BeyondImmersion.BannouService.Servicedata;
 /// Implementation of the ServiceData service.
 /// Provides a minimal registry of game services (games/applications) that users can subscribe to.
 /// </summary>
-[DaprService("servicedata", typeof(IServicedataService), lifetime: ServiceLifetime.Singleton)]
+[BannouService("servicedata", typeof(IServicedataService), lifetime: ServiceLifetime.Singleton)]
 public partial class ServicedataService : IServicedataService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<ServicedataService> _logger;
     private readonly ServicedataServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
 
-    // Key patterns for Dapr state store
+    // Key patterns for state store
     private const string SERVICE_KEY_PREFIX = "service:";
     private const string SERVICE_STUB_INDEX_PREFIX = "service-stub:";
     private const string SERVICE_LIST_KEY = "service-list";
 
     public ServicedataService(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         ILogger<ServicedataService> logger,
         ServicedataServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
 
         // Register event handlers via partial class (ServicedataServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     private string StateStoreName => _configuration.StateStoreName ?? "servicedata-statestore";
@@ -57,21 +58,17 @@ public partial class ServicedataService : IServicedataService
         try
         {
             // Get all service IDs from the index
-            var serviceIds = await _daprClient.GetStateAsync<List<string>>(
-                StateStoreName,
-                SERVICE_LIST_KEY,
-                cancellationToken: cancellationToken);
+            var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
+            var serviceIds = await listStore.GetAsync(SERVICE_LIST_KEY, cancellationToken);
 
             var services = new List<ServiceInfo>();
+            var modelStore = _stateStoreFactory.GetStore<ServiceDataModel>(StateStoreName);
 
             if (serviceIds != null)
             {
                 foreach (var serviceId in serviceIds)
                 {
-                    var serviceModel = await _daprClient.GetStateAsync<ServiceDataModel>(
-                        StateStoreName,
-                        $"{SERVICE_KEY_PREFIX}{serviceId}",
-                        cancellationToken: cancellationToken);
+                    var serviceModel = await modelStore.GetAsync($"{SERVICE_KEY_PREFIX}{serviceId}", cancellationToken);
 
                     if (serviceModel != null)
                     {
@@ -111,30 +108,23 @@ public partial class ServicedataService : IServicedataService
         try
         {
             ServiceDataModel? serviceModel = null;
+            var modelStore = _stateStoreFactory.GetStore<ServiceDataModel>(StateStoreName);
+            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreName);
 
             // Try by service ID first
             if (body.ServiceId != Guid.Empty)
             {
-                serviceModel = await _daprClient.GetStateAsync<ServiceDataModel>(
-                    StateStoreName,
-                    $"{SERVICE_KEY_PREFIX}{body.ServiceId}",
-                    cancellationToken: cancellationToken);
+                serviceModel = await modelStore.GetAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId}", cancellationToken);
             }
             // Try by stub name if not found
             else if (!string.IsNullOrWhiteSpace(body.StubName))
             {
                 // Get service ID from stub name index
-                var serviceId = await _daprClient.GetStateAsync<string>(
-                    StateStoreName,
-                    $"{SERVICE_STUB_INDEX_PREFIX}{body.StubName.ToLowerInvariant()}",
-                    cancellationToken: cancellationToken);
+                var serviceId = await stringStore.GetAsync($"{SERVICE_STUB_INDEX_PREFIX}{body.StubName.ToLowerInvariant()}", cancellationToken);
 
                 if (!string.IsNullOrEmpty(serviceId))
                 {
-                    serviceModel = await _daprClient.GetStateAsync<ServiceDataModel>(
-                        StateStoreName,
-                        $"{SERVICE_KEY_PREFIX}{serviceId}",
-                        cancellationToken: cancellationToken);
+                    serviceModel = await modelStore.GetAsync($"{SERVICE_KEY_PREFIX}{serviceId}", cancellationToken);
                 }
             }
 
@@ -178,12 +168,11 @@ public partial class ServicedataService : IServicedataService
             }
 
             var normalizedStubName = body.StubName.ToLowerInvariant();
+            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreName);
+            var modelStore = _stateStoreFactory.GetStore<ServiceDataModel>(StateStoreName);
 
             // Check if stub name already exists
-            var existingServiceId = await _daprClient.GetStateAsync<string>(
-                StateStoreName,
-                $"{SERVICE_STUB_INDEX_PREFIX}{normalizedStubName}",
-                cancellationToken: cancellationToken);
+            var existingServiceId = await stringStore.GetAsync($"{SERVICE_STUB_INDEX_PREFIX}{normalizedStubName}", cancellationToken);
 
             if (!string.IsNullOrEmpty(existingServiceId))
             {
@@ -207,18 +196,10 @@ public partial class ServicedataService : IServicedataService
             };
 
             // Save service data
-            await _daprClient.SaveStateAsync(
-                StateStoreName,
-                $"{SERVICE_KEY_PREFIX}{serviceId}",
-                serviceModel,
-                cancellationToken: cancellationToken);
+            await modelStore.SaveAsync($"{SERVICE_KEY_PREFIX}{serviceId}", serviceModel, cancellationToken: cancellationToken);
 
             // Create stub name index
-            await _daprClient.SaveStateAsync(
-                StateStoreName,
-                $"{SERVICE_STUB_INDEX_PREFIX}{normalizedStubName}",
-                serviceId.ToString(),
-                cancellationToken: cancellationToken);
+            await stringStore.SaveAsync($"{SERVICE_STUB_INDEX_PREFIX}{normalizedStubName}", serviceId.ToString(), cancellationToken: cancellationToken);
 
             // Add to service list
             await AddToServiceListAsync(serviceId.ToString(), cancellationToken);
@@ -250,11 +231,10 @@ public partial class ServicedataService : IServicedataService
                 return (StatusCodes.BadRequest, null!);
             }
 
+            var modelStore = _stateStoreFactory.GetStore<ServiceDataModel>(StateStoreName);
+
             // Get existing service
-            var serviceModel = await _daprClient.GetStateAsync<ServiceDataModel>(
-                StateStoreName,
-                $"{SERVICE_KEY_PREFIX}{body.ServiceId}",
-                cancellationToken: cancellationToken);
+            var serviceModel = await modelStore.GetAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId}", cancellationToken);
 
             if (serviceModel == null)
             {
@@ -281,11 +261,7 @@ public partial class ServicedataService : IServicedataService
             serviceModel.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
             // Save updated service
-            await _daprClient.SaveStateAsync(
-                StateStoreName,
-                $"{SERVICE_KEY_PREFIX}{body.ServiceId}",
-                serviceModel,
-                cancellationToken: cancellationToken);
+            await modelStore.SaveAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId}", serviceModel, cancellationToken: cancellationToken);
 
             _logger.LogInformation("Updated service {ServiceId}", body.ServiceId);
             return (StatusCodes.OK, MapToServiceInfo(serviceModel));
@@ -312,11 +288,11 @@ public partial class ServicedataService : IServicedataService
                 return (StatusCodes.BadRequest, null!);
             }
 
+            var modelStore = _stateStoreFactory.GetStore<ServiceDataModel>(StateStoreName);
+            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreName);
+
             // Get existing service to get stub name for index cleanup
-            var serviceModel = await _daprClient.GetStateAsync<ServiceDataModel>(
-                StateStoreName,
-                $"{SERVICE_KEY_PREFIX}{body.ServiceId}",
-                cancellationToken: cancellationToken);
+            var serviceModel = await modelStore.GetAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId}", cancellationToken);
 
             if (serviceModel == null)
             {
@@ -325,18 +301,12 @@ public partial class ServicedataService : IServicedataService
             }
 
             // Delete service data
-            await _daprClient.DeleteStateAsync(
-                StateStoreName,
-                $"{SERVICE_KEY_PREFIX}{body.ServiceId}",
-                cancellationToken: cancellationToken);
+            await modelStore.DeleteAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId}", cancellationToken);
 
             // Delete stub name index
             if (!string.IsNullOrEmpty(serviceModel.StubName))
             {
-                await _daprClient.DeleteStateAsync(
-                    StateStoreName,
-                    $"{SERVICE_STUB_INDEX_PREFIX}{serviceModel.StubName}",
-                    cancellationToken: cancellationToken);
+                await stringStore.DeleteAsync($"{SERVICE_STUB_INDEX_PREFIX}{serviceModel.StubName}", cancellationToken);
             }
 
             // Remove from service list
@@ -359,19 +329,13 @@ public partial class ServicedataService : IServicedataService
     /// </summary>
     private async Task AddToServiceListAsync(string serviceId, CancellationToken cancellationToken)
     {
-        var serviceIds = await _daprClient.GetStateAsync<List<string>>(
-            StateStoreName,
-            SERVICE_LIST_KEY,
-            cancellationToken: cancellationToken) ?? new List<string>();
+        var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
+        var serviceIds = await listStore.GetAsync(SERVICE_LIST_KEY, cancellationToken) ?? new List<string>();
 
         if (!serviceIds.Contains(serviceId))
         {
             serviceIds.Add(serviceId);
-            await _daprClient.SaveStateAsync(
-                StateStoreName,
-                SERVICE_LIST_KEY,
-                serviceIds,
-                cancellationToken: cancellationToken);
+            await listStore.SaveAsync(SERVICE_LIST_KEY, serviceIds, cancellationToken: cancellationToken);
         }
     }
 
@@ -380,18 +344,12 @@ public partial class ServicedataService : IServicedataService
     /// </summary>
     private async Task RemoveFromServiceListAsync(string serviceId, CancellationToken cancellationToken)
     {
-        var serviceIds = await _daprClient.GetStateAsync<List<string>>(
-            StateStoreName,
-            SERVICE_LIST_KEY,
-            cancellationToken: cancellationToken);
+        var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreName);
+        var serviceIds = await listStore.GetAsync(SERVICE_LIST_KEY, cancellationToken);
 
         if (serviceIds != null && serviceIds.Remove(serviceId))
         {
-            await _daprClient.SaveStateAsync(
-                StateStoreName,
-                SERVICE_LIST_KEY,
-                serviceIds,
-                cancellationToken: cancellationToken);
+            await listStore.SaveAsync(SERVICE_LIST_KEY, serviceIds, cancellationToken: cancellationToken);
         }
     }
 
@@ -420,12 +378,12 @@ public partial class ServicedataService : IServicedataService
 
     /// <summary>
     /// Registers this service's API permissions with the Permissions service on startup.
-    /// Overrides the default IDaprService implementation to use generated permission data.
+    /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()
     {
         _logger.LogInformation("Registering ServiceData service permissions...");
-        await ServicedataPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+        await ServicedataPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
     }
 
     #endregion
@@ -436,14 +394,14 @@ public partial class ServicedataService : IServicedataService
     /// Publishes an error event for unexpected/internal failures.
     /// Does NOT publish for validation errors or expected failure cases.
     /// </summary>
-    private Task PublishErrorEventAsync(
+    private async Task PublishErrorEventAsync(
         string operation,
         string errorType,
         string message,
         string? dependency = null,
         object? details = null)
     {
-        return _errorEventEmitter.TryPublishAsync(
+        await _messageBus.TryPublishErrorAsync(
             serviceId: "servicedata",
             operation: operation,
             errorType: errorType,
@@ -456,7 +414,7 @@ public partial class ServicedataService : IServicedataService
 }
 
 /// <summary>
-/// Internal storage model using Unix timestamps to avoid Dapr serialization issues.
+/// Internal storage model using Unix timestamps to avoid serialization issues.
 /// Accessible to test project via InternalsVisibleTo attribute.
 /// </summary>
 internal class ServiceDataModel

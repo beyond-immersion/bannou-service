@@ -6,26 +6,16 @@
 
 set -e
 
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+# Source common utilities
+source "$(dirname "$0")/common.sh"
 
 if [ $# -lt 2 ]; then
-    echo -e "${RED}Usage: $0 <service-name> <schema-file>${NC}"
+    log_error "Usage: $0 <service-name> <schema-file>"
     exit 1
 fi
 
 SERVICE_NAME="$1"
 SCHEMA_FILE="$2"
-
-# Helper function to convert to PascalCase
-to_pascal_case() {
-    local input="$1"
-    echo "$input" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))} 1' | sed 's/ //g'
-}
 
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
 PROJECT_DIR="../lib-${SERVICE_NAME}"
@@ -153,8 +143,9 @@ cat > "$OUTPUT_FILE" << CSHARP_EOF
 
 #nullable enable
 
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
-using Dapr.Client;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.${SERVICE_PASCAL};
@@ -186,7 +177,7 @@ public static class ${SERVICE_PASCAL}PermissionRegistration
             Timestamp = DateTimeOffset.UtcNow,
             ServiceId = ServiceId,
             Version = ServiceVersion,
-            AppId = Environment.GetEnvironmentVariable("DAPR_APP_ID") ?? "bannou",
+            AppId = AppConstants.DEFAULT_APP_NAME,
             Endpoints = GetEndpoints()
         };
     }
@@ -292,16 +283,15 @@ cat >> "$OUTPUT_FILE" << 'CSHARP_FOOTER'
 
     /// <summary>
     /// Registers service permissions via event publishing.
-    /// Should only be called after Dapr connectivity is confirmed.
+    /// Should only be called after messaging infrastructure is confirmed.
     /// </summary>
-    public static async Task RegisterViaEventAsync(DaprClient daprClient, ILogger? logger = null)
+    public static async Task RegisterViaEventAsync(IMessageBus messageBus, ILogger? logger = null)
     {
         try
         {
             var registrationEvent = CreateRegistrationEvent();
 
-            await daprClient.PublishEventAsync(
-                "bannou-pubsub",
+            await messageBus.PublishAsync(
                 "permissions.service-registered",
                 registrationEvent);
 

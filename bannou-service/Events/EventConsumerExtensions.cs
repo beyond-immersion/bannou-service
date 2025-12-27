@@ -24,7 +24,7 @@ public static class EventConsumerExtensions
     /// <typeparam name="TService">The service type that handles the event.</typeparam>
     /// <typeparam name="TEvent">The event type.</typeparam>
     /// <param name="eventConsumer">The event consumer.</param>
-    /// <param name="topicName">The Dapr topic name.</param>
+    /// <param name="topicName">The message topic name.</param>
     /// <param name="handler">The handler method on the service.</param>
     public static void RegisterHandler<TService, TEvent>(
         this IEventConsumer eventConsumer,

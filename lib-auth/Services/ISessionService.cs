@@ -162,13 +162,13 @@ public class SessionDataModel
 
     /// <summary>
     /// Session creation time as Unix timestamp.
-    /// Store as Unix epoch timestamps (long) to avoid Dapr/System.Text.Json DateTimeOffset serialization bugs.
+    /// Store as Unix epoch timestamps (long) to avoid System.Text.Json DateTimeOffset serialization issues.
     /// </summary>
     public long CreatedAtUnix { get; set; }
 
     /// <summary>
     /// Session expiration time as Unix timestamp.
-    /// Store as Unix epoch timestamps (long) to avoid Dapr/System.Text.Json DateTimeOffset serialization bugs.
+    /// Store as Unix epoch timestamps (long) to avoid System.Text.Json DateTimeOffset serialization issues.
     /// </summary>
     public long ExpiresAtUnix { get; set; }
 

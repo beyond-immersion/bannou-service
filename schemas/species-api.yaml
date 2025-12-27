@@ -6,7 +6,7 @@ info:
 
     **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
-    See API-DESIGN.md for architectural rationale.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
 
     Species define the playable and NPC races in each realm. Each species has unique
     traits, abilities, and cultural characteristics. Species are realm-specific,
@@ -30,8 +30,8 @@ info:
     3. Optionally hard-delete the deprecated species after merge
   version: 2.0.0
 servers:
-- url: http://localhost:3500/v1.0/invoke/bannou/method
-  description: Dapr sidecar endpoint (internal only)
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
 
 # NOTE: x-lifecycle moved to species-events.yaml
 

@@ -1,0 +1,581 @@
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Minio;
+using Minio.DataModel.Args;
+using StorageModels = BeyondImmersion.BannouService.Storage;
+
+namespace BeyondImmersion.BannouService.Asset.Storage;
+
+/// <summary>
+/// MinIO/S3-compatible implementation of the asset storage provider.
+/// Supports pre-signed URLs, multipart uploads, versioning, and object management.
+/// </summary>
+public class MinioStorageProvider : StorageModels.IAssetStorageProvider
+{
+    private readonly IMinioClient _minioClient;
+    private readonly MinioStorageOptions _options;
+    private readonly ILogger<MinioStorageProvider> _logger;
+    private readonly IMessageBus _messageBus;
+
+    /// <inheritdoc />
+    public string ProviderName => "MinIO";
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MinioStorageProvider"/> class.
+    /// </summary>
+    /// <param name="minioClient">MinIO client for storage operations.</param>
+    /// <param name="options">Storage configuration options.</param>
+    /// <param name="logger">Logger for diagnostic output.</param>
+    /// <param name="messageBus">Message bus for error event publishing.</param>
+    public MinioStorageProvider(
+        IMinioClient minioClient,
+        IOptions<MinioStorageOptions> options,
+        ILogger<MinioStorageProvider> logger,
+        IMessageBus messageBus)
+    {
+        _minioClient = minioClient ?? throw new ArgumentNullException(nameof(minioClient));
+        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+    }
+
+    /// <inheritdoc />
+    public async Task<StorageModels.PreSignedUploadResult> GenerateUploadUrlAsync(
+        string bucket,
+        string key,
+        string contentType,
+        long expectedSize,
+        TimeSpan expiration,
+        IDictionary<string, string>? metadata = null)
+    {
+        _logger.LogDebug("Generating upload URL for {Bucket}/{Key}, contentType={ContentType}, size={Size}",
+            bucket, key, contentType, expectedSize);
+
+        try
+        {
+            var reqParams = new Dictionary<string, string>
+            {
+                { "Content-Type", contentType }
+            };
+
+            // Add custom metadata headers
+            var requiredHeaders = new Dictionary<string, string>
+            {
+                { "Content-Type", contentType }
+            };
+
+            if (metadata != null)
+            {
+                foreach (var kvp in metadata)
+                {
+                    reqParams[$"x-amz-meta-{kvp.Key}"] = kvp.Value;
+                    requiredHeaders[$"x-amz-meta-{kvp.Key}"] = kvp.Value;
+                }
+            }
+
+            var presignedUrl = await _minioClient.PresignedPutObjectAsync(
+                new PresignedPutObjectArgs()
+                    .WithBucket(bucket)
+                    .WithObject(key)
+                    .WithExpiry((int)expiration.TotalSeconds)
+                    .WithHeaders(reqParams))
+                .ConfigureAwait(false);
+
+            return new StorageModels.PreSignedUploadResult(
+                presignedUrl,
+                key,
+                DateTime.UtcNow.Add(expiration),
+                requiredHeaders);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to generate upload URL for {Bucket}/{Key}", bucket, key);
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "MinioStorageProvider.GenerateUploadUrlAsync",
+                "storage_error",
+                ex.Message,
+                dependency: "minio",
+                endpoint: $"PUT {bucket}/{key}",
+                details: null,
+                stack: ex.StackTrace);
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<StorageModels.PreSignedDownloadResult> GenerateDownloadUrlAsync(
+        string bucket,
+        string key,
+        string? versionId = null,
+        TimeSpan? expiration = null)
+    {
+        _logger.LogDebug("Generating download URL for {Bucket}/{Key}, versionId={VersionId}",
+            bucket, key, versionId);
+
+        var effectiveExpiration = expiration ?? _options.DefaultUrlExpiration;
+
+        var args = new PresignedGetObjectArgs()
+            .WithBucket(bucket)
+            .WithObject(key)
+            .WithExpiry((int)effectiveExpiration.TotalSeconds);
+
+        // Add version ID as request parameter if specified
+        if (!string.IsNullOrEmpty(versionId))
+        {
+            var reqParams = new Dictionary<string, string> { { "versionId", versionId } };
+            args.WithHeaders(reqParams);
+        }
+
+        var presignedUrl = await _minioClient.PresignedGetObjectAsync(args).ConfigureAwait(false);
+
+        // Get object metadata for content info
+        StorageModels.ObjectMetadata? objectMetadata = null;
+        try
+        {
+            objectMetadata = await GetObjectMetadataAsync(bucket, key, versionId).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not retrieve metadata for {Bucket}/{Key}", bucket, key);
+        }
+
+        return new StorageModels.PreSignedDownloadResult(
+            presignedUrl,
+            key,
+            versionId,
+            DateTime.UtcNow.Add(effectiveExpiration),
+            objectMetadata?.ContentLength,
+            objectMetadata?.ContentType);
+    }
+
+    /// <inheritdoc />
+    public async Task<StorageModels.MultipartUploadResult> InitiateMultipartUploadAsync(
+        string bucket,
+        string key,
+        string contentType,
+        int partCount,
+        TimeSpan partUrlExpiration)
+    {
+        _logger.LogDebug("Initiating multipart upload for {Bucket}/{Key}, partCount={PartCount}",
+            bucket, key, partCount);
+
+        // MinIO SDK v7 handles multipart uploads internally
+        // For client-side multipart, we generate individual pre-signed PUT URLs for each part
+        // which will be composed on completion
+
+        // Generate a unique upload ID for tracking
+        var uploadId = Guid.NewGuid().ToString("N");
+
+        var parts = new List<StorageModels.PartUploadInfo>();
+        for (int i = 1; i <= partCount; i++)
+        {
+            // Generate individual pre-signed PUT URLs for each part
+            var partKey = $"{key}.part{i}";
+            var partUrl = await _minioClient.PresignedPutObjectAsync(
+                new PresignedPutObjectArgs()
+                    .WithBucket(bucket)
+                    .WithObject(partKey)
+                    .WithExpiry((int)partUrlExpiration.TotalSeconds))
+                .ConfigureAwait(false);
+
+            parts.Add(new StorageModels.PartUploadInfo(
+                i,
+                partUrl,
+                i < partCount ? _options.MinPartSize : 0, // Last part can be smaller
+                _options.MaxPartSize));
+        }
+
+        return new StorageModels.MultipartUploadResult(
+            uploadId,
+            key,
+            parts,
+            DateTime.UtcNow.Add(partUrlExpiration));
+    }
+
+    /// <inheritdoc />
+    public async Task<StorageModels.AssetReference> CompleteMultipartUploadAsync(
+        string bucket,
+        string key,
+        string uploadId,
+        IList<StorageModels.StorageCompletedPart> parts)
+    {
+        _logger.LogDebug("Completing multipart upload for {Bucket}/{Key}, uploadId={UploadId}, parts={PartCount}",
+            bucket, key, uploadId, parts.Count);
+
+        // Since we used individual part uploads, we need to concatenate them
+        // MinIO SDK v7 doesn't have ComposeObject - we'll use ConcatObjects via CopyObject with sources
+        var partKeys = parts.OrderBy(p => p.PartNumber)
+            .Select(p => $"{key}.part{p.PartNumber}")
+            .ToList();
+
+        // For simplicity with SDK v7, we'll use a streaming approach:
+        // Download and re-upload concatenated content
+        // In production, consider using native S3 multipart API via HTTP client
+        using var outputStream = new MemoryStream();
+
+        foreach (var partKey in partKeys)
+        {
+            await _minioClient.GetObjectAsync(
+                new GetObjectArgs()
+                    .WithBucket(bucket)
+                    .WithObject(partKey)
+                    .WithCallbackStream(stream => stream.CopyTo(outputStream)))
+                .ConfigureAwait(false);
+        }
+
+        outputStream.Position = 0;
+
+        // Upload the concatenated object
+        await _minioClient.PutObjectAsync(
+            new PutObjectArgs()
+                .WithBucket(bucket)
+                .WithObject(key)
+                .WithStreamData(outputStream)
+                .WithObjectSize(outputStream.Length))
+            .ConfigureAwait(false);
+
+        // Clean up part objects
+        foreach (var partKey in partKeys)
+        {
+            try
+            {
+                await _minioClient.RemoveObjectAsync(
+                    new RemoveObjectArgs()
+                        .WithBucket(bucket)
+                        .WithObject(partKey))
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to clean up part object {PartKey}", partKey);
+            }
+        }
+
+        // Get the final object metadata
+        var stat = await _minioClient.StatObjectAsync(
+            new StatObjectArgs()
+                .WithBucket(bucket)
+                .WithObject(key))
+            .ConfigureAwait(false);
+
+        return new StorageModels.AssetReference(
+            bucket,
+            key,
+            stat.VersionId,
+            stat.ETag,
+            stat.Size,
+            stat.LastModified);
+    }
+
+    /// <inheritdoc />
+    public async Task AbortMultipartUploadAsync(
+        string bucket,
+        string key,
+        string uploadId)
+    {
+        _logger.LogDebug("Aborting multipart upload for {Bucket}/{Key}, uploadId={UploadId}",
+            bucket, key, uploadId);
+
+        // Clean up any uploaded part objects
+        var partPrefix = $"{key}.part";
+        var listArgs = new ListObjectsArgs()
+            .WithBucket(bucket)
+            .WithPrefix(partPrefix);
+
+        var objectsToDelete = new List<string>();
+        await foreach (var item in _minioClient.ListObjectsEnumAsync(listArgs))
+        {
+            objectsToDelete.Add(item.Key);
+        }
+
+        foreach (var partKey in objectsToDelete)
+        {
+            try
+            {
+                await _minioClient.RemoveObjectAsync(
+                    new RemoveObjectArgs()
+                        .WithBucket(bucket)
+                        .WithObject(partKey))
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to delete part object {PartKey} during abort", partKey);
+            }
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<StorageModels.AssetReference> CopyObjectAsync(
+        string sourceBucket,
+        string sourceKey,
+        string destBucket,
+        string destKey,
+        string? sourceVersionId = null)
+    {
+        _logger.LogDebug("Copying object from {SrcBucket}/{SrcKey} to {DstBucket}/{DstKey}",
+            sourceBucket, sourceKey, destBucket, destKey);
+
+        try
+        {
+            var copySourceArgs = new CopySourceObjectArgs()
+                .WithBucket(sourceBucket)
+                .WithObject(sourceKey);
+
+            if (!string.IsNullOrEmpty(sourceVersionId))
+            {
+                copySourceArgs.WithVersionId(sourceVersionId);
+            }
+
+            await _minioClient.CopyObjectAsync(
+                new CopyObjectArgs()
+                    .WithBucket(destBucket)
+                    .WithObject(destKey)
+                    .WithCopyObjectSource(copySourceArgs))
+                .ConfigureAwait(false);
+
+            // Get the copied object's metadata
+            var stat = await _minioClient.StatObjectAsync(
+                new StatObjectArgs()
+                    .WithBucket(destBucket)
+                    .WithObject(destKey))
+                .ConfigureAwait(false);
+
+            return new StorageModels.AssetReference(
+                destBucket,
+                destKey,
+                stat.VersionId,
+                stat.ETag,
+                stat.Size,
+                stat.LastModified);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to copy object from {SrcBucket}/{SrcKey} to {DstBucket}/{DstKey}",
+                sourceBucket, sourceKey, destBucket, destKey);
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "MinioStorageProvider.CopyObjectAsync",
+                "storage_error",
+                ex.Message,
+                dependency: "minio",
+                endpoint: $"COPY {sourceBucket}/{sourceKey} -> {destBucket}/{destKey}",
+                details: null,
+                stack: ex.StackTrace);
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteObjectAsync(
+        string bucket,
+        string key,
+        string? versionId = null)
+    {
+        _logger.LogDebug("Deleting object {Bucket}/{Key}, versionId={VersionId}",
+            bucket, key, versionId);
+
+        var args = new RemoveObjectArgs()
+            .WithBucket(bucket)
+            .WithObject(key);
+
+        if (!string.IsNullOrEmpty(versionId))
+        {
+            args.WithVersionId(versionId);
+        }
+
+        await _minioClient.RemoveObjectAsync(args).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<IList<StorageModels.ObjectVersionInfo>> ListVersionsAsync(
+        string bucket,
+        string keyPrefix)
+    {
+        _logger.LogDebug("Listing versions for {Bucket}/{KeyPrefix}", bucket, keyPrefix);
+
+        var versions = new List<StorageModels.ObjectVersionInfo>();
+
+        var args = new ListObjectsArgs()
+            .WithBucket(bucket)
+            .WithPrefix(keyPrefix)
+            .WithVersions(true);
+
+        await foreach (var item in _minioClient.ListObjectsEnumAsync(args))
+        {
+            // MinIO SDK v7 Item: IsDeleteMarker and StorageClass may not be available
+            // MinIO uses "STANDARD" for all objects by default; tier transitions require ILM rules
+            versions.Add(new StorageModels.ObjectVersionInfo(
+                item.VersionId ?? "null",
+                item.IsLatest,
+                item.LastModifiedDateTime ?? DateTime.MinValue,
+                (long)item.Size,
+                item.ETag ?? string.Empty,
+                IsDeleteMarker: false,
+                StorageClass: "STANDARD")); // MinIO defaults to STANDARD; real archival needs ILM rules
+        }
+
+        return versions;
+    }
+
+    /// <inheritdoc />
+    public async Task<StorageModels.ObjectMetadata> GetObjectMetadataAsync(
+        string bucket,
+        string key,
+        string? versionId = null)
+    {
+        _logger.LogDebug("Getting metadata for {Bucket}/{Key}, versionId={VersionId}",
+            bucket, key, versionId);
+
+        var args = new StatObjectArgs()
+            .WithBucket(bucket)
+            .WithObject(key);
+
+        if (!string.IsNullOrEmpty(versionId))
+        {
+            args.WithVersionId(versionId);
+        }
+
+        var stat = await _minioClient.StatObjectAsync(args).ConfigureAwait(false);
+
+        return new StorageModels.ObjectMetadata(
+            key,
+            stat.VersionId,
+            stat.ContentType,
+            stat.Size,
+            stat.ETag,
+            stat.LastModified,
+            stat.MetaData ?? new Dictionary<string, string>());
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> ObjectExistsAsync(
+        string bucket,
+        string key,
+        string? versionId = null)
+    {
+        _logger.LogDebug("Checking if object exists: {Bucket}/{Key}, versionId={VersionId}",
+            bucket, key, versionId);
+
+        try
+        {
+            var args = new StatObjectArgs()
+                .WithBucket(bucket)
+                .WithObject(key);
+
+            if (!string.IsNullOrEmpty(versionId))
+            {
+                args.WithVersionId(versionId);
+            }
+
+            await _minioClient.StatObjectAsync(args).ConfigureAwait(false);
+            return true;
+        }
+        catch (Minio.Exceptions.ObjectNotFoundException)
+        {
+            return false;
+        }
+        catch (Minio.Exceptions.BucketNotFoundException)
+        {
+            return false;
+        }
+    }
+
+    /// <inheritdoc />
+    public bool SupportsCapability(StorageModels.StorageCapability capability)
+    {
+        return capability switch
+        {
+            StorageModels.StorageCapability.Versioning => true,
+            StorageModels.StorageCapability.MultipartUpload => true,
+            StorageModels.StorageCapability.EventNotifications => true,
+            StorageModels.StorageCapability.ObjectLocking => true,
+            StorageModels.StorageCapability.ServerSideEncryption => true,
+            StorageModels.StorageCapability.ObjectTagging => true,
+            StorageModels.StorageCapability.PreSignedUrls => true,
+            StorageModels.StorageCapability.CustomMetadata => true,
+            _ => false
+        };
+    }
+
+    /// <inheritdoc />
+    public async Task<Stream> GetObjectAsync(
+        string bucket,
+        string key,
+        string? versionId = null)
+    {
+        _logger.LogDebug("Getting object: {Bucket}/{Key}, versionId={VersionId}",
+            bucket, key, versionId);
+
+        var memoryStream = new MemoryStream();
+
+        var args = new GetObjectArgs()
+            .WithBucket(bucket)
+            .WithObject(key)
+            .WithCallbackStream(stream => stream.CopyTo(memoryStream));
+
+        if (!string.IsNullOrEmpty(versionId))
+        {
+            args.WithVersionId(versionId);
+        }
+
+        await _minioClient.GetObjectAsync(args).ConfigureAwait(false);
+
+        memoryStream.Position = 0;
+        return memoryStream;
+    }
+
+    /// <inheritdoc />
+    public async Task<StorageModels.AssetReference> PutObjectAsync(
+        string bucket,
+        string key,
+        Stream content,
+        long contentLength,
+        string contentType,
+        IDictionary<string, string>? metadata = null)
+    {
+        _logger.LogDebug("Putting object: {Bucket}/{Key}, contentType={ContentType}, size={Size}",
+            bucket, key, contentType, contentLength);
+
+        try
+        {
+            var args = new PutObjectArgs()
+                .WithBucket(bucket)
+                .WithObject(key)
+                .WithStreamData(content)
+                .WithObjectSize(contentLength)
+                .WithContentType(contentType);
+
+            if (metadata != null)
+            {
+                args.WithHeaders(metadata);
+            }
+
+            var response = await _minioClient.PutObjectAsync(args).ConfigureAwait(false);
+
+            return new StorageModels.AssetReference(
+                bucket,
+                key,
+                null, // Version ID not available in simple put response
+                response.Etag,
+                contentLength,
+                DateTime.UtcNow);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to put object {Bucket}/{Key}", bucket, key);
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "MinioStorageProvider.PutObjectAsync",
+                "storage_error",
+                ex.Message,
+                dependency: "minio",
+                endpoint: $"PUT {bucket}/{key}",
+                details: null,
+                stack: ex.StackTrace);
+            throw;
+        }
+    }
+}

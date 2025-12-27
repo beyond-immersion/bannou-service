@@ -69,9 +69,9 @@ public partial class BaseClientEvent
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -169,9 +169,9 @@ public partial class ClientCapabilityEntry
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        get => _additionalProperties;
         set { _additionalProperties = value; }
     }
 
@@ -363,6 +363,237 @@ public partial class SystemNotificationEvent : BaseClientEvent
 
 }
 
+/// <summary>
+/// Published by services to create or update a session shortcut.
+/// <br/>Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
+/// <br/>Connect handles this event internally and does NOT forward to the client.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ShortcutPublishedEvent : BaseClientEvent
+{
+
+    /// <summary>
+    /// Fixed event type identifier.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ShortcutPublishedEventEvent_name Event_name { get; set; } = default!;
+
+    /// <summary>
+    /// Target session for this shortcut.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("session_id")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Session_id { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("shortcut")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public SessionShortcut Shortcut { get; set; } = new SessionShortcut();
+
+    /// <summary>
+    /// If true and a shortcut with the same route_guid exists, replace it.
+    /// <br/>If false and shortcut exists, the event is ignored.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("replace_existing")]
+    public bool Replace_existing { get; set; } = true;
+
+}
+
+/// <summary>
+/// Published by services to remove shortcuts.
+/// <br/>Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
+/// <br/>Supports both single-shortcut revocation (by route_guid) and
+/// <br/>bulk revocation (all shortcuts from a source_service).
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ShortcutRevokedEvent : BaseClientEvent
+{
+
+    /// <summary>
+    /// Fixed event type identifier.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ShortcutRevokedEventEvent_name Event_name { get; set; } = default!;
+
+    /// <summary>
+    /// Target session for revocation.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("session_id")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Session_id { get; set; } = default!;
+
+    /// <summary>
+    /// Specific shortcut to revoke.
+    /// <br/>If provided, only this shortcut is removed.
+    /// <br/>Mutually exclusive with revoke_by_service.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("route_guid")]
+    public System.Guid? Route_guid { get; set; } = default!;
+
+    /// <summary>
+    /// Revoke ALL shortcuts from this source service.
+    /// <br/>Used when a service needs to clear all its shortcuts.
+    /// <br/>Mutually exclusive with route_guid.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("revoke_by_service")]
+    public string? Revoke_by_service { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for revocation (for logging/debugging).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A pre-bound API call that clients can invoke with a single GUID.
+/// <br/>The bound_payload is injected by Connect when the shortcut is invoked.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SessionShortcut
+{
+
+    /// <summary>
+    /// Client-salted GUID for invoking this shortcut.
+    /// <br/>Uses UUID version 7 bits to distinguish from service GUIDs (version 5).
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("route_guid")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid Route_guid { get; set; } = default!;
+
+    /// <summary>
+    /// The actual service capability GUID this shortcut invokes.
+    /// <br/>Must be a valid capability in the client's current capability manifest.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("target_guid")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid Target_guid { get; set; } = default!;
+
+    /// <summary>
+    /// Pre-serialized JSON payload passed unchanged to the target service.
+    /// <br/>Connect treats this as opaque bytes - no deserialization or modification.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bound_payload")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Bound_payload { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public SessionShortcutMetadata Metadata { get; set; } = new SessionShortcutMetadata();
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Metadata about a session shortcut for display, debugging, and lifecycle management.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SessionShortcutMetadata
+{
+
+    /// <summary>
+    /// Machine-readable identifier for this shortcut.
+    /// <br/>Examples: "join_game_arcadia", "get_my_stats"
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable description of what this shortcut does.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// The service that created this shortcut.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("source_service")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Source_service { get; set; } = default!;
+
+    /// <summary>
+    /// The target service for routing.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("target_service")]
+    public string Target_service { get; set; } = default!;
+
+    /// <summary>
+    /// The target HTTP method for routing.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("target_method")]
+    public string Target_method { get; set; } = "POST";
+
+    /// <summary>
+    /// The target endpoint for routing.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("target_endpoint")]
+    public string Target_endpoint { get; set; } = default!;
+
+    /// <summary>
+    /// When this shortcut was created.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("created_at")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset Created_at { get; set; } = default!;
+
+    /// <summary>
+    /// Optional TTL for this shortcut.
+    /// <br/>If set, Connect automatically removes the shortcut after this time.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expires_at")]
+    public System.DateTimeOffset? Expires_at { get; set; } = default!;
+
+    /// <summary>
+    /// Optional categorization tags for client-side organization.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+
+    /// <summary>
+    /// Optional user-friendly name for display in client UIs.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("display_name")]
+    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    public string? Display_name { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum CapabilityManifestEventEvent_name
 {
@@ -435,6 +666,24 @@ public enum SystemNotificationEventNotification_type
 
     [System.Runtime.Serialization.EnumMember(Value = @"announcement")]
     Announcement = 3,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ShortcutPublishedEventEvent_name
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"session.shortcut_published")]
+    Session_shortcut_published = 0,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ShortcutRevokedEventEvent_name
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"session.shortcut_revoked")]
+    Session_shortcut_revoked = 0,
 
 }
 

@@ -7,16 +7,8 @@ namespace BeyondImmersion.BannouService.Testing;
 /// Testing controller for infrastructure validation - provides endpoints to verify enabled services.
 /// This controller is manually created (not schema-generated) as it's for internal infrastructure testing.
 /// </summary>
-/// <remarks>
-/// Two routes are needed:
-/// - "testing" for direct HTTP access (infrastructure tests)
-/// - "v1.0/invoke/bannou/method/testing" for WebSocket access via Dapr (edge tests)
-/// Dapr does NOT strip the /v1.0/invoke/{appId}/method/ prefix when forwarding requests,
-/// so generated controllers include this prefix. Manual controllers must do the same.
-/// </remarks>
 [ApiController]
 [Route("testing")]
-[Route("v1.0/invoke/bannou/method/testing")]
 public class TestingController : ControllerBase
 {
     private readonly ITestingService _testingService;
@@ -286,12 +278,8 @@ public class TestingController : ControllerBase
 
     /// <summary>
     /// Debug endpoint to log and return the actual HTTP request path received by the controller.
-    /// This helps diagnose routing issues, particularly for verifying Dapr path handling.
+    /// This helps diagnose routing issues, particularly for verifying mesh path handling.
     /// </summary>
-    /// <remarks>
-    /// When Dapr forwards requests, it may strip the /v1.0/invoke/{app-id}/method/ prefix.
-    /// This endpoint allows us to verify exactly what path the controller receives.
-    /// </remarks>
     [HttpGet("debug/path")]
     [HttpPost("debug/path")]
     public IActionResult DebugPath()
@@ -388,7 +376,7 @@ public class TestingController : ControllerBase
         var allowedHeaders = new[]
         {
             "Host", "Content-Type", "Accept", "User-Agent",
-            "dapr-app-id", "dapr-caller-app-id", "traceparent", "tracestate",
+            "bannou-app-id", "bannou-caller-app-id", "traceparent", "tracestate",
             "X-Forwarded-For", "X-Forwarded-Proto", "X-Forwarded-Host"
         };
 
@@ -426,8 +414,8 @@ public class TestingController : ControllerBase
     {
         try
         {
-            // This uses the IDaprService.EnabledServices from the new architecture
-            return BeyondImmersion.BannouService.Services.IDaprService.EnabledServices.Length;
+            // This uses the IBannouService.EnabledServices from the new architecture
+            return BeyondImmersion.BannouService.Services.IBannouService.EnabledServices.Length;
         }
         catch
         {

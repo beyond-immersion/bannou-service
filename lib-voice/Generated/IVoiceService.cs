@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.Voice;
 /// <summary>
 /// Service interface for Voice API
 /// </summary>
-public partial interface IVoiceService : IDaprService
+public partial interface IVoiceService : IBannouService
 {
     /// <summary>
     /// CreateVoiceRoom operation

@@ -1,9 +1,10 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Orchestrator;
+using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
 using LibOrchestrator;
 using LibOrchestrator.Backends;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,22 +18,21 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 /// <summary>
 /// Implementation of the Orchestrator service.
 /// This class contains the business logic for all Orchestrator operations.
-/// CRITICAL: Uses direct Redis/RabbitMQ connections (NOT Dapr) to avoid chicken-and-egg dependency.
+/// Uses lib-state and lib-messaging infrastructure for state management and event publishing.
 /// </summary>
-[DaprService("orchestrator", typeof(IOrchestratorService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("orchestrator", typeof(IOrchestratorService), lifetime: ServiceLifetime.Scoped)]
 public partial class OrchestratorService : IOrchestratorService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<OrchestratorService> _logger;
     private readonly OrchestratorServiceConfiguration _configuration;
-    private readonly IOrchestratorRedisManager _redisManager;
+    private readonly IOrchestratorStateManager _stateManager;
     private readonly IOrchestratorEventManager _eventManager;
     private readonly IServiceHealthMonitor _healthMonitor;
     private readonly ISmartRestartManager _restartManager;
     private readonly IBackendDetector _backendDetector;
     private readonly PresetLoader _presetLoader;
     private readonly ILoggerFactory _loggerFactory;
-    private readonly IErrorEventEmitter _errorEventEmitter;
 
     /// <summary>
     /// Cached orchestrator instance for container operations.
@@ -44,7 +44,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private DateTimeOffset _orchestratorCachedAt;
 
-    private const string STATE_STORE = "orchestrator-store";
+    private const string STATE_STORE = "orchestrator-statestore";
     private const string CONFIG_VERSION_KEY = "orchestrator:config:version";
 
     /// <summary>
@@ -53,36 +53,52 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private const string DEFAULT_PRESET = "bannou";
 
+    /// <summary>
+    /// Infrastructure services that should NEVER be included in routing mappings.
+    /// These services must always be handled by the local node, never delegated to another instance.
+    /// </summary>
+    private static readonly HashSet<string> InfrastructureServices = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "state",
+        "messaging",
+        "mesh"
+    };
+
+    /// <summary>
+    /// Checks if a service name is an infrastructure service that should never be routed.
+    /// </summary>
+    private static bool IsInfrastructureService(string serviceName) =>
+        InfrastructureServices.Contains(serviceName);
+
     public OrchestratorService(
-        DaprClient daprClient,
+        IMessageBus messageBus,
         ILogger<OrchestratorService> logger,
         ILoggerFactory loggerFactory,
         OrchestratorServiceConfiguration configuration,
-        IOrchestratorRedisManager redisManager,
+        IOrchestratorStateManager stateManager,
         IOrchestratorEventManager eventManager,
         IServiceHealthMonitor healthMonitor,
         ISmartRestartManager restartManager,
         IBackendDetector backendDetector,
-        IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _redisManager = redisManager ?? throw new ArgumentNullException(nameof(redisManager));
+        _stateManager = stateManager ?? throw new ArgumentNullException(nameof(stateManager));
         _eventManager = eventManager ?? throw new ArgumentNullException(nameof(eventManager));
         _healthMonitor = healthMonitor ?? throw new ArgumentNullException(nameof(healthMonitor));
         _restartManager = restartManager ?? throw new ArgumentNullException(nameof(restartManager));
         _backendDetector = backendDetector ?? throw new ArgumentNullException(nameof(backendDetector));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
 
-        // Create preset loader
-        _presetLoader = new PresetLoader(_loggerFactory.CreateLogger<PresetLoader>());
+        // Create preset loader with configured presets directory
+        var presetsPath = configuration.PresetsHostPath ?? "/app/provisioning/orchestrator/presets";
+        _presetLoader = new PresetLoader(_loggerFactory.CreateLogger<PresetLoader>(), presetsPath);
 
         // Register event handlers via partial class (OrchestratorServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>
@@ -94,7 +110,7 @@ public partial class OrchestratorService : IOrchestratorService
         if (_orchestrator != null)
         {
             // Check if TTL has expired (0 = caching disabled)
-            var ttlMinutes = _configuration.OrchestratorCacheTtlMinutes;
+            var ttlMinutes = _configuration.CacheTtlMinutes;
             if (ttlMinutes > 0)
             {
                 var cacheAge = DateTimeOffset.UtcNow - _orchestratorCachedAt;
@@ -151,38 +167,39 @@ public partial class OrchestratorService : IOrchestratorService
             var components = new List<ComponentHealth>();
             var overallHealthy = true;
 
-            // Check Redis connectivity
-            var (redisHealthy, redisMessage, redisPing) = await _redisManager.CheckHealthAsync();
+            // Check state store connectivity
+            var (stateHealthy, stateMessage, stateOpTime) = await _stateManager.CheckHealthAsync();
             components.Add(new ComponentHealth
             {
-                Name = "redis",
-                Status = redisHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
+                Name = "statestore",
+                Status = stateHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
                 LastSeen = DateTimeOffset.UtcNow,
-                Message = redisMessage ?? string.Empty,
-                Metrics = redisPing.HasValue
-                    ? (object)new Dictionary<string, object> { { "pingTimeMs", redisPing.Value.TotalMilliseconds } }
+                Message = stateMessage ?? string.Empty,
+                Metrics = stateOpTime.HasValue
+                    ? (object)new Dictionary<string, object> { { "operationTimeMs", stateOpTime.Value.TotalMilliseconds } }
                     : new Dictionary<string, object>()
             });
-            overallHealthy = overallHealthy && redisHealthy;
+            overallHealthy = overallHealthy && stateHealthy;
 
-            // Check pub/sub path (Dapr) by publishing a tiny health probe
+            // Check pub/sub path by publishing a tiny health probe
             bool pubsubHealthy;
             string pubsubMessage;
             try
             {
-                await _daprClient.PublishEventAsync(
-                    "bannou-pubsub",
-                    "orchestrator-health",
-                    new { ping = "ok" },
-                    cancellationToken);
+                await _messageBus.PublishAsync("orchestrator-health", new OrchestratorHealthPingEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    Status = OrchestratorHealthPingEventStatus.Ok
+                });
                 pubsubHealthy = true;
-                pubsubMessage = "Dapr pub/sub path active";
+                pubsubMessage = "Message bus pub/sub path active";
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Dapr pub/sub health check failed");
+                _logger.LogWarning(ex, "Message bus pub/sub health check failed");
                 pubsubHealthy = false;
-                pubsubMessage = $"Dapr pub/sub check failed: {ex.Message}";
+                pubsubMessage = $"Pub/sub check failed: {ex.Message}";
             }
             components.Add(new ComponentHealth
             {
@@ -193,31 +210,32 @@ public partial class OrchestratorService : IOrchestratorService
             });
             overallHealthy = overallHealthy && pubsubHealthy;
 
-            // Check Dapr sidecar health via metadata endpoint
-            bool daprHealthy;
-            string daprMessage;
+            // Check messaging infrastructure health
+            bool messagingHealthy;
+            string messagingMessage;
             try
             {
-                var metadata = await _daprClient.GetMetadataAsync(cancellationToken);
-                daprHealthy = metadata != null;
-                daprMessage = daprHealthy
-                    ? "Dapr sidecar responding"
-                    : "Dapr sidecar not responding";
+                // If we got here and the messageBus is not null, the infrastructure is healthy
+                // The actual pub/sub test above validates connectivity
+                messagingHealthy = _messageBus != null;
+                messagingMessage = messagingHealthy
+                    ? "Messaging infrastructure available"
+                    : "Messaging infrastructure unavailable";
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Dapr sidecar health check failed");
-                daprHealthy = false;
-                daprMessage = $"Dapr sidecar check failed: {ex.Message}";
+                _logger.LogWarning(ex, "Messaging infrastructure health check failed");
+                messagingHealthy = false;
+                messagingMessage = $"Messaging check failed: {ex.Message}";
             }
             components.Add(new ComponentHealth
             {
-                Name = "dapr",
-                Status = daprHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
+                Name = "messaging",
+                Status = messagingHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
                 LastSeen = DateTimeOffset.UtcNow,
-                Message = daprMessage
+                Message = messagingMessage
             });
-            overallHealthy = overallHealthy && daprHealthy;
+            overallHealthy = overallHealthy && messagingHealthy;
 
             var response = new InfrastructureHealthResponse
             {
@@ -232,6 +250,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetInfrastructureHealth operation");
+            await PublishErrorEventAsync("GetInfrastructureHealth", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -252,6 +271,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetServicesHealth operation");
+            await PublishErrorEventAsync("GetServicesHealth", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -287,6 +307,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing RestartService operation");
+            await PublishErrorEventAsync("RestartService", ex.GetType().Name, ex.Message, details: new { ServiceName = body.ServiceName });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -307,6 +328,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing ShouldRestartService operation");
+            await PublishErrorEventAsync("ShouldRestartService", ex.GetType().Name, ex.Message, details: new { ServiceName = body.ServiceName });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -327,6 +349,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetBackends operation");
+            await PublishErrorEventAsync("GetBackends", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -371,6 +394,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetPresets operation");
+            await PublishErrorEventAsync("GetPresets", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -524,7 +548,7 @@ public partial class OrchestratorService : IOrchestratorService
 
             foreach (var node in nodesToDeploy)
             {
-                var appId = node.DaprAppId ?? node.Name;
+                var appId = node.AppId ?? node.Name;
 
                 // VALIDATION: Reject any node attempting to deploy orchestrator service
                 // Orchestrator cannot deploy itself or another orchestrator - route cannot be overridden
@@ -537,8 +561,31 @@ public partial class OrchestratorService : IOrchestratorService
                     continue; // Skip this node
                 }
 
-                // Start with preset environment (lowest priority)
+                // Build environment with proper layering (lowest to highest priority):
+                // 1. Orchestrator's own environment (foundation)
+                // 2. Preset environment
+                // 3. Node-specific environment
+                // 4. Request body environment (highest priority)
                 var environment = new Dictionary<string, string>();
+
+                // Layer 1: Forward orchestrator's own environment as foundation
+                // This ensures deployed containers inherit all service configuration
+                // (AUTH_*, STATE_*, CONNECT_*, etc.) without needing to duplicate in presets
+                foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
+                {
+                    var key = entry.Key?.ToString();
+                    var value = entry.Value?.ToString();
+                    if (string.IsNullOrEmpty(key) || value == null)
+                        continue;
+
+                    // Only forward vars with valid service prefixes (whitelist approach)
+                    if (!IsAllowedEnvironmentVariable(key))
+                        continue;
+
+                    environment[key] = value;
+                }
+
+                // Layer 2: Preset environment (overrides orchestrator's environment)
                 if (presetEnvironment != null)
                 {
                     foreach (var kvp in presetEnvironment)
@@ -547,7 +594,7 @@ public partial class OrchestratorService : IOrchestratorService
                     }
                 }
 
-                // Add node-specific environment (higher priority, overrides preset)
+                // Layer 3: Node-specific environment (overrides preset)
                 if (node.Environment != null)
                 {
                     foreach (var kvp in node.Environment)
@@ -556,7 +603,7 @@ public partial class OrchestratorService : IOrchestratorService
                     }
                 }
 
-                // Add request environment (highest priority, overrides node and preset)
+                // Layer 4: Request body environment (highest priority, overrides all)
                 if (body.Environment != null)
                 {
                     foreach (var kvp in body.Environment)
@@ -565,12 +612,26 @@ public partial class OrchestratorService : IOrchestratorService
                     }
                 }
 
-                // Build service enable flags for this node
+                // CRITICAL: Disable all services by default, then enable only the specified ones
+                // This MUST override any forwarded SERVICES_ENABLED=true from the orchestrator's environment
+                // Without this, deployed containers would run ALL services (including orchestrator itself!)
+                environment["SERVICES_ENABLED"] = "false";
+
+                // Build service enable flags for this node's specified services only
                 foreach (var serviceName in node.Services)
                 {
-                    var serviceEnvKey = $"{serviceName.ToUpperInvariant()}_SERVICE_ENABLED";
+                    var serviceEnvKey = $"{serviceName.ToUpperInvariant().Replace("-", "_")}_SERVICE_ENABLED";
                     environment[serviceEnvKey] = "true";
                 }
+
+                // CRITICAL: Set the app-id so the container knows its identity for heartbeats and mesh routing
+                // Without this, the container falls back to "bannou" and the orchestrator never receives
+                // the expected heartbeat from the deployed app-id
+                environment["BANNOU_APP_ID"] = appId;
+
+                _logger.LogDebug(
+                    "Node {NodeName} service configuration: SERVICES_ENABLED=false, APP_ID={AppId}, enabled services: {Services}",
+                    node.Name, appId, string.Join(", ", node.Services));
 
                 // Deploy via container orchestrator
                 var deployResult = await orchestrator.DeployServiceAsync(
@@ -661,7 +722,7 @@ public partial class OrchestratorService : IOrchestratorService
             }
 
             // Wait for heartbeats from deployed containers before declaring success
-            // This ensures new containers are fully operational (Dapr connected, plugins loaded)
+            // This ensures new containers are fully operational (mesh connected, plugins loaded)
             if (expectedAppIds.Count > 0 && failedServices.Count == 0)
             {
                 _logger.LogInformation(
@@ -678,7 +739,7 @@ public partial class OrchestratorService : IOrchestratorService
                     cancellationToken.ThrowIfCancellationRequested();
 
                     // Poll Redis for heartbeats from expected app-ids
-                    var heartbeats = await _redisManager.GetServiceHeartbeatsAsync();
+                    var heartbeats = await _stateManager.GetServiceHeartbeatsAsync();
 
                     // Check which expected app-ids have sent heartbeats
                     foreach (var heartbeat in heartbeats)
@@ -774,7 +835,7 @@ public partial class OrchestratorService : IOrchestratorService
                         deploymentConfig.Services[serviceName] = new ServiceDeploymentConfig
                         {
                             Enabled = true,
-                            AppId = node.DaprAppId ?? node.Name,
+                            AppId = node.AppId ?? node.Name,
                             Replicas = 1
                         };
                     }
@@ -795,7 +856,7 @@ public partial class OrchestratorService : IOrchestratorService
                     }
                 }
 
-                var configVersion = await _redisManager.SaveConfigurationVersionAsync(deploymentConfig);
+                var configVersion = await _stateManager.SaveConfigurationVersionAsync(deploymentConfig);
                 _logger.LogInformation(
                     "Saved deployment configuration version {Version} for deployment {DeploymentId}",
                     configVersion, deploymentId);
@@ -830,6 +891,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing Deploy operation");
+            await PublishErrorEventAsync("Deploy", ex.GetType().Name, ex.Message, details: new { Preset = body.Preset, Backend = body.Backend });
 
             // Publish deployment failed event on exception
             await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
@@ -860,12 +922,19 @@ public partial class OrchestratorService : IOrchestratorService
         {
             // Get service-to-app-id mappings from Redis
             // These are populated by DeployAsync when deploying presets with split topologies
-            var serviceRoutings = await _redisManager.GetServiceRoutingsAsync();
+            var serviceRoutings = await _stateManager.GetServiceRoutingsAsync();
 
             // Convert to simple string -> string mappings (service -> appId)
+            // CRITICAL: Exclude infrastructure services (state, messaging, mesh) - these must always be local
             var mappings = new Dictionary<string, string>();
             foreach (var kvp in serviceRoutings)
             {
+                // Never include infrastructure services - they must be handled locally
+                if (IsInfrastructureService(kvp.Key))
+                {
+                    continue;
+                }
+
                 // Apply filter if specified
                 if (string.IsNullOrEmpty(body.ServiceFilter) ||
                     kvp.Key.StartsWith(body.ServiceFilter, StringComparison.OrdinalIgnoreCase))
@@ -895,6 +964,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving service routing mappings");
+            await PublishErrorEventAsync("GetServiceRouting", ex.GetType().Name, ex.Message, dependency: "redis");
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -922,8 +992,8 @@ public partial class OrchestratorService : IOrchestratorService
                         Name = g.Key,
                         Services = new List<string> { g.Key },
                         Replicas = g.Count(),
-                        DaprEnabled = true,
-                        DaprAppId = g.Key
+                        MeshEnabled = true,
+                        AppId = g.Key
                     })
                     .ToList()
             };
@@ -947,6 +1017,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetStatus operation");
+            await PublishErrorEventAsync("GetStatus", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1082,6 +1153,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing Teardown operation");
+            await PublishErrorEventAsync("Teardown", ex.GetType().Name, ex.Message);
 
             // Publish teardown failed event on exception
             await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
@@ -1352,8 +1424,50 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing Clean operation");
+            await PublishErrorEventAsync("Clean", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
+    }
+
+    /// <summary>
+    /// Determines if an environment variable should be forwarded to deployed containers.
+    /// Uses a whitelist approach based on discovered plugin prefixes.
+    /// </summary>
+    /// <remarks>
+    /// Only forwards environment variables with prefixes matching:
+    /// - Core infrastructure: BANNOU_, ACCOUNT_, HEARTBEAT_, SERVICES_, OPENRESTY_, ASPNETCORE_ENVIRONMENT
+    /// - Plugin prefixes: AUTH_, CONNECT_, STATE_, MESH_, etc. (derived from discovered plugins)
+    ///
+    /// EXCLUDES: *_SERVICE_ENABLED and *_SERVICE_DISABLED flags - these are controlled
+    /// entirely by the deployment logic based on the preset's services list.
+    /// </remarks>
+    private static bool IsAllowedEnvironmentVariable(string key)
+    {
+        // NEVER forward service enable/disable flags - these are set by deployment logic
+        // based on the preset's services list, not inherited from orchestrator
+        if (key.EndsWith("_SERVICE_ENABLED", StringComparison.OrdinalIgnoreCase) ||
+            key.EndsWith("_SERVICE_DISABLED", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // NEVER forward BANNOU_APP_ID - each deployed container gets its own app-id
+        // set explicitly by the deployment logic
+        if (key.Equals("BANNOU_APP_ID", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var validPrefixes = PluginLoader.ValidEnvironmentPrefixes;
+
+        // Check if the key starts with any valid prefix
+        foreach (var prefix in validPrefixes)
+        {
+            if (key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -1445,6 +1559,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetLogs operation");
+            await PublishErrorEventAsync("GetLogs", ex.GetType().Name, ex.Message, details: new { Service = body.Service });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1499,7 +1614,23 @@ public partial class OrchestratorService : IOrchestratorService
                                 // Convert IDictionary to Dictionary for the orchestrator method
                                 var nodeEnvironment = change.Environment != null
                                     ? new Dictionary<string, string>(change.Environment)
-                                    : null;
+                                    : new Dictionary<string, string>();
+
+                                // CRITICAL: Disable all services by default, then enable only the specified ones
+                                if (!nodeEnvironment.ContainsKey("SERVICES_ENABLED"))
+                                {
+                                    nodeEnvironment["SERVICES_ENABLED"] = "false";
+                                }
+
+                                // Enable each service listed in the change
+                                foreach (var svc in change.Services)
+                                {
+                                    var envKey = $"{svc.ToUpperInvariant().Replace("-", "_")}_SERVICE_ENABLED";
+                                    if (!nodeEnvironment.ContainsKey(envKey))
+                                    {
+                                        nodeEnvironment[envKey] = "true";
+                                    }
+                                }
 
                                 foreach (var serviceName in change.Services)
                                 {
@@ -1666,6 +1797,7 @@ public partial class OrchestratorService : IOrchestratorService
                     appliedChange.Error = ex.Message;
                     _logger.LogError(ex, "Error applying topology change: {Action} for {Target}",
                         change.Action, change.NodeName);
+                    _ = PublishErrorEventAsync("UpdateTopology", ex.GetType().Name, ex.Message, details: new { Action = change.Action, NodeName = change.NodeName });
                 }
 
                 appliedChanges.Add(appliedChange);
@@ -1692,13 +1824,14 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing UpdateTopology operation");
+            await PublishErrorEventAsync("UpdateTopology", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Implementation of RequestContainerRestart operation.
-    /// Restarts a specific container by Dapr app name.
+    /// Restarts a specific container by Bannou app name.
     /// </summary>
     public async Task<(StatusCodes, ContainerRestartResponse?)> RequestContainerRestartAsync(
         ContainerRestartRequestBody body,
@@ -1730,13 +1863,14 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing RequestContainerRestart operation");
+            await PublishErrorEventAsync("RequestContainerRestart", ex.GetType().Name, ex.Message, details: new { AppName = body.AppName });
             return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Implementation of GetContainerStatus operation.
-    /// Gets the status of a specific container by Dapr app name.
+    /// Gets the status of a specific container by Bannou app name.
     /// </summary>
     public async Task<(StatusCodes, ContainerStatus?)> GetContainerStatusAsync(GetContainerStatusRequest body, CancellationToken cancellationToken)
     {
@@ -1759,6 +1893,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetContainerStatus operation");
+            await PublishErrorEventAsync("GetContainerStatus", ex.GetType().Name, ex.Message, details: new { AppName = body.AppName });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1774,8 +1909,8 @@ public partial class OrchestratorService : IOrchestratorService
         try
         {
             // Get current configuration
-            var currentConfig = await _redisManager.GetCurrentConfigurationAsync();
-            var currentVersion = await _redisManager.GetConfigVersionAsync();
+            var currentConfig = await _stateManager.GetCurrentConfigurationAsync();
+            var currentVersion = await _stateManager.GetConfigVersionAsync();
 
             if (currentVersion <= 1)
             {
@@ -1791,7 +1926,7 @@ public partial class OrchestratorService : IOrchestratorService
 
             // Get the previous version (currentVersion - 1)
             var targetVersion = currentVersion - 1;
-            var previousConfig = await _redisManager.GetConfigurationVersionAsync(targetVersion);
+            var previousConfig = await _stateManager.GetConfigurationVersionAsync(targetVersion);
 
             if (previousConfig == null)
             {
@@ -1806,11 +1941,12 @@ public partial class OrchestratorService : IOrchestratorService
             }
 
             // Perform the rollback
-            var success = await _redisManager.RestoreConfigurationVersionAsync(targetVersion);
+            var success = await _stateManager.RestoreConfigurationVersionAsync(targetVersion);
 
             if (!success)
             {
                 _logger.LogError("Failed to restore configuration version {Version}", targetVersion);
+                await PublishErrorEventAsync("RollbackConfiguration", "restore_failed", $"Failed to restore configuration version {targetVersion}", dependency: "redis");
                 return (StatusCodes.InternalServerError, new ConfigRollbackResponse
                 {
                     Success = false,
@@ -1821,7 +1957,7 @@ public partial class OrchestratorService : IOrchestratorService
             }
 
             // Get the new version (which is currentVersion + 1 after rollback)
-            var newVersion = await _redisManager.GetConfigVersionAsync();
+            var newVersion = await _stateManager.GetConfigVersionAsync();
 
             // Determine what changed
             var changedKeys = new List<string>();
@@ -1864,6 +2000,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing RollbackConfiguration operation");
+            await PublishErrorEventAsync("RollbackConfiguration", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1879,12 +2016,12 @@ public partial class OrchestratorService : IOrchestratorService
         try
         {
             // Get current version and configuration from Redis
-            var currentVersion = await _redisManager.GetConfigVersionAsync();
-            var currentConfig = await _redisManager.GetCurrentConfigurationAsync();
+            var currentVersion = await _stateManager.GetConfigVersionAsync();
+            var currentConfig = await _stateManager.GetCurrentConfigurationAsync();
 
             // Check if previous version exists
             var hasPreviousConfig = currentVersion > 1 &&
-                await _redisManager.GetConfigurationVersionAsync(currentVersion - 1) != null;
+                await _stateManager.GetConfigurationVersionAsync(currentVersion - 1) != null;
 
             // Collect key prefixes from current config
             var keyPrefixes = new List<string>();
@@ -1917,6 +2054,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetConfigVersion operation");
+            await PublishErrorEventAsync("GetConfigVersion", ex.GetType().Name, ex.Message, dependency: "redis");
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1931,12 +2069,13 @@ public partial class OrchestratorService : IOrchestratorService
         _logger.LogInformation("Registering Orchestrator service permissions... (starting)");
         try
         {
-            await OrchestratorPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+            await OrchestratorPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
             _logger.LogInformation("Orchestrator service permissions registered via event (complete)");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to register Orchestrator service permissions");
+            await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "permissions");
             throw;
         }
     }
@@ -1961,14 +2100,14 @@ public partial class OrchestratorService : IOrchestratorService
     /// Publishes an error event for unexpected/internal failures.
     /// Does NOT publish for validation errors or expected failure cases.
     /// </summary>
-    private Task PublishErrorEventAsync(
+    private async Task PublishErrorEventAsync(
         string operation,
         string errorType,
         string message,
         string? dependency = null,
         object? details = null)
     {
-        return _errorEventEmitter.TryPublishAsync(
+        await _messageBus.TryPublishErrorAsync(
             serviceId: "orchestrator",
             operation: operation,
             errorType: errorType,
@@ -2014,7 +2153,7 @@ public partial class OrchestratorService : IOrchestratorService
         try
         {
             // Get the current deployment configuration - this tells us exactly what we deployed
-            var currentConfig = await _redisManager.GetCurrentConfigurationAsync();
+            var currentConfig = await _stateManager.GetCurrentConfigurationAsync();
 
             if (currentConfig == null || currentConfig.Services.Count == 0)
             {
@@ -2045,7 +2184,7 @@ public partial class OrchestratorService : IOrchestratorService
             {
                 // All services were deployed to "bannou" - nothing to tear down
                 await _healthMonitor.ResetAllMappingsToDefaultAsync();
-                await _redisManager.ClearCurrentConfigurationAsync();
+                await _stateManager.ClearCurrentConfigurationAsync();
 
                 return (true, "Already at default topology - all services on 'bannou', configuration cleared", tornDownServices);
             }
@@ -2081,7 +2220,7 @@ public partial class OrchestratorService : IOrchestratorService
             await _healthMonitor.ResetAllMappingsToDefaultAsync();
 
             // Clear the deployment configuration (saves empty config as new version for audit trail)
-            await _redisManager.ClearCurrentConfigurationAsync();
+            await _stateManager.ClearCurrentConfigurationAsync();
 
             var message = tornDownServices.Count > 0
                 ? $"Reset to default topology: torn down {tornDownServices.Count} tracked container(s), all services now route to 'bannou'"
@@ -2095,4 +2234,543 @@ public partial class OrchestratorService : IOrchestratorService
             return (false, $"Failed to reset to default topology: {ex.Message}", tornDownServices);
         }
     }
+
+    #region Processing Pool Management
+
+    // Redis key patterns for processing pool
+    private const string POOL_INSTANCES_KEY = "processing-pool:{0}:instances";
+    private const string POOL_AVAILABLE_KEY = "processing-pool:{0}:available";
+    private const string POOL_LEASES_KEY = "processing-pool:{0}:leases";
+    private const string POOL_METRICS_KEY = "processing-pool:{0}:metrics";
+    private const string POOL_CONFIG_KEY = "processing-pool:{0}:config";
+
+    /// <summary>
+    /// Acquires a processor from the pool for processing work.
+    /// </summary>
+    /// <param name="body">Request containing pool type and priority.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Processor information including app-id and lease.</returns>
+    public async Task<(StatusCodes, AcquireProcessorResponse?)> AcquireProcessorAsync(
+        AcquireProcessorRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(body);
+
+            if (string.IsNullOrEmpty(body.Pool_type))
+            {
+                _logger.LogWarning("AcquireProcessor: Missing pool_type");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.Pool_type);
+            var leasesKey = string.Format(POOL_LEASES_KEY, body.Pool_type);
+
+            // Try to get an available processor from the pool
+            var availableProcessors = await _stateManager.GetListAsync<ProcessorInstance>(availableKey);
+
+            if (availableProcessors == null || availableProcessors.Count == 0)
+            {
+                _logger.LogInformation("AcquireProcessor: No available processors in pool {PoolType}", body.Pool_type);
+
+                // Return 429 Too Many Requests to indicate pool is busy
+                return (StatusCodes.TooManyRequests, null);
+            }
+
+            // Pop the first available processor
+            var processor = availableProcessors[0];
+            availableProcessors.RemoveAt(0);
+            await _stateManager.SetListAsync(availableKey, availableProcessors);
+
+            // Create a lease for this processor
+            var leaseId = Guid.NewGuid();
+            var timeoutSeconds = body.Timeout_seconds > 0 ? body.Timeout_seconds : 300;
+            var expiresAt = DateTimeOffset.UtcNow.AddSeconds(timeoutSeconds);
+
+            var lease = new ProcessorLease
+            {
+                LeaseId = leaseId,
+                ProcessorId = processor.ProcessorId,
+                AppId = processor.AppId,
+                PoolType = body.Pool_type,
+                AcquiredAt = DateTimeOffset.UtcNow,
+                ExpiresAt = expiresAt,
+                Priority = body.Priority,
+                Metadata = body.Metadata
+            };
+
+            // Store the lease
+            var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
+            leases[leaseId.ToString()] = lease;
+            await _stateManager.SetHashAsync(leasesKey, leases);
+
+            _logger.LogInformation(
+                "AcquireProcessor: Acquired processor {ProcessorId} from pool {PoolType} with lease {LeaseId}, expires at {ExpiresAt}",
+                processor.ProcessorId, body.Pool_type, leaseId, expiresAt);
+
+            return (StatusCodes.OK, new AcquireProcessorResponse
+            {
+                Processor_id = processor.ProcessorId,
+                App_id = processor.AppId,
+                Lease_id = leaseId,
+                Expires_at = expiresAt
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "AcquireProcessor: Error acquiring processor from pool {PoolType}", body?.Pool_type);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Releases a processor back to the pool.
+    /// </summary>
+    /// <param name="body">Request containing lease ID and completion status.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Release confirmation.</returns>
+    public async Task<(StatusCodes, ReleaseProcessorResponse?)> ReleaseProcessorAsync(
+        ReleaseProcessorRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(body);
+
+            if (body.Lease_id == Guid.Empty)
+            {
+                _logger.LogWarning("ReleaseProcessor: Missing or invalid lease_id");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Find the lease across all pool types
+            ProcessorLease? lease = null;
+            string? poolType = null;
+
+            // We need to search all pools for the lease
+            var poolTypes = await GetKnownPoolTypesAsync();
+
+            foreach (var pt in poolTypes)
+            {
+                var leasesKey = string.Format(POOL_LEASES_KEY, pt);
+                var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey);
+
+                if (leases != null && leases.TryGetValue(body.Lease_id.ToString(), out var foundLease))
+                {
+                    lease = foundLease;
+                    poolType = pt;
+                    break;
+                }
+            }
+
+            if (lease == null || poolType == null)
+            {
+                _logger.LogWarning("ReleaseProcessor: Lease {LeaseId} not found", body.Lease_id);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Remove the lease
+            var leasesKeyToUpdate = string.Format(POOL_LEASES_KEY, poolType);
+            var currentLeases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKeyToUpdate) ?? new Dictionary<string, ProcessorLease>();
+            currentLeases.Remove(body.Lease_id.ToString());
+            await _stateManager.SetHashAsync(leasesKeyToUpdate, currentLeases);
+
+            // Return processor to available pool
+            var availableKey = string.Format(POOL_AVAILABLE_KEY, poolType);
+            var availableProcessors = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+
+            availableProcessors.Add(new ProcessorInstance
+            {
+                ProcessorId = lease.ProcessorId,
+                AppId = lease.AppId,
+                PoolType = poolType,
+                Status = "available",
+                LastUpdated = DateTimeOffset.UtcNow
+            });
+
+            await _stateManager.SetListAsync(availableKey, availableProcessors);
+
+            // Update metrics
+            await UpdatePoolMetricsAsync(poolType, body.Success);
+
+            _logger.LogInformation(
+                "ReleaseProcessor: Released processor {ProcessorId} back to pool {PoolType}, success={Success}",
+                lease.ProcessorId, poolType, body.Success);
+
+            return (StatusCodes.OK, new ReleaseProcessorResponse
+            {
+                Released = true,
+                Processor_id = lease.ProcessorId
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "ReleaseProcessor: Error releasing processor with lease {LeaseId}", body?.Lease_id);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Gets the current status of a processing pool.
+    /// </summary>
+    /// <param name="body">Request containing pool type.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Pool status including instance counts and metrics.</returns>
+    public async Task<(StatusCodes, PoolStatusResponse?)> GetPoolStatusAsync(
+        GetPoolStatusRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(body);
+
+            if (string.IsNullOrEmpty(body.Pool_type))
+            {
+                _logger.LogWarning("GetPoolStatus: Missing pool_type");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var instancesKey = string.Format(POOL_INSTANCES_KEY, body.Pool_type);
+            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.Pool_type);
+            var leasesKey = string.Format(POOL_LEASES_KEY, body.Pool_type);
+            var configKey = string.Format(POOL_CONFIG_KEY, body.Pool_type);
+            var metricsKey = string.Format(POOL_METRICS_KEY, body.Pool_type);
+
+            var allInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
+            var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+            var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
+            var config = await _stateManager.GetValueAsync<PoolConfiguration>(configKey);
+
+            var response = new PoolStatusResponse
+            {
+                Pool_type = body.Pool_type,
+                Total_instances = allInstances.Count,
+                Available_instances = availableInstances.Count,
+                Busy_instances = leases.Count,
+                Queue_depth = 0, // We don't have a queue yet
+                Min_instances = config?.MinInstances ?? 1,
+                Max_instances = config?.MaxInstances ?? 5
+            };
+
+            // Include metrics if requested
+            if (body.Include_metrics)
+            {
+                var metrics = await _stateManager.GetValueAsync<PoolMetricsData>(metricsKey);
+                if (metrics != null)
+                {
+                    response.Recent_metrics = new PoolMetrics
+                    {
+                        Jobs_completed_1h = metrics.JobsCompleted1h,
+                        Jobs_failed_1h = metrics.JobsFailed1h,
+                        Avg_processing_time_ms = metrics.AvgProcessingTimeMs,
+                        Last_scale_event = metrics.LastScaleEvent
+                    };
+                }
+            }
+
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetPoolStatus: Error getting status for pool {PoolType}", body?.Pool_type);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Scales a processing pool to a target number of instances.
+    /// </summary>
+    /// <param name="body">Request containing pool type and target instances.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Scaling result including previous and current instance counts.</returns>
+    public async Task<(StatusCodes, ScalePoolResponse?)> ScalePoolAsync(
+        ScalePoolRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(body);
+
+            if (string.IsNullOrEmpty(body.Pool_type))
+            {
+                _logger.LogWarning("ScalePool: Missing pool_type");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            if (body.Target_instances < 0)
+            {
+                _logger.LogWarning("ScalePool: Invalid target_instances {Target}", body.Target_instances);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var instancesKey = string.Format(POOL_INSTANCES_KEY, body.Pool_type);
+            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.Pool_type);
+            var leasesKey = string.Format(POOL_LEASES_KEY, body.Pool_type);
+            var metricsKey = string.Format(POOL_METRICS_KEY, body.Pool_type);
+
+            var currentInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
+            var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+            var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
+
+            var previousCount = currentInstances.Count;
+            var scaledUp = 0;
+            var scaledDown = 0;
+
+            if (body.Target_instances > previousCount)
+            {
+                // Scale up - add new instances
+                scaledUp = body.Target_instances - previousCount;
+
+                for (int i = 0; i < scaledUp; i++)
+                {
+                    var processorId = $"{body.Pool_type}-{Guid.NewGuid():N}";
+                    var appId = $"bannou-processor-{body.Pool_type}-{currentInstances.Count + 1}";
+
+                    var newInstance = new ProcessorInstance
+                    {
+                        ProcessorId = processorId,
+                        AppId = appId,
+                        PoolType = body.Pool_type,
+                        Status = "available",
+                        CreatedAt = DateTimeOffset.UtcNow,
+                        LastUpdated = DateTimeOffset.UtcNow
+                    };
+
+                    currentInstances.Add(newInstance);
+                    availableInstances.Add(newInstance);
+                }
+
+                _logger.LogInformation("ScalePool: Scaled up pool {PoolType} by {Count} instances", body.Pool_type, scaledUp);
+            }
+            else if (body.Target_instances < previousCount)
+            {
+                // Scale down - remove instances (prefer idle ones)
+                var toRemove = previousCount - body.Target_instances;
+
+                // Can only remove available instances (unless force)
+                var maxRemovable = body.Force ? previousCount : availableInstances.Count;
+                scaledDown = Math.Min(toRemove, maxRemovable);
+
+                if (scaledDown > 0)
+                {
+                    // Remove from available first
+                    var removedIds = new HashSet<string>();
+                    for (int i = 0; i < Math.Min(scaledDown, availableInstances.Count); i++)
+                    {
+                        removedIds.Add(availableInstances[i].ProcessorId);
+                    }
+
+                    availableInstances.RemoveAll(p => removedIds.Contains(p.ProcessorId));
+                    currentInstances.RemoveAll(p => removedIds.Contains(p.ProcessorId));
+
+                    // If force and still need to remove more, remove busy instances
+                    if (body.Force && removedIds.Count < scaledDown)
+                    {
+                        var busyToRemove = scaledDown - removedIds.Count;
+                        var busyInstances = currentInstances.Take(busyToRemove).ToList();
+                        foreach (var instance in busyInstances)
+                        {
+                            removedIds.Add(instance.ProcessorId);
+                            // Also release their leases
+                            var leaseToRemove = leases.FirstOrDefault(l => l.Value.ProcessorId == instance.ProcessorId);
+                            if (leaseToRemove.Key != null)
+                            {
+                                leases.Remove(leaseToRemove.Key);
+                            }
+                        }
+
+                        currentInstances.RemoveAll(p => removedIds.Contains(p.ProcessorId));
+                    }
+                }
+
+                _logger.LogInformation("ScalePool: Scaled down pool {PoolType} by {Count} instances", body.Pool_type, scaledDown);
+            }
+
+            // Save updated state
+            await _stateManager.SetListAsync(instancesKey, currentInstances);
+            await _stateManager.SetListAsync(availableKey, availableInstances);
+            await _stateManager.SetHashAsync(leasesKey, leases);
+
+            // Update metrics with scale event
+            var metrics = await _stateManager.GetValueAsync<PoolMetricsData>(metricsKey) ?? new PoolMetricsData();
+            metrics.LastScaleEvent = DateTimeOffset.UtcNow;
+            await _stateManager.SetValueAsync(metricsKey, metrics);
+
+            return (StatusCodes.OK, new ScalePoolResponse
+            {
+                Pool_type = body.Pool_type,
+                Previous_instances = previousCount,
+                Current_instances = currentInstances.Count,
+                Scaled_up = scaledUp,
+                Scaled_down = scaledDown
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "ScalePool: Error scaling pool {PoolType}", body?.Pool_type);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Cleans up idle processors from a pool, optionally preserving minimum instances.
+    /// </summary>
+    /// <param name="body">Request containing pool type and preservation preference.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Cleanup result including removed instance count.</returns>
+    public async Task<(StatusCodes, CleanupPoolResponse?)> CleanupPoolAsync(
+        CleanupPoolRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(body);
+
+            if (string.IsNullOrEmpty(body.Pool_type))
+            {
+                _logger.LogWarning("CleanupPool: Missing pool_type");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var instancesKey = string.Format(POOL_INSTANCES_KEY, body.Pool_type);
+            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.Pool_type);
+            var configKey = string.Format(POOL_CONFIG_KEY, body.Pool_type);
+
+            var currentInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
+            var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+            var config = await _stateManager.GetValueAsync<PoolConfiguration>(configKey);
+
+            var minInstances = config?.MinInstances ?? 1;
+            var targetCount = body.Preserve_minimum ? minInstances : 0;
+
+            var toRemove = availableInstances.Count - targetCount;
+            if (toRemove <= 0)
+            {
+                return (StatusCodes.OK, new CleanupPoolResponse
+                {
+                    Pool_type = body.Pool_type,
+                    Instances_removed = 0,
+                    Current_instances = currentInstances.Count,
+                    Message = "No idle instances to remove"
+                });
+            }
+
+            // Remove idle instances
+            var removedIds = availableInstances
+                .Take(toRemove)
+                .Select(p => p.ProcessorId)
+                .ToHashSet();
+
+            availableInstances.RemoveAll(p => removedIds.Contains(p.ProcessorId));
+            currentInstances.RemoveAll(p => removedIds.Contains(p.ProcessorId));
+
+            await _stateManager.SetListAsync(instancesKey, currentInstances);
+            await _stateManager.SetListAsync(availableKey, availableInstances);
+
+            _logger.LogInformation(
+                "CleanupPool: Removed {Count} idle instances from pool {PoolType}, {Remaining} instances remaining",
+                removedIds.Count, body.Pool_type, currentInstances.Count);
+
+            return (StatusCodes.OK, new CleanupPoolResponse
+            {
+                Pool_type = body.Pool_type,
+                Instances_removed = removedIds.Count,
+                Current_instances = currentInstances.Count,
+                Message = $"Cleaned up {removedIds.Count} idle processor(s)"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "CleanupPool: Error cleaning up pool {PoolType}", body?.Pool_type);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Gets a list of known pool types from Redis.
+    /// </summary>
+    private Task<List<string>> GetKnownPoolTypesAsync()
+    {
+        // For now, we'll use a hardcoded list of known pool types
+        // In a full implementation, we'd scan Redis keys or maintain a registry
+        return Task.FromResult(new List<string> { "asset-processor", "texture-processor", "model-processor", "audio-processor" });
+    }
+
+    /// <summary>
+    /// Updates pool metrics after a job completes.
+    /// </summary>
+    private async Task UpdatePoolMetricsAsync(string poolType, bool success)
+    {
+        var metricsKey = string.Format(POOL_METRICS_KEY, poolType);
+        var metrics = await _stateManager.GetValueAsync<PoolMetricsData>(metricsKey) ?? new PoolMetricsData();
+
+        if (success)
+        {
+            metrics.JobsCompleted1h++;
+        }
+        else
+        {
+            metrics.JobsFailed1h++;
+        }
+
+        await _stateManager.SetValueAsync(metricsKey, metrics);
+    }
+
+    #endregion
+
+    #region Processing Pool Internal Models
+
+    /// <summary>
+    /// Represents a processor instance in the pool.
+    /// </summary>
+    internal sealed class ProcessorInstance
+    {
+        public string ProcessorId { get; set; } = string.Empty;
+        public string AppId { get; set; } = string.Empty;
+        public string PoolType { get; set; } = string.Empty;
+        public string Status { get; set; } = "available";
+        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset LastUpdated { get; set; }
+    }
+
+    /// <summary>
+    /// Represents an active lease for a processor.
+    /// </summary>
+    internal sealed class ProcessorLease
+    {
+        public Guid LeaseId { get; set; }
+        public string ProcessorId { get; set; } = string.Empty;
+        public string AppId { get; set; } = string.Empty;
+        public string PoolType { get; set; } = string.Empty;
+        public DateTimeOffset AcquiredAt { get; set; }
+        public DateTimeOffset ExpiresAt { get; set; }
+        public int Priority { get; set; }
+        public object? Metadata { get; set; }
+    }
+
+    /// <summary>
+    /// Pool configuration stored in Redis.
+    /// </summary>
+    internal sealed class PoolConfiguration
+    {
+        public string PoolType { get; set; } = string.Empty;
+        public int MinInstances { get; set; } = 1;
+        public int MaxInstances { get; set; } = 5;
+        public double ScaleUpThreshold { get; set; } = 0.8;
+        public double ScaleDownThreshold { get; set; } = 0.2;
+    }
+
+    /// <summary>
+    /// Pool metrics data stored in Redis.
+    /// </summary>
+    internal sealed class PoolMetricsData
+    {
+        public int JobsCompleted1h { get; set; }
+        public int JobsFailed1h { get; set; }
+        public int AvgProcessingTimeMs { get; set; }
+        public DateTimeOffset LastScaleEvent { get; set; }
+    }
+
+    #endregion
 }

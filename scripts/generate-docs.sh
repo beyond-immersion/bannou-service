@@ -32,4 +32,8 @@ python3 "$SCRIPT_DIR/generate-state-store-docs.py"
 echo "  → Generating events reference..."
 python3 "$SCRIPT_DIR/generate-event-docs.py"
 
+# Generate configuration documentation
+echo "  → Generating configuration reference..."
+python3 "$SCRIPT_DIR/generate-config-docs.py"
+
 echo "✅ Documentation generation complete"

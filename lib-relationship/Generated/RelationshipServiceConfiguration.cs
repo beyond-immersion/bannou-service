@@ -9,15 +9,15 @@ namespace BeyondImmersion.BannouService.Relationship;
 /// Configuration class for Relationship service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(RelationshipService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(RelationshipService))]
 public class RelationshipServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
     /// Enable/disable Relationship service
-    /// Environment variable: ENABLED or BANNOU_ENABLED
+    /// Environment variable: ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -18,6 +19,28 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
     private static readonly object _versionLock = new();
     private readonly ILogger<ServiceAppMappingResolver> _logger;
 
+    /// <summary>
+    /// The local app-id for this node. Infrastructure services always route here.
+    /// </summary>
+    private readonly string _localAppId;
+
+    /// <summary>
+    /// Infrastructure services that must ALWAYS be handled locally, never routed to other nodes.
+    /// These provide the communication and storage fabric that all other services depend on.
+    /// </summary>
+    private static readonly HashSet<string> InfrastructureServices = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "state",
+        "messaging",
+        "mesh"
+    };
+
+    /// <summary>
+    /// Checks if a service is an infrastructure service that must always be local.
+    /// </summary>
+    private static bool IsInfrastructureService(string serviceName) =>
+        InfrastructureServices.Contains(serviceName);
+
     /// <inheritdoc/>
     public event EventHandler<ServiceMappingChangedEventArgs>? MappingChanged;
 
@@ -25,14 +48,16 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
     public long CurrentVersion => _currentVersion;
 
     /// <inheritdoc/>
-    public ServiceAppMappingResolver(ILogger<ServiceAppMappingResolver> logger)
+    public ServiceAppMappingResolver(ILogger<ServiceAppMappingResolver> logger, AppConfiguration configuration)
     {
         _logger = logger;
-        _logger.LogInformation("ServiceAppMappingResolver initialized with default app-id: {DefaultAppId}", AppConstants.DEFAULT_APP_NAME);
+        _localAppId = configuration.EffectiveAppId;
+        _logger.LogInformation("ServiceAppMappingResolver initialized: local={LocalAppId}, default={DefaultAppId}",
+            _localAppId, AppConstants.DEFAULT_APP_NAME);
     }
 
     /// <summary>
-    /// Gets the Dapr app-id for the specified service.
+    /// Gets the app-id for the specified service.
     /// Defaults to "bannou" but can be overridden by RabbitMQ service mapping events.
     /// </summary>
     public string GetAppIdForService(string? serviceName)
@@ -48,6 +73,15 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
         {
             _logger.LogTrace("Service {ServiceName} forced to control-plane app-id {DefaultAppId}", serviceName, AppConstants.DEFAULT_APP_NAME);
             return AppConstants.DEFAULT_APP_NAME;
+        }
+
+        // Infrastructure services (state, messaging, mesh) must ALWAYS be handled locally.
+        // These services cannot be delegated to other nodes - they provide the communication
+        // and storage fabric that everything else depends on.
+        if (IsInfrastructureService(serviceName))
+        {
+            _logger.LogTrace("Infrastructure service {ServiceName} forced to local app-id {LocalAppId}", serviceName, _localAppId);
+            return _localAppId;
         }
 
         // Check for dynamic mapping first
@@ -191,6 +225,9 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
             return false;
         }
 
+        // Declare outside lock so we can notify after releasing lock
+        List<ServiceMappingChangedEventArgs> changedServices;
+
         // Version check with lock to prevent race conditions
         lock (_versionLock)
         {
@@ -204,7 +241,7 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
 
             // Collect changes for event notification
             var previousMappings = _serviceMappings.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-            var changedServices = new List<ServiceMappingChangedEventArgs>();
+            changedServices = new List<ServiceMappingChangedEventArgs>();
 
             // Find services that were removed
             foreach (var oldMapping in previousMappings)
@@ -251,14 +288,14 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
             _logger.LogInformation(
                 "Applied full mappings v{Version}: {Count} services ({ChangedCount} changes)",
                 version, mappings.Count, changedServices.Count);
-
-            // Notify listeners of changes (outside the lock would be better, but okay for now)
-            foreach (var change in changedServices)
-            {
-                MappingChanged?.Invoke(this, change);
-            }
-
-            return true;
         }
+
+        // Notify listeners of changes OUTSIDE the lock to prevent deadlocks
+        foreach (var change in changedServices)
+        {
+            MappingChanged?.Invoke(this, change);
+        }
+
+        return true;
     }
 }

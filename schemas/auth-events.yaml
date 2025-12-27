@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Auth Service Events
   description: |
-    Event models for Auth service RabbitMQ pub/sub via Dapr.
+    Event models for Auth service RabbitMQ pub/sub via MassTransit.
     Contains auth-specific events and subscription/publication declarations.
   version: 1.0.0
   x-event-subscriptions:

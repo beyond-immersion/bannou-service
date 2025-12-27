@@ -120,7 +120,7 @@ public class Program
     /// <summary>
     /// Waits for OpenResty gateway and backend services to become ready.
     /// Polls the health endpoint with exponential backoff, then verifies
-    /// that Dapr-dependent services are also ready by making a warmup call.
+    /// that mesh-dependent services are also ready by making a warmup call.
     /// </summary>
     /// <returns>True if services are ready, false if timeout exceeded.</returns>
     private static async Task<bool> WaitForServiceReadiness()
@@ -133,8 +133,8 @@ public class Program
         var delayMs = initialDelayMs;
 
         // Construct health check URL from OpenResty configuration
-        var openrestyHost = Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Configuration.OpenRestyPort ?? 80;
         var healthUrl = $"http://{openrestyHost}:{openrestyPort}/health";
         var authHealthUrl = $"http://{openrestyHost}:{openrestyPort}/auth/health";
 
@@ -196,40 +196,39 @@ public class Program
             return false;
         }
 
-        // Phase 2: Wait for Dapr sidecar to be ready by making a warmup registration attempt
-        // The registration endpoint calls AccountsClient through Dapr, so this actually exercises
-        // the full Dapr dependency chain. We expect 200 (created) or 409 (conflict) when working,
-        // but 500/502/503 when Dapr isn't ready yet. Login with empty credentials doesn't work
-        // because validation fails before Dapr is touched.
-        Console.WriteLine($"⏳ Verifying Dapr sidecar readiness...");
-        var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+        // Phase 2: Wait for mesh to be ready by making a warmup login attempt
+        // The login endpoint calls AccountsClient through mesh to look up the account, so this
+        // exercises the full mesh dependency chain. We use a non-existent account to get 401,
+        // which avoids publishing any events (unlike registration which publishes account.created).
+        // We expect 401 (not found) when working, but 500/502/503 when mesh isn't ready yet.
+        Console.WriteLine($"⏳ Verifying mesh readiness...");
+        var loginUrl = $"http://{openrestyHost}:{openrestyPort}/auth/login";
         delayMs = initialDelayMs;
 
         while (stopwatch.Elapsed.TotalSeconds < maxWaitSeconds)
         {
             try
             {
-                // Make a registration request with a unique warmup username - this will exercise Dapr
-                var warmupUsername = $"warmup_{Guid.NewGuid():N}@test.local";
+                // Make a login request with a non-existent account - exercises mesh without publishing events
                 var warmupContent = new StringContent(
-                    $"{{\"username\":\"{warmupUsername}\",\"password\":\"warmup-password-123\"}}",
+                    "{\"username\":\"mesh-warmup-nonexistent@test.local\",\"password\":\"warmup-password-123\"}",
                     Encoding.UTF8,
                     "application/json");
-                var warmupResponse = await HttpClient.PostAsync(registerUrl, warmupContent);
+                var warmupResponse = await HttpClient.PostAsync(loginUrl, warmupContent);
 
-                // 500/502/503 typically indicates Dapr sidecar isn't ready
+                // 500/502/503 typically indicates mesh isn't ready
                 if (warmupResponse.StatusCode == System.Net.HttpStatusCode.InternalServerError ||
                     warmupResponse.StatusCode == System.Net.HttpStatusCode.BadGateway ||
                     warmupResponse.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
                 {
-                    Console.WriteLine($"⏳ Dapr sidecar not ready ({warmupResponse.StatusCode}), retrying in {delayMs}ms...");
+                    Console.WriteLine($"⏳ mesh not ready ({warmupResponse.StatusCode}), retrying in {delayMs}ms...");
                     await Task.Delay(delayMs);
                     delayMs = Math.Min(delayMs * 2, maxDelayMs);
                     continue;
                 }
 
-                // 200 OK or 409 Conflict means the service chain is fully working
-                Console.WriteLine($"✅ Dapr sidecar ready after {stopwatch.Elapsed.TotalSeconds:F1}s (warmup returned {warmupResponse.StatusCode})");
+                // 401 Unauthorized (account not found) or 400 Bad Request means mesh invocation worked
+                Console.WriteLine($"✅ mesh ready after {stopwatch.Elapsed.TotalSeconds:F1}s (warmup returned {warmupResponse.StatusCode})");
 
                 // Phase 3 (Permission Registration) is now handled via WebSocket capability manifest
                 // The BannouClient will receive capability manifests after connection, and we verify
@@ -249,7 +248,7 @@ public class Program
             delayMs = Math.Min(delayMs * 2, maxDelayMs);
         }
 
-        Console.WriteLine($"❌ Dapr sidecar failed to become ready within {maxWaitSeconds}s");
+        Console.WriteLine($"❌ mesh failed to become ready within {maxWaitSeconds}s");
         return false;
     }
 
@@ -281,8 +280,8 @@ public class Program
         // Anonymous-only endpoints (like /auth/register) are not available to authenticated users.
         var expectedPaths = customExpectedPaths ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "/auth/login",        // Auth service - user role, default state
-            "/sessions"           // GameSession service - user role, default state (POST:/sessions)
+            "/auth/validate",       // Auth service - user role, default state
+            "/auth/sessions/list"   // Auth service - user role, default state
         };
 
         Console.WriteLine($"⏳ Waiting for capability manifest to include expected APIs (timeout: {timeout.TotalSeconds}s)...");
@@ -351,16 +350,16 @@ public class Program
             Console.WriteLine("Attempting to authenticate using BannouClient SDK...");
 
             // Build server URL from configuration
-            var openrestyHost = Configuration.OpenResty_Host ?? "openresty";
-            var openrestyPort = Configuration.OpenResty_Port ?? 80;
+            var openrestyHost = Configuration.OpenRestyHost ?? "openresty";
+            var openrestyPort = Configuration.OpenRestyPort ?? 80;
             var serverUrl = $"http://{openrestyHost}:{openrestyPort}";
 
             // Use BannouClient for authentication and WebSocket connection
             _client = new BannouClient(HttpClient);
 
             // Try login first, then registration
-            var email = Configuration.Client_Username ?? throw new InvalidOperationException("Client_Username is required");
-            var password = Configuration.Client_Password ?? throw new InvalidOperationException("Client_Password is required");
+            var email = Configuration.ClientUsername ?? throw new InvalidOperationException("ClientUsername is required");
+            var password = Configuration.ClientPassword ?? throw new InvalidOperationException("ClientPassword is required");
             var username = email.Contains('@') ? email.Split('@')[0] : email;
 
             var connected = await _client.ConnectAsync(serverUrl, email, password);
@@ -401,7 +400,7 @@ public class Program
             Console.WriteLine();
 
             Console.WriteLine("🧪 Enhanced WebSocket Protocol Testing - Binary Protocol Validation");
-            Console.WriteLine($"Base URL: ws://{Configuration.Connect_Endpoint}");
+            Console.WriteLine($"Base URL: ws://{Configuration.ConnectEndpoint}");
             Console.WriteLine();
 
             // Run initial connectivity test
@@ -529,8 +528,8 @@ public class Program
     {
         Console.WriteLine("Attempting to authenticate admin using BannouClient SDK...");
 
-        var openrestyHost = Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Configuration.OpenRestyPort ?? 80;
         var serverUrl = $"http://{openrestyHost}:{openrestyPort}";
 
         _adminClient = new BannouClient(HttpClient);
@@ -601,8 +600,8 @@ public class Program
 
         Console.WriteLine("📋 Creating dedicated test account for binary protocol validation...");
 
-        var openrestyHost = Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Configuration.OpenRestyPort ?? 80;
         var uniqueId = Guid.NewGuid().ToString("N")[..12];
         var testEmail = $"binproto_{uniqueId}@test.local";
         var testPassword = "BinaryProtocolTest123!";
@@ -641,7 +640,7 @@ public class Program
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Configuration.ConnectEndpoint}");
 
         using var webSocket = new ClientWebSocket();
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + testAccessToken);

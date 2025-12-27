@@ -28,8 +28,8 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return null;
         }
 
-        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
         var uniqueId = Guid.NewGuid().ToString("N")[..12];
         var testEmail = $"{testPrefix}_{uniqueId}@test.local";
         var testPassword = $"{testPrefix}Test123!";
@@ -183,7 +183,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         using var webSocket = new ClientWebSocket();
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
 
@@ -197,7 +197,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             Console.WriteLine("📥 Waiting for capability manifest to be pushed by server...");
 
             var receiveBuffer = new byte[65536]; // Large buffer for capability manifest
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
             try
             {
@@ -284,9 +284,9 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
-        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
 
         // Create first test account
         Console.WriteLine("📋 Creating first test account for unique GUID test...");
@@ -427,7 +427,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         using var webSocket = new ClientWebSocket();
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
 
@@ -507,7 +507,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
     /// <summary>
     /// Test that setting game-session:in_game state triggers capability manifest update via WebSocket.
     /// This validates the real-time push mechanism where:
-    /// - Session state changes published via Dapr pub/sub
+    /// - Session state changes published via Bannou pub/sub
     /// - Permissions service recompiles capabilities
     /// - Connect service pushes updated capability manifest to WebSocket client
     /// </summary>
@@ -562,7 +562,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         using var webSocket = new ClientWebSocket();
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
 
@@ -574,7 +574,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             // Wait for initial capability manifest
             Console.WriteLine("📥 Waiting for initial capability manifest...");
             var receiveBuffer = new byte[65536];
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
             var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);
             Console.WriteLine($"📥 Received {result.Count} bytes");
@@ -626,7 +626,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     "POST",
                     "/permissions/update-session-state",
                     stateUpdate,
-                    timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
+                    timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
 
                 Console.WriteLine($"✅ State update succeeded: {response.GetRawText().Substring(0, Math.Min(200, response.GetRawText().Length))}...");
             }
@@ -641,7 +641,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             Console.WriteLine("✅ State update succeeded, waiting for capability manifest update...");
 
             // Wait for updated capability manifest
-            cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             try
             {
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);

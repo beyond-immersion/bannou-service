@@ -1,0 +1,131 @@
+openapi: 3.0.3
+info:
+  title: Asset Service Configuration
+  description: |
+    Configuration schema for Asset service.
+    Properties are bound to environment variables with ASSET_ prefix.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Storage Provider Configuration
+    StorageProvider:
+      type: string
+      description: Storage backend type (minio, s3, r2, azure, filesystem)
+      env: ASSET_STORAGE_PROVIDER
+      default: minio
+
+    StorageBucket:
+      type: string
+      description: Primary bucket/container name for assets
+      env: ASSET_STORAGE_BUCKET
+      default: bannou-assets
+
+    StorageEndpoint:
+      type: string
+      description: Storage endpoint URL (MinIO/S3 compatible)
+      env: ASSET_STORAGE_ENDPOINT
+      default: "http://minio:9000"
+
+    StorageAccessKey:
+      type: string
+      description: Storage access key/username
+      env: ASSET_STORAGE_ACCESS_KEY
+
+    StorageSecretKey:
+      type: string
+      description: Storage secret key/password
+      env: ASSET_STORAGE_SECRET_KEY
+
+    StorageRegion:
+      type: string
+      description: Storage region (for S3/R2)
+      env: ASSET_STORAGE_REGION
+      default: us-east-1
+
+    StorageForcePathStyle:
+      type: boolean
+      description: Force path-style URLs (required for MinIO)
+      env: ASSET_STORAGE_FORCE_PATH_STYLE
+      default: true
+
+    StorageUseSsl:
+      type: boolean
+      description: Use SSL/TLS for storage connections
+      env: ASSET_STORAGE_USE_SSL
+      default: false
+
+    # Pre-signed URL Configuration
+    TokenTtlSeconds:
+      type: integer
+      description: TTL for pre-signed upload/download URLs in seconds
+      env: ASSET_TOKEN_TTL_SECONDS
+      default: 3600
+
+    DownloadTokenTtlSeconds:
+      type: integer
+      description: TTL for download URLs (can be shorter than upload)
+      env: ASSET_DOWNLOAD_TOKEN_TTL_SECONDS
+      default: 900
+
+    # Upload Limits
+    MaxUploadSizeMb:
+      type: integer
+      description: Maximum upload size in megabytes
+      env: ASSET_MAX_UPLOAD_SIZE_MB
+      default: 500
+
+    MultipartThresholdMb:
+      type: integer
+      description: File size threshold for multipart uploads in megabytes
+      env: ASSET_MULTIPART_THRESHOLD_MB
+      default: 50
+
+    MultipartPartSizeMb:
+      type: integer
+      description: Size of each part in multipart uploads in megabytes
+      env: ASSET_MULTIPART_PART_SIZE_MB
+      default: 16
+
+    # Processing Configuration
+    LargeFileThresholdMb:
+      type: integer
+      description: File size threshold for delegating to processing pool
+      env: ASSET_LARGE_FILE_THRESHOLD_MB
+      default: 50
+
+    ProcessingPoolType:
+      type: string
+      description: Processing pool identifier for orchestrator
+      env: ASSET_PROCESSING_POOL_TYPE
+      default: asset-processor
+
+    ProcessingMode:
+      type: string
+      description: Service mode (api, worker, both)
+      env: ASSET_PROCESSING_MODE
+      default: both
+
+    WorkerPool:
+      type: string
+      description: Worker pool identifier when running in worker mode
+      env: ASSET_WORKER_POOL
+
+    # Bundle Configuration
+    BundleCompressionDefault:
+      type: string
+      description: Default compression for bundles (lz4, lzma, none)
+      env: ASSET_BUNDLE_COMPRESSION_DEFAULT
+      default: lz4
+
+    ZipCacheTtlHours:
+      type: integer
+      description: TTL for cached ZIP conversions in hours
+      env: ASSET_ZIP_CACHE_TTL_HOURS
+      default: 24
+
+    # Webhook Configuration
+    MinioWebhookSecret:
+      type: string
+      description: Secret for validating MinIO webhook requests
+      env: ASSET_MINIO_WEBHOOK_SECRET

@@ -1,7 +1,9 @@
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State;
 using LibOrchestrator;
 using LibOrchestrator.Backends;
 using Microsoft.Extensions.Logging;
@@ -15,21 +17,20 @@ namespace BeyondImmersion.BannouService.Orchestrator.Tests;
 /// </summary>
 public class OrchestratorServiceTests
 {
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<OrchestratorService>> _mockLogger;
     private readonly Mock<ILoggerFactory> _mockLoggerFactory;
     private readonly OrchestratorServiceConfiguration _configuration;
-    private readonly Mock<IOrchestratorRedisManager> _mockRedisManager;
+    private readonly Mock<IOrchestratorStateManager> _mockStateManager;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
     private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
     private readonly Mock<ISmartRestartManager> _mockRestartManager;
     private readonly Mock<IBackendDetector> _mockBackendDetector;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public OrchestratorServiceTests()
     {
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<OrchestratorService>>();
         _mockLoggerFactory = new Mock<ILoggerFactory>();
         _mockLoggerFactory
@@ -42,28 +43,26 @@ public class OrchestratorServiceTests
             HeartbeatTimeoutSeconds = 90,
             DegradationThresholdMinutes = 5
         };
-        _mockRedisManager = new Mock<IOrchestratorRedisManager>();
+        _mockStateManager = new Mock<IOrchestratorStateManager>();
         _mockEventManager = new Mock<IOrchestratorEventManager>();
         _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
         _mockRestartManager = new Mock<ISmartRestartManager>();
         _mockBackendDetector = new Mock<IBackendDetector>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockEventConsumer = new Mock<IEventConsumer>();
     }
 
     private OrchestratorService CreateService()
     {
         return new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
-            _mockRedisManager.Object,
+            _mockStateManager.Object,
             _mockEventManager.Object,
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
     }
 
@@ -72,13 +71,16 @@ public class OrchestratorServiceTests
     [Fact]
     public void Constructor_WithValidParameters_ShouldNotThrow()
     {
-        // Act & Assert
+        // Act
         var service = CreateService();
+
+        // Assert - Verify service was created and implements expected interface
         Assert.NotNull(service);
+        Assert.IsAssignableFrom<IOrchestratorService>(service);
     }
 
     [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrowArgumentNullException()
+    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
@@ -86,15 +88,14 @@ public class OrchestratorServiceTests
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
-            _mockRedisManager.Object,
+            _mockStateManager.Object,
             _mockEventManager.Object,
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
 
-        Assert.Equal("daprClient", exception.ParamName);
+        Assert.Equal("messageBus", exception.ParamName);
     }
 
     [Fact]
@@ -102,16 +103,15 @@ public class OrchestratorServiceTests
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             null!,
             _mockLoggerFactory.Object,
             _configuration,
-            _mockRedisManager.Object,
+            _mockStateManager.Object,
             _mockEventManager.Object,
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
 
         Assert.Equal("logger", exception.ParamName);
@@ -122,16 +122,15 @@ public class OrchestratorServiceTests
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             null!,
             _configuration,
-            _mockRedisManager.Object,
+            _mockStateManager.Object,
             _mockEventManager.Object,
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
 
         Assert.Equal("loggerFactory", exception.ParamName);
@@ -142,27 +141,26 @@ public class OrchestratorServiceTests
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             null!,
-            _mockRedisManager.Object,
+            _mockStateManager.Object,
             _mockEventManager.Object,
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
 
         Assert.Equal("configuration", exception.ParamName);
     }
 
     [Fact]
-    public void Constructor_WithNullRedisManager_ShouldThrowArgumentNullException()
+    public void Constructor_WithNullStateManager_ShouldThrowArgumentNullException()
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
@@ -171,10 +169,9 @@ public class OrchestratorServiceTests
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
 
-        Assert.Equal("redisManager", exception.ParamName);
+        Assert.Equal("stateManager", exception.ParamName);
     }
 
     [Fact]
@@ -182,16 +179,15 @@ public class OrchestratorServiceTests
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
-            _mockRedisManager.Object,
+            _mockStateManager.Object,
             null!,
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
 
         Assert.Equal("eventManager", exception.ParamName);
@@ -202,16 +198,15 @@ public class OrchestratorServiceTests
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
-            _mockRedisManager.Object,
+            _mockStateManager.Object,
             _mockEventManager.Object,
             null!,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
 
         Assert.Equal("healthMonitor", exception.ParamName);
@@ -222,16 +217,15 @@ public class OrchestratorServiceTests
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
-            _mockRedisManager.Object,
+            _mockStateManager.Object,
             _mockEventManager.Object,
             _mockHealthMonitor.Object,
             null!,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
 
         Assert.Equal("restartManager", exception.ParamName);
@@ -242,16 +236,15 @@ public class OrchestratorServiceTests
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
-            _mockRedisManager.Object,
+            _mockStateManager.Object,
             _mockEventManager.Object,
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             null!,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
 
         Assert.Equal("backendDetector", exception.ParamName);
@@ -262,16 +255,15 @@ public class OrchestratorServiceTests
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
-            _mockRedisManager.Object,
+            _mockStateManager.Object,
             _mockEventManager.Object,
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object,
             null!));
 
         Assert.Equal("eventConsumer", exception.ParamName);
@@ -285,27 +277,18 @@ public class OrchestratorServiceTests
     public async Task GetInfrastructureHealthAsync_WhenAllHealthy_ShouldReturnHealthyStatus()
     {
         // Arrange
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.CheckHealthAsync())
-            .ReturnsAsync((true, "Redis connected", TimeSpan.FromMilliseconds(1.5)));
+            .ReturnsAsync((true, "State stores healthy", TimeSpan.FromMilliseconds(1.5)));
 
-        // Pub/sub healthy
-        _mockDaprClient
-            .Setup(x => x.PublishEventAsync(
-                "bannou-pubsub",
+        // Pub/sub healthy via IMessageBus
+        _mockMessageBus
+            .Setup(x => x.PublishAsync(
                 "orchestrator-health",
                 It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Dapr sidecar healthy (metadata endpoint)
-        _mockDaprClient
-            .Setup(x => x.GetMetadataAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Dapr.Client.DaprMetadata(
-                "test-app",
-                new List<Dapr.Client.DaprActorMetadata>(),
-                new Dictionary<string, string>(),
-                new List<Dapr.Client.DaprComponentsMetadata>()));
+            .ReturnsAsync(Guid.NewGuid());
 
         var service = CreateService();
 
@@ -316,25 +299,24 @@ public class OrchestratorServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.True(response.Healthy);
-        Assert.Equal(3, response.Components.Count);
     }
 
     [Fact]
-    public async Task GetInfrastructureHealthAsync_WhenRedisUnhealthy_ShouldReturnUnhealthyStatus()
+    public async Task GetInfrastructureHealthAsync_WhenStateStoreUnhealthy_ShouldReturnUnhealthyStatus()
     {
         // Arrange
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.CheckHealthAsync())
-            .ReturnsAsync((false, "Redis connection failed", (TimeSpan?)null));
+            .ReturnsAsync((false, "State store connection failed", (TimeSpan?)null));
 
-        // Simulate pub/sub failure via Dapr publish failure
-        _mockDaprClient
-            .Setup(x => x.PublishEventAsync(
-                "bannou-pubsub",
+        // Pub/sub failure via IMessageBus
+        _mockMessageBus
+            .Setup(x => x.PublishAsync(
                 "orchestrator-health",
                 It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Dapr sidecar unavailable"));
+            .ThrowsAsync(new Exception("Message bus unavailable"));
 
         var service = CreateService();
 
@@ -346,26 +328,26 @@ public class OrchestratorServiceTests
         Assert.NotNull(response);
         Assert.False(response.Healthy);
 
-        var redisComponent = response.Components.First(c => c.Name == "redis");
-        Assert.Equal(ComponentHealthStatus.Unavailable, redisComponent.Status);
+        var stateStoreComponent = response.Components.First(c => c.Name == "statestore");
+        Assert.Equal(ComponentHealthStatus.Unavailable, stateStoreComponent.Status);
     }
 
     [Fact]
-    public async Task GetInfrastructureHealthAsync_WhenRabbitMQUnhealthy_ShouldReturnUnhealthyStatus()
+    public async Task GetInfrastructureHealthAsync_WhenMessageBusUnhealthy_ShouldReturnUnhealthyStatus()
     {
         // Arrange
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.CheckHealthAsync())
-            .ReturnsAsync((true, "Redis connected", TimeSpan.FromMilliseconds(1.5)));
+            .ReturnsAsync((true, "State stores healthy", TimeSpan.FromMilliseconds(1.5)));
 
-        // Pub/sub unhealthy via publish failure
-        _mockDaprClient
-            .Setup(x => x.PublishEventAsync(
-                "bannou-pubsub",
+        // Pub/sub unhealthy via IMessageBus publish failure
+        _mockMessageBus
+            .Setup(x => x.PublishAsync(
                 "orchestrator-health",
                 It.IsAny<object>(),
+                It.IsAny<PublishOptions?>(),
                 It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Dapr sidecar unavailable"));
+            .ThrowsAsync(new Exception("Message bus unavailable"));
 
         var service = CreateService();
 
@@ -703,7 +685,7 @@ public class OrchestratorServiceTests
             ["connect"] = new ServiceRouting { AppId = "bannou-main", Host = "bannou-main-container" }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetServiceRoutingsAsync())
             .ReturnsAsync(serviceRoutings);
 
@@ -728,7 +710,7 @@ public class OrchestratorServiceTests
     public async Task GetServiceRoutingAsync_WithNoMappings_ShouldReturnEmptyWithDefault()
     {
         // Arrange
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetServiceRoutingsAsync())
             .ReturnsAsync(new Dictionary<string, ServiceRouting>());
 
@@ -758,7 +740,7 @@ public class OrchestratorServiceTests
             ["connect"] = new ServiceRouting { AppId = "bannou-main", Host = "bannou-main-container" }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetServiceRoutingsAsync())
             .ReturnsAsync(serviceRoutings);
 
@@ -779,12 +761,12 @@ public class OrchestratorServiceTests
     }
 
     [Fact]
-    public async Task GetServiceRoutingAsync_WhenRedisThrows_ShouldReturnInternalServerError()
+    public async Task GetServiceRoutingAsync_WhenStateStoreThrows_ShouldReturnInternalServerError()
     {
         // Arrange
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetServiceRoutingsAsync())
-            .ThrowsAsync(new InvalidOperationException("Redis connection failed"));
+            .ThrowsAsync(new InvalidOperationException("State store connection failed"));
 
         var service = CreateService();
 
@@ -836,14 +818,14 @@ public class OrchestratorConfigurationTests
 public class ServiceHealthMonitorTests
 {
     private readonly Mock<ILogger<ServiceHealthMonitor>> _mockLogger;
-    private readonly Mock<IOrchestratorRedisManager> _mockRedisManager;
+    private readonly Mock<IOrchestratorStateManager> _mockStateManager;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
     private readonly OrchestratorServiceConfiguration _configuration;
 
     public ServiceHealthMonitorTests()
     {
         _mockLogger = new Mock<ILogger<ServiceHealthMonitor>>();
-        _mockRedisManager = new Mock<IOrchestratorRedisManager>();
+        _mockStateManager = new Mock<IOrchestratorStateManager>();
         _mockEventManager = new Mock<IOrchestratorEventManager>();
         _configuration = new OrchestratorServiceConfiguration
         {
@@ -857,7 +839,7 @@ public class ServiceHealthMonitorTests
         return new ServiceHealthMonitor(
             _mockLogger.Object,
             _configuration,
-            _mockRedisManager.Object,
+            _mockStateManager.Object,
             _mockEventManager.Object);
     }
 
@@ -872,7 +854,7 @@ public class ServiceHealthMonitorTests
             new() { ServiceId = "service3", Status = "healthy", LastSeen = DateTimeOffset.UtcNow }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetServiceHeartbeatsAsync())
             .ReturnsAsync(heartbeats);
 
@@ -900,7 +882,7 @@ public class ServiceHealthMonitorTests
             new() { ServiceId = "service4", Status = "shutting_down", LastSeen = DateTimeOffset.UtcNow }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetServiceHeartbeatsAsync())
             .ReturnsAsync(heartbeats);
 
@@ -920,7 +902,7 @@ public class ServiceHealthMonitorTests
     public async Task ShouldRestartServiceAsync_WhenNoHeartbeats_ShouldRecommendRestart()
     {
         // Arrange
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetServiceHeartbeatsAsync())
             .ReturnsAsync(new List<ServiceHealthStatus>());
 
@@ -950,7 +932,7 @@ public class ServiceHealthMonitorTests
             }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetServiceHeartbeatsAsync())
             .ReturnsAsync(heartbeats);
 
@@ -979,7 +961,7 @@ public class ServiceHealthMonitorTests
             }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetServiceHeartbeatsAsync())
             .ReturnsAsync(heartbeats);
 
@@ -1002,7 +984,7 @@ public class ServiceHealthMonitorTests
 public class ServiceHealthMonitorRoutingProtectionTests
 {
     private readonly Mock<ILogger<ServiceHealthMonitor>> _mockLogger;
-    private readonly Mock<IOrchestratorRedisManager> _mockRedisManager;
+    private readonly Mock<IOrchestratorStateManager> _mockStateManager;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
     private readonly OrchestratorServiceConfiguration _configuration;
 
@@ -1012,7 +994,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
     public ServiceHealthMonitorRoutingProtectionTests()
     {
         _mockLogger = new Mock<ILogger<ServiceHealthMonitor>>();
-        _mockRedisManager = new Mock<IOrchestratorRedisManager>();
+        _mockStateManager = new Mock<IOrchestratorStateManager>();
         _mockEventManager = new Mock<IOrchestratorEventManager>();
         _configuration = new OrchestratorServiceConfiguration
         {
@@ -1029,14 +1011,14 @@ public class ServiceHealthMonitorRoutingProtectionTests
             .Callback<Action<ServiceHeartbeatEvent>>(handler => _heartbeatHandler = handler);
 
         // Setup for GetServiceRoutingsAsync (needed for PublishFullMappingsAsync)
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetServiceRoutingsAsync())
             .ReturnsAsync(new Dictionary<string, ServiceRouting>());
 
         return new ServiceHealthMonitor(
             _mockLogger.Object,
             _configuration,
-            _mockRedisManager.Object,
+            _mockStateManager.Object,
             _mockEventManager.Object);
     }
 
@@ -1058,12 +1040,12 @@ public class ServiceHealthMonitorRoutingProtectionTests
         };
 
         ServiceRouting? capturedRouting = null;
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.WriteServiceRoutingAsync("auth", It.IsAny<ServiceRouting>()))
             .Callback<string, ServiceRouting>((name, routing) => capturedRouting = routing)
             .Returns(Task.CompletedTask);
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.WriteServiceHeartbeatAsync(It.IsAny<ServiceHeartbeatEvent>()))
             .Returns(Task.CompletedTask);
 
@@ -1084,11 +1066,11 @@ public class ServiceHealthMonitorRoutingProtectionTests
         // Arrange
         var monitor = CreateMonitorWithEventCapture();
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.WriteServiceRoutingAsync("auth", It.IsAny<ServiceRouting>()))
             .Returns(Task.CompletedTask);
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.WriteServiceHeartbeatAsync(It.IsAny<ServiceHeartbeatEvent>()))
             .Returns(Task.CompletedTask);
 
@@ -1108,14 +1090,14 @@ public class ServiceHealthMonitorRoutingProtectionTests
         };
 
         // Reset the mock to track new calls
-        _mockRedisManager.Invocations.Clear();
+        _mockStateManager.Invocations.Clear();
 
         _heartbeatHandler?.Invoke(heartbeat);
         await Task.Delay(100);
 
         // Assert - WriteServiceRoutingAsync for "auth" should NOT have been called with "bannou"
         // (heartbeat from "bannou" should be ignored because "auth" is routed to "bannou-auth")
-        _mockRedisManager.Verify(
+        _mockStateManager.Verify(
             x => x.WriteServiceRoutingAsync("auth", It.Is<ServiceRouting>(r => r.AppId == "bannou")),
             Times.Never(),
             "Heartbeat from wrong app-id should not overwrite explicit routing");
@@ -1128,12 +1110,12 @@ public class ServiceHealthMonitorRoutingProtectionTests
         var monitor = CreateMonitorWithEventCapture();
 
         ServiceRouting? lastCapturedRouting = null;
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.WriteServiceRoutingAsync("auth", It.IsAny<ServiceRouting>()))
             .Callback<string, ServiceRouting>((name, routing) => lastCapturedRouting = routing)
             .Returns(Task.CompletedTask);
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.WriteServiceHeartbeatAsync(It.IsAny<ServiceHeartbeatEvent>()))
             .Returns(Task.CompletedTask);
 
@@ -1168,12 +1150,12 @@ public class ServiceHealthMonitorRoutingProtectionTests
         var monitor = CreateMonitorWithEventCapture();
 
         ServiceRouting? lastCapturedRouting = null;
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.WriteServiceRoutingAsync("auth", It.IsAny<ServiceRouting>()))
             .Callback<string, ServiceRouting>((name, routing) => lastCapturedRouting = routing)
             .Returns(Task.CompletedTask);
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.WriteServiceHeartbeatAsync(It.IsAny<ServiceHeartbeatEvent>()))
             .Returns(Task.CompletedTask);
 
@@ -1208,11 +1190,11 @@ public class ServiceHealthMonitorRoutingProtectionTests
         // Arrange
         var monitor = CreateMonitorWithEventCapture();
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.WriteServiceRoutingAsync("auth", It.IsAny<ServiceRouting>()))
             .Returns(Task.CompletedTask);
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.RemoveServiceRoutingAsync("auth"))
             .Returns(Task.CompletedTask);
 
@@ -1223,7 +1205,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         await monitor.RemoveServiceRoutingAsync("auth");
 
         // Assert - RemoveServiceRoutingAsync was called on redis
-        _mockRedisManager.Verify(
+        _mockStateManager.Verify(
             x => x.RemoveServiceRoutingAsync("auth"),
             Times.Once(),
             "RemoveServiceRoutingAsync should be called on redis manager");
@@ -1235,11 +1217,11 @@ public class ServiceHealthMonitorRoutingProtectionTests
         // Arrange
         var monitor = CreateMonitorWithEventCapture();
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.ClearAllServiceRoutingsAsync())
             .Returns(Task.CompletedTask);
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetServiceRoutingsAsync())
             .ReturnsAsync(new Dictionary<string, ServiceRouting>());
 
@@ -1251,7 +1233,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         await monitor.ResetAllMappingsToDefaultAsync();
 
         // Assert
-        _mockRedisManager.Verify(x => x.ClearAllServiceRoutingsAsync(), Times.Once(),
+        _mockStateManager.Verify(x => x.ClearAllServiceRoutingsAsync(), Times.Once(),
             "ClearAllServiceRoutingsAsync should be called to clear Redis routing keys");
 
         _mockEventManager.Verify(
@@ -1267,15 +1249,15 @@ public class ServiceHealthMonitorRoutingProtectionTests
         // Arrange
         var monitor = CreateMonitorWithEventCapture();
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.WriteServiceRoutingAsync(It.IsAny<string>(), It.IsAny<ServiceRouting>()))
             .Returns(Task.CompletedTask);
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.ClearAllServiceRoutingsAsync())
             .Returns(Task.CompletedTask);
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetServiceRoutingsAsync())
             .ReturnsAsync(new Dictionary<string, ServiceRouting>());
 
@@ -1292,7 +1274,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
 
         // Now simulate a heartbeat - it should be able to initialize routing again
         // (because in-memory cache was cleared)
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.WriteServiceHeartbeatAsync(It.IsAny<ServiceHeartbeatEvent>()))
             .Returns(Task.CompletedTask);
 
@@ -1308,7 +1290,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         };
 
         ServiceRouting? capturedRouting = null;
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.WriteServiceRoutingAsync("auth", It.IsAny<ServiceRouting>()))
             .Callback<string, ServiceRouting>((name, routing) => capturedRouting = routing)
             .Returns(Task.CompletedTask);
@@ -1323,20 +1305,20 @@ public class ServiceHealthMonitorRoutingProtectionTests
 }
 
 /// <summary>
-/// Tests for OrchestratorRedisManager operations.
-/// These tests verify Redis key management for deployment configuration tracking.
+/// Tests for OrchestratorStateManager operations.
+/// These tests verify state store key management for deployment configuration tracking.
 /// </summary>
-public class OrchestratorRedisManagerTests
+public class OrchestratorStateManagerTests
 {
     [Fact]
     public void ClearAllServiceRoutingsAsync_Interface_ShouldExist()
     {
         // Arrange & Act & Assert
         // Verify the interface method exists (compile-time check)
-        var mockRedisManager = new Mock<IOrchestratorRedisManager>();
-        mockRedisManager.Setup(x => x.ClearAllServiceRoutingsAsync()).Returns(Task.CompletedTask);
+        var mockStateManager = new Mock<IOrchestratorStateManager>();
+        mockStateManager.Setup(x => x.ClearAllServiceRoutingsAsync()).Returns(Task.CompletedTask);
 
-        Assert.NotNull(mockRedisManager.Object);
+        Assert.NotNull(mockStateManager.Object);
     }
 
     [Fact]
@@ -1344,25 +1326,201 @@ public class OrchestratorRedisManagerTests
     {
         // Arrange & Act & Assert
         // Verify the interface method exists (compile-time check)
-        var mockRedisManager = new Mock<IOrchestratorRedisManager>();
-        mockRedisManager.Setup(x => x.ClearCurrentConfigurationAsync()).ReturnsAsync(1);
+        var mockStateManager = new Mock<IOrchestratorStateManager>();
+        mockStateManager.Setup(x => x.ClearCurrentConfigurationAsync()).ReturnsAsync(1);
 
-        Assert.NotNull(mockRedisManager.Object);
+        Assert.NotNull(mockStateManager.Object);
     }
 
     [Fact]
     public async Task ClearCurrentConfigurationAsync_ShouldReturnNewVersion()
     {
         // Arrange
-        var mockRedisManager = new Mock<IOrchestratorRedisManager>();
-        mockRedisManager.Setup(x => x.ClearCurrentConfigurationAsync()).ReturnsAsync(5);
+        var mockStateManager = new Mock<IOrchestratorStateManager>();
+        mockStateManager.Setup(x => x.ClearCurrentConfigurationAsync()).ReturnsAsync(5);
 
         // Act
-        var newVersion = await mockRedisManager.Object.ClearCurrentConfigurationAsync();
+        var newVersion = await mockStateManager.Object.ClearCurrentConfigurationAsync();
 
         // Assert
         Assert.Equal(5, newVersion);
     }
+
+    #region OrchestratorStateManager Implementation Tests
+
+    [Fact]
+    public void OrchestratorStateManager_Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        var ex = Assert.Throws<ArgumentNullException>(() => new OrchestratorStateManager(
+            null!,
+            Mock.Of<ILogger<OrchestratorStateManager>>()));
+        Assert.Equal("stateStoreFactory", ex.ParamName);
+    }
+
+    [Fact]
+    public void OrchestratorStateManager_Constructor_WithNullLogger_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        var ex = Assert.Throws<ArgumentNullException>(() => new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            null!));
+        Assert.Equal("logger", ex.ParamName);
+    }
+
+    [Fact]
+    public void OrchestratorStateManager_Constructor_WithValidParameters_ShouldNotThrow()
+    {
+        // Arrange & Act
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+
+        // Assert
+        Assert.NotNull(manager);
+    }
+
+    [Fact]
+    public async Task OrchestratorStateManager_CheckHealthAsync_WhenNotInitialized_ShouldReturnNotHealthy()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+
+        // Act
+        var (isHealthy, message, _) = await manager.CheckHealthAsync();
+
+        // Assert
+        Assert.False(isHealthy);
+        Assert.Contains("not initialized", message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task OrchestratorStateManager_GetConfigVersionAsync_WhenNotInitialized_ShouldReturnZero()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+
+        // Act
+        var result = await manager.GetConfigVersionAsync();
+
+        // Assert
+        Assert.Equal(0, result);
+    }
+
+    [Fact]
+    public async Task OrchestratorStateManager_GetServiceHeartbeatsAsync_WhenNotInitialized_ShouldReturnEmptyList()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+
+        // Act
+        var result = await manager.GetServiceHeartbeatsAsync();
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task OrchestratorStateManager_GetServiceRoutingsAsync_WhenNotInitialized_ShouldReturnEmptyDictionary()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+
+        // Act
+        var result = await manager.GetServiceRoutingsAsync();
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task OrchestratorStateManager_WriteServiceHeartbeatAsync_WhenNotInitialized_ShouldNotThrow()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+        var heartbeat = new ServiceHeartbeatEvent
+        {
+            ServiceId = Guid.NewGuid(),
+            AppId = "test-app",
+            Status = ServiceHeartbeatEventStatus.Healthy
+        };
+
+        // Act & Assert - should log warning but not throw
+        var exception = await Record.ExceptionAsync(() => manager.WriteServiceHeartbeatAsync(heartbeat));
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public async Task OrchestratorStateManager_WriteServiceRoutingAsync_WhenNotInitialized_ShouldNotThrow()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+        var routing = new ServiceRouting
+        {
+            AppId = "test-app",
+            Host = "localhost",
+            Port = 5012
+        };
+
+        // Act & Assert - should log warning but not throw
+        var exception = await Record.ExceptionAsync(() => manager.WriteServiceRoutingAsync("test-service", routing));
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public async Task OrchestratorStateManager_RestoreConfigurationVersionAsync_WhenNotInitialized_ShouldReturnFalse()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+
+        // Act
+        var result = await manager.RestoreConfigurationVersionAsync(1);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void OrchestratorStateManager_Dispose_ShouldNotThrow()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+
+        // Act & Assert - Should not throw
+        var exception = Record.Exception(() => manager.Dispose());
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public async Task OrchestratorStateManager_DisposeAsync_ShouldNotThrow()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+
+        // Act & Assert - Should not throw
+        var exception = await Record.ExceptionAsync(async () => await manager.DisposeAsync());
+        Assert.Null(exception);
+    }
+
+    #endregion
 }
 
 /// <summary>
@@ -1372,29 +1530,27 @@ public class OrchestratorRedisManagerTests
 /// </summary>
 public class OrchestratorResetToDefaultTests
 {
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<OrchestratorService>> _mockLogger;
     private readonly Mock<ILoggerFactory> _mockLoggerFactory;
-    private readonly Mock<IOrchestratorRedisManager> _mockRedisManager;
+    private readonly Mock<IOrchestratorStateManager> _mockStateManager;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
     private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
     private readonly Mock<ISmartRestartManager> _mockRestartManager;
     private readonly Mock<IBackendDetector> _mockBackendDetector;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly OrchestratorServiceConfiguration _configuration;
 
     public OrchestratorResetToDefaultTests()
     {
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<OrchestratorService>>();
         _mockLoggerFactory = new Mock<ILoggerFactory>();
-        _mockRedisManager = new Mock<IOrchestratorRedisManager>();
+        _mockStateManager = new Mock<IOrchestratorStateManager>();
         _mockEventManager = new Mock<IOrchestratorEventManager>();
         _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
         _mockRestartManager = new Mock<ISmartRestartManager>();
         _mockBackendDetector = new Mock<IBackendDetector>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _configuration = new OrchestratorServiceConfiguration
         {
@@ -1411,16 +1567,15 @@ public class OrchestratorResetToDefaultTests
     private OrchestratorService CreateService()
     {
         return new OrchestratorService(
-            _mockDaprClient.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
             _configuration,
-            _mockRedisManager.Object,
+            _mockStateManager.Object,
             _mockEventManager.Object,
             _mockHealthMonitor.Object,
             _mockRestartManager.Object,
             _mockBackendDetector.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
     }
 
@@ -1460,7 +1615,7 @@ public class OrchestratorResetToDefaultTests
             .Returns(mockOrchestrator.Object);
 
         // No deployment configuration - already at default
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetCurrentConfigurationAsync())
             .ReturnsAsync((DeploymentConfiguration?)null);
 
@@ -1530,11 +1685,11 @@ public class OrchestratorResetToDefaultTests
             }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetCurrentConfigurationAsync())
             .ReturnsAsync(existingConfig);
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.ClearCurrentConfigurationAsync())
             .ReturnsAsync(2);
 
@@ -1567,7 +1722,7 @@ public class OrchestratorResetToDefaultTests
             Times.Never(),
             "Should NOT tear down default 'bannou' container");
 
-        _mockRedisManager.Verify(x => x.ClearCurrentConfigurationAsync(), Times.Once(),
+        _mockStateManager.Verify(x => x.ClearCurrentConfigurationAsync(), Times.Once(),
             "ClearCurrentConfigurationAsync should be called to save empty config");
 
         _mockHealthMonitor.Verify(x => x.ResetAllMappingsToDefaultAsync(), Times.Once(),
@@ -1607,14 +1762,14 @@ public class OrchestratorResetToDefaultTests
             .Setup(x => x.CreateOrchestrator(BackendType.Compose))
             .Returns(mockOrchestrator.Object);
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetServiceHeartbeatsAsync())
             .ReturnsAsync(new List<ServiceHealthStatus>
             {
                 new() { AppId = "bannou-auth", ServiceId = "auth", Status = "healthy", LastSeen = DateTimeOffset.UtcNow }
             });
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.SaveConfigurationVersionAsync(It.IsAny<DeploymentConfiguration>()))
             .ReturnsAsync(1);
 
@@ -1634,7 +1789,7 @@ public class OrchestratorResetToDefaultTests
                     new()
                     {
                         Name = "bannou-auth",
-                        DaprAppId = "bannou-auth",
+                        AppId = "bannou-auth",
                         Services = new List<string> { "auth" }
                     }
                 }
@@ -1699,11 +1854,11 @@ public class OrchestratorResetToDefaultTests
             }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetCurrentConfigurationAsync())
             .ReturnsAsync(existingConfig);
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.ClearCurrentConfigurationAsync())
             .ReturnsAsync(2);
 
@@ -1732,7 +1887,7 @@ public class OrchestratorResetToDefaultTests
             "Should NOT tear down any containers when all services are on 'bannou'");
 
         // Should still clear configuration
-        _mockRedisManager.Verify(x => x.ClearCurrentConfigurationAsync(), Times.Once(),
+        _mockStateManager.Verify(x => x.ClearCurrentConfigurationAsync(), Times.Once(),
             "ClearCurrentConfigurationAsync should still be called");
 
         _mockHealthMonitor.Verify(x => x.ResetAllMappingsToDefaultAsync(), Times.Once(),

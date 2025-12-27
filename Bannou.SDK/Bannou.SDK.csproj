@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -10,8 +10,8 @@
     <!-- NuGet Package Metadata -->
     <PackageId>BeyondImmersion.Bannou.SDK</PackageId>
     <Authors>BeyondImmersion</Authors>
-    <Description>Server SDK for Bannou service platform with Dapr service clients, models, events, and WebSocket protocol support. Use this for game servers and internal services.</Description>
-    <PackageTags>bannou;microservices;websocket;dapr;server;sdk;service-client</PackageTags>
+    <Description>Server SDK for Bannou service platform with service clients, models, events, and WebSocket protocol support. Use this for game servers and internal services.</Description>
+    <PackageTags>bannou;microservices;websocket;server;sdk;service-client</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
     <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
@@ -29,7 +29,7 @@
 
   <ItemGroup>
     <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
-    <PackageReference Include="Dapr.Client" Version="1.15.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
   </ItemGroup>
 
   <!-- Generated Files via MSBuild Target (VS-Compatible) -->
@@ -37,10 +37,13 @@
     <ItemGroup>
       <Compile Include="../bannou-service/Generated/CommonClientEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Clients/RealmClient.cs" />
+      <Compile Include="../bannou-service/Generated/Clients/AssetClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/AccountsClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/VoiceClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/SubscriptionsClient.cs" />
+      <Compile Include="../bannou-service/Generated/Clients/MessagingClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/GameSessionClient.cs" />
+      <Compile Include="../bannou-service/Generated/Clients/MeshClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/DocumentationClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/ConnectClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/SpeciesClient.cs" />
@@ -49,6 +52,7 @@
       <Compile Include="../bannou-service/Generated/Clients/RelationshipTypeClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/PermissionsClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/WebsiteClient.cs" />
+      <Compile Include="../bannou-service/Generated/Clients/StateClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/AuthClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/OrchestratorClient.cs" />
       <Compile Include="../bannou-service/Generated/Clients/LocationClient.cs" />
@@ -58,9 +62,13 @@
       <Compile Include="../bannou-service/Generated/Models/AuthModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/RelationshipTypeModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/CharacterModels.cs" />
+      <Compile Include="../bannou-service/Generated/Models/AssetModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/ServicedataModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/RelationshipModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/PermissionsModels.cs" />
+      <Compile Include="../bannou-service/Generated/Models/MeshModels.cs" />
+      <Compile Include="../bannou-service/Generated/Models/MessagingModels.cs" />
+      <Compile Include="../bannou-service/Generated/Models/StateModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/SubscriptionsModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/BehaviorModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/AccountsModels.cs" />
@@ -75,16 +83,22 @@
       <Compile Include="../bannou-service/Generated/Events/DocumentationLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/SpeciesEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/RelationshipLifecycleEvents.cs" />
+      <Compile Include="../bannou-service/Generated/Events/MeshEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/RelationshipTypeEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/LocationEventsModels.cs" />
+      <Compile Include="../bannou-service/Generated/Events/AssetEventsModels.cs" />
+      <Compile Include="../bannou-service/Generated/Events/OrchestratorEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/CharacterLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/GameSessionEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/RealmEventsModels.cs" />
+      <Compile Include="../bannou-service/Generated/Events/StateEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/LocationLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/RelationshipTypeLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/AccountsEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/SubscriptionsEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/VoiceEventsModels.cs" />
+      <Compile Include="../bannou-service/Generated/Events/MessagingEventsModels.cs" />
+      <Compile Include="../bannou-service/Generated/Events/GameSessionLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/AccountsLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/AuthEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/SpeciesLifecycleEvents.cs" />
@@ -92,19 +106,20 @@
       <Compile Include="../bannou-service/Generated/Events/CharacterEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/DocumentationEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/RealmLifecycleEvents.cs" />
+      <Compile Include="../bannou-service/Generated/Events/ConnectEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/RelationshipEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/CommonEventsModels.cs" />
+      <Compile Include="../lib-asset/Generated/AssetClientEventsModels.cs" />
       <Compile Include="../lib-game-session/Generated/GameSessionClientEventsModels.cs" />
       <Compile Include="../lib-voice/Generated/VoiceClientEventsModels.cs" />
     </ItemGroup>
   </Target>
 
-  <!-- Service Client Infrastructure (for Dapr service-to-service calls) -->
+  <!-- Service Client Infrastructure (for mesh service-to-service calls) -->
   <ItemGroup>
-    <Compile Include="../bannou-service/ServiceClients/IDaprClient.cs" Condition="Exists('../bannou-service/ServiceClients/IDaprClient.cs')" />
     <Compile Include="../bannou-service/ServiceClients/IServiceClient.cs" Condition="Exists('../bannou-service/ServiceClients/IServiceClient.cs')" />
-    <Compile Include="../bannou-service/ServiceClients/DaprServiceClientBase.cs" Condition="Exists('../bannou-service/ServiceClients/DaprServiceClientBase.cs')" />
     <Compile Include="../bannou-service/Services/IServiceAppMappingResolver.cs" Condition="Exists('../bannou-service/Services/IServiceAppMappingResolver.cs')" />
+    <Compile Include="../bannou-service/Services/IMeshInvocationClient.cs" Condition="Exists('../bannou-service/Services/IMeshInvocationClient.cs')" />
     <Compile Include="../bannou-service/ApiException.cs" Condition="Exists('../bannou-service/ApiException.cs')" />
     <Compile Include="../bannou-service/Configuration/BannouJson.cs" Condition="Exists('../bannou-service/Configuration/BannouJson.cs')" />
   </ItemGroup>

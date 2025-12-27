@@ -42,7 +42,7 @@ components:
           description: Service API version for change tracking
         appId:
           type: string
-          description: Dapr app-id for service routing (typically "bannou")
+          description: Bannou app-id for service routing (typically "bannou")
         endpoints:
           type: array
           items:
@@ -134,7 +134,7 @@ components:
           description: Unique GUID identifying this bannou instance (for log correlation/debugging)
         appId:
           type: string
-          description: Dapr app-id for this instance (e.g., "bannou", "jobberwocky")
+          description: Bannou app-id for this instance (e.g., "bannou", "jobberwocky")
         status:
           type: string
           enum: [healthy, degraded, overloaded, shutting_down, unavailable]
@@ -234,7 +234,7 @@ components:
           description: Logical service name emitting the error (e.g., "accounts")
         appId:
           type: string
-          description: Dapr app-id of the instance emitting the error
+          description: Bannou app-id of the instance emitting the error
         operation:
           type: string
           description: Operation/method name where the error occurred
@@ -256,7 +256,7 @@ components:
         dependency:
           type: string
           nullable: true
-          description: Dependency implicated in the failure (e.g., redis, dapr-pubsub, http:accounts)
+          description: Dependency implicated in the failure (e.g., redis, pubsub, http:accounts)
         endpoint:
           type: string
           nullable: true
@@ -490,7 +490,7 @@ components:
           description: Name of the service (e.g., "accounts", "character-agent")
         appId:
           type: string
-          description: Dapr app-id where the service is running
+          description: Bannou app-id where the service is running
         action:
           type: string
           enum: [register, update, unregister]

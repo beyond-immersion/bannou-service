@@ -2,8 +2,9 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Documentation;
 using BeyondImmersion.BannouService.Documentation.Services;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -15,30 +16,49 @@ namespace BeyondImmersion.BannouService.Documentation.Tests;
 /// </summary>
 public class DocumentationServiceTests
 {
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<IStateStore<DocumentationService.StoredDocument>> _mockDocumentStore;
+    private readonly Mock<IStateStore<DocumentationService.TrashedDocument>> _mockTrashStore;
+    private readonly Mock<IStateStore<List<Guid>>> _mockGuidListStore;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<DocumentationService>> _mockLogger;
     private readonly DocumentationServiceConfiguration _configuration;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<ISearchIndexService> _mockSearchIndexService;
     private readonly DocumentationService _service;
 
     private const string TEST_NAMESPACE = "test-namespace";
+    private const string STATE_STORE = "documentation-statestore";
 
     public DocumentationServiceTests()
     {
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockStringStore = new Mock<IStateStore<string>>();
+        _mockDocumentStore = new Mock<IStateStore<DocumentationService.StoredDocument>>();
+        _mockTrashStore = new Mock<IStateStore<DocumentationService.TrashedDocument>>();
+        _mockGuidListStore = new Mock<IStateStore<List<Guid>>>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<DocumentationService>>();
         _configuration = new DocumentationServiceConfiguration();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockSearchIndexService = new Mock<ISearchIndexService>();
 
+        // Setup factory to return typed stores
+        _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
+            .Returns(_mockStringStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<DocumentationService.StoredDocument>(STATE_STORE))
+            .Returns(_mockDocumentStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<DocumentationService.TrashedDocument>(STATE_STORE))
+            .Returns(_mockTrashStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(STATE_STORE))
+            .Returns(_mockGuidListStore.Object);
+
         _service = new DocumentationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object,
             _mockSearchIndexService.Object);
     }
@@ -50,10 +70,10 @@ public class DocumentationServiceTests
     {
         // Arrange & Act
         var service = new DocumentationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object,
             _mockSearchIndexService.Object);
 
@@ -62,14 +82,14 @@ public class DocumentationServiceTests
     }
 
     [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrowArgumentNullException()
+    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new DocumentationService(
             null!,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object,
             _mockSearchIndexService.Object));
     }
@@ -79,10 +99,10 @@ public class DocumentationServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new DocumentationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             null!,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object,
             _mockSearchIndexService.Object));
     }
@@ -92,22 +112,9 @@ public class DocumentationServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new DocumentationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
-            null!,
-            _mockErrorEventEmitter.Object,
-            _mockEventConsumer.Object,
-            _mockSearchIndexService.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullErrorEventEmitter_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new DocumentationService(
-            _mockDaprClient.Object,
-            _mockLogger.Object,
-            _configuration,
             null!,
             _mockEventConsumer.Object,
             _mockSearchIndexService.Object));
@@ -118,10 +125,10 @@ public class DocumentationServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new DocumentationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             null!,
             _mockSearchIndexService.Object));
     }
@@ -131,10 +138,10 @@ public class DocumentationServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new DocumentationService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object,
             null!));
     }
@@ -444,10 +451,10 @@ public class DocumentationServiceTests
             Category = DocumentCategory.GettingStarted
         };
 
-        // Mock - slug already exists
-        _mockDaprClient.Setup(x => x.GetStateAsync<Guid?>(
-            It.IsAny<string>(), It.Is<string>(k => k.Contains("slug-idx")), null, null, default))
-            .ReturnsAsync(existingDocId);
+        // Mock - slug already exists (stored as string representation of Guid)
+        _mockStringStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains("slug-idx")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingDocId.ToString());
 
         // Act
         var (status, response) = await _service.CreateDocumentAsync(request);
@@ -471,17 +478,17 @@ public class DocumentationServiceTests
             SearchTerm = "test query"
         };
 
-        _mockSearchIndexService.Setup(x => x.Search(
-            TEST_NAMESPACE, "test query", null, It.IsAny<int>()))
-            .Returns(new List<SearchResult>());
+        _mockSearchIndexService.Setup(x => x.SearchAsync(
+            TEST_NAMESPACE, "test query", null, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<SearchResult>());
 
         // Act
         var (status, _) = await _service.SearchDocumentationAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        _mockSearchIndexService.Verify(x => x.Search(
-            TEST_NAMESPACE, "test query", null, It.IsAny<int>()), Times.Once);
+        _mockSearchIndexService.Verify(x => x.SearchAsync(
+            TEST_NAMESPACE, "test query", null, It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -494,17 +501,17 @@ public class DocumentationServiceTests
             Query = "how do I start"
         };
 
-        _mockSearchIndexService.Setup(x => x.Query(
-            TEST_NAMESPACE, "how do I start", null, It.IsAny<int>(), It.IsAny<double>()))
-            .Returns(new List<SearchResult>());
+        _mockSearchIndexService.Setup(x => x.QueryAsync(
+            TEST_NAMESPACE, "how do I start", null, It.IsAny<int>(), It.IsAny<double>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<SearchResult>());
 
         // Act
         var (status, _) = await _service.QueryDocumentationAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        _mockSearchIndexService.Verify(x => x.Query(
-            TEST_NAMESPACE, "how do I start", null, It.IsAny<int>(), It.IsAny<double>()), Times.Once);
+        _mockSearchIndexService.Verify(x => x.QueryAsync(
+            TEST_NAMESPACE, "how do I start", null, It.IsAny<int>(), It.IsAny<double>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -516,14 +523,66 @@ public class DocumentationServiceTests
 public class DocumentationConfigurationTests
 {
     [Fact]
-    public void Configuration_WithValidSettings_ShouldInitializeCorrectly()
+    public void Configuration_WithDefaultValues_ShouldHaveExpectedDefaults()
     {
-        // Arrange
+        // Arrange & Act
         var config = new DocumentationServiceConfiguration();
 
-        // Act & Assert
+        // Assert - Verify all default values are set correctly
         Assert.NotNull(config);
+        Assert.True(config.SearchIndexRebuildOnStartup, "SearchIndexRebuildOnStartup should default to true");
+        Assert.Equal(86400, config.SessionTtlSeconds); // 24 hours
+        Assert.Equal(524288, config.MaxContentSizeBytes); // 500KB
+        Assert.Equal(7, config.TrashcanTtlDays);
+        Assert.Equal(200, config.VoiceSummaryMaxLength);
+        Assert.Equal(300, config.SearchCacheTtlSeconds); // 5 minutes
+        Assert.Equal(0.3, config.MinRelevanceScore);
+        Assert.Equal(20, config.MaxSearchResults);
+        Assert.Equal(0, config.MaxImportDocuments); // 0 = unlimited
+        Assert.False(config.AiEnhancementsEnabled);
+        Assert.Equal("", config.AiEmbeddingsModel);
     }
 
-    // TODO: Add configuration-specific tests
+    [Fact]
+    public void Configuration_ForceServiceId_ShouldBeNullByDefault()
+    {
+        // Arrange & Act
+        var config = new DocumentationServiceConfiguration();
+
+        // Assert
+        Assert.Null(config.ForceServiceId);
+    }
+
+    [Fact]
+    public void Configuration_WithCustomValues_ShouldRetainValues()
+    {
+        // Arrange & Act
+        var config = new DocumentationServiceConfiguration
+        {
+            SearchIndexRebuildOnStartup = false,
+            SessionTtlSeconds = 3600,
+            MaxContentSizeBytes = 1048576, // 1MB
+            TrashcanTtlDays = 30,
+            VoiceSummaryMaxLength = 500,
+            SearchCacheTtlSeconds = 600,
+            MinRelevanceScore = 0.5,
+            MaxSearchResults = 50,
+            MaxImportDocuments = 100,
+            AiEnhancementsEnabled = true,
+            AiEmbeddingsModel = "text-embedding-ada-002"
+        };
+
+        // Assert
+        Assert.False(config.SearchIndexRebuildOnStartup);
+        Assert.Equal(3600, config.SessionTtlSeconds);
+        Assert.Equal(1048576, config.MaxContentSizeBytes);
+        Assert.Equal(30, config.TrashcanTtlDays);
+        Assert.Equal(500, config.VoiceSummaryMaxLength);
+        Assert.Equal(600, config.SearchCacheTtlSeconds);
+        Assert.Equal(0.5, config.MinRelevanceScore);
+        Assert.Equal(50, config.MaxSearchResults);
+        Assert.Equal(100, config.MaxImportDocuments);
+        Assert.True(config.AiEnhancementsEnabled);
+        Assert.Equal("text-embedding-ada-002", config.AiEmbeddingsModel);
+    }
 }

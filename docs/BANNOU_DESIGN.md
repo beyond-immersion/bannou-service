@@ -8,7 +8,7 @@ Bannou is a **monoservice** - a single codebase that can deploy as anything from
 
 1. **Schema-First Development** - OpenAPI specifications are the single source of truth
 2. **Plugin Architecture** - Each service is an independent, loadable assembly
-3. **Dapr Integration** - Infrastructure concerns (databases, messaging, service discovery) are externalized
+3. **Infrastructure Libs** - Infrastructure concerns (state, messaging, service invocation) are abstracted via lib-state, lib-messaging, and lib-mesh
 
 Together, these enable Bannou to scale from local development to supporting 100,000+ concurrent AI-driven NPCs without code changes.
 
@@ -111,52 +111,57 @@ lib-accounts/           # Accounts service plugin
 
 **Service registration**:
 ```csharp
-[DaprService("accounts", typeof(IAccountsService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("accounts", typeof(IAccountsService), lifetime: ServiceLifetime.Scoped)]
 public class AccountsService : IAccountsService
 {
     // Business logic implementation
 }
 ```
 
-The `[DaprService]` attribute enables automatic discovery and dependency injection.
+The `[BannouService]` attribute enables automatic discovery and dependency injection.
 
-## Dapr Integration
+## Infrastructure Libs
 
-[Dapr](https://dapr.io) externalizes infrastructure concerns, making services portable across environments:
+Bannou uses three infrastructure libraries to abstract infrastructure concerns, making services portable across environments:
 
-### State Management
+### State Management (lib-state)
 Services don't know if they're using Redis, MySQL, or any other store:
 ```csharp
-await _daprClient.SaveStateAsync("accounts-store", key, data);
-var data = await _daprClient.GetStateAsync<Model>("accounts-store", key);
+// In constructor
+_stateStore = stateStoreFactory.Create<AccountModel>("accounts");
+
+// Usage
+await _stateStore.SaveAsync(key, data);
+var data = await _stateStore.GetAsync(key);
 ```
 
-The actual database is configured via Dapr components - change the YAML, not the code.
+The actual database is configured via service configuration - change the config, not the code.
 
-### Pub/Sub Messaging
-Services publish and subscribe to events without knowing the message broker:
+### Pub/Sub Messaging (lib-messaging)
+Services publish and subscribe to events without knowing the message broker details:
 ```csharp
 // Publisher
-await _daprClient.PublishEventAsync("bannou-pubsub", "account-created", event);
+await _messageBus.PublishAsync("account.created", event);
 
-// Subscriber (via Dapr topic subscription)
-[Topic("bannou-pubsub", "account-created")]
-public async Task HandleAccountCreated(AccountCreatedEvent event) { }
+// Subscriber
+await _messageSubscriber.SubscribeAsync<AccountCreatedEvent>(
+    "account.created",
+    async (evt, ct) => await HandleAccountCreatedAsync(evt, ct));
 ```
 
-RabbitMQ, Redis Streams, or any Dapr-supported broker works without code changes.
+RabbitMQ is used underneath, but services only interact with the IMessageBus abstraction.
 
-### Service Invocation
-Services call each other through Dapr without hardcoded addresses:
+### Service Invocation (lib-mesh)
+Services call each other through lib-mesh without hardcoded addresses:
 ```csharp
-var response = await _daprClient.InvokeMethodAsync<Request, Response>(
-    "auth",        // Target service (resolved by Dapr)
+var response = await _meshClient.InvokeMethodAsync<Request, Response>(
+    "auth",        // Target service (resolved by mesh)
     "validate",    // Method
     request
 );
 ```
 
-Dapr handles service discovery, load balancing, and retries.
+The mesh handles service discovery, load balancing, and endpoint caching via YARP.
 
 ### The "Bannou" Omnipotent Routing
 
@@ -169,14 +174,14 @@ public string GetAppIdForService(string serviceName)
 }
 ```
 
-In production, the `ServiceAppMappingResolver` can dynamically route to distributed services based on RabbitMQ events from the Orchestrator.
+In production, the mesh can dynamically route to distributed services based on Redis-stored routing tables updated by the Orchestrator.
 
 ## WebSocket-First Architecture
 
 Bannou uses a **Connect service edge gateway** that routes all client communication:
 
 ```
-Client ──WebSocket──► Connect Service ──Dapr──► Backend Services
+Client ──WebSocket──► Connect Service ──mesh──► Backend Services
                            │
                      Binary Routing Header
                      (31 bytes, zero-copy)
@@ -295,7 +300,7 @@ var (status, response) = await _authClient.ValidateTokenAsync(request);
 ### Asynchronous (Events)
 For operations that don't require immediate response:
 ```csharp
-await _daprClient.PublishEventAsync("bannou-pubsub", "account-deleted", event);
+await _messageBus.PublishAsync("account.deleted", event);
 ```
 
 ### Event-Driven Flows

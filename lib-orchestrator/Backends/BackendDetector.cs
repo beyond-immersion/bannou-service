@@ -322,6 +322,7 @@ public class BackendDetector : IBackendDetector
     private IContainerOrchestrator CreateComposeOrchestrator()
     {
         return new DockerComposeOrchestrator(
+            _configuration,
             _logger.GetType().Assembly.CreateLogger<DockerComposeOrchestrator>());
     }
 }

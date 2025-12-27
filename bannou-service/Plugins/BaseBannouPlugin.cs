@@ -6,7 +6,7 @@ namespace BeyondImmersion.BannouService.Plugins;
 
 /// <summary>
 /// Base implementation of IBannouPlugin that provides default behavior
-/// and integrates with existing IDaprService implementations.
+/// and integrates with existing IBannouService implementations.
 /// </summary>
 public abstract class BaseBannouPlugin : IBannouPlugin
 {
@@ -26,7 +26,7 @@ public abstract class BaseBannouPlugin : IBannouPlugin
     public virtual void ConfigureServices(IServiceCollection services)
     {
         // Default implementation - override in derived classes if needed
-        // Most services will use the existing [DaprService] registration
+        // Most services will use the existing [BannouService] registration
     }
 
     /// <inheritdoc />

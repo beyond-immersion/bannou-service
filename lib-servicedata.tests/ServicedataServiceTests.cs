@@ -1,43 +1,57 @@
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Servicedata;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.Linq;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Servicedata.Tests;
 
 /// <summary>
 /// Unit tests for ServicedataService
-/// Tests business logic with mocked DaprClient for state store operations.
+/// Tests business logic with mocked IStateStoreFactory for state store operations.
 /// </summary>
 public class ServicedataServiceTests
 {
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<ServiceDataModel>> _mockModelStore;
+    private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<ServicedataService>> _mockLogger;
     private readonly ServicedataServiceConfiguration _configuration;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private const string STATE_STORE = "servicedata-statestore";
 
     public ServicedataServiceTests()
     {
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockModelStore = new Mock<IStateStore<ServiceDataModel>>();
+        _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockStringStore = new Mock<IStateStore<string>>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<ServicedataService>>();
         _configuration = new ServicedataServiceConfiguration();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup factory to return typed stores
+        _mockStateStoreFactory.Setup(f => f.GetStore<ServiceDataModel>(STATE_STORE))
+            .Returns(_mockModelStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE))
+            .Returns(_mockListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
+            .Returns(_mockStringStore.Object);
     }
 
     private ServicedataService CreateService()
     {
         return new ServicedataService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
     }
 
@@ -54,11 +68,11 @@ public class ServicedataServiceTests
     }
 
     [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrowArgumentNullException()
+    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new ServicedataService(
-            null!, _mockLogger.Object, _configuration, _mockErrorEventEmitter.Object, _mockEventConsumer.Object));
+            null!, _mockMessageBus.Object, _mockLogger.Object, _configuration, _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -66,7 +80,7 @@ public class ServicedataServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new ServicedataService(
-            _mockDaprClient.Object, null!, _configuration, _mockErrorEventEmitter.Object, _mockEventConsumer.Object));
+            _mockStateStoreFactory.Object, _mockMessageBus.Object, null!, _configuration, _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -74,7 +88,7 @@ public class ServicedataServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new ServicedataService(
-            _mockDaprClient.Object, _mockLogger.Object, null!, _mockErrorEventEmitter.Object, _mockEventConsumer.Object));
+            _mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, null!, _mockEventConsumer.Object));
     }
 
     [Fact]
@@ -82,7 +96,7 @@ public class ServicedataServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new ServicedataService(
-            _mockDaprClient.Object, _mockLogger.Object, _configuration, _mockErrorEventEmitter.Object, null!));
+            _mockStateStoreFactory.Object, _mockMessageBus.Object, _mockLogger.Object, _configuration, null!));
     }
 
     #endregion
@@ -103,23 +117,13 @@ public class ServicedataServiceTests
         };
 
         // Mock: No existing stub name
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string?>(
-                STATE_STORE,
-                "service-stub:testservice",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockStringStore
+            .Setup(s => s.GetAsync("service-stub:testservice", It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Mock: Empty service list
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                "service-list",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync("service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Act
@@ -147,23 +151,13 @@ public class ServicedataServiceTests
         };
 
         // Mock: No existing stub name
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string?>(
-                STATE_STORE,
-                "service-stub:mygame",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockStringStore
+            .Setup(s => s.GetAsync("service-stub:mygame", It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Mock: Empty service list
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                "service-list",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync("service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Act
@@ -173,21 +167,17 @@ public class ServicedataServiceTests
         Assert.Equal(StatusCodes.Created, statusCode);
 
         // Verify service data saved with service: prefix
-        _mockDaprClient.Verify(d => d.SaveStateAsync(
-            STATE_STORE,
+        _mockModelStore.Verify(s => s.SaveAsync(
             It.Is<string>(k => k.StartsWith("service:") && k != "service-list"),
             It.IsAny<ServiceDataModel>(),
             It.IsAny<StateOptions?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify stub name index saved
-        _mockDaprClient.Verify(d => d.SaveStateAsync(
-            STATE_STORE,
+        _mockStringStore.Verify(s => s.SaveAsync(
             "service-stub:mygame",
             It.IsAny<string>(),
             It.IsAny<StateOptions?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -204,38 +194,26 @@ public class ServicedataServiceTests
         };
 
         // Mock: No existing stub name
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string?>(
-                STATE_STORE,
-                "service-stub:newservice",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockStringStore
+            .Setup(s => s.GetAsync("service-stub:newservice", It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Mock: Existing service list with one item
         var existingList = new List<string> { "existing-service-id" };
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                "service-list",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync("service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingList);
 
         // Capture the saved list
         List<string>? savedList = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockListStore
+            .Setup(s => s.SaveAsync(
                 "service-list",
                 It.IsAny<List<string>>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, List<string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedList = data);
+            .Callback<string, List<string>, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedList = data);
 
         // Act
         var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
@@ -259,13 +237,8 @@ public class ServicedataServiceTests
         };
 
         // Mock: Stub name already exists
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string?>(
-                STATE_STORE,
-                "service-stub:existing",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockStringStore
+            .Setup(s => s.GetAsync("service-stub:existing", It.IsAny<CancellationToken>()))
             .ReturnsAsync("existing-service-id");
 
         // Act
@@ -326,22 +299,12 @@ public class ServicedataServiceTests
         };
 
         // Mock: No existing stub name (lowercase)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string?>(
-                STATE_STORE,
-                "service-stub:mygameservice",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockStringStore
+            .Setup(s => s.GetAsync("service-stub:mygameservice", It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                "service-list",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync("service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Act
@@ -366,13 +329,8 @@ public class ServicedataServiceTests
         var request = new GetServiceRequest { ServiceId = serviceId };
 
         // Mock: Service exists
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<ServiceDataModel?>(
-                STATE_STORE,
-                $"service:{serviceId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockModelStore
+            .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ServiceDataModel
             {
                 ServiceId = serviceId.ToString(),
@@ -403,13 +361,8 @@ public class ServicedataServiceTests
         var request = new GetServiceRequest { ServiceId = serviceId };
 
         // Mock: Service doesn't exist
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<ServiceDataModel?>(
-                STATE_STORE,
-                $"service:{serviceId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockModelStore
+            .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((ServiceDataModel?)null);
 
         // Act
@@ -428,23 +381,13 @@ public class ServicedataServiceTests
         var request = new GetServiceRequest { StubName = "testservice" };
 
         // Mock: Stub index returns service ID
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string?>(
-                STATE_STORE,
-                "service-stub:testservice",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockStringStore
+            .Setup(s => s.GetAsync("service-stub:testservice", It.IsAny<CancellationToken>()))
             .ReturnsAsync(serviceId.ToString());
 
         // Mock: Service exists
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<ServiceDataModel?>(
-                STATE_STORE,
-                $"service:{serviceId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockModelStore
+            .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ServiceDataModel
             {
                 ServiceId = serviceId.ToString(),
@@ -471,13 +414,8 @@ public class ServicedataServiceTests
         var request = new GetServiceRequest { StubName = "nonexistent" };
 
         // Mock: Stub index doesn't exist
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string?>(
-                STATE_STORE,
-                "service-stub:nonexistent",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockStringStore
+            .Setup(s => s.GetAsync("service-stub:nonexistent", It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -501,23 +439,13 @@ public class ServicedataServiceTests
         var request = new ListServicesRequest { ActiveOnly = false };
 
         // Mock: Service list with two IDs
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                "service-list",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync("service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { serviceId1.ToString(), serviceId2.ToString() });
 
         // Mock: Service 1
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<ServiceDataModel?>(
-                STATE_STORE,
-                $"service:{serviceId1}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockModelStore
+            .Setup(s => s.GetAsync($"service:{serviceId1}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ServiceDataModel
             {
                 ServiceId = serviceId1.ToString(),
@@ -528,13 +456,8 @@ public class ServicedataServiceTests
             });
 
         // Mock: Service 2
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<ServiceDataModel?>(
-                STATE_STORE,
-                $"service:{serviceId2}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockModelStore
+            .Setup(s => s.GetAsync($"service:{serviceId2}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ServiceDataModel
             {
                 ServiceId = serviceId2.ToString(),
@@ -564,23 +487,13 @@ public class ServicedataServiceTests
         var request = new ListServicesRequest { ActiveOnly = true };
 
         // Mock: Service list with two IDs
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                "service-list",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync("service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { serviceId1.ToString(), serviceId2.ToString() });
 
         // Mock: Service 1 (active)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<ServiceDataModel?>(
-                STATE_STORE,
-                $"service:{serviceId1}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockModelStore
+            .Setup(s => s.GetAsync($"service:{serviceId1}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ServiceDataModel
             {
                 ServiceId = serviceId1.ToString(),
@@ -591,13 +504,8 @@ public class ServicedataServiceTests
             });
 
         // Mock: Service 2 (inactive)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<ServiceDataModel?>(
-                STATE_STORE,
-                $"service:{serviceId2}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockModelStore
+            .Setup(s => s.GetAsync($"service:{serviceId2}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ServiceDataModel
             {
                 ServiceId = serviceId2.ToString(),
@@ -626,13 +534,8 @@ public class ServicedataServiceTests
         var request = new ListServicesRequest { ActiveOnly = false };
 
         // Mock: Empty service list
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                "service-list",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync("service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<string>?)null);
 
         // Act
@@ -662,13 +565,8 @@ public class ServicedataServiceTests
         };
 
         // Mock: Service exists
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<ServiceDataModel?>(
-                STATE_STORE,
-                $"service:{serviceId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockModelStore
+            .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ServiceDataModel
             {
                 ServiceId = serviceId.ToString(),
@@ -680,16 +578,14 @@ public class ServicedataServiceTests
 
         // Capture saved data
         ServiceDataModel? savedModel = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockModelStore
+            .Setup(s => s.SaveAsync(
                 $"service:{serviceId}",
                 It.IsAny<ServiceDataModel>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, ServiceDataModel, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedModel = data);
+            .Callback<string, ServiceDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data);
 
         // Act
         var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
@@ -716,13 +612,8 @@ public class ServicedataServiceTests
         };
 
         // Mock: Service exists
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<ServiceDataModel?>(
-                STATE_STORE,
-                $"service:{serviceId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockModelStore
+            .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ServiceDataModel
             {
                 ServiceId = serviceId.ToString(),
@@ -735,16 +626,14 @@ public class ServicedataServiceTests
 
         // Capture saved data
         ServiceDataModel? savedModel = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockModelStore
+            .Setup(s => s.SaveAsync(
                 $"service:{serviceId}",
                 It.IsAny<ServiceDataModel>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, ServiceDataModel, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedModel = data);
+            .Callback<string, ServiceDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data);
 
         // Act
         var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
@@ -769,13 +658,8 @@ public class ServicedataServiceTests
         };
 
         // Mock: Service doesn't exist
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<ServiceDataModel?>(
-                STATE_STORE,
-                $"service:{serviceId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockModelStore
+            .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((ServiceDataModel?)null);
 
         // Act
@@ -816,13 +700,8 @@ public class ServicedataServiceTests
         };
 
         // Mock: Service exists (active)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<ServiceDataModel?>(
-                STATE_STORE,
-                $"service:{serviceId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockModelStore
+            .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ServiceDataModel
             {
                 ServiceId = serviceId.ToString(),
@@ -834,16 +713,14 @@ public class ServicedataServiceTests
 
         // Capture saved data
         ServiceDataModel? savedModel = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockModelStore
+            .Setup(s => s.SaveAsync(
                 $"service:{serviceId}",
                 It.IsAny<ServiceDataModel>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, ServiceDataModel, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedModel = data);
+            .Callback<string, ServiceDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data);
 
         // Act
         var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
@@ -869,13 +746,8 @@ public class ServicedataServiceTests
         var request = new DeleteServiceRequest { ServiceId = serviceId };
 
         // Mock: Service exists
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<ServiceDataModel?>(
-                STATE_STORE,
-                $"service:{serviceId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockModelStore
+            .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ServiceDataModel
             {
                 ServiceId = serviceId.ToString(),
@@ -886,13 +758,8 @@ public class ServicedataServiceTests
             });
 
         // Mock: Service list
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                "service-list",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync("service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { serviceId.ToString() });
 
         // Act
@@ -902,11 +769,8 @@ public class ServicedataServiceTests
         Assert.Equal(StatusCodes.NoContent, statusCode);
 
         // Verify delete was called
-        _mockDaprClient.Verify(d => d.DeleteStateAsync(
-            STATE_STORE,
+        _mockModelStore.Verify(s => s.DeleteAsync(
             $"service:{serviceId}",
-            It.IsAny<StateOptions?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -919,13 +783,8 @@ public class ServicedataServiceTests
         var request = new DeleteServiceRequest { ServiceId = serviceId };
 
         // Mock: Service exists with stub name
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<ServiceDataModel?>(
-                STATE_STORE,
-                $"service:{serviceId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockModelStore
+            .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ServiceDataModel
             {
                 ServiceId = serviceId.ToString(),
@@ -936,13 +795,8 @@ public class ServicedataServiceTests
             });
 
         // Mock: Service list
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                "service-list",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync("service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { serviceId.ToString() });
 
         // Act
@@ -952,11 +806,8 @@ public class ServicedataServiceTests
         Assert.Equal(StatusCodes.NoContent, statusCode);
 
         // Verify stub index delete was called
-        _mockDaprClient.Verify(d => d.DeleteStateAsync(
-            STATE_STORE,
+        _mockStringStore.Verify(s => s.DeleteAsync(
             "service-stub:testservice",
-            It.IsAny<StateOptions?>(),
-            It.IsAny<IReadOnlyDictionary<string, string>?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -970,13 +821,8 @@ public class ServicedataServiceTests
         var request = new DeleteServiceRequest { ServiceId = serviceId };
 
         // Mock: Service exists
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<ServiceDataModel?>(
-                STATE_STORE,
-                $"service:{serviceId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockModelStore
+            .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ServiceDataModel
             {
                 ServiceId = serviceId.ToString(),
@@ -987,27 +833,20 @@ public class ServicedataServiceTests
             });
 
         // Mock: Service list with multiple items
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                "service-list",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync("service-list", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { serviceId.ToString(), otherId.ToString() });
 
         // Capture saved list
         List<string>? savedList = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockListStore
+            .Setup(s => s.SaveAsync(
                 "service-list",
                 It.IsAny<List<string>>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, List<string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedList = data);
+            .Callback<string, List<string>, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedList = data);
 
         // Act
         var (statusCode, response) = await service.DeleteServiceAsync(request, CancellationToken.None);
@@ -1028,13 +867,8 @@ public class ServicedataServiceTests
         var request = new DeleteServiceRequest { ServiceId = serviceId };
 
         // Mock: Service doesn't exist
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<ServiceDataModel?>(
-                STATE_STORE,
-                $"service:{serviceId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockModelStore
+            .Setup(s => s.GetAsync($"service:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((ServiceDataModel?)null);
 
         // Act

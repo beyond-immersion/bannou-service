@@ -1,11 +1,12 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.RelationshipType;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
-using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -18,28 +19,41 @@ namespace BeyondImmersion.BannouService.RelationshipType.Tests;
 /// </summary>
 public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServiceConfiguration>
 {
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private const string STATE_STORE = "relationship-type-statestore";
+
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<RelationshipTypeModel>> _mockRelationshipTypeStore;
+    private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<RelationshipTypeService>> _mockLogger;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IRelationshipClient> _mockRelationshipClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public RelationshipTypeServiceTests()
     {
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockRelationshipTypeStore = new Mock<IStateStore<RelationshipTypeModel>>();
+        _mockStringStore = new Mock<IStateStore<string>>();
+        _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<RelationshipTypeService>>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockRelationshipClient = new Mock<IRelationshipClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup factory to return typed stores
+        _mockStateStoreFactory.Setup(f => f.GetStore<RelationshipTypeModel>(STATE_STORE)).Returns(_mockRelationshipTypeStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE)).Returns(_mockStringStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE)).Returns(_mockListStore.Object);
     }
 
     private RelationshipTypeService CreateService()
     {
         return new RelationshipTypeService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockRelationshipClient.Object,
             _mockEventConsumer.Object);
     }
@@ -57,14 +71,27 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
     }
 
     [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrowArgumentNullException()
+    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new RelationshipTypeService(
             null!,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
+            _mockRelationshipClient.Object,
+            _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new RelationshipTypeService(
+            _mockStateStoreFactory.Object,
+            null!,
+            _mockLogger.Object,
+            Configuration,
             _mockRelationshipClient.Object,
             _mockEventConsumer.Object));
     }
@@ -74,10 +101,10 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new RelationshipTypeService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             null!,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockRelationshipClient.Object,
             _mockEventConsumer.Object));
     }
@@ -87,22 +114,9 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new RelationshipTypeService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
-            null!,
-            _mockErrorEventEmitter.Object,
-            _mockRelationshipClient.Object,
-            _mockEventConsumer.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullErrorEventEmitter_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new RelationshipTypeService(
-            _mockDaprClient.Object,
-            _mockLogger.Object,
-            Configuration,
             null!,
             _mockRelationshipClient.Object,
             _mockEventConsumer.Object));
@@ -113,10 +127,10 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new RelationshipTypeService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockRelationshipClient.Object,
             null!));
     }
@@ -133,13 +147,8 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var typeId = Guid.NewGuid();
         var model = CreateTestRelationshipTypeModel(typeId, "FRIEND", "Friend");
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RelationshipTypeModel>(
-                "relationship-type-statestore",
-                $"type:{typeId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockRelationshipTypeStore
+            .Setup(s => s.GetAsync($"type:{typeId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
         // Act
@@ -160,14 +169,9 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var service = CreateService();
         var typeId = Guid.NewGuid();
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RelationshipTypeModel>(
-                "relationship-type-statestore",
-                $"type:{typeId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<RelationshipTypeModel?>(null));
+        _mockRelationshipTypeStore
+            .Setup(s => s.GetAsync($"type:{typeId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RelationshipTypeModel?)null);
 
         // Act
         var (status, response) = await service.GetRelationshipTypeAsync(
@@ -190,24 +194,14 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var typeId = Guid.NewGuid();
         var code = "FRIEND";
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
-                "relationship-type-statestore",
-                "code-index:FRIEND",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockStringStore
+            .Setup(s => s.GetAsync("code-index:FRIEND", It.IsAny<CancellationToken>()))
             .ReturnsAsync(typeId.ToString());
 
         var model = CreateTestRelationshipTypeModel(typeId, code, "Friend");
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RelationshipTypeModel>(
-                "relationship-type-statestore",
-                $"type:{typeId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockRelationshipTypeStore
+            .Setup(s => s.GetAsync($"type:{typeId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
         // Act
@@ -226,14 +220,9 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         // Arrange
         var service = CreateService();
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
-                "relationship-type-statestore",
-                "code-index:UNKNOWN",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<string?>(null));
+        _mockStringStore
+            .Setup(s => s.GetAsync("code-index:UNKNOWN", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
 
         // Act
         var (status, response) = await service.GetRelationshipTypeByCodeAsync(
@@ -303,42 +292,22 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var parentModel = CreateTestRelationshipTypeModel(parentId, "SOCIAL", "Social");
         parentModel.IsBidirectional = true;
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
-                "relationship-type-statestore",
-                It.Is<string>(k => k.StartsWith("code-index:")),
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<string?>(null));
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("code-index:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RelationshipTypeModel>(
-                "relationship-type-statestore",
-                $"type:{parentId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockRelationshipTypeStore
+            .Setup(s => s.GetAsync($"type:{parentId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentModel);
 
         // Setup all-types list
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                "relationship-type-statestore",
-                "all-types",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync("all-types", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Setup children index
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                "relationship-type-statestore",
-                $"children-idx:{parentId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync($"children-idx:{parentId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         var request = new CreateRelationshipTypeRequest
@@ -375,10 +344,10 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
 
         // Assert
         Assert.Equal(StatusCodes.Created, status);
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            "bannou-pubsub",
+        _mockMessageBus.Verify(m => m.PublishAsync(
             "relationship-type.created",
             It.IsAny<RelationshipTypeCreatedEvent>(),
+            It.IsAny<PublishOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -394,13 +363,8 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var typeId = Guid.NewGuid();
         var model = CreateTestRelationshipTypeModel(typeId, "FRIEND", "Friend");
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RelationshipTypeModel>(
-                "relationship-type-statestore",
-                $"type:{typeId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockRelationshipTypeStore
+            .Setup(s => s.GetAsync($"type:{typeId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
         var request = new UpdateRelationshipTypeRequest
@@ -426,14 +390,9 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var service = CreateService();
         var typeId = Guid.NewGuid();
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RelationshipTypeModel>(
-                "relationship-type-statestore",
-                $"type:{typeId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<RelationshipTypeModel?>(null));
+        _mockRelationshipTypeStore
+            .Setup(s => s.GetAsync($"type:{typeId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RelationshipTypeModel?)null);
 
         var request = new UpdateRelationshipTypeRequest
         {
@@ -457,13 +416,8 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var typeId = Guid.NewGuid();
         var model = CreateTestRelationshipTypeModel(typeId, "FRIEND", "Friend");
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RelationshipTypeModel>(
-                "relationship-type-statestore",
-                $"type:{typeId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockRelationshipTypeStore
+            .Setup(s => s.GetAsync($"type:{typeId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
         var request = new UpdateRelationshipTypeRequest
@@ -477,10 +431,10 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            "bannou-pubsub",
+        _mockMessageBus.Verify(m => m.PublishAsync(
             "relationship-type.updated",
             It.IsAny<RelationshipTypeUpdatedEvent>(),
+            It.IsAny<PublishOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -496,34 +450,19 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var typeId = Guid.NewGuid();
         var model = CreateTestRelationshipTypeModel(typeId, "TEST", "Test Type");
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RelationshipTypeModel>(
-                "relationship-type-statestore",
-                $"type:{typeId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockRelationshipTypeStore
+            .Setup(s => s.GetAsync($"type:{typeId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
         // Setup all-types list
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                "relationship-type-statestore",
-                "all-types",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync("all-types", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { typeId.ToString() });
 
         // Setup children index (no children)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                "relationship-type-statestore",
-                $"children-idx:{typeId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<List<string>?>(null));
+        _mockListStore
+            .Setup(s => s.GetAsync($"children-idx:{typeId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<string>?)null);
 
         // Act
         var (status, response) = await service.DeleteRelationshipTypeAsync(
@@ -540,14 +479,9 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var service = CreateService();
         var typeId = Guid.NewGuid();
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RelationshipTypeModel>(
-                "relationship-type-statestore",
-                $"type:{typeId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<RelationshipTypeModel?>(null));
+        _mockRelationshipTypeStore
+            .Setup(s => s.GetAsync($"type:{typeId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RelationshipTypeModel?)null);
 
         // Act
         var (status, response) = await service.DeleteRelationshipTypeAsync(
@@ -567,14 +501,9 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         // Arrange
         var service = CreateService();
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                "relationship-type-statestore",
-                "all-types",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<List<string>?>(null));
+        _mockListStore
+            .Setup(s => s.GetAsync("all-types", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<string>?)null);
 
         // Act
         var (status, response) = await service.ListRelationshipTypesAsync(new ListRelationshipTypesRequest());
@@ -592,28 +521,19 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var service = CreateService();
         var typeIds = new List<string> { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                "relationship-type-statestore",
-                "all-types",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync("all-types", It.IsAny<CancellationToken>()))
             .ReturnsAsync(typeIds);
 
-        var bulkResults = typeIds.Select((id, idx) => new BulkStateItem(
-            $"type:{id}",
-            BannouJson.Serialize(CreateTestRelationshipTypeModel(Guid.Parse(id), $"TYPE{idx}", $"Type {idx}")),
-            "etag")).ToList();
+        var bulkResults = typeIds.Select((id, idx) =>
+            new KeyValuePair<string, RelationshipTypeModel>(
+                $"type:{id}",
+                CreateTestRelationshipTypeModel(Guid.Parse(id), $"TYPE{idx}", $"Type {idx}")))
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
-        _mockDaprClient
-            .Setup(d => d.GetBulkStateAsync(
-                "relationship-type-statestore",
-                It.IsAny<IReadOnlyList<string>>(),
-                It.IsAny<int?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(bulkResults);
+        _mockRelationshipTypeStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyDictionary<string, RelationshipTypeModel>)bulkResults);
 
         // Act
         var (status, response) = await service.ListRelationshipTypesAsync(
@@ -637,23 +557,13 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var parentId = Guid.NewGuid();
         var parentModel = CreateTestRelationshipTypeModel(parentId, "SOCIAL", "Social");
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RelationshipTypeModel>(
-                "relationship-type-statestore",
-                $"type:{parentId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockRelationshipTypeStore
+            .Setup(s => s.GetAsync($"type:{parentId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentModel);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                "relationship-type-statestore",
-                $"children-idx:{parentId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<List<string>?>(null));
+        _mockListStore
+            .Setup(s => s.GetAsync($"children-idx:{parentId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<string>?)null);
 
         // Act
         var (status, response) = await service.GetChildRelationshipTypesAsync(
@@ -674,13 +584,8 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var model = CreateTestRelationshipTypeModel(typeId, "ROOT", "Root Type");
         model.ParentTypeId = null; // No parent = root
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RelationshipTypeModel>(
-                "relationship-type-statestore",
-                $"type:{typeId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockRelationshipTypeStore
+            .Setup(s => s.GetAsync($"type:{typeId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
         // Act
@@ -701,13 +606,8 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var typeId = Guid.NewGuid();
         var model = CreateTestRelationshipTypeModel(typeId, "TYPE", "Type");
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RelationshipTypeModel>(
-                "relationship-type-statestore",
-                $"type:{typeId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockRelationshipTypeStore
+            .Setup(s => s.GetAsync($"type:{typeId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
         var request = new MatchesHierarchyRequest
@@ -737,13 +637,8 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         var typeId = Guid.NewGuid();
         var model = CreateTestRelationshipTypeModel(typeId, "OLD", "Old Type");
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RelationshipTypeModel>(
-                "relationship-type-statestore",
-                $"type:{typeId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockRelationshipTypeStore
+            .Setup(s => s.GetAsync($"type:{typeId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
         var request = new DeprecateRelationshipTypeRequest
@@ -771,13 +666,8 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         model.IsDeprecated = true;
         model.DeprecatedAt = DateTimeOffset.UtcNow;
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RelationshipTypeModel>(
-                "relationship-type-statestore",
-                $"type:{typeId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockRelationshipTypeStore
+            .Setup(s => s.GetAsync($"type:{typeId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
         var request = new UndeprecateRelationshipTypeRequest { RelationshipTypeId = typeId };
@@ -849,23 +739,13 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
     private void SetupCreateRelationshipTypeMocks(bool codeExists)
     {
         // Setup code existence check
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
-                "relationship-type-statestore",
-                It.Is<string>(k => k.StartsWith("code-index:")),
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<string?>(codeExists ? Guid.NewGuid().ToString() : null));
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("code-index:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(codeExists ? Guid.NewGuid().ToString() : null);
 
         // Setup all-types list
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                "relationship-type-statestore",
-                "all-types",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync("all-types", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
     }
 

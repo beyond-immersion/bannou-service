@@ -92,6 +92,16 @@ public static class ClientEventNormalizer
         {
             using var doc = JsonDocument.Parse(payload);
             var root = doc.RootElement;
+            byte[] effectivePayload = payload;
+
+            // Unwrap MassTransit envelope - MassTransit wraps messages with metadata,
+            // and the actual event data is in the "message" property
+            if (root.TryGetProperty("message", out var messageElement))
+            {
+                root = messageElement;
+                // Extract the unwrapped message as the payload to send to clients
+                effectivePayload = System.Text.Encoding.UTF8.GetBytes(messageElement.GetRawText());
+            }
 
             // Try to find the event_name property (could be "event_name" or "Event_name")
             string? receivedEventName = null;
@@ -111,20 +121,20 @@ public static class ClientEventNormalizer
             if (string.IsNullOrEmpty(receivedEventName) || string.IsNullOrEmpty(propertyName))
             {
                 // No event_name field - can't validate or normalize
-                return (null, payload);
+                return (null, effectivePayload);
             }
 
             // Try to get canonical name
             if (!TryGetCanonicalName(receivedEventName, out var canonicalName) || canonicalName == null)
             {
                 // Not in whitelist - reject
-                return (null, payload);
+                return (null, effectivePayload);
             }
 
             // If the name is already canonical, return as-is
             if (receivedEventName == canonicalName)
             {
-                return (canonicalName, payload);
+                return (canonicalName, effectivePayload);
             }
 
             // Need to rewrite the event_name to canonical form

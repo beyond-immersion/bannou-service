@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
 using BeyondImmersion.BannouService.Voice;
 
@@ -10,31 +11,28 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Note: Voice rooms are associated with game sessions and require valid session context.
 /// These tests use synthetic SIP endpoints for testing purposes.
 /// </summary>
-public class VoiceTestHandler : IServiceTestHandler
+public class VoiceTestHandler : BaseHttpTestHandler
 {
-    public ServiceTest[] GetServiceTests()
-    {
-        return new[]
-        {
-            // Core CRUD operations
-            new ServiceTest(TestCreateVoiceRoom, "CreateVoiceRoom", "Voice", "Test voice room creation endpoint"),
-            new ServiceTest(TestGetVoiceRoom, "GetVoiceRoom", "Voice", "Test voice room retrieval endpoint"),
+    public override ServiceTest[] GetServiceTests() =>
+    [
+        // Core CRUD operations
+        new ServiceTest(TestCreateVoiceRoom, "CreateVoiceRoom", "Voice", "Test voice room creation endpoint"),
+        new ServiceTest(TestGetVoiceRoom, "GetVoiceRoom", "Voice", "Test voice room retrieval endpoint"),
 
-            // Participant operations
-            new ServiceTest(TestJoinVoiceRoom, "JoinVoiceRoom", "Voice", "Test joining a voice room"),
-            new ServiceTest(TestLeaveVoiceRoom, "LeaveVoiceRoom", "Voice", "Test leaving a voice room"),
-            new ServiceTest(TestPeerHeartbeat, "PeerHeartbeat", "Voice", "Test peer heartbeat mechanism"),
+        // Participant operations
+        new ServiceTest(TestJoinVoiceRoom, "JoinVoiceRoom", "Voice", "Test joining a voice room"),
+        new ServiceTest(TestLeaveVoiceRoom, "LeaveVoiceRoom", "Voice", "Test leaving a voice room"),
+        new ServiceTest(TestPeerHeartbeat, "PeerHeartbeat", "Voice", "Test peer heartbeat mechanism"),
 
-            // Cleanup operations
-            new ServiceTest(TestDeleteVoiceRoom, "DeleteVoiceRoom", "Voice", "Test voice room deletion"),
+        // Cleanup operations
+        new ServiceTest(TestDeleteVoiceRoom, "DeleteVoiceRoom", "Voice", "Test voice room deletion"),
 
-            // Error handling tests
-            new ServiceTest(TestGetNonExistentRoom, "GetNonExistentRoom", "Voice", "Test 404 for non-existent room"),
+        // Error handling tests
+        new ServiceTest(TestGetNonExistentRoom, "GetNonExistentRoom", "Voice", "Test 404 for non-existent room"),
 
-            // Complete lifecycle test
-            new ServiceTest(TestCompleteVoiceLifecycle, "CompleteVoiceLifecycle", "Voice", "Test complete voice room lifecycle: create → join → heartbeat → leave → delete"),
-        };
-    }
+        // Complete lifecycle test
+        new ServiceTest(TestCompleteVoiceLifecycle, "CompleteVoiceLifecycle", "Voice", "Test complete voice room lifecycle: create → join → heartbeat → leave → delete"),
+    ];
 
     /// <summary>
     /// Creates a synthetic SDP offer for testing purposes.
@@ -53,11 +51,10 @@ a=fmtp:111 minptime=10;useinbandfec=1
 a=sendrecv";
     }
 
-    private static async Task<TestResult> TestCreateVoiceRoom(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestCreateVoiceRoom(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var voiceClient = new VoiceClient();
+            var voiceClient = GetServiceClient<IVoiceClient>();
 
             var createRequest = new CreateVoiceRoomRequest
             {
@@ -76,22 +73,12 @@ a=sendrecv";
                 return TestResult.Failed($"Tier mismatch: expected 'p2p', got '{response.Tier}'");
 
             return TestResult.Successful($"Voice room created successfully: ID={response.RoomId}, Tier={response.Tier}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Voice room creation failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Create voice room");
 
-    private static async Task<TestResult> TestGetVoiceRoom(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestGetVoiceRoom(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var voiceClient = new VoiceClient();
+            var voiceClient = GetServiceClient<IVoiceClient>();
 
             // First create a test room
             var createRequest = new CreateVoiceRoomRequest
@@ -114,22 +101,12 @@ a=sendrecv";
                 return TestResult.Failed($"Room ID mismatch: expected '{createResponse.RoomId}', got '{response.RoomId}'");
 
             return TestResult.Successful($"Voice room retrieved successfully: ID={response.RoomId}, Tier={response.Tier}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Voice room retrieval failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Get voice room");
 
-    private static async Task<TestResult> TestJoinVoiceRoom(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestJoinVoiceRoom(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var voiceClient = new VoiceClient();
+            var voiceClient = GetServiceClient<IVoiceClient>();
 
             // First create a test room
             var createRequest = new CreateVoiceRoomRequest
@@ -165,22 +142,12 @@ a=sendrecv";
                 return TestResult.Failed($"Room ID mismatch in join response");
 
             return TestResult.Successful($"Successfully joined voice room: RoomID={createResponse.RoomId}, Tier={response.Tier}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Join voice room failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Join voice room");
 
-    private static async Task<TestResult> TestLeaveVoiceRoom(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestLeaveVoiceRoom(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var voiceClient = new VoiceClient();
+            var voiceClient = GetServiceClient<IVoiceClient>();
 
             // Create and join a room first
             var createRequest = new CreateVoiceRoomRequest
@@ -217,22 +184,12 @@ a=sendrecv";
             await voiceClient.LeaveVoiceRoomAsync(leaveRequest);
 
             return TestResult.Successful($"Successfully left voice room: RoomID={createResponse.RoomId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Leave voice room failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Leave voice room");
 
-    private static async Task<TestResult> TestPeerHeartbeat(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestPeerHeartbeat(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var voiceClient = new VoiceClient();
+            var voiceClient = GetServiceClient<IVoiceClient>();
 
             // Create and join a room first
             var createRequest = new CreateVoiceRoomRequest
@@ -269,22 +226,12 @@ a=sendrecv";
             await voiceClient.PeerHeartbeatAsync(heartbeatRequest);
 
             return TestResult.Successful($"Peer heartbeat sent successfully: RoomID={createResponse.RoomId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Peer heartbeat failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Peer heartbeat");
 
-    private static async Task<TestResult> TestDeleteVoiceRoom(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestDeleteVoiceRoom(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var voiceClient = new VoiceClient();
+            var voiceClient = GetServiceClient<IVoiceClient>();
 
             // Create a room first
             var createRequest = new CreateVoiceRoomRequest
@@ -320,53 +267,25 @@ a=sendrecv";
             }
 
             return TestResult.Successful($"Voice room deleted successfully: RoomID={createResponse.RoomId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Delete voice room failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Delete voice room");
 
-    private static async Task<TestResult> TestGetNonExistentRoom(ITestClient client, string[] args)
-    {
-        try
-        {
-            var voiceClient = new VoiceClient();
-
-            var getRequest = new GetVoiceRoomRequest
+    private static Task<TestResult> TestGetNonExistentRoom(ITestClient client, string[] args) =>
+        ExecuteExpectingStatusAsync(
+            async () =>
             {
-                RoomId = Guid.NewGuid() // Non-existent room ID
-            };
+                var voiceClient = GetServiceClient<IVoiceClient>();
+                await voiceClient.GetVoiceRoomAsync(new GetVoiceRoomRequest
+                {
+                    RoomId = Guid.NewGuid()
+                });
+            },
+            404,
+            "Get non-existent room");
 
-            try
-            {
-                await voiceClient.GetVoiceRoomAsync(getRequest);
-                return TestResult.Failed("Expected 404 for non-existent room, but request succeeded");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                return TestResult.Successful("Correctly returned 404 for non-existent room");
-            }
-        }
-        catch (ApiException ex)
+    private static Task<TestResult> TestCompleteVoiceLifecycle(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            return TestResult.Failed($"Unexpected error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
-
-    private static async Task<TestResult> TestCompleteVoiceLifecycle(ITestClient client, string[] args)
-    {
-        try
-        {
-            var voiceClient = new VoiceClient();
+            var voiceClient = GetServiceClient<IVoiceClient>();
 
             // Step 1: Create room
             var createRequest = new CreateVoiceRoomRequest
@@ -436,14 +355,5 @@ a=sendrecv";
             }
 
             return TestResult.Successful($"Complete voice room lifecycle test passed for room {createResponse.RoomId}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Lifecycle test failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
+        }, "Complete voice lifecycle");
 }

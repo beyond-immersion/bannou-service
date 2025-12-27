@@ -22,6 +22,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Required for Moq/Castle.Core to mock IStateStore<internal types> -->
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Microsoft.Extensions.Configuration.*, DependencyInjection, Logging come from bannou-service -->
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
     <PackageReference Include="System.Text.Json" Version="9.0.2" />
@@ -29,6 +34,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\bannou-service\bannou-service.csproj" />
+    <ProjectReference Include="..\lib-messaging\lib-messaging.csproj" />
   </ItemGroup>
 
   <Import Project="../ServiceLib.targets" />

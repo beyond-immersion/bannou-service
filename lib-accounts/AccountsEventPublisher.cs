@@ -1,6 +1,6 @@
 using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Events;
-using Dapr.Client;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Accounts;
@@ -22,10 +22,10 @@ public class AccountsEventPublisher : EventPublisherBase
     /// <summary>
     /// Creates an AccountsEventPublisher with the specified dependencies.
     /// </summary>
-    /// <param name="daprClient">Dapr client for publishing events.</param>
+    /// <param name="messageBus">Message bus for publishing events.</param>
     /// <param name="logger">Logger for event operations.</param>
-    public AccountsEventPublisher(DaprClient daprClient, ILogger<AccountsEventPublisher> logger)
-        : base(daprClient, logger)
+    public AccountsEventPublisher(IMessageBus messageBus, ILogger<AccountsEventPublisher> logger)
+        : base(messageBus, logger)
     {
     }
 

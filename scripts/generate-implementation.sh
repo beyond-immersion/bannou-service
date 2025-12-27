@@ -5,15 +5,12 @@
 
 set -e  # Exit on any error
 
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+# Source common utilities
+source "$(dirname "$0")/common.sh"
 
 # Validate arguments
 if [ $# -lt 1 ]; then
-    echo -e "${RED}Usage: $0 <service-name> [schema-file]${NC}"
+    log_error "Usage: $0 <service-name> [schema-file]"
     echo "Example: $0 accounts"
     echo "Example: $0 accounts ../schemas/accounts-api.yaml"
     exit 1
@@ -21,12 +18,6 @@ fi
 
 SERVICE_NAME="$1"
 SCHEMA_FILE="${2:-../schemas/${SERVICE_NAME}-api.yaml}"
-
-# Helper function to convert hyphenated names to PascalCase
-to_pascal_case() {
-    local input="$1"
-    echo "$input" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))} 1' | sed 's/ //g'
-}
 
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
 SERVICE_DIR="../lib-${SERVICE_NAME}"
@@ -56,8 +47,9 @@ echo -e "${YELLOW}🔄 Creating service implementation template...${NC}"
 # Create service implementation template
 cat > "$IMPLEMENTATION_FILE" << EOF
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 
 [assembly: InternalsVisibleTo("lib-${SERVICE_NAME}.tests")]
@@ -68,26 +60,26 @@ namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 /// Implementation of the $SERVICE_PASCAL service.
 /// This class contains the business logic for all $SERVICE_PASCAL operations.
 /// </summary>
-[DaprService("$SERVICE_NAME", typeof(I${SERVICE_PASCAL}Service), lifetime: ServiceLifetime.Scoped)]
+[BannouService("$SERVICE_NAME", typeof(I${SERVICE_PASCAL}Service), lifetime: ServiceLifetime.Scoped)]
 public class ${SERVICE_PASCAL}Service : I${SERVICE_PASCAL}Service
 {
-    private readonly DaprClient _daprClient;
+    private readonly IMessageBus _messageBus;
+    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<${SERVICE_PASCAL}Service> _logger;
     private readonly ${SERVICE_PASCAL}ServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
 
-    private const string STATE_STORE = "${SERVICE_NAME}-store";
+    private const string STATE_STORE = "${SERVICE_NAME}-statestore";
 
     public ${SERVICE_PASCAL}Service(
-        DaprClient daprClient,
+        IMessageBus messageBus,
+        IStateStoreFactory stateStoreFactory,
         ILogger<${SERVICE_PASCAL}Service> logger,
-        ${SERVICE_PASCAL}ServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter)
+        ${SERVICE_PASCAL}ServiceConfiguration configuration)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
     }
 
 EOF
@@ -223,30 +215,37 @@ try:
             // TODO: Implement your business logic here
             throw new NotImplementedException(\"Method {method_name} not yet implemented\");
 
-            // Example patterns:
+            // Example patterns using infrastructure libs:
             //
-            // For data retrieval:
-            // var data = await _daprClient.GetStateAsync<YourDataType>(STATE_STORE, key);
+            // For data retrieval (lib-state):
+            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
+            // var data = await stateStore.GetAsync(key, cancellationToken);
             // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
             //
-            // For data creation:
-            // await _daprClient.SaveStateAsync(STATE_STORE, key, newData);
+            // For data creation (lib-state):
+            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
+            // await stateStore.SaveAsync(key, newData, cancellationToken);
             // return (StatusCodes.Created, newData);
             //
-            // For data updates:
-            // var existing = await _daprClient.GetStateAsync<YourDataType>(STATE_STORE, key);
+            // For data updates (lib-state):
+            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
+            // var existing = await stateStore.GetAsync(key, cancellationToken);
             // if (existing == null) return (StatusCodes.NotFound, default);
-            // await _daprClient.SaveStateAsync(STATE_STORE, key, updatedData);
+            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
             // return (StatusCodes.OK, updatedData);
             //
-            // For data deletion:
-            // await _daprClient.DeleteStateAsync(STATE_STORE, key);
+            // For data deletion (lib-state):
+            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
+            // await stateStore.DeleteAsync(key, cancellationToken);
             // return (StatusCodes.NoContent, default);
+            //
+            // For event publishing (lib-messaging):
+            // await _messageBus.PublishAsync(\"topic.name\", eventModel, cancellationToken: cancellationToken);
         }}
         catch (Exception ex)
         {{
             _logger.LogError(ex, \"Error executing {method_name} operation\");
-            await _errorEventEmitter.TryPublishAsync(
+            await _messageBus.TryPublishErrorAsync(
                 \"${SERVICE_NAME}\",
                 \"{method_name}\",
                 \"unexpected_exception\",
@@ -254,7 +253,8 @@ try:
                 dependency: null,
                 endpoint: \"{http_method}:/{path.strip('/')}\",
                 details: null,
-                stack: ex.StackTrace);
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, default);
         }}
     }}

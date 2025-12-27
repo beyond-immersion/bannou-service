@@ -1,9 +1,10 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
-using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -20,9 +21,12 @@ namespace BeyondImmersion.BannouService.Realm.Tests;
 /// </summary>
 public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
 {
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IStateStore<RealmModel>> _mockRealmStore;
+    private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<IStateStore<List<string>>> _mockListStore;
     private readonly Mock<ILogger<RealmService>> _mockLogger;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     private const string STATE_STORE = "realm-statestore";
@@ -33,19 +37,33 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
 
     public RealmServiceTests()
     {
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockRealmStore = new Mock<IStateStore<RealmModel>>();
+        _mockStringStore = new Mock<IStateStore<string>>();
+        _mockListStore = new Mock<IStateStore<List<string>>>();
         _mockLogger = new Mock<ILogger<RealmService>>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup factory to return typed stores
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<RealmModel>(STATE_STORE))
+            .Returns(_mockRealmStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<string>(STATE_STORE))
+            .Returns(_mockStringStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<List<string>>(STATE_STORE))
+            .Returns(_mockListStore.Object);
     }
 
     private RealmService CreateService()
     {
         return new RealmService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
     }
 
@@ -86,13 +104,24 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
     }
 
     [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrowArgumentNullException()
+    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() => new RealmService(
             null!,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => new RealmService(
+            _mockStateStoreFactory.Object,
+            null!,
+            _mockLogger.Object,
+            Configuration,
             _mockEventConsumer.Object));
     }
 
@@ -100,10 +129,10 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
     public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() => new RealmService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             null!,
             Configuration,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -111,22 +140,22 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
     public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() => new RealmService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             null!,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
     [Fact]
-    public void Constructor_WithNullErrorEventEmitter_ShouldThrowArgumentNullException()
+    public void Constructor_WithNullEventConsumer_ShouldThrowArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() => new RealmService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            null!,
-            _mockEventConsumer.Object));
+            null!));
     }
 
     #endregion
@@ -142,9 +171,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var request = new GetRealmRequest { RealmId = realmId };
         var testModel = CreateTestRealmModel(realmId, "OMEGA", "Omega Realm");
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(testModel);
 
         // Act
@@ -166,9 +194,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var realmId = Guid.NewGuid();
         var request = new GetRealmRequest { RealmId = realmId };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((RealmModel?)null);
 
         // Act
@@ -180,17 +207,16 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
     }
 
     [Fact]
-    public async Task GetRealmAsync_WhenDaprFails_ShouldReturnInternalServerError()
+    public async Task GetRealmAsync_WhenStoreFails_ShouldReturnInternalServerError()
     {
         // Arrange
         var service = CreateService();
         var realmId = Guid.NewGuid();
         var request = new GetRealmRequest { RealmId = realmId };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
-            .ThrowsAsync(new Exception("Dapr connection failed"));
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("State store connection failed"));
 
         // Act
         var (status, response) = await service.GetRealmAsync(request);
@@ -198,10 +224,10 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);
         Assert.Null(response);
-        _mockErrorEventEmitter.Verify(e => e.TryPublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
             "realm", "GetRealm", "unexpected_exception", It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object>(), It.IsAny<string>(), It.IsAny<string>(), default), Times.Once);
+            It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>(), default), Times.Once);
     }
 
     #endregion
@@ -219,15 +245,13 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var testModel = CreateTestRealmModel(realmId, code, "Arcadia Realm");
 
         // Setup code index lookup
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
-                STATE_STORE, $"{CODE_INDEX_PREFIX}{code.ToUpperInvariant()}", null, null, default))
+        _mockStringStore
+            .Setup(s => s.GetAsync($"{CODE_INDEX_PREFIX}{code.ToUpperInvariant()}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(realmId.ToString());
 
         // Setup realm retrieval
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(testModel);
 
         // Act
@@ -247,9 +271,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var service = CreateService();
         var request = new GetRealmByCodeRequest { Code = "NONEXISTENT" };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
-                STATE_STORE, $"{CODE_INDEX_PREFIX}NONEXISTENT", null, null, default))
+        _mockStringStore
+            .Setup(s => s.GetAsync($"{CODE_INDEX_PREFIX}NONEXISTENT", It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -270,15 +293,13 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var request = new GetRealmByCodeRequest { Code = code };
 
         // Code index exists
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
-                STATE_STORE, $"{CODE_INDEX_PREFIX}{code.ToUpperInvariant()}", null, null, default))
+        _mockStringStore
+            .Setup(s => s.GetAsync($"{CODE_INDEX_PREFIX}{code.ToUpperInvariant()}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(realmId.ToString());
 
         // But realm data is missing
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((RealmModel?)null);
 
         // Act
@@ -302,9 +323,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var request = new RealmExistsRequest { RealmId = realmId };
         var testModel = CreateTestRealmModel(realmId, isActive: true, isDeprecated: false);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(testModel);
 
         // Act
@@ -326,9 +346,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var realmId = Guid.NewGuid();
         var request = new RealmExistsRequest { RealmId = realmId };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((RealmModel?)null);
 
         // Act
@@ -351,9 +370,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var request = new RealmExistsRequest { RealmId = realmId };
         var testModel = CreateTestRealmModel(realmId, isActive: true, isDeprecated: true);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(testModel);
 
         // Act
@@ -384,9 +402,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             Description = "Updated Description"
         };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingModel);
 
         // Act
@@ -398,12 +415,12 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.Equal("Updated Name", response.Name);
 
         // Verify save was called
-        _mockDaprClient.Verify(d => d.SaveStateAsync(
-            STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", It.IsAny<RealmModel>(), null, null, default), Times.Once);
+        _mockRealmStore.Verify(s => s.SaveAsync(
+            $"{REALM_KEY_PREFIX}{realmId}", It.IsAny<RealmModel>(), null, It.IsAny<CancellationToken>()), Times.Once);
 
-        // Verify event was published
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            PUBSUB_NAME, "realm.updated", It.IsAny<RealmUpdatedEvent>(), default), Times.Once);
+        // Verify event was published via IMessageBus
+        _mockMessageBus.Verify(m => m.PublishAsync(
+            "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -414,9 +431,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var realmId = Guid.NewGuid();
         var request = new UpdateRealmRequest { RealmId = realmId, Name = "New Name" };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((RealmModel?)null);
 
         // Act
@@ -427,8 +443,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.Null(response);
 
         // Verify no save or event publishing occurred
-        _mockDaprClient.Verify(d => d.SaveStateAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<RealmModel>(), null, null, default), Times.Never);
+        _mockRealmStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(), It.IsAny<RealmModel>(), null, It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -444,9 +460,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             // No updates specified
         };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingModel);
 
         // Act
@@ -456,8 +471,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.Equal(StatusCodes.OK, status);
 
         // Verify no event was published (no changes)
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<object>(), default), Times.Never);
+        _mockMessageBus.Verify(m => m.PublishAsync(
+            It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -472,9 +487,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var realmId = Guid.NewGuid();
         var request = new DeleteRealmRequest { RealmId = realmId };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((RealmModel?)null);
 
         // Act
@@ -493,9 +507,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var request = new DeleteRealmRequest { RealmId = realmId };
         var existingModel = CreateTestRealmModel(realmId, isDeprecated: false);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingModel);
 
         // Act
@@ -505,8 +518,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.Equal(StatusCodes.Conflict, status);
 
         // Verify no delete occurred
-        _mockDaprClient.Verify(d => d.DeleteStateAsync(
-            It.IsAny<string>(), It.IsAny<string>(), null, null, default), Times.Never);
+        _mockRealmStore.Verify(s => s.DeleteAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -518,14 +531,12 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var request = new DeleteRealmRequest { RealmId = realmId };
         var existingModel = CreateTestRealmModel(realmId, "DELETED", isDeprecated: true);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingModel);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                STATE_STORE, ALL_REALMS_KEY, null, null, default))
+        _mockListStore
+            .Setup(s => s.GetAsync(ALL_REALMS_KEY, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { realmId.ToString() });
 
         // Act
@@ -535,14 +546,14 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.Equal(StatusCodes.NoContent, status);
 
         // Verify delete operations
-        _mockDaprClient.Verify(d => d.DeleteStateAsync(
-            STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default), Times.Once);
-        _mockDaprClient.Verify(d => d.DeleteStateAsync(
-            STATE_STORE, $"{CODE_INDEX_PREFIX}DELETED", null, null, default), Times.Once);
+        _mockRealmStore.Verify(s => s.DeleteAsync(
+            $"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()), Times.Once);
+        _mockStringStore.Verify(s => s.DeleteAsync(
+            $"{CODE_INDEX_PREFIX}DELETED", It.IsAny<CancellationToken>()), Times.Once);
 
-        // Verify event was published
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            PUBSUB_NAME, "realm.deleted", It.IsAny<RealmDeletedEvent>(), default), Times.Once);
+        // Verify event was published via IMessageBus
+        _mockMessageBus.Verify(m => m.PublishAsync(
+            "realm.deleted", It.IsAny<RealmDeletedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -557,9 +568,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var realmId = Guid.NewGuid();
         var request = new DeprecateRealmRequest { RealmId = realmId, Reason = "Test" };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((RealmModel?)null);
 
         // Act
@@ -578,9 +588,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var request = new DeprecateRealmRequest { RealmId = realmId, Reason = "Test" };
         var existingModel = CreateTestRealmModel(realmId, isDeprecated: true);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingModel);
 
         // Act
@@ -599,9 +608,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var request = new DeprecateRealmRequest { RealmId = realmId, Reason = "No longer needed" };
         var existingModel = CreateTestRealmModel(realmId, isDeprecated: false);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingModel);
 
         // Act
@@ -614,9 +622,9 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.Equal("No longer needed", response.DeprecationReason);
         Assert.NotNull(response.DeprecatedAt);
 
-        // Verify event was published
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            PUBSUB_NAME, "realm.updated", It.IsAny<RealmUpdatedEvent>(), default), Times.Once);
+        // Verify event was published via IMessageBus
+        _mockMessageBus.Verify(m => m.PublishAsync(
+            "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -631,9 +639,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var realmId = Guid.NewGuid();
         var request = new UndeprecateRealmRequest { RealmId = realmId };
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((RealmModel?)null);
 
         // Act
@@ -652,9 +659,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var request = new UndeprecateRealmRequest { RealmId = realmId };
         var existingModel = CreateTestRealmModel(realmId, isDeprecated: false);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingModel);
 
         // Act
@@ -673,9 +679,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var request = new UndeprecateRealmRequest { RealmId = realmId };
         var existingModel = CreateTestRealmModel(realmId, isDeprecated: true);
 
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<RealmModel>(
-                STATE_STORE, $"{REALM_KEY_PREFIX}{realmId}", null, null, default))
+        _mockRealmStore
+            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingModel);
 
         // Act
@@ -688,9 +693,9 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.Null(response.DeprecationReason);
         Assert.Null(response.DeprecatedAt);
 
-        // Verify event was published
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            PUBSUB_NAME, "realm.updated", It.IsAny<RealmUpdatedEvent>(), default), Times.Once);
+        // Verify event was published via IMessageBus
+        _mockMessageBus.Verify(m => m.PublishAsync(
+            "realm.updated", It.IsAny<RealmUpdatedEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

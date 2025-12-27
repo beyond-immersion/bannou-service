@@ -1,14 +1,14 @@
 # Bannou Server SDK
 
 Server SDK for the Bannou service platform. Use this for **game servers** and **internal services** that need:
-- Dapr service-to-service calls via generated ServiceClients
+- Mesh service-to-service calls via generated ServiceClients
 - WebSocket connections for event reception
 - Full access to all Bannou APIs
 
 ## When to Use This SDK
 
 - **Game Servers** (e.g., Stride3D game server) that need to call Bannou services directly
-- **Internal Microservices** that communicate via Dapr service invocation
+- **Internal Microservices** that communicate via mesh service invocation
 - **External Servers** that connect via WebSocket for event reception
 
 ## Features
@@ -18,17 +18,17 @@ Server SDK for the Bannou service platform. Use this for **game servers** and **
 - ✅ Event models for pub/sub messaging
 - ✅ WebSocket binary protocol (31-byte header)
 - ✅ `BannouClient` for WebSocket connections
-- ✅ Dapr service routing with dynamic app-id resolution
+- ✅ Mesh service routing with dynamic app-id resolution
 
 ## Usage
 
-### Using Service Clients (Dapr)
+### Using Service Clients
 
 ```csharp
 using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Auth;
 
-// Service clients use Dapr for routing
+// Service clients use mesh routing
 var accountsClient = new AccountsClient();
 var authClient = new AuthClient();
 
@@ -59,4 +59,4 @@ dotnet add package BeyondImmersion.Bannou.SDK
 
 ## See Also
 
-- **Bannou.Client.SDK** - For game clients that only use WebSocket (no Dapr dependency)
+- **Bannou.Client.SDK** - For game clients that only use WebSocket (lightweight, no service clients)

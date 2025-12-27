@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.Realm;
 /// <summary>
 /// Service interface for Realm API
 /// </summary>
-public partial interface IRealmService : IDaprService
+public partial interface IRealmService : IBannouService
 {
     /// <summary>
     /// GetRealm operation

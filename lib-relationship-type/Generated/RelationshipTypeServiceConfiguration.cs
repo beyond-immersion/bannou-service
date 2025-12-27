@@ -9,15 +9,15 @@ namespace BeyondImmersion.BannouService.RelationshipType;
 /// Configuration class for RelationshipType service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(RelationshipTypeService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(RelationshipTypeService))]
 public class RelationshipTypeServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
     /// Enable/disable Relationship Type service
-    /// Environment variable: ENABLED or BANNOU_ENABLED
+    /// Environment variable: ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
 

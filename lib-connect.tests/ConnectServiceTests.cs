@@ -3,8 +3,8 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -27,9 +27,10 @@ public class ConnectServiceTests
     private readonly Mock<ILoggerFactory> _mockLoggerFactory;
     private readonly ConnectServiceConfiguration _configuration;
     private readonly Mock<IAuthClient> _mockAuthClient;
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IMeshInvocationClient> _mockMeshClient;
     private readonly Mock<IServiceAppMappingResolver> _mockAppMappingResolver;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly string _testServerSalt = "test-server-salt-2025";
 
@@ -42,18 +43,21 @@ public class ConnectServiceTests
             .Returns(Mock.Of<ILogger>());
         _configuration = new ConnectServiceConfiguration
         {
-            BinaryProtocolVersion = "2.0"
+            BinaryProtocolVersion = "2.0",
+            ServerSalt = _testServerSalt
         };
         _mockAuthClient = new Mock<IAuthClient>();
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockMeshClient = new Mock<IMeshInvocationClient>();
         _mockAppMappingResolver = new Mock<IServiceAppMappingResolver>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
     }
 
     #region Basic Constructor Tests
 
     [Fact]
+    [Obsolete]
     public void Constructor_WithValidParameters_ShouldNotThrow()
     {
         // Arrange & Act & Assert
@@ -411,6 +415,7 @@ public class ConnectServiceTests
     // PushCapabilityUpdateAsync(sessionId) for each affected session.
 
     [Fact]
+    [Obsolete]
     public async Task ProcessAuthEventAsync_WithLoginEvent_ShouldRefreshCapabilities()
     {
         // Arrange
@@ -436,6 +441,7 @@ public class ConnectServiceTests
     }
 
     [Fact]
+    [Obsolete]
     public async Task ProcessServiceRegistrationAsync_WithValidEvent_ShouldPublishRecompileEvent()
     {
         // Arrange
@@ -457,15 +463,16 @@ public class ConnectServiceTests
         Assert.Equal("processed", resultDict["status"].ToString());
         Assert.Equal("new-service-123", resultDict["serviceId"].ToString());
 
-        // Verify that PublishEventAsync was called for permission recompilation
-        _mockDaprClient.Verify(x => x.PublishEventAsync(
-            "bannou-pubsub",
+        // Verify that PublishAsync was called for permission recompilation via IMessageBus
+        _mockMessageBus.Verify(x => x.PublishAsync(
             "bannou-permission-recompile",
             It.IsAny<PermissionRecompileEvent>(),
+            It.IsAny<PublishOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
+    [Obsolete]
     public async Task ProcessClientMessageEventAsync_WithConnectedClient_ShouldDeliverMessage()
     {
         // Arrange
@@ -494,6 +501,7 @@ public class ConnectServiceTests
     }
 
     [Fact]
+    [Obsolete]
     public async Task ProcessClientRPCEventAsync_WithConnectedClient_ShouldSendRPCMessage()
     {
         // Arrange
@@ -522,6 +530,7 @@ public class ConnectServiceTests
     }
 
     [Fact]
+    [Obsolete]
     public void HasConnection_WithExistingConnection_ShouldReturnTrue()
     {
         // Arrange
@@ -536,6 +545,7 @@ public class ConnectServiceTests
     }
 
     [Fact]
+    [Obsolete]
     public void HasConnection_WithNonExistentConnection_ShouldReturnFalse()
     {
         // Arrange
@@ -550,6 +560,7 @@ public class ConnectServiceTests
     }
 
     [Fact]
+    [Obsolete]
     public async Task SendMessageAsync_WithValidConnection_ShouldReturnTrue()
     {
         // Arrange
@@ -568,20 +579,23 @@ public class ConnectServiceTests
 
     #region Helper Methods
 
+    [Obsolete]
     private ConnectService CreateConnectService()
     {
         return new ConnectService(
             _mockAuthClient.Object,
-            _mockDaprClient.Object,
+            _mockMeshClient.Object,
+            _mockMessageBus.Object,
+            _mockHttpClientFactory.Object,
             _mockAppMappingResolver.Object,
             _configuration,
             _mockLogger.Object,
             _mockLoggerFactory.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object
         );
     }
 
+    [Obsolete]
     private ConnectService CreateConnectServiceWithConnectionManager(bool hasConnection = true)
     {
         // Create a mock connection manager that simulates having connections

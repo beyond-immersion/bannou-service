@@ -6,10 +6,9 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect.ClientEvents;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
-using Dapr;
-using Dapr.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,72 +30,84 @@ namespace BeyondImmersion.BannouService.Connect;
 /// WebSocket-first edge gateway service providing zero-copy message routing.
 /// Uses Permissions service for dynamic API discovery and capability management.
 /// </summary>
-[DaprService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton)]
+[BannouService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton)]
 public partial class ConnectService : IConnectService
 {
+    /// <summary>
+    /// Named HttpClient for mesh proxying. Configured via IHttpClientFactory.
+    /// </summary>
+    internal const string HttpClientName = "ConnectMeshProxy";
+
     // Static cached header values to avoid per-request allocations
     private static readonly MediaTypeWithQualityHeaderValue s_jsonAcceptHeader = new("application/json");
     private static readonly MediaTypeHeaderValue s_jsonContentType = new("application/json") { CharSet = "utf-8" };
 
     private readonly IAuthClient _authClient;
-    private readonly DaprClient _daprClient;
-    private readonly HttpClient _httpClient;
+    private readonly IMeshInvocationClient _meshClient;
+    private readonly IMessageBus _messageBus;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly IServiceAppMappingResolver _appMappingResolver;
     private readonly ILogger<ConnectService> _logger;
     private readonly WebSocketConnectionManager _connectionManager;
     private readonly ISessionManager? _sessionManager;
-    private readonly IErrorEventEmitter _errorEventEmitter;
 
     // Client event subscriber for session-specific RabbitMQ subscriptions (TENET exception)
     private ClientEventRabbitMQSubscriber? _clientEventSubscriber;
     private readonly ILoggerFactory _loggerFactory;
+    [Obsolete]
     private readonly ClientEventQueueManager? _clientEventQueueManager;
+    private readonly string? _rabbitMqConnectionString;
 
     // Session to service GUID mappings (in-memory for low-latency lookups, persisted via ISessionManager)
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>> _sessionServiceMappings;
     private readonly string _serverSalt;
     private readonly string _instanceId;
 
+    [Obsolete]
     public ConnectService(
         IAuthClient authClient,
-        DaprClient daprClient,
+        IMeshInvocationClient meshClient,
+        IMessageBus messageBus,
+        IHttpClientFactory httpClientFactory,
         IServiceAppMappingResolver appMappingResolver,
         ConnectServiceConfiguration configuration,
         ILogger<ConnectService> logger,
         ILoggerFactory loggerFactory,
-        IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer,
         ISessionManager? sessionManager = null,
         ClientEventQueueManager? clientEventQueueManager = null)
     {
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
-        _httpClient = new HttpClient
-        {
-            // Set timeout to 120 seconds to ensure Connect service doesn't hang indefinitely
-            // This should be longer than client timeouts (60s) but shorter than infinite
-            // If Dapr/target service doesn't respond, we'll get TaskCanceledException
-            Timeout = TimeSpan.FromSeconds(120)
-        };
+        _meshClient = meshClient ?? throw new ArgumentNullException(nameof(meshClient));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _appMappingResolver = appMappingResolver ?? throw new ArgumentNullException(nameof(appMappingResolver));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
-        _sessionManager = sessionManager; // Optional Dapr-based session management
+        _sessionManager = sessionManager; // Optional mesh-based session management
         _clientEventQueueManager = clientEventQueueManager; // Optional client event queuing
 
         _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
         _connectionManager = new WebSocketConnectionManager();
 
-        // Use shared server salt for GUID generation (ensures shortcuts work across services)
-        _serverSalt = GuidGenerator.GetSharedServerSalt();
+        // Store configuration values for later use
+        _rabbitMqConnectionString = configuration.RabbitMqConnectionString;
+
+        // Server salt from configuration - REQUIRED (fail-fast for production safety)
+        // All service instances must share the same salt for session shortcuts to work correctly
+        if (string.IsNullOrEmpty(configuration.ServerSalt))
+        {
+            throw new InvalidOperationException(
+                "CONNECT_SERVERSALT is required. All service instances must share the same salt for session shortcuts to work correctly.");
+        }
+        _serverSalt = configuration.ServerSalt;
 
         // Generate unique instance ID for distributed deployment
         _instanceId = Environment.MachineName + "-" + Guid.NewGuid().ToString("N")[..8];
 
         // Register event handlers via partial class (ConnectServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        RegisterEventConsumers(eventConsumer);
 
         _logger.LogInformation("Connect service initialized with instance ID: {InstanceId}, SessionManager: {SessionManagerEnabled}",
             _instanceId, sessionManager != null ? "Enabled" : "Disabled");
@@ -104,7 +115,7 @@ public partial class ConnectService : IConnectService
 
     /// <summary>
     /// Internal API proxy for stateless requests.
-    /// Routes requests through Dapr to the appropriate service.
+    /// Routes requests through mesh to the appropriate service.
     /// </summary>
     public async Task<(StatusCodes, InternalProxyResponse?)> ProxyInternalRequestAsync(
         InternalProxyRequest body,
@@ -178,15 +189,15 @@ public partial class ConnectService : IConnectService
 
             try
             {
-                // Route through Dapr service invocation
+                // Route through Bannou service invocation
                 HttpResponseMessage httpResponse;
 
                 if (body.Method == InternalProxyRequestMethod.GET ||
                     body.Method == InternalProxyRequestMethod.DELETE)
                 {
                     // For GET/DELETE, no body
-                    var request = _daprClient.CreateInvokeMethodRequest(httpMethod, appId, endpoint);
-                    httpResponse = await _daprClient.InvokeMethodWithResponseAsync(request, cancellationToken);
+                    var request = _meshClient.CreateInvokeMethodRequest(httpMethod, appId, endpoint);
+                    httpResponse = await _meshClient.InvokeMethodWithResponseAsync(request, cancellationToken);
                 }
                 else
                 {
@@ -195,12 +206,12 @@ public partial class ConnectService : IConnectService
 
                     var content = jsonBody != null ?
                         new StringContent(jsonBody, Encoding.UTF8, "application/json") : null;
-                    var request = _daprClient.CreateInvokeMethodRequest(httpMethod, appId, endpoint);
+                    var request = _meshClient.CreateInvokeMethodRequest(httpMethod, appId, endpoint);
                     if (content != null)
                     {
                         request.Content = content;
                     }
-                    httpResponse = await _daprClient.InvokeMethodWithResponseAsync(request, cancellationToken);
+                    httpResponse = await _meshClient.InvokeMethodWithResponseAsync(request, cancellationToken);
                 }
 
                 // Read response
@@ -230,16 +241,17 @@ public partial class ConnectService : IConnectService
 
                 return (StatusCodes.OK, response);
             }
-            catch (Exception daprEx)
+            catch (Exception meshEx)
             {
-                _logger.LogError(daprEx, "Dapr service invocation failed for {Service}/{Endpoint}",
+                _logger.LogError(meshEx, "Bannou service invocation failed for {Service}/{Endpoint}",
                     body.TargetService, endpoint);
+                await PublishErrorEventAsync("ProxyInternalRequest", meshEx.GetType().Name, meshEx.Message, dependency: body.TargetService, details: new { Endpoint = endpoint });
 
                 var errorResponse = new InternalProxyResponse
                 {
                     Success = false,
                     StatusCode = 503,
-                    Error = $"Service invocation failed: {daprEx.Message}",
+                    Error = $"Service invocation failed: {meshEx.Message}",
                     ExecutionTime = (int)(DateTime.UtcNow - startTime).TotalMilliseconds
                 };
 
@@ -249,6 +261,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing internal proxy request");
+            await PublishErrorEventAsync("ProxyInternalRequest", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -262,10 +275,11 @@ public partial class ConnectService : IConnectService
     /// Gets the client capability manifest (GUID to API mappings) for the authenticated session.
     /// Each client receives unique GUIDs for security isolation.
     /// </summary>
-    public Task<(StatusCodes, ClientCapabilitiesResponse?)> GetClientCapabilitiesAsync(
+    public async Task<(StatusCodes, ClientCapabilitiesResponse?)> GetClientCapabilitiesAsync(
         GetClientCapabilitiesRequest body,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask; // Satisfy async requirement for sync method
         try
         {
             // For now, return a placeholder response until full capability system is integrated
@@ -288,12 +302,13 @@ public partial class ConnectService : IConnectService
             };
 
             _logger.LogInformation("Returning client capabilities (placeholder implementation)");
-            return Task.FromResult<(StatusCodes, ClientCapabilitiesResponse?)>((StatusCodes.OK, response));
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving client capabilities");
-            return Task.FromResult<(StatusCodes, ClientCapabilitiesResponse?)>((StatusCodes.InternalServerError, null));
+            await PublishErrorEventAsync("GetClientCapabilities", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -324,13 +339,16 @@ public partial class ConnectService : IConnectService
                 _logger.LogDebug("Validating JWT token, TokenLength: {TokenLength}", token.Length);
 
                 // Use auth service to validate token with header-based authorization
-                var validationResponse = await _authClient
+                // Cast to concrete type to access fluent WithAuthorization method
+                var authClient = (AuthClient)_authClient;
+                var validationResponse = await authClient
                     .WithAuthorization(token)
                     .ValidateTokenAsync(cancellationToken);
 
                 if (validationResponse == null)
                 {
                     _logger.LogError("Auth service returned null validation response");
+                    await PublishErrorEventAsync("ValidateJWT", "null_response", "Auth service returned null validation response", dependency: "auth");
                     return (null, null, null, null, false);
                 }
 
@@ -402,6 +420,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "JWT validation failed with exception");
+            await PublishErrorEventAsync("ValidateJWT", ex.GetType().Name, ex.Message, dependency: "auth");
             return (null, null, null, null, false);
         }
     }
@@ -437,6 +456,7 @@ public partial class ConnectService : IConnectService
     /// Handles WebSocket communication using the enhanced 31-byte binary protocol.
     /// Creates persistent connection state and processes messages with proper routing.
     /// </summary>
+    [Obsolete]
     public async Task HandleWebSocketCommunicationAsync(
         WebSocket webSocket,
         string sessionId,
@@ -535,7 +555,7 @@ public partial class ConnectService : IConnectService
                         ConnectInstanceId = Guid.TryParse(_instanceId.Split('-').LastOrDefault(), out var instanceGuid)
                             ? instanceGuid : (Guid?)null
                     };
-                    await _daprClient.PublishEventAsync("bannou-pubsub", "session.connected", sessionConnectedEvent, cancellationToken);
+                    await _messageBus.PublishAsync("session.connected", sessionConnectedEvent, cancellationToken: cancellationToken);
                     _logger.LogInformation("Published session.connected event for session {SessionId}", sessionId);
 
                     // If this is a reconnection, publish session.reconnected event so services can re-publish shortcuts
@@ -556,7 +576,7 @@ public partial class ConnectService : IConnectService
                                 ["connect_instance_id"] = _instanceId
                             }
                         };
-                        await _daprClient.PublishEventAsync("bannou-pubsub", "session.reconnected", sessionReconnectedEvent, cancellationToken);
+                        await _messageBus.PublishAsync("session.reconnected", sessionReconnectedEvent, cancellationToken: cancellationToken);
                         _logger.LogInformation("Published session.reconnected event for session {SessionId} - services should re-publish shortcuts", sessionId);
                     }
                 }
@@ -566,14 +586,18 @@ public partial class ConnectService : IConnectService
                 }
             }
 
-            // Deliver any queued events from the reconnection window
-            // Events are queued in Redis when client disconnects but session is still valid
+            // OBSOLETE: Redis event queue - transitional code only
+            // Primary buffering is now handled by RabbitMQ queue (see ClientEventRabbitMQSubscriber).
+            // When we re-subscribe above, RabbitMQ delivers pending messages automatically.
+            // This Redis code only handles events queued BEFORE the architecture change.
+            // TODO: Remove this section once RabbitMQ buffering is confirmed stable in production.
+#pragma warning disable CS0618 // Type or member is obsolete
             if (_clientEventQueueManager != null)
             {
                 var queuedEvents = await _clientEventQueueManager.DequeueEventsAsync(sessionId, cancellationToken);
                 if (queuedEvents.Count > 0)
                 {
-                    _logger.LogInformation("Delivering {Count} queued events to reconnected session {SessionId}",
+                    _logger.LogInformation("Delivering {Count} LEGACY Redis-queued events to session {SessionId}",
                         queuedEvents.Count, sessionId);
 
                     foreach (var eventPayload in queuedEvents)
@@ -590,13 +614,13 @@ public partial class ConnectService : IConnectService
                         var sent = await _connectionManager.SendMessageAsync(sessionId, eventMessage, cancellationToken);
                         if (!sent)
                         {
-                            _logger.LogWarning("Failed to deliver queued event to session {SessionId}", sessionId);
-                            // Don't re-queue - client just reconnected but send failed, likely connection issue
+                            _logger.LogWarning("Failed to deliver legacy queued event to session {SessionId}", sessionId);
                             break;
                         }
                     }
                 }
             }
+#pragma warning restore CS0618
 
             // Capability manifest is delivered via event-driven flow:
             // 1. session.connected event published above
@@ -650,6 +674,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error in WebSocket communication for session {SessionId}", sessionId);
+            await PublishErrorEventAsync("WebSocketCommunication", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
         }
         finally
         {
@@ -671,23 +696,35 @@ public partial class ConnectService : IConnectService
                     Reconnectable = !isForcedDisconnect,
                     Reason = isForcedDisconnect ? "forced_disconnect" : "graceful_disconnect"
                 };
-                await _daprClient.PublishEventAsync("bannou-pubsub", "session.disconnected", sessionDisconnectedEvent);
+                await _messageBus.PublishAsync("session.disconnected", sessionDisconnectedEvent);
                 _logger.LogInformation("Published session.disconnected event for session {SessionId}, reconnectable: {Reconnectable}",
                     sessionId, !isForcedDisconnect);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to publish session.disconnected event for session {SessionId}", sessionId);
+                // Fire-and-forget error event - we're in finally cleanup
+                _ = PublishErrorEventAsync("PublishSessionDisconnected", ex.GetType().Name, ex.Message, dependency: "messaging", details: new { SessionId = sessionId });
             }
 
             // Remove from connection manager - use instance-matching removal to prevent
             // race condition during session subsume where old connection's cleanup could
             // accidentally remove a new connection that replaced it (Tenet 4 compliance)
-            _connectionManager.RemoveConnectionIfMatch(sessionId, webSocket);
+            var wasRemoved = _connectionManager.RemoveConnectionIfMatch(sessionId, webSocket);
 
-            // Initiate reconnection window instead of immediate cleanup (unless forced disconnect)
-            if (_sessionManager != null)
+            // CRITICAL: If wasRemoved is false, this connection was SUBSUMED by a new connection
+            // with the same session ID. In this case, we must NOT:
+            // - Unsubscribe from RabbitMQ (new connection is using the subscription)
+            // - Initiate reconnection window (session is still active)
+            // - Publish disconnect events (session is not actually disconnecting)
+            if (!wasRemoved)
             {
+                _logger.LogDebug("Session {SessionId} was subsumed by new connection - skipping cleanup", sessionId);
+                // Skip all cleanup - new connection owns this session now
+            }
+            else if (_sessionManager != null)
+            {
+                // Initiate reconnection window instead of immediate cleanup (unless forced disconnect)
                 if (isForcedDisconnect)
                 {
                     // Forced disconnect - unsubscribe from RabbitMQ and clean up immediately
@@ -704,11 +741,15 @@ public partial class ConnectService : IConnectService
                 else
                 {
                     // Normal disconnect - initiate reconnection window
-                    // IMPORTANT: Keep RabbitMQ subscription active so events can be queued during
-                    // the reconnection window. HandleClientEventAsync will detect the missing WebSocket
-                    // connection and queue events for delivery when the client reconnects.
-                    _logger.LogDebug("Keeping RabbitMQ subscription active for session {SessionId} during reconnection window",
-                        sessionId);
+                    // Cancel RabbitMQ consumer - queue will buffer messages automatically
+                    // RabbitMQ handles buffering natively: queue persists, messages accumulate
+                    // On reconnect, we re-subscribe and get all pending messages from queue
+                    if (_clientEventSubscriber != null)
+                    {
+                        await _clientEventSubscriber.UnsubscribeFromSessionAsync(sessionId);
+                        _logger.LogDebug("Cancelled RabbitMQ consumer for session {SessionId} - queue will buffer messages",
+                            sessionId);
+                    }
 
                     var reconnectionToken = connectionState.InitiateReconnectionWindow(
                         reconnectionWindowMinutes: 5,
@@ -735,7 +776,8 @@ public partial class ConnectService : IConnectService
             }
 
             // Can send messages when Open (server-initiated close) or CloseReceived (client-initiated close)
-            if (webSocket.State == WebSocketState.Open || webSocket.State == WebSocketState.CloseReceived)
+            // Skip this when subsumed - the subsume mechanism already closes the old WebSocket with "New connection established"
+            if (wasRemoved && (webSocket.State == WebSocketState.Open || webSocket.State == WebSocketState.CloseReceived))
             {
                 try
                 {
@@ -869,6 +911,7 @@ public partial class ConnectService : IConnectService
                 if (routeInfo.TargetGuid == null || routeInfo.InjectedPayload == null)
                 {
                     _logger.LogError("SessionShortcut route missing TargetGuid or InjectedPayload for session {SessionId}", sessionId);
+                    await PublishErrorEventAsync("HandleBinaryMessage", "shortcut_config_error", "SessionShortcut route missing TargetGuid or InjectedPayload", details: new { SessionId = sessionId });
                     var errorResponse = MessageRouter.CreateErrorResponse(
                         message, ResponseCodes.ShortcutTargetNotFound, "Shortcut configuration error");
                     await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
@@ -899,6 +942,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling binary message from session {SessionId}", sessionId);
+            await PublishErrorEventAsync("HandleBinaryMessage", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
 
             // Send generic error response if we can parse the message
             try
@@ -914,12 +958,13 @@ public partial class ConnectService : IConnectService
                 // If we can't even parse the message or send error response, log and continue
                 // This is a last resort - the outer exception handler already logged the original error
                 _logger.LogError(parseEx, "Failed to send error response to session {SessionId} - message may be corrupted", sessionId);
+                _ = PublishErrorEventAsync("HandleBinaryMessage", parseEx.GetType().Name, "Failed to send error response - message may be corrupted", details: new { SessionId = sessionId });
             }
         }
     }
 
     /// <summary>
-    /// Routes a message to a Dapr service and handles the response.
+    /// Routes a message to a Bannou service and handles the response.
     /// ServiceName format: "servicename:METHOD:/path" (e.g., "orchestrator:GET:/orchestrator/health/infrastructure")
     /// </summary>
     private async Task RouteToServiceAsync(
@@ -962,24 +1007,21 @@ public partial class ConnectService : IConnectService
             // Connect service should NEVER parse the payload - zero-copy routing based on GUID only
             var payloadBytes = message.Payload;
 
-            // Make the actual Dapr service invocation via direct HTTP
-            // This preserves the full path including /v1.0/invoke/{appId}/method/ prefix
-            // which is required because NSwag-generated controllers have route prefix [Route("v1.0/invoke/bannou/method")]
+            // Make the actual Bannou service invocation via direct HTTP
             string? responseJson = null;
             HttpResponseMessage? httpResponse = null;
 
             try
             {
-                // Build full Dapr URL like DaprServiceClientBase does
-                var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT")
-                    ?? throw new InvalidOperationException("DAPR_HTTP_ENDPOINT environment variable is not set. Dapr sidecar must be configured.");
-                var daprUrl = $"{daprHttpEndpoint}/v1.0/invoke/{appId}/method/{path.TrimStart('/')}";
+                // Build mesh URL using direct path
+                var bannouHttpEndpoint = Program.Configuration.EffectiveHttpEndpoint;
+                var meshUrl = $"{bannouHttpEndpoint}/{path.TrimStart('/')}";
 
                 // Create HTTP request with proper headers
-                using var request = new HttpRequestMessage(new HttpMethod(httpMethod), daprUrl);
+                using var request = new HttpRequestMessage(new HttpMethod(httpMethod), meshUrl);
 
-                // Add dapr-app-id header for routing (like DaprServiceClientBase.PrepareRequest)
-                request.Headers.Add("dapr-app-id", appId);
+                // Add bannou-app-id header for routing (like ServiceClientBase.PrepareRequest)
+                request.Headers.Add("bannou-app-id", appId);
                 // Use static cached Accept header to avoid per-request allocation
                 request.Headers.Accept.Add(s_jsonAcceptHeader);
 
@@ -988,8 +1030,8 @@ public partial class ConnectService : IConnectService
                 request.Headers.Add("X-Bannou-Session-Id", sessionId);
 
                 // Use Warning level to ensure visibility even when app logging is set to Warning
-                _logger.LogWarning("WebSocket -> Dapr HTTP: {Method} {Uri} AppId={AppId}",
-                    request.Method, daprUrl, appId);
+                _logger.LogWarning("WebSocket -> mesh HTTP: {Method} {Uri} AppId={AppId}",
+                    request.Method, meshUrl, appId);
 
                 // Pass raw payload bytes directly to service - true zero-copy forwarding
                 // Uses ByteArrayContent instead of StringContent to avoid UTF-8 → UTF-16 → UTF-8 conversion
@@ -1004,14 +1046,17 @@ public partial class ConnectService : IConnectService
 
                 // Track timing for long-running requests
                 var requestStartTime = DateTimeOffset.UtcNow;
-                _logger.LogDebug("Sending HTTP request to Dapr at {StartTime}", requestStartTime);
+                _logger.LogDebug("Sending HTTP request to mesh at {StartTime}", requestStartTime);
+
+                // Create HttpClient from factory (properly pooled, configured with 120s timeout)
+                using var httpClient = _httpClientFactory.CreateClient(HttpClientName);
 
                 // Invoke the service via direct HTTP (preserves full path)
-                httpResponse = await _httpClient.SendAsync(request, cancellationToken);
+                httpResponse = await httpClient.SendAsync(request, cancellationToken);
 
                 var requestDuration = DateTimeOffset.UtcNow - requestStartTime;
                 // Use Warning level for response timing to ensure visibility in CI
-                _logger.LogWarning("Dapr HTTP response in {DurationMs}ms: {StatusCode}",
+                _logger.LogWarning("mesh HTTP response in {DurationMs}ms: {StatusCode}",
                     requestDuration.TotalMilliseconds, (int)httpResponse.StatusCode);
 
                 // Read response content
@@ -1034,16 +1079,10 @@ public partial class ConnectService : IConnectService
             catch (TaskCanceledException tcEx) when (tcEx.InnerException is TimeoutException)
             {
                 // HTTP client timeout reached (120 seconds)
-                _logger.LogError("Dapr HTTP request timed out (120s) for {Service} {Method} {Path}",
+                _logger.LogError("mesh HTTP request timed out (120s) for {Service} {Method} {Path}",
                     serviceName, httpMethod, path);
-
-                var errorPayload = new
-                {
-                    error = "Service request timeout",
-                    statusCode = 504,
-                    message = $"Request to {serviceName} timed out after 120 seconds"
-                };
-                responseJson = BannouJson.Serialize(errorPayload);
+                await PublishErrorEventAsync("RouteToService", "timeout", $"mesh HTTP request timed out (120s) for {serviceName}", dependency: serviceName, details: new { Method = httpMethod, Path = path });
+                // Error payload discarded by BinaryMessage.CreateResponse for non-OK responses
             }
             catch (TaskCanceledException tcEx)
             {
@@ -1051,56 +1090,30 @@ public partial class ConnectService : IConnectService
                 var isTimeout = !cancellationToken.IsCancellationRequested;
                 if (isTimeout)
                 {
-                    _logger.LogError("Dapr HTTP request timed out for {Service} {Method} {Path}",
+                    _logger.LogError("mesh HTTP request timed out for {Service} {Method} {Path}",
                         serviceName, httpMethod, path);
-
-                    var errorPayload = new
-                    {
-                        error = "Service request timeout",
-                        statusCode = 504,
-                        message = $"Request to {serviceName} timed out"
-                    };
-                    responseJson = BannouJson.Serialize(errorPayload);
+                    await PublishErrorEventAsync("RouteToService", "timeout", $"mesh HTTP request timed out for {serviceName}", dependency: serviceName, details: new { Method = httpMethod, Path = path });
                 }
                 else
                 {
-                    _logger.LogWarning(tcEx, "Dapr HTTP request cancelled for {Service} {Method} {Path}",
+                    _logger.LogWarning(tcEx, "mesh HTTP request cancelled for {Service} {Method} {Path}",
                         serviceName, httpMethod, path);
-
-                    var errorPayload = new
-                    {
-                        error = "Request cancelled",
-                        statusCode = 499,
-                        message = "Request was cancelled"
-                    };
-                    responseJson = BannouJson.Serialize(errorPayload);
                 }
+                // Error payload discarded by BinaryMessage.CreateResponse for non-OK responses
             }
             catch (HttpRequestException httpEx)
             {
-                _logger.LogWarning(httpEx, "HTTP request to Dapr failed for {Service} {Method} {Path}",
+                _logger.LogWarning(httpEx, "HTTP request to mesh failed for {Service} {Method} {Path}",
                     serviceName, httpMethod, path);
-
-                // Create error response
-                var errorPayload = new
-                {
-                    error = "Service invocation failed",
-                    statusCode = (int?)httpEx.StatusCode ?? 500,
-                    message = httpEx.Message
-                };
-                responseJson = BannouJson.Serialize(errorPayload);
+                await PublishErrorEventAsync("RouteToService", "http_error", httpEx.Message, dependency: serviceName, details: new { Method = httpMethod, Path = path, StatusCode = (int?)httpEx.StatusCode });
+                // Error payload discarded by BinaryMessage.CreateResponse for non-OK responses
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error invoking service {Service} {Method} {Path}",
                     serviceName, httpMethod, path);
-
-                var errorPayload = new
-                {
-                    error = "Internal server error",
-                    message = ex.Message
-                };
-                responseJson = BannouJson.Serialize(errorPayload);
+                await PublishErrorEventAsync("RouteToService", ex.GetType().Name, ex.Message, dependency: serviceName, details: new { Method = httpMethod, Path = path });
+                // Error payload discarded by BinaryMessage.CreateResponse for non-OK responses
             }
 
             // Send response back to WebSocket client
@@ -1120,6 +1133,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error routing message to service {Service}", routeInfo.ServiceName);
+            await PublishErrorEventAsync("RouteToService", ex.GetType().Name, ex.Message, dependency: routeInfo.ServiceName, details: new { SessionId = sessionId });
 
             if (routeInfo.RequiresResponse)
             {
@@ -1243,6 +1257,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error routing message to client {TargetClient}", routeInfo.TargetId);
+            await PublishErrorEventAsync("RouteToClient", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId, TargetClient = routeInfo.TargetId });
 
             if (message.ExpectsResponse)
             {
@@ -1286,6 +1301,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling text message from session {SessionId}", sessionId);
+            await PublishErrorEventAsync("HandleTextMessage", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
         }
     }
 
@@ -1300,46 +1316,50 @@ public partial class ConnectService : IConnectService
     {
         _logger.LogInformation("Registering Connect service RabbitMQ event handlers");
 
-        // Register auth event handler
+        // Register auth event handler (subscribes via MassTransit, not mesh Topics)
         webApp.MapPost("/events/auth-events", ProcessAuthEventAsync)
-            .WithTopic("bannou-pubsub", "bannou-auth-events")
             .WithMetadata("Connect service auth event handler");
 
         // Register service registration handler
         webApp.MapPost("/events/service-registered", ProcessServiceRegistrationAsync)
-            .WithTopic("bannou-pubsub", "bannou-service-registered")
             .WithMetadata("Connect service registration handler");
 
         // Register client message handler
         webApp.MapPost("/events/client-messages", ProcessClientMessageEventAsync)
-            .WithTopic("bannou-pubsub", "bannou-client-messages")
             .WithMetadata("Connect service client message handler");
 
         // Register client RPC handler
         webApp.MapPost("/events/client-rpc", ProcessClientRPCEventAsync)
-            .WithTopic("bannou-pubsub", "bannou-client-rpc")
             .WithMetadata("Connect service client RPC handler");
 
         _logger.LogInformation("Connect service RabbitMQ event handlers registered successfully");
 
         // Initialize direct RabbitMQ subscriber for session-specific client events
-        // TENET exception: Dapr doesn't support dynamic runtime subscriptions
-        _logger.LogInformation("Initializing client event RabbitMQ subscriber");
-        var subscriberLogger = _loggerFactory.CreateLogger<ClientEventRabbitMQSubscriber>();
-        _clientEventSubscriber = new ClientEventRabbitMQSubscriber(
-            subscriberLogger,
-            HandleClientEventAsync,
-            _instanceId);
-
-        var subscriberInitialized = await _clientEventSubscriber.InitializeAsync(cancellationToken);
-        if (subscriberInitialized)
+        // TENET exception: mesh doesn't support dynamic runtime subscriptions
+        if (string.IsNullOrEmpty(_rabbitMqConnectionString))
         {
-            _logger.LogInformation("Client event RabbitMQ subscriber initialized successfully");
+            _logger.LogWarning("CONNECT_RABBITMQ_CONNECTION_STRING not configured - client events will not be delivered");
         }
         else
         {
-            _logger.LogWarning("Failed to initialize RabbitMQ subscriber - client events will not be delivered");
-            _clientEventSubscriber = null;
+            _logger.LogInformation("Initializing client event RabbitMQ subscriber");
+            var subscriberLogger = _loggerFactory.CreateLogger<ClientEventRabbitMQSubscriber>();
+            _clientEventSubscriber = new ClientEventRabbitMQSubscriber(
+                _rabbitMqConnectionString,
+                subscriberLogger,
+                HandleClientEventAsync,
+                _instanceId);
+
+            var subscriberInitialized = await _clientEventSubscriber.InitializeAsync(cancellationToken);
+            if (subscriberInitialized)
+            {
+                _logger.LogInformation("Client event RabbitMQ subscriber initialized successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to initialize RabbitMQ subscriber - client events will not be delivered");
+                _clientEventSubscriber = null;
+            }
         }
     }
 
@@ -1402,6 +1422,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process auth event for session {SessionId}", eventData.SessionId);
+            await PublishErrorEventAsync("ProcessAuthEvent", ex.GetType().Name, ex.Message, details: new { SessionId = eventData.SessionId, EventType = eventData.EventType });
             throw;
         }
     }
@@ -1418,8 +1439,7 @@ public partial class ConnectService : IConnectService
 
             // Notify permission service that a new service was registered
             // This will trigger permission recompilation for all sessions
-            await _daprClient.PublishEventAsync(
-                "bannou-pubsub",
+            await _messageBus.PublishAsync(
                 "bannou-permission-recompile",
                 new PermissionRecompileEvent
                 {
@@ -1441,6 +1461,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process service registration event for {ServiceId}", eventData.ServiceId);
+            await PublishErrorEventAsync("ProcessServiceRegistration", ex.GetType().Name, ex.Message, details: new { ServiceId = eventData.ServiceId });
             throw;
         }
     }
@@ -1492,6 +1513,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process client message event for {ClientId}", eventData.ClientId);
+            await PublishErrorEventAsync("ProcessClientMessage", ex.GetType().Name, ex.Message, details: new { ClientId = eventData.ClientId, ServiceName = eventData.ServiceName });
             throw;
         }
     }
@@ -1547,6 +1569,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process client RPC event for {ClientId}", eventData.ClientId);
+            await PublishErrorEventAsync("ProcessClientRPC", ex.GetType().Name, ex.Message, details: new { ClientId = eventData.ClientId, ServiceName = eventData.ServiceName });
             throw;
         }
     }
@@ -1560,104 +1583,80 @@ public partial class ConnectService : IConnectService
     /// This is the callback invoked by ClientEventRabbitMQSubscriber when events arrive.
     /// Internal events (like CapabilitiesRefreshEvent) are handled locally without forwarding to client.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// IMPORTANT: This method throws exceptions on delivery failure to trigger RabbitMQ message requeue.
+    /// The subscriber NACKs with requeue=true when this method throws, causing RabbitMQ to buffer
+    /// the message until the client reconnects.
+    /// </para>
+    /// <para>
+    /// Delivery failure cases:
+    /// - Client disconnected: Message requeued, delivered on reconnect
+    /// - WebSocket send failed: Message requeued, retried on next connection
+    /// - Internal event handling failed: Message requeued for retry
+    /// </para>
+    /// </remarks>
     private async Task HandleClientEventAsync(string sessionId, byte[] eventPayload)
     {
-        try
+        // Check if this is an internal event that should be handled locally, not forwarded to client
+        if (await TryHandleInternalEventAsync(sessionId, eventPayload))
         {
-            // Unwrap CloudEvents envelope if present - Dapr pub/sub wraps events in CloudEvents format
-            // Clients should receive the actual event data, not the CloudEvents wrapper
-            var unwrappedPayload = DaprEventHelper.UnwrapCloudEventsEnvelope(eventPayload);
-
-            // Check if this is an internal event that should be handled locally, not forwarded to client
-            if (await TryHandleInternalEventAsync(sessionId, unwrappedPayload))
-            {
-                // Internal event was handled - don't forward to client
-                return;
-            }
-
-            // Validate event against whitelist and normalize the event_name
-            // NSwag/JSON serialization can mangle event names (e.g., "system.notification" -> "system_notification")
-            // We need to validate the mangled name and rewrite it to canonical form before sending to client
-            var (canonicalName, clientPayload) = ClientEventNormalizer.NormalizeEventPayload(unwrappedPayload);
-
-            if (string.IsNullOrEmpty(canonicalName))
-            {
-                _logger.LogWarning("Rejected client event for session {SessionId} - event name not in whitelist or missing",
-                    sessionId);
-                return;
-            }
-
-            _logger.LogDebug("Validated and normalized client event '{CanonicalName}' for session {SessionId}",
-                canonicalName, sessionId);
-
-            // Check if session has active WebSocket connection
-            var connection = _connectionManager.GetConnection(sessionId);
-            if (connection == null)
-            {
-                // Client disconnected - queue the event for later delivery during reconnection window
-                _logger.LogDebug("Session {SessionId} not connected, attempting to queue event for later delivery",
-                    sessionId);
-
-                // Queue event for delivery when client reconnects (if within reconnection window)
-                // Note: We queue the unwrapped payload so it's ready for client delivery
-                if (_clientEventQueueManager != null)
-                {
-                    var queued = await _clientEventQueueManager.QueueEventAsync(sessionId, clientPayload);
-                    if (queued)
-                    {
-                        _logger.LogDebug("Queued client event for disconnected session {SessionId} ({PayloadSize} bytes)",
-                            sessionId, clientPayload.Length);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Failed to queue client event for session {SessionId}", sessionId);
-                    }
-                }
-                else
-                {
-                    _logger.LogWarning("Session {SessionId} not connected - event dropped (queue manager not available)",
-                        sessionId);
-                }
-                return;
-            }
-
-            // Create binary message for the client event
-            var eventMessage = new BinaryMessage(
-                flags: MessageFlags.Event, // Server-initiated event, no response expected
-                channel: 0, // Event channel
-                sequenceNumber: 0, // Events don't need sequence numbers
-                serviceGuid: Guid.Empty, // System event
-                messageId: GuidGenerator.GenerateMessageId(),
-                payload: clientPayload
-            );
-
-            // Send to WebSocket client
-            var sent = await _connectionManager.SendMessageAsync(sessionId, eventMessage, CancellationToken.None);
-
-            if (sent)
-            {
-                _logger.LogDebug("Delivered client event to session {SessionId} ({PayloadSize} bytes)",
-                    sessionId, eventPayload.Length);
-            }
-            else
-            {
-                // Send failed - client may have disconnected between check and send
-                // Queue the event for reconnection delivery
-                if (_clientEventQueueManager != null)
-                {
-                    await _clientEventQueueManager.QueueEventAsync(sessionId, eventPayload);
-                    _logger.LogDebug("WebSocket send failed, queued event for session {SessionId}", sessionId);
-                }
-                else
-                {
-                    _logger.LogWarning("Failed to deliver client event to session {SessionId} - WebSocket send failed",
-                        sessionId);
-                }
-            }
+            // Internal event was handled - don't forward to client
+            return;
         }
-        catch (Exception ex)
+
+        // Validate event against whitelist and normalize the event_name
+        // NSwag/JSON serialization can mangle event names (e.g., "system.notification" -> "system_notification")
+        // We need to validate the mangled name and rewrite it to canonical form before sending to client
+        var (canonicalName, clientPayload) = ClientEventNormalizer.NormalizeEventPayload(eventPayload);
+
+        if (string.IsNullOrEmpty(canonicalName))
         {
-            _logger.LogError(ex, "Error handling client event for session {SessionId}", sessionId);
+            // Invalid event - don't requeue, just discard
+            _logger.LogWarning("Rejected client event for session {SessionId} - event name not in whitelist or missing",
+                sessionId);
+            return;
+        }
+
+        _logger.LogDebug("Validated and normalized client event '{CanonicalName}' for session {SessionId}",
+            canonicalName, sessionId);
+
+        // Check if session has active WebSocket connection
+        var connection = _connectionManager.GetConnection(sessionId);
+        if (connection == null)
+        {
+            // Client disconnected - throw to trigger NACK with requeue
+            // RabbitMQ will buffer the message until client reconnects
+            _logger.LogDebug("Session {SessionId} not connected - message will be requeued by RabbitMQ",
+                sessionId);
+            throw new InvalidOperationException($"Client not connected for session {sessionId} - requeue for later delivery");
+        }
+
+        // Create binary message for the client event
+        var eventMessage = new BinaryMessage(
+            flags: MessageFlags.Event, // Server-initiated event, no response expected
+            channel: 0, // Event channel
+            sequenceNumber: 0, // Events don't need sequence numbers
+            serviceGuid: Guid.Empty, // System event
+            messageId: GuidGenerator.GenerateMessageId(),
+            payload: clientPayload
+        );
+
+        // Send to WebSocket client
+        var sent = await _connectionManager.SendMessageAsync(sessionId, eventMessage, CancellationToken.None);
+
+        if (sent)
+        {
+            _logger.LogDebug("Delivered client event to session {SessionId} ({PayloadSize} bytes)",
+                sessionId, eventPayload.Length);
+        }
+        else
+        {
+            // Send failed - client may have disconnected between check and send
+            // Throw to trigger NACK with requeue
+            _logger.LogDebug("WebSocket send failed for session {SessionId} - message will be requeued by RabbitMQ",
+                sessionId);
+            throw new InvalidOperationException($"WebSocket send failed for session {sessionId} - requeue for later delivery");
         }
     }
 
@@ -1678,13 +1677,13 @@ public partial class ConnectService : IConnectService
         {
             // Try to parse just the event_name field to determine event type
             using var doc = JsonDocument.Parse(eventPayload);
-
-            // Handle CloudEvents envelope - Dapr wraps pub/sub messages in CloudEvents format
-            // The actual event data is in the "data" property
             var root = doc.RootElement;
-            if (root.TryGetProperty("data", out var dataElement))
+
+            // Unwrap MassTransit envelope - MassTransit wraps messages with metadata,
+            // and the actual event data is in the "message" property
+            if (root.TryGetProperty("message", out var messageElement))
             {
-                root = dataElement;
+                root = messageElement;
             }
 
             if (!root.TryGetProperty("event_name", out var eventNameElement))
@@ -1804,6 +1803,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending message to session {SessionId}", sessionId);
+            _ = PublishErrorEventAsync("SendMessage", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
             return false;
         }
     }
@@ -1843,25 +1843,27 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error disconnecting session {SessionId}: {Reason}", sessionId, reason);
+            _ = PublishErrorEventAsync("Disconnect", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId, Reason = reason });
         }
     }
 
     /// <summary>
     /// Validates that a session still exists and is valid by checking the connection manager.
     /// </summary>
-    private Task<bool> ValidateSessionAsync(string sessionId)
+    private async Task<bool> ValidateSessionAsync(string sessionId)
     {
+        await Task.CompletedTask; // Satisfy async requirement for sync method
         try
         {
             // Check if session exists in our connection manager
             // This is used for token refresh events where we only have session ID
             var connection = _connectionManager.GetConnection(sessionId);
-            return Task.FromResult(connection != null);
+            return connection != null;
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Session validation failed for {SessionId}", sessionId);
-            return Task.FromResult(false);
+            return false;
         }
     }
 
@@ -1870,12 +1872,13 @@ public partial class ConnectService : IConnectService
     /// SessionCapabilitiesEvent from Permissions service after session.connected event.
     /// This method exists for reconnection scenarios where existing mappings may be restored.
     /// </summary>
-    internal Task<Dictionary<string, Guid>> InitializeSessionCapabilitiesAsync(
+    internal async Task<Dictionary<string, Guid>> InitializeSessionCapabilitiesAsync(
         string sessionId,
         string? role = "anonymous",
         ICollection<string>? authorizations = null,
         CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask; // Satisfy async requirement for sync method
         // Capabilities are delivered via event-driven flow:
         // 1. Connect publishes session.connected with roles/authorizations
         // 2. Permissions receives event, compiles capabilities, publishes SessionCapabilitiesEvent
@@ -1888,7 +1891,7 @@ public partial class ConnectService : IConnectService
             sessionId, role ?? "anonymous", authorizations?.Count ?? 0);
 
         // Return empty mappings - real capabilities come via SessionCapabilitiesEvent
-        return Task.FromResult(new Dictionary<string, Guid>());
+        return new Dictionary<string, Guid>();
     }
 
     /// <summary>
@@ -2015,6 +2018,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send capability manifest to session {SessionId}", sessionId);
+            await PublishErrorEventAsync("SendCapabilityManifest", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
             // Don't throw - capability manifest is informational, connection can continue
         }
     }
@@ -2150,6 +2154,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process capabilities for session {SessionId}", sessionId);
+            await PublishErrorEventAsync("ProcessCapabilities", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId, Reason = reason });
         }
     }
 
@@ -2222,19 +2227,20 @@ public partial class ConnectService : IConnectService
 
     /// <summary>
     /// Registers this service's API permissions with the Permissions service on startup.
-    /// Overrides the default IDaprService implementation to use generated permission data.
+    /// Overrides the default IBannouService implementation to use generated permission data.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()
     {
         _logger.LogInformation("Registering Connect service permissions... (starting)");
         try
         {
-            await ConnectPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+            await ConnectPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
             _logger.LogInformation("Connect service permissions registered via event (complete)");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to register Connect service permissions");
+            await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "permissions");
             throw;
         }
     }
@@ -2410,6 +2416,7 @@ public partial class ConnectService : IConnectService
                 _logger.LogError("Shortcut '{ShortcutName}' missing required target_service in metadata for session {SessionId}. " +
                     "The shortcut publisher must provide target_service.",
                     shortcutData.Name, sessionId);
+                await PublishErrorEventAsync("HandleShortcutPublished", "missing_target_service", $"Shortcut '{shortcutData.Name}' missing required target_service", details: new { SessionId = sessionId, ShortcutName = shortcutData.Name });
                 return; // Reject invalid shortcut
             }
 
@@ -2418,6 +2425,7 @@ public partial class ConnectService : IConnectService
                 _logger.LogError("Shortcut '{ShortcutName}' missing required target_method in metadata for session {SessionId}. " +
                     "The shortcut publisher must provide target_method (e.g., 'POST').",
                     shortcutData.Name, sessionId);
+                await PublishErrorEventAsync("HandleShortcutPublished", "missing_target_method", $"Shortcut '{shortcutData.Name}' missing required target_method", details: new { SessionId = sessionId, ShortcutName = shortcutData.Name });
                 return; // Reject invalid shortcut
             }
 
@@ -2426,6 +2434,7 @@ public partial class ConnectService : IConnectService
                 _logger.LogError("Shortcut '{ShortcutName}' missing required target_endpoint in metadata for session {SessionId}. " +
                     "The shortcut publisher must provide target_endpoint (e.g., '/sessions/join').",
                     shortcutData.Name, sessionId);
+                await PublishErrorEventAsync("HandleShortcutPublished", "missing_target_endpoint", $"Shortcut '{shortcutData.Name}' missing required target_endpoint", details: new { SessionId = sessionId, ShortcutName = shortcutData.Name });
                 return; // Reject invalid shortcut
             }
 
@@ -2441,6 +2450,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling ShortcutPublishedEvent for session {SessionId}", sessionId);
+            await PublishErrorEventAsync("HandleShortcutPublished", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
         }
     }
 
@@ -2516,6 +2526,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling ShortcutRevokedEvent for session {SessionId}", sessionId);
+            await PublishErrorEventAsync("HandleShortcutRevoked", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
         }
     }
 
@@ -2622,6 +2633,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send capability manifest with shortcuts to session {SessionId}", sessionId);
+            await PublishErrorEventAsync("SendCapabilityManifestWithShortcuts", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
         }
     }
 
@@ -2633,14 +2645,14 @@ public partial class ConnectService : IConnectService
     /// Publishes an error event for unexpected/internal failures.
     /// Does NOT publish for validation errors or expected failure cases.
     /// </summary>
-    private Task PublishErrorEventAsync(
+    private async Task PublishErrorEventAsync(
         string operation,
         string errorType,
         string message,
         string? dependency = null,
         object? details = null)
     {
-        return _errorEventEmitter.TryPublishAsync(
+        await _messageBus.TryPublishErrorAsync(
             serviceId: "connect",
             operation: operation,
             errorType: errorType,

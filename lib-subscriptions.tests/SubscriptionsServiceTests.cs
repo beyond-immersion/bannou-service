@@ -1,9 +1,10 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Servicedata;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Subscriptions;
-using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Collections.Generic;
@@ -14,36 +15,56 @@ namespace BeyondImmersion.BannouService.Subscriptions.Tests;
 
 /// <summary>
 /// Unit tests for SubscriptionsService.
-/// Tests business logic with mocked DaprClient and IServicedataClient.
+/// Tests business logic with mocked IStateStoreFactory and IServicedataClient.
 /// </summary>
 public class SubscriptionsServiceTests
 {
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<SubscriptionDataModel>> _mockSubscriptionStore;
+    private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<SubscriptionsService>> _mockLogger;
     private readonly SubscriptionsServiceConfiguration _configuration;
     private readonly Mock<IServicedataClient> _mockServicedataClient;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private const string STATE_STORE = "subscriptions-statestore";
 
     public SubscriptionsServiceTests()
     {
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockSubscriptionStore = new Mock<IStateStore<SubscriptionDataModel>>();
+        _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<SubscriptionsService>>();
         _configuration = new SubscriptionsServiceConfiguration();
         _mockServicedataClient = new Mock<IServicedataClient>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup factory to return typed stores
+        _mockStateStoreFactory.Setup(f => f.GetStore<SubscriptionDataModel>(STATE_STORE))
+            .Returns(_mockSubscriptionStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE))
+            .Returns(_mockListStore.Object);
+
+        // Setup default behavior for stores
+        _mockSubscriptionStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SubscriptionDataModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockListStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Setup default behavior for message bus
+        _mockMessageBus.Setup(m => m.PublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Guid.NewGuid());
     }
 
     private SubscriptionsService CreateService()
     {
         return new SubscriptionsService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             _mockServicedataClient.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
     }
 
@@ -60,15 +81,28 @@ public class SubscriptionsServiceTests
     }
 
     [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrowArgumentNullException()
+    public void Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new SubscriptionsService(
             null!,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             _mockServicedataClient.Object,
-            _mockErrorEventEmitter.Object,
+            _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullMessageBus_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new SubscriptionsService(
+            _mockStateStoreFactory.Object,
+            null!,
+            _mockLogger.Object,
+            _configuration,
+            _mockServicedataClient.Object,
             _mockEventConsumer.Object));
     }
 
@@ -77,11 +111,11 @@ public class SubscriptionsServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new SubscriptionsService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             null!,
             _configuration,
             _mockServicedataClient.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -90,11 +124,11 @@ public class SubscriptionsServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new SubscriptionsService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             null!,
             _mockServicedataClient.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -103,11 +137,11 @@ public class SubscriptionsServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new SubscriptionsService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             null!,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -116,11 +150,11 @@ public class SubscriptionsServiceTests
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new SubscriptionsService(
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
             _mockServicedataClient.Object,
-            _mockErrorEventEmitter.Object,
             null!));
     }
 
@@ -144,23 +178,13 @@ public class SubscriptionsServiceTests
         };
 
         // Mock: Account subscription index
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                $"account-subscriptions:{accountId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { subscriptionId.ToString() });
 
         // Mock: Subscription data
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{subscriptionId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
                 SubscriptionId = subscriptionId.ToString(),
@@ -200,23 +224,13 @@ public class SubscriptionsServiceTests
         };
 
         // Mock: Account subscription index
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                $"account-subscriptions:{accountId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { activeSubId.ToString(), inactiveSubId.ToString() });
 
         // Mock: Active subscription
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{activeSubId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{activeSubId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
                 SubscriptionId = activeSubId.ToString(),
@@ -230,13 +244,8 @@ public class SubscriptionsServiceTests
             });
 
         // Mock: Inactive subscription
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{inactiveSubId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{inactiveSubId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
                 SubscriptionId = inactiveSubId.ToString(),
@@ -276,23 +285,13 @@ public class SubscriptionsServiceTests
         };
 
         // Mock: Account subscription index
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                $"account-subscriptions:{accountId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { activeSubId.ToString(), expiredSubId.ToString() });
 
         // Mock: Active subscription (future expiration)
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{activeSubId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{activeSubId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
                 SubscriptionId = activeSubId.ToString(),
@@ -307,13 +306,8 @@ public class SubscriptionsServiceTests
             });
 
         // Mock: Expired subscription
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{expiredSubId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{expiredSubId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
                 SubscriptionId = expiredSubId.ToString(),
@@ -346,13 +340,8 @@ public class SubscriptionsServiceTests
         var request = new GetAccountSubscriptionsRequest { AccountId = accountId };
 
         // Mock: No subscriptions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                $"account-subscriptions:{accountId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<string>?)null);
 
         // Act
@@ -380,23 +369,13 @@ public class SubscriptionsServiceTests
         var request = new GetCurrentSubscriptionsRequest { AccountId = accountId };
 
         // Mock: Account subscription index
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                $"account-subscriptions:{accountId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { activeSubId.ToString() });
 
         // Mock: Active subscription
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{activeSubId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{activeSubId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
                 SubscriptionId = activeSubId.ToString(),
@@ -432,23 +411,13 @@ public class SubscriptionsServiceTests
         var request = new GetCurrentSubscriptionsRequest { AccountId = accountId };
 
         // Mock: Account subscription index
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                $"account-subscriptions:{accountId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { expiredSubId.ToString() });
 
         // Mock: Expired subscription
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{expiredSubId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{expiredSubId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
                 SubscriptionId = expiredSubId.ToString(),
@@ -482,23 +451,13 @@ public class SubscriptionsServiceTests
         var request = new GetCurrentSubscriptionsRequest { AccountId = accountId };
 
         // Mock: Account subscription index
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                $"account-subscriptions:{accountId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { inactiveSubId.ToString() });
 
         // Mock: Inactive subscription
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{inactiveSubId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{inactiveSubId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
                 SubscriptionId = inactiveSubId.ToString(),
@@ -535,13 +494,8 @@ public class SubscriptionsServiceTests
         var request = new GetSubscriptionRequest { SubscriptionId = subscriptionId };
 
         // Mock: Subscription exists
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{subscriptionId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
                 SubscriptionId = subscriptionId.ToString(),
@@ -573,13 +527,8 @@ public class SubscriptionsServiceTests
         var request = new GetSubscriptionRequest { SubscriptionId = subscriptionId };
 
         // Mock: Subscription doesn't exist
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{subscriptionId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((SubscriptionDataModel?)null);
 
         // Act
@@ -621,23 +570,13 @@ public class SubscriptionsServiceTests
             });
 
         // Mock: No existing subscriptions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                $"account-subscriptions:{accountId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Mock: Service subscriptions index
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                $"service-subscriptions:{serviceId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync($"service-subscriptions:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Act
@@ -706,23 +645,13 @@ public class SubscriptionsServiceTests
             });
 
         // Mock: Existing subscriptions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                $"account-subscriptions:{accountId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { existingSubId.ToString() });
 
         // Mock: Existing active subscription for same service
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{existingSubId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{existingSubId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
                 SubscriptionId = existingSubId.ToString(),
@@ -768,23 +697,13 @@ public class SubscriptionsServiceTests
             });
 
         // Mock: No existing subscriptions
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                $"account-subscriptions:{accountId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync($"account-subscriptions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Mock: Service subscriptions index
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                STATE_STORE,
-                $"service-subscriptions:{serviceId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockListStore
+            .Setup(s => s.GetAsync($"service-subscriptions:{serviceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
         // Act
@@ -793,13 +712,13 @@ public class SubscriptionsServiceTests
         // Assert
         Assert.Equal(StatusCodes.Created, statusCode);
 
-        // Verify event published
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            "bannou-pubsub",
+        // Verify event published via IMessageBus
+        _mockMessageBus.Verify(m => m.PublishAsync(
             "subscription.updated",
             It.Is<SubscriptionUpdatedEvent>(e =>
                 e.AccountId == accountId &&
                 e.Action == SubscriptionUpdatedEventAction.Created),
+            It.IsAny<PublishOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -823,13 +742,8 @@ public class SubscriptionsServiceTests
         };
 
         // Mock: Subscription exists
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{subscriptionId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
                 SubscriptionId = subscriptionId.ToString(),
@@ -845,16 +759,15 @@ public class SubscriptionsServiceTests
 
         // Capture saved model
         SubscriptionDataModel? savedModel = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockSubscriptionStore
+            .Setup(s => s.SaveAsync(
                 $"subscription:{subscriptionId}",
                 It.IsAny<SubscriptionDataModel>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, SubscriptionDataModel, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedModel = data);
+            .Callback<string, SubscriptionDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data)
+            .ReturnsAsync("etag");
 
         // Act
         var (statusCode, response) = await service.UpdateSubscriptionAsync(request, CancellationToken.None);
@@ -878,13 +791,8 @@ public class SubscriptionsServiceTests
         };
 
         // Mock: Subscription doesn't exist
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{subscriptionId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((SubscriptionDataModel?)null);
 
         // Act
@@ -913,13 +821,8 @@ public class SubscriptionsServiceTests
         };
 
         // Mock: Subscription exists
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{subscriptionId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
                 SubscriptionId = subscriptionId.ToString(),
@@ -934,16 +837,15 @@ public class SubscriptionsServiceTests
 
         // Capture saved model
         SubscriptionDataModel? savedModel = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockSubscriptionStore
+            .Setup(s => s.SaveAsync(
                 $"subscription:{subscriptionId}",
                 It.IsAny<SubscriptionDataModel>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, SubscriptionDataModel, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedModel = data);
+            .Callback<string, SubscriptionDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data)
+            .ReturnsAsync("etag");
 
         // Act
         var (statusCode, response) = await service.CancelSubscriptionAsync(request, CancellationToken.None);
@@ -973,13 +875,8 @@ public class SubscriptionsServiceTests
         };
 
         // Mock: Subscription exists
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{subscriptionId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
                 SubscriptionId = subscriptionId.ToString(),
@@ -998,13 +895,13 @@ public class SubscriptionsServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
 
-        // Verify event published with Cancelled action
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            "bannou-pubsub",
+        // Verify event published with Cancelled action via IMessageBus
+        _mockMessageBus.Verify(m => m.PublishAsync(
             "subscription.updated",
             It.Is<SubscriptionUpdatedEvent>(e =>
                 e.SubscriptionId == subscriptionId &&
                 e.Action == SubscriptionUpdatedEventAction.Cancelled),
+            It.IsAny<PublishOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1017,13 +914,8 @@ public class SubscriptionsServiceTests
         var request = new CancelSubscriptionRequest { SubscriptionId = subscriptionId };
 
         // Mock: Subscription doesn't exist
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{subscriptionId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((SubscriptionDataModel?)null);
 
         // Act
@@ -1053,13 +945,8 @@ public class SubscriptionsServiceTests
         };
 
         // Mock: Subscription exists
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{subscriptionId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
                 SubscriptionId = subscriptionId.ToString(),
@@ -1075,16 +962,15 @@ public class SubscriptionsServiceTests
 
         // Capture saved model
         SubscriptionDataModel? savedModel = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockSubscriptionStore
+            .Setup(s => s.SaveAsync(
                 $"subscription:{subscriptionId}",
                 It.IsAny<SubscriptionDataModel>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, SubscriptionDataModel, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedModel = data);
+            .Callback<string, SubscriptionDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data)
+            .ReturnsAsync("etag");
 
         // Act
         var (statusCode, response) = await service.RenewSubscriptionAsync(request, CancellationToken.None);
@@ -1114,13 +1000,8 @@ public class SubscriptionsServiceTests
         };
 
         // Mock: Cancelled subscription
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{subscriptionId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
                 SubscriptionId = subscriptionId.ToString(),
@@ -1137,16 +1018,15 @@ public class SubscriptionsServiceTests
 
         // Capture saved model
         SubscriptionDataModel? savedModel = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockSubscriptionStore
+            .Setup(s => s.SaveAsync(
                 $"subscription:{subscriptionId}",
                 It.IsAny<SubscriptionDataModel>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, SubscriptionDataModel, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedModel = data);
+            .Callback<string, SubscriptionDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data)
+            .ReturnsAsync("etag");
 
         // Act
         var (statusCode, response) = await service.RenewSubscriptionAsync(request, CancellationToken.None);
@@ -1172,13 +1052,8 @@ public class SubscriptionsServiceTests
         };
 
         // Mock: Subscription doesn't exist
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{subscriptionId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((SubscriptionDataModel?)null);
 
         // Act
@@ -1202,13 +1077,8 @@ public class SubscriptionsServiceTests
         var serviceId = Guid.NewGuid();
 
         // Mock: Active subscription
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{subscriptionId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
                 SubscriptionId = subscriptionId.ToString(),
@@ -1224,16 +1094,15 @@ public class SubscriptionsServiceTests
 
         // Capture saved model
         SubscriptionDataModel? savedModel = null;
-        _mockDaprClient
-            .Setup(d => d.SaveStateAsync(
-                STATE_STORE,
+        _mockSubscriptionStore
+            .Setup(s => s.SaveAsync(
                 $"subscription:{subscriptionId}",
                 It.IsAny<SubscriptionDataModel>(),
                 It.IsAny<StateOptions?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, string, SubscriptionDataModel, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
-                (store, key, data, options, metadata, ct) => savedModel = data);
+            .Callback<string, SubscriptionDataModel, StateOptions?, CancellationToken>(
+                (key, data, options, ct) => savedModel = data)
+            .ReturnsAsync("etag");
 
         // Act
         var result = await service.ExpireSubscriptionAsync(subscriptionId.ToString(), CancellationToken.None);
@@ -1252,13 +1121,8 @@ public class SubscriptionsServiceTests
         var subscriptionId = Guid.NewGuid();
 
         // Mock: Subscription doesn't exist
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{subscriptionId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((SubscriptionDataModel?)null);
 
         // Act
@@ -1278,13 +1142,8 @@ public class SubscriptionsServiceTests
         var serviceId = Guid.NewGuid();
 
         // Mock: Already inactive subscription
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<SubscriptionDataModel?>(
-                STATE_STORE,
-                $"subscription:{subscriptionId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
-                It.IsAny<CancellationToken>()))
+        _mockSubscriptionStore
+            .Setup(s => s.GetAsync($"subscription:{subscriptionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SubscriptionDataModel
             {
                 SubscriptionId = subscriptionId.ToString(),

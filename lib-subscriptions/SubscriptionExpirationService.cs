@@ -1,4 +1,6 @@
-using Dapr.Client;
+using BeyondImmersion.BannouService.Messaging.Services;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -26,7 +28,6 @@ public class SubscriptionExpirationService : BackgroundService
     private static readonly TimeSpan ExpirationGracePeriod = TimeSpan.FromSeconds(30);
 
     private const string STATE_STORE = "subscriptions-statestore";
-    private const string PUBSUB_NAME = "bannou-pubsub";
     private const string SUBSCRIPTION_UPDATED_TOPIC = "subscription.updated";
     private const string SUBSCRIPTION_INDEX_KEY = "subscription-index";
 
@@ -43,7 +44,15 @@ public class SubscriptionExpirationService : BackgroundService
         _logger.LogInformation("Subscription expiration service starting, check interval: {Interval}", CheckInterval);
 
         // Wait a bit before first check to allow other services to start
-        await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Subscription expiration service cancelled during startup");
+            return;
+        }
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -59,6 +68,24 @@ public class SubscriptionExpirationService : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during subscription expiration check");
+                try
+                {
+                    using var errorScope = _serviceProvider.CreateScope();
+                    var messageBus = errorScope.ServiceProvider.GetService<IMessageBus>();
+                    if (messageBus != null)
+                    {
+                        await messageBus.TryPublishErrorAsync(
+                            "subscriptions",
+                            "ExpirationCheck",
+                            ex.GetType().Name,
+                            ex.Message,
+                            severity: BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity.Error);
+                    }
+                }
+                catch
+                {
+                    // Don't let error publishing failures affect the loop
+                }
             }
 
             try
@@ -82,19 +109,18 @@ public class SubscriptionExpirationService : BackgroundService
         _logger.LogDebug("Checking for expired subscriptions");
 
         using var scope = _serviceProvider.CreateScope();
-        var daprClient = scope.ServiceProvider.GetService<DaprClient>();
+        var stateStoreFactory = scope.ServiceProvider.GetService<IStateStoreFactory>();
+        var messageBus = scope.ServiceProvider.GetService<IMessageBus>();
 
-        if (daprClient == null)
+        if (stateStoreFactory == null || messageBus == null)
         {
-            _logger.LogWarning("DaprClient not available, skipping expiration check");
+            _logger.LogError("IStateStoreFactory or IMessageBus not available - subscription expiration checks cannot run. This is a critical infrastructure issue.");
             return;
         }
 
         // Get the subscription index to find all subscription IDs
-        var subscriptionIndex = await daprClient.GetStateAsync<List<string>>(
-            STATE_STORE,
-            SUBSCRIPTION_INDEX_KEY,
-            cancellationToken: cancellationToken);
+        var indexStore = stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var subscriptionIndex = await indexStore.GetAsync(SUBSCRIPTION_INDEX_KEY, cancellationToken);
 
         if (subscriptionIndex == null || subscriptionIndex.Count == 0)
         {
@@ -105,14 +131,14 @@ public class SubscriptionExpirationService : BackgroundService
         var nowUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var expiredCount = 0;
 
+        var subscriptionStore = stateStoreFactory.GetStore<SubscriptionDataModel>(STATE_STORE);
         foreach (var subscriptionId in subscriptionIndex)
         {
             try
             {
-                var subscription = await daprClient.GetStateAsync<SubscriptionDataModel>(
-                    STATE_STORE,
+                var subscription = await subscriptionStore.GetAsync(
                     $"subscription:{subscriptionId}",
-                    cancellationToken: cancellationToken);
+                    cancellationToken);
 
                 if (subscription == null)
                 {
@@ -129,8 +155,7 @@ public class SubscriptionExpirationService : BackgroundService
 
                     // Mark as inactive
                     subscription.IsActive = false;
-                    await daprClient.SaveStateAsync(
-                        STATE_STORE,
+                    await subscriptionStore.SaveAsync(
                         $"subscription:{subscriptionId}",
                         subscription,
                         cancellationToken: cancellationToken);
@@ -148,11 +173,9 @@ public class SubscriptionExpirationService : BackgroundService
                         IsActive = false
                     };
 
-                    await daprClient.PublishEventAsync(
-                        PUBSUB_NAME,
+                    await messageBus.PublishAsync(
                         SUBSCRIPTION_UPDATED_TOPIC,
-                        expirationEvent,
-                        cancellationToken);
+                        expirationEvent);
 
                     _logger.LogInformation("Published expiration event for subscription {SubscriptionId}",
                         subscription.SubscriptionId);

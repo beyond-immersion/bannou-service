@@ -5,7 +5,6 @@ using BeyondImmersion.BannouService.Logging;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebSockets;
 using Serilog;
@@ -33,6 +32,7 @@ public static class Program
     }
 
     private static IConfigurationRoot _configurationRoot;
+
     /// <summary>
     /// Shared service configuration root.
     /// Includes command line args.
@@ -44,6 +44,7 @@ public static class Program
     }
 
     private static AppConfiguration _configuration;
+
     /// <summary>
     /// Service configuration.
     /// Pull from Config.json, ENVs, and command line args.
@@ -55,17 +56,19 @@ public static class Program
     }
 
     private static string _serviceGUID;
+
     /// <summary>
     /// Internal service GUID- largely used for administrative network commands.
     /// Randomly generated on service startup.
     /// </summary>
     public static string ServiceGUID
     {
-        get => _serviceGUID ??= Configuration.Force_Service_ID ?? Guid.NewGuid().ToString().ToLower();
+        get => _serviceGUID ??= Configuration.ForceServiceId ?? Guid.NewGuid().ToString().ToLower();
         internal set => _serviceGUID = value;
     }
 
     private static Microsoft.Extensions.Logging.ILogger _logger;
+
     /// <summary>
     /// Application/global logger.
     /// </summary>
@@ -76,11 +79,6 @@ public static class Program
     }
 
     /// <summary>
-    /// Shared dapr client interface, used by all enabled service handlers.
-    /// </summary>
-    public static DaprClient DaprClient { get; private set; }
-
-    /// <summary>
     /// Plugin loader for managing service plugins.
     /// </summary>
     public static PluginLoader PluginLoader { get; private set; }
@@ -89,6 +87,12 @@ public static class Program
     /// Service heartbeat manager for publishing instance health to orchestrator.
     /// </summary>
     public static ServiceHeartbeatManager? HeartbeatManager { get; private set; }
+
+    /// <summary>
+    /// Mesh invocation client for service-to-service HTTP communication.
+    /// Replaces mesh client for service invocation.
+    /// </summary>
+    public static IMeshInvocationClient? MeshInvocationClient { get; private set; }
 
     /// <summary>
     /// Token source for initiating a clean shutdown.
@@ -108,30 +112,6 @@ public static class Program
         }
 
         Logger.Log(LogLevel.Information, null, "Configuration built and validated.");
-
-        // build the dapr client
-        var daprClientBuilder = new DaprClientBuilder()
-            .UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig);
-
-        // Configure Dapr gRPC endpoint from environment variable (for containerized environments)
-        var daprGrpcEndpoint = Environment.GetEnvironmentVariable("DAPR_GRPC_ENDPOINT");
-        if (!string.IsNullOrEmpty(daprGrpcEndpoint))
-        {
-            daprClientBuilder.UseGrpcEndpoint(daprGrpcEndpoint);
-            Logger.Log(LogLevel.Information, null, $"Using Dapr gRPC endpoint from environment: {daprGrpcEndpoint}");
-        }
-
-        // Configure Dapr HTTP endpoint from environment variable (for containerized environments)
-        var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT");
-        if (!string.IsNullOrEmpty(daprHttpEndpoint))
-        {
-            daprClientBuilder.UseHttpEndpoint(daprHttpEndpoint);
-            Logger.Log(LogLevel.Information, null, $"Using Dapr HTTP endpoint from environment: {daprHttpEndpoint}");
-        }
-
-        DaprClient = daprClientBuilder.Build();
-
-        // Note: Dapr readiness check moved to after web server startup to avoid circular dependency
 
         // load the plugins
         if (!await LoadPlugins())
@@ -154,28 +134,32 @@ public static class Program
             _ = webAppBuilder.Services.AddAuthentication("Bearer")
                 .AddJwtBearer("Bearer", options =>
                 {
-                    // Basic JWT bearer configuration - not used for validation, just to prevent Forbid() errors
+                    // JWT bearer configuration with full validation enabled
                     options.RequireHttpsMetadata = false; // Allow HTTP for development
                     options.SaveToken = false; // We don't need to save tokens
                     options.IncludeErrorDetails = true; // Include error details for debugging
 
-                    // Set actual JWT secret to prevent validation errors in CI
-                    var jwtSecret = webAppBuilder.Configuration["BANNOU_JWTSECRET"]
-                        ?? webAppBuilder.Configuration["AUTH_JWT_SECRET"]
-                        ?? webAppBuilder.Configuration["JWTSECRET"]
-                        ?? "default-fallback-secret-key-for-development";
+                    // JWT secret is REQUIRED - no fallback to prevent accidental insecure deployments
+                    if (string.IsNullOrEmpty(Configuration.JwtSecret))
+                    {
+                        throw new InvalidOperationException(
+                            "JWT secret not configured. Set BANNOU_JWTSECRET environment variable.");
+                    }
 
-                    var key = System.Text.Encoding.ASCII.GetBytes(jwtSecret);
+                    var key = System.Text.Encoding.ASCII.GetBytes(Configuration.JwtSecret);
 
                     options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                     {
-                        ValidateIssuer = false,
-                        ValidateAudience = false,
-                        ValidateLifetime = false,
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
+                        ValidIssuer = Configuration.JwtIssuer,
+                        ValidAudience = Configuration.JwtAudience,
                         IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(key),
-                        RequireExpirationTime = false,
-                        RequireSignedTokens = true
+                        RequireExpirationTime = true,
+                        RequireSignedTokens = true,
+                        ClockSkew = TimeSpan.FromMinutes(5)
                     };
                 });
 
@@ -197,37 +181,30 @@ public static class Program
                         }
                     }
                 })
-                .AddDapr(daprClientBuilder =>
-                {
-                    // CRITICAL: Configure DaprClient serializer here, NOT in separate AddDaprClient call
-                    // AddDapr() registers DaprClient first, and subsequent AddDaprClient() calls are ignored
-                    // (TryAddSingleton pattern - first registration wins)
-                    daprClientBuilder.UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig);
-                })
                 .AddJsonOptions(jsonOptions =>
                 {
-                    // Configure System.Text.Json serialization options
-                    jsonOptions.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+                    // Apply BannouJson standard settings as base configuration
+                    BeyondImmersion.BannouService.Configuration.BannouJson.ApplyBannouSettings(jsonOptions.JsonSerializerOptions);
+
+                    // Web API-specific overrides for client compatibility:
+                    // - CamelCase for JavaScript clients expecting camelCase JSON
+                    // - AllowReadingFromString for lenient parsing of numeric strings from clients
+                    // - Skip comments for more lenient request parsing
                     jsonOptions.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-                    jsonOptions.JsonSerializerOptions.PropertyNameCaseInsensitive = true; // CRITICAL: Allow case-insensitive deserialization
-                    jsonOptions.JsonSerializerOptions.WriteIndented = false;
-                    jsonOptions.JsonSerializerOptions.AllowTrailingCommas = true;
-                    jsonOptions.JsonSerializerOptions.ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip;
                     jsonOptions.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString;
-                    // Serialize enums as strings matching C# enum names (e.g., GettingStarted -> "GettingStarted")
-                    jsonOptions.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+                    jsonOptions.JsonSerializerOptions.ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip;
                 });
 
             webAppBuilder.Services
                 .AddWebSockets((websocketOptions) => { });
 
-            // NOTE: DaprClient is already registered by AddDapr() above with proper serializer config
-            // Do NOT call AddDaprClient() here - it would be ignored due to TryAddSingleton pattern
+            // NOTE: mesh client is already registered by AddBannouServices() above with proper serializer config
+            // Do NOT call Addmesh client() here - it would be ignored due to TryAddSingleton pattern
 
             // Add core service infrastructure (but not clients - PluginLoader handles those)
             webAppBuilder.Services.AddBannouServiceClients();
 
-            // Add client event publisher (for pushing events to WebSocket clients via Dapr pub/sub)
+            // Add client event publisher (for pushing events to WebSocket clients via Bannou pub/sub)
             webAppBuilder.Services.AddClientEventPublisher();
 
             // Configure plugin services (includes centralized client, service, and configuration registration)
@@ -247,8 +224,8 @@ public static class Program
             webAppBuilder.WebHost
                 .UseKestrel((kestrelOptions) =>
                 {
-                    kestrelOptions.ListenAnyIP(Configuration.HTTP_Web_Host_Port);
-                    kestrelOptions.ListenAnyIP(Configuration.HTTPS_Web_Host_Port, (listenOptions) =>
+                    kestrelOptions.ListenAnyIP(Configuration.HttpWebHostPort);
+                    kestrelOptions.ListenAnyIP(Configuration.HttpsWebHostPort, (listenOptions) =>
                     {
                         listenOptions.UseHttps((httpsOptions) =>
                         {
@@ -262,7 +239,7 @@ public static class Program
                 {
                     loggingOptions
                         .AddSerilog()
-                        .SetMinimumLevel(Configuration.Web_Host_Logging_Level);
+                        .SetMinimumLevel(Configuration.WebHostLoggingLevel);
                 });
         }
         catch (Exception exc)
@@ -326,56 +303,60 @@ public static class Program
                 KeepAliveInterval = TimeSpan.FromMinutes(2)
             });
 
-            // Add CloudEvents support for Dapr pub/sub
-            webApp.UseCloudEvents();
-
-            // Normalize Dapr invoke paths so controllers work with any sidecar app-id
-            webApp.UseMiddleware<BeyondImmersion.BannouService.Middleware.InvokeAppIdRewriteMiddleware>();
-
-            // map controller routes and subscription handlers
+            // map controller routes
             _ = webApp.UseRouting().UseEndpoints(endpointOptions =>
             {
                 endpointOptions.MapDefaultControllerRoute();
-                endpointOptions.MapSubscribeHandler(); // Required for Dapr pub/sub
             });
 
             // Configure plugin application pipeline
+            Logger.Log(LogLevel.Debug, null, "Configuring plugin application pipeline...");
             PluginLoader?.ConfigureApplication(webApp);
 
             // Resolve services centrally for plugins
+            Logger.Log(LogLevel.Debug, null, "Resolving plugin services from DI container...");
             PluginLoader?.ResolveServices(webApp.Services);
 
             // Initialize plugins
             if (PluginLoader != null)
             {
+                Logger.Log(LogLevel.Information, null, "Initializing plugins...");
                 if (!await PluginLoader.InitializeAsync())
                 {
                     Logger.Log(LogLevel.Error, "Plugin initialization failed- exiting application.");
                     return 1;
                 }
+                Logger.Log(LogLevel.Information, null, "Plugin initialization complete.");
             }
+
+            // Register event types before starting messaging plugin (required for NativeEventConsumerBackend)
+            // This MUST happen before PluginLoader.StartAsync() which starts the messaging backend
+            EventSubscriptionRegistration.RegisterAll();
+            Logger.Log(LogLevel.Debug, null, "Registered {Count} event subscription types.", Events.EventSubscriptionRegistry.Count);
 
             // Start plugins
             if (PluginLoader != null)
             {
+                Logger.Log(LogLevel.Information, null, "Starting plugins...");
                 if (!await PluginLoader.StartAsync())
                 {
                     Logger.Log(LogLevel.Error, "Plugin startup failed- exiting application.");
                     return 1;
                 }
+                Logger.Log(LogLevel.Information, null, "Plugin startup complete.");
             }
 
             // Event subscriptions will be handled by generated controller methods
 
-            Logger.Log(LogLevel.Information, null, "Services added and initialized successfully- WebHost starting.");
+            Logger.Log(LogLevel.Information, null, "Services added and initialized successfully- starting Kestrel WebHost on ports {HttpPort}/{HttpsPort}...", Configuration.HttpWebHostPort, Configuration.HttpsWebHostPort);
 
             // start webhost
             var webHostTask = webApp.RunAsync(ShutdownCancellationTokenSource.Token);
             await Task.Delay(TimeSpan.FromSeconds(1));
 
-            // Create heartbeat manager for Dapr connectivity check and ongoing health reporting
+            // Create heartbeat manager for mesh connectivity check and ongoing health reporting
             // HEARTBEAT_ENABLED defaults to true - only set to false for minimal infrastructure testing
-            // where Dapr pub/sub components are intentionally not configured
+            // where Bannou pub/sub components are intentionally not configured
             var heartbeatEnabledEnv = Environment.GetEnvironmentVariable("HEARTBEAT_ENABLED");
             var heartbeatEnabled = string.IsNullOrEmpty(heartbeatEnabledEnv) ||
                 !string.Equals(heartbeatEnabledEnv, "false", StringComparison.OrdinalIgnoreCase);
@@ -391,18 +372,21 @@ public static class Program
                 using var heartbeatLoggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
                 var heartbeatLogger = heartbeatLoggerFactory.CreateLogger<ServiceHeartbeatManager>();
                 var mappingResolver = webApp.Services.GetRequiredService<IServiceAppMappingResolver>();
-                HeartbeatManager = new ServiceHeartbeatManager(DaprClient, heartbeatLogger, PluginLoader, mappingResolver);
+                var messageBus = webApp.Services.GetRequiredService<IMessageBus>();
+                HeartbeatManager = new ServiceHeartbeatManager(messageBus, heartbeatLogger, PluginLoader, mappingResolver, Configuration);
 
-                // Wait for Dapr connectivity using heartbeat publishing as the test
-                // This replaces the old WaitForDaprReadiness() - publishing a heartbeat proves both
-                // Dapr sidecar connectivity AND RabbitMQ pub/sub readiness
-                Logger.Log(LogLevel.Information, null, "Waiting for Dapr pub/sub connectivity via startup heartbeat...");
-                if (!await HeartbeatManager.WaitForDaprConnectivityAsync(
-                    maxRetries: Configuration.Dapr_Readiness_Timeout > 0 ? 30 : 1,
+                // Initialize mesh invocation client for service-to-service communication
+                MeshInvocationClient = webApp.Services.GetService<IMeshInvocationClient>();
+
+                // Wait for message bus connectivity using heartbeat publishing as the test
+                // Publishing a heartbeat proves RabbitMQ pub/sub readiness
+                Logger.Log(LogLevel.Information, null, "Waiting for message bus connectivity via startup heartbeat...");
+                if (!await HeartbeatManager.WaitForConnectivityAsync(
+                    maxRetries: Configuration.MeshReadinessTimeout > 0 ? 30 : 1,
                     retryDelayMs: 2000,
                     ShutdownCancellationTokenSource.Token))
                 {
-                    Logger.Log(LogLevel.Error, null, "Dapr pub/sub connectivity check failed - exiting application.");
+                    Logger.Log(LogLevel.Error, null, "Message bus connectivity check failed - exiting application.");
                     return 1;
                 }
 
@@ -426,14 +410,17 @@ public static class Program
                 }
                 else
                 {
-                    // Orchestrator/primary container - try loading persisted mappings from Redis
-                    await LoadPersistedMappingsAsync(webApp, ShutdownCancellationTokenSource.Token);
+                    // Orchestrator/primary container - no initial mappings to load
+                    // Mappings are discovered dynamically via:
+                    // - Service heartbeats publishing their services
+                    // - FullServiceMappingsEvent from orchestrator (RabbitMQ pub/sub)
+                    Logger.Log(LogLevel.Debug, null, "No source app-id configured - mappings will be discovered from heartbeats");
                 }
 
                 // Start periodic heartbeats now that we've confirmed connectivity
                 HeartbeatManager.StartPeriodicHeartbeats();
 
-                // Register service permissions now that Dapr pub/sub is confirmed ready
+                // Register service permissions now that Bannou pub/sub is confirmed ready
                 // This ensures permission registration events are delivered to the Permissions service
                 if (PluginLoader != null)
                 {
@@ -448,7 +435,7 @@ public static class Program
             else
             {
                 Logger.Log(LogLevel.Warning, null, "Heartbeat system disabled via HEARTBEAT_ENABLED=false (infrastructure testing mode).");
-                // Do NOT register permissions here: infra profile uses empty Dapr components (no pubsub),
+                // Do NOT register permissions here: infra profile uses empty components (no pubsub),
                 // and permission registration publishes over pubsub. Calling it would fail startup.
             }
 
@@ -492,8 +479,6 @@ public static class Program
             // perform cleanup
             if (webApp != null)
                 await webApp.DisposeAsync();
-
-            DaprClient?.Dispose();
         }
 
         Logger.Log(LogLevel.Debug, null, "Application shutdown complete.");
@@ -525,7 +510,7 @@ public static class Program
             return false;
 
         if (pluginsLoaded == 0)
-            Logger.Log(LogLevel.Warning, null, "No plugins were loaded. Running with existing IDaprService implementations only.");
+            Logger.Log(LogLevel.Warning, null, "No plugins were loaded. Running with existing IBannouService implementations only.");
         else
             Logger.Log(LogLevel.Information, null, $"Successfully loaded {pluginsLoaded} plugins.");
 
@@ -533,29 +518,29 @@ public static class Program
     }
 
     /// <summary>
-    /// Get the list of requested plugins based on Include_Assemblies configuration.
+    /// Get the list of requested plugins based on IncludeAssemblies configuration.
     /// </summary>
     /// <returns>List of plugin names to load, or null for all plugins</returns>
     private static IList<string>? GetRequestedPlugins()
     {
-        if (string.Equals("none", Configuration.Include_Assemblies, StringComparison.InvariantCultureIgnoreCase))
+        if (string.Equals("none", Configuration.IncludeAssemblies, StringComparison.InvariantCultureIgnoreCase))
         {
             return new List<string>(); // Empty list = no plugins
         }
 
-        if (string.Equals("all", Configuration.Include_Assemblies, StringComparison.InvariantCultureIgnoreCase))
+        if (string.Equals("all", Configuration.IncludeAssemblies, StringComparison.InvariantCultureIgnoreCase))
         {
             return null; // null = all plugins
         }
 
-        if (string.IsNullOrWhiteSpace(Configuration.Include_Assemblies) ||
-            string.Equals("common", Configuration.Include_Assemblies, StringComparison.InvariantCultureIgnoreCase))
+        if (string.IsNullOrWhiteSpace(Configuration.IncludeAssemblies) ||
+            string.Equals("common", Configuration.IncludeAssemblies, StringComparison.InvariantCultureIgnoreCase))
         {
             return new List<string> { "common" }; // Only common plugins
         }
 
         // Parse comma-separated list
-        var assemblyNames = Configuration.Include_Assemblies.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        var assemblyNames = Configuration.IncludeAssemblies.Split(',', StringSplitOptions.RemoveEmptyEntries);
         return assemblyNames.Select(name => name.Trim()).ToList();
     }
 
@@ -614,7 +599,12 @@ public static class Program
                 assembly = Assembly.LoadFile(assemblyPath);
                 return true;
             }
-            catch (BadImageFormatException) { }
+            catch (BadImageFormatException ex)
+            {
+                Logger.Log(LogLevel.Warning, ex,
+                    "Assembly at '{Path}' is not a valid .NET assembly (corrupted or architecture mismatch)",
+                    assemblyPath);
+            }
             catch (Exception exc)
             {
                 Logger.Log(LogLevel.Error, exc, $"Failed to load assembly at path: {assemblyPath}.");
@@ -647,9 +637,8 @@ public static class Program
         const int maxRetries = 3;
         const int retryDelayMs = 1000;
 
-        var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT")
-            ?? "http://127.0.0.1:3500";
-        var url = $"{daprHttpEndpoint}/v1.0/invoke/{sourceAppId}/method/orchestrator/service-routing";
+        var bannouHttpEndpoint = Configuration.EffectiveHttpEndpoint;
+        var url = $"{bannouHttpEndpoint}/orchestrator/service-routing";
 
         using var httpClient = new HttpClient();
         httpClient.Timeout = TimeSpan.FromSeconds(10);
@@ -659,7 +648,7 @@ public static class Program
             try
             {
                 using var request = new HttpRequestMessage(HttpMethod.Post, url);
-                request.Headers.Add("dapr-app-id", sourceAppId);
+                request.Headers.Add("bannou-app-id", sourceAppId);
                 request.Content = new StringContent("{}", System.Text.Encoding.UTF8, "application/json");
 
                 var response = await httpClient.SendAsync(request, cancellationToken);
@@ -704,54 +693,6 @@ public static class Program
         }
 
         return false;
-    }
-
-    /// <summary>
-    /// Load persisted service mappings from Dapr state store (Redis).
-    /// Used by orchestrator containers on restart to recover their routing table.
-    /// </summary>
-    /// <param name="webApp">The web application for service resolution</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    private static async Task LoadPersistedMappingsAsync(
-        WebApplication webApp,
-        CancellationToken cancellationToken)
-    {
-        const string StateStore = "connect-statestore";
-        const string MappingsKey = "service-mappings:all";
-
-        try
-        {
-            if (DaprClient == null)
-            {
-                Logger.Log(LogLevel.Warning, null, "DaprClient not available, skipping persisted mappings load");
-                return;
-            }
-
-            var mappings = await DaprClient.GetStateAsync<Dictionary<string, string>>(
-                StateStore,
-                MappingsKey,
-                cancellationToken: cancellationToken);
-
-            if (mappings != null && mappings.Count > 0)
-            {
-                var resolver = webApp.Services.GetService<IServiceAppMappingResolver>();
-                if (resolver != null)
-                {
-                    resolver.ImportMappings(mappings);
-                    Logger.Log(LogLevel.Information, null,
-                        $"Loaded {mappings.Count} persisted service mappings from Redis");
-                }
-            }
-            else
-            {
-                Logger.Log(LogLevel.Debug, null, "No persisted service mappings found in Redis");
-            }
-        }
-        catch (Exception ex)
-        {
-            // Non-fatal - orchestrator can rebuild from new deployments
-            Logger.Log(LogLevel.Warning, ex, "Could not load persisted mappings from Redis");
-        }
     }
 
     /// <summary>

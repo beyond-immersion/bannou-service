@@ -7,7 +7,7 @@ paths: {}
 x-service-configuration:
   properties:
     # Cache Configuration
-    OrchestratorCacheTtlMinutes:
+    CacheTtlMinutes:
       type: integer
       description: Cache TTL in minutes for orchestrator data
       env: ORCHESTRATOR_CACHE_TTL_MINUTES
@@ -46,6 +46,26 @@ x-service-configuration:
       description: Docker host for direct Docker API access
       env: ORCHESTRATOR_DOCKER_HOST
       default: "unix:///var/run/docker.sock"
+    DockerNetwork:
+      type: string
+      description: Docker network name for deployed containers
+      env: ORCHESTRATOR_DOCKER_NETWORK
+      default: "bannou_default"
+    CertificatesHostPath:
+      type: string
+      description: Host path for TLS certificates
+      env: ORCHESTRATOR_CERTIFICATES_HOST_PATH
+      default: "/app/provisioning/certificates"
+    PresetsHostPath:
+      type: string
+      description: Host path for orchestrator deployment presets
+      env: ORCHESTRATOR_PRESETS_HOST_PATH
+      default: "/app/provisioning/orchestrator/presets"
+    LogsVolumeName:
+      type: string
+      description: Docker volume name for logs
+      env: ORCHESTRATOR_LOGS_VOLUME
+      default: "logs-data"
 
     # Kubernetes Configuration
     KubernetesNamespace:
@@ -54,14 +74,12 @@ x-service-configuration:
       env: ORCHESTRATOR_KUBERNETES_NAMESPACE
       default: "default"
 
-    # Infrastructure Connection Strings
+    # Infrastructure Connection Strings (Tenet 21 - no insecure defaults)
     RedisConnectionString:
       type: string
-      description: Redis connection string for orchestrator state
+      description: Redis connection string for orchestrator state (required, no default)
       env: ORCHESTRATOR_REDIS_CONNECTION_STRING
-      default: "localhost:6379"
     RabbitMqConnectionString:
       type: string
-      description: RabbitMQ connection string for orchestrator messaging
+      description: RabbitMQ connection string for orchestrator messaging (required, no default)
       env: ORCHESTRATOR_RABBITMQ_CONNECTION_STRING
-      default: "amqp://guest:guest@localhost:5672/"

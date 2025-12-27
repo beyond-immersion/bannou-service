@@ -1,98 +1,35 @@
 {% template Client.Class.Annotations %}
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "{{ ToolchainVersion }}")]
-{{ ClientClassAccessModifier }} partial class {{ Class }} {% if HasBaseType %}: {% endif %}{% if HasBaseClass %}{{ BaseClass }}{% if GenerateClientInterfaces %}, {% endif %}{% endif %}{% if GenerateClientInterfaces %}I{{ Class }}, BeyondImmersion.BannouService.ServiceClients.IServiceClient<{{ Class }}>{% endif %}
+{{ ClientClassAccessModifier }} partial class {{ Class }} {% if GenerateClientInterfaces %}: I{{ Class }}, BeyondImmersion.BannouService.ServiceClients.IServiceClient<{{ Class }}>{% endif %}
 {
     // Use centralized BannouJson serialization helper
     private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = BeyondImmersion.BannouService.Configuration.BannouJson.Options;
-{% if UseBaseUrl -%}
-{%     assign isDaprClient = false -%}
-{%     if HasBaseClass and BaseClass contains "DaprServiceClientBase" -%}
-{%         assign isDaprClient = true -%}
-{%     endif -%}
-{%     unless isDaprClient -%}
-    private string? _baseUrl;
 
-{%     endunless -%}
-{% endif -%}
-{% if InjectHttpClient -%}
-    private {{ HttpClientType }}? _httpClient;
-{% endif -%}
+    private readonly BeyondImmersion.BannouService.Services.IMeshInvocationClient _meshClient;
+    private readonly BeyondImmersion.BannouService.Services.IServiceAppMappingResolver _resolver;
+    private readonly Microsoft.Extensions.Logging.ILogger<{{ Class }}>? _logger;
 
-{% assign constructorParameters = "" -%}
-{% if HasConfigurationClass -%}
-{%     assign constructorParameters = ConfigurationClass | append: " configuration" -%}
-{% endif -%}
-{% if UseBaseUrl and HasBaseUrl == false and HasConfigurationClass == false -%}
-{%     unless constructorParameters == "" -%}{% assign constructorParameters = constructorParameters | append: ", " -%}{% endunless -%}
-{%     assign constructorParameters = constructorParameters | append: "string baseUrl" -%}
-{% endif -%}
-{% if InjectHttpClient -%}
-{%     unless constructorParameters == "" -%}{% assign constructorParameters = constructorParameters | append: ", " -%}{% endunless -%}
-{%     assign constructorParameters = constructorParameters | append: HttpClientType | append: " httpClient" -%}
-{% endif -%}
-    public {{ Class }}({{ constructorParameters }}){% if HasConfigurationClass and HasBaseClass -%}{{ " : base(configuration)"}}{% endif %}
+    /// <summary>
+    /// Service name used for app-id resolution. Extracted from class name.
+    /// </summary>
+    private static readonly string _serviceName = "{{ Class | replace: "Client", "" | downcase }}";
+
+    /// <summary>
+    /// The name of the service this client communicates with.
+    /// Implements IServiceClient.ServiceName.
+    /// </summary>
+    public string ServiceName => _serviceName;
+
+{% assign constructorParameters = "BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<" | append: Class | append: ">? logger = null" -%}
+    public {{ Class }}({{ constructorParameters }})
     {
-{%     if UseBaseUrl -%}
-{%         assign isDaprClient = false -%}
-{%         if HasBaseClass and BaseClass contains "DaprServiceClientBase" -%}
-{%             assign isDaprClient = true -%}
-{%         endif -%}
-{%         unless isDaprClient -%}
-{%             if HasBaseUrl -%}
-{%                 if GenerateBaseUrlProperty -%}
-        BaseUrl = "{{ BaseUrl }}";
-{%                 else -%}
-{%                     if BaseUrl != "" -%}
-{%                         assign baseUrlLength = BaseUrl | size -%}
-{%                         assign lastUrlCharIndex = baseUrlLength | minus: 1 -%}
-{%                         assign lastUrlChar = BaseUrl | slice: lastUrlCharIndex, 1 -%}
-{%                         if lastUrlChar == "/" -%}
-        _baseUrl = "{{ BaseUrl }}";
-{%                         else -%}
-        _baseUrl = "{{ BaseUrl }}/";
-{%                         endif -%}
-{%                     endif -%}
-{%                 endif -%}
-{%             else -%}
-{%                 if GenerateBaseUrlProperty -%}
-        BaseUrl = baseUrl;
-{%                 else -%}
-{%                     if HasConfigurationClass == false -%}
-        _baseUrl = (string.IsNullOrEmpty(baseUrl) || baseUrl.EndsWith("/"))
-            ? baseUrl
-            : baseUrl + "/";
-{%                     endif -%}
-{%                 endif -%}
-{%             endif -%}
-{%         endunless -%}
-{%     endif -%}
-{%     if InjectHttpClient -%}
-        _httpClient = httpClient;
-{%     endif -%}
+        _meshClient = meshClient ?? throw new System.ArgumentNullException(nameof(meshClient));
+        _resolver = resolver ?? throw new System.ArgumentNullException(nameof(resolver));
+        _logger = logger;
         Initialize();
     {% template Client.Class.Constructor %}
     }
 
-
-{% if UseBaseUrl and GenerateBaseUrlProperty -%}
-{%     assign isDaprClient = false -%}
-{%     if HasBaseClass and BaseClass contains "DaprServiceClientBase" -%}
-{%         assign isDaprClient = true -%}
-{%     endif -%}
-{%     unless isDaprClient -%}
-    public string BaseUrl
-    {
-        get { return _baseUrl; }
-        set
-        {
-            _baseUrl = value;
-            if (!string.IsNullOrEmpty(_baseUrl) && !_baseUrl.EndsWith("/"))
-                _baseUrl += '/';
-        }
-    }
-
-{%     endunless -%}
-{% endif -%}
 {% if ExposeJsonSerializerSettings -%}
 {%     assign serializerSettingsAccessModifier = "public" %}
 {% else -%}
@@ -107,51 +44,32 @@
 
     partial void Initialize();
 
-{% if UseHttpClientCreationMethod -%}
+    #region Header Support Methods
+
     /// <summary>
-    /// Creates and configures an HttpClient instance for this service client.
-    /// Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+    /// Storage for custom headers to be applied to the next request.
     /// </summary>
-    protected virtual System.Threading.Tasks.Task<{{ HttpClientType }}> CreateHttpClientAsync(System.Threading.CancellationToken cancellationToken)
+    private readonly System.Collections.Generic.Dictionary<string, string> _customHeaders = new();
+
+    /// <summary>
+    /// Authorization header value for the next request.
+    /// </summary>
+    private string? _authorizationHeader;
+
+    /// <summary>
+    /// Sets a custom header for the next service request.
+    /// Headers are applied once and then cleared.
+    /// </summary>
+    /// <param name="name">Header name (e.g., "X-Custom-Header")</param>
+    /// <param name="value">Header value</param>
+    public void SetHeader(string name, string value)
     {
-        // Create HttpClient with default configuration
-        var httpClient = new {{ HttpClientType }}();
+        if (string.IsNullOrWhiteSpace(name))
+            throw new System.ArgumentException("Header name cannot be null or empty", nameof(name));
 
-{% if UseBaseUrl and HasBaseUrl -%}
-{%     assign isDaprClient = false -%}
-{%     if HasBaseClass and BaseClass contains "DaprServiceClientBase" -%}
-{%         assign isDaprClient = true -%}
-{%     endif -%}
-{%     unless isDaprClient -%}
-        // Set base address if specified
-        if (!string.IsNullOrEmpty("{{ BaseUrl }}"))
-        {
-            httpClient.BaseAddress = new System.Uri("{{ BaseUrl }}", System.UriKind.Absolute);
-        }
-{%     endunless -%}
-{% endif -%}
-
-        return System.Threading.Tasks.Task.FromResult(httpClient);
+        _customHeaders[name] = value ?? string.Empty;
     }
-{% endif -%}
 
-{% if GeneratePrepareRequestAndProcessResponseAsAsyncMethods == false -%}
-{%     assign isDaprClient = false -%}
-{%     if HasBaseClass and BaseClass contains "DaprServiceClientBase" -%}
-{%         assign isDaprClient = true -%}
-{%     endif -%}
-{%     unless isDaprClient -%}
-    partial void PrepareRequest({{ HttpClientType }} client, System.Net.Http.HttpRequestMessage request, string url);
-    partial void PrepareRequest({{ HttpClientType }} client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
-{%     endunless -%}
-    partial void ProcessResponse({{ HttpClientType }} client, System.Net.Http.HttpResponseMessage response);
-{% endif -%}
-
-{% assign isDaprClient = false -%}
-{% if HasBaseClass and BaseClass contains "DaprServiceClientBase" -%}
-{%     assign isDaprClient = true -%}
-{% endif -%}
-{% if isDaprClient -%}
     /// <summary>
     /// Sets the Authorization header for the next request.
     /// Automatically prefixes with "Bearer " if not already present.
@@ -166,14 +84,56 @@
             return this;
         }
 
-        var authValue = token.StartsWith("Bearer ", System.StringComparison.OrdinalIgnoreCase)
+        _authorizationHeader = token.StartsWith("Bearer ", System.StringComparison.OrdinalIgnoreCase)
             ? token : $"Bearer {token}";
 
-        SetHeader("Authorization", authValue);
         return this;
     }
 
-{% endif -%}
+    /// <summary>
+    /// Clears the Authorization header.
+    /// </summary>
+    public void ClearAuthorization()
+    {
+        _authorizationHeader = null;
+    }
+
+    /// <summary>
+    /// Clears all custom headers and authorization for a fresh request.
+    /// Called automatically after each request.
+    /// </summary>
+    private void ClearHeaders()
+    {
+        _customHeaders.Clear();
+        _authorizationHeader = null;
+    }
+
+    /// <summary>
+    /// Applies stored headers to a request message.
+    /// </summary>
+    private void ApplyHeaders(System.Net.Http.HttpRequestMessage request)
+    {
+        // Apply authorization header if set
+        if (!string.IsNullOrEmpty(_authorizationHeader))
+        {
+            var tokenValue = _authorizationHeader.StartsWith("Bearer ", System.StringComparison.OrdinalIgnoreCase)
+                ? _authorizationHeader.Substring(7)
+                : _authorizationHeader;
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", tokenValue);
+        }
+
+        // Apply custom headers
+        foreach (var header in _customHeaders)
+        {
+            if (!request.Headers.Contains(header.Key))
+            {
+                request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+        }
+    }
+
+    #endregion
+
 {% for operation in Operations %}
 {%     if GenerateOptionalParameters == false -%}
     {% template Client.Method.Documentation %}
@@ -217,143 +177,9 @@
             throw new System.ArgumentNullException("{{ operation.ContentParameter.VariableName }}");
 
 {%     endif -%}
-{%     if InjectHttpClient -%}
-        var client_ = _httpClient;
-{%     elsif UseHttpClientCreationMethod -%}
-        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
-{%     else -%}
-        var client_ = new {{ HttpClientType }}();
-{%     endif -%}
-{%     if InjectHttpClient == false and DisposeHttpClient -%}
-        var disposeClient_ = true;
-{%     else -%}
-        var disposeClient_ = false;
-{%     endif -%}
-        try
-        {
-{%     if UseHttpRequestMessageCreationMethod -%}
-            using (var request_ = await CreateHttpRequestMessageAsync(cancellationToken).ConfigureAwait(false))
-{%     else -%}
-            using (var request_ = new System.Net.Http.HttpRequestMessage())
-{%     endif -%}
-            {
-{%     for parameter in operation.HeaderParameters %}
-{%         if parameter.IsRequired -%}
-                if ({{ parameter.VariableName }} == null)
-                    throw new System.ArgumentNullException("{{ parameter.VariableName }}");
-                {% template Client.Class.HeaderParameter %}
-{%         else -%}
-                if ({{ parameter.VariableName }} != null)
-                    {% template Client.Class.HeaderParameter %}
-{%         endif -%}
-{%     endfor -%}
-{%     if operation.HasContent -%}
-{%         if operation.HasBinaryBodyParameter -%}
-{%             if operation.ContentParameter.HasBinaryBodyWithMultipleMimeTypes -%}
-                var content_ = new System.Net.Http.StreamContent({{ operation.ContentParameter.VariableName }}.Data);
-                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse({{ operation.ContentParameter.VariableName }}.ContentType);
-{%             else -%}
-                var content_ = new System.Net.Http.StreamContent({{ operation.ContentParameter.VariableName }});
-                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("{{ operation.Consumes }}");
-{%             endif -%}
-{%         elsif operation.HasXmlBodyParameter -%}
-                var content_ = new System.Net.Http.StringContent({{ operation.ContentParameter.VariableName }});
-                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("{{ operation.Consumes }}");
-{%         elsif operation.ConsumesOnlyFormUrlEncoded -%}
-                var json_ = {% if UseSystemTextJson %}BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes{% else %}Newtonsoft.Json.JsonConvert.SerializeObject{% endif %}({{ operation.ContentParameter.VariableName }});
-                var dictionary_ = {% if UseSystemTextJson %}BeyondImmersion.BannouService.Configuration.BannouJson.Deserialize{% else %}Newtonsoft.Json.JsonConvert.DeserializeObject{% endif %}<System.Collections.Generic.Dictionary<string, string>>(json_);
-                var content_ = new System.Net.Http.FormUrlEncodedContent(dictionary_);
-                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("{{ operation.Consumes }}");
-{%         elsif operation.HasPlainTextBodyParameter -%}
-                var content_ = new System.Net.Http.StringContent({{ operation.ContentParameter.VariableName }});
-                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("{{ operation.Consumes }}");
-{%         else -%}
-                var json_ = {% if UseSystemTextJson %}BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes{% else %}Newtonsoft.Json.JsonConvert.SerializeObject{% endif %}({{ operation.ContentParameter.VariableName }});
-                var content_ = new System.Net.Http.{% if UseSystemTextJson %}ByteArrayContent{% else %}StringContent{% endif %}(json_);
-                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("{{ operation.Consumes }}");
-{%         endif -%}
-                request_.Content = content_;
-{%     else -%}
-{%         if operation.HasFormParameters -%}
-{%             if operation.ConsumesOnlyFormUrlEncoded -%}
-                var keyValues_ = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, string>>();
-{%                 for parameter in operation.FormParameters -%}
-{%                     if parameter.IsNullable -%}
-                if ({{ parameter.VariableName }} != null)
-{%                     else -%}
-                if ({{ parameter.VariableName }} == null)
-                    throw new System.ArgumentNullException("{{ parameter.VariableName }}");
-                else
-{%                     endif -%}
-                    keyValues_.Add(new System.Collections.Generic.KeyValuePair<string, string>("{{ parameter.Name }}", ConvertToString({{ parameter.VariableName }}, System.Globalization.CultureInfo.InvariantCulture)));
-{%                 endfor -%}
-                request_.Content = new System.Net.Http.FormUrlEncodedContent(keyValues_);
-{%             else -%}
-                var boundary_ = System.Guid.NewGuid().ToString();
-                var content_ = new System.Net.Http.MultipartFormDataContent(boundary_);
-                content_.Headers.Remove("Content-Type");
-                content_.Headers.TryAddWithoutValidation("Content-Type", "multipart/form-data; boundary=" + boundary_);
-{%                 for parameter in operation.FormParameters %}
-{%                     if parameter.IsNullable -%}
-                if ({{ parameter.VariableName }} != null)
-{%                     else -%}
-                if ({{ parameter.VariableName }} == null)
-                    throw new System.ArgumentNullException("{{ parameter.VariableName }}");
-                else
-{%                     endif -%}
-                {
-{%                     if parameter.IsFile -%}
-{%                         if parameter.IsArray -%}
-                    foreach (var item_ in {{ parameter.VariableName }})
-                    {
-                        var content_{{ parameter.VariableName }}_ = new System.Net.Http.StreamContent(item_.Data);
-                        if (!string.IsNullOrEmpty(item_.ContentType))
-                            content_{{ parameter.VariableName }}_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(item_.ContentType);
-                        content_.Add(content_{{ parameter.VariableName }}_, "{{ parameter.Name }}", item_.FileName ?? "{{ parameter.Name }}");
-                    }
-{%                         else -%}
-                    var content_{{ parameter.VariableName }}_ = new System.Net.Http.StreamContent({{ parameter.VariableName }}.Data);
-                    if (!string.IsNullOrEmpty({{ parameter.VariableName }}.ContentType))
-                        content_{{ parameter.VariableName }}_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse({{ parameter.VariableName }}.ContentType);
-                    content_.Add(content_{{ parameter.VariableName }}_, "{{ parameter.Name }}", {{ parameter.VariableName }}.FileName ?? "{{ parameter.Name }}");
-{%                         endif -%}
-{%                     elsif parameter.IsArray -%}
-                    foreach (var item_ in {{ parameter.VariableName }})
-                    {
-                        content_.Add(new System.Net.Http.StringContent(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture)), "{{ parameter.Name }}");
-                    }
-{%                     elsif parameter.IsObject -%}
-                    var json_ = {% if UseSystemTextJson %}BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes{% else %}Newtonsoft.Json.JsonConvert.SerializeObject{% endif %}({{ parameter.VariableName }});
-                    content_.Add(new System.Net.Http.{% if UseSystemTextJson %}ByteArrayContent(json_{% else %}StringContent(json_, System.Text.Encoding.UTF8, "application/json"{% endif %}), "{{ parameter.Name }}");
-{%                     else -%}
-                    content_.Add(new System.Net.Http.StringContent(ConvertToString({{ parameter.VariableName }}, System.Globalization.CultureInfo.InvariantCulture)), "{{ parameter.Name }}");
-{%                     endif -%}
-                }
-{%                 endfor -%}
-                request_.Content = content_;
-{%             endif -%}
-{%         elsif operation.IsGetOrDeleteOrHead == false -%}
-                request_.Content = new System.Net.Http.StringContent(string.Empty, System.Text.Encoding.UTF8, "{{ operation.Consumes }}");
-{%         endif -%}
-{%     endif -%}
-                request_.Method = new System.Net.Http.HttpMethod("{{ operation.HttpMethodUpper | upcase }}");
-{%     if operation.HasResultType and operation.HasAcceptHeaderParameterParameter == false -%}
-                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("{{ operation.Produces }}"));
-{%     endif -%}
-
-                var urlBuilder_ = new System.Text.StringBuilder();
-                {% if UseBaseUrl -%}
-{%     assign isDaprClient = false -%}
-{%     if HasBaseClass and BaseClass contains "DaprServiceClientBase" -%}
-{%         assign isDaprClient = true -%}
-{%     endif -%}
-{%     if isDaprClient -%}
-                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
-{%     else -%}
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-{%     endif -%}
-{% endif %}
-                // Operation Path: "{{ operation.Path }}"
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "{{ operation.Path }}"
 {%     if operation.Path contains "{" -%}
 {%        assign pathParts = operation.Path | split: "{" -%}
 {%        for pathPart in pathParts -%}
@@ -364,66 +190,172 @@
 {%                    if parameter.Name == pathParameterParts[0] -%}
 {%                        if parameter.IsOptional -%}
 {%                            assign pathParameterFound = false -%}
-                if ({{ parameter.VariableName }} != null)
-                {
-                    {% template Client.Class.PathParameter %}
-                }
-                else
-                    if (urlBuilder_.Length > 0) urlBuilder_.Length--;
+        if ({{ parameter.VariableName }} != null)
+        {
+            {% template Client.Class.PathParameter %}
+        }
+        else
+            if (urlBuilder_.Length > 0) urlBuilder_.Length--;
 {%                        else -%}
-                {% template Client.Class.PathParameter %}
+        {% template Client.Class.PathParameter %}
 {%                        endif -%}
 {%                    endif -%}
 {%                endfor -%}
 {%                comment -%} >>> just in case {% endcomment -%}
 {%                unless pathParameterFound -%}
-                urlBuilder_.Append("{{ '{' }}{{ pathParameterParts[0] }}{{ '}' }}");
+        urlBuilder_.Append("{{ '{' }}{{ pathParameterParts[0] }}{{ '}' }}");
 {%                endunless -%}
 {%                comment -%} <<< just in case {% endcomment -%}
 {%                assign nonParameterPartLengh = pathParameterParts[1] | size -%}
 {%                if nonParameterPartLengh == 1 -%}
-                urlBuilder_.Append('{{ pathParameterParts[1] }}');
+        urlBuilder_.Append('{{ pathParameterParts[1] }}');
 {%                elsif nonParameterPartLengh > 0 -%}
-                urlBuilder_.Append("{{ pathParameterParts[1] }}");
+        urlBuilder_.Append("{{ pathParameterParts[1] }}");
 {%                endif -%}
 {%            else -%}
 {%                 unless pathPart == "" -%}
-                urlBuilder_.Append("{{ pathPart }}");
+        urlBuilder_.Append("{{ pathPart }}");
 {%                 endunless -%}
 {%            endif -%}
 {%        endfor -%}
 {%    else -%}
 {%        unless operation.Path == "" -%}
-                urlBuilder_.Append("{{ operation.Path }}");
+        urlBuilder_.Append("{{ operation.Path }}");
 {%        endunless -%}
 {%    endif -%}
 {%     if operation.HasQueryParameters -%}
-                urlBuilder_.Append('?');
+        urlBuilder_.Append('?');
 {%         for parameter in operation.QueryParameters -%}
 {%             if parameter.IsOptional -%}
-                if ({{ parameter.VariableName }} != null)
-                {
-                    {% template Client.Class.QueryParameter %}
-                }
+        if ({{ parameter.VariableName }} != null)
+        {
+            {% template Client.Class.QueryParameter %}
+        }
 {%             else -%}
-                {% template Client.Class.QueryParameter %}
+        {% template Client.Class.QueryParameter %}
 {%             endif -%}
 {%         endfor -%}
-                urlBuilder_.Length--;
+        urlBuilder_.Length--;
 {%     endif -%}
 
-{% if GeneratePrepareRequestAndProcessResponseAsAsyncMethods %}
-                await PrepareRequestAsync(client_, request_, urlBuilder_, cancellationToken).ConfigureAwait(false);
-{% else -%}
-                PrepareRequest(client_, request_, urlBuilder_);
-{% endif -%}
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
 
-                var url_ = urlBuilder_.ToString();
-                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("{{ operation.HttpMethodUpper | upcase }}"),
+            appId_,
+            methodPath_))
+        {
+{%     for parameter in operation.HeaderParameters %}
+{%         if parameter.IsRequired -%}
+            if ({{ parameter.VariableName }} == null)
+                throw new System.ArgumentNullException("{{ parameter.VariableName }}");
+            {% template Client.Class.HeaderParameter %}
+{%         else -%}
+            if ({{ parameter.VariableName }} != null)
+                {% template Client.Class.HeaderParameter %}
+{%         endif -%}
+{%     endfor -%}
+{%     if operation.HasContent -%}
+{%         if operation.HasBinaryBodyParameter -%}
+{%             if operation.ContentParameter.HasBinaryBodyWithMultipleMimeTypes -%}
+            var content_ = new System.Net.Http.StreamContent({{ operation.ContentParameter.VariableName }}.Data);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse({{ operation.ContentParameter.VariableName }}.ContentType);
+{%             else -%}
+            var content_ = new System.Net.Http.StreamContent({{ operation.ContentParameter.VariableName }});
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("{{ operation.Consumes }}");
+{%             endif -%}
+{%         elsif operation.HasXmlBodyParameter -%}
+            var content_ = new System.Net.Http.StringContent({{ operation.ContentParameter.VariableName }});
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("{{ operation.Consumes }}");
+{%         elsif operation.ConsumesOnlyFormUrlEncoded -%}
+            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes({{ operation.ContentParameter.VariableName }});
+            var dictionary_ = BeyondImmersion.BannouService.Configuration.BannouJson.Deserialize<System.Collections.Generic.Dictionary<string, string>>(json_);
+            var content_ = new System.Net.Http.FormUrlEncodedContent(dictionary_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("{{ operation.Consumes }}");
+{%         elsif operation.HasPlainTextBodyParameter -%}
+            var content_ = new System.Net.Http.StringContent({{ operation.ContentParameter.VariableName }});
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("{{ operation.Consumes }}");
+{%         else -%}
+            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes({{ operation.ContentParameter.VariableName }});
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("{{ operation.Consumes }}");
+{%         endif -%}
+            request_.Content = content_;
+{%     else -%}
+{%         if operation.HasFormParameters -%}
+{%             if operation.ConsumesOnlyFormUrlEncoded -%}
+            var keyValues_ = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, string>>();
+{%                 for parameter in operation.FormParameters -%}
+{%                     if parameter.IsNullable -%}
+            if ({{ parameter.VariableName }} != null)
+{%                     else -%}
+            if ({{ parameter.VariableName }} == null)
+                throw new System.ArgumentNullException("{{ parameter.VariableName }}");
+            else
+{%                     endif -%}
+                keyValues_.Add(new System.Collections.Generic.KeyValuePair<string, string>("{{ parameter.Name }}", ConvertToString({{ parameter.VariableName }}, System.Globalization.CultureInfo.InvariantCulture)));
+{%                 endfor -%}
+            request_.Content = new System.Net.Http.FormUrlEncodedContent(keyValues_);
+{%             else -%}
+            var boundary_ = System.Guid.NewGuid().ToString();
+            var content_ = new System.Net.Http.MultipartFormDataContent(boundary_);
+            content_.Headers.Remove("Content-Type");
+            content_.Headers.TryAddWithoutValidation("Content-Type", "multipart/form-data; boundary=" + boundary_);
+{%                 for parameter in operation.FormParameters %}
+{%                     if parameter.IsNullable -%}
+            if ({{ parameter.VariableName }} != null)
+{%                     else -%}
+            if ({{ parameter.VariableName }} == null)
+                throw new System.ArgumentNullException("{{ parameter.VariableName }}");
+            else
+{%                     endif -%}
+            {
+{%                     if parameter.IsFile -%}
+{%                         if parameter.IsArray -%}
+                foreach (var item_ in {{ parameter.VariableName }})
+                {
+                    var content_{{ parameter.VariableName }}_ = new System.Net.Http.StreamContent(item_.Data);
+                    if (!string.IsNullOrEmpty(item_.ContentType))
+                        content_{{ parameter.VariableName }}_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(item_.ContentType);
+                    content_.Add(content_{{ parameter.VariableName }}_, "{{ parameter.Name }}", item_.FileName ?? "{{ parameter.Name }}");
+                }
+{%                         else -%}
+                var content_{{ parameter.VariableName }}_ = new System.Net.Http.StreamContent({{ parameter.VariableName }}.Data);
+                if (!string.IsNullOrEmpty({{ parameter.VariableName }}.ContentType))
+                    content_{{ parameter.VariableName }}_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse({{ parameter.VariableName }}.ContentType);
+                content_.Add(content_{{ parameter.VariableName }}_, "{{ parameter.Name }}", {{ parameter.VariableName }}.FileName ?? "{{ parameter.Name }}");
+{%                         endif -%}
+{%                     elsif parameter.IsArray -%}
+                foreach (var item_ in {{ parameter.VariableName }})
+                {
+                    content_.Add(new System.Net.Http.StringContent(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture)), "{{ parameter.Name }}");
+                }
+{%                     elsif parameter.IsObject -%}
+                var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes({{ parameter.VariableName }});
+                content_.Add(new System.Net.Http.ByteArrayContent(json_), "{{ parameter.Name }}");
+{%                     else -%}
+                content_.Add(new System.Net.Http.StringContent(ConvertToString({{ parameter.VariableName }}, System.Globalization.CultureInfo.InvariantCulture)), "{{ parameter.Name }}");
+{%                     endif -%}
+            }
+{%                 endfor -%}
+            request_.Content = content_;
+{%             endif -%}
+{%         elsif operation.IsGetOrDeleteOrHead == false -%}
+            request_.Content = new System.Net.Http.StringContent(string.Empty, System.Text.Encoding.UTF8, "{{ operation.Consumes }}");
+{%         endif -%}
+{%     endif -%}
+{%     if operation.HasResultType and operation.HasAcceptHeaderParameterParameter == false -%}
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("{{ operation.Produces }}"));
+{%     endif -%}
 
-                {% template Client.Class.BeforeSend %}
+            // Apply custom headers
+            ApplyHeaders(request_);
 
-                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
                 try
                 {
@@ -435,12 +367,6 @@
                         foreach (var item_ in response_.Content.Headers)
                             headers_[item_.Key] = item_.Value;
                     }
-
-{% if GeneratePrepareRequestAndProcessResponseAsAsyncMethods %}
-                    await ProcessResponseAsync(client_, response_, cancellationToken).ConfigureAwait(false);
-{% else %}
-                    ProcessResponse(client_, response_);
-{% endif %}
 
                     var status_ = (int)response_.StatusCode;
 {%     for response in operation.Responses -%}
@@ -505,11 +431,11 @@
                         response_.Dispose();
                 }
             }
-        }
-        finally
-        {
-            if (disposeClient_)
-                client_.Dispose();
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
         }
     }
 

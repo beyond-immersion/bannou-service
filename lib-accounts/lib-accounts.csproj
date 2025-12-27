@@ -10,10 +10,14 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="lib-accounts.tests" />
+    <!-- Required for Moq/Castle.Core to mock IStateStore<internal types> -->
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
+    <ProjectReference Include="../lib-state/lib-state.csproj" />
   </ItemGroup>
 
   <ItemGroup>

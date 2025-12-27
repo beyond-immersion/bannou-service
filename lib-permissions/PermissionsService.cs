@@ -3,9 +3,9 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
-using Dapr;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -23,21 +23,21 @@ namespace BeyondImmersion.BannouService.Permissions;
 
 /// <summary>
 /// Permissions service - authoritative source for all permission mappings and session capabilities.
-/// Uses Dapr state store for atomic operations and Redis-backed data structures.
+/// Uses lib-state for atomic operations and Redis-backed data structures.
 /// </summary>
-[DaprService("permissions", typeof(IPermissionsService), lifetime: ServiceLifetime.Singleton)]
+[BannouService("permissions", typeof(IPermissionsService), lifetime: ServiceLifetime.Singleton)]
 public partial class PermissionsService : IPermissionsService
 {
     private readonly ILogger<PermissionsService> _logger;
     private readonly PermissionsServiceConfiguration _configuration;
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IMessageBus _messageBus;
     private readonly IDistributedLockProvider _lockProvider;
-    private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly IClientEventPublisher _clientEventPublisher;
     private static readonly string[] ROLE_ORDER = new[] { "anonymous", "user", "developer", "admin" };
 
-    // Dapr state store name
-    private const string STATE_STORE = "permissions-store";
+    // State store name
+    private const string STATE_STORE = "permissions-statestore";
 
     // State key patterns
     private const string ACTIVE_SESSIONS_KEY = "active_sessions";
@@ -51,30 +51,30 @@ public partial class PermissionsService : IPermissionsService
     private const string SERVICE_LOCK_KEY = "lock:service-registration:{0}";
     private const string PERMISSION_HASH_KEY = "permission_hash:{0}"; // Stores hash of service permission data for idempotent registration
 
-    // Cache for compiled permissions (in-memory cache with Dapr state backing)
+    // Cache for compiled permissions (in-memory cache with lib-state backing)
     private readonly ConcurrentDictionary<string, CapabilityResponse> _sessionCapabilityCache;
 
     public PermissionsService(
         ILogger<PermissionsService> logger,
         PermissionsServiceConfiguration configuration,
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         IDistributedLockProvider lockProvider,
-        IErrorEventEmitter errorEventEmitter,
         IClientEventPublisher clientEventPublisher,
         IEventConsumer eventConsumer)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
         _sessionCapabilityCache = new ConcurrentDictionary<string, CapabilityResponse>();
 
         // Register event handlers via partial class (PermissionsServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
 
-        _logger.LogInformation("Permissions service initialized with Dapr state store, session-specific client event publishing, and event handlers registered");
+        _logger.LogInformation("Permissions service initialized with native state store, session-specific client event publishing, and event handlers registered");
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public partial class PermissionsService : IPermissionsService
     }
 
     /// <summary>
-    /// Get compiled capabilities for a session from Dapr state store with in-memory caching.
+    /// Get compiled capabilities for a session from lib-state store with in-memory caching.
     /// </summary>
     public async Task<(StatusCodes, CapabilityResponse?)> GetCapabilitiesAsync(
         CapabilityRequest body,
@@ -130,10 +130,10 @@ public partial class PermissionsService : IPermissionsService
                 return (StatusCodes.OK, cachedResponse);
             }
 
-            // Get compiled permissions from Dapr state store
+            // Get compiled permissions from state store
             var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, body.SessionId);
-            var permissionsData = await _daprClient.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE, permissionsKey, cancellationToken: cancellationToken);
+            var permissionsData = await _stateStoreFactory.GetStore<Dictionary<string, object>>(STATE_STORE)
+                .GetAsync(permissionsKey, cancellationToken);
 
             if (permissionsData == null || permissionsData.Count == 0)
             {
@@ -189,12 +189,18 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting capabilities for session {SessionId}", body.SessionId);
+            await PublishErrorEventAsync(
+                "GetCapabilities",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.SessionId });
             return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
-    /// Fast O(1) validation using Dapr state lookup for specific API access.
+    /// Fast O(1) validation using lib-state lookup for specific API access.
     /// </summary>
     public async Task<(StatusCodes, ValidationResponse?)> ValidateApiAccessAsync(
         ValidationRequest body,
@@ -205,10 +211,10 @@ public partial class PermissionsService : IPermissionsService
             _logger.LogDebug("Validating API access for session {SessionId}, service {ServiceId}, method {Method}",
                 body.SessionId, body.ServiceId, body.Method);
 
-            // Get session permissions from Dapr state store
+            // Get session permissions from state store
             var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, body.SessionId);
-            var permissionsData = await _daprClient.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE, permissionsKey, cancellationToken: cancellationToken);
+            var permissionsData = await _stateStoreFactory.GetStore<Dictionary<string, object>>(STATE_STORE)
+                .GetAsync(permissionsKey, cancellationToken);
 
             if (permissionsData == null || !permissionsData.ContainsKey(body.ServiceId))
             {
@@ -238,13 +244,19 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating API access for session {SessionId}", body.SessionId);
+            await PublishErrorEventAsync(
+                "ValidateApiAccess",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.SessionId, body.ServiceId, body.Method });
             return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Register service permission matrix and trigger recompilation for all active sessions.
-    /// Uses Dapr atomic transactions to prevent race conditions.
+    /// Uses lib-state atomic transactions to prevent race conditions.
     /// </summary>
     public async Task<(StatusCodes, RegistrationResponse?)> RegisterServicePermissionsAsync(
         ServicePermissionMatrix body,
@@ -259,11 +271,12 @@ public partial class PermissionsService : IPermissionsService
             // If the hash matches AND service is already registered, skip entirely
             var newHash = ComputePermissionDataHash(body);
             var hashKey = string.Format(PERMISSION_HASH_KEY, body.ServiceId);
-            var storedHash = await _daprClient.GetStateAsync<string>(STATE_STORE, hashKey, cancellationToken: cancellationToken);
+            var storedHash = await _stateStoreFactory.GetStore<string>(STATE_STORE)
+                .GetAsync(hashKey, cancellationToken);
 
             // Also check if service is in registered_services (might be cleared independently of hash)
-            var registeredServices = await _daprClient.GetStateAsync<HashSet<string>>(
-                STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+            var registeredServices = await _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE)
+                .GetAsync(REGISTERED_SERVICES_KEY, cancellationToken) ?? new HashSet<string>();
             var isServiceAlreadyRegistered = registeredServices.Contains(body.ServiceId);
 
             if (storedHash != null && storedHash == newHash && isServiceAlreadyRegistered)
@@ -295,10 +308,8 @@ public partial class PermissionsService : IPermissionsService
                     body.ServiceId);
             }
 
-            // Use Dapr state transactions for atomic operations
-            var transactionRequests = new List<StateTransactionRequest>();
-
-            // Update permission matrix atomically
+            // Update permission matrix - save each permission set
+            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
             if (body.Permissions != null)
             {
                 _logger.LogDebug("Processing {PermissionCount} permission states for {ServiceId}",
@@ -320,16 +331,14 @@ public partial class PermissionsService : IPermissionsService
                             roleName);
 
                         // Get existing endpoints and merge with new ones
-                        var existingEndpoints = await _daprClient.GetStateAsync<HashSet<string>>(
-                            STATE_STORE, matrixKey, cancellationToken: cancellationToken) ?? new HashSet<string>();
+                        var existingEndpoints = await hashSetStore.GetAsync(matrixKey, cancellationToken) ?? new HashSet<string>();
 
                         foreach (var method in methods)
                         {
                             existingEndpoints.Add(method);
                         }
 
-                        transactionRequests.Add(new StateTransactionRequest(
-                            matrixKey, BannouJson.SerializeToUtf8Bytes(existingEndpoints), StateOperationType.Upsert));
+                        await hashSetStore.SaveAsync(matrixKey, existingEndpoints, cancellationToken: cancellationToken);
                     }
                 }
             }
@@ -338,14 +347,9 @@ public partial class PermissionsService : IPermissionsService
                 _logger.LogWarning("No permissions to register for {ServiceId}", body.ServiceId);
             }
 
-            // Update service version
-            transactionRequests.Add(new StateTransactionRequest(
-                $"{PERMISSION_VERSION_KEY}:{body.ServiceId}",
-                BannouJson.SerializeToUtf8Bytes(body.Version),
-                StateOperationType.Upsert));
-
-            // Execute atomic transaction
-            await _daprClient.ExecuteStateTransactionAsync(STATE_STORE, transactionRequests, cancellationToken: cancellationToken);
+            // Update service version (wrap in object for state store compatibility)
+            await _stateStoreFactory.GetStore<Dictionary<string, string>>(STATE_STORE)
+                .SaveAsync($"{PERMISSION_VERSION_KEY}:{body.ServiceId}", new Dictionary<string, string> { ["version"] = body.Version }, cancellationToken: cancellationToken);
 
             // Track this service using individual key pattern (race-condition safe)
             // Each service has its own key, eliminating the need to modify a shared list
@@ -354,16 +358,17 @@ public partial class PermissionsService : IPermissionsService
             {
                 ServiceId = body.ServiceId,
                 Version = body.Version,
-                RegisteredAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds() // Store as Unix timestamp to avoid Dapr serialization bugs
+                RegisteredAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds() // Store as Unix timestamp to avoid serialization bugs
             };
-            await _daprClient.SaveStateAsync(STATE_STORE, serviceRegisteredKey, registrationInfo, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<object>(STATE_STORE)
+                .SaveAsync(serviceRegisteredKey, registrationInfo, cancellationToken: cancellationToken);
             _logger.LogInformation("Stored individual registration marker for {ServiceId} at key {Key}", body.ServiceId, serviceRegisteredKey);
 
             // Update the centralized registered_services list (enables "list all registered services" queries)
             // Uses Redis-based distributed lock to prevent race conditions when multiple services register concurrently
             // NO FALLBACK - if lock fails after retries, registration fails. We don't mask failures with alternative paths.
             // RETRY IS NOT A FALLBACK - retrying lock acquisition is the correct approach for handling lock contention.
-            const string LOCK_STORE = "permissions-store"; // Use Redis state store for distributed locking
+            const string LOCK_STORE = "permissions-statestore"; // Use Redis state store for distributed locking
             const string LOCK_RESOURCE = "registered_services_lock";
             var lockOwnerId = $"{body.ServiceId}-{Guid.NewGuid():N}";
 
@@ -407,6 +412,7 @@ public partial class PermissionsService : IPermissionsService
                         _logger.LogError(ex, "Exception while acquiring distributed lock for {ServiceId} after {MaxRetries} attempts. " +
                             "Lock store: {LockStore}, Resource: {LockResource}, Owner: {LockOwner}",
                             body.ServiceId, maxRetries, LOCK_STORE, LOCK_RESOURCE, lockOwnerId);
+                        await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.ServiceId, LockStore = LOCK_STORE, LockResource = LOCK_RESOURCE });
                         return (StatusCodes.InternalServerError, new RegistrationResponse
                         {
                             ServiceId = body.ServiceId,
@@ -424,6 +430,7 @@ public partial class PermissionsService : IPermissionsService
             if (serviceLock == null)
             {
                 _logger.LogError("Lock response was null for {ServiceId} - this should never happen", body.ServiceId);
+                await PublishErrorEventAsync("RegisterServicePermissions", "lock_null", "Lock acquisition returned null response", dependency: "state", details: new { body.ServiceId });
                 return (StatusCodes.InternalServerError, new RegistrationResponse
                 {
                     ServiceId = body.ServiceId,
@@ -439,6 +446,7 @@ public partial class PermissionsService : IPermissionsService
                     _logger.LogError("Failed to acquire distributed lock for {ServiceId} after {MaxRetries} attempts - " +
                         "cannot safely update registered services. This indicates persistent lock contention or Redis issues.",
                         body.ServiceId, maxRetries);
+                    await PublishErrorEventAsync("RegisterServicePermissions", "lock_failed", $"Failed to acquire distributed lock after {maxRetries} attempts", dependency: "state", details: new { body.ServiceId, MaxRetries = maxRetries });
                     return (StatusCodes.InternalServerError, new RegistrationResponse
                     {
                         ServiceId = body.ServiceId,
@@ -450,8 +458,9 @@ public partial class PermissionsService : IPermissionsService
                 _logger.LogInformation("Acquired lock for {ServiceId} to update registered services", body.ServiceId);
 
                 // Now we have exclusive access - safe to read-modify-write
-                var lockedServices = await _daprClient.GetStateAsync<HashSet<string>>(
-                    STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+                // CRITICAL: Keep lock scope minimal to avoid timeout during concurrent registrations
+                var registeredServicesStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+                var lockedServices = await registeredServicesStore.GetAsync(REGISTERED_SERVICES_KEY, cancellationToken) ?? new HashSet<string>();
 
                 _logger.LogInformation("Current registered services (locked): {Services}",
                     string.Join(", ", lockedServices));
@@ -459,7 +468,7 @@ public partial class PermissionsService : IPermissionsService
                 if (!lockedServices.Contains(body.ServiceId))
                 {
                     lockedServices.Add(body.ServiceId);
-                    await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, lockedServices, cancellationToken: cancellationToken);
+                    await registeredServicesStore.SaveAsync(REGISTERED_SERVICES_KEY, lockedServices, cancellationToken: cancellationToken);
                     _logger.LogInformation("Successfully added {ServiceId} to registered services list. Now: {Services}",
                         body.ServiceId, string.Join(", ", lockedServices));
                 }
@@ -467,37 +476,39 @@ public partial class PermissionsService : IPermissionsService
                 {
                     _logger.LogInformation("Service {ServiceId} already in registered services list", body.ServiceId);
                 }
+            } // End of await using (serviceLock) - release lock BEFORE expensive session recompilation
 
-                // Get all active sessions and recompile (for state tracking)
-                var activeSessions = await _daprClient.GetStateAsync<HashSet<string>>(
-                    STATE_STORE, ACTIVE_SESSIONS_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+            // Session recompilation happens OUTSIDE the lock to prevent lock timeouts
+            // during concurrent service registrations at startup
+            var registeredStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var activeSessions = await registeredStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
 
-                // Recompile permissions for all active sessions
-                var recompiledCount = 0;
-                foreach (var sessionId in activeSessions)
-                {
-                    await RecompileSessionPermissionsAsync(sessionId, "service_registered");
-                    recompiledCount++;
-                }
+            // Recompile permissions for all active sessions
+            var recompiledCount = 0;
+            foreach (var sessionId in activeSessions)
+            {
+                await RecompileSessionPermissionsAsync(sessionId, "service_registered");
+                recompiledCount++;
+            }
 
-                _logger.LogInformation("Service {ServiceId} registered successfully, recompiled {Count} sessions",
-                    body.ServiceId, recompiledCount);
+            _logger.LogInformation("Service {ServiceId} registered successfully, recompiled {Count} sessions",
+                body.ServiceId, recompiledCount);
 
-                // Note: RecompileSessionPermissionsAsync already handles publishing via PublishCapabilityUpdateAsync,
-                // which checks activeConnections before publishing to avoid RabbitMQ crashes
+            // Note: RecompileSessionPermissionsAsync already handles publishing via PublishCapabilityUpdateAsync,
+            // which checks activeConnections before publishing to avoid RabbitMQ crashes
 
-                // Store the new hash for idempotent registration detection
-                await _daprClient.SaveStateAsync(STATE_STORE, hashKey, newHash, cancellationToken: cancellationToken);
-                _logger.LogDebug("Stored permission hash for {ServiceId}: {Hash}",
-                    body.ServiceId, newHash[..8] + "...");
+            // Store the new hash for idempotent registration detection
+            await _stateStoreFactory.GetStore<string>(STATE_STORE)
+                .SaveAsync(hashKey, newHash, cancellationToken: cancellationToken);
+            _logger.LogDebug("Stored permission hash for {ServiceId}: {Hash}",
+                body.ServiceId, newHash[..8] + "...");
 
-                return (StatusCodes.OK, new RegistrationResponse
-                {
-                    ServiceId = body.ServiceId,
-                    Success = true,
-                    Message = $"Registered {body.Permissions?.Count ?? 0} permission rules, recompiled {recompiledCount} sessions"
-                });
-            } // End of await using (serviceLock)
+            return (StatusCodes.OK, new RegistrationResponse
+            {
+                ServiceId = body.ServiceId,
+                Success = true,
+                Message = $"Registered {body.Permissions?.Count ?? 0} permission rules, recompiled {recompiledCount} sessions"
+            });
         }
         catch (Exception ex)
         {
@@ -506,7 +517,7 @@ public partial class PermissionsService : IPermissionsService
                 "RegisterServicePermissions",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "lib-state",
                 details: new { body.ServiceId });
             return (StatusCodes.InternalServerError, null);
         }
@@ -514,7 +525,7 @@ public partial class PermissionsService : IPermissionsService
 
     /// <summary>
     /// Update session state for specific service and recompile permissions.
-    /// Uses Dapr atomic transactions for consistency.
+    /// Uses lib-state atomic transactions for consistency.
     /// </summary>
     public async Task<(StatusCodes, SessionUpdateResponse?)> UpdateSessionStateAsync(
         SessionStateUpdate body,
@@ -529,12 +540,12 @@ public partial class PermissionsService : IPermissionsService
             var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, body.SessionId);
 
             // Get current session states
-            var sessionStates = await _daprClient.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE, statesKey, cancellationToken: cancellationToken) ?? new Dictionary<string, string>();
+            var sessionStates = await _stateStoreFactory.GetStore<Dictionary<string, string>>(STATE_STORE)
+                .GetAsync(statesKey, cancellationToken) ?? new Dictionary<string, string>();
 
             // Get current permissions data for version increment
-            var permissionsData = await _daprClient.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE, permissionsKey, cancellationToken: cancellationToken) ?? new Dictionary<string, object>();
+            var permissionsData = await _stateStoreFactory.GetStore<Dictionary<string, object>>(STATE_STORE)
+                .GetAsync(permissionsKey, cancellationToken) ?? new Dictionary<string, object>();
 
             // Update session state
             sessionStates[body.ServiceId] = body.NewState;
@@ -548,21 +559,17 @@ public partial class PermissionsService : IPermissionsService
             var newVersion = currentVersion + 1;
 
             // Get active sessions
-            var activeSessions = await _daprClient.GetStateAsync<HashSet<string>>(
-                STATE_STORE, ACTIVE_SESSIONS_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var activeSessions = await hashSetStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
             activeSessions.Add(body.SessionId);
 
-            // Atomic transaction to update session state, version, and active sessions
-            var transactionRequests = new List<StateTransactionRequest>
-            {
-                new StateTransactionRequest(statesKey, BannouJson.SerializeToUtf8Bytes(sessionStates), StateOperationType.Upsert),
-                new StateTransactionRequest(ACTIVE_SESSIONS_KEY, BannouJson.SerializeToUtf8Bytes(activeSessions), StateOperationType.Upsert)
-            };
-
-            await _daprClient.ExecuteStateTransactionAsync(STATE_STORE, transactionRequests, cancellationToken: cancellationToken);
+            // Save session state and active sessions
+            await _stateStoreFactory.GetStore<Dictionary<string, string>>(STATE_STORE)
+                .SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
+            await hashSetStore.SaveAsync(ACTIVE_SESSIONS_KEY, activeSessions, cancellationToken: cancellationToken);
 
             // Recompile session permissions using the states we already have
-            // (avoids read-after-write consistency issues by not re-reading from Dapr)
+            // (avoids read-after-write consistency issues by not re-reading from state store)
             await RecompileSessionPermissionsAsync(body.SessionId, sessionStates, "session_state_changed");
 
             return (StatusCodes.OK, new SessionUpdateResponse
@@ -575,6 +582,12 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating session state for {SessionId}", body.SessionId);
+            await PublishErrorEventAsync(
+                "UpdateSessionState",
+                "dependency_failure",
+                ex.Message,
+                dependency: "lib-state",
+                details: new { body.SessionId, body.ServiceId, body.NewState });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -594,28 +607,24 @@ public partial class PermissionsService : IPermissionsService
             var statesKey = string.Format(SESSION_STATES_KEY, body.SessionId);
 
             // Get current session states
-            var sessionStates = await _daprClient.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE, statesKey, cancellationToken: cancellationToken) ?? new Dictionary<string, string>();
+            var sessionStates = await _stateStoreFactory.GetStore<Dictionary<string, string>>(STATE_STORE)
+                .GetAsync(statesKey, cancellationToken) ?? new Dictionary<string, string>();
 
             // Update role
             sessionStates["role"] = body.NewRole;
 
             // Get active sessions
-            var activeSessions = await _daprClient.GetStateAsync<HashSet<string>>(
-                STATE_STORE, ACTIVE_SESSIONS_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var activeSessions = await hashSetStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
             activeSessions.Add(body.SessionId);
 
-            // Atomic update
-            var transactionRequests = new List<StateTransactionRequest>
-            {
-                new StateTransactionRequest(statesKey, BannouJson.SerializeToUtf8Bytes(sessionStates), StateOperationType.Upsert),
-                new StateTransactionRequest(ACTIVE_SESSIONS_KEY, BannouJson.SerializeToUtf8Bytes(activeSessions), StateOperationType.Upsert)
-            };
-
-            await _daprClient.ExecuteStateTransactionAsync(STATE_STORE, transactionRequests, cancellationToken: cancellationToken);
+            // Save session states and active sessions
+            await _stateStoreFactory.GetStore<Dictionary<string, string>>(STATE_STORE)
+                .SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
+            await hashSetStore.SaveAsync(ACTIVE_SESSIONS_KEY, activeSessions, cancellationToken: cancellationToken);
 
             // Recompile all permissions for this session using the states we already have
-            // (avoids read-after-write consistency issues by not re-reading from Dapr)
+            // (avoids read-after-write consistency issues by not re-reading from state store)
             await RecompileSessionPermissionsAsync(body.SessionId, sessionStates, "role_changed");
 
             return (StatusCodes.OK, new SessionUpdateResponse
@@ -628,6 +637,12 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating session role for {SessionId}", body.SessionId);
+            await PublishErrorEventAsync(
+                "UpdateSessionRole",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.SessionId, body.NewRole });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -646,8 +661,8 @@ public partial class PermissionsService : IPermissionsService
             var statesKey = string.Format(SESSION_STATES_KEY, body.SessionId);
 
             // Get current session states
-            var sessionStates = await _daprClient.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE, statesKey, cancellationToken: cancellationToken);
+            var statesStore = _stateStoreFactory.GetStore<Dictionary<string, string>>(STATE_STORE);
+            var sessionStates = await statesStore.GetAsync(statesKey, cancellationToken);
 
             if (sessionStates == null || !sessionStates.ContainsKey(body.ServiceId))
             {
@@ -690,13 +705,8 @@ public partial class PermissionsService : IPermissionsService
             // Remove the state
             sessionStates.Remove(body.ServiceId);
 
-            // Atomic update
-            var transactionRequests = new List<StateTransactionRequest>
-            {
-                new StateTransactionRequest(statesKey, BannouJson.SerializeToUtf8Bytes(sessionStates), StateOperationType.Upsert)
-            };
-
-            await _daprClient.ExecuteStateTransactionAsync(STATE_STORE, transactionRequests, cancellationToken: cancellationToken);
+            // Save updated session states
+            await statesStore.SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
 
             // Recompile session permissions
             await RecompileSessionPermissionsAsync(body.SessionId, sessionStates, "session_state_cleared");
@@ -712,6 +722,12 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error clearing session state for {SessionId}", body.SessionId);
+            await PublishErrorEventAsync(
+                "ClearSessionState",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.SessionId, body.ServiceId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -731,10 +747,10 @@ public partial class PermissionsService : IPermissionsService
             var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, body.SessionId);
 
             // Get session states and permissions concurrently
-            var statesTask = _daprClient.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE, statesKey, cancellationToken: cancellationToken);
-            var permissionsTask = _daprClient.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE, permissionsKey, cancellationToken: cancellationToken);
+            var statesTask = _stateStoreFactory.GetStore<Dictionary<string, string>>(STATE_STORE)
+                .GetAsync(statesKey, cancellationToken);
+            var permissionsTask = _stateStoreFactory.GetStore<Dictionary<string, object>>(STATE_STORE)
+                .GetAsync(permissionsKey, cancellationToken);
 
             await Task.WhenAll(statesTask, permissionsTask);
 
@@ -786,20 +802,26 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting session info for {SessionId}", body.SessionId);
+            await PublishErrorEventAsync(
+                "GetSessionInfo",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: new { body.SessionId });
             return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Recompile permissions for a session and publish update to Connect service.
-    /// Reads session states from Dapr (used when states are not already in memory).
+    /// Reads session states from state store (used when states are not already in memory).
     /// </summary>
     private async Task RecompileSessionPermissionsAsync(string sessionId, string reason)
     {
-        // Get session states from Dapr
+        // Get session states from state store
         var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        var sessionStates = await _daprClient.GetStateAsync<Dictionary<string, string>>(
-            STATE_STORE, statesKey);
+        var sessionStates = await _stateStoreFactory.GetStore<Dictionary<string, string>>(STATE_STORE)
+            .GetAsync(statesKey);
 
         if (sessionStates == null || sessionStates.Count == 0)
         {
@@ -822,7 +844,7 @@ public partial class PermissionsService : IPermissionsService
     ///   - Cross-service (stateServiceId != serviceId): stateKey = "{stateServiceId}:{stateValue}" (e.g., "game-session:in_game")
     /// </summary>
     /// <param name="sessionId">Session ID to recompile permissions for.</param>
-    /// <param name="sessionStates">Session states dictionary (avoids re-reading from Dapr).</param>
+    /// <param name="sessionStates">Session states dictionary (avoids re-reading from state store).</param>
     /// <param name="reason">Reason for recompilation (for logging).</param>
     /// <param name="skipActiveConnectionsCheck">Skip activeConnections check in PublishCapabilityUpdateAsync (used when session just added).</param>
     private async Task RecompileSessionPermissionsAsync(
@@ -847,8 +869,8 @@ public partial class PermissionsService : IPermissionsService
             var compiledPermissions = new Dictionary<string, HashSet<string>>();
 
             // First, get all registered services and check "default" state permissions for the role
-            var registeredServices = await _daprClient.GetStateAsync<HashSet<string>>(
-                STATE_STORE, REGISTERED_SERVICES_KEY) ?? new HashSet<string>();
+            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var registeredServices = await hashSetStore.GetAsync(REGISTERED_SERVICES_KEY) ?? new HashSet<string>();
 
             _logger.LogInformation("Found {Count} registered services: {Services}",
                 registeredServices.Count, string.Join(", ", registeredServices));
@@ -873,7 +895,7 @@ public partial class PermissionsService : IPermissionsService
                     foreach (var roleName in ROLE_ORDER)
                     {
                         var matrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, stateKey, roleName);
-                        var endpoints = await _daprClient.GetStateAsync<HashSet<string>>(STATE_STORE, matrixKey);
+                        var endpoints = await hashSetStore.GetAsync(matrixKey);
 
                         _logger.LogDebug("State-based lookup: service={ServiceId}, stateKey={StateKey}, role={Role}, key={Key}, found={Count}",
                             serviceId, stateKey, roleName, matrixKey, endpoints?.Count ?? 0);
@@ -910,8 +932,8 @@ public partial class PermissionsService : IPermissionsService
 
             // Store compiled permissions with version increment
             var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
-            var existingPermissions = await _daprClient.GetStateAsync<Dictionary<string, object>>(
-                STATE_STORE, permissionsKey) ?? new Dictionary<string, object>();
+            var permissionsStore = _stateStoreFactory.GetStore<Dictionary<string, object>>(STATE_STORE);
+            var existingPermissions = await permissionsStore.GetAsync(permissionsKey) ?? new Dictionary<string, object>();
 
             var currentVersion = 0;
             if (existingPermissions.ContainsKey("version"))
@@ -928,7 +950,7 @@ public partial class PermissionsService : IPermissionsService
             newPermissionData["version"] = newVersion;
             newPermissionData["generated_at"] = DateTimeOffset.UtcNow.ToString();
 
-            await _daprClient.SaveStateAsync(STATE_STORE, permissionsKey, newPermissionData);
+            await permissionsStore.SaveAsync(permissionsKey, newPermissionData);
 
             // Clear in-memory cache after write
             _sessionCapabilityCache.TryRemove(sessionId, out _);
@@ -950,7 +972,7 @@ public partial class PermissionsService : IPermissionsService
                 "RecompileSessionPermissions",
                 "dependency_failure",
                 ex.Message,
-                dependency: "dapr-state",
+                dependency: "state",
                 details: new { sessionId, reason });
         }
     }
@@ -961,7 +983,7 @@ public partial class PermissionsService : IPermissionsService
     /// and sends CapabilityManifestEvent to the client. No API callback required.
     /// CRITICAL: Only publishes to sessions in activeConnections to avoid RabbitMQ exchange not_found crashes,
     /// unless skipActiveConnectionsCheck is true (used when called from HandleSessionConnectedAsync where we
-    /// just added the session to activeConnections and want to avoid Dapr read-after-write consistency issues).
+    /// just added the session to activeConnections and want to avoid state store read-after-write consistency issues).
     /// </summary>
     private async Task PublishCapabilityUpdateAsync(
         string sessionId,
@@ -976,8 +998,8 @@ public partial class PermissionsService : IPermissionsService
             // Skip this check when called from HandleSessionConnectedAsync (we just added the session)
             if (!skipActiveConnectionsCheck)
             {
-                var activeConnections = await _daprClient.GetStateAsync<HashSet<string>>(
-                    STATE_STORE, ACTIVE_CONNECTIONS_KEY) ?? new HashSet<string>();
+                var activeConnections = await _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE)
+                    .GetAsync(ACTIVE_CONNECTIONS_KEY) ?? new HashSet<string>();
 
                 if (!activeConnections.Contains(sessionId))
                 {
@@ -1019,17 +1041,18 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error publishing capabilities for session {SessionId}", sessionId);
+            _ = PublishErrorEventAsync("PublishCapabilities", ex.GetType().Name, ex.Message, dependency: "messaging", details: new { SessionId = sessionId });
         }
     }
 
-    private Task PublishErrorEventAsync(
+    private async Task PublishErrorEventAsync(
         string operation,
         string errorType,
         string message,
         string? dependency = null,
         object? details = null)
     {
-        return _errorEventEmitter.TryPublishAsync(
+        await _messageBus.TryPublishErrorAsync(
             serviceId: "permissions",
             operation: operation,
             errorType: errorType,
@@ -1049,20 +1072,20 @@ public partial class PermissionsService : IPermissionsService
             _logger.LogDebug("Getting list of registered services");
 
             // Get all registered service IDs
-            var registeredServiceIds = await _daprClient.GetStateAsync<HashSet<string>>(
-                STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var registeredServiceIds = await hashSetStore.GetAsync(REGISTERED_SERVICES_KEY, cancellationToken) ?? new HashSet<string>();
 
             _logger.LogDebug("Found {Count} registered services: {Services}",
                 registeredServiceIds.Count, string.Join(", ", registeredServiceIds));
 
             var services = new List<RegisteredServiceInfo>();
+            var dictStore = _stateStoreFactory.GetStore<Dictionary<string, object>>(STATE_STORE);
 
             foreach (var serviceId in registeredServiceIds)
             {
                 // Get individual registration info for this service
                 var serviceRegisteredKey = string.Format(SERVICE_REGISTERED_KEY, serviceId);
-                var registrationData = await _daprClient.GetStateAsync<Dictionary<string, object>>(
-                    STATE_STORE, serviceRegisteredKey, cancellationToken: cancellationToken);
+                var registrationData = await dictStore.GetAsync(serviceRegisteredKey, cancellationToken);
 
                 // Count endpoints for this service by scanning permission matrix keys
                 // We look for all state/role combinations and sum unique endpoints
@@ -1078,8 +1101,7 @@ public partial class PermissionsService : IPermissionsService
                     foreach (var role in roles)
                     {
                         var matrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, state, role);
-                        var endpoints = await _daprClient.GetStateAsync<HashSet<string>>(
-                            STATE_STORE, matrixKey, cancellationToken: cancellationToken);
+                        var endpoints = await hashSetStore.GetAsync(matrixKey, cancellationToken);
 
                         if (endpoints != null)
                         {
@@ -1154,6 +1176,12 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting registered services");
+            await PublishErrorEventAsync(
+                "GetRegisteredServices",
+                "dependency_failure",
+                ex.Message,
+                dependency: "state",
+                details: null);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1168,7 +1196,7 @@ public partial class PermissionsService : IPermissionsService
     public async Task RegisterServicePermissionsAsync()
     {
         _logger.LogInformation("Registering Permissions service permissions...");
-        await PermissionsPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+        await PermissionsPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
     }
 
     #endregion
@@ -1202,8 +1230,8 @@ public partial class PermissionsService : IPermissionsService
             // Build session states dictionary with role and authorizations
             // This is the format expected by RecompileSessionPermissionsAsync
             var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-            var sessionStates = await _daprClient.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE, statesKey, cancellationToken: cancellationToken) ?? new Dictionary<string, string>();
+            var statesStore = _stateStoreFactory.GetStore<Dictionary<string, string>>(STATE_STORE);
+            var sessionStates = await statesStore.GetAsync(statesKey, cancellationToken) ?? new Dictionary<string, string>();
 
             // Add role to session states
             var role = DetermineHighestPriorityRole(roles);
@@ -1227,29 +1255,28 @@ public partial class PermissionsService : IPermissionsService
                 }
             }
 
-            // Store session states atomically
-            await _daprClient.SaveStateAsync(STATE_STORE, statesKey, sessionStates, cancellationToken: cancellationToken);
+            // Store session states
+            await statesStore.SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
 
             // Add to activeConnections (sessions with WebSocket connections where exchange exists)
-            var activeConnections = await _daprClient.GetStateAsync<HashSet<string>>(
-                STATE_STORE, ACTIVE_CONNECTIONS_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var activeConnections = await hashSetStore.GetAsync(ACTIVE_CONNECTIONS_KEY, cancellationToken) ?? new HashSet<string>();
 
             if (!activeConnections.Contains(sessionId))
             {
                 activeConnections.Add(sessionId);
-                await _daprClient.SaveStateAsync(STATE_STORE, ACTIVE_CONNECTIONS_KEY, activeConnections, cancellationToken: cancellationToken);
+                await hashSetStore.SaveAsync(ACTIVE_CONNECTIONS_KEY, activeConnections, cancellationToken: cancellationToken);
                 _logger.LogDebug("Added session {SessionId} to active connections. Total: {Count}",
                     sessionId, activeConnections.Count);
             }
 
             // Also ensure session is in activeSessions for state tracking
-            var activeSessions = await _daprClient.GetStateAsync<HashSet<string>>(
-                STATE_STORE, ACTIVE_SESSIONS_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+            var activeSessions = await hashSetStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
 
             if (!activeSessions.Contains(sessionId))
             {
                 activeSessions.Add(sessionId);
-                await _daprClient.SaveStateAsync(STATE_STORE, ACTIVE_SESSIONS_KEY, activeSessions, cancellationToken: cancellationToken);
+                await hashSetStore.SaveAsync(ACTIVE_SESSIONS_KEY, activeSessions, cancellationToken: cancellationToken);
             }
 
             // Compile and publish initial capabilities for this session using the states we just built
@@ -1257,7 +1284,7 @@ public partial class PermissionsService : IPermissionsService
             // RecompileSessionPermissionsAsync calls PublishCapabilityUpdateAsync which sends
             // SessionCapabilitiesEvent with actual permissions data to Connect
             // CRITICAL: skipActiveConnectionsCheck=true because we JUST added sessionId to activeConnections above
-            // and Dapr state store has eventual consistency - re-reading might not show the session yet
+            // and state store has eventual consistency - re-reading might not show the session yet
             await RecompileSessionPermissionsAsync(sessionId, sessionStates, "session_connected", skipActiveConnectionsCheck: true);
 
             return (StatusCodes.OK, new SessionUpdateResponse
@@ -1270,6 +1297,7 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to handle session connected for {SessionId}", sessionId);
+            await PublishErrorEventAsync("HandleSessionConnected", ex.GetType().Name, ex.Message, dependency: "state", details: new { SessionId = sessionId });
             return (StatusCodes.InternalServerError, new SessionUpdateResponse
             {
                 Success = false,
@@ -1298,13 +1326,13 @@ public partial class PermissionsService : IPermissionsService
                 sessionId, reconnectable);
 
             // Remove from activeConnections (no longer has WebSocket/exchange)
-            var activeConnections = await _daprClient.GetStateAsync<HashSet<string>>(
-                STATE_STORE, ACTIVE_CONNECTIONS_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var activeConnections = await hashSetStore.GetAsync(ACTIVE_CONNECTIONS_KEY, cancellationToken) ?? new HashSet<string>();
 
             if (activeConnections.Contains(sessionId))
             {
                 activeConnections.Remove(sessionId);
-                await _daprClient.SaveStateAsync(STATE_STORE, ACTIVE_CONNECTIONS_KEY, activeConnections, cancellationToken: cancellationToken);
+                await hashSetStore.SaveAsync(ACTIVE_CONNECTIONS_KEY, activeConnections, cancellationToken: cancellationToken);
                 _logger.LogDebug("Removed session {SessionId} from active connections. Remaining: {Count}",
                     sessionId, activeConnections.Count);
             }
@@ -1312,13 +1340,12 @@ public partial class PermissionsService : IPermissionsService
             // If not reconnectable, also remove from activeSessions and clear session state
             if (!reconnectable)
             {
-                var activeSessions = await _daprClient.GetStateAsync<HashSet<string>>(
-                    STATE_STORE, ACTIVE_SESSIONS_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+                var activeSessions = await hashSetStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
 
                 if (activeSessions.Contains(sessionId))
                 {
                     activeSessions.Remove(sessionId);
-                    await _daprClient.SaveStateAsync(STATE_STORE, ACTIVE_SESSIONS_KEY, activeSessions, cancellationToken: cancellationToken);
+                    await hashSetStore.SaveAsync(ACTIVE_SESSIONS_KEY, activeSessions, cancellationToken: cancellationToken);
                 }
 
                 // Clear session state and permissions cache
@@ -1340,6 +1367,7 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to handle session disconnected for {SessionId}", sessionId);
+            await PublishErrorEventAsync("HandleSessionDisconnected", ex.GetType().Name, ex.Message, dependency: "state", details: new { SessionId = sessionId });
             return (StatusCodes.InternalServerError, new SessionUpdateResponse
             {
                 Success = false,

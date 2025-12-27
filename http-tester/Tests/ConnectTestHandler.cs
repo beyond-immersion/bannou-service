@@ -3,8 +3,6 @@ using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
-using Microsoft.Extensions.DependencyInjection;
-using System.Collections.ObjectModel;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -13,154 +11,127 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 /// Tests the connect service APIs directly via NSwag-generated ConnectClient.
 /// Note: This tests HTTP endpoints only - WebSocket functionality is tested in edge-tester.
 /// </summary>
-public class ConnectTestHandler : IServiceTestHandler
+public class ConnectTestHandler : BaseHttpTestHandler
 {
-    public ServiceTest[] GetServiceTests()
-    {
-        return new[]
-        {
-            // Client Capabilities Tests (GUID -> API mappings for clients)
-            // NOTE: Service routing (service-name -> app-id) has moved to Orchestrator API
-            new ServiceTest(TestClientCapabilities, "ClientCapabilities", "Connect", "Test client capability manifest retrieval"),
-            new ServiceTest(TestClientCapabilitiesStructure, "CapabilitiesStructure", "Connect", "Test capability response has valid structure"),
+    public override ServiceTest[] GetServiceTests() =>
+    [
+        // Client Capabilities Tests (GUID -> API mappings for clients)
+        // NOTE: Service routing (service-name -> app-id) has moved to Orchestrator API
+        new ServiceTest(TestClientCapabilities, "ClientCapabilities", "Connect", "Test client capability manifest retrieval"),
+        new ServiceTest(TestClientCapabilitiesStructure, "CapabilitiesStructure", "Connect", "Test capability response has valid structure"),
 
-            // Internal Proxy Tests
-            new ServiceTest(TestInternalProxy, "InternalProxy", "Connect", "Test internal API proxy functionality"),
-            new ServiceTest(TestInternalProxyToInvalidService, "ProxyInvalidService", "Connect", "Test proxy to invalid service returns error"),
-            new ServiceTest(TestInternalProxyWithoutSession, "ProxyNoSession", "Connect", "Test proxy without session ID fails appropriately"),
-            new ServiceTest(TestInternalProxyWithDifferentMethods, "ProxyMethods", "Connect", "Test proxy handles different HTTP methods"),
-            new ServiceTest(TestInternalProxyWithBody, "ProxyWithBody", "Connect", "Test proxy correctly forwards request body"),
-            new ServiceTest(TestInternalProxyWithHeaders, "ProxyWithHeaders", "Connect", "Test proxy correctly forwards custom headers"),
-            new ServiceTest(TestInternalProxyEmptyEndpoint, "ProxyEmptyEndpoint", "Connect", "Test proxy handles empty endpoint"),
-            new ServiceTest(TestInternalProxyToAccountsService, "ProxyAccounts", "Connect", "Test proxy to accounts service"),
+        // Internal Proxy Tests
+        new ServiceTest(TestInternalProxy, "InternalProxy", "Connect", "Test internal API proxy functionality"),
+        new ServiceTest(TestInternalProxyToInvalidService, "ProxyInvalidService", "Connect", "Test proxy to invalid service returns error"),
+        new ServiceTest(TestInternalProxyWithoutSession, "ProxyNoSession", "Connect", "Test proxy without session ID fails appropriately"),
+        new ServiceTest(TestInternalProxyWithDifferentMethods, "ProxyMethods", "Connect", "Test proxy handles different HTTP methods"),
+        new ServiceTest(TestInternalProxyWithBody, "ProxyWithBody", "Connect", "Test proxy correctly forwards request body"),
+        new ServiceTest(TestInternalProxyWithHeaders, "ProxyWithHeaders", "Connect", "Test proxy correctly forwards custom headers"),
+        new ServiceTest(TestInternalProxyEmptyEndpoint, "ProxyEmptyEndpoint", "Connect", "Test proxy handles empty endpoint"),
+        new ServiceTest(TestInternalProxyToAccountsService, "ProxyAccounts", "Connect", "Test proxy to accounts service"),
 
-            // Session validation tests (dependencies for WebSocket upgrade)
-            new ServiceTest(TestTokenValidationForWebSocket, "WSTokenValidation", "Connect", "Test token validation used in WebSocket upgrade"),
-            new ServiceTest(TestTokenValidationReturnsSessionData, "WSSessionData", "Connect", "Test token validation returns session data for Connect"),
-            new ServiceTest(TestSequentialTokenValidations, "WSSeqValidation", "Connect", "Test sequential token validations (simulating WS pre-checks)"),
-            new ServiceTest(TestTokenValidationAfterOtherOperations, "WSPostOps", "Connect", "Test token validation after other API operations"),
-        };
-    }
-
-    /// <summary>
-    /// Gets a service client from the dependency injection container.
-    /// </summary>
-    private static T GetServiceClient<T>() where T : class
-    {
-        if (Program.ServiceProvider == null)
-            throw new InvalidOperationException("Service provider not initialized");
-
-        return Program.ServiceProvider.GetRequiredService<T>();
-    }
+        // Session validation tests (dependencies for WebSocket upgrade)
+        new ServiceTest(TestTokenValidationForWebSocket, "WSTokenValidation", "Connect", "Test token validation used in WebSocket upgrade"),
+        new ServiceTest(TestTokenValidationReturnsSessionData, "WSSessionData", "Connect", "Test token validation returns session data for Connect"),
+        new ServiceTest(TestSequentialTokenValidations, "WSSeqValidation", "Connect", "Test sequential token validations (simulating WS pre-checks)"),
+        new ServiceTest(TestTokenValidationAfterOtherOperations, "WSPostOps", "Connect", "Test token validation after other API operations"),
+    ];
 
     /// <summary>
     /// Test the client capabilities endpoint.
     /// Returns GUID -> API mappings for the authenticated client's session.
     /// </summary>
-    private static async Task<TestResult> TestClientCapabilities(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestClientCapabilities(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var connectClient = new ConnectClient();
-            var response = await connectClient.GetClientCapabilitiesAsync(new GetClientCapabilitiesRequest());
+            var connectClient = GetServiceClient<IConnectClient>();
 
-            if (response == null)
-                return TestResult.Failed("Client capabilities response is null");
+            try
+            {
+                var response = await connectClient.GetClientCapabilitiesAsync(new GetClientCapabilitiesRequest());
 
-            // Even placeholder implementation should have required fields
-            if (response.Capabilities == null)
-                return TestResult.Failed("Capabilities list is null");
+                if (response == null)
+                    return TestResult.Failed("Client capabilities response is null");
 
-            if (response.Version < 0)
-                return TestResult.Failed($"Invalid version: {response.Version}");
+                // Even placeholder implementation should have required fields
+                if (response.Capabilities == null)
+                    return TestResult.Failed("Capabilities list is null");
 
-            if (response.GeneratedAt == default)
-                return TestResult.Failed("GeneratedAt timestamp is not set");
+                if (response.Version < 0)
+                    return TestResult.Failed($"Invalid version: {response.Version}");
 
-            return TestResult.Successful(
-                $"Client capabilities retrieved: {response.Capabilities.Count} capabilities, " +
-                $"version={response.Version}, sessionId={response.SessionId ?? "(placeholder)"}");
-        }
-        catch (ApiException ex) when (ex.StatusCode == 401)
-        {
-            // 401 is expected for unauthenticated requests - capabilities require auth
-            return TestResult.Successful("Client capabilities correctly returned 401 (authentication required)");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
+                if (response.GeneratedAt == default)
+                    return TestResult.Failed("GeneratedAt timestamp is not set");
+
+                return TestResult.Successful(
+                    $"Client capabilities retrieved: {response.Capabilities.Count} capabilities, " +
+                    $"version={response.Version}, sessionId={response.SessionId ?? "(placeholder)"}");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 401)
+            {
+                // 401 is expected for unauthenticated requests - capabilities require auth
+                return TestResult.Successful("Client capabilities correctly returned 401 (authentication required)");
+            }
+        }, "Client capabilities");
 
     /// <summary>
     /// Test that client capabilities response has valid structure.
     /// </summary>
-    private static async Task<TestResult> TestClientCapabilitiesStructure(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestClientCapabilitiesStructure(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var connectClient = new ConnectClient();
-            var response = await connectClient.GetClientCapabilitiesAsync(new GetClientCapabilitiesRequest());
+            var connectClient = GetServiceClient<IConnectClient>();
 
-            // Check required fields exist
-            var issues = new List<string>();
-
-            if (response.SessionId == null)
-                issues.Add("SessionId is null (should be set even for placeholder)");
-
-            if (response.Capabilities == null)
-                issues.Add("Capabilities is null");
-
-            if (response.GeneratedAt == default)
-                issues.Add("GeneratedAt is default");
-
-            // Check each capability has required fields (if any exist)
-            if (response.Capabilities?.Count > 0)
+            try
             {
-                foreach (var cap in response.Capabilities)
+                var response = await connectClient.GetClientCapabilitiesAsync(new GetClientCapabilitiesRequest());
+
+                // Check required fields exist
+                var issues = new List<string>();
+
+                if (response.SessionId == null)
+                    issues.Add("SessionId is null (should be set even for placeholder)");
+
+                if (response.Capabilities == null)
+                    issues.Add("Capabilities is null");
+
+                if (response.GeneratedAt == default)
+                    issues.Add("GeneratedAt is default");
+
+                // Check each capability has required fields (if any exist)
+                if (response.Capabilities?.Count > 0)
                 {
-                    if (cap.Guid == Guid.Empty)
-                        issues.Add($"Capability missing Guid");
-                    if (string.IsNullOrEmpty(cap.Service))
-                        issues.Add($"Capability missing Service");
-                    if (string.IsNullOrEmpty(cap.Endpoint))
-                        issues.Add($"Capability missing Endpoint");
+                    foreach (var cap in response.Capabilities)
+                    {
+                        if (cap.Guid == Guid.Empty)
+                            issues.Add("Capability missing Guid");
+                        if (string.IsNullOrEmpty(cap.Service))
+                            issues.Add("Capability missing Service");
+                        if (string.IsNullOrEmpty(cap.Endpoint))
+                            issues.Add("Capability missing Endpoint");
+                    }
                 }
-            }
 
-            if (issues.Count > 0)
+                if (issues.Count > 0)
+                {
+                    return TestResult.Failed($"Capability structure issues: {string.Join(", ", issues)}");
+                }
+
+                return TestResult.Successful(
+                    $"Client capabilities structure valid: version={response.Version}, " +
+                    $"capCount={response.Capabilities?.Count ?? 0}");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 401)
             {
-                return TestResult.Failed($"Capability structure issues: {string.Join(", ", issues)}");
+                // 401 is expected - capabilities require authentication
+                return TestResult.Successful("Client capabilities correctly returned 401 (authentication required)");
             }
+        }, "Client capabilities structure");
 
-            return TestResult.Successful(
-                $"Client capabilities structure valid: version={response.Version}, " +
-                $"capCount={response.Capabilities?.Count ?? 0}");
-        }
-        catch (ApiException ex) when (ex.StatusCode == 401)
+    private static Task<TestResult> TestInternalProxy(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            // 401 is expected - capabilities require authentication
-            return TestResult.Successful("Client capabilities correctly returned 401 (authentication required)");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
-
-    private static async Task<TestResult> TestInternalProxy(ITestClient client, string[] args)
-    {
-        try
-        {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"test-session-{DateTime.Now.Ticks}";
 
             var proxyRequest = new InternalProxyRequest
@@ -175,41 +146,31 @@ public class ConnectTestHandler : IServiceTestHandler
                 }
             };
 
-            var response = await connectClient.ProxyInternalRequestAsync(proxyRequest);
+            try
+            {
+                var response = await connectClient.ProxyInternalRequestAsync(proxyRequest);
 
-            if (response == null)
-                return TestResult.Failed("Internal proxy response is null");
+                if (response == null)
+                    return TestResult.Failed("Internal proxy response is null");
 
-            var statusCode = response.StatusCode;
-            var success = response.Success;
-
-            return TestResult.Successful($"Internal proxy completed - Success: {success}, Status: {statusCode}");
-        }
-        catch (ApiException ex) when (ex.StatusCode == 403)
-        {
-            // 403 is expected for proxy calls without proper auth
-            return TestResult.Successful($"Internal proxy correctly returned 403 (permission denied without auth)");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Internal proxy failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
+                return TestResult.Successful($"Internal proxy completed - Success: {response.Success}, Status: {response.StatusCode}");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 403)
+            {
+                // 403 is expected for proxy calls without proper auth
+                return TestResult.Successful("Internal proxy correctly returned 403 (permission denied without auth)");
+            }
+        }, "Internal proxy");
 
     /// <summary>
     /// Test proxy to an invalid service returns appropriate error.
     /// Note: Connect service validates permissions FIRST before checking service existence,
     /// so 403 is correct behavior (don't leak info about what services exist).
     /// </summary>
-    private static async Task<TestResult> TestInternalProxyToInvalidService(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestInternalProxyToInvalidService(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-invalid-{Guid.NewGuid():N}";
 
             var proxyRequest = new InternalProxyRequest
@@ -236,26 +197,16 @@ public class ConnectTestHandler : IServiceTestHandler
                 // 403 is expected - permission check happens before service existence check (correct security behavior)
                 return TestResult.Successful($"Proxy correctly returned {ex.StatusCode} for invalid service");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
+        }, "Proxy to invalid service");
 
     /// <summary>
     /// Test proxy without session ID fails appropriately.
     /// Note: 403 is valid - permission denied for empty/invalid session.
     /// </summary>
-    private static async Task<TestResult> TestInternalProxyWithoutSession(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestInternalProxyWithoutSession(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
 
             var proxyRequest = new InternalProxyRequest
             {
@@ -282,25 +233,15 @@ public class ConnectTestHandler : IServiceTestHandler
                 // 403 is expected - permission denied for empty/invalid session
                 return TestResult.Successful($"Proxy correctly returned {ex.StatusCode} for empty session ID");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
+        }, "Proxy without session");
 
     /// <summary>
     /// Test proxy handles different HTTP methods (GET, POST, PUT, DELETE).
     /// </summary>
-    private static async Task<TestResult> TestInternalProxyWithDifferentMethods(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestInternalProxyWithDifferentMethods(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-methods-{Guid.NewGuid():N}";
 
             var methods = new[]
@@ -356,21 +297,15 @@ public class ConnectTestHandler : IServiceTestHandler
             }
 
             return TestResult.Failed($"Some methods failed: {string.Join("; ", errorDetails)}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
+        }, "Proxy with different methods");
 
     /// <summary>
     /// Test proxy correctly forwards request body.
     /// </summary>
-    private static async Task<TestResult> TestInternalProxyWithBody(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestInternalProxyWithBody(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-body-{Guid.NewGuid():N}";
 
             var proxyRequest = new InternalProxyRequest
@@ -396,27 +331,17 @@ public class ConnectTestHandler : IServiceTestHandler
             catch (ApiException ex) when (ex.StatusCode == 403)
             {
                 // 403 is expected - permission denied without auth
-                return TestResult.Successful($"Proxy correctly returned 403 (permission denied without auth)");
+                return TestResult.Successful("Proxy correctly returned 403 (permission denied without auth)");
             }
-            catch (ApiException ex)
-            {
-                return TestResult.Failed($"Proxy with body failed: {ex.StatusCode} - {ex.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
+        }, "Proxy with body");
 
     /// <summary>
     /// Test proxy correctly forwards custom headers.
     /// </summary>
-    private static async Task<TestResult> TestInternalProxyWithHeaders(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestInternalProxyWithHeaders(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-headers-{Guid.NewGuid():N}";
 
             var proxyRequest = new InternalProxyRequest
@@ -441,28 +366,18 @@ public class ConnectTestHandler : IServiceTestHandler
             catch (ApiException ex) when (ex.StatusCode == 403)
             {
                 // 403 is expected - permission denied without auth
-                return TestResult.Successful($"Proxy correctly returned 403 (permission denied without auth)");
+                return TestResult.Successful("Proxy correctly returned 403 (permission denied without auth)");
             }
-            catch (ApiException ex)
-            {
-                return TestResult.Failed($"Proxy with headers failed: {ex.StatusCode} - {ex.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
+        }, "Proxy with headers");
 
     /// <summary>
     /// Test proxy handles empty endpoint.
     /// Note: 403 is valid - permission check happens before endpoint validation.
     /// </summary>
-    private static async Task<TestResult> TestInternalProxyEmptyEndpoint(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestInternalProxyEmptyEndpoint(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-empty-{Guid.NewGuid():N}";
 
             var proxyRequest = new InternalProxyRequest
@@ -490,25 +405,15 @@ public class ConnectTestHandler : IServiceTestHandler
                 // 403 is expected - permission check happens before endpoint validation
                 return TestResult.Successful($"Proxy correctly returned {ex.StatusCode} for empty endpoint");
             }
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
+        }, "Proxy with empty endpoint");
 
     /// <summary>
     /// Test proxy to accounts service specifically.
     /// </summary>
-    private static async Task<TestResult> TestInternalProxyToAccountsService(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestInternalProxyToAccountsService(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
-            var connectClient = new ConnectClient();
+            var connectClient = GetServiceClient<IConnectClient>();
             var testSessionId = $"proxy-accounts-{Guid.NewGuid():N}";
 
             var proxyRequest = new InternalProxyRequest
@@ -542,18 +447,9 @@ public class ConnectTestHandler : IServiceTestHandler
             catch (ApiException ex) when (ex.StatusCode == 403)
             {
                 // 403 is expected - permission denied without auth
-                return TestResult.Successful($"Proxy correctly returned 403 (permission denied without auth)");
+                return TestResult.Successful("Proxy correctly returned 403 (permission denied without auth)");
             }
-            catch (ApiException ex)
-            {
-                return TestResult.Failed($"Proxy to accounts failed: {ex.StatusCode} - {ex.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
+        }, "Proxy to accounts service");
 
     #region Session Validation Tests (WebSocket Dependencies)
 
@@ -561,9 +457,8 @@ public class ConnectTestHandler : IServiceTestHandler
     /// Test token validation endpoint that Connect service uses before WebSocket upgrade.
     /// This simulates the exact flow that happens in WebSocket connection establishment.
     /// </summary>
-    private static async Task<TestResult> TestTokenValidationForWebSocket(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestTokenValidationForWebSocket(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
             var testUsername = $"ws_token_{DateTime.Now.Ticks}";
@@ -587,7 +482,7 @@ public class ConnectTestHandler : IServiceTestHandler
                 return TestResult.Failed("Login failed to return access token");
 
             // This is what Connect service calls internally when validating WebSocket upgrade
-            var validation = await authClient.WithAuthorization(token).ValidateTokenAsync();
+            var validation = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token).ValidateTokenAsync();
 
             if (!validation.Valid)
                 return TestResult.Failed($"Token validation failed for WebSocket upgrade simulation. Valid={validation.Valid}, SessionId={validation.SessionId}, RemainingTime={validation.RemainingTime}");
@@ -600,23 +495,13 @@ public class ConnectTestHandler : IServiceTestHandler
                 return TestResult.Failed($"RemainingTime is {validation.RemainingTime} - session appears expired (ExpiresAtUnix deserialization issue?)");
 
             return TestResult.Successful($"Token validation for WebSocket ready. SessionId: {validation.SessionId}, RemainingTime: {validation.RemainingTime}s, Roles: {validation.Roles?.Count ?? 0}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
+        }, "Token validation for WebSocket");
 
     /// <summary>
     /// Test that token validation returns all session data needed by Connect service.
     /// </summary>
-    private static async Task<TestResult> TestTokenValidationReturnsSessionData(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestTokenValidationReturnsSessionData(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
             var testUsername = $"ws_data_{DateTime.Now.Ticks}";
@@ -634,7 +519,7 @@ public class ConnectTestHandler : IServiceTestHandler
                 Password = "TestPassword123!"
             });
 
-            var validation = await authClient.WithAuthorization(loginResponse.AccessToken).ValidateTokenAsync();
+            var validation = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(loginResponse.AccessToken).ValidateTokenAsync();
 
             // Check all required fields for Connect service
             var issues = new List<string>();
@@ -660,24 +545,14 @@ public class ConnectTestHandler : IServiceTestHandler
             }
 
             return TestResult.Successful($"Session data complete - AccountId: {validation.AccountId}, SessionId: {validation.SessionId}, RemainingTime: {validation.RemainingTime}s, Roles: [{string.Join(", ", validation.Roles ?? Array.Empty<string>())}]");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
+        }, "Token validation returns session data");
 
     /// <summary>
     /// Test sequential token validations to detect any state corruption over multiple calls.
     /// This simulates what happens when Connect service validates tokens repeatedly.
     /// </summary>
-    private static async Task<TestResult> TestSequentialTokenValidations(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestSequentialTokenValidations(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
             var testUsername = $"ws_seq_{DateTime.Now.Ticks}";
@@ -699,9 +574,9 @@ public class ConnectTestHandler : IServiceTestHandler
 
             // Perform 10 sequential validations
             var results = new List<(bool Valid, int RemainingTime)>();
-            for (int i = 0; i < 10; i++)
+            for (var i = 0; i < 10; i++)
             {
-                var validation = await authClient.WithAuthorization(token).ValidateTokenAsync();
+                var validation = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token).ValidateTokenAsync();
                 results.Add((validation.Valid, validation.RemainingTime));
 
                 // Small delay between validations
@@ -727,24 +602,14 @@ public class ConnectTestHandler : IServiceTestHandler
             var lastTime = results.Last().RemainingTime;
 
             return TestResult.Successful($"All 10 sequential validations succeeded. RemainingTime: {firstTime}s -> {lastTime}s");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
+        }, "Sequential token validations");
 
     /// <summary>
     /// Test token validation after performing other API operations.
     /// This simulates the scenario where auth tests run and then WebSocket tests run.
     /// </summary>
-    private static async Task<TestResult> TestTokenValidationAfterOtherOperations(ITestClient client, string[] args)
-    {
-        try
+    private static Task<TestResult> TestTokenValidationAfterOtherOperations(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
         {
             var authClient = GetServiceClient<IAuthClient>();
             var testUsername = $"ws_postops_{DateTime.Now.Ticks}";
@@ -763,7 +628,7 @@ public class ConnectTestHandler : IServiceTestHandler
             var token1 = loginResponse1.AccessToken;
 
             // Validate initial session
-            var validation1 = await authClient.WithAuthorization(token1).ValidateTokenAsync();
+            var validation1 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token1).ValidateTokenAsync();
             if (!validation1.Valid || validation1.RemainingTime <= 0)
                 return TestResult.Failed($"Initial validation failed: Valid={validation1.Valid}, RT={validation1.RemainingTime}");
 
@@ -775,10 +640,10 @@ public class ConnectTestHandler : IServiceTestHandler
             var loginResponse3 = await authClient.LoginAsync(new LoginRequest { Email = email, Password = password });
 
             // 3. Logout third session (simulating Logout test)
-            await authClient.WithAuthorization(loginResponse3.AccessToken).LogoutAsync(new LogoutRequest { AllSessions = false });
+            await ((IServiceClient<AuthClient>)authClient).WithAuthorization(loginResponse3.AccessToken).LogoutAsync(new LogoutRequest { AllSessions = false });
 
             // Now validate the ORIGINAL session - this is what WebSocket tests do
-            var validation2 = await authClient.WithAuthorization(token1).ValidateTokenAsync();
+            var validation2 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token1).ValidateTokenAsync();
 
             if (!validation2.Valid)
             {
@@ -791,23 +656,14 @@ public class ConnectTestHandler : IServiceTestHandler
             }
 
             // Also validate second session is still valid
-            var validation3 = await authClient.WithAuthorization(loginResponse2.AccessToken).ValidateTokenAsync();
+            var validation3 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(loginResponse2.AccessToken).ValidateTokenAsync();
             if (!validation3.Valid || validation3.RemainingTime <= 0)
             {
                 return TestResult.Failed($"Second session invalid after logout of third: Valid={validation3.Valid}, RT={validation3.RemainingTime}");
             }
 
             return TestResult.Successful($"Original session remains valid after other operations. Session1 RT: {validation2.RemainingTime}s, Session2 RT: {validation3.RemainingTime}s");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
+        }, "Token validation after other operations");
 
     #endregion
 }

@@ -14,13 +14,14 @@ public class HealthController : ControllerBase
     /// </summary>
     /// <returns>HTTP 200 if healthy, 503 if starting, 500 if error.</returns>
     [HttpGet]
-    public Task<IActionResult> Get()
+    public async Task<IActionResult> Get()
     {
+        await Task.CompletedTask; // Satisfy async requirement for sync method
         return Program.AppRunningState switch
         {
-            AppRunningStates.Running => Task.FromResult<IActionResult>(Ok("Healthy")),
-            AppRunningStates.Starting => Task.FromResult<IActionResult>(StatusCode(503, "Service unavailable")),
-            _ => Task.FromResult<IActionResult>(StatusCode(500, "Service error")),
+            AppRunningStates.Running => Ok("Healthy"),
+            AppRunningStates.Starting => StatusCode(503, "Service unavailable"),
+            _ => StatusCode(500, "Service error"),
         };
     }
 
@@ -29,13 +30,14 @@ public class HealthController : ControllerBase
     /// </summary>
     /// <returns>HTTP 200 if healthy, 503 if starting, 500 if error.</returns>
     [HttpPost]
-    public Task<IActionResult> Post()
+    public async Task<IActionResult> Post()
     {
+        await Task.CompletedTask; // Satisfy async requirement for sync method
         return Program.AppRunningState switch
         {
-            AppRunningStates.Running => Task.FromResult<IActionResult>(Ok("Healthy")),
-            AppRunningStates.Starting => Task.FromResult<IActionResult>(StatusCode(503, "Service unavailable")),
-            _ => Task.FromResult<IActionResult>(StatusCode(500, "Service error")),
+            AppRunningStates.Running => Ok("Healthy"),
+            AppRunningStates.Starting => StatusCode(503, "Service unavailable"),
+            _ => StatusCode(500, "Service error"),
         };
     }
 }

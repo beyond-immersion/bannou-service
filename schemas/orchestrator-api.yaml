@@ -7,13 +7,13 @@ info:
 
     **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
-    See API-DESIGN.md for architectural rationale.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
 
     The orchestrator service provides comprehensive environment lifecycle management:
     - **Environment Provisioning**: Deploy complete environments via API (replaces Makefile/docker-compose)
     - **Dynamic Service Topology**: Reconfigure which services run on which containers at runtime
     - **Multi-Backend Support**: Docker Compose, Docker Swarm, Portainer, and Kubernetes
-    - **Infrastructure Health**: Monitor Redis, RabbitMQ, Dapr placement, and custom services
+    - **Infrastructure Health**: Monitor Redis, RabbitMQ, and custom services
     - **Smart Service Management**: Restart, scale, and configure services based on health metrics
     - **Deployment Presets**: Testing is configured via deployment presets (e.g., http-tests, edge-tests)
 
@@ -24,13 +24,13 @@ info:
     4. Docker Compose (single-host containers)
 
     **Architecture**: The orchestrator uses DIRECT connections to Redis, RabbitMQ,
-    and container APIs for its own infrastructure monitoring. It ALSO has a Dapr
-    sidecar (app-id: "orchestrator") so other services can call its APIs via Dapr
-    service invocation.
+    and container APIs for its own infrastructure monitoring. It ALSO runs as a plugin within
+    bannou so other services can call its APIs via mesh
+    service invocation through lib-mesh.
 
 servers:
-- url: http://localhost:3500/v1.0/invoke/bannou/method
-  description: Dapr sidecar endpoint for service-to-service invocation (orchestrator runs as plugin within bannou)
+- url: http://localhost:5012
+  description: Service endpoint for service-to-service invocation (orchestrator runs as plugin within bannou)
 
 paths:
   /orchestrator/health/infrastructure:
@@ -40,7 +40,7 @@ paths:
         Validates connectivity and health of core infrastructure components:
         - Redis (direct connection via StackExchange.Redis)
         - RabbitMQ (direct connection via RabbitMQ.Client)
-        - Dapr Placement service
+        - 
       operationId: GetInfrastructureHealth
       x-permissions:
       - role: admin
@@ -53,13 +53,7 @@ paths:
               $ref: '#/components/schemas/InfrastructureHealthRequest'
       responses:
         '200':
-          description: Infrastructure health status
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InfrastructureHealthResponse'
-        '503':
-          description: One or more infrastructure components unavailable
+          description: Infrastructure health status (check response body for component health)
           content:
             application/json:
               schema:
@@ -91,8 +85,8 @@ paths:
         \  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Check infrastructure component health\",\n  \"description\": \"Validates
         connectivity and health of core infrastructure components:\\n- Redis (direct connection via StackExchange.Redis)\\
-        n- RabbitMQ (direct connection via RabbitMQ.Client)\\n- Dapr Placement service\\n\",\n  \"tags\": [],\n  \"deprecated\"\
-        : false,\n  \"operationId\": \"GetInfrastructureHealth\"\n}"
+        n- RabbitMQ (direct connection via RabbitMQ.Client)\\n- \\n\",\n  \"tags\": [],\n  \"deprecated\": false,\n  \"operationId\"\
+        : \"GetInfrastructureHealth\"\n}"
   /orchestrator/health/services:
     post:
       summary: Get health status of all services
@@ -139,17 +133,17 @@ paths:
         serviceId\",\n        \"appId\",\n        \"status\",\n        \"lastSeen\"\n      ],\n      \"properties\": {\n \
         \       \"serviceId\": {\n          \"type\": \"string\",\n          \"description\": \"Service ID (e.g., \\\"behavior\\\
         \", \\\"accounts\\\")\"\n        },\n        \"appId\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Dapr app-id (e.g., \\\"bannou\\\", \\\"npc-omega-01\\\")\"\n        },\n        \"status\": {\n          \"type\"\
-        : \"string\",\n          \"description\": \"Service status from heartbeat\"\n        },\n        \"lastSeen\": {\n\
-        \          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Last heartbeat
-        timestamp\"\n        },\n        \"capacity\": {\n          \"type\": \"object\",\n          \"description\": \"Service
-        capacity from heartbeat\",\n          \"properties\": {\n            \"maxConnections\": {\n              \"type\"\
-        : \"integer\"\n            },\n            \"currentConnections\": {\n              \"type\": \"integer\"\n      \
-        \      },\n            \"cpuUsage\": {\n              \"type\": \"number\",\n              \"format\": \"float\"\n\
-        \            },\n            \"memoryUsage\": {\n              \"type\": \"number\",\n              \"format\": \"\
-        float\"\n            }\n          }\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n      \
-        \    \"additionalProperties\": true,\n          \"description\": \"Additional service metadata\"\n        }\n    \
-        \  }\n    }\n  }\n}"
+        : \"App-id for mesh routing (e.g., \\\"bannou\\\", \\\"npc-omega-01\\\")\"\n        },\n        \"status\": {\n  \
+        \        \"type\": \"string\",\n          \"description\": \"Service status from heartbeat\"\n        },\n       \
+        \ \"lastSeen\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        : \"Last heartbeat timestamp\"\n        },\n        \"capacity\": {\n          \"type\": \"object\",\n          \"\
+        description\": \"Service capacity from heartbeat\",\n          \"properties\": {\n            \"maxConnections\":
+        {\n              \"type\": \"integer\"\n            },\n            \"currentConnections\": {\n              \"type\"\
+        : \"integer\"\n            },\n            \"cpuUsage\": {\n              \"type\": \"number\",\n              \"\
+        format\": \"float\"\n            },\n            \"memoryUsage\": {\n              \"type\": \"number\",\n       \
+        \       \"format\": \"float\"\n            }\n          }\n        },\n        \"metadata\": {\n          \"type\"\
+        : \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Additional service metadata\"\
+        \n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get health status of all services\",\n  \"description\": \"Retrieves health
         information from all services via Redis heartbeat monitoring.\\nUses existing ServiceHeartbeatEvent schema from common-events.yaml.\\\
         n\",\n  \"tags\": [],\n  \"deprecated\": false,\n  \"operationId\": \"GetServicesHealth\"\n}"
@@ -341,7 +335,7 @@ paths:
         Presets define service combinations and configuration for specific use cases.
 
         Built-in presets:
-        - `local-development`: All services in single container with Dapr
+        - `local-development`: All services in single container with mesh infrastructure
         - `local-testing`: Test environment with infrastructure services
         - `integration-http`: HTTP integration testing preset
         - `integration-edge`: WebSocket/edge testing preset
@@ -405,44 +399,43 @@ paths:
         this node\"\n        },\n        \"resources\": {\n          \"$ref\": \"#/$defs/ResourceLimits\"\n        },\n  \
         \      \"environment\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"\
         type\": \"string\"\n          },\n          \"description\": \"Node-specific environment overrides\"\n        },\n\
-        \        \"daprEnabled\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\"\
-        : \"Whether to attach Dapr sidecar\"\n        },\n        \"daprAppId\": {\n          \"type\": \"string\",\n    \
-        \      \"description\": \"Dapr app-id override (default derives from node name)\"\n        }\n      }\n    },\n  \
-        \  \"ResourceLimits\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"cpuLimit\": {\n        \
-        \  \"type\": \"string\",\n          \"description\": \"CPU limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n        },\n  \
-        \      \"memoryLimit\": {\n          \"type\": \"string\",\n          \"description\": \"Memory limit (e.g., \\\"\
-        512m\\\", \\\"2g\\\")\"\n        },\n        \"cpuRequest\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"CPU request (Kubernetes)\"\n        },\n        \"memoryRequest\": {\n          \"type\": \"string\",\n      \
-        \    \"description\": \"Memory request (Kubernetes)\"\n        }\n      }\n    },\n    \"InfrastructureConfig\": {\n\
-        \      \"type\": \"object\",\n      \"properties\": {\n        \"redis\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\"\
+        \        \"meshEnabled\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\"\
+        : \"Whether mesh routing is enabled\"\n        },\n        \"appId\": {\n          \"type\": \"string\",\n       \
+        \   \"description\": \"App-id override for mesh routing (default derives from node name)\"\n        }\n      }\n \
+        \   },\n    \"ResourceLimits\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"cpuLimit\": {\n\
+        \          \"type\": \"string\",\n          \"description\": \"CPU limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n      \
+        \  },\n        \"memoryLimit\": {\n          \"type\": \"string\",\n          \"description\": \"Memory limit (e.g.,
+        \\\"512m\\\", \\\"2g\\\")\"\n        },\n        \"cpuRequest\": {\n          \"type\": \"string\",\n          \"\
+        description\": \"CPU request (Kubernetes)\"\n        },\n        \"memoryRequest\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"Memory request (Kubernetes)\"\n        }\n      }\n    },\n    \"InfrastructureConfig\"\
+        : {\n      \"type\": \"object\",\n      \"properties\": {\n        \"redis\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\"\
         \n        },\n        \"rabbitmq\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\"\n        },\n        \"\
-        mysql\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\"\n        },\n        \"placement\": {\n          \"\
-        $ref\": \"#/$defs/InfraServiceConfig\",\n          \"description\": \"Dapr placement service\"\n        },\n     \
-        \   \"ingress\": {\n          \"$ref\": \"#/$defs/IngressConfig\"\n        }\n      }\n    },\n    \"InfraServiceConfig\"\
-        : {\n      \"type\": \"object\",\n      \"properties\": {\n        \"enabled\": {\n          \"type\": \"boolean\"\
-        ,\n          \"default\": true\n        },\n        \"image\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Docker image override\"\n        },\n        \"resources\": {\n          \"$ref\": \"#/$defs/ResourceLimits\"\n\
-        \        },\n        \"environment\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n\
-        \            \"type\": \"string\"\n          }\n        },\n        \"volumes\": {\n          \"type\": \"array\"\
-        ,\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"Volume mounts\"\
-        \n        }\n      }\n    },\n    \"IngressConfig\": {\n      \"type\": \"object\",\n      \"properties\": {\n   \
-        \     \"enabled\": {\n          \"type\": \"boolean\",\n          \"default\": true\n        },\n        \"type\"\
-        : {\n          \"type\": \"string\",\n          \"enum\": [\n            \"openresty\",\n            \"nginx\",\n\
-        \            \"traefik\",\n            \"none\"\n          ],\n          \"default\": \"openresty\"\n        },\n\
-        \        \"ports\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"http\": {\n   \
-        \           \"type\": \"integer\",\n              \"default\": 80\n            },\n            \"https\": {\n    \
-        \          \"type\": \"integer\",\n              \"default\": 443\n            }\n          }\n        },\n      \
-        \  \"ssl\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        }\n      }\n    },\n    \"\
-        BackendType\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"kubernetes\",\n        \"portainer\",\n\
-        \        \"swarm\",\n        \"compose\"\n      ],\n      \"description\": \"Container orchestration backend type.\\
-        nPriority order: kubernetes > portainer > swarm > compose\\n\"\n    }\n  }\n}"
+        mysql\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\"\n        },\n        \"ingress\": {\n          \"$ref\"\
+        : \"#/$defs/IngressConfig\"\n        }\n      }\n    },\n    \"InfraServiceConfig\": {\n      \"type\": \"object\"\
+        ,\n      \"properties\": {\n        \"enabled\": {\n          \"type\": \"boolean\",\n          \"default\": true\n\
+        \        },\n        \"image\": {\n          \"type\": \"string\",\n          \"description\": \"Docker image override\"\
+        \n        },\n        \"resources\": {\n          \"$ref\": \"#/$defs/ResourceLimits\"\n        },\n        \"environment\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n  \
+        \        }\n        },\n        \"volumes\": {\n          \"type\": \"array\",\n          \"items\": {\n         \
+        \   \"type\": \"string\"\n          },\n          \"description\": \"Volume mounts\"\n        }\n      }\n    },\n\
+        \    \"IngressConfig\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"enabled\": {\n        \
+        \  \"type\": \"boolean\",\n          \"default\": true\n        },\n        \"type\": {\n          \"type\": \"string\"\
+        ,\n          \"enum\": [\n            \"openresty\",\n            \"nginx\",\n            \"traefik\",\n         \
+        \   \"none\"\n          ],\n          \"default\": \"openresty\"\n        },\n        \"ports\": {\n          \"type\"\
+        : \"object\",\n          \"properties\": {\n            \"http\": {\n              \"type\": \"integer\",\n      \
+        \        \"default\": 80\n            },\n            \"https\": {\n              \"type\": \"integer\",\n       \
+        \       \"default\": 443\n            }\n          }\n        },\n        \"ssl\": {\n          \"type\": \"boolean\"\
+        ,\n          \"default\": false\n        }\n      }\n    },\n    \"BackendType\": {\n      \"type\": \"string\",\n\
+        \      \"enum\": [\n        \"kubernetes\",\n        \"portainer\",\n        \"swarm\",\n        \"compose\"\n   \
+        \   ],\n      \"description\": \"Container orchestration backend type.\\nPriority order: kubernetes > portainer >
+        swarm > compose\\n\"\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"List available deployment presets\",\n  \"description\": \"Returns all available
         deployment presets from the orchestrator's preset directory.\\nPresets define service combinations and configuration
-        for specific use cases.\\n\\nBuilt-in presets:\\n- `local-development`: All services in single container with Dapr\\
-        n- `local-testing`: Test environment with infrastructure services\\n- `integration-http`: HTTP integration testing
-        preset\\n- `integration-edge`: WebSocket/edge testing preset\\n- `split-auth-accounts`: Auth and Accounts in separate
-        containers\\n- `distributed-npc`: NPC processing distributed across nodes\\n\",\n  \"tags\": [],\n  \"deprecated\"\
-        : false,\n  \"operationId\": \"GetPresets\"\n}"
+        for specific use cases.\\n\\nBuilt-in presets:\\n- `local-development`: All services in single container with mesh
+        infrastructure\\n- `local-testing`: Test environment with infrastructure services\\n- `integration-http`: HTTP integration
+        testing preset\\n- `integration-edge`: WebSocket/edge testing preset\\n- `split-auth-accounts`: Auth and Accounts
+        in separate containers\\n- `distributed-npc`: NPC processing distributed across nodes\\n\",\n  \"tags\": [],\n  \"\
+        deprecated\": false,\n  \"operationId\": \"GetPresets\"\n}"
   /orchestrator/deploy:
     post:
       summary: Deploy or update an environment
@@ -526,40 +519,39 @@ paths:
         default\": 1,\n          \"description\": \"Number of replicas for this node\"\n        },\n        \"resources\"\
         : {\n          \"$ref\": \"#/$defs/ResourceLimits\"\n        },\n        \"environment\": {\n          \"type\": \"\
         object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n          },\n          \"description\"\
-        : \"Node-specific environment overrides\"\n        },\n        \"daprEnabled\": {\n          \"type\": \"boolean\"\
-        ,\n          \"default\": true,\n          \"description\": \"Whether to attach Dapr sidecar\"\n        },\n     \
-        \   \"daprAppId\": {\n          \"type\": \"string\",\n          \"description\": \"Dapr app-id override (default
-        derives from node name)\"\n        }\n      }\n    },\n    \"ResourceLimits\": {\n      \"type\": \"object\",\n  \
-        \    \"properties\": {\n        \"cpuLimit\": {\n          \"type\": \"string\",\n          \"description\": \"CPU
-        limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n        },\n        \"memoryLimit\": {\n          \"type\": \"string\",\n\
-        \          \"description\": \"Memory limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n        },\n        \"cpuRequest\"\
+        : \"Node-specific environment overrides\"\n        },\n        \"meshEnabled\": {\n          \"type\": \"boolean\"\
+        ,\n          \"default\": true,\n          \"description\": \"Whether mesh routing is enabled\"\n        },\n    \
+        \    \"appId\": {\n          \"type\": \"string\",\n          \"description\": \"App-id override for mesh routing
+        (default derives from node name)\"\n        }\n      }\n    },\n    \"ResourceLimits\": {\n      \"type\": \"object\"\
+        ,\n      \"properties\": {\n        \"cpuLimit\": {\n          \"type\": \"string\",\n          \"description\": \"\
+        CPU limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n        },\n        \"memoryLimit\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"Memory limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n        },\n        \"cpuRequest\"\
         : {\n          \"type\": \"string\",\n          \"description\": \"CPU request (Kubernetes)\"\n        },\n      \
         \  \"memoryRequest\": {\n          \"type\": \"string\",\n          \"description\": \"Memory request (Kubernetes)\"\
         \n        }\n      }\n    },\n    \"InfrastructureConfig\": {\n      \"type\": \"object\",\n      \"properties\":
         {\n        \"redis\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\"\n        },\n        \"rabbitmq\": {\n\
         \          \"$ref\": \"#/$defs/InfraServiceConfig\"\n        },\n        \"mysql\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\"\
-        \n        },\n        \"placement\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\",\n          \"description\"\
-        : \"Dapr placement service\"\n        },\n        \"ingress\": {\n          \"$ref\": \"#/$defs/IngressConfig\"\n\
-        \        }\n      }\n    },\n    \"InfraServiceConfig\": {\n      \"type\": \"object\",\n      \"properties\": {\n\
-        \        \"enabled\": {\n          \"type\": \"boolean\",\n          \"default\": true\n        },\n        \"image\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Docker image override\"\n        },\n        \"\
-        resources\": {\n          \"$ref\": \"#/$defs/ResourceLimits\"\n        },\n        \"environment\": {\n         \
-        \ \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n          }\n  \
-        \      },\n        \"volumes\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"\
-        string\"\n          },\n          \"description\": \"Volume mounts\"\n        }\n      }\n    },\n    \"IngressConfig\"\
-        : {\n      \"type\": \"object\",\n      \"properties\": {\n        \"enabled\": {\n          \"type\": \"boolean\"\
-        ,\n          \"default\": true\n        },\n        \"type\": {\n          \"type\": \"string\",\n          \"enum\"\
-        : [\n            \"openresty\",\n            \"nginx\",\n            \"traefik\",\n            \"none\"\n        \
-        \  ],\n          \"default\": \"openresty\"\n        },\n        \"ports\": {\n          \"type\": \"object\",\n \
-        \         \"properties\": {\n            \"http\": {\n              \"type\": \"integer\",\n              \"default\"\
-        : 80\n            },\n            \"https\": {\n              \"type\": \"integer\",\n              \"default\": 443\n\
-        \            }\n          }\n        },\n        \"ssl\": {\n          \"type\": \"boolean\",\n          \"default\"\
-        : false\n        }\n      }\n    },\n    \"BackendType\": {\n      \"type\": \"string\",\n      \"enum\": [\n    \
-        \    \"kubernetes\",\n        \"portainer\",\n        \"swarm\",\n        \"compose\"\n      ],\n      \"description\"\
-        : \"Container orchestration backend type.\\nPriority order: kubernetes > portainer > swarm > compose\\n\"\n    },\n\
-        \    \"DeploymentMode\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"graceful\",\n        \"force\"\
-        ,\n        \"clean\"\n      ],\n      \"description\": \"Deployment mode:\\n- graceful: Wait for connections to drain\\
-        n- force: Apply immediately\\n- clean: Tear down and rebuild\\n\"\n    }\n  }\n}"
+        \n        },\n        \"ingress\": {\n          \"$ref\": \"#/$defs/IngressConfig\"\n        }\n      }\n    },\n\
+        \    \"InfraServiceConfig\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"enabled\": {\n   \
+        \       \"type\": \"boolean\",\n          \"default\": true\n        },\n        \"image\": {\n          \"type\"\
+        : \"string\",\n          \"description\": \"Docker image override\"\n        },\n        \"resources\": {\n      \
+        \    \"$ref\": \"#/$defs/ResourceLimits\"\n        },\n        \"environment\": {\n          \"type\": \"object\"\
+        ,\n          \"additionalProperties\": {\n            \"type\": \"string\"\n          }\n        },\n        \"volumes\"\
+        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n    \
+        \      \"description\": \"Volume mounts\"\n        }\n      }\n    },\n    \"IngressConfig\": {\n      \"type\": \"\
+        object\",\n      \"properties\": {\n        \"enabled\": {\n          \"type\": \"boolean\",\n          \"default\"\
+        : true\n        },\n        \"type\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"openresty\"\
+        ,\n            \"nginx\",\n            \"traefik\",\n            \"none\"\n          ],\n          \"default\": \"\
+        openresty\"\n        },\n        \"ports\": {\n          \"type\": \"object\",\n          \"properties\": {\n    \
+        \        \"http\": {\n              \"type\": \"integer\",\n              \"default\": 80\n            },\n      \
+        \      \"https\": {\n              \"type\": \"integer\",\n              \"default\": 443\n            }\n       \
+        \   }\n        },\n        \"ssl\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        }\n\
+        \      }\n    },\n    \"BackendType\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"kubernetes\",\n\
+        \        \"portainer\",\n        \"swarm\",\n        \"compose\"\n      ],\n      \"description\": \"Container orchestration
+        backend type.\\nPriority order: kubernetes > portainer > swarm > compose\\n\"\n    },\n    \"DeploymentMode\": {\n\
+        \      \"type\": \"string\",\n      \"enum\": [\n        \"graceful\",\n        \"force\",\n        \"clean\"\n  \
+        \    ],\n      \"description\": \"Deployment mode:\\n- graceful: Wait for connections to drain\\n- force: Apply immediately\\
+        n- clean: Tear down and rebuild\\n\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/DeployResponse\"\
         ,\n  \"$defs\": {\n    \"DeployResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"success\"\
         ,\n        \"deploymentId\",\n        \"backend\",\n        \"duration\"\n      ],\n      \"properties\": {\n    \
@@ -591,44 +583,43 @@ paths:
         default\": 1,\n          \"description\": \"Number of replicas for this node\"\n        },\n        \"resources\"\
         : {\n          \"$ref\": \"#/$defs/ResourceLimits\"\n        },\n        \"environment\": {\n          \"type\": \"\
         object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n          },\n          \"description\"\
-        : \"Node-specific environment overrides\"\n        },\n        \"daprEnabled\": {\n          \"type\": \"boolean\"\
-        ,\n          \"default\": true,\n          \"description\": \"Whether to attach Dapr sidecar\"\n        },\n     \
-        \   \"daprAppId\": {\n          \"type\": \"string\",\n          \"description\": \"Dapr app-id override (default
-        derives from node name)\"\n        }\n      }\n    },\n    \"ResourceLimits\": {\n      \"type\": \"object\",\n  \
-        \    \"properties\": {\n        \"cpuLimit\": {\n          \"type\": \"string\",\n          \"description\": \"CPU
-        limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n        },\n        \"memoryLimit\": {\n          \"type\": \"string\",\n\
-        \          \"description\": \"Memory limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n        },\n        \"cpuRequest\"\
+        : \"Node-specific environment overrides\"\n        },\n        \"meshEnabled\": {\n          \"type\": \"boolean\"\
+        ,\n          \"default\": true,\n          \"description\": \"Whether mesh routing is enabled\"\n        },\n    \
+        \    \"appId\": {\n          \"type\": \"string\",\n          \"description\": \"App-id override for mesh routing
+        (default derives from node name)\"\n        }\n      }\n    },\n    \"ResourceLimits\": {\n      \"type\": \"object\"\
+        ,\n      \"properties\": {\n        \"cpuLimit\": {\n          \"type\": \"string\",\n          \"description\": \"\
+        CPU limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n        },\n        \"memoryLimit\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"Memory limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n        },\n        \"cpuRequest\"\
         : {\n          \"type\": \"string\",\n          \"description\": \"CPU request (Kubernetes)\"\n        },\n      \
         \  \"memoryRequest\": {\n          \"type\": \"string\",\n          \"description\": \"Memory request (Kubernetes)\"\
         \n        }\n      }\n    },\n    \"InfrastructureConfig\": {\n      \"type\": \"object\",\n      \"properties\":
         {\n        \"redis\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\"\n        },\n        \"rabbitmq\": {\n\
         \          \"$ref\": \"#/$defs/InfraServiceConfig\"\n        },\n        \"mysql\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\"\
-        \n        },\n        \"placement\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\",\n          \"description\"\
-        : \"Dapr placement service\"\n        },\n        \"ingress\": {\n          \"$ref\": \"#/$defs/IngressConfig\"\n\
-        \        }\n      }\n    },\n    \"InfraServiceConfig\": {\n      \"type\": \"object\",\n      \"properties\": {\n\
-        \        \"enabled\": {\n          \"type\": \"boolean\",\n          \"default\": true\n        },\n        \"image\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Docker image override\"\n        },\n        \"\
-        resources\": {\n          \"$ref\": \"#/$defs/ResourceLimits\"\n        },\n        \"environment\": {\n         \
-        \ \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n          }\n  \
-        \      },\n        \"volumes\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"\
-        string\"\n          },\n          \"description\": \"Volume mounts\"\n        }\n      }\n    },\n    \"IngressConfig\"\
-        : {\n      \"type\": \"object\",\n      \"properties\": {\n        \"enabled\": {\n          \"type\": \"boolean\"\
-        ,\n          \"default\": true\n        },\n        \"type\": {\n          \"type\": \"string\",\n          \"enum\"\
-        : [\n            \"openresty\",\n            \"nginx\",\n            \"traefik\",\n            \"none\"\n        \
-        \  ],\n          \"default\": \"openresty\"\n        },\n        \"ports\": {\n          \"type\": \"object\",\n \
-        \         \"properties\": {\n            \"http\": {\n              \"type\": \"integer\",\n              \"default\"\
-        : 80\n            },\n            \"https\": {\n              \"type\": \"integer\",\n              \"default\": 443\n\
-        \            }\n          }\n        },\n        \"ssl\": {\n          \"type\": \"boolean\",\n          \"default\"\
-        : false\n        }\n      }\n    },\n    \"DeployedService\": {\n      \"type\": \"object\",\n      \"required\":
-        [\n        \"name\",\n        \"status\",\n        \"node\"\n      ],\n      \"properties\": {\n        \"name\":
-        {\n          \"type\": \"string\",\n          \"description\": \"Service name\"\n        },\n        \"status\": {\n\
-        \          \"type\": \"string\",\n          \"enum\": [\n            \"starting\",\n            \"running\",\n   \
-        \         \"healthy\",\n            \"unhealthy\",\n            \"stopped\"\n          ]\n        },\n        \"node\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Node/container hosting this service\"\n       \
-        \ },\n        \"containerId\": {\n          \"type\": \"string\",\n          \"description\": \"Container ID (Compose/Swarm)\"\
-        \n        },\n        \"podName\": {\n          \"type\": \"string\",\n          \"description\": \"Pod name (Kubernetes)\"\
-        \n        },\n        \"endpoints\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\"\
-        : \"string\"\n          },\n          \"description\": \"Exposed endpoints\"\n        }\n      }\n    }\n  }\n}"
+        \n        },\n        \"ingress\": {\n          \"$ref\": \"#/$defs/IngressConfig\"\n        }\n      }\n    },\n\
+        \    \"InfraServiceConfig\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"enabled\": {\n   \
+        \       \"type\": \"boolean\",\n          \"default\": true\n        },\n        \"image\": {\n          \"type\"\
+        : \"string\",\n          \"description\": \"Docker image override\"\n        },\n        \"resources\": {\n      \
+        \    \"$ref\": \"#/$defs/ResourceLimits\"\n        },\n        \"environment\": {\n          \"type\": \"object\"\
+        ,\n          \"additionalProperties\": {\n            \"type\": \"string\"\n          }\n        },\n        \"volumes\"\
+        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n    \
+        \      \"description\": \"Volume mounts\"\n        }\n      }\n    },\n    \"IngressConfig\": {\n      \"type\": \"\
+        object\",\n      \"properties\": {\n        \"enabled\": {\n          \"type\": \"boolean\",\n          \"default\"\
+        : true\n        },\n        \"type\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"openresty\"\
+        ,\n            \"nginx\",\n            \"traefik\",\n            \"none\"\n          ],\n          \"default\": \"\
+        openresty\"\n        },\n        \"ports\": {\n          \"type\": \"object\",\n          \"properties\": {\n    \
+        \        \"http\": {\n              \"type\": \"integer\",\n              \"default\": 80\n            },\n      \
+        \      \"https\": {\n              \"type\": \"integer\",\n              \"default\": 443\n            }\n       \
+        \   }\n        },\n        \"ssl\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        }\n\
+        \      }\n    },\n    \"DeployedService\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"name\"\
+        ,\n        \"status\",\n        \"node\"\n      ],\n      \"properties\": {\n        \"name\": {\n          \"type\"\
+        : \"string\",\n          \"description\": \"Service name\"\n        },\n        \"status\": {\n          \"type\"\
+        : \"string\",\n          \"enum\": [\n            \"starting\",\n            \"running\",\n            \"healthy\"\
+        ,\n            \"unhealthy\",\n            \"stopped\"\n          ]\n        },\n        \"node\": {\n          \"\
+        type\": \"string\",\n          \"description\": \"Node/container hosting this service\"\n        },\n        \"containerId\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Container ID (Compose/Swarm)\"\n        },\n  \
+        \      \"podName\": {\n          \"type\": \"string\",\n          \"description\": \"Pod name (Kubernetes)\"\n   \
+        \     },\n        \"endpoints\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\":
+        \"string\"\n          },\n          \"description\": \"Exposed endpoints\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Deploy or update an environment\",\n  \"description\": \"Deploys a complete
         environment using a preset or custom configuration.\\nSupports graceful transitions, forced deployments, and clean
         rebuilds.\\n\\n**Deployment Modes**:\\n- `graceful`: Wait for existing connections to drain before changing topology\\
@@ -642,7 +633,7 @@ paths:
     post:
       summary: Get current service-to-app-id routing mappings
       description: |
-        Returns the current service-to-app-id routing mappings used for Dapr service invocation.
+        Returns the current service-to-app-id routing mappings used for mesh service invocation through lib-mesh.
         This is the authoritative source of truth for how services are routed in the current deployment.
 
         In development, all services route to "bannou" by default. In production, services may be
@@ -679,7 +670,7 @@ paths:
         ,\n  \"$defs\": {\n    \"ServiceRoutingResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
         \ \"mappings\",\n        \"defaultAppId\",\n        \"generatedAt\"\n      ],\n      \"properties\": {\n        \"\
         mappings\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\
-        \n          },\n          \"description\": \"Map of service names to Dapr app-id routing destinations.\\nExample:
+        \n          },\n          \"description\": \"Map of service names to Bannou app-id routing destinations.\\nExample:
         { \\\"accounts\\\": \\\"bannou\\\", \\\"behavior\\\": \\\"npc-processing-01\\\" }\\n\"\n        },\n        \"defaultAppId\"\
         : {\n          \"type\": \"string\",\n          \"description\": \"Default app-id used when no specific mapping exists\"\
         ,\n          \"default\": \"bannou\"\n        },\n        \"generatedAt\": {\n          \"type\": \"string\",\n  \
@@ -689,12 +680,12 @@ paths:
         \  \"type\": \"string\",\n          \"description\": \"Current deployment identifier (if environment is deployed)\"\
         ,\n          \"nullable\": true\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get current service-to-app-id routing mappings\",\n  \"description\": \"\
-        Returns the current service-to-app-id routing mappings used for Dapr service invocation.\\nThis is the authoritative
-        source of truth for how services are routed in the current deployment.\\n\\nIn development, all services route to
-        \\\"bannou\\\" by default. In production, services may be\\ndistributed across multiple app-ids based on deployment
-        topology.\\n\\n**Use Cases**:\\n- Services querying routing on startup\\n- Debugging service communication issues\\
-        n- Monitoring deployment topology\\n\",\n  \"tags\": [],\n  \"deprecated\": false,\n  \"operationId\": \"GetServiceRouting\"\
-        \n}"
+        Returns the current service-to-app-id routing mappings used for mesh service invocation through lib-mesh.\\nThis is
+        the authoritative source of truth for how services are routed in the current deployment.\\n\\nIn development, all
+        services route to \\\"bannou\\\" by default. In production, services may be\\ndistributed across multiple app-ids
+        based on deployment topology.\\n\\n**Use Cases**:\\n- Services querying routing on startup\\n- Debugging service communication
+        issues\\n- Monitoring deployment topology\\n\",\n  \"tags\": [],\n  \"deprecated\": false,\n  \"operationId\": \"\
+        GetServiceRouting\"\n}"
   /orchestrator/status:
     post:
       summary: Get current environment status
@@ -759,44 +750,43 @@ paths:
         default\": 1,\n          \"description\": \"Number of replicas for this node\"\n        },\n        \"resources\"\
         : {\n          \"$ref\": \"#/$defs/ResourceLimits\"\n        },\n        \"environment\": {\n          \"type\": \"\
         object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n          },\n          \"description\"\
-        : \"Node-specific environment overrides\"\n        },\n        \"daprEnabled\": {\n          \"type\": \"boolean\"\
-        ,\n          \"default\": true,\n          \"description\": \"Whether to attach Dapr sidecar\"\n        },\n     \
-        \   \"daprAppId\": {\n          \"type\": \"string\",\n          \"description\": \"Dapr app-id override (default
-        derives from node name)\"\n        }\n      }\n    },\n    \"ResourceLimits\": {\n      \"type\": \"object\",\n  \
-        \    \"properties\": {\n        \"cpuLimit\": {\n          \"type\": \"string\",\n          \"description\": \"CPU
-        limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n        },\n        \"memoryLimit\": {\n          \"type\": \"string\",\n\
-        \          \"description\": \"Memory limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n        },\n        \"cpuRequest\"\
+        : \"Node-specific environment overrides\"\n        },\n        \"meshEnabled\": {\n          \"type\": \"boolean\"\
+        ,\n          \"default\": true,\n          \"description\": \"Whether mesh routing is enabled\"\n        },\n    \
+        \    \"appId\": {\n          \"type\": \"string\",\n          \"description\": \"App-id override for mesh routing
+        (default derives from node name)\"\n        }\n      }\n    },\n    \"ResourceLimits\": {\n      \"type\": \"object\"\
+        ,\n      \"properties\": {\n        \"cpuLimit\": {\n          \"type\": \"string\",\n          \"description\": \"\
+        CPU limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n        },\n        \"memoryLimit\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"Memory limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n        },\n        \"cpuRequest\"\
         : {\n          \"type\": \"string\",\n          \"description\": \"CPU request (Kubernetes)\"\n        },\n      \
         \  \"memoryRequest\": {\n          \"type\": \"string\",\n          \"description\": \"Memory request (Kubernetes)\"\
         \n        }\n      }\n    },\n    \"InfrastructureConfig\": {\n      \"type\": \"object\",\n      \"properties\":
         {\n        \"redis\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\"\n        },\n        \"rabbitmq\": {\n\
         \          \"$ref\": \"#/$defs/InfraServiceConfig\"\n        },\n        \"mysql\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\"\
-        \n        },\n        \"placement\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\",\n          \"description\"\
-        : \"Dapr placement service\"\n        },\n        \"ingress\": {\n          \"$ref\": \"#/$defs/IngressConfig\"\n\
-        \        }\n      }\n    },\n    \"InfraServiceConfig\": {\n      \"type\": \"object\",\n      \"properties\": {\n\
-        \        \"enabled\": {\n          \"type\": \"boolean\",\n          \"default\": true\n        },\n        \"image\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Docker image override\"\n        },\n        \"\
-        resources\": {\n          \"$ref\": \"#/$defs/ResourceLimits\"\n        },\n        \"environment\": {\n         \
-        \ \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n          }\n  \
-        \      },\n        \"volumes\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"\
-        string\"\n          },\n          \"description\": \"Volume mounts\"\n        }\n      }\n    },\n    \"IngressConfig\"\
-        : {\n      \"type\": \"object\",\n      \"properties\": {\n        \"enabled\": {\n          \"type\": \"boolean\"\
-        ,\n          \"default\": true\n        },\n        \"type\": {\n          \"type\": \"string\",\n          \"enum\"\
-        : [\n            \"openresty\",\n            \"nginx\",\n            \"traefik\",\n            \"none\"\n        \
-        \  ],\n          \"default\": \"openresty\"\n        },\n        \"ports\": {\n          \"type\": \"object\",\n \
-        \         \"properties\": {\n            \"http\": {\n              \"type\": \"integer\",\n              \"default\"\
-        : 80\n            },\n            \"https\": {\n              \"type\": \"integer\",\n              \"default\": 443\n\
-        \            }\n          }\n        },\n        \"ssl\": {\n          \"type\": \"boolean\",\n          \"default\"\
-        : false\n        }\n      }\n    },\n    \"DeployedService\": {\n      \"type\": \"object\",\n      \"required\":
-        [\n        \"name\",\n        \"status\",\n        \"node\"\n      ],\n      \"properties\": {\n        \"name\":
-        {\n          \"type\": \"string\",\n          \"description\": \"Service name\"\n        },\n        \"status\": {\n\
-        \          \"type\": \"string\",\n          \"enum\": [\n            \"starting\",\n            \"running\",\n   \
-        \         \"healthy\",\n            \"unhealthy\",\n            \"stopped\"\n          ]\n        },\n        \"node\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Node/container hosting this service\"\n       \
-        \ },\n        \"containerId\": {\n          \"type\": \"string\",\n          \"description\": \"Container ID (Compose/Swarm)\"\
-        \n        },\n        \"podName\": {\n          \"type\": \"string\",\n          \"description\": \"Pod name (Kubernetes)\"\
-        \n        },\n        \"endpoints\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\"\
-        : \"string\"\n          },\n          \"description\": \"Exposed endpoints\"\n        }\n      }\n    },\n    \"InfrastructureHealthResponse\"\
+        \n        },\n        \"ingress\": {\n          \"$ref\": \"#/$defs/IngressConfig\"\n        }\n      }\n    },\n\
+        \    \"InfraServiceConfig\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"enabled\": {\n   \
+        \       \"type\": \"boolean\",\n          \"default\": true\n        },\n        \"image\": {\n          \"type\"\
+        : \"string\",\n          \"description\": \"Docker image override\"\n        },\n        \"resources\": {\n      \
+        \    \"$ref\": \"#/$defs/ResourceLimits\"\n        },\n        \"environment\": {\n          \"type\": \"object\"\
+        ,\n          \"additionalProperties\": {\n            \"type\": \"string\"\n          }\n        },\n        \"volumes\"\
+        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n    \
+        \      \"description\": \"Volume mounts\"\n        }\n      }\n    },\n    \"IngressConfig\": {\n      \"type\": \"\
+        object\",\n      \"properties\": {\n        \"enabled\": {\n          \"type\": \"boolean\",\n          \"default\"\
+        : true\n        },\n        \"type\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"openresty\"\
+        ,\n            \"nginx\",\n            \"traefik\",\n            \"none\"\n          ],\n          \"default\": \"\
+        openresty\"\n        },\n        \"ports\": {\n          \"type\": \"object\",\n          \"properties\": {\n    \
+        \        \"http\": {\n              \"type\": \"integer\",\n              \"default\": 80\n            },\n      \
+        \      \"https\": {\n              \"type\": \"integer\",\n              \"default\": 443\n            }\n       \
+        \   }\n        },\n        \"ssl\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        }\n\
+        \      }\n    },\n    \"DeployedService\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"name\"\
+        ,\n        \"status\",\n        \"node\"\n      ],\n      \"properties\": {\n        \"name\": {\n          \"type\"\
+        : \"string\",\n          \"description\": \"Service name\"\n        },\n        \"status\": {\n          \"type\"\
+        : \"string\",\n          \"enum\": [\n            \"starting\",\n            \"running\",\n            \"healthy\"\
+        ,\n            \"unhealthy\",\n            \"stopped\"\n          ]\n        },\n        \"node\": {\n          \"\
+        type\": \"string\",\n          \"description\": \"Node/container hosting this service\"\n        },\n        \"containerId\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Container ID (Compose/Swarm)\"\n        },\n  \
+        \      \"podName\": {\n          \"type\": \"string\",\n          \"description\": \"Pod name (Kubernetes)\"\n   \
+        \     },\n        \"endpoints\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\":
+        \"string\"\n          },\n          \"description\": \"Exposed endpoints\"\n        }\n      }\n    },\n    \"InfrastructureHealthResponse\"\
         : {\n      \"type\": \"object\",\n      \"required\": [\n        \"healthy\",\n        \"timestamp\",\n        \"\
         components\"\n      ],\n      \"properties\": {\n        \"healthy\": {\n          \"type\": \"boolean\",\n      \
         \    \"description\": \"Overall infrastructure health status\"\n        },\n        \"timestamp\": {\n          \"\
@@ -1091,18 +1081,18 @@ paths:
         this node\"\n        },\n        \"resources\": {\n          \"$ref\": \"#/$defs/ResourceLimits\"\n        },\n  \
         \      \"environment\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"\
         type\": \"string\"\n          },\n          \"description\": \"Node-specific environment overrides\"\n        },\n\
-        \        \"daprEnabled\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\"\
-        : \"Whether to attach Dapr sidecar\"\n        },\n        \"daprAppId\": {\n          \"type\": \"string\",\n    \
-        \      \"description\": \"Dapr app-id override (default derives from node name)\"\n        }\n      }\n    },\n  \
-        \  \"ResourceLimits\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"cpuLimit\": {\n        \
-        \  \"type\": \"string\",\n          \"description\": \"CPU limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n        },\n  \
-        \      \"memoryLimit\": {\n          \"type\": \"string\",\n          \"description\": \"Memory limit (e.g., \\\"\
-        512m\\\", \\\"2g\\\")\"\n        },\n        \"cpuRequest\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"CPU request (Kubernetes)\"\n        },\n        \"memoryRequest\": {\n          \"type\": \"string\",\n      \
-        \    \"description\": \"Memory request (Kubernetes)\"\n        }\n      }\n    },\n    \"DeploymentMode\": {\n   \
-        \   \"type\": \"string\",\n      \"enum\": [\n        \"graceful\",\n        \"force\",\n        \"clean\"\n     \
-        \ ],\n      \"description\": \"Deployment mode:\\n- graceful: Wait for connections to drain\\n- force: Apply immediately\\
-        n- clean: Tear down and rebuild\\n\"\n    }\n  }\n}"
+        \        \"meshEnabled\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\"\
+        : \"Whether mesh routing is enabled\"\n        },\n        \"appId\": {\n          \"type\": \"string\",\n       \
+        \   \"description\": \"App-id override for mesh routing (default derives from node name)\"\n        }\n      }\n \
+        \   },\n    \"ResourceLimits\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"cpuLimit\": {\n\
+        \          \"type\": \"string\",\n          \"description\": \"CPU limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n      \
+        \  },\n        \"memoryLimit\": {\n          \"type\": \"string\",\n          \"description\": \"Memory limit (e.g.,
+        \\\"512m\\\", \\\"2g\\\")\"\n        },\n        \"cpuRequest\": {\n          \"type\": \"string\",\n          \"\
+        description\": \"CPU request (Kubernetes)\"\n        },\n        \"memoryRequest\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"Memory request (Kubernetes)\"\n        }\n      }\n    },\n    \"DeploymentMode\"\
+        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"graceful\",\n        \"force\",\n        \"clean\"\n\
+        \      ],\n      \"description\": \"Deployment mode:\\n- graceful: Wait for connections to drain\\n- force: Apply
+        immediately\\n- clean: Tear down and rebuild\\n\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/TopologyUpdateResponse\"\
         ,\n  \"$defs\": {\n    \"TopologyUpdateResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
         \ \"success\",\n        \"appliedChanges\"\n      ],\n      \"properties\": {\n        \"success\": {\n          \"\
@@ -1131,34 +1121,33 @@ paths:
         this node\"\n        },\n        \"resources\": {\n          \"$ref\": \"#/$defs/ResourceLimits\"\n        },\n  \
         \      \"environment\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"\
         type\": \"string\"\n          },\n          \"description\": \"Node-specific environment overrides\"\n        },\n\
-        \        \"daprEnabled\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\"\
-        : \"Whether to attach Dapr sidecar\"\n        },\n        \"daprAppId\": {\n          \"type\": \"string\",\n    \
-        \      \"description\": \"Dapr app-id override (default derives from node name)\"\n        }\n      }\n    },\n  \
-        \  \"ResourceLimits\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"cpuLimit\": {\n        \
-        \  \"type\": \"string\",\n          \"description\": \"CPU limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n        },\n  \
-        \      \"memoryLimit\": {\n          \"type\": \"string\",\n          \"description\": \"Memory limit (e.g., \\\"\
-        512m\\\", \\\"2g\\\")\"\n        },\n        \"cpuRequest\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"CPU request (Kubernetes)\"\n        },\n        \"memoryRequest\": {\n          \"type\": \"string\",\n      \
-        \    \"description\": \"Memory request (Kubernetes)\"\n        }\n      }\n    },\n    \"InfrastructureConfig\": {\n\
-        \      \"type\": \"object\",\n      \"properties\": {\n        \"redis\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\"\
+        \        \"meshEnabled\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\"\
+        : \"Whether mesh routing is enabled\"\n        },\n        \"appId\": {\n          \"type\": \"string\",\n       \
+        \   \"description\": \"App-id override for mesh routing (default derives from node name)\"\n        }\n      }\n \
+        \   },\n    \"ResourceLimits\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"cpuLimit\": {\n\
+        \          \"type\": \"string\",\n          \"description\": \"CPU limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n      \
+        \  },\n        \"memoryLimit\": {\n          \"type\": \"string\",\n          \"description\": \"Memory limit (e.g.,
+        \\\"512m\\\", \\\"2g\\\")\"\n        },\n        \"cpuRequest\": {\n          \"type\": \"string\",\n          \"\
+        description\": \"CPU request (Kubernetes)\"\n        },\n        \"memoryRequest\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"Memory request (Kubernetes)\"\n        }\n      }\n    },\n    \"InfrastructureConfig\"\
+        : {\n      \"type\": \"object\",\n      \"properties\": {\n        \"redis\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\"\
         \n        },\n        \"rabbitmq\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\"\n        },\n        \"\
-        mysql\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\"\n        },\n        \"placement\": {\n          \"\
-        $ref\": \"#/$defs/InfraServiceConfig\",\n          \"description\": \"Dapr placement service\"\n        },\n     \
-        \   \"ingress\": {\n          \"$ref\": \"#/$defs/IngressConfig\"\n        }\n      }\n    },\n    \"InfraServiceConfig\"\
-        : {\n      \"type\": \"object\",\n      \"properties\": {\n        \"enabled\": {\n          \"type\": \"boolean\"\
-        ,\n          \"default\": true\n        },\n        \"image\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Docker image override\"\n        },\n        \"resources\": {\n          \"$ref\": \"#/$defs/ResourceLimits\"\n\
-        \        },\n        \"environment\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n\
-        \            \"type\": \"string\"\n          }\n        },\n        \"volumes\": {\n          \"type\": \"array\"\
-        ,\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"Volume mounts\"\
-        \n        }\n      }\n    },\n    \"IngressConfig\": {\n      \"type\": \"object\",\n      \"properties\": {\n   \
-        \     \"enabled\": {\n          \"type\": \"boolean\",\n          \"default\": true\n        },\n        \"type\"\
-        : {\n          \"type\": \"string\",\n          \"enum\": [\n            \"openresty\",\n            \"nginx\",\n\
-        \            \"traefik\",\n            \"none\"\n          ],\n          \"default\": \"openresty\"\n        },\n\
-        \        \"ports\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"http\": {\n   \
-        \           \"type\": \"integer\",\n              \"default\": 80\n            },\n            \"https\": {\n    \
-        \          \"type\": \"integer\",\n              \"default\": 443\n            }\n          }\n        },\n      \
-        \  \"ssl\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        }\n      }\n    }\n  }\n}"
+        mysql\": {\n          \"$ref\": \"#/$defs/InfraServiceConfig\"\n        },\n        \"ingress\": {\n          \"$ref\"\
+        : \"#/$defs/IngressConfig\"\n        }\n      }\n    },\n    \"InfraServiceConfig\": {\n      \"type\": \"object\"\
+        ,\n      \"properties\": {\n        \"enabled\": {\n          \"type\": \"boolean\",\n          \"default\": true\n\
+        \        },\n        \"image\": {\n          \"type\": \"string\",\n          \"description\": \"Docker image override\"\
+        \n        },\n        \"resources\": {\n          \"$ref\": \"#/$defs/ResourceLimits\"\n        },\n        \"environment\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n  \
+        \        }\n        },\n        \"volumes\": {\n          \"type\": \"array\",\n          \"items\": {\n         \
+        \   \"type\": \"string\"\n          },\n          \"description\": \"Volume mounts\"\n        }\n      }\n    },\n\
+        \    \"IngressConfig\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"enabled\": {\n        \
+        \  \"type\": \"boolean\",\n          \"default\": true\n        },\n        \"type\": {\n          \"type\": \"string\"\
+        ,\n          \"enum\": [\n            \"openresty\",\n            \"nginx\",\n            \"traefik\",\n         \
+        \   \"none\"\n          ],\n          \"default\": \"openresty\"\n        },\n        \"ports\": {\n          \"type\"\
+        : \"object\",\n          \"properties\": {\n            \"http\": {\n              \"type\": \"integer\",\n      \
+        \        \"default\": 80\n            },\n            \"https\": {\n              \"type\": \"integer\",\n       \
+        \       \"default\": 443\n            }\n          }\n        },\n        \"ssl\": {\n          \"type\": \"boolean\"\
+        ,\n          \"default\": false\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Update service topology without full redeploy\",\n  \"description\": \"Changes
         which services run on which containers without tearing down\\nthe entire environment. Enables live topology changes.\\
         n\\n**Use Cases**:\\n- Move auth service to dedicated container for scaling\\n- Consolidate services during low-traffic
@@ -1207,13 +1196,13 @@ paths:
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ContainerRestartRequestBody\"\
         ,\n  \"$defs\": {\n    \"ContainerRestartRequestBody\": {\n      \"type\": \"object\",\n      \"required\": [\n  \
         \      \"appName\",\n        \"reason\"\n      ],\n      \"properties\": {\n        \"appName\": {\n          \"type\"\
-        : \"string\",\n          \"description\": \"Container's Dapr app name (e.g., \\\"bannou\\\", \\\"npc-omega\\\")\"\n\
-        \        },\n        \"reason\": {\n          \"type\": \"string\",\n          \"description\": \"Why restart is needed
-        (for logging/auditing)\",\n          \"example\": \"configuration_change\"\n        },\n        \"priority\": {\n\
-        \          \"$ref\": \"#/$defs/RestartPriority\"\n        },\n        \"shutdownGracePeriod\": {\n          \"type\"\
-        : \"integer\",\n          \"default\": 30,\n          \"description\": \"Seconds to allow graceful shutdown before
-        force-kill\"\n        }\n      }\n    },\n    \"RestartPriority\": {\n      \"type\": \"string\",\n      \"enum\"\
-        : [\n        \"graceful\",\n        \"immediate\",\n        \"force\"\n      ],\n      \"description\": \"Restart
+        : \"string\",\n          \"description\": \"Container's app-id for mesh routing (e.g., \\\"bannou\\\", \\\"npc-omega\\\
+        \")\"\n        },\n        \"reason\": {\n          \"type\": \"string\",\n          \"description\": \"Why restart
+        is needed (for logging/auditing)\",\n          \"example\": \"configuration_change\"\n        },\n        \"priority\"\
+        : {\n          \"$ref\": \"#/$defs/RestartPriority\"\n        },\n        \"shutdownGracePeriod\": {\n          \"\
+        type\": \"integer\",\n          \"default\": 30,\n          \"description\": \"Seconds to allow graceful shutdown
+        before force-kill\"\n        }\n      }\n    },\n    \"RestartPriority\": {\n      \"type\": \"string\",\n      \"\
+        enum\": [\n        \"graceful\",\n        \"immediate\",\n        \"force\"\n      ],\n      \"description\": \"Restart
         urgency level:\\n- graceful: Rolling update, wait for healthy before cycling next instance\\n- immediate: Rolling
         update but don't wait for connection drain\\n- force: Kill all instances simultaneously (causes downtime)\\n\"\n \
         \   }\n  }\n}"
@@ -1271,38 +1260,38 @@ paths:
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetContainerStatusRequest\"\
         ,\n  \"$defs\": {\n    \"GetContainerStatusRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n    \
         \    \"appName\"\n      ],\n      \"properties\": {\n        \"appName\": {\n          \"type\": \"string\",\n   \
-        \       \"description\": \"Container's Dapr app name\"\n        }\n      }\n    }\n  }\n}"
+        \       \"description\": \"Container's app-id for mesh routing\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ContainerStatus\"\
         ,\n  \"$defs\": {\n    \"ContainerStatus\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"appName\"\
         ,\n        \"status\",\n        \"timestamp\"\n      ],\n      \"properties\": {\n        \"appName\": {\n       \
-        \   \"type\": \"string\",\n          \"description\": \"Container's Dapr app name\"\n        },\n        \"status\"\
-        : {\n          \"type\": \"string\",\n          \"enum\": [\n            \"running\",\n            \"starting\",\n\
-        \            \"stopping\",\n            \"stopped\",\n            \"unhealthy\"\n          ]\n        },\n       \
-        \ \"timestamp\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"instances\"\
-        : {\n          \"type\": \"integer\",\n          \"description\": \"Number of running instances\"\n        },\n  \
-        \      \"plugins\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n\
-        \          },\n          \"description\": \"Plugins running in this container\"\n        },\n        \"lastRestart\"\
-        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"When container
-        was last restarted\"\n        },\n        \"restartCount\": {\n          \"type\": \"integer\",\n          \"description\"\
-        : \"Number of restarts in last 24 hours\"\n        },\n        \"restartHistory\": {\n          \"type\": \"array\"\
-        ,\n          \"items\": {\n            \"$ref\": \"#/$defs/RestartHistoryEntry\"\n          },\n          \"description\"\
-        : \"Recent restart history\"\n        },\n        \"healthChecks\": {\n          \"type\": \"object\",\n         \
-        \ \"properties\": {\n            \"lastCheck\": {\n              \"type\": \"string\",\n              \"format\":
-        \"date-time\"\n            },\n            \"status\": {\n              \"type\": \"string\"\n            },\n   \
-        \         \"consecutiveFailures\": {\n              \"type\": \"integer\"\n            }\n          }\n        },\n\
-        \        \"labels\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\"\
-        : \"string\"\n          },\n          \"description\": \"Container labels for metadata and management\"\n        }\n\
-        \      }\n    },\n    \"RestartHistoryEntry\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"timestamp\"\
-        ,\n        \"reason\"\n      ],\n      \"properties\": {\n        \"timestamp\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"date-time\"\n        },\n        \"reason\": {\n          \"type\": \"string\"\n      \
-        \  },\n        \"priority\": {\n          \"$ref\": \"#/$defs/RestartPriority\"\n        },\n        \"duration\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Time taken to restart\"\n        },\n        \"\
-        success\": {\n          \"type\": \"boolean\"\n        },\n        \"error\": {\n          \"type\": \"string\",\n\
-        \          \"description\": \"Error message if restart failed\"\n        }\n      }\n    },\n    \"RestartPriority\"\
-        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"graceful\",\n        \"immediate\",\n        \"force\"\
-        \n      ],\n      \"description\": \"Restart urgency level:\\n- graceful: Rolling update, wait for healthy before
-        cycling next instance\\n- immediate: Rolling update but don't wait for connection drain\\n- force: Kill all instances
-        simultaneously (causes downtime)\\n\"\n    }\n  }\n}"
+        \   \"type\": \"string\",\n          \"description\": \"Container's app-id for mesh routing\"\n        },\n      \
+        \  \"status\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"running\",\n            \"\
+        starting\",\n            \"stopping\",\n            \"stopped\",\n            \"unhealthy\"\n          ]\n       \
+        \ },\n        \"timestamp\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n\
+        \        \"instances\": {\n          \"type\": \"integer\",\n          \"description\": \"Number of running instances\"\
+        \n        },\n        \"plugins\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\"\
+        : \"string\"\n          },\n          \"description\": \"Plugins running in this container\"\n        },\n       \
+        \ \"lastRestart\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        : \"When container was last restarted\"\n        },\n        \"restartCount\": {\n          \"type\": \"integer\"\
+        ,\n          \"description\": \"Number of restarts in last 24 hours\"\n        },\n        \"restartHistory\": {\n\
+        \          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/RestartHistoryEntry\"\n \
+        \         },\n          \"description\": \"Recent restart history\"\n        },\n        \"healthChecks\": {\n   \
+        \       \"type\": \"object\",\n          \"properties\": {\n            \"lastCheck\": {\n              \"type\":
+        \"string\",\n              \"format\": \"date-time\"\n            },\n            \"status\": {\n              \"\
+        type\": \"string\"\n            },\n            \"consecutiveFailures\": {\n              \"type\": \"integer\"\n\
+        \            }\n          }\n        },\n        \"labels\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : {\n            \"type\": \"string\"\n          },\n          \"description\": \"Container labels for metadata and
+        management\"\n        }\n      }\n    },\n    \"RestartHistoryEntry\": {\n      \"type\": \"object\",\n      \"required\"\
+        : [\n        \"timestamp\",\n        \"reason\"\n      ],\n      \"properties\": {\n        \"timestamp\": {\n   \
+        \       \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"reason\": {\n          \"\
+        type\": \"string\"\n        },\n        \"priority\": {\n          \"$ref\": \"#/$defs/RestartPriority\"\n       \
+        \ },\n        \"duration\": {\n          \"type\": \"string\",\n          \"description\": \"Time taken to restart\"\
+        \n        },\n        \"success\": {\n          \"type\": \"boolean\"\n        },\n        \"error\": {\n        \
+        \  \"type\": \"string\",\n          \"description\": \"Error message if restart failed\"\n        }\n      }\n   \
+        \ },\n    \"RestartPriority\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"graceful\",\n        \"\
+        immediate\",\n        \"force\"\n      ],\n      \"description\": \"Restart urgency level:\\n- graceful: Rolling update,
+        wait for healthy before cycling next instance\\n- immediate: Rolling update but don't wait for connection drain\\\
+        n- force: Kill all instances simultaneously (causes downtime)\\n\"\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get container health and restart history\",\n  \"description\": \"Returns
         detailed status of a container including health, restart history,\\nrunning plugins, and current configuration.\\\
         n\",\n  \"tags\": [],\n  \"deprecated\": false,\n  \"operationId\": \"GetContainerStatus\"\n}"
@@ -1400,6 +1389,256 @@ paths:
       x-endpoint-info-json: "{\n  \"summary\": \"Get current configuration version and metadata\",\n  \"description\": \"\
         Returns the current configuration version, last update time,\\nand summary of configuration state (not actual values
         for security).\\n\",\n  \"tags\": [],\n  \"deprecated\": false,\n  \"operationId\": \"GetConfigVersion\"\n}"
+
+  # ============================================================
+  # PROCESSING POOL MANAGEMENT
+  # Manage pools of dedicated processing instances for heavy operations
+  # ============================================================
+
+  /orchestrator/processing-pool/acquire:
+    post:
+      summary: Acquire a processor from a pool
+      description: |
+        Requests an available processor instance from the specified pool type.
+        Returns the app-id of an available processor or 429 if none available.
+        The processor is marked as busy until explicitly released.
+      operationId: AcquireProcessor
+      x-permissions:
+      - role: service
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcquireProcessorRequest'
+      responses:
+        '200':
+          description: Processor acquired successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcquireProcessorResponse'
+        '429':
+          description: No processors available (all busy or pool at capacity)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolBusyResponse'
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AcquireProcessorRequest\"\
+        ,\n  \"$defs\": {\n    \"AcquireProcessorRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n      \
+        \  \"pool_type\"\n      ],\n      \"properties\": {\n        \"pool_type\": {\n          \"type\": \"string\",\n \
+        \         \"description\": \"Type of processing pool (e.g., \\\"asset-processor\\\", \\\"texture-processor\\\")\"\n\
+        \        },\n        \"priority\": {\n          \"type\": \"integer\",\n          \"default\": 0,\n          \"description\"\
+        : \"Request priority (higher = more urgent)\"\n        },\n        \"timeout_seconds\": {\n          \"type\": \"\
+        integer\",\n          \"default\": 300,\n          \"description\": \"How long the lease is valid for\"\n        },\n\
+        \        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"\
+        description\": \"Optional metadata about the processing job\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AcquireProcessorResponse\"\
+        ,\n  \"$defs\": {\n    \"AcquireProcessorResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
+        \   \"processor_id\",\n        \"app_id\",\n        \"lease_id\",\n        \"expires_at\"\n      ],\n      \"properties\"\
+        : {\n        \"processor_id\": {\n          \"type\": \"string\",\n          \"description\": \"Unique identifier
+        for this processor instance\"\n        },\n        \"app_id\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"App-id for mesh service invocation to this processor\"\n        },\n        \"lease_id\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique lease identifier (used for release)\"\
+        \n        },\n        \"expires_at\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n \
+        \         \"description\": \"When the lease expires (must release before this)\"\n        }\n      }\n    }\n  }\n\
+        }"
+      x-endpoint-info-json: "{\n  \"summary\": \"Acquire a processor from a pool\",\n  \"description\": \"Requests an available
+        processor instance from the specified pool type.\\nReturns the app-id of an available processor or 429 if none available.\\
+        nThe processor is marked as busy until explicitly released.\\n\",\n  \"tags\": [],\n  \"deprecated\": false,\n  \"\
+        operationId\": \"AcquireProcessor\"\n}"
+  /orchestrator/processing-pool/release:
+    post:
+      summary: Release a processor back to the pool
+      description: |
+        Releases a previously acquired processor, making it available for other requests.
+        Should be called when processing is complete or on error cleanup.
+      operationId: ReleaseProcessor
+      x-permissions:
+      - role: service
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReleaseProcessorRequest'
+      responses:
+        '200':
+          description: Processor released successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseProcessorResponse'
+        '404':
+          description: Processor or lease not found
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ReleaseProcessorRequest\"\
+        ,\n  \"$defs\": {\n    \"ReleaseProcessorRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n      \
+        \  \"lease_id\"\n      ],\n      \"properties\": {\n        \"lease_id\": {\n          \"type\": \"string\",\n   \
+        \       \"format\": \"uuid\",\n          \"description\": \"The lease ID returned from AcquireProcessor\"\n      \
+        \  },\n        \"success\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\"\
+        : \"Whether the processing completed successfully\"\n        },\n        \"metrics\": {\n          \"type\": \"object\"\
+        ,\n          \"additionalProperties\": true,\n          \"description\": \"Optional processing metrics (duration,
+        items processed, etc.)\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ReleaseProcessorResponse\"\
+        ,\n  \"$defs\": {\n    \"ReleaseProcessorResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
+        \   \"released\"\n      ],\n      \"properties\": {\n        \"released\": {\n          \"type\": \"boolean\",\n \
+        \         \"description\": \"Whether the processor was successfully released\"\n        },\n        \"processor_id\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"ID of the released processor\"\n        }\n   \
+        \   }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Release a processor back to the pool\",\n  \"description\": \"Releases a
+        previously acquired processor, making it available for other requests.\\nShould be called when processing is complete
+        or on error cleanup.\\n\",\n  \"tags\": [],\n  \"deprecated\": false,\n  \"operationId\": \"ReleaseProcessor\"\n}"
+  /orchestrator/processing-pool/status:
+    post:
+      summary: Get processing pool status
+      description: |
+        Returns current status of a processing pool including:
+        - Total instances (running and available)
+        - Current utilization
+        - Queue depth (waiting requests)
+        - Recent processing metrics
+      operationId: GetPoolStatus
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetPoolStatusRequest'
+      responses:
+        '200':
+          description: Pool status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolStatusResponse'
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetPoolStatusRequest\"\
+        ,\n  \"$defs\": {\n    \"GetPoolStatusRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        pool_type\"\n      ],\n      \"properties\": {\n        \"pool_type\": {\n          \"type\": \"string\",\n      \
+        \    \"description\": \"Type of processing pool to query\"\n        },\n        \"include_metrics\": {\n         \
+        \ \"type\": \"boolean\",\n          \"default\": true,\n          \"description\": \"Include recent processing metrics\"\
+        \n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/PoolStatusResponse\"\
+        ,\n  \"$defs\": {\n    \"PoolStatusResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"pool_type\"\
+        ,\n        \"total_instances\",\n        \"available_instances\",\n        \"busy_instances\",\n        \"utilization\"\
+        \n      ],\n      \"properties\": {\n        \"pool_type\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Pool type\"\n        },\n        \"total_instances\": {\n          \"type\": \"integer\",\n          \"description\"\
+        : \"Total processor instances in the pool\"\n        },\n        \"available_instances\": {\n          \"type\": \"\
+        integer\",\n          \"description\": \"Instances ready to accept work\"\n        },\n        \"busy_instances\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Instances currently processing\"\n        },\n\
+        \        \"queue_depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Number of requests waiting
+        for a processor\"\n        },\n        \"utilization\": {\n          \"type\": \"number\",\n          \"format\":
+        \"float\",\n          \"description\": \"Current utilization percentage (0.0 to 1.0)\"\n        },\n        \"min_instances\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Minimum configured instances\"\n        },\n \
+        \       \"max_instances\": {\n          \"type\": \"integer\",\n          \"description\": \"Maximum configured instances\"\
+        \n        },\n        \"scale_up_threshold\": {\n          \"type\": \"number\",\n          \"format\": \"float\"\
+        ,\n          \"description\": \"Utilization threshold for auto-scale-up\"\n        },\n        \"recent_metrics\"\
+        : {\n          \"$ref\": \"#/$defs/PoolMetrics\"\n        }\n      }\n    },\n    \"PoolMetrics\": {\n      \"type\"\
+        : \"object\",\n      \"properties\": {\n        \"jobs_completed_1h\": {\n          \"type\": \"integer\",\n     \
+        \     \"description\": \"Jobs completed in the last hour\"\n        },\n        \"jobs_failed_1h\": {\n          \"\
+        type\": \"integer\",\n          \"description\": \"Jobs failed in the last hour\"\n        },\n        \"avg_processing_time_ms\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Average processing time in milliseconds\"\n  \
+        \      },\n        \"last_scale_event\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n\
+        \          \"description\": \"When the pool was last scaled\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Get processing pool status\",\n  \"description\": \"Returns current status
+        of a processing pool including:\\n- Total instances (running and available)\\n- Current utilization\\n- Queue depth
+        (waiting requests)\\n- Recent processing metrics\\n\",\n  \"tags\": [],\n  \"deprecated\": false,\n  \"operationId\"\
+        : \"GetPoolStatus\"\n}"
+  /orchestrator/processing-pool/scale:
+    post:
+      summary: Scale a processing pool
+      description: |
+        Manually adjust the size of a processing pool.
+        Can scale up (add instances) or scale down (remove idle instances).
+        Respects min/max constraints from pool configuration.
+      operationId: ScalePool
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScalePoolRequest'
+      responses:
+        '200':
+          description: Pool scaled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScalePoolResponse'
+        '400':
+          description: Invalid scale request (exceeds limits)
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ScalePoolRequest\"\
+        ,\n  \"$defs\": {\n    \"ScalePoolRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"pool_type\"\
+        ,\n        \"target_instances\"\n      ],\n      \"properties\": {\n        \"pool_type\": {\n          \"type\":
+        \"string\",\n          \"description\": \"Type of processing pool to scale\"\n        },\n        \"target_instances\"\
+        : {\n          \"type\": \"integer\",\n          \"minimum\": 0,\n          \"description\": \"Desired number of instances\"\
+        \n        },\n        \"force\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n          \"\
+        description\": \"Force scale even if it would interrupt processing\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ScalePoolResponse\"\
+        ,\n  \"$defs\": {\n    \"ScalePoolResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"pool_type\"\
+        ,\n        \"previous_instances\",\n        \"current_instances\"\n      ],\n      \"properties\": {\n        \"pool_type\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Pool type that was scaled\"\n        },\n     \
+        \   \"previous_instances\": {\n          \"type\": \"integer\",\n          \"description\": \"Instance count before
+        scaling\"\n        },\n        \"current_instances\": {\n          \"type\": \"integer\",\n          \"description\"\
+        : \"Instance count after scaling\"\n        },\n        \"scaled_up\": {\n          \"type\": \"integer\",\n     \
+        \     \"description\": \"Number of instances added\"\n        },\n        \"scaled_down\": {\n          \"type\":
+        \"integer\",\n          \"description\": \"Number of instances removed\"\n        },\n        \"message\": {\n   \
+        \       \"type\": \"string\",\n          \"description\": \"Status message\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Scale a processing pool\",\n  \"description\": \"Manually adjust the size
+        of a processing pool.\\nCan scale up (add instances) or scale down (remove idle instances).\\nRespects min/max constraints
+        from pool configuration.\\n\",\n  \"tags\": [],\n  \"deprecated\": false,\n  \"operationId\": \"ScalePool\"\n}"
+  /orchestrator/processing-pool/cleanup:
+    post:
+      summary: Cleanup idle processing pool instances
+      description: |
+        Scales pool back to minimum instances by removing idle processors.
+        Used for resource reclamation during low-activity periods.
+      operationId: CleanupPool
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupPoolRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupPoolResponse'
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CleanupPoolRequest\"\
+        ,\n  \"$defs\": {\n    \"CleanupPoolRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"pool_type\"\
+        \n      ],\n      \"properties\": {\n        \"pool_type\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Type of processing pool to cleanup\"\n        },\n        \"preserve_minimum\": {\n          \"type\": \"boolean\"\
+        ,\n          \"default\": true,\n          \"description\": \"Keep at least min_instances running\"\n        }\n \
+        \     }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CleanupPoolResponse\"\
+        ,\n  \"$defs\": {\n    \"CleanupPoolResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        pool_type\",\n        \"instances_removed\"\n      ],\n      \"properties\": {\n        \"pool_type\": {\n       \
+        \   \"type\": \"string\",\n          \"description\": \"Pool type that was cleaned up\"\n        },\n        \"instances_removed\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Number of idle instances removed\"\n        },\n\
+        \        \"current_instances\": {\n          \"type\": \"integer\",\n          \"description\": \"Instance count after
+        cleanup\"\n        },\n        \"message\": {\n          \"type\": \"string\",\n          \"description\": \"Status
+        message\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Cleanup idle processing pool instances\",\n  \"description\": \"Scales pool
+        back to minimum instances by removing idle processors.\\nUsed for resource reclamation during low-activity periods.\\\
+        n\",\n  \"tags\": [],\n  \"deprecated\": false,\n  \"operationId\": \"CleanupPool\"\n}"
 components:
   schemas:
     # Request Models for POST-only pattern
@@ -1444,7 +1683,7 @@ components:
           additionalProperties:
             type: string
           description: |
-            Map of service names to Dapr app-id routing destinations.
+            Map of service names to Bannou app-id routing destinations.
             Example: { "accounts": "bannou", "behavior": "npc-processing-01" }
         defaultAppId:
           type: string
@@ -1528,7 +1767,7 @@ components:
       properties:
         appName:
           type: string
-          description: Container's Dapr app name (e.g., "bannou", "npc-omega")
+          description: Container's app-id for mesh routing (e.g., "bannou", "npc-omega")
         reason:
           type: string
           description: Why restart is needed (for logging/auditing)
@@ -1547,7 +1786,7 @@ components:
       properties:
         appName:
           type: string
-          description: Container's Dapr app name
+          description: Container's app-id for mesh routing
 
     GetConfigVersionRequest:
       type: object
@@ -1651,7 +1890,7 @@ components:
           description: Service ID (e.g., "behavior", "accounts")
         appId:
           type: string
-          description: Dapr app-id (e.g., "bannou", "npc-omega-01")
+          description: App-id for mesh routing (e.g., "bannou", "npc-omega-01")
         status:
           type: string
           description: Service status from heartbeat
@@ -1993,13 +2232,13 @@ components:
           additionalProperties:
             type: string
           description: Node-specific environment overrides
-        daprEnabled:
+        meshEnabled:
           type: boolean
           default: true
-          description: Whether to attach Dapr sidecar
-        daprAppId:
+          description: Whether mesh routing is enabled
+        appId:
           type: string
-          description: Dapr app-id override (default derives from node name)
+          description: App-id override for mesh routing (default derives from node name)
 
     InfrastructureConfig:
       type: object
@@ -2010,9 +2249,6 @@ components:
           $ref: '#/components/schemas/InfraServiceConfig'
         mysql:
           $ref: '#/components/schemas/InfraServiceConfig'
-        placement:
-          $ref: '#/components/schemas/InfraServiceConfig'
-          description: Dapr placement service
         ingress:
           $ref: '#/components/schemas/IngressConfig'
 
@@ -2610,7 +2846,7 @@ components:
             Key prefixes indicate scope:
             - "auth.*" - Authentication-related
             - "database.*" - Database connections
-            - "dapr.*" - Dapr components (typically global impact)
+            - "mesh.*" - Mesh components (typically global impact)
             - "connect.*" - WebSocket/connection settings
 
     # ==========================================================================
@@ -2679,7 +2915,7 @@ components:
       properties:
         appName:
           type: string
-          description: Container's Dapr app name
+          description: Container's app-id for mesh routing
         status:
           type: string
           enum: [running, starting, stopping, stopped, unhealthy]
@@ -2805,4 +3041,249 @@ components:
           items:
             type: string
           description: Configuration key prefixes present (e.g., "auth", "database")
+
+    # ============================================================
+    # PROCESSING POOL MODELS
+    # ============================================================
+
+    AcquireProcessorRequest:
+      type: object
+      required:
+      - pool_type
+      properties:
+        pool_type:
+          type: string
+          description: Type of processing pool (e.g., "asset-processor", "texture-processor")
+        priority:
+          type: integer
+          default: 0
+          description: Request priority (higher = more urgent)
+        timeout_seconds:
+          type: integer
+          default: 300
+          description: How long the lease is valid for
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Optional metadata about the processing job
+
+    AcquireProcessorResponse:
+      type: object
+      required:
+      - processor_id
+      - app_id
+      - lease_id
+      - expires_at
+      properties:
+        processor_id:
+          type: string
+          description: Unique identifier for this processor instance
+        app_id:
+          type: string
+          description: App-id for mesh service invocation to this processor
+        lease_id:
+          type: string
+          format: uuid
+          description: Unique lease identifier (used for release)
+        expires_at:
+          type: string
+          format: date-time
+          description: When the lease expires (must release before this)
+
+    PoolBusyResponse:
+      type: object
+      required:
+      - pool_type
+      - queue_position
+      - estimated_wait_seconds
+      properties:
+        pool_type:
+          type: string
+          description: Pool type that is busy
+        queue_position:
+          type: integer
+          description: Position in the wait queue (0 = not queued)
+        estimated_wait_seconds:
+          type: integer
+          description: Estimated wait time until a processor is available
+        message:
+          type: string
+          description: Human-readable status message
+
+    ReleaseProcessorRequest:
+      type: object
+      required:
+      - lease_id
+      properties:
+        lease_id:
+          type: string
+          format: uuid
+          description: The lease ID returned from AcquireProcessor
+        success:
+          type: boolean
+          default: true
+          description: Whether the processing completed successfully
+        metrics:
+          type: object
+          additionalProperties: true
+          description: Optional processing metrics (duration, items processed, etc.)
+
+    ReleaseProcessorResponse:
+      type: object
+      required:
+      - released
+      properties:
+        released:
+          type: boolean
+          description: Whether the processor was successfully released
+        processor_id:
+          type: string
+          description: ID of the released processor
+
+    GetPoolStatusRequest:
+      type: object
+      required:
+      - pool_type
+      properties:
+        pool_type:
+          type: string
+          description: Type of processing pool to query
+        include_metrics:
+          type: boolean
+          default: true
+          description: Include recent processing metrics
+
+    PoolStatusResponse:
+      type: object
+      required:
+      - pool_type
+      - total_instances
+      - available_instances
+      - busy_instances
+      - utilization
+      properties:
+        pool_type:
+          type: string
+          description: Pool type
+        total_instances:
+          type: integer
+          description: Total processor instances in the pool
+        available_instances:
+          type: integer
+          description: Instances ready to accept work
+        busy_instances:
+          type: integer
+          description: Instances currently processing
+        queue_depth:
+          type: integer
+          description: Number of requests waiting for a processor
+        utilization:
+          type: number
+          format: float
+          description: Current utilization percentage (0.0 to 1.0)
+        min_instances:
+          type: integer
+          description: Minimum configured instances
+        max_instances:
+          type: integer
+          description: Maximum configured instances
+        scale_up_threshold:
+          type: number
+          format: float
+          description: Utilization threshold for auto-scale-up
+        recent_metrics:
+          $ref: '#/components/schemas/PoolMetrics'
+
+    PoolMetrics:
+      type: object
+      properties:
+        jobs_completed_1h:
+          type: integer
+          description: Jobs completed in the last hour
+        jobs_failed_1h:
+          type: integer
+          description: Jobs failed in the last hour
+        avg_processing_time_ms:
+          type: integer
+          description: Average processing time in milliseconds
+        last_scale_event:
+          type: string
+          format: date-time
+          description: When the pool was last scaled
+
+    ScalePoolRequest:
+      type: object
+      required:
+      - pool_type
+      - target_instances
+      properties:
+        pool_type:
+          type: string
+          description: Type of processing pool to scale
+        target_instances:
+          type: integer
+          minimum: 0
+          description: Desired number of instances
+        force:
+          type: boolean
+          default: false
+          description: Force scale even if it would interrupt processing
+
+    ScalePoolResponse:
+      type: object
+      required:
+      - pool_type
+      - previous_instances
+      - current_instances
+      properties:
+        pool_type:
+          type: string
+          description: Pool type that was scaled
+        previous_instances:
+          type: integer
+          description: Instance count before scaling
+        current_instances:
+          type: integer
+          description: Instance count after scaling
+        scaled_up:
+          type: integer
+          description: Number of instances added
+        scaled_down:
+          type: integer
+          description: Number of instances removed
+        message:
+          type: string
+          description: Status message
+
+    CleanupPoolRequest:
+      type: object
+      required:
+      - pool_type
+      properties:
+        pool_type:
+          type: string
+          description: Type of processing pool to cleanup
+        preserve_minimum:
+          type: boolean
+          default: true
+          description: Keep at least min_instances running
+
+    CleanupPoolResponse:
+      type: object
+      required:
+      - pool_type
+      - instances_removed
+      properties:
+        pool_type:
+          type: string
+          description: Pool type that was cleaned up
+        instances_removed:
+          type: integer
+          description: Number of idle instances removed
+        current_instances:
+          type: integer
+          description: Instance count after cleanup
+        message:
+          type: string
+          description: Status message
 

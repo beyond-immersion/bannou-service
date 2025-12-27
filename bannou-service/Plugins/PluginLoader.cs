@@ -20,6 +20,29 @@ public class PluginLoader
 {
     private readonly ILogger<PluginLoader> _logger;
 
+    /// <summary>
+    /// Required infrastructure plugins that MUST be loaded and enabled.
+    /// These plugins provide core functionality (messaging, state, mesh) and
+    /// cannot be disabled. Startup will fail if any of these plugins fail to load or initialize.
+    /// </summary>
+    private static readonly HashSet<string> RequiredInfrastructurePlugins = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "state",      // lib-state: IStateStore for state management (MUST load first)
+        "messaging",  // lib-messaging: IMessageBus for pub/sub events (depends on state)
+        "mesh"        // lib-mesh: IMeshInvocationClient for service-to-service calls (depends on messaging)
+    };
+
+    /// <summary>
+    /// Loading priority for infrastructure plugins. Lower values load first.
+    /// This ensures dependencies are available before dependent plugins load.
+    /// </summary>
+    private static readonly Dictionary<string, int> InfrastructureLoadOrder = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { "state", 0 },      // First: state management foundation
+        { "messaging", 1 },  // Second: messaging depends on state being available
+        { "mesh", 2 }        // Third: mesh may depend on messaging for events
+    };
+
     // All discovered plugins (enabled and disabled)
     private readonly List<IBannouPlugin> _allPlugins = new();
 
@@ -30,7 +53,7 @@ public class PluginLoader
     private readonly Dictionary<string, Assembly> _loadedAssemblies = new();
 
     // Resolved service instances for enabled plugins only
-    private readonly Dictionary<string, IDaprService> _resolvedServices = new();
+    private readonly Dictionary<string, IBannouService> _resolvedServices = new();
 
     // WebApplication reference for service startup (stored during ConfigureApplication)
     private WebApplication? _webApp;
@@ -39,6 +62,16 @@ public class PluginLoader
     private readonly List<Type> _clientTypesToRegister = new();
     private readonly List<(Type interfaceType, Type implementationType, ServiceLifetime lifetime)> _serviceTypesToRegister = new();
     private readonly List<(Type configurationType, ServiceLifetime lifetime)> _configurationTypesToRegister = new();
+
+    // Static set of valid environment variable prefixes for forwarding to deployed containers
+    // Populated during plugin discovery and accessible by OrchestratorService
+    private static readonly HashSet<string> _validEnvironmentPrefixes = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Valid environment variable prefixes based on discovered plugins.
+    /// Used by OrchestratorService to filter which ENV vars to forward to deployed containers.
+    /// </summary>
+    public static IReadOnlySet<string> ValidEnvironmentPrefixes => _validEnvironmentPrefixes;
 
     /// <inheritdoc/>
     public PluginLoader(ILogger<PluginLoader> logger)
@@ -115,8 +148,47 @@ public class PluginLoader
             }
         }
 
-        // STAGE 2: Discover types for DI registration from ALL assemblies
+        // STAGE 2: Validate required infrastructure plugins are present
+        var missingInfrastructure = RequiredInfrastructurePlugins
+            .Where(required => !_enabledPlugins.Any(p => p.PluginName.Equals(required, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+        if (missingInfrastructure.Count > 0)
+        {
+            var missing = string.Join(", ", missingInfrastructure);
+            _logger.LogCritical(
+                "STARTUP FAILURE: Required infrastructure plugins are missing: [{MissingPlugins}]. " +
+                "These plugins (lib-messaging, lib-state, lib-mesh) are MANDATORY and must be present for the application to function.",
+                missing);
+            return null; // Indicate fatal failure
+        }
+
+        // STAGE 3: Sort enabled plugins so infrastructure loads FIRST in specific order
+        // Order: state → messaging → mesh → all other services alphabetically
+        // This ensures dependencies are available before dependent plugins load
+        var sortedPlugins = _enabledPlugins
+            .OrderBy(p =>
+            {
+                // Infrastructure plugins get priority order (0, 1, 2)
+                if (InfrastructureLoadOrder.TryGetValue(p.PluginName, out var order))
+                    return order;
+                // Non-infrastructure plugins get high value to sort after infrastructure
+                return 100;
+            })
+            .ThenBy(p => p.PluginName) // Alphabetical within non-infrastructure
+            .ToList();
+        _enabledPlugins.Clear();
+        _enabledPlugins.AddRange(sortedPlugins);
+
+        _logger.LogInformation(
+            "Infrastructure plugins validated. Loading order: [{LoadOrder}]",
+            string.Join(" -> ", _enabledPlugins.Select(p => p.PluginName)));
+
+        // STAGE 4: Discover types for DI registration from ALL assemblies
         DiscoverTypesForRegistration();
+
+        // STAGE 5: Build valid environment variable prefixes for orchestrator forwarding
+        PopulateValidEnvironmentPrefixes();
 
         var discoveredSummary = string.Join(", ", _allPlugins.Select(p => $"{p.DisplayName} v{p.Version}"));
         var enabledSummary = string.Join(", ", _enabledPlugins.Select(p => $"{p.DisplayName} v{p.Version}"));
@@ -133,21 +205,33 @@ public class PluginLoader
     /// Two modes:
     /// - SERVICES_ENABLED=true: All services enabled by default, use {SERVICE}_SERVICE_DISABLED to disable individual services
     /// - SERVICES_ENABLED=false: All services disabled by default, use {SERVICE}_SERVICE_ENABLED to enable individual services
+    ///
+    /// IMPORTANT: Required infrastructure plugins (messaging, state, mesh) are ALWAYS enabled.
+    /// These cannot be disabled via environment variables as they provide core functionality.
     /// </summary>
     /// <param name="serviceName">Name of the service (e.g., "auth", "accounts")</param>
     /// <returns>True if service should be enabled, false if disabled</returns>
     private bool IsServiceEnabled(string serviceName)
     {
         if (string.IsNullOrWhiteSpace(serviceName))
-            return Program.Configuration.Services_Enabled;
+            return Program.Configuration.ServicesEnabled;
+
+        // Required infrastructure plugins are ALWAYS enabled - they cannot be disabled
+        if (RequiredInfrastructurePlugins.Contains(serviceName))
+        {
+            _logger.LogInformation(
+                "Infrastructure plugin '{ServiceName}' is REQUIRED and cannot be disabled",
+                serviceName);
+            return true;
+        }
 
         // Check SERVICES_ENABLED environment variable directly
         var servicesEnabledEnv = Environment.GetEnvironmentVariable("SERVICES_ENABLED");
         var globalServicesEnabled = string.IsNullOrWhiteSpace(servicesEnabledEnv) ?
-            Program.Configuration.Services_Enabled : // Default fallback
+            Program.Configuration.ServicesEnabled : // Default fallback
             string.Equals(servicesEnabledEnv, "true", StringComparison.OrdinalIgnoreCase);
 
-        // Get service name from DaprServiceAttribute for ENV prefix
+        // Get service name from BannouServiceAttribute for ENV prefix
         var serviceNameUpper = serviceName.ToUpper();
 
         if (globalServicesEnabled)
@@ -172,6 +256,45 @@ public class PluginLoader
 
             return isEnabled;
         }
+    }
+
+    /// <summary>
+    /// Populate the static set of valid environment variable prefixes based on discovered plugins.
+    /// This allows the orchestrator to whitelist which ENVs to forward to deployed containers.
+    /// </summary>
+    private void PopulateValidEnvironmentPrefixes()
+    {
+        _validEnvironmentPrefixes.Clear();
+
+        // Only BANNOU_ prefix for shared configuration
+        // All other configuration uses plugin-derived {SERVICE}_ prefixes
+        _validEnvironmentPrefixes.Add("BANNOU_");
+
+        // Add prefix for each discovered plugin
+        // e.g., "auth" → "AUTH_", "game-session" → "GAMESESSION_" and "GAME_SESSION_"
+        foreach (var plugin in _allPlugins)
+        {
+            var pluginName = plugin.PluginName;
+            if (string.IsNullOrWhiteSpace(pluginName))
+                continue;
+
+            // Primary prefix: uppercase with underscores replaced for hyphens, plus trailing underscore
+            // e.g., "game-session" → "GAME_SESSION_"
+            var primaryPrefix = pluginName.ToUpperInvariant().Replace('-', '_') + "_";
+            _validEnvironmentPrefixes.Add(primaryPrefix);
+
+            // Secondary prefix: hyphens removed (no underscore replacement)
+            // e.g., "game-session" → "GAMESESSION_"
+            var secondaryPrefix = pluginName.ToUpperInvariant().Replace("-", "") + "_";
+            if (primaryPrefix != secondaryPrefix)
+            {
+                _validEnvironmentPrefixes.Add(secondaryPrefix);
+            }
+        }
+
+        _logger.LogInformation(
+            "Valid environment prefixes for orchestrator forwarding: {Prefixes}",
+            string.Join(", ", _validEnvironmentPrefixes.OrderBy(p => p)));
     }
 
     /// <summary>
@@ -239,13 +362,13 @@ public class PluginLoader
     }
 
     /// <summary>
-    /// Discover client types that implement IDaprClient interface.
+    /// Discover client types that implement IServiceClient interface.
     /// Pure interface-based discovery - no naming conventions.
     /// </summary>
     private void DiscoverClientTypes(Assembly assembly, string pluginName)
     {
         var clientTypes = assembly.GetTypes()
-            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IDaprClient).IsAssignableFrom(t))
+            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IServiceClient).IsAssignableFrom(t))
             .ToList();
 
         foreach (var clientType in clientTypes)
@@ -259,18 +382,18 @@ public class PluginLoader
     }
 
     /// <summary>
-    /// Discover service types using IDaprService interface and DaprServiceAttribute.
+    /// Discover service types using IBannouService interface and BannouServiceAttribute.
     /// Pure interface/attribute-based discovery from the specific assembly.
     /// </summary>
     private void DiscoverServiceTypes(Assembly assembly, string pluginName)
     {
         var serviceTypes = assembly.GetTypes()
-            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IDaprService).IsAssignableFrom(t))
+            .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IBannouService).IsAssignableFrom(t))
             .ToList();
 
         foreach (var serviceType in serviceTypes)
         {
-            var serviceAttr = serviceType.GetCustomAttribute<DaprServiceAttribute>();
+            var serviceAttr = serviceType.GetCustomAttribute<BannouServiceAttribute>();
             if (serviceAttr != null)
             {
                 var interfaceType = serviceAttr.InterfaceType ?? serviceType;
@@ -282,13 +405,13 @@ public class PluginLoader
             }
             else
             {
-                _logger.LogDebug("🚫 Skipping service {ServiceType} - missing [DaprService] attribute",
+                _logger.LogDebug("Skipping service {ServiceType} - missing BannouService attribute",
                     serviceType.Name);
             }
         }
 
         _logger.LogDebug("Discovered {Count} service types in assembly {AssemblyName}",
-            serviceTypes.Count(t => t.GetCustomAttribute<DaprServiceAttribute>() != null), assembly.GetName().Name);
+            serviceTypes.Count(t => t.GetCustomAttribute<BannouServiceAttribute>() != null), assembly.GetName().Name);
     }
 
     /// <summary>
@@ -339,7 +462,7 @@ public class PluginLoader
 
                 // Find service by name in the same assembly
                 serviceType = assembly.GetTypes()
-                    .FirstOrDefault(t => t.Name == serviceName && typeof(IDaprService).IsAssignableFrom(t));
+                    .FirstOrDefault(t => t.Name == serviceName && typeof(IBannouService).IsAssignableFrom(t));
 
                 if (serviceType != null)
                 {
@@ -393,9 +516,6 @@ public class PluginLoader
     {
         _logger.LogInformation("Centrally registering {ClientCount} client types, {ServiceCount} service types, and {ConfigCount} configuration types",
             _clientTypesToRegister.Count, _serviceTypesToRegister.Count, _configurationTypesToRegister.Count);
-
-        // Shared error event emitter for all services
-        services.AddSingleton<IErrorEventEmitter, ErrorEventEmitter>();
 
         // STAGE 1: Register ALL client types (even from disabled plugins for dependencies)
         RegisterClientTypes(services);
@@ -489,7 +609,7 @@ public class PluginLoader
     private ServiceLifetime GetClientLifetime(Type clientInterface)
     {
         // All clients should be Singleton regardless of their service lifetime.
-        // Clients are generated code for making Dapr requests and should not depend on their service's lifetime.
+        // Clients are generated code for making mesh requests and should not depend on their service's lifetime.
         // Some services that USE clients (not the service they communicate with) could be Singleton,
         // so all clients need to be at least Singleton to be injectable.
         _logger.LogDebug("Using Singleton lifetime for client '{ClientInterface}' (all clients are Singleton)", clientInterface.Name);
@@ -517,6 +637,17 @@ public class PluginLoader
     /// </summary>
     private void RegisterConfigurationTypes(IServiceCollection services)
     {
+        // CRITICAL: Register AppConfiguration first - it's a global config without a matching service
+        // but is needed by MeshServicePlugin and other components during early startup
+        if (!services.Any(s => s.ServiceType == typeof(AppConfiguration)))
+        {
+            services.AddSingleton<AppConfiguration>(serviceProvider =>
+            {
+                return IServiceConfiguration.BuildConfiguration<AppConfiguration>(null);
+            });
+            _logger.LogInformation("Registered global configuration: AppConfiguration (Singleton with BuildConfiguration factory)");
+        }
+
         foreach (var (configurationType, _) in _configurationTypesToRegister)
         {
             // Check if this type is already registered
@@ -546,19 +677,6 @@ public class PluginLoader
         }
 
         _logger.LogInformation("Registered {Count} configuration types in DI", _configurationTypesToRegister.Count);
-
-        // Debug: Print all ConnectServiceConfiguration registrations
-        var connectConfigRegistrations = services.Where(s =>
-            s.ServiceType.Name.Contains("ConnectServiceConfiguration")).ToList();
-
-        _logger.LogWarning("DEBUG: Found {Count} registrations for ConnectServiceConfiguration:",
-            connectConfigRegistrations.Count);
-
-        foreach (var reg in connectConfigRegistrations)
-        {
-            _logger.LogWarning("  - ServiceType: {ServiceType}, ImplementationType: {ImplType}, Lifetime: {Lifetime}",
-                reg.ServiceType.Name, reg.ImplementationType?.Name ?? "Unknown", reg.Lifetime);
-        }
     }
 
     /// <summary>
@@ -587,9 +705,9 @@ public class PluginLoader
                 if (serviceRegistration != default)
                 {
                     var serviceInstance = scopedServiceProvider.GetService(serviceRegistration.interfaceType);
-                    if (serviceInstance is IDaprService daprService)
+                    if (serviceInstance is IBannouService bannouService)
                     {
-                        _resolvedServices[plugin.PluginName] = daprService;
+                        _resolvedServices[plugin.PluginName] = bannouService;
                         _logger.LogInformation("Resolved {ServiceType} for plugin: {PluginName}",
                             serviceRegistration.implementationType.Name, plugin.PluginName);
                     }
@@ -617,12 +735,12 @@ public class PluginLoader
     }
 
     /// <summary>
-    /// Extract service name from a service type using DaprService attribute.
+    /// Extract service name from a service type using BannouService attribute.
     /// </summary>
     private string? GetServiceNameFromType(Type serviceType)
     {
-        var daprServiceAttr = serviceType.GetCustomAttribute<DaprServiceAttribute>();
-        return daprServiceAttr?.Name;
+        var bannouServiceAttr = serviceType.GetCustomAttribute<BannouServiceAttribute>();
+        return bannouServiceAttr?.Name;
     }
 
 
@@ -631,7 +749,7 @@ public class PluginLoader
     /// </summary>
     /// <param name="pluginName">Name of the plugin</param>
     /// <returns>Resolved service instance or null if not found</returns>
-    public IDaprService? GetResolvedService(string pluginName)
+    public IBannouService? GetResolvedService(string pluginName)
     {
         return _resolvedServices.GetValueOrDefault(pluginName);
     }
@@ -735,30 +853,71 @@ public class PluginLoader
     }
 
     /// <summary>
+    /// Check if a plugin is a required infrastructure plugin.
+    /// </summary>
+    /// <param name="pluginName">Name of the plugin to check</param>
+    /// <returns>True if the plugin is required infrastructure</returns>
+    public static bool IsRequiredInfrastructure(string pluginName)
+        => RequiredInfrastructurePlugins.Contains(pluginName);
+
+    /// <summary>
     /// Initialize enabled plugins and their resolved services.
     /// This follows the proper lifecycle: plugins first, then services.
+    /// Infrastructure plugins (messaging, state, mesh) are initialized first and
+    /// their failure causes immediate startup failure.
     /// </summary>
     /// <returns>True if all plugins and services initialized successfully</returns>
     public async Task<bool> InitializeAsync()
     {
-        _logger.LogInformation("🚀 Initializing {EnabledCount} enabled plugins", _enabledPlugins.Count);
+        _logger.LogInformation("Initializing {EnabledCount} enabled plugins", _enabledPlugins.Count);
 
-        // STAGE 1: Initialize enabled plugins
+        // STAGE 1: Initialize enabled plugins (infrastructure first due to sorting)
         foreach (var plugin in _enabledPlugins)
         {
+            var isInfrastructure = RequiredInfrastructurePlugins.Contains(plugin.PluginName);
+            var pluginType = isInfrastructure ? "INFRASTRUCTURE" : "service";
+
             try
             {
-                _logger.LogDebug("Initializing plugin: {PluginName}", plugin.PluginName);
+                _logger.LogDebug("Initializing {PluginType} plugin: {PluginName}",
+                    pluginType, plugin.PluginName);
+
                 var success = await plugin.InitializeAsync();
                 if (!success)
                 {
-                    _logger.LogError("Plugin initialization failed: {PluginName}", plugin.PluginName);
+                    if (isInfrastructure)
+                    {
+                        _logger.LogCritical(
+                            "STARTUP FAILURE: Infrastructure plugin '{PluginName}' failed to initialize. " +
+                            "This is a required plugin and the application cannot function without it.",
+                            plugin.PluginName);
+                    }
+                    else
+                    {
+                        _logger.LogError("Plugin initialization failed: {PluginName}", plugin.PluginName);
+                    }
                     return false;
+                }
+
+                if (isInfrastructure)
+                {
+                    _logger.LogInformation("Infrastructure plugin '{PluginName}' initialized successfully",
+                        plugin.PluginName);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception during plugin initialization: {PluginName}", plugin.PluginName);
+                if (isInfrastructure)
+                {
+                    _logger.LogCritical(ex,
+                        "STARTUP FAILURE: Infrastructure plugin '{PluginName}' threw exception during initialization. " +
+                        "This is a required plugin and the application cannot function without it.",
+                        plugin.PluginName);
+                }
+                else
+                {
+                    _logger.LogError(ex, "Exception during plugin initialization: {PluginName}", plugin.PluginName);
+                }
                 return false;
             }
         }
@@ -800,7 +959,7 @@ public class PluginLoader
 
     /// <summary>
     /// Registers service permissions for all enabled plugins with the Permissions service.
-    /// This should be called AFTER Dapr connectivity is confirmed to ensure events are delivered.
+    /// This should be called AFTER mesh connectivity is confirmed to ensure events are delivered.
     /// </summary>
     /// <returns>True if all permissions were registered successfully</returns>
     public async Task<bool> RegisterServicePermissionsAsync()
@@ -825,14 +984,14 @@ public class PluginLoader
                         _logger.LogInformation("Permissions registered successfully for service: {PluginName} (attempt {Attempt})", pluginName, attempt);
                         break;
                     }
-                    catch (Dapr.DaprException daprEx) when (attempt < maxAttempts)
+                    catch (HttpRequestException httpEx) when (attempt < maxAttempts)
                     {
-                        _logger.LogWarning(daprEx, "Permission registration retry {Attempt}/{Max} for {PluginName}", attempt, maxAttempts, pluginName);
+                        _logger.LogWarning(httpEx, "Permission registration retry {Attempt}/{Max} for {PluginName}", attempt, maxAttempts, pluginName);
                         await Task.Delay(TimeSpan.FromMilliseconds(500));
                     }
-                    catch (Grpc.Core.RpcException rpcEx) when (attempt < maxAttempts)
+                    catch (TimeoutException timeoutEx) when (attempt < maxAttempts)
                     {
-                        _logger.LogWarning(rpcEx, "Permission registration retry {Attempt}/{Max} for {PluginName}", attempt, maxAttempts, pluginName);
+                        _logger.LogWarning(timeoutEx, "Permission registration retry {Attempt}/{Max} for {PluginName}", attempt, maxAttempts, pluginName);
                         await Task.Delay(TimeSpan.FromMilliseconds(500));
                     }
                 }

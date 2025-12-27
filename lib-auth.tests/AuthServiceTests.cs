@@ -2,9 +2,12 @@ using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.Subscriptions;
-using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -21,12 +24,16 @@ public class AuthServiceTests
     private readonly AuthServiceConfiguration _configuration;
     private readonly Mock<IAccountsClient> _mockAccountsClient;
     private readonly Mock<ISubscriptionsClient> _mockSubscriptionsClient;
-    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<AuthService.PasswordResetData>> _mockPasswordResetStore;
+    private readonly Mock<IStateStore<SessionDataModel>> _mockSessionStore;
+    private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<IStateStore<StringWrapper>> _mockStringWrapperStore;
+    private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<ITokenService> _mockTokenService;
     private readonly Mock<ISessionService> _mockSessionService;
     private readonly Mock<IOAuthProviderService> _mockOAuthService;
-    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public AuthServiceTests()
@@ -55,13 +62,41 @@ public class AuthServiceTests
         };
         _mockAccountsClient = new Mock<IAccountsClient>();
         _mockSubscriptionsClient = new Mock<ISubscriptionsClient>();
-        _mockDaprClient = new Mock<DaprClient>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockPasswordResetStore = new Mock<IStateStore<AuthService.PasswordResetData>>();
+        _mockSessionStore = new Mock<IStateStore<SessionDataModel>>();
+        _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockStringWrapperStore = new Mock<IStateStore<StringWrapper>>();
+        _mockMessageBus = new Mock<IMessageBus>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockTokenService = new Mock<ITokenService>();
         _mockSessionService = new Mock<ISessionService>();
         _mockOAuthService = new Mock<IOAuthProviderService>();
-        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup state store factory to return typed stores
+        _mockStateStoreFactory.Setup(f => f.GetStore<AuthService.PasswordResetData>(It.IsAny<string>()))
+            .Returns(_mockPasswordResetStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<SessionDataModel>(It.IsAny<string>()))
+            .Returns(_mockSessionStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(It.IsAny<string>()))
+            .Returns(_mockListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<StringWrapper>(It.IsAny<string>()))
+            .Returns(_mockStringWrapperStore.Object);
+
+        // Setup default behavior for state stores
+        _mockPasswordResetStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<AuthService.PasswordResetData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockSessionStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SessionDataModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockListStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockStringWrapperStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<StringWrapper>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Setup default behavior for message bus
+        _mockMessageBus.Setup(m => m.PublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Guid.NewGuid());
 
         // Setup default HttpClient for mock factory
         var mockHttpClient = new HttpClient();
@@ -76,14 +111,14 @@ public class AuthServiceTests
         return new AuthService(
             _mockAccountsClient.Object,
             _mockSubscriptionsClient.Object,
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _configuration,
             _mockLogger.Object,
             _mockHttpClientFactory.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object);
     }
 
@@ -108,11 +143,12 @@ public class AuthServiceTests
 
         try
         {
-            // Set environment variables with BANNOU_ prefix
-            Environment.SetEnvironmentVariable("BANNOU_JWTSECRET", testSecret);
-            Environment.SetEnvironmentVariable("BANNOU_JWTISSUER", testIssuer);
-            Environment.SetEnvironmentVariable("BANNOU_JWTAUDIENCE", testAudience);
-            Environment.SetEnvironmentVariable("BANNOU_JWTEXPIRATIONMINUTES", testExpiration.ToString());
+            // Set environment variables with AUTH_ prefix and UPPER_SNAKE_CASE format
+            // The normalization converts AUTH_JWT_SECRET -> JwtSecret
+            Environment.SetEnvironmentVariable("AUTH_JWT_SECRET", testSecret);
+            Environment.SetEnvironmentVariable("AUTH_JWT_ISSUER", testIssuer);
+            Environment.SetEnvironmentVariable("AUTH_JWT_AUDIENCE", testAudience);
+            Environment.SetEnvironmentVariable("AUTH_JWT_EXPIRATION_MINUTES", testExpiration.ToString());
 
             // Act - Build configuration using the same method as dependency injection
             var config = BeyondImmersion.BannouService.Configuration.IServiceConfiguration.BuildConfiguration<AuthServiceConfiguration>();
@@ -127,10 +163,10 @@ public class AuthServiceTests
         finally
         {
             // Clean up environment variables
-            Environment.SetEnvironmentVariable("BANNOU_JWTSECRET", null);
-            Environment.SetEnvironmentVariable("BANNOU_JWTISSUER", null);
-            Environment.SetEnvironmentVariable("BANNOU_JWTAUDIENCE", null);
-            Environment.SetEnvironmentVariable("BANNOU_JWTEXPIRATIONMINUTES", null);
+            Environment.SetEnvironmentVariable("AUTH_JWT_SECRET", null);
+            Environment.SetEnvironmentVariable("AUTH_JWT_ISSUER", null);
+            Environment.SetEnvironmentVariable("AUTH_JWT_AUDIENCE", null);
+            Environment.SetEnvironmentVariable("AUTH_JWT_EXPIRATION_MINUTES", null);
         }
     }
 
@@ -242,7 +278,7 @@ public class AuthServiceTests
 
     #region Role Handling Tests
 
-    // NOTE: Complex role handling tests requiring DaprClient mocking with internal SessionDataModel
+    // NOTE: Complex role handling tests requiring mesh client mocking with internal SessionDataModel
     // are better suited for integration testing where real Redis can be used.
     // The permission flow is fully tested in PermissionsServiceTests.
     // Role storage in Redis is verified through HTTP integration tests (http-tester).
@@ -509,14 +545,14 @@ public class AuthServiceTests
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             null!,
             _mockSubscriptionsClient.Object,
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _configuration,
             _mockLogger.Object,
             _mockHttpClientFactory.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -527,24 +563,43 @@ public class AuthServiceTests
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             _mockAccountsClient.Object,
             null!,
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _configuration,
             _mockLogger.Object,
             _mockHttpClientFactory.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
     [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrow()
+    public void Constructor_WithNullStateStoreFactory_ShouldThrow()
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             _mockAccountsClient.Object,
             _mockSubscriptionsClient.Object,
+            null!,
+            _mockMessageBus.Object,
+            _configuration,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object,
+            _mockTokenService.Object,
+            _mockSessionService.Object,
+            _mockOAuthService.Object,
+            _mockEventConsumer.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullMessageBus_ShouldThrow()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new AuthService(
+            _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
+            _mockStateStoreFactory.Object,
             null!,
             _configuration,
             _mockLogger.Object,
@@ -552,7 +607,6 @@ public class AuthServiceTests
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -563,14 +617,14 @@ public class AuthServiceTests
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             _mockAccountsClient.Object,
             _mockSubscriptionsClient.Object,
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             null!,
             _mockLogger.Object,
             _mockHttpClientFactory.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -581,14 +635,14 @@ public class AuthServiceTests
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             _mockAccountsClient.Object,
             _mockSubscriptionsClient.Object,
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _configuration,
             null!,
             _mockHttpClientFactory.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -599,14 +653,14 @@ public class AuthServiceTests
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             _mockAccountsClient.Object,
             _mockSubscriptionsClient.Object,
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _configuration,
             _mockLogger.Object,
             null!,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -617,14 +671,14 @@ public class AuthServiceTests
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             _mockAccountsClient.Object,
             _mockSubscriptionsClient.Object,
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _configuration,
             _mockLogger.Object,
             _mockHttpClientFactory.Object,
             null!,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -635,14 +689,14 @@ public class AuthServiceTests
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             _mockAccountsClient.Object,
             _mockSubscriptionsClient.Object,
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _configuration,
             _mockLogger.Object,
             _mockHttpClientFactory.Object,
             _mockTokenService.Object,
             null!,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -653,14 +707,14 @@ public class AuthServiceTests
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             _mockAccountsClient.Object,
             _mockSubscriptionsClient.Object,
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _configuration,
             _mockLogger.Object,
             _mockHttpClientFactory.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             null!,
-            _mockErrorEventEmitter.Object,
             _mockEventConsumer.Object));
     }
 
@@ -671,14 +725,14 @@ public class AuthServiceTests
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             _mockAccountsClient.Object,
             _mockSubscriptionsClient.Object,
-            _mockDaprClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
             _configuration,
             _mockLogger.Object,
             _mockHttpClientFactory.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
-            _mockErrorEventEmitter.Object,
             null!));
     }
 
@@ -755,12 +809,9 @@ public class AuthServiceTests
         var resetToken = "valid-reset-token";
 
         // Set up the mock to return valid reset data
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<AuthService.PasswordResetData>(
-                It.IsAny<string>(),
-                It.Is<string>(s => s.Contains(resetToken)),
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+        _mockPasswordResetStore
+            .Setup(s => s.GetAsync(
+                It.Is<string>(k => k.Contains(resetToken)),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new AuthService.PasswordResetData
             {
@@ -817,12 +868,9 @@ public class AuthServiceTests
         var sessionKey2 = $"session:{Guid.NewGuid()}";
 
         // Mock the account sessions lookup
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>>(
-                "auth-statestore",
+        _mockListStore
+            .Setup(s => s.GetAsync(
                 $"account-sessions:{accountId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { sessionKey1, sessionKey2 });
 
@@ -840,13 +888,13 @@ public class AuthServiceTests
         await service.OnEventReceivedAsync("account.deleted", accountDeletedEvent);
 
         // Assert - verify session invalidation event was published
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            "bannou-pubsub",
+        _mockMessageBus.Verify(m => m.PublishAsync(
             "session.invalidated",
             It.Is<SessionInvalidatedEvent>(e =>
                 e.AccountId == accountId &&
                 e.Reason == SessionInvalidatedEventReason.Account_deleted &&
                 e.DisconnectClients == true),
+            It.IsAny<PublishOptions?>(),
             It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -858,12 +906,9 @@ public class AuthServiceTests
         var accountId = Guid.NewGuid();
 
         // Mock returns empty session list
-        _mockDaprClient
-            .Setup(d => d.GetStateAsync<List<string>?>(
-                "auth-statestore",
+        _mockListStore
+            .Setup(s => s.GetAsync(
                 $"account-sessions:{accountId}",
-                It.IsAny<ConsistencyMode?>(),
-                It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<string>?)null);
 
@@ -881,10 +926,10 @@ public class AuthServiceTests
         await service.OnEventReceivedAsync("account.deleted", accountDeletedEvent);
 
         // Assert - no event should be published since there were no sessions
-        _mockDaprClient.Verify(d => d.PublishEventAsync(
-            "bannou-pubsub",
+        _mockMessageBus.Verify(m => m.PublishAsync(
             "session.invalidated",
             It.IsAny<SessionInvalidatedEvent>(),
+            It.IsAny<PublishOptions?>(),
             It.IsAny<CancellationToken>()),
             Times.Never);
     }

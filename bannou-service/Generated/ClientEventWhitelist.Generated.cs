@@ -24,6 +24,13 @@ public static class ClientEventWhitelist
     /// </summary>
     private static readonly HashSet<string> ValidEventNames = new(StringComparer.OrdinalIgnoreCase)
     {
+        "asset.bundle.creation.complete",
+        "asset.bundle.validation.complete",
+        "asset.bundle.validation.failed",
+        "asset.processing.complete",
+        "asset.processing.failed",
+        "asset.ready",
+        "asset.upload.complete",
         "connect.capability_manifest",
         "connect.disconnect_notification",
         "game_session.action_result",
@@ -34,6 +41,8 @@ public static class ClientEventWhitelist
         "game_session.state_changed",
         "game_session.state_updated",
         "permissions.session_capabilities",
+        "session.shortcut_published",
+        "session.shortcut_revoked",
         "system.error",
         "system.notification",
         "voice.peer_joined",

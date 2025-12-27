@@ -2,13 +2,13 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 
 [assembly: InternalsVisibleTo("lib-relationship-type.tests")]
 
@@ -18,39 +18,38 @@ namespace BeyondImmersion.BannouService.RelationshipType;
 /// Implementation of the RelationshipType service.
 /// Manages hierarchical relationship types for character relationships.
 /// </summary>
-[DaprService("relationship-type", typeof(IRelationshipTypeService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("relationship-type", typeof(IRelationshipTypeService), lifetime: ServiceLifetime.Scoped)]
 public partial class RelationshipTypeService : IRelationshipTypeService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<RelationshipTypeService> _logger;
     private readonly RelationshipTypeServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly IRelationshipClient _relationshipClient;
 
     private const string STATE_STORE = "relationship-type-statestore";
-    private const string PUBSUB_NAME = "bannou-pubsub";
     private const string TYPE_KEY_PREFIX = "type:";
     private const string CODE_INDEX_PREFIX = "code-index:";
     private const string PARENT_INDEX_PREFIX = "parent-index:";
     private const string ALL_TYPES_KEY = "all-types";
 
     public RelationshipTypeService(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         ILogger<RelationshipTypeService> logger,
         RelationshipTypeServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
         IRelationshipClient relationshipClient,
         IEventConsumer eventConsumer)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _relationshipClient = relationshipClient ?? throw new ArgumentNullException(nameof(relationshipClient));
 
         // Register event handlers via partial class (RelationshipTypeServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     #region Read Operations
@@ -64,10 +63,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             _logger.LogInformation("Getting relationship type by ID: {TypeId}", body.RelationshipTypeId);
 
             var typeKey = BuildTypeKey(body.RelationshipTypeId.ToString());
-            var model = await _daprClient.GetStateAsync<RelationshipTypeModel>(
-                STATE_STORE,
-                typeKey,
-                cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<RelationshipTypeModel>(STATE_STORE)
+                .GetAsync(typeKey, cancellationToken);
 
             if (model == null)
             {
@@ -95,10 +92,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             _logger.LogInformation("Getting relationship type by code: {Code}", body.Code);
 
             var codeIndexKey = BuildCodeIndexKey(body.Code.ToUpperInvariant());
-            var typeId = await _daprClient.GetStateAsync<string>(
-                STATE_STORE,
-                codeIndexKey,
-                cancellationToken: cancellationToken);
+            var typeId = await _stateStoreFactory.GetStore<string>(STATE_STORE)
+                .GetAsync(codeIndexKey, cancellationToken);
 
             if (string.IsNullOrEmpty(typeId))
             {
@@ -107,10 +102,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             }
 
             var typeKey = BuildTypeKey(typeId);
-            var model = await _daprClient.GetStateAsync<RelationshipTypeModel>(
-                STATE_STORE,
-                typeKey,
-                cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<RelationshipTypeModel>(STATE_STORE)
+                .GetAsync(typeKey, cancellationToken);
 
             if (model == null)
             {
@@ -137,10 +130,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         {
             _logger.LogInformation("Listing relationship types");
 
-            var allTypeIds = await _daprClient.GetStateAsync<List<string>>(
-                STATE_STORE,
-                ALL_TYPES_KEY,
-                cancellationToken: cancellationToken) ?? new List<string>();
+            var allTypeIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE)
+                .GetAsync(ALL_TYPES_KEY, cancellationToken) ?? new List<string>();
 
             if (allTypeIds.Count == 0)
             {
@@ -153,17 +144,12 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             // Bulk load all types
             var keys = allTypeIds.Select(BuildTypeKey).ToList();
-            var bulkResults = await _daprClient.GetBulkStateAsync(
-                STATE_STORE,
-                keys,
-                parallelism: 10,
-                cancellationToken: cancellationToken);
+            var bulkResults = await _stateStoreFactory.GetStore<RelationshipTypeModel>(STATE_STORE)
+                .GetBulkAsync(keys, cancellationToken);
 
             var types = new List<RelationshipTypeModel>();
-            foreach (var result in bulkResults)
+            foreach (var (_, model) in bulkResults)
             {
-                if (string.IsNullOrEmpty(result.Value)) continue;
-                var model = BannouJson.Deserialize<RelationshipTypeModel>(result.Value);
                 if (model != null) types.Add(model);
             }
 
@@ -218,10 +204,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             // Verify parent exists
             var parentKey = BuildTypeKey(body.ParentTypeId.ToString());
-            var parent = await _daprClient.GetStateAsync<RelationshipTypeModel>(
-                STATE_STORE,
-                parentKey,
-                cancellationToken: cancellationToken);
+            var parent = await _stateStoreFactory.GetStore<RelationshipTypeModel>(STATE_STORE)
+                .GetAsync(parentKey, cancellationToken);
 
             if (parent == null)
             {
@@ -241,17 +225,12 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             // Bulk load children
             var keys = childIds.Select(BuildTypeKey).ToList();
-            var bulkResults = await _daprClient.GetBulkStateAsync(
-                STATE_STORE,
-                keys,
-                parallelism: 10,
-                cancellationToken: cancellationToken);
+            var bulkResults = await _stateStoreFactory.GetStore<RelationshipTypeModel>(STATE_STORE)
+                .GetBulkAsync(keys, cancellationToken);
 
             var responses = new List<RelationshipTypeResponse>();
-            foreach (var result in bulkResults)
+            foreach (var (_, model) in bulkResults)
             {
-                if (string.IsNullOrEmpty(result.Value)) continue;
-                var model = BannouJson.Deserialize<RelationshipTypeModel>(result.Value);
                 if (model != null)
                 {
                     responses.Add(await MapToResponseAsync(model, cancellationToken));
@@ -293,10 +272,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             // Get the type and traverse up the hierarchy
             var typeKey = BuildTypeKey(body.TypeId.ToString());
-            var currentType = await _daprClient.GetStateAsync<RelationshipTypeModel>(
-                STATE_STORE,
-                typeKey,
-                cancellationToken: cancellationToken);
+            var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(STATE_STORE);
+            var currentType = await store.GetAsync(typeKey, cancellationToken);
 
             if (currentType == null)
             {
@@ -305,10 +282,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             // Verify ancestor exists
             var ancestorKey = BuildTypeKey(body.AncestorTypeId.ToString());
-            var ancestor = await _daprClient.GetStateAsync<RelationshipTypeModel>(
-                STATE_STORE,
-                ancestorKey,
-                cancellationToken: cancellationToken);
+            var ancestor = await store.GetAsync(ancestorKey, cancellationToken);
 
             if (ancestor == null)
             {
@@ -332,10 +306,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 }
 
                 var parentKey = BuildTypeKey(currentParentId);
-                var parentType = await _daprClient.GetStateAsync<RelationshipTypeModel>(
-                    STATE_STORE,
-                    parentKey,
-                    cancellationToken: cancellationToken);
+                var parentType = await store.GetAsync(parentKey, cancellationToken);
 
                 currentParentId = parentType?.ParentTypeId;
             }
@@ -363,10 +334,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             _logger.LogInformation("Getting ancestors for type: {TypeId}", body.TypeId);
 
             var typeKey = BuildTypeKey(body.TypeId.ToString());
-            var currentType = await _daprClient.GetStateAsync<RelationshipTypeModel>(
-                STATE_STORE,
-                typeKey,
-                cancellationToken: cancellationToken);
+            var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(STATE_STORE);
+            var currentType = await store.GetAsync(typeKey, cancellationToken);
 
             if (currentType == null)
             {
@@ -379,10 +348,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             while (!string.IsNullOrEmpty(currentParentId))
             {
                 var parentKey = BuildTypeKey(currentParentId);
-                var parentType = await _daprClient.GetStateAsync<RelationshipTypeModel>(
-                    STATE_STORE,
-                    parentKey,
-                    cancellationToken: cancellationToken);
+                var parentType = await store.GetAsync(parentKey, cancellationToken);
 
                 if (parentType == null) break;
 
@@ -420,10 +386,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             // Check if code already exists
             var codeIndexKey = BuildCodeIndexKey(code);
-            var existingId = await _daprClient.GetStateAsync<string>(
-                STATE_STORE,
-                codeIndexKey,
-                cancellationToken: cancellationToken);
+            var stringStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            var existingId = await stringStore.GetAsync(codeIndexKey, cancellationToken);
 
             if (!string.IsNullOrEmpty(existingId))
             {
@@ -434,13 +398,11 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             // Validate parent if specified
             string? parentTypeCode = null;
             var depth = 0;
+            var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(STATE_STORE);
             if (body.ParentTypeId.HasValue)
             {
                 var parentKey = BuildTypeKey(body.ParentTypeId.Value.ToString());
-                var parent = await _daprClient.GetStateAsync<RelationshipTypeModel>(
-                    STATE_STORE,
-                    parentKey,
-                    cancellationToken: cancellationToken);
+                var parent = await modelStore.GetAsync(parentKey, cancellationToken);
 
                 if (parent == null)
                 {
@@ -456,10 +418,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             if (!string.IsNullOrEmpty(body.InverseTypeCode))
             {
                 var inverseIndexKey = BuildCodeIndexKey(body.InverseTypeCode.ToUpperInvariant());
-                inverseTypeId = await _daprClient.GetStateAsync<string>(
-                    STATE_STORE,
-                    inverseIndexKey,
-                    cancellationToken: cancellationToken);
+                inverseTypeId = await stringStore.GetAsync(inverseIndexKey, cancellationToken);
             }
 
             var typeId = Guid.NewGuid();
@@ -485,10 +444,10 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             // Save the model
             var typeKey = BuildTypeKey(typeId.ToString());
-            await _daprClient.SaveStateAsync(STATE_STORE, typeKey, model, cancellationToken: cancellationToken);
+            await modelStore.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
 
             // Update code index
-            await _daprClient.SaveStateAsync(STATE_STORE, codeIndexKey, typeId.ToString(), cancellationToken: cancellationToken);
+            await stringStore.SaveAsync(codeIndexKey, typeId.ToString(), cancellationToken: cancellationToken);
 
             // Update parent's children index
             if (body.ParentTypeId.HasValue)
@@ -521,10 +480,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             _logger.LogInformation("Updating relationship type: {TypeId}", body.RelationshipTypeId);
 
             var typeKey = BuildTypeKey(body.RelationshipTypeId.ToString());
-            var existing = await _daprClient.GetStateAsync<RelationshipTypeModel>(
-                STATE_STORE,
-                typeKey,
-                cancellationToken: cancellationToken);
+            var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(STATE_STORE);
+            var existing = await modelStore.GetAsync(typeKey, cancellationToken);
 
             if (existing == null)
             {
@@ -571,10 +528,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 {
                     // Validate new parent exists
                     var parentKey = BuildTypeKey(newParentId);
-                    var parent = await _daprClient.GetStateAsync<RelationshipTypeModel>(
-                        STATE_STORE,
-                        parentKey,
-                        cancellationToken: cancellationToken);
+                    var parent = await modelStore.GetAsync(parentKey, cancellationToken);
 
                     if (parent == null)
                     {
@@ -608,10 +562,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 else
                 {
                     var inverseIndexKey = BuildCodeIndexKey(body.InverseTypeCode.ToUpperInvariant());
-                    var inverseId = await _daprClient.GetStateAsync<string>(
-                        STATE_STORE,
-                        inverseIndexKey,
-                        cancellationToken: cancellationToken);
+                    var inverseId = await _stateStoreFactory.GetStore<string>(STATE_STORE)
+                        .GetAsync(inverseIndexKey, cancellationToken);
                     existing.InverseTypeId = inverseId;
                     existing.InverseTypeCode = body.InverseTypeCode;
                 }
@@ -621,7 +573,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             if (changedFields.Count > 0)
             {
                 existing.UpdatedAt = DateTimeOffset.UtcNow;
-                await _daprClient.SaveStateAsync(STATE_STORE, typeKey, existing, cancellationToken: cancellationToken);
+                await modelStore.SaveAsync(typeKey, existing, cancellationToken: cancellationToken);
                 await PublishRelationshipTypeUpdatedEventAsync(existing, changedFields, cancellationToken);
             }
 
@@ -645,10 +597,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             _logger.LogInformation("Deleting relationship type: {TypeId}", body.RelationshipTypeId);
 
             var typeKey = BuildTypeKey(body.RelationshipTypeId.ToString());
-            var existing = await _daprClient.GetStateAsync<RelationshipTypeModel>(
-                STATE_STORE,
-                typeKey,
-                cancellationToken: cancellationToken);
+            var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(STATE_STORE);
+            var existing = await modelStore.GetAsync(typeKey, cancellationToken);
 
             if (existing == null)
             {
@@ -664,11 +614,12 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             }
 
             // Delete the type
-            await _daprClient.DeleteStateAsync(STATE_STORE, typeKey, cancellationToken: cancellationToken);
+            await modelStore.DeleteAsync(typeKey, cancellationToken);
 
             // Remove from code index
             var codeIndexKey = BuildCodeIndexKey(existing.Code);
-            await _daprClient.DeleteStateAsync(STATE_STORE, codeIndexKey, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<string>(STATE_STORE)
+                .DeleteAsync(codeIndexKey, cancellationToken);
 
             // Remove from parent's children index
             if (!string.IsNullOrEmpty(existing.ParentTypeId))
@@ -706,16 +657,14 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             // First pass: create types without parent references
             var codeToId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var stringStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
 
             // Load existing code-to-id mappings
             foreach (var seedType in body.Types)
             {
                 var code = seedType.Code.ToUpperInvariant();
                 var codeIndexKey = BuildCodeIndexKey(code);
-                var existingId = await _daprClient.GetStateAsync<string>(
-                    STATE_STORE,
-                    codeIndexKey,
-                    cancellationToken: cancellationToken);
+                var existingId = await stringStore.GetAsync(codeIndexKey, cancellationToken);
 
                 if (!string.IsNullOrEmpty(existingId))
                 {
@@ -860,8 +809,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             _logger.LogInformation("Deprecating relationship type: {TypeId}", body.RelationshipTypeId);
 
             var typeKey = BuildTypeKey(body.RelationshipTypeId.ToString());
-            var model = await _daprClient.GetStateAsync<RelationshipTypeModel>(
-                STATE_STORE, typeKey, cancellationToken: cancellationToken);
+            var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(STATE_STORE);
+            var model = await store.GetAsync(typeKey, cancellationToken);
 
             if (model == null)
             {
@@ -880,7 +829,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             model.DeprecationReason = body.Reason;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _daprClient.SaveStateAsync(STATE_STORE, typeKey, model, cancellationToken: cancellationToken);
+            await store.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
 
             // Publish updated event with deprecation fields
             await PublishRelationshipTypeUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
@@ -905,8 +854,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             _logger.LogInformation("Undeprecating relationship type: {TypeId}", body.RelationshipTypeId);
 
             var typeKey = BuildTypeKey(body.RelationshipTypeId.ToString());
-            var model = await _daprClient.GetStateAsync<RelationshipTypeModel>(
-                STATE_STORE, typeKey, cancellationToken: cancellationToken);
+            var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(STATE_STORE);
+            var model = await store.GetAsync(typeKey, cancellationToken);
 
             if (model == null)
             {
@@ -925,7 +874,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             model.DeprecationReason = null;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _daprClient.SaveStateAsync(STATE_STORE, typeKey, model, cancellationToken: cancellationToken);
+            await store.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
 
             // Publish updated event with deprecation fields cleared
             await PublishRelationshipTypeUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
@@ -952,8 +901,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             // Verify source exists and is deprecated
             var sourceKey = BuildTypeKey(body.SourceTypeId.ToString());
-            var sourceModel = await _daprClient.GetStateAsync<RelationshipTypeModel>(
-                STATE_STORE, sourceKey, cancellationToken: cancellationToken);
+            var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(STATE_STORE);
+            var sourceModel = await store.GetAsync(sourceKey, cancellationToken);
 
             if (sourceModel == null)
             {
@@ -969,8 +918,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             // Verify target exists
             var targetKey = BuildTypeKey(body.TargetTypeId.ToString());
-            var targetModel = await _daprClient.GetStateAsync<RelationshipTypeModel>(
-                STATE_STORE, targetKey, cancellationToken: cancellationToken);
+            var targetModel = await store.GetAsync(targetKey, cancellationToken);
 
             if (targetModel == null)
             {
@@ -1072,10 +1020,8 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     private async Task<List<string>> GetChildTypeIdsAsync(string parentId, bool recursive, CancellationToken cancellationToken)
     {
         var parentIndexKey = BuildParentIndexKey(parentId);
-        var directChildren = await _daprClient.GetStateAsync<List<string>>(
-            STATE_STORE,
-            parentIndexKey,
-            cancellationToken: cancellationToken) ?? new List<string>();
+        var directChildren = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE)
+            .GetAsync(parentIndexKey, cancellationToken) ?? new List<string>();
 
         if (!recursive || directChildren.Count == 0)
         {
@@ -1095,56 +1041,48 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     private async Task AddToParentIndexAsync(string parentId, string childId, CancellationToken cancellationToken)
     {
         var parentIndexKey = BuildParentIndexKey(parentId);
-        var children = await _daprClient.GetStateAsync<List<string>>(
-            STATE_STORE,
-            parentIndexKey,
-            cancellationToken: cancellationToken) ?? new List<string>();
+        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var children = await store.GetAsync(parentIndexKey, cancellationToken) ?? new List<string>();
 
         if (!children.Contains(childId))
         {
             children.Add(childId);
-            await _daprClient.SaveStateAsync(STATE_STORE, parentIndexKey, children, cancellationToken: cancellationToken);
+            await store.SaveAsync(parentIndexKey, children, cancellationToken: cancellationToken);
         }
     }
 
     private async Task RemoveFromParentIndexAsync(string parentId, string childId, CancellationToken cancellationToken)
     {
         var parentIndexKey = BuildParentIndexKey(parentId);
-        var children = await _daprClient.GetStateAsync<List<string>>(
-            STATE_STORE,
-            parentIndexKey,
-            cancellationToken: cancellationToken) ?? new List<string>();
+        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var children = await store.GetAsync(parentIndexKey, cancellationToken) ?? new List<string>();
 
         if (children.Remove(childId))
         {
-            await _daprClient.SaveStateAsync(STATE_STORE, parentIndexKey, children, cancellationToken: cancellationToken);
+            await store.SaveAsync(parentIndexKey, children, cancellationToken: cancellationToken);
         }
     }
 
     private async Task AddToAllTypesListAsync(string typeId, CancellationToken cancellationToken)
     {
-        var allTypes = await _daprClient.GetStateAsync<List<string>>(
-            STATE_STORE,
-            ALL_TYPES_KEY,
-            cancellationToken: cancellationToken) ?? new List<string>();
+        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var allTypes = await store.GetAsync(ALL_TYPES_KEY, cancellationToken) ?? new List<string>();
 
         if (!allTypes.Contains(typeId))
         {
             allTypes.Add(typeId);
-            await _daprClient.SaveStateAsync(STATE_STORE, ALL_TYPES_KEY, allTypes, cancellationToken: cancellationToken);
+            await store.SaveAsync(ALL_TYPES_KEY, allTypes, cancellationToken: cancellationToken);
         }
     }
 
     private async Task RemoveFromAllTypesListAsync(string typeId, CancellationToken cancellationToken)
     {
-        var allTypes = await _daprClient.GetStateAsync<List<string>>(
-            STATE_STORE,
-            ALL_TYPES_KEY,
-            cancellationToken: cancellationToken) ?? new List<string>();
+        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var allTypes = await store.GetAsync(ALL_TYPES_KEY, cancellationToken) ?? new List<string>();
 
         if (allTypes.Remove(typeId))
         {
-            await _daprClient.SaveStateAsync(STATE_STORE, ALL_TYPES_KEY, allTypes, cancellationToken: cancellationToken);
+            await store.SaveAsync(ALL_TYPES_KEY, allTypes, cancellationToken: cancellationToken);
         }
     }
 
@@ -1174,7 +1112,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
     private async Task EmitErrorAsync(string operation, string endpoint, Exception ex)
     {
-        await _errorEventEmitter.TryPublishAsync(
+        await _messageBus.TryPublishErrorAsync(
             "relationship-type",
             operation,
             "unexpected_exception",
@@ -1207,7 +1145,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 ParentTypeId = string.IsNullOrEmpty(model.ParentTypeId) ? Guid.Empty : Guid.Parse(model.ParentTypeId)
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, "relationship-type.created", eventModel, cancellationToken);
+            await _messageBus.PublishAsync("relationship-type.created", eventModel);
             _logger.LogDebug("Published relationship-type.created event for {TypeId}", model.RelationshipTypeId);
         }
         catch (Exception ex)
@@ -1245,7 +1183,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 ChangedFields = changedFields.ToList()
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, "relationship-type.updated", eventModel, cancellationToken);
+            await _messageBus.PublishAsync("relationship-type.updated", eventModel);
             _logger.LogDebug("Published relationship-type.updated event for {TypeId} with changed fields: {ChangedFields}",
                 model.RelationshipTypeId, string.Join(", ", changedFields));
         }
@@ -1270,7 +1208,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
                 Code = model.Code
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, "relationship-type.deleted", eventModel, cancellationToken);
+            await _messageBus.PublishAsync("relationship-type.deleted", eventModel);
             _logger.LogDebug("Published relationship-type.deleted event for {TypeId}", model.RelationshipTypeId);
         }
         catch (Exception ex)
@@ -1290,7 +1228,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
     public async Task RegisterServicePermissionsAsync()
     {
         _logger.LogInformation("Registering RelationshipType service permissions...");
-        await RelationshipTypePermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+        await RelationshipTypePermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
     }
 
     #endregion

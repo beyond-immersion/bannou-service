@@ -1,7 +1,8 @@
 #nullable enable
 
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
-using Dapr.Client;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Testing;
@@ -38,7 +39,8 @@ public static class TestingPermissionRegistration
             Timestamp = DateTimeOffset.UtcNow,
             ServiceId = ServiceId,
             Version = ServiceVersion,
-            AppId = Environment.GetEnvironmentVariable("DAPR_APP_ID") ?? "bannou",
+            // BANNOU_APP_ID is a legitimate Tenet 21 exception - mesh bootstrap variable
+            AppId = Environment.GetEnvironmentVariable("BANNOU_APP_ID") ?? AppConstants.DEFAULT_APP_NAME,
             Endpoints = GetEndpoints()
         };
     }
@@ -192,16 +194,15 @@ public static class TestingPermissionRegistration
 
     /// <summary>
     /// Registers service permissions via event publishing.
-    /// Should only be called after Dapr connectivity is confirmed.
+    /// Should only be called after messaging connectivity is confirmed.
     /// </summary>
-    public static async Task RegisterViaEventAsync(DaprClient daprClient, ILogger? logger = null)
+    public static async Task RegisterViaEventAsync(IMessageBus messageBus, ILogger? logger = null)
     {
         try
         {
             var registrationEvent = CreateRegistrationEvent();
 
-            await daprClient.PublishEventAsync(
-                "bannou-pubsub",
+            await messageBus.PublishAsync(
                 "permissions.service-registered",
                 registrationEvent);
 

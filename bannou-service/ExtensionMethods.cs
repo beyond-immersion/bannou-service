@@ -202,17 +202,17 @@ public static partial class ExtensionMethods
     }
 
     /// <summary>
-    /// Gets the service name from a service type using DaprServiceAttribute or service info.
+    /// Gets the service name from a service type using BannouServiceAttribute or service info.
     /// </summary>
     /// <param name="serviceType">The service type to examine.</param>
     /// <returns>The service name if found, otherwise null.</returns>
     public static string? GetServiceName(this Type serviceType)
     {
-        DaprServiceAttribute? serviceAttr = serviceType.GetCustomAttributes<DaprServiceAttribute>().FirstOrDefault();
+        BannouServiceAttribute? serviceAttr = serviceType.GetCustomAttributes<BannouServiceAttribute>().FirstOrDefault();
         if (serviceAttr != null && !string.IsNullOrWhiteSpace(serviceAttr.Name))
             return serviceAttr.Name;
 
-        var serviceInfo = IDaprService.GetServiceInfo(serviceType);
+        var serviceInfo = IBannouService.GetServiceInfo(serviceType);
         if (serviceInfo != null && serviceInfo.HasValue)
             return serviceInfo.Value.Item3.Name;
 

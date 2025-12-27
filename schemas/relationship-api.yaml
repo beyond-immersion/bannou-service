@@ -17,7 +17,7 @@ info:
     - Soft-delete via endedAt (relationships can be re-created after ending)
 
 servers:
-- url: http://localhost:3500/v1.0/invoke/bannou/method
+- url: http://localhost:5012
 
 # NOTE: x-lifecycle moved to relationship-events.yaml
 

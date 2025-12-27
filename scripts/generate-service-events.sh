@@ -6,74 +6,18 @@
 
 set -e
 
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
 # Change to scripts directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-echo -e "${BLUE}📡 Generating service-specific event models${NC}"
+# Source common utilities
+source "./common.sh"
 
-# Function to find NSwag executable
-find_nswag_exe() {
-    # On Linux/macOS, prefer the global dotnet tool over Windows executables
-    if [[ "$OSTYPE" == "linux-gnu"* ]] || [[ "$OSTYPE" == "darwin"* ]]; then
-        local nswag_global=$(which nswag 2>/dev/null)
-        if [ -n "$nswag_global" ]; then
-            echo "$nswag_global"
-            return 0
-        fi
-    fi
+log_info "📡 Generating service-specific event models"
 
-    # Try common NSwag installation paths
-    local nswag_paths=(
-        "$HOME/.nuget/packages/nswag.msbuild/14.2.0/tools/Net90/dotnet-nswag.exe"
-        "$HOME/.nuget/packages/nswag.msbuild/14.1.0/tools/Net90/dotnet-nswag.exe"
-        "$HOME/.nuget/packages/nswag.msbuild/14.0.7/tools/Net90/dotnet-nswag.exe"
-        "$(find $HOME/.nuget/packages/nswag.msbuild -name "dotnet-nswag.exe" 2>/dev/null | head -1)"
-        "$(which nswag 2>/dev/null)"
-    )
-
-    for nswag_path in "${nswag_paths[@]}"; do
-        if [ -f "$nswag_path" ] && [ -x "$nswag_path" ]; then
-            echo "$nswag_path"
-            return 0
-        fi
-    done
-
-    return 1
-}
-
-# Helper function to convert to PascalCase
-to_pascal_case() {
-    local input="$1"
-    echo "$input" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))} 1' | sed 's/ //g'
-}
-
-# Find NSwag executable
-NSWAG_EXE=$(find_nswag_exe)
-if [ -z "$NSWAG_EXE" ]; then
-    echo -e "${RED}NSwag executable not found${NC}"
-    echo -e "${YELLOW}Please install NSwag: dotnet tool install -g NSwag.ConsoleCore${NC}"
-    exit 1
-fi
-
-echo -e "${BLUE}Using NSwag: $NSWAG_EXE${NC}"
-
-# Set DOTNET_ROOT if not already set
-if [ -z "$DOTNET_ROOT" ]; then
-    if [ -d "/usr/share/dotnet" ]; then
-        export DOTNET_ROOT="/usr/share/dotnet"
-    elif command -v dotnet >/dev/null 2>&1; then
-        DOTNET_PATH=$(dirname "$(readlink -f "$(which dotnet)")")
-        export DOTNET_ROOT="$DOTNET_PATH"
-    fi
-fi
+# Find NSwag executable and ensure DOTNET_ROOT is set
+require_nswag
+ensure_dotnet_root
 
 # Target directory for generated models
 TARGET_DIR="../bannou-service/Generated/Events"

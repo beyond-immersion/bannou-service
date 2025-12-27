@@ -1,0 +1,91 @@
+# Asset Processing Pool Preset
+# Defines processor pool configuration for heavy asset operations
+# Used for texture, model, and audio processing delegation
+
+name: asset-processing
+description: Asset processing pool configuration for distributed heavy processing
+category: processing
+
+processing_pools:
+  - pool_type: asset-processor
+    plugin: asset
+    min_instances: 1
+    max_instances: 5
+    scale_up_threshold: 0.8
+    scale_down_threshold: 0.2
+    idle_timeout_minutes: 10
+    environment:
+      ASSET_PROCESSING_MODE: worker
+      ASSET_WORKER_POOL: asset-processor
+
+  - pool_type: texture-processor
+    plugin: asset
+    min_instances: 1
+    max_instances: 3
+    scale_up_threshold: 0.7
+    scale_down_threshold: 0.3
+    idle_timeout_minutes: 15
+    environment:
+      ASSET_PROCESSING_MODE: worker
+      ASSET_WORKER_POOL: texture-processor
+      TEXTURE_COMPRESSION_ENABLED: "true"
+      TEXTURE_MAX_DIMENSION: "4096"
+
+  - pool_type: model-processor
+    plugin: asset
+    min_instances: 1
+    max_instances: 3
+    scale_up_threshold: 0.7
+    scale_down_threshold: 0.3
+    idle_timeout_minutes: 15
+    environment:
+      ASSET_PROCESSING_MODE: worker
+      ASSET_WORKER_POOL: model-processor
+      MODEL_OPTIMIZE_MESHES: "true"
+      MODEL_GENERATE_LODS: "true"
+
+  - pool_type: audio-processor
+    plugin: asset
+    min_instances: 1
+    max_instances: 2
+    scale_up_threshold: 0.75
+    scale_down_threshold: 0.25
+    idle_timeout_minutes: 20
+    environment:
+      ASSET_PROCESSING_MODE: worker
+      ASSET_WORKER_POOL: audio-processor
+      AUDIO_NORMALIZE: "true"
+      AUDIO_TARGET_FORMAT: opus
+
+topology:
+  nodes:
+    - name: bannou-asset-pool
+      services:
+        - asset
+      replicas: 1
+      environment:
+        ASPNETCORE_ENVIRONMENT: Production
+        ASSET_PROCESSING_MODE: coordinator
+        LARGE_FILE_THRESHOLD_MB: "50"
+
+  infrastructure:
+    minio:
+      enabled: true
+      bucket: bannou-assets
+    redis:
+      enabled: true
+      version: "7"
+    rabbitmq:
+      enabled: true
+      version: "4"
+
+environment:
+  APP_LOGGING_LEVEL: Information
+  ASSET_STORAGE_PROVIDER: minio
+  ASSET_TOKEN_TTL_SECONDS: "3600"
+  ASSET_MAX_UPLOAD_SIZE_MB: "500"
+
+requiredBackends:
+  - docker-compose
+  - docker-swarm
+  - kubernetes

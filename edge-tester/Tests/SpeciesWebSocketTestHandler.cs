@@ -101,7 +101,7 @@ public class SpeciesWebSocketTestHandler : IServiceTestHandler
                             baseLifespan = 100,
                             maturityAge = 18
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var speciesIdStr = createJson?["speciesId"]?.GetValue<string>();
@@ -121,7 +121,7 @@ public class SpeciesWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/species/get",
                         new { speciesId = speciesIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var getJson = JsonNode.Parse(getResponse.GetRawText())?.AsObject();
                     var retrievedId = getJson?["speciesId"]?.GetValue<string>();
@@ -189,7 +189,7 @@ public class SpeciesWebSocketTestHandler : IServiceTestHandler
                             description = "Lifecycle test species",
                             isPlayable = false
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var speciesIdStr = createJson?["speciesId"]?.GetValue<string>();
@@ -211,7 +211,7 @@ public class SpeciesWebSocketTestHandler : IServiceTestHandler
                             name = $"Updated Lifecycle Test {uniqueCode}",
                             description = "Updated description"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var updateJson = JsonNode.Parse(updateResponse.GetRawText())?.AsObject();
                     var updatedName = updateJson?["name"]?.GetValue<string>();
@@ -232,7 +232,7 @@ public class SpeciesWebSocketTestHandler : IServiceTestHandler
                             speciesId = speciesIdStr,
                             reason = "WebSocket lifecycle test"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var deprecateJson = JsonNode.Parse(deprecateResponse.GetRawText())?.AsObject();
                     var isDeprecated = deprecateJson?["isDeprecated"]?.GetValue<bool>() ?? false;
@@ -249,7 +249,7 @@ public class SpeciesWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/species/undeprecate",
                         new { speciesId = speciesIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var undeprecateJson = JsonNode.Parse(undeprecateResponse.GetRawText())?.AsObject();
                     var isUndeprecated = !(undeprecateJson?["isDeprecated"]?.GetValue<bool>() ?? true);
@@ -317,7 +317,7 @@ public class SpeciesWebSocketTestHandler : IServiceTestHandler
                 method,
                 path,
                 requestBody,
-                timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
 
             var responseJson = response.GetRawText();
             Console.WriteLine($"📥 Received response: {responseJson.Substring(0, Math.Min(500, responseJson.Length))}...");

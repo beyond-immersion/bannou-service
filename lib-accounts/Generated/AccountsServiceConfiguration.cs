@@ -9,21 +9,21 @@ namespace BeyondImmersion.BannouService.Accounts;
 /// Configuration class for Accounts service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(AccountsService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(AccountsService))]
 public class AccountsServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
     /// Comma-separated list of admin email addresses
-    /// Environment variable: ACCOUNTS_ADMIN_EMAILS or BANNOU_ACCOUNTS_ADMIN_EMAILS
+    /// Environment variable: ACCOUNTS_ADMIN_EMAILS
     /// </summary>
     public string AdminEmails { get; set; } = string.Empty;
 
     /// <summary>
     /// Email domain that grants admin access (e.g., "@company.com")
-    /// Environment variable: ACCOUNTS_ADMIN_EMAIL_DOMAIN or BANNOU_ACCOUNTS_ADMIN_EMAIL_DOMAIN
+    /// Environment variable: ACCOUNTS_ADMIN_EMAIL_DOMAIN
     /// </summary>
     public string AdminEmailDomain { get; set; } = string.Empty;
 

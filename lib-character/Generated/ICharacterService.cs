@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.Character;
 /// <summary>
 /// Service interface for Character API
 /// </summary>
-public partial interface ICharacterService : IDaprService
+public partial interface ICharacterService : IBannouService
 {
     /// <summary>
     /// CreateCharacter operation

@@ -19,7 +19,7 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
     /// <summary>
     /// Attribute attached to the service.
     /// </summary>
-    public DaprServiceAttribute? ServiceAttribute { get; }
+    public BannouServiceAttribute? ServiceAttribute { get; }
 
     /// <summary>
     /// Prefix for ENVs for this configuration.
@@ -48,17 +48,22 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
         if (serviceImplementation == null)
             throw new ArgumentNullException(nameof(serviceImplementation), "Service implementation type is required");
 
-        if (!typeof(IDaprService).IsAssignableFrom(serviceImplementation))
-            throw new InvalidCastException($"Service implementation type provided does not implement {nameof(IDaprService)}");
+        if (!typeof(IBannouService).IsAssignableFrom(serviceImplementation))
+            throw new InvalidCastException($"Service implementation type provided does not implement {nameof(IBannouService)}");
 
         if (serviceImplementation.IsAbstract || serviceImplementation.IsInterface)
             throw new InvalidCastException($"Service implementation type provided to config must be a concrete class.");
 
         ServiceImplementationType = serviceImplementation;
-        ServiceAttribute = serviceImplementation.GetCustomAttribute<DaprServiceAttribute>();
+        ServiceAttribute = serviceImplementation.GetCustomAttribute<BannouServiceAttribute>();
 
         EnvPrefix = envPrefix;
         if (ServiceAttribute != null && envPrefix == null)
-            EnvPrefix = $"{ServiceAttribute.Name.ToUpper()}_";
+        {
+            // Convert service name to env prefix: "game-session" -> "GAMESESSION_"
+            // Hyphens are removed (not converted to underscores) to match property naming conventions
+            var normalizedName = ServiceAttribute.Name.Replace("-", "").ToUpper();
+            EnvPrefix = $"{normalizedName}_";
+        }
     }
 }

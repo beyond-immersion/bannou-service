@@ -6,8 +6,9 @@
 
 #nullable enable
 
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
-using Dapr.Client;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Orchestrator;
@@ -39,7 +40,7 @@ public static class OrchestratorPermissionRegistration
             Timestamp = DateTimeOffset.UtcNow,
             ServiceId = ServiceId,
             Version = ServiceVersion,
-            AppId = Environment.GetEnvironmentVariable("DAPR_APP_ID") ?? "bannou",
+            AppId = AppConstants.DEFAULT_APP_NAME,
             Endpoints = GetEndpoints()
         };
     }
@@ -306,6 +307,81 @@ public static class OrchestratorPermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/processing-pool/acquire",
+            Method = ServiceEndpointMethod.POST,
+            Description = "AcquireProcessor",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "service",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/processing-pool/release",
+            Method = ServiceEndpointMethod.POST,
+            Description = "ReleaseProcessor",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "service",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/processing-pool/status",
+            Method = ServiceEndpointMethod.POST,
+            Description = "GetPoolStatus",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/processing-pool/scale",
+            Method = ServiceEndpointMethod.POST,
+            Description = "ScalePool",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/processing-pool/cleanup",
+            Method = ServiceEndpointMethod.POST,
+            Description = "CleanupPool",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 
@@ -357,16 +433,15 @@ public static class OrchestratorPermissionRegistration
 
     /// <summary>
     /// Registers service permissions via event publishing.
-    /// Should only be called after Dapr connectivity is confirmed.
+    /// Should only be called after messaging infrastructure is confirmed.
     /// </summary>
-    public static async Task RegisterViaEventAsync(DaprClient daprClient, ILogger? logger = null)
+    public static async Task RegisterViaEventAsync(IMessageBus messageBus, ILogger? logger = null)
     {
         try
         {
             var registrationEvent = CreateRegistrationEvent();
 
-            await daprClient.PublishEventAsync(
-                "bannou-pubsub",
+            await messageBus.PublishAsync(
                 "permissions.service-registered",
                 registrationEvent);
 

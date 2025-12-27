@@ -2,12 +2,12 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
-using Dapr.Client;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 
 [assembly: InternalsVisibleTo("lib-relationship.tests")]
 
@@ -18,16 +18,15 @@ namespace BeyondImmersion.BannouService.Relationship;
 /// Manages entity-to-entity relationships with composite uniqueness validation,
 /// bidirectional support, and soft-delete capability.
 /// </summary>
-[DaprService("relationship", typeof(IRelationshipService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("relationship", typeof(IRelationshipService), lifetime: ServiceLifetime.Scoped)]
 public partial class RelationshipService : IRelationshipService
 {
-    private readonly DaprClient _daprClient;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IMessageBus _messageBus;
     private readonly ILogger<RelationshipService> _logger;
     private readonly RelationshipServiceConfiguration _configuration;
-    private readonly IErrorEventEmitter _errorEventEmitter;
 
     private const string STATE_STORE = "relationship-statestore";
-    private const string PUBSUB_NAME = "bannou-pubsub";
     private const string RELATIONSHIP_KEY_PREFIX = "rel:";
     private const string ENTITY_INDEX_PREFIX = "entity-idx:";
     private const string TYPE_INDEX_PREFIX = "type-idx:";
@@ -37,25 +36,25 @@ public partial class RelationshipService : IRelationshipService
     /// <summary>
     /// Initializes a new instance of the RelationshipService.
     /// </summary>
-    /// <param name="daprClient">Dapr client for state and pub/sub operations.</param>
+    /// <param name="stateStoreFactory">Factory for getting state stores.</param>
     /// <param name="logger">Logger for diagnostic output.</param>
     /// <param name="configuration">Service configuration.</param>
     /// <param name="errorEventEmitter">Error event emitter for publishing error events.</param>
     public RelationshipService(
-        DaprClient daprClient,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
         ILogger<RelationshipService> logger,
         RelationshipServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter,
         IEventConsumer eventConsumer)
     {
-        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
 
         // Register event handlers via partial class (RelationshipServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IDaprService)this).RegisterEventConsumers(eventConsumer);
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     #region Read Operations
@@ -75,10 +74,8 @@ public partial class RelationshipService : IRelationshipService
             _logger.LogInformation("Getting relationship by ID: {RelationshipId}", body.RelationshipId);
 
             var relationshipKey = BuildRelationshipKey(body.RelationshipId.ToString());
-            var model = await _daprClient.GetStateAsync<RelationshipModel>(
-                STATE_STORE,
-                relationshipKey,
-                cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                .GetAsync(relationshipKey, cancellationToken);
 
             if (model == null)
             {
@@ -114,10 +111,8 @@ public partial class RelationshipService : IRelationshipService
 
             // Get all relationship IDs for this entity from the entity index
             var entityIndexKey = BuildEntityIndexKey(body.EntityType.ToString(), body.EntityId.ToString());
-            var relationshipIds = await _daprClient.GetStateAsync<List<string>>(
-                STATE_STORE,
-                entityIndexKey,
-                cancellationToken: cancellationToken) ?? new List<string>();
+            var relationshipIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE)
+                .GetAsync(entityIndexKey, cancellationToken) ?? new List<string>();
 
             if (relationshipIds.Count == 0)
             {
@@ -126,17 +121,12 @@ public partial class RelationshipService : IRelationshipService
 
             // Bulk load all relationships
             var keys = relationshipIds.Select(BuildRelationshipKey).ToList();
-            var bulkResults = await _daprClient.GetBulkStateAsync(
-                STATE_STORE,
-                keys,
-                parallelism: 10,
-                cancellationToken: cancellationToken);
+            var bulkResults = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                .GetBulkAsync(keys, cancellationToken);
 
             var relationships = new List<RelationshipModel>();
-            foreach (var result in bulkResults)
+            foreach (var (_, model) in bulkResults)
             {
-                if (string.IsNullOrEmpty(result.Value)) continue;
-                var model = BannouJson.Deserialize<RelationshipModel>(result.Value);
                 if (model != null) relationships.Add(model);
             }
 
@@ -213,10 +203,8 @@ public partial class RelationshipService : IRelationshipService
 
             // Get relationships from entity1's index
             var entity1IndexKey = BuildEntityIndexKey(body.Entity1Type.ToString(), body.Entity1Id.ToString());
-            var entity1RelationshipIds = await _daprClient.GetStateAsync<List<string>>(
-                STATE_STORE,
-                entity1IndexKey,
-                cancellationToken: cancellationToken) ?? new List<string>();
+            var entity1RelationshipIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE)
+                .GetAsync(entity1IndexKey, cancellationToken) ?? new List<string>();
 
             if (entity1RelationshipIds.Count == 0)
             {
@@ -225,19 +213,14 @@ public partial class RelationshipService : IRelationshipService
 
             // Bulk load all relationships from entity1
             var keys = entity1RelationshipIds.Select(BuildRelationshipKey).ToList();
-            var bulkResults = await _daprClient.GetBulkStateAsync(
-                STATE_STORE,
-                keys,
-                parallelism: 10,
-                cancellationToken: cancellationToken);
+            var bulkResults = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                .GetBulkAsync(keys, cancellationToken);
 
             var relationships = new List<RelationshipModel>();
             var entity2IdStr = body.Entity2Id.ToString();
 
-            foreach (var result in bulkResults)
+            foreach (var (_, model) in bulkResults)
             {
-                if (string.IsNullOrEmpty(result.Value)) continue;
-                var model = BannouJson.Deserialize<RelationshipModel>(result.Value);
                 if (model == null) continue;
 
                 // Filter to only include relationships with entity2
@@ -300,10 +283,8 @@ public partial class RelationshipService : IRelationshipService
 
             // Get all relationship IDs for this type from the type index
             var typeIndexKey = BuildTypeIndexKey(body.RelationshipTypeId.ToString());
-            var relationshipIds = await _daprClient.GetStateAsync<List<string>>(
-                STATE_STORE,
-                typeIndexKey,
-                cancellationToken: cancellationToken) ?? new List<string>();
+            var relationshipIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE)
+                .GetAsync(typeIndexKey, cancellationToken) ?? new List<string>();
 
             if (relationshipIds.Count == 0)
             {
@@ -312,17 +293,12 @@ public partial class RelationshipService : IRelationshipService
 
             // Bulk load all relationships
             var keys = relationshipIds.Select(BuildRelationshipKey).ToList();
-            var bulkResults = await _daprClient.GetBulkStateAsync(
-                STATE_STORE,
-                keys,
-                parallelism: 10,
-                cancellationToken: cancellationToken);
+            var bulkResults = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                .GetBulkAsync(keys, cancellationToken);
 
             var relationships = new List<RelationshipModel>();
-            foreach (var result in bulkResults)
+            foreach (var (_, model) in bulkResults)
             {
-                if (string.IsNullOrEmpty(result.Value)) continue;
-                var model = BannouJson.Deserialize<RelationshipModel>(result.Value);
                 if (model != null) relationships.Add(model);
             }
 
@@ -412,10 +388,8 @@ public partial class RelationshipService : IRelationshipService
                 body.Entity2Id.ToString(), body.Entity2Type.ToString(),
                 body.RelationshipTypeId.ToString());
 
-            var existingId = await _daprClient.GetStateAsync<string>(
-                STATE_STORE,
-                compositeKey,
-                cancellationToken: cancellationToken);
+            var existingId = await _stateStoreFactory.GetStore<string>(STATE_STORE)
+                .GetAsync(compositeKey, cancellationToken);
 
             if (!string.IsNullOrEmpty(existingId))
             {
@@ -442,10 +416,12 @@ public partial class RelationshipService : IRelationshipService
 
             // Save the relationship
             var relationshipKey = BuildRelationshipKey(relationshipId.ToString());
-            await _daprClient.SaveStateAsync(STATE_STORE, relationshipKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
 
             // Update composite uniqueness index
-            await _daprClient.SaveStateAsync(STATE_STORE, compositeKey, relationshipId.ToString(), cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<string>(STATE_STORE)
+                .SaveAsync(compositeKey, relationshipId.ToString(), cancellationToken: cancellationToken);
 
             // Update entity indices (both entities)
             await AddToEntityIndexAsync(body.Entity1Type.ToString(), body.Entity1Id.ToString(), relationshipId.ToString(), cancellationToken);
@@ -486,10 +462,8 @@ public partial class RelationshipService : IRelationshipService
             _logger.LogInformation("Updating relationship: {RelationshipId}", body.RelationshipId);
 
             var relationshipKey = BuildRelationshipKey(body.RelationshipId.ToString());
-            var model = await _daprClient.GetStateAsync<RelationshipModel>(
-                STATE_STORE,
-                relationshipKey,
-                cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                .GetAsync(relationshipKey, cancellationToken);
 
             if (model == null)
             {
@@ -531,7 +505,8 @@ public partial class RelationshipService : IRelationshipService
             if (needsSave)
             {
                 model.UpdatedAt = DateTimeOffset.UtcNow;
-                await _daprClient.SaveStateAsync(STATE_STORE, relationshipKey, model, cancellationToken: cancellationToken);
+                await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                    .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
 
                 // Publish relationship updated event
                 await PublishRelationshipUpdatedEventAsync(model, changedFields, cancellationToken);
@@ -571,10 +546,8 @@ public partial class RelationshipService : IRelationshipService
             _logger.LogInformation("Ending relationship: {RelationshipId}", body.RelationshipId);
 
             var relationshipKey = BuildRelationshipKey(body.RelationshipId.ToString());
-            var model = await _daprClient.GetStateAsync<RelationshipModel>(
-                STATE_STORE,
-                relationshipKey,
-                cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                .GetAsync(relationshipKey, cancellationToken);
 
             if (model == null)
             {
@@ -593,14 +566,16 @@ public partial class RelationshipService : IRelationshipService
             model.EndedAt = body.EndedAt == default ? DateTimeOffset.UtcNow : body.EndedAt;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _daprClient.SaveStateAsync(STATE_STORE, relationshipKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
 
             // Clear composite uniqueness key to allow new relationships
             var compositeKey = BuildCompositeKey(
                 model.Entity1Id, model.Entity1Type,
                 model.Entity2Id, model.Entity2Type,
                 model.RelationshipTypeId);
-            await _daprClient.DeleteStateAsync(STATE_STORE, compositeKey, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<string>(STATE_STORE)
+                .DeleteAsync(compositeKey, cancellationToken);
 
             // Publish relationship deleted/ended event
             await PublishRelationshipDeletedEventAsync(model, "Relationship ended", cancellationToken);
@@ -668,15 +643,13 @@ public partial class RelationshipService : IRelationshipService
         CancellationToken cancellationToken)
     {
         var indexKey = BuildEntityIndexKey(entityType, entityId);
-        var relationshipIds = await _daprClient.GetStateAsync<List<string>>(
-            STATE_STORE,
-            indexKey,
-            cancellationToken: cancellationToken) ?? new List<string>();
+        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var relationshipIds = await store.GetAsync(indexKey, cancellationToken) ?? new List<string>();
 
         if (!relationshipIds.Contains(relationshipId))
         {
             relationshipIds.Add(relationshipId);
-            await _daprClient.SaveStateAsync(STATE_STORE, indexKey, relationshipIds, cancellationToken: cancellationToken);
+            await store.SaveAsync(indexKey, relationshipIds, cancellationToken: cancellationToken);
         }
     }
 
@@ -688,15 +661,13 @@ public partial class RelationshipService : IRelationshipService
         CancellationToken cancellationToken)
     {
         var indexKey = BuildTypeIndexKey(relationshipTypeId);
-        var relationshipIds = await _daprClient.GetStateAsync<List<string>>(
-            STATE_STORE,
-            indexKey,
-            cancellationToken: cancellationToken) ?? new List<string>();
+        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var relationshipIds = await store.GetAsync(indexKey, cancellationToken) ?? new List<string>();
 
         if (!relationshipIds.Contains(relationshipId))
         {
             relationshipIds.Add(relationshipId);
-            await _daprClient.SaveStateAsync(STATE_STORE, indexKey, relationshipIds, cancellationToken: cancellationToken);
+            await store.SaveAsync(indexKey, relationshipIds, cancellationToken: cancellationToken);
         }
     }
 
@@ -708,14 +679,12 @@ public partial class RelationshipService : IRelationshipService
         CancellationToken cancellationToken)
     {
         var indexKey = BuildTypeIndexKey(relationshipTypeId);
-        var relationshipIds = await _daprClient.GetStateAsync<List<string>>(
-            STATE_STORE,
-            indexKey,
-            cancellationToken: cancellationToken) ?? new List<string>();
+        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var relationshipIds = await store.GetAsync(indexKey, cancellationToken) ?? new List<string>();
 
         if (relationshipIds.Remove(relationshipId))
         {
-            await _daprClient.SaveStateAsync(STATE_STORE, indexKey, relationshipIds, cancellationToken: cancellationToken);
+            await store.SaveAsync(indexKey, relationshipIds, cancellationToken: cancellationToken);
         }
     }
 
@@ -724,15 +693,13 @@ public partial class RelationshipService : IRelationshipService
     /// </summary>
     private async Task AddToAllRelationshipsListAsync(string relationshipId, CancellationToken cancellationToken)
     {
-        var allRelationships = await _daprClient.GetStateAsync<List<string>>(
-            STATE_STORE,
-            ALL_RELATIONSHIPS_KEY,
-            cancellationToken: cancellationToken) ?? new List<string>();
+        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var allRelationships = await store.GetAsync(ALL_RELATIONSHIPS_KEY, cancellationToken) ?? new List<string>();
 
         if (!allRelationships.Contains(relationshipId))
         {
             allRelationships.Add(relationshipId);
-            await _daprClient.SaveStateAsync(STATE_STORE, ALL_RELATIONSHIPS_KEY, allRelationships, cancellationToken: cancellationToken);
+            await store.SaveAsync(ALL_RELATIONSHIPS_KEY, allRelationships, cancellationToken: cancellationToken);
         }
     }
 
@@ -795,7 +762,7 @@ public partial class RelationshipService : IRelationshipService
                 CreatedAt = model.CreatedAt
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, "relationship.created", eventModel, cancellationToken);
+            await _messageBus.PublishAsync("relationship.created", eventModel);
             _logger.LogDebug("Published relationship.created event for {RelationshipId}", model.RelationshipId);
         }
         catch (Exception ex)
@@ -833,7 +800,7 @@ public partial class RelationshipService : IRelationshipService
                 ChangedFields = changedFields.ToList()
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, "relationship.updated", eventModel, cancellationToken);
+            await _messageBus.PublishAsync("relationship.updated", eventModel);
             _logger.LogDebug("Published relationship.updated event for {RelationshipId}", model.RelationshipId);
         }
         catch (Exception ex)
@@ -868,7 +835,7 @@ public partial class RelationshipService : IRelationshipService
                 DeletedReason = deletedReason
             };
 
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, "relationship.deleted", eventModel, cancellationToken);
+            await _messageBus.PublishAsync("relationship.deleted", eventModel);
             _logger.LogDebug("Published relationship.deleted event for {RelationshipId}", model.RelationshipId);
         }
         catch (Exception ex)
@@ -882,7 +849,7 @@ public partial class RelationshipService : IRelationshipService
     /// </summary>
     private async Task EmitErrorAsync(string operation, string endpoint, Exception ex)
     {
-        await _errorEventEmitter.TryPublishAsync(
+        await _messageBus.TryPublishErrorAsync(
             "relationship",
             operation,
             "unexpected_exception",
@@ -904,7 +871,7 @@ public partial class RelationshipService : IRelationshipService
     public async Task RegisterServicePermissionsAsync()
     {
         _logger.LogInformation("Registering Relationship service permissions...");
-        await RelationshipPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+        await RelationshipPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
     }
 
     #endregion

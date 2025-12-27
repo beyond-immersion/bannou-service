@@ -6,7 +6,7 @@ using System.Reflection;
 namespace BeyondImmersion.BannouService.ServiceClients;
 
 /// <summary>
-/// Dependency injection extensions for registering Dapr-aware service clients.
+/// Dependency injection extensions for registering Bannou-aware service clients.
 /// Provides dynamic app-id resolution with default "bannou" routing.
 /// </summary>
 public static class ServiceClientExtensions
@@ -22,7 +22,7 @@ public static class ServiceClientExtensions
     }
 
     /// <summary>
-    /// Registers a Dapr-aware service client with automatic HttpClient configuration.
+    /// Registers a Bannou-aware service client with automatic HttpClient configuration.
     /// The client uses dynamic app-id resolution defaulting to "bannou".
     /// </summary>
     /// <typeparam name="TClient">The service client type (e.g., AccountsClient)</typeparam>
@@ -30,7 +30,7 @@ public static class ServiceClientExtensions
     /// <param name="services">The service collection to add the client to.</param>
     /// <param name="serviceName">The service name for app-id resolution (e.g., "accounts")</param>
     /// <param name="configureClient">Optional HttpClient configuration</param>
-    public static IServiceCollection AddDaprServiceClient<TClient, TInterface>(
+    public static IServiceCollection AddBannouServiceClient<TClient, TInterface>(
         this IServiceCollection services,
         string serviceName,
         Action<HttpClient>? configureClient = null)
@@ -39,11 +39,11 @@ public static class ServiceClientExtensions
     {
         services.AddHttpClient<TClient>(client =>
         {
-            // Dapr sidecar endpoint - will be routed via app-id resolution
+            // mesh endpoint - will be routed via app-id resolution
             client.BaseAddress = new Uri("http://localhost:3500");
             client.Timeout = TimeSpan.FromSeconds(30);
 
-            // Add standard Dapr headers
+            // Add standard routing headers
             client.DefaultRequestHeaders.Add("Accept", "application/json");
 
             configureClient?.Invoke(client);
@@ -92,17 +92,17 @@ public static class ServiceClientExtensions
     }
 
     /// <summary>
-    /// Registers multiple Dapr service clients at once for convenience.
+    /// Registers multiple Bannou service clients at once for convenience.
     /// Uses service name derived from client type name (e.g., AccountsClient -> "accounts").
     /// </summary>
-    public static IServiceCollection AddDaprServiceClients(
+    public static IServiceCollection AddBannouServiceClients(
         this IServiceCollection services,
         params (Type clientType, Type interfaceType, string serviceName)[] clientConfigurations)
     {
         foreach (var (clientType, interfaceType, serviceName) in clientConfigurations)
         {
             var method = typeof(ServiceClientExtensions)
-                .GetMethod(nameof(AddDaprServiceClient))!
+                .GetMethod(nameof(AddBannouServiceClient))!
                 .MakeGenericMethod(clientType, interfaceType);
 
             method.Invoke(null, new object?[] { services, serviceName, null });
@@ -116,7 +116,7 @@ public static class ServiceClientExtensions
     /// Follows naming convention: {Service}Client implements I{Service}Client.
     /// Service name is derived by removing "Client" suffix and converting to lowercase.
     /// </summary>
-    public static IServiceCollection AddAllDaprServiceClients(this IServiceCollection services)
+    public static IServiceCollection AddAllBannouServiceClients(this IServiceCollection services)
     {
         var assemblies = new List<Assembly> { typeof(ServiceClientExtensions).Assembly };
 
@@ -149,7 +149,7 @@ public static class ServiceClientExtensions
                     .ToLowerInvariant();
 
                 var method = typeof(ServiceClientExtensions)
-                    .GetMethod(nameof(AddDaprServiceClient))!
+                    .GetMethod(nameof(AddBannouServiceClient))!
                     .MakeGenericMethod(clientType, interfaceType);
 
                 method.Invoke(null, new object?[] { services, serviceName, null });
