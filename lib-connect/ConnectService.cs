@@ -456,6 +456,7 @@ public partial class ConnectService : IConnectService
     /// Handles WebSocket communication using the enhanced 31-byte binary protocol.
     /// Creates persistent connection state and processes messages with proper routing.
     /// </summary>
+    [Obsolete]
     public async Task HandleWebSocketCommunicationAsync(
         WebSocket webSocket,
         string sessionId,
@@ -709,11 +710,21 @@ public partial class ConnectService : IConnectService
             // Remove from connection manager - use instance-matching removal to prevent
             // race condition during session subsume where old connection's cleanup could
             // accidentally remove a new connection that replaced it (Tenet 4 compliance)
-            _connectionManager.RemoveConnectionIfMatch(sessionId, webSocket);
+            var wasRemoved = _connectionManager.RemoveConnectionIfMatch(sessionId, webSocket);
 
-            // Initiate reconnection window instead of immediate cleanup (unless forced disconnect)
-            if (_sessionManager != null)
+            // CRITICAL: If wasRemoved is false, this connection was SUBSUMED by a new connection
+            // with the same session ID. In this case, we must NOT:
+            // - Unsubscribe from RabbitMQ (new connection is using the subscription)
+            // - Initiate reconnection window (session is still active)
+            // - Publish disconnect events (session is not actually disconnecting)
+            if (!wasRemoved)
             {
+                _logger.LogDebug("Session {SessionId} was subsumed by new connection - skipping cleanup", sessionId);
+                // Skip all cleanup - new connection owns this session now
+            }
+            else if (_sessionManager != null)
+            {
+                // Initiate reconnection window instead of immediate cleanup (unless forced disconnect)
                 if (isForcedDisconnect)
                 {
                     // Forced disconnect - unsubscribe from RabbitMQ and clean up immediately
@@ -765,7 +776,8 @@ public partial class ConnectService : IConnectService
             }
 
             // Can send messages when Open (server-initiated close) or CloseReceived (client-initiated close)
-            if (webSocket.State == WebSocketState.Open || webSocket.State == WebSocketState.CloseReceived)
+            // Skip this when subsumed - the subsume mechanism already closes the old WebSocket with "New connection established"
+            if (wasRemoved && (webSocket.State == WebSocketState.Open || webSocket.State == WebSocketState.CloseReceived))
             {
                 try
                 {

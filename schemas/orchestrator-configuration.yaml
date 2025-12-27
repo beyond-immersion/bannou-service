@@ -7,7 +7,7 @@ paths: {}
 x-service-configuration:
   properties:
     # Cache Configuration
-    OrchestratorCacheTtlMinutes:
+    CacheTtlMinutes:
       type: integer
       description: Cache TTL in minutes for orchestrator data
       env: ORCHESTRATOR_CACHE_TTL_MINUTES

@@ -5,6 +5,11 @@ info:
     Event models for Orchestrator service RabbitMQ pub/sub.
     Used for internal health checks and orchestration events.
   version: 1.0.0
+  x-event-subscriptions:
+    # Service heartbeats from all bannou instances - used for deployment validation
+    - topic: bannou-service-heartbeats
+      event: ServiceHeartbeatEvent
+      handler: HandleServiceHeartbeat
 
 paths: {}
 

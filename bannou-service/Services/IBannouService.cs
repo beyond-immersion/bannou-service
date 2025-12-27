@@ -212,7 +212,7 @@ public interface IBannouService
             if (_networkModePresets != null)
                 return _networkModePresets;
 
-            var networkMode = Program.Configuration?.Network_Mode;
+            var networkMode = Program.Configuration?.NetworkMode;
             if (networkMode != null)
             {
                 if (networkMode.EndsWith("-scaling", StringComparison.InvariantCultureIgnoreCase))
@@ -395,12 +395,12 @@ public interface IBannouService
     public static bool IsDisabled(string? serviceName)
     {
         if (string.IsNullOrWhiteSpace(serviceName))
-            return !Program.Configuration.Services_Enabled;
+            return !Program.Configuration.ServicesEnabled;
 
         // Use the same two-mode logic as PluginLoader.IsServiceEnabled, but inverted
         var servicesEnabledEnv = Environment.GetEnvironmentVariable("SERVICES_ENABLED");
         var globalServicesEnabled = string.IsNullOrWhiteSpace(servicesEnabledEnv) ?
-            Program.Configuration.Services_Enabled :
+            Program.Configuration.ServicesEnabled :
             string.Equals(servicesEnabledEnv, "true", StringComparison.OrdinalIgnoreCase);
 
         var serviceNameUpper = serviceName.ToUpper();

@@ -28,8 +28,8 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return null;
         }
 
-        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
         var uniqueId = Guid.NewGuid().ToString("N")[..12];
         var testEmail = $"{testPrefix}_{uniqueId}@test.local";
         var testPassword = $"{testPrefix}Test123!";
@@ -183,7 +183,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         using var webSocket = new ClientWebSocket();
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
 
@@ -284,9 +284,9 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
-        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
 
         // Create first test account
         Console.WriteLine("📋 Creating first test account for unique GUID test...");
@@ -427,7 +427,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         using var webSocket = new ClientWebSocket();
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
 
@@ -562,7 +562,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         using var webSocket = new ClientWebSocket();
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
 

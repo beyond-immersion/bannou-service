@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Auth;
 public class AuthServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
     /// Secret key for JWT token signing

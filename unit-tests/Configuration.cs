@@ -27,10 +27,9 @@ public class Configuration : IClassFixture<CollectionFixture>
 
     private abstract class ConfigBase : IServiceConfiguration
     {
-        // Note: Force_Service_ID uses legacy underscore naming from interface
-        // New tests should use PascalCase properties (Property, TestValue, etc.)
-        public string? Force_Service_ID { get; set; }
-        public string? ForceServiceId { get; set; } // PascalCase version for normalization tests
+        // ForceServiceId implements IServiceConfiguration.ForceServiceId
+        // Env var FORCE_SERVICE_ID normalizes to ForceServiceId via NormalizeEnvVarKey
+        public string? ForceServiceId { get; set; }
     }
 
     private class Configuration_Invalid
@@ -109,7 +108,7 @@ public class Configuration : IClassFixture<CollectionFixture>
     {
         IDictionary<string, string>? switchLookup = IServiceConfiguration.CreateAllSwitchMappings();
         Assert.NotNull(switchLookup);
-        Assert.Equal("Force_Service_ID", switchLookup["--force-service-id"]);
+        Assert.Equal("ForceServiceId", switchLookup["--force-service-id"]);
         Assert.False(switchLookup.ContainsKey("--test-service-enabled"));
     }
 
@@ -124,7 +123,7 @@ public class Configuration : IClassFixture<CollectionFixture>
     {
         IDictionary<string, string> switchLookup = IServiceConfiguration.CreateSwitchMappings(typeof(Configuration_NoAttribute));
         Assert.NotNull(switchLookup);
-        Assert.Equal("Force_Service_ID", switchLookup["--force-service-id"]);
+        Assert.Equal("ForceServiceId", switchLookup["--force-service-id"]);
         Assert.False(switchLookup.ContainsKey("--test-service-enabled"));
     }
 
@@ -133,7 +132,7 @@ public class Configuration : IClassFixture<CollectionFixture>
     {
         IDictionary<string, string> switchLookup = IServiceConfiguration.CreateSwitchMappings<Configuration_NoAttribute>();
         Assert.NotNull(switchLookup);
-        Assert.Equal("Force_Service_ID", switchLookup["--force-service-id"]);
+        Assert.Equal("ForceServiceId", switchLookup["--force-service-id"]);
         Assert.False(switchLookup.ContainsKey("--test-service-enabled"));
     }
 
@@ -209,7 +208,7 @@ public class Configuration : IClassFixture<CollectionFixture>
 
         IConfigurationRoot configRoot = IServiceConfiguration.BuildConfigurationRoot();
         Assert.NotNull(configRoot);
-        Assert.Null(configRoot["Force_Service_ID"]);
+        Assert.Null(configRoot["ForceServiceId"]);
         Assert.Null(configRoot["force_service_id"]);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
@@ -218,7 +217,7 @@ public class Configuration : IClassFixture<CollectionFixture>
             Environment.SetEnvironmentVariable("FORCE_SERVICE_ID", serviceID);
             configRoot = IServiceConfiguration.BuildConfigurationRoot();
             Assert.NotNull(configRoot);
-            Assert.Equal(serviceID, configRoot["Force_Service_ID"]);
+            Assert.Equal(serviceID, configRoot["ForceServiceId"]);
         }
         finally
         {
@@ -230,9 +229,9 @@ public class Configuration : IClassFixture<CollectionFixture>
     public void Configuration_AppConfigRoot_WithArgs()
     {
         var serviceID = Guid.NewGuid().ToString().ToLower();
-        IConfigurationRoot configRoot = IServiceConfiguration.BuildConfigurationRoot(args: new string[] { $"--Force-Service-ID={serviceID}" });
+        IConfigurationRoot configRoot = IServiceConfiguration.BuildConfigurationRoot(args: new string[] { $"--force-service-id={serviceID}" });
         Assert.NotNull(configRoot);
-        Assert.Equal(serviceID, configRoot["Force_Service_ID"]);
+        Assert.Equal(serviceID, configRoot["ForceServiceId"]);
     }
 
     [Fact]
@@ -246,8 +245,8 @@ public class Configuration : IClassFixture<CollectionFixture>
             Environment.SetEnvironmentVariable("TEST_FORCE_SERVICE_ID", serviceID);
             IConfigurationRoot configRoot = IServiceConfiguration.BuildConfigurationRoot(envPrefix: "test_");
             Assert.NotNull(configRoot);
-            Assert.Null(configRoot["Test_Force_Service_ID"]);
-            Assert.Equal(serviceID, configRoot["Force_Service_ID"]);
+            Assert.Null(configRoot["TestForceServiceId"]);
+            Assert.Equal(serviceID, configRoot["ForceServiceId"]);
         }
         finally
         {
@@ -261,14 +260,14 @@ public class Configuration : IClassFixture<CollectionFixture>
         Environment.SetEnvironmentVariable("FORCE_SERVICE_ID", null);
 
         var config = IServiceConfiguration.BuildConfiguration();
-        Assert.Null(config.Force_Service_ID);
+        Assert.Null(config.ForceServiceId);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
         try
         {
             Environment.SetEnvironmentVariable("FORCE_SERVICE_ID", serviceID);
             config = IServiceConfiguration.BuildConfiguration();
-            Assert.Equal(serviceID, config.Force_Service_ID);
+            Assert.Equal(serviceID, config.ForceServiceId);
         }
         finally
         {
@@ -280,14 +279,14 @@ public class Configuration : IClassFixture<CollectionFixture>
     public void Configuration_AppConfig_WithArgs()
     {
         var serviceID = Guid.NewGuid().ToString().ToLower();
-        var config = IServiceConfiguration.BuildConfiguration(new string[] { $"--Force-Service-ID={serviceID}" });
-        Assert.Equal(serviceID, config.Force_Service_ID);
+        var config = IServiceConfiguration.BuildConfiguration(new string[] { $"--force-service-id={serviceID}" });
+        Assert.Equal(serviceID, config.ForceServiceId);
 
         config = IServiceConfiguration.BuildConfiguration(new string[] { $"--force-service-id={serviceID}" });
-        Assert.Equal(serviceID, config.Force_Service_ID);
+        Assert.Equal(serviceID, config.ForceServiceId);
 
         config = IServiceConfiguration.BuildConfiguration();
-        Assert.Null(config.Force_Service_ID);
+        Assert.Null(config.ForceServiceId);
     }
 
     [Fact]
@@ -297,17 +296,17 @@ public class Configuration : IClassFixture<CollectionFixture>
         Environment.SetEnvironmentVariable("TEST_FORCE_SERVICE_ID", null);
 
         var config = IServiceConfiguration.BuildConfiguration(envPrefix: "test_");
-        Assert.Null(config.Force_Service_ID);
+        Assert.Null(config.ForceServiceId);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
         try
         {
             Environment.SetEnvironmentVariable("FORCE_SERVICE_ID", serviceID);
             config = IServiceConfiguration.BuildConfiguration(envPrefix: "test_");
-            Assert.Null(config.Force_Service_ID);
+            Assert.Null(config.ForceServiceId);
             Environment.SetEnvironmentVariable("TEST_FORCE_SERVICE_ID", serviceID);
             config = IServiceConfiguration.BuildConfiguration(envPrefix: "test_");
-            Assert.Equal(serviceID, config.Force_Service_ID);
+            Assert.Equal(serviceID, config.ForceServiceId);
         }
         finally
         {
@@ -352,14 +351,14 @@ public class Configuration : IClassFixture<CollectionFixture>
     {
         var serviceID = Guid.NewGuid().ToString().ToLower();
         var config = IServiceConfiguration.BuildConfiguration(typeof(Configuration_NoAttribute),
-                        args: new string[] { $"--Force-Service-ID={serviceID}" });
+                        args: new string[] { $"--force-service-id={serviceID}" });
         Assert.NotNull(config);
-        Assert.Equal(serviceID, config.Force_Service_ID);
+        Assert.Equal(serviceID, config.ForceServiceId);
 
         config = IServiceConfiguration.BuildConfiguration(typeof(Configuration_NoAttribute),
                         args: new string[] { $"--force-service-id={serviceID}" });
         Assert.NotNull(config);
-        Assert.Equal(serviceID, config.Force_Service_ID);
+        Assert.Equal(serviceID, config.ForceServiceId);
     }
 
     [Fact]
@@ -394,12 +393,12 @@ public class Configuration : IClassFixture<CollectionFixture>
     {
         var serviceID = Guid.NewGuid().ToString().ToLower();
         Configuration_NoAttribute config = IServiceConfiguration.BuildConfiguration<Configuration_NoAttribute>(
-                        args: new string[] { $"--Force-Service-ID={serviceID}" });
-        Assert.Equal(serviceID, config.Force_Service_ID);
+                        args: new string[] { $"--force-service-id={serviceID}" });
+        Assert.Equal(serviceID, config.ForceServiceId);
 
         config = IServiceConfiguration.BuildConfiguration<Configuration_NoAttribute>(
                         args: new string[] { $"--force-service-id={serviceID}" });
-        Assert.Equal(serviceID, config.Force_Service_ID);
+        Assert.Equal(serviceID, config.ForceServiceId);
     }
 
     [Fact]
@@ -496,14 +495,14 @@ public class Configuration : IClassFixture<CollectionFixture>
     {
         var serviceID = Guid.NewGuid().ToString().ToLower();
         var config = IServiceConfiguration.BuildConfiguration(typeof(Configuration_Attribute_TestService),
-                        args: new string[] { $"--Force-Service-ID={serviceID}" });
+                        args: new string[] { $"--force-service-id={serviceID}" });
         Assert.NotNull(config);
-        Assert.Equal(serviceID, config.Force_Service_ID);
+        Assert.Equal(serviceID, config.ForceServiceId);
 
         config = IServiceConfiguration.BuildConfiguration(typeof(Configuration_Attribute_TestService),
                         args: new string[] { $"--force-service-id={serviceID}" });
         Assert.NotNull(config);
-        Assert.Equal(serviceID, config.Force_Service_ID);
+        Assert.Equal(serviceID, config.ForceServiceId);
     }
 
     [Fact]
@@ -539,12 +538,12 @@ public class Configuration : IClassFixture<CollectionFixture>
     {
         var serviceID = Guid.NewGuid().ToString().ToLower();
         Configuration_Attribute_TestService config = IServiceConfiguration.BuildConfiguration<Configuration_Attribute_TestService>(
-                        args: new string[] { $"--Force-Service-ID={serviceID}" });
-        Assert.Equal(serviceID, config.Force_Service_ID);
+                        args: new string[] { $"--force-service-id={serviceID}" });
+        Assert.Equal(serviceID, config.ForceServiceId);
 
         config = IServiceConfiguration.BuildConfiguration<Configuration_Attribute_TestService>(
                         args: new string[] { $"--force-service-id={serviceID}" });
-        Assert.Equal(serviceID, config.Force_Service_ID);
+        Assert.Equal(serviceID, config.ForceServiceId);
     }
 
     [Fact]

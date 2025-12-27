@@ -152,7 +152,7 @@ public class LoginTestHandler : IServiceTestHandler
         var testEmail = $"{testUsername}@test.local";
         var testPassword = "RegistrationTest123!";
 
-        var registerUrl = $"http://{Program.Configuration.Register_Endpoint}";
+        var registerUrl = $"http://{Program.Configuration.RegisterEndpoint}";
         Console.WriteLine($"📡 Testing registration at: {registerUrl}");
 
         var content = new JsonObject
@@ -207,13 +207,13 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // Use the existing test user (already registered in Program.Main)
-        var loginUrl = $"http://{Program.Configuration.Login_Credentials_Endpoint}";
+        var loginUrl = $"http://{Program.Configuration.LoginCredentialsEndpoint}";
         Console.WriteLine($"📡 Testing login at: {loginUrl}");
 
         var content = new JsonObject
         {
-            ["email"] = Program.Configuration.Client_Username,
-            ["password"] = Program.Configuration.Client_Password
+            ["email"] = Program.Configuration.ClientUsername,
+            ["password"] = Program.Configuration.ClientPassword
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, loginUrl);
@@ -269,12 +269,12 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // First login to get a refresh token
-        var loginUrl = $"http://{Program.Configuration.Login_Credentials_Endpoint}";
+        var loginUrl = $"http://{Program.Configuration.LoginCredentialsEndpoint}";
 
         var loginContent = new JsonObject
         {
-            ["email"] = Program.Configuration.Client_Username,
-            ["password"] = Program.Configuration.Client_Password
+            ["email"] = Program.Configuration.ClientUsername,
+            ["password"] = Program.Configuration.ClientPassword
         };
 
         using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
@@ -298,7 +298,7 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // Now use refresh token to get new access token
-        var refreshUrl = $"http://{Program.Configuration.Login_Token_Endpoint}";
+        var refreshUrl = $"http://{Program.Configuration.LoginTokenEndpoint}";
         Console.WriteLine($"📡 Testing token refresh at: {refreshUrl}");
 
         // Get access token for Authorization header
@@ -354,7 +354,7 @@ public class LoginTestHandler : IServiceTestHandler
             return false;
         }
 
-        var loginUrl = $"http://{Program.Configuration.Login_Credentials_Endpoint}";
+        var loginUrl = $"http://{Program.Configuration.LoginCredentialsEndpoint}";
         Console.WriteLine($"📡 Testing invalid login at: {loginUrl}");
 
         var content = new JsonObject
@@ -423,11 +423,11 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // First login to get a valid token
-        var loginUrl = $"http://{Program.Configuration.Login_Credentials_Endpoint}";
+        var loginUrl = $"http://{Program.Configuration.LoginCredentialsEndpoint}";
         var loginContent = new JsonObject
         {
-            ["email"] = Program.Configuration.Client_Username,
-            ["password"] = Program.Configuration.Client_Password
+            ["email"] = Program.Configuration.ClientUsername,
+            ["password"] = Program.Configuration.ClientPassword
         };
 
         using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
@@ -451,8 +451,8 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // Now validate the token
-        var loginEndpoint = Program.Configuration.Login_Credentials_Endpoint
-            ?? throw new InvalidOperationException("Login_Credentials_Endpoint not configured");
+        var loginEndpoint = Program.Configuration.LoginCredentialsEndpoint
+            ?? throw new InvalidOperationException("LoginCredentialsEndpoint not configured");
         var validateUrl = $"http://{loginEndpoint.Replace("/auth/login", "/auth/validate")}";
         Console.WriteLine($"📡 Testing token validation at: {validateUrl}");
 
@@ -514,11 +514,11 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // First login to get a valid token
-        var loginUrl = $"http://{Program.Configuration.Login_Credentials_Endpoint}";
+        var loginUrl = $"http://{Program.Configuration.LoginCredentialsEndpoint}";
         var loginContent = new JsonObject
         {
-            ["email"] = Program.Configuration.Client_Username,
-            ["password"] = Program.Configuration.Client_Password
+            ["email"] = Program.Configuration.ClientUsername,
+            ["password"] = Program.Configuration.ClientPassword
         };
 
         using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
@@ -542,8 +542,8 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // Now get sessions - POST /auth/sessions/list
-        var sessionsLoginEndpoint = Program.Configuration.Login_Credentials_Endpoint
-            ?? throw new InvalidOperationException("Login_Credentials_Endpoint not configured");
+        var sessionsLoginEndpoint = Program.Configuration.LoginCredentialsEndpoint
+            ?? throw new InvalidOperationException("LoginCredentialsEndpoint not configured");
         var sessionsUrl = $"http://{sessionsLoginEndpoint.Replace("/auth/login", "/auth/sessions/list")}";
         Console.WriteLine($"📡 Testing get sessions at: {sessionsUrl}");
 
@@ -612,11 +612,11 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // First login to get a valid token
-        var loginUrl = $"http://{Program.Configuration.Login_Credentials_Endpoint}";
+        var loginUrl = $"http://{Program.Configuration.LoginCredentialsEndpoint}";
         var loginContent = new JsonObject
         {
-            ["email"] = Program.Configuration.Client_Username,
-            ["password"] = Program.Configuration.Client_Password
+            ["email"] = Program.Configuration.ClientUsername,
+            ["password"] = Program.Configuration.ClientPassword
         };
 
         using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
@@ -640,8 +640,8 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // Now logout
-        var logoutLoginEndpoint = Program.Configuration.Login_Credentials_Endpoint
-            ?? throw new InvalidOperationException("Login_Credentials_Endpoint not configured");
+        var logoutLoginEndpoint = Program.Configuration.LoginCredentialsEndpoint
+            ?? throw new InvalidOperationException("LoginCredentialsEndpoint not configured");
         var logoutUrl = $"http://{logoutLoginEndpoint.Replace("/auth/login", "/auth/logout")}";
         Console.WriteLine($"📡 Testing logout at: {logoutUrl}");
 
@@ -723,8 +723,8 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // Build OAuth init URL
-        var oauthLoginEndpoint = Program.Configuration.Login_Credentials_Endpoint
-            ?? throw new InvalidOperationException("Login_Credentials_Endpoint not configured");
+        var oauthLoginEndpoint = Program.Configuration.LoginCredentialsEndpoint
+            ?? throw new InvalidOperationException("LoginCredentialsEndpoint not configured");
         var baseUrl = oauthLoginEndpoint.Replace("/auth/login", "");
         var oauthUrl = $"http://{baseUrl}/auth/oauth/{provider}/init?redirectUri=http://localhost:5012/callback&state=test_state";
         Console.WriteLine($"📡 Testing OAuth init at: {oauthUrl}");
@@ -803,8 +803,8 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // Build Steam verify URL
-        var steamLoginEndpoint = Program.Configuration.Login_Credentials_Endpoint
-            ?? throw new InvalidOperationException("Login_Credentials_Endpoint not configured");
+        var steamLoginEndpoint = Program.Configuration.LoginCredentialsEndpoint
+            ?? throw new InvalidOperationException("LoginCredentialsEndpoint not configured");
         var steamBaseUrl = steamLoginEndpoint.Replace("/auth/login", "");
         var steamUrl = $"http://{steamBaseUrl}/auth/steam/verify";
         Console.WriteLine($"📡 Testing Steam verify at: {steamUrl}");

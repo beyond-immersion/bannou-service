@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,7 +46,7 @@ public class BannouServiceMappingTestHandler : IServiceTestHandler
             Console.WriteLine("Testing service mapping resolver...");
 
             // Test default resolution
-            var resolver = new ServiceAppMappingResolver(CreateTestLogger<ServiceAppMappingResolver>());
+            var resolver = new ServiceAppMappingResolver(CreateTestLogger<ServiceAppMappingResolver>(), CreateTestConfiguration());
 
             // Should default to "bannou"
             var appId = resolver.GetAppIdForService("accounts");
@@ -88,7 +89,7 @@ public class BannouServiceMappingTestHandler : IServiceTestHandler
             Console.WriteLine("Testing service mapping events...");
 
             // Test ServiceAppMappingResolver with simulated RabbitMQ events
-            var resolver = new ServiceAppMappingResolver(CreateTestLogger<ServiceAppMappingResolver>());
+            var resolver = new ServiceAppMappingResolver(CreateTestLogger<ServiceAppMappingResolver>(), CreateTestConfiguration());
 
             // Test 1: Verify default behavior (everything routes to "bannou")
             var defaultAppId = resolver.GetAppIdForService("test-service");
@@ -144,7 +145,7 @@ public class BannouServiceMappingTestHandler : IServiceTestHandler
         {
             Console.WriteLine("Testing service mapping health and monitoring...");
 
-            var resolver = new ServiceAppMappingResolver(CreateTestLogger<ServiceAppMappingResolver>());
+            var resolver = new ServiceAppMappingResolver(CreateTestLogger<ServiceAppMappingResolver>(), CreateTestConfiguration());
 
             // Test 1: Health check - resolver responds correctly to various inputs
             Console.WriteLine("Testing resolver health with edge cases...");
@@ -230,4 +231,6 @@ public class BannouServiceMappingTestHandler : IServiceTestHandler
         var serviceProvider = services.BuildServiceProvider();
         return serviceProvider.GetRequiredService<ILogger<T>>();
     }
+
+    private static AppConfiguration CreateTestConfiguration() => new AppConfiguration();
 }

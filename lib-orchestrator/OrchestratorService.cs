@@ -53,6 +53,23 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private const string DEFAULT_PRESET = "bannou";
 
+    /// <summary>
+    /// Infrastructure services that should NEVER be included in routing mappings.
+    /// These services must always be handled by the local node, never delegated to another instance.
+    /// </summary>
+    private static readonly HashSet<string> InfrastructureServices = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "state",
+        "messaging",
+        "mesh"
+    };
+
+    /// <summary>
+    /// Checks if a service name is an infrastructure service that should never be routed.
+    /// </summary>
+    private static bool IsInfrastructureService(string serviceName) =>
+        InfrastructureServices.Contains(serviceName);
+
     public OrchestratorService(
         IMessageBus messageBus,
         ILogger<OrchestratorService> logger,
@@ -93,7 +110,7 @@ public partial class OrchestratorService : IOrchestratorService
         if (_orchestrator != null)
         {
             // Check if TTL has expired (0 = caching disabled)
-            var ttlMinutes = _configuration.OrchestratorCacheTtlMinutes;
+            var ttlMinutes = _configuration.CacheTtlMinutes;
             if (ttlMinutes > 0)
             {
                 var cacheAge = DateTimeOffset.UtcNow - _orchestratorCachedAt;
@@ -607,9 +624,14 @@ public partial class OrchestratorService : IOrchestratorService
                     environment[serviceEnvKey] = "true";
                 }
 
+                // CRITICAL: Set the app-id so the container knows its identity for heartbeats and mesh routing
+                // Without this, the container falls back to "bannou" and the orchestrator never receives
+                // the expected heartbeat from the deployed app-id
+                environment["BANNOU_APP_ID"] = appId;
+
                 _logger.LogDebug(
-                    "Node {NodeName} service configuration: SERVICES_ENABLED=false, enabled services: {Services}",
-                    node.Name, string.Join(", ", node.Services));
+                    "Node {NodeName} service configuration: SERVICES_ENABLED=false, APP_ID={AppId}, enabled services: {Services}",
+                    node.Name, appId, string.Join(", ", node.Services));
 
                 // Deploy via container orchestrator
                 var deployResult = await orchestrator.DeployServiceAsync(
@@ -903,9 +925,16 @@ public partial class OrchestratorService : IOrchestratorService
             var serviceRoutings = await _stateManager.GetServiceRoutingsAsync();
 
             // Convert to simple string -> string mappings (service -> appId)
+            // CRITICAL: Exclude infrastructure services (state, messaging, mesh) - these must always be local
             var mappings = new Dictionary<string, string>();
             foreach (var kvp in serviceRoutings)
             {
+                // Never include infrastructure services - they must be handled locally
+                if (IsInfrastructureService(kvp.Key))
+                {
+                    continue;
+                }
+
                 // Apply filter if specified
                 if (string.IsNullOrEmpty(body.ServiceFilter) ||
                     kvp.Key.StartsWith(body.ServiceFilter, StringComparison.OrdinalIgnoreCase))

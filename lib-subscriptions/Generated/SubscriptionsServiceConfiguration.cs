@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Subscriptions;
 public class SubscriptionsServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
     /// State store name for subscriptions

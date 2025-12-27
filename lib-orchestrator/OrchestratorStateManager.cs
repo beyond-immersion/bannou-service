@@ -185,32 +185,56 @@ public class OrchestratorStateManager : IOrchestratorStateManager
 
     /// <summary>
     /// Update the heartbeat index to include this app ID.
+    /// Uses retry logic to handle concurrent modifications from multiple containers.
     /// </summary>
     private async Task UpdateHeartbeatIndexAsync(string appId)
     {
         if (_heartbeatIndexStore == null) return;
 
-        try
+        const int maxRetries = 3;
+
+        for (int retry = 0; retry < maxRetries; retry++)
         {
-            var (index, etag) = await _heartbeatIndexStore.GetWithETagAsync(HEARTBEAT_INDEX_KEY);
-
-            index ??= new HeartbeatIndex();
-            index.AppIds.Add(appId);
-            index.LastUpdated = DateTimeOffset.UtcNow;
-
-            if (etag != null)
+            try
             {
-                await _heartbeatIndexStore.TrySaveAsync(HEARTBEAT_INDEX_KEY, index, etag);
+                var (index, etag) = await _heartbeatIndexStore.GetWithETagAsync(HEARTBEAT_INDEX_KEY);
+
+                index ??= new HeartbeatIndex();
+                index.AppIds.Add(appId);
+                index.LastUpdated = DateTimeOffset.UtcNow;
+
+                bool saved;
+                if (etag != null)
+                {
+                    saved = await _heartbeatIndexStore.TrySaveAsync(HEARTBEAT_INDEX_KEY, index, etag);
+                }
+                else
+                {
+                    await _heartbeatIndexStore.SaveAsync(HEARTBEAT_INDEX_KEY, index);
+                    saved = true;
+                }
+
+                if (saved)
+                {
+                    return; // Success
+                }
+
+                // TrySaveAsync returned false (ETag mismatch due to concurrent modification) - retry
+                _logger.LogDebug(
+                    "Heartbeat index update for {AppId} failed due to concurrent modification, retrying ({Retry}/{MaxRetries})",
+                    appId, retry + 1, maxRetries);
             }
-            else
+            catch (Exception ex)
             {
-                await _heartbeatIndexStore.SaveAsync(HEARTBEAT_INDEX_KEY, index);
+                _logger.LogWarning(ex,
+                    "Failed to update heartbeat index for {AppId} (attempt {Retry}/{MaxRetries})",
+                    appId, retry + 1, maxRetries);
             }
         }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to update heartbeat index for {AppId}", appId);
-        }
+
+        _logger.LogWarning(
+            "Failed to update heartbeat index for {AppId} after {MaxRetries} retries - orchestrator may not detect this container",
+            appId, maxRetries);
     }
 
     /// <summary>

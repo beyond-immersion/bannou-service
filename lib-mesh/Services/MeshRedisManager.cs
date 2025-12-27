@@ -18,11 +18,9 @@ public class MeshRedisManager : IMeshRedisManager
     private ConnectionMultiplexer? _redis;
     private IDatabase? _database;
 
-    // Redis key patterns for mesh
+    // Redis key patterns for mesh endpoint discovery
     private const string ENDPOINT_KEY_PREFIX = "mesh:endpoint:";
     private const string ENDPOINTS_BY_APPID_PREFIX = "mesh:appid:";
-    private const string SERVICE_MAPPINGS_KEY = "mesh:service-mappings";
-    private const string MAPPINGS_VERSION_KEY = "mesh:mappings-version";
     private const string ENDPOINT_INDEX_KEY = "mesh:endpoint-index";
 
     /// <summary>
@@ -372,112 +370,6 @@ public class MeshRedisManager : IMeshRedisManager
         }
 
         return endpoints;
-    }
-
-    /// <inheritdoc/>
-    public async Task<Dictionary<string, string>> GetServiceMappingsAsync()
-    {
-        if (_database == null)
-        {
-            _logger.LogWarning("Redis database not initialized. Cannot get service mappings.");
-            return new Dictionary<string, string>();
-        }
-
-        try
-        {
-            var value = await _database.StringGetAsync(SERVICE_MAPPINGS_KEY);
-            if (value.IsNullOrEmpty)
-            {
-                return new Dictionary<string, string>();
-            }
-
-            return BannouJson.Deserialize<Dictionary<string, string>>(value.ToString())
-                ?? new Dictionary<string, string>();
-        }
-        catch (RedisException ex)
-        {
-            _logger.LogError(ex, "Failed to get service mappings");
-            throw; // Don't mask Redis failures - empty dict should mean "no mappings", not "error"
-        }
-    }
-
-    /// <inheritdoc/>
-    public async Task<bool> UpdateServiceMappingsAsync(Dictionary<string, string> mappings, long version)
-    {
-        if (_database == null)
-        {
-            _logger.LogWarning("Redis database not initialized. Cannot update service mappings.");
-            return false;
-        }
-
-        try
-        {
-            // Get current version
-            var currentVersion = await GetMappingsVersionAsync();
-
-            // Reject stale updates
-            if (version <= currentVersion)
-            {
-                _logger.LogDebug(
-                    "Rejecting stale mappings update: version {Version} <= current {CurrentVersion}",
-                    version, currentVersion);
-                return false;
-            }
-
-            // Atomic update using transaction
-            var transaction = _database.CreateTransaction();
-            transaction.AddCondition(Condition.StringEqual(MAPPINGS_VERSION_KEY, currentVersion.ToString()));
-
-            var mappingsJson = BannouJson.Serialize(mappings);
-            _ = transaction.StringSetAsync(SERVICE_MAPPINGS_KEY, mappingsJson);
-            _ = transaction.StringSetAsync(MAPPINGS_VERSION_KEY, version.ToString());
-
-            var committed = await transaction.ExecuteAsync();
-
-            if (committed)
-            {
-                _logger.LogInformation(
-                    "Updated service mappings to version {Version} with {Count} mappings",
-                    version, mappings.Count);
-            }
-            else
-            {
-                // Concurrent update - retry will handle
-                _logger.LogDebug("Concurrent update detected, transaction not committed");
-            }
-
-            return committed;
-        }
-        catch (RedisException ex)
-        {
-            _logger.LogError(ex, "Failed to update service mappings");
-            return false;
-        }
-    }
-
-    /// <inheritdoc/>
-    public async Task<long> GetMappingsVersionAsync()
-    {
-        if (_database == null)
-        {
-            return 0;
-        }
-
-        try
-        {
-            var value = await _database.StringGetAsync(MAPPINGS_VERSION_KEY);
-            if (value.IsNullOrEmpty)
-            {
-                return 0;
-            }
-
-            return long.TryParse(value.ToString(), out var version) ? version : 0;
-        }
-        catch (RedisException ex)
-        {
-            _logger.LogError(ex, "Failed to get mappings version");
-            throw; // Don't mask Redis failures - 0 should mean "no version set", not "error"
-        }
     }
 
     /// <inheritdoc/>

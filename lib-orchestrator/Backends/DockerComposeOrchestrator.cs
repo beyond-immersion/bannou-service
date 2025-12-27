@@ -216,7 +216,9 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         _discoveredInfrastructureHosts = new Dictionary<string, string>();
 
         // Infrastructure service names that dynamically created containers need to resolve
-        var serviceNames = new[] { "rabbitmq", "redis", "bannou-redis", "auth-redis", "routing-redis", "account-db", "mysql" };
+        // IMPORTANT: DEFAULT_APP_NAME must be included so deployed containers can reach the orchestrator
+        // for fetching initial service mappings via BANNOU_MappingSourceAppId
+        var serviceNames = new[] { AppConstants.DEFAULT_APP_NAME, "rabbitmq", "redis", "bannou-redis", "auth-redis", "routing-redis", "account-db", "mysql" };
 
         try
         {
@@ -708,6 +710,9 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 // Tell deployed container to query this orchestrator for initial service mappings
                 // This ensures new containers have correct routing info before participating in network
                 $"BANNOU_MappingSourceAppId={orchestratorAppId}",
+                // Set the HTTP endpoint to the orchestrator so the new container can reach it
+                // via ExtraHosts DNS resolution (not localhost which would hit itself)
+                $"BANNOU_HttpEndpoint=http://{orchestratorAppId}",
                 // Required for proper service operation - not forwarded from orchestrator ENV
                 "DAEMON_MODE=true",
                 "HEARTBEAT_ENABLED=true"

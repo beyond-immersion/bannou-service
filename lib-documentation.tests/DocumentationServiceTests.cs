@@ -544,13 +544,13 @@ public class DocumentationConfigurationTests
     }
 
     [Fact]
-    public void Configuration_Force_Service_ID_ShouldBeNullByDefault()
+    public void Configuration_ForceServiceId_ShouldBeNullByDefault()
     {
         // Arrange & Act
         var config = new DocumentationServiceConfiguration();
 
         // Assert
-        Assert.Null(config.Force_Service_ID);
+        Assert.Null(config.ForceServiceId);
     }
 
     [Fact]

@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Mesh;
 public class MeshServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
     /// Use local-only routing instead of Redis. All calls route to local instance. ONLY for testing/minimal infrastructure.

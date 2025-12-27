@@ -214,7 +214,7 @@ public class PluginLoader
     private bool IsServiceEnabled(string serviceName)
     {
         if (string.IsNullOrWhiteSpace(serviceName))
-            return Program.Configuration.Services_Enabled;
+            return Program.Configuration.ServicesEnabled;
 
         // Required infrastructure plugins are ALWAYS enabled - they cannot be disabled
         if (RequiredInfrastructurePlugins.Contains(serviceName))
@@ -228,7 +228,7 @@ public class PluginLoader
         // Check SERVICES_ENABLED environment variable directly
         var servicesEnabledEnv = Environment.GetEnvironmentVariable("SERVICES_ENABLED");
         var globalServicesEnabled = string.IsNullOrWhiteSpace(servicesEnabledEnv) ?
-            Program.Configuration.Services_Enabled : // Default fallback
+            Program.Configuration.ServicesEnabled : // Default fallback
             string.Equals(servicesEnabledEnv, "true", StringComparison.OrdinalIgnoreCase);
 
         // Get service name from BannouServiceAttribute for ENV prefix
@@ -637,6 +637,17 @@ public class PluginLoader
     /// </summary>
     private void RegisterConfigurationTypes(IServiceCollection services)
     {
+        // CRITICAL: Register AppConfiguration first - it's a global config without a matching service
+        // but is needed by MeshServicePlugin and other components during early startup
+        if (!services.Any(s => s.ServiceType == typeof(AppConfiguration)))
+        {
+            services.AddSingleton<AppConfiguration>(serviceProvider =>
+            {
+                return IServiceConfiguration.BuildConfiguration<AppConfiguration>(null);
+            });
+            _logger.LogInformation("Registered global configuration: AppConfiguration (Singleton with BuildConfiguration factory)");
+        }
+
         foreach (var (configurationType, _) in _configurationTypesToRegister)
         {
             // Check if this type is already registered
@@ -666,19 +677,6 @@ public class PluginLoader
         }
 
         _logger.LogInformation("Registered {Count} configuration types in DI", _configurationTypesToRegister.Count);
-
-        // Debug: Print all ConnectServiceConfiguration registrations
-        var connectConfigRegistrations = services.Where(s =>
-            s.ServiceType.Name.Contains("ConnectServiceConfiguration")).ToList();
-
-        _logger.LogWarning("DEBUG: Found {Count} registrations for ConnectServiceConfiguration:",
-            connectConfigRegistrations.Count);
-
-        foreach (var reg in connectConfigRegistrations)
-        {
-            _logger.LogWarning("  - ServiceType: {ServiceType}, ImplementationType: {ImplType}, Lifetime: {Lifetime}",
-                reg.ServiceType.Name, reg.ImplementationType?.Name ?? "Unknown", reg.Lifetime);
-        }
     }
 
     /// <summary>

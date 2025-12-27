@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Permissions;
 public class PermissionsServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
     /// Enable/disable Permissions service

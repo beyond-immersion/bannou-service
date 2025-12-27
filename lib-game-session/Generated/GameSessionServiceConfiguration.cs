@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.GameSession;
 public class GameSessionServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
     /// Enable/disable Game Session service

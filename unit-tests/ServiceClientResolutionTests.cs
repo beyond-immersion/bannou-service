@@ -25,6 +25,15 @@ public class ServiceClientResolutionTests
     }
 
     /// <summary>
+    /// Helper to set up common test services including AppConfiguration.
+    /// </summary>
+    private static void AddTestServices(ServiceCollection services)
+    {
+        services.AddLogging();
+        services.AddSingleton<AppConfiguration>();
+    }
+
+    /// <summary>
     /// Tests that AddAllBannouServiceClients correctly registers service app mapping resolver.
     /// This is the foundation for distributed service routing.
     /// </summary>
@@ -33,7 +42,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
 
         // Act - Use ServiceClientsDependencyInjection which registers both resolver and clients
         ServiceClientsDependencyInjection.AddAllBannouServiceClients(services);
@@ -54,7 +63,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -76,7 +85,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -105,7 +114,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -134,7 +143,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -160,7 +169,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -197,7 +206,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -233,7 +242,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -254,7 +263,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -291,7 +300,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -325,7 +334,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         services.AddServiceAppMappingResolver();
         var serviceProvider = services.BuildServiceProvider();
 
@@ -383,7 +392,7 @@ public class ServiceClientResolutionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        AddTestServices(services);
         // Use ServiceClientsDependencyInjection which registers both resolver and clients
         ServiceClientsDependencyInjection.AddAllBannouServiceClients(services);
 

@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Documentation;
 public class DocumentationServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
     /// Whether to rebuild search index on service startup

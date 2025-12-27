@@ -135,7 +135,7 @@ namespace BeyondImmersion.BannouService.{service_pascal};
 public class {service_pascal}ServiceConfiguration : IServiceConfiguration
 {{
     /// <inheritdoc />
-    public string? Force_Service_ID {{ get; set; }}
+    public string? ForceServiceId {{ get; set; }}
 ''')
 
     if config_properties:

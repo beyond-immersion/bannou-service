@@ -31,9 +31,9 @@ public class ServiceHeartbeatManager : IAsyncDisposable
 
     /// <summary>
     /// Unique instance identifier for this bannou application instance.
-    /// Used for log correlation across distributed systems.
+    /// Uses the shared Program.ServiceGUID for consistent identification across mesh and heartbeat.
     /// </summary>
-    public Guid InstanceId { get; } = Guid.NewGuid();
+    public Guid InstanceId => Guid.Parse(Program.ServiceGUID);
 
     /// <summary>
     /// The app-id for this instance. Resolved from configuration.
@@ -76,7 +76,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         _mappingResolver.MappingChanged += OnMappingChanged;
 
         // Resolve app-id from configuration
-        AppId = configuration.BannouAppId ?? AppConstants.DEFAULT_APP_NAME;
+        AppId = configuration.AppId ?? AppConstants.DEFAULT_APP_NAME;
 
         // Get heartbeat settings from configuration (Tenet 21 compliant)
         HeartbeatIntervalSeconds = configuration.HeartbeatIntervalSeconds > 0

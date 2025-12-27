@@ -17,7 +17,7 @@ public static class ServiceLogging
     {
         var logFilepath = Path.Combine(Directory.GetCurrentDirectory(), $"logs/app.log");
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Is((Serilog.Events.LogEventLevel)Program.Configuration.App_Logging_Level)
+            .MinimumLevel.Is((Serilog.Events.LogEventLevel)Program.Configuration.AppLoggingLevel)
             .WriteToFile(logFilepath).WriteToConsole().WriteToCloud()
             .ReadFrom.Configuration(IServiceConfiguration.BuildConfigurationRoot())
             .CreateLogger();
@@ -46,7 +46,7 @@ public static class ServiceLogging
 
     private static LoggerConfiguration WriteToFile(this LoggerConfiguration config, string logFilepath)
     {
-        if (Program.Configuration.Log_Mode.HasFlag(AppConfiguration.LogModes.File))
+        if (Program.Configuration.LogMode.HasFlag(AppConfiguration.LogModes.File))
             config.WriteTo.File(logFilepath, rollingInterval: RollingInterval.Day, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}");
 
         return config;
@@ -54,7 +54,7 @@ public static class ServiceLogging
 
     private static LoggerConfiguration WriteToConsole(this LoggerConfiguration config)
     {
-        if (Program.Configuration.Log_Mode.HasFlag(AppConfiguration.LogModes.Console))
+        if (Program.Configuration.LogMode.HasFlag(AppConfiguration.LogModes.Console))
             config.WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}");
 
         return config;
@@ -62,7 +62,7 @@ public static class ServiceLogging
 
     private static LoggerConfiguration WriteToCloud(this LoggerConfiguration config)
     {
-        //if (Program.Configuration.Log_Mode.HasFlag(AppConfiguration.LogModes.Cloud))
+        //if (Program.Configuration.LogMode.HasFlag(AppConfiguration.LogModes.Cloud))
         //    config.WriteTo.File(logFilepath, rollingInterval: RollingInterval.Day, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}");
 
         return config;

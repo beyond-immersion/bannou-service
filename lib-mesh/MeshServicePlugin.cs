@@ -107,19 +107,20 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
 
         // Get app configuration for app-id
         var appConfig = ServiceProvider?.GetService<AppConfiguration>();
-        var appId = appConfig?.BannouAppId ?? "bannou";
+        var appId = appConfig?.AppId ?? "bannou";
 
         // Determine host and port from environment or defaults
         // In Docker Compose, the service name is the hostname
         var endpointHost = Environment.GetEnvironmentVariable("MESH_ENDPOINT_HOST")
-            ?? appConfig?.BannouAppId
+            ?? appConfig?.AppId
             ?? "bannou";
         var endpointPort = int.TryParse(
             Environment.GetEnvironmentVariable("MESH_ENDPOINT_PORT"), out var port)
             ? port : 80;
 
-        // Generate a unique instance ID for this endpoint
-        var instanceId = Guid.NewGuid();
+        // Use the shared Program.ServiceGUID for consistent instance identification
+        // This ensures mesh endpoint and heartbeat use the same instance ID
+        var instanceId = Guid.Parse(Program.ServiceGUID);
 
         var endpoint = new MeshEndpoint
         {

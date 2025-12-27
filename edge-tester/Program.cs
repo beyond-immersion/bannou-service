@@ -133,8 +133,8 @@ public class Program
         var delayMs = initialDelayMs;
 
         // Construct health check URL from OpenResty configuration
-        var openrestyHost = Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Configuration.OpenRestyPort ?? 80;
         var healthUrl = $"http://{openrestyHost}:{openrestyPort}/health";
         var authHealthUrl = $"http://{openrestyHost}:{openrestyPort}/auth/health";
 
@@ -350,16 +350,16 @@ public class Program
             Console.WriteLine("Attempting to authenticate using BannouClient SDK...");
 
             // Build server URL from configuration
-            var openrestyHost = Configuration.OpenResty_Host ?? "openresty";
-            var openrestyPort = Configuration.OpenResty_Port ?? 80;
+            var openrestyHost = Configuration.OpenRestyHost ?? "openresty";
+            var openrestyPort = Configuration.OpenRestyPort ?? 80;
             var serverUrl = $"http://{openrestyHost}:{openrestyPort}";
 
             // Use BannouClient for authentication and WebSocket connection
             _client = new BannouClient(HttpClient);
 
             // Try login first, then registration
-            var email = Configuration.Client_Username ?? throw new InvalidOperationException("Client_Username is required");
-            var password = Configuration.Client_Password ?? throw new InvalidOperationException("Client_Password is required");
+            var email = Configuration.ClientUsername ?? throw new InvalidOperationException("ClientUsername is required");
+            var password = Configuration.ClientPassword ?? throw new InvalidOperationException("ClientPassword is required");
             var username = email.Contains('@') ? email.Split('@')[0] : email;
 
             var connected = await _client.ConnectAsync(serverUrl, email, password);
@@ -400,7 +400,7 @@ public class Program
             Console.WriteLine();
 
             Console.WriteLine("🧪 Enhanced WebSocket Protocol Testing - Binary Protocol Validation");
-            Console.WriteLine($"Base URL: ws://{Configuration.Connect_Endpoint}");
+            Console.WriteLine($"Base URL: ws://{Configuration.ConnectEndpoint}");
             Console.WriteLine();
 
             // Run initial connectivity test
@@ -528,8 +528,8 @@ public class Program
     {
         Console.WriteLine("Attempting to authenticate admin using BannouClient SDK...");
 
-        var openrestyHost = Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Configuration.OpenRestyPort ?? 80;
         var serverUrl = $"http://{openrestyHost}:{openrestyPort}";
 
         _adminClient = new BannouClient(HttpClient);
@@ -600,8 +600,8 @@ public class Program
 
         Console.WriteLine("📋 Creating dedicated test account for binary protocol validation...");
 
-        var openrestyHost = Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Configuration.OpenRestyPort ?? 80;
         var uniqueId = Guid.NewGuid().ToString("N")[..12];
         var testEmail = $"binproto_{uniqueId}@test.local";
         var testPassword = "BinaryProtocolTest123!";
@@ -640,7 +640,7 @@ public class Program
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Configuration.ConnectEndpoint}");
 
         using var webSocket = new ClientWebSocket();
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + testAccessToken);

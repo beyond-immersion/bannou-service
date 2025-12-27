@@ -394,8 +394,8 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     {
         // Make an auth API call (validate token) and check it works
         var config = Program.Configuration;
-        var host = config.OpenResty_Host ?? "openresty";
-        var port = config.OpenResty_Port ?? 80;
+        var host = config.OpenRestyHost ?? "openresty";
+        var port = config.OpenRestyPort ?? 80;
 
         // Use the client's token to validate
         var client = Program.Client;

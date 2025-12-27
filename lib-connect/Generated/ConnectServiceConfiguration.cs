@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Connect;
 public class ConnectServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum number of concurrent WebSocket connections

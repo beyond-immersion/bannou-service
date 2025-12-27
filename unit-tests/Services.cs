@@ -271,14 +271,14 @@ public class Services : IClassFixture<CollectionFixture>
             Assert.Contains(IBannouService.Services, t => t.Item1 == typeof(Service_MultipleRequired));
 
             Environment.SetEnvironmentVariable("SERVICES_ENABLED", "true");
-            Program.Configuration.Services_Enabled = true;
+            Program.Configuration.ServicesEnabled = true;
             Assert.DoesNotContain(IBannouService.EnabledServices, t => t.Item1 == typeof(Service));
             Assert.Contains(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_Attribute));
             Assert.Contains(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_Required));
             Assert.Contains(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_MultipleRequired));
 
             Environment.SetEnvironmentVariable("SERVICES_ENABLED", "false");
-            Program.Configuration.Services_Enabled = false;
+            Program.Configuration.ServicesEnabled = false;
             Assert.DoesNotContain(IBannouService.EnabledServices, t => t.Item1 == typeof(Service));
             Assert.DoesNotContain(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_Attribute));
             Assert.DoesNotContain(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_Required));
@@ -287,7 +287,7 @@ public class Services : IClassFixture<CollectionFixture>
         finally
         {
             Environment.SetEnvironmentVariable("SERVICES_ENABLED", null);
-            Program.Configuration.Services_Enabled = true;
+            Program.Configuration.ServicesEnabled = true;
         }
 
         try

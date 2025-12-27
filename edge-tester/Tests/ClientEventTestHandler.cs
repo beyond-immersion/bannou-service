@@ -27,8 +27,8 @@ public class ClientEventTestHandler : IServiceTestHandler
             return null;
         }
 
-        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
         var uniqueId = Guid.NewGuid().ToString("N")[..12];
         var testEmail = $"{testPrefix}_{uniqueId}@test.local";
         var testPassword = $"{testPrefix}Test123!";
@@ -157,7 +157,7 @@ public class ClientEventTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         using var webSocket = new ClientWebSocket();
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
 
@@ -333,7 +333,7 @@ public class ClientEventTestHandler : IServiceTestHandler
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
         var receiveBuffer = new byte[65536];
 
         // First connection to get session ID

@@ -42,8 +42,8 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
             return null;
         }
 
-        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var openrestyHost = Program.Configuration.OpenRestyHost ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
         var uniqueId = Guid.NewGuid().ToString("N")[..12];
         var testEmail = $"{testPrefix}_{uniqueId}@test.local";
         var testPassword = $"{testPrefix}Test123!";

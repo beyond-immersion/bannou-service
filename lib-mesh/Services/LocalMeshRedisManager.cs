@@ -14,8 +14,6 @@ public sealed class LocalMeshRedisManager : IMeshRedisManager
 {
     private readonly ILogger<LocalMeshRedisManager> _logger;
     private readonly MeshEndpoint _localEndpoint;
-    private readonly Dictionary<string, string> _serviceMappings = new();
-    private long _mappingsVersion = 0;
 
     public LocalMeshRedisManager(
         MeshServiceConfiguration config,
@@ -26,9 +24,10 @@ public sealed class LocalMeshRedisManager : IMeshRedisManager
         var defaultAppId = config?.DefaultAppId ?? "bannou";
 
         // Create a local endpoint representing this instance
+        // Use the shared Program.ServiceGUID for consistent identification
         _localEndpoint = new MeshEndpoint
         {
-            InstanceId = Guid.NewGuid(),
+            InstanceId = Guid.Parse(Program.ServiceGUID),
             AppId = defaultAppId,
             Host = "localhost",
             Port = 80,
@@ -95,40 +94,6 @@ public sealed class LocalMeshRedisManager : IMeshRedisManager
     public Task<List<MeshEndpoint>> GetAllEndpointsAsync(string? appIdPrefix = null)
     {
         return Task.FromResult(new List<MeshEndpoint> { _localEndpoint });
-    }
-
-    /// <inheritdoc/>
-    public Task<Dictionary<string, string>> GetServiceMappingsAsync()
-    {
-        // Return current mappings (or empty if none set)
-        return Task.FromResult(new Dictionary<string, string>(_serviceMappings));
-    }
-
-    /// <inheritdoc/>
-    public Task<bool> UpdateServiceMappingsAsync(Dictionary<string, string> mappings, long version)
-    {
-        if (version <= _mappingsVersion)
-        {
-            return Task.FromResult(false);
-        }
-
-        _serviceMappings.Clear();
-        foreach (var kvp in mappings)
-        {
-            _serviceMappings[kvp.Key] = kvp.Value;
-        }
-        _mappingsVersion = version;
-
-        _logger.LogDebug("Updated service mappings to version {Version} with {Count} entries (local mode)",
-            version, mappings.Count);
-
-        return Task.FromResult(true);
-    }
-
-    /// <inheritdoc/>
-    public Task<long> GetMappingsVersionAsync()
-    {
-        return Task.FromResult(_mappingsVersion);
     }
 
     /// <inheritdoc/>

@@ -75,6 +75,19 @@ public partial class PublishOptions
     public string Exchange { get; set; } = "bannou";
 
     /// <summary>
+    /// Routing key for direct/topic exchanges (ignored for fanout exchanges)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("routingKey")]
+    public string? RoutingKey { get; set; } = default!;
+
+    /// <summary>
+    /// Exchange type - determines how messages are routed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("exchangeType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public PublishOptionsExchangeType? ExchangeType { get; set; } = BeyondImmersion.BannouService.Messaging.PublishOptionsExchangeType.Fanout;
+
+    /// <summary>
     /// Whether the message should be persisted to disk
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("persistent")]
@@ -347,6 +360,21 @@ public partial class TopicInfo
         get => _additionalProperties;
         set { _additionalProperties = value; }
     }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum PublishOptionsExchangeType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"fanout")]
+    Fanout = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"direct")]
+    Direct = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"topic")]
+    Topic = 2,
 
 }
 

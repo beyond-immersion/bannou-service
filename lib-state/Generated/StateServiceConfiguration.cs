@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.State;
 public class StateServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
     /// Use in-memory storage instead of Redis/MySQL. Data is NOT persisted. ONLY for testing/minimal infrastructure.

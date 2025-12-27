@@ -407,72 +407,40 @@ public partial class MeshService : IMeshService
     /// <summary>
     /// Get the current service-to-app-id mappings.
     /// Used for routing decisions based on service name.
+    /// Mappings are populated via FullServiceMappingsEvent from RabbitMQ.
     /// </summary>
-    public async Task<(StatusCodes, GetMappingsResponse?)> GetMappingsAsync(
+    public Task<(StatusCodes, GetMappingsResponse?)> GetMappingsAsync(
         GetMappingsRequest body,
         CancellationToken cancellationToken)
     {
         _logger.LogDebug("Getting service mappings");
 
-        try
+        // Get mappings from local cache (populated via RabbitMQ events)
+        Dictionary<string, string> mappings;
+        long version;
+
+        lock (_versionLock)
         {
-            // Try local cache first
-            Dictionary<string, string> mappings;
-            long version;
-
-            lock (_versionLock)
-            {
-                if (_serviceMappingsCache.Count > 0)
-                {
-                    mappings = _serviceMappingsCache.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-                    version = _mappingsCacheVersion;
-                }
-                else
-                {
-                    mappings = new Dictionary<string, string>();
-                    version = 0;
-                }
-            }
-
-            // Refresh from Redis if cache is empty
-            if (mappings.Count == 0)
-            {
-                mappings = await _redisManager.GetServiceMappingsAsync();
-                version = await _redisManager.GetMappingsVersionAsync();
-
-                // Update cache
-                UpdateMappingsCache(mappings, version);
-            }
-
-            // Apply filter if specified
-            if (!string.IsNullOrEmpty(body.ServiceNameFilter))
-            {
-                mappings = mappings
-                    .Where(kvp => kvp.Key.StartsWith(body.ServiceNameFilter, StringComparison.OrdinalIgnoreCase))
-                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-            }
-
-            var response = new GetMappingsResponse
-            {
-                Mappings = mappings,
-                DefaultAppId = "bannou",
-                Version = version
-            };
-
-            return (StatusCodes.OK, response);
+            mappings = _serviceMappingsCache.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            version = _mappingsCacheVersion;
         }
-        catch (Exception ex)
+
+        // Apply filter if specified
+        if (!string.IsNullOrEmpty(body.ServiceNameFilter))
         {
-            _logger.LogError(ex, "Error getting service mappings");
-            await _messageBus.TryPublishErrorAsync(
-                "mesh",
-                "GetMappings",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "redis",
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            mappings = mappings
+                .Where(kvp => kvp.Key.StartsWith(body.ServiceNameFilter, StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
+
+        var response = new GetMappingsResponse
+        {
+            Mappings = mappings,
+            DefaultAppId = "bannou",
+            Version = version
+        };
+
+        return Task.FromResult<(StatusCodes, GetMappingsResponse?)>((StatusCodes.OK, response));
     }
 
     /// <summary>

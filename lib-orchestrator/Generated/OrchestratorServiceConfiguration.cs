@@ -13,13 +13,13 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 public class OrchestratorServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
     /// Cache TTL in minutes for orchestrator data
     /// Environment variable: ORCHESTRATOR_CACHE_TTL_MINUTES
     /// </summary>
-    public int OrchestratorCacheTtlMinutes { get; set; } = 5;
+    public int CacheTtlMinutes { get; set; } = 5;
 
     /// <summary>
     /// Service heartbeat timeout in seconds

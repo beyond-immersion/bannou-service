@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Servicedata;
 public class ServicedataServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
     /// State store name for service data

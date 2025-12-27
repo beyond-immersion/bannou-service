@@ -14,8 +14,8 @@ public class TestingServiceConfiguration : IServiceConfiguration
     public string TestEnvironment { get; set; } = "development";
 
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <inheritdoc />
-    public bool? Service_Disabled { get; set; }
+    public bool? ServiceDisabled { get; set; }
 }

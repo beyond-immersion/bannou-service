@@ -4614,6 +4614,16 @@
             Exchange name for routing
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.RoutingKey">
+            <summary>
+            Routing key for direct/topic exchanges (ignored for fanout exchanges)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.ExchangeType">
+            <summary>
+            Exchange type - determines how messages are routed
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.Persistent">
             <summary>
             Whether the message should be persisted to disk

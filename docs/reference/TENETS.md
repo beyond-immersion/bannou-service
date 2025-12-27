@@ -1307,6 +1307,31 @@ Browser-facing endpoints are:
 | **Client Events** | `{service}-client-events.yaml` | Pushed TO clients via WebSocket | Game clients, SDK |
 | **Service Events** | `{service}-events.yaml` | Service-to-service pub/sub | Other Bannou services |
 
+### RabbitMQ Exchange Architecture
+
+Client events and service events use **separate RabbitMQ exchanges** with different routing patterns:
+
+| Exchange | Type | Purpose | Routing |
+|----------|------|---------|---------|
+| `bannou` | Fanout | Service events (heartbeats, mappings, IEventConsumer) | All bound queues receive all messages |
+| `bannou-client-events` | Direct | Client events (per-session push) | Routing key matches queue binding key |
+
+**Service Events** (`bannou` fanout):
+- Used by `lib-messaging` (`MassTransitMessageBus`, `MassTransitMessageSubscriber`)
+- All subscribers receive all events (fanout semantics)
+- Used for: `ServiceHeartbeatEvent`, `FullServiceMappingsEvent`, `IEventConsumer` subscriptions
+
+**Client Events** (`bannou-client-events` direct):
+- Used by `MessageBusClientEventPublisher` and `ClientEventRabbitMQSubscriber`
+- Queue per session: `CONNECT_SESSION_{sessionId}`
+- Routing key isolation: Only matching session receives events (broker-level filtering)
+- Queue expiry: RabbitMQ policy applies 5-minute TTL (see `provisioning/rabbitmq/definitions.json`)
+
+This separation ensures:
+- No flood of service events to client session queues
+- Efficient per-session message routing at broker level
+- Clean architecture boundary between internal and client-facing events
+
 ### Required Pattern
 
 1. Define client events in `/schemas/{service}-client-events.yaml`

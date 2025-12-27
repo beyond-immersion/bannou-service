@@ -208,6 +208,22 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
           "default": "bannou",
           "description": "Exchange name for routing"
         },
+        "routingKey": {
+          "type": "string",
+          "nullable": true,
+          "description": "Routing key for direct/topic exchanges (ignored for fanout exchanges)"
+        },
+        "exchangeType": {
+          "type": "string",
+          "enum": [
+            "fanout",
+            "direct",
+            "topic"
+          ],
+          "default": "fanout",
+          "nullable": true,
+          "description": "Exchange type - determines how messages are routed"
+        },
         "persistent": {
           "type": "boolean",
           "default": true,

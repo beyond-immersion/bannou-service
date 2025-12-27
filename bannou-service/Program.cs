@@ -63,7 +63,7 @@ public static class Program
     /// </summary>
     public static string ServiceGUID
     {
-        get => _serviceGUID ??= Configuration.Force_Service_ID ?? Guid.NewGuid().ToString().ToLower();
+        get => _serviceGUID ??= Configuration.ForceServiceId ?? Guid.NewGuid().ToString().ToLower();
         internal set => _serviceGUID = value;
     }
 
@@ -224,8 +224,8 @@ public static class Program
             webAppBuilder.WebHost
                 .UseKestrel((kestrelOptions) =>
                 {
-                    kestrelOptions.ListenAnyIP(Configuration.HTTP_Web_Host_Port);
-                    kestrelOptions.ListenAnyIP(Configuration.HTTPS_Web_Host_Port, (listenOptions) =>
+                    kestrelOptions.ListenAnyIP(Configuration.HttpWebHostPort);
+                    kestrelOptions.ListenAnyIP(Configuration.HttpsWebHostPort, (listenOptions) =>
                     {
                         listenOptions.UseHttps((httpsOptions) =>
                         {
@@ -239,7 +239,7 @@ public static class Program
                 {
                     loggingOptions
                         .AddSerilog()
-                        .SetMinimumLevel(Configuration.Web_Host_Logging_Level);
+                        .SetMinimumLevel(Configuration.WebHostLoggingLevel);
                 });
         }
         catch (Exception exc)
@@ -348,7 +348,7 @@ public static class Program
 
             // Event subscriptions will be handled by generated controller methods
 
-            Logger.Log(LogLevel.Information, null, "Services added and initialized successfully- starting Kestrel WebHost on ports {HttpPort}/{HttpsPort}...", Configuration.HTTP_Web_Host_Port, Configuration.HTTPS_Web_Host_Port);
+            Logger.Log(LogLevel.Information, null, "Services added and initialized successfully- starting Kestrel WebHost on ports {HttpPort}/{HttpsPort}...", Configuration.HttpWebHostPort, Configuration.HttpsWebHostPort);
 
             // start webhost
             var webHostTask = webApp.RunAsync(ShutdownCancellationTokenSource.Token);
@@ -382,7 +382,7 @@ public static class Program
                 // Publishing a heartbeat proves RabbitMQ pub/sub readiness
                 Logger.Log(LogLevel.Information, null, "Waiting for message bus connectivity via startup heartbeat...");
                 if (!await HeartbeatManager.WaitForConnectivityAsync(
-                    maxRetries: Configuration.Mesh_Readiness_Timeout > 0 ? 30 : 1,
+                    maxRetries: Configuration.MeshReadinessTimeout > 0 ? 30 : 1,
                     retryDelayMs: 2000,
                     ShutdownCancellationTokenSource.Token))
                 {
@@ -410,8 +410,11 @@ public static class Program
                 }
                 else
                 {
-                    // Orchestrator/primary container - try loading persisted mappings from Redis
-                    await LoadPersistedMappingsAsync(webApp, ShutdownCancellationTokenSource.Token);
+                    // Orchestrator/primary container - no initial mappings to load
+                    // Mappings are discovered dynamically via:
+                    // - Service heartbeats publishing their services
+                    // - FullServiceMappingsEvent from orchestrator (RabbitMQ pub/sub)
+                    Logger.Log(LogLevel.Debug, null, "No source app-id configured - mappings will be discovered from heartbeats");
                 }
 
                 // Start periodic heartbeats now that we've confirmed connectivity
@@ -515,29 +518,29 @@ public static class Program
     }
 
     /// <summary>
-    /// Get the list of requested plugins based on Include_Assemblies configuration.
+    /// Get the list of requested plugins based on IncludeAssemblies configuration.
     /// </summary>
     /// <returns>List of plugin names to load, or null for all plugins</returns>
     private static IList<string>? GetRequestedPlugins()
     {
-        if (string.Equals("none", Configuration.Include_Assemblies, StringComparison.InvariantCultureIgnoreCase))
+        if (string.Equals("none", Configuration.IncludeAssemblies, StringComparison.InvariantCultureIgnoreCase))
         {
             return new List<string>(); // Empty list = no plugins
         }
 
-        if (string.Equals("all", Configuration.Include_Assemblies, StringComparison.InvariantCultureIgnoreCase))
+        if (string.Equals("all", Configuration.IncludeAssemblies, StringComparison.InvariantCultureIgnoreCase))
         {
             return null; // null = all plugins
         }
 
-        if (string.IsNullOrWhiteSpace(Configuration.Include_Assemblies) ||
-            string.Equals("common", Configuration.Include_Assemblies, StringComparison.InvariantCultureIgnoreCase))
+        if (string.IsNullOrWhiteSpace(Configuration.IncludeAssemblies) ||
+            string.Equals("common", Configuration.IncludeAssemblies, StringComparison.InvariantCultureIgnoreCase))
         {
             return new List<string> { "common" }; // Only common plugins
         }
 
         // Parse comma-separated list
-        var assemblyNames = Configuration.Include_Assemblies.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        var assemblyNames = Configuration.IncludeAssemblies.Split(',', StringSplitOptions.RemoveEmptyEntries);
         return assemblyNames.Select(name => name.Trim()).ToList();
     }
 
@@ -690,53 +693,6 @@ public static class Program
         }
 
         return false;
-    }
-
-    /// <summary>
-    /// Load persisted service mappings from state store (Redis).
-    /// Used by orchestrator containers on restart to recover their routing table.
-    /// </summary>
-    /// <param name="webApp">The web application for service resolution</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    private static async Task LoadPersistedMappingsAsync(
-        WebApplication webApp,
-        CancellationToken cancellationToken)
-    {
-        const string StateStoreName = "connect-statestore";
-        const string MappingsKey = "service-mappings:all";
-
-        try
-        {
-            var stateStoreFactory = webApp.Services.GetService<IStateStoreFactory>();
-            if (stateStoreFactory == null)
-            {
-                Logger.Log(LogLevel.Warning, null, "IStateStoreFactory not available, skipping persisted mappings load");
-                return;
-            }
-
-            var stateStore = stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreName);
-            var mappings = await stateStore.GetAsync(MappingsKey, cancellationToken);
-
-            if (mappings != null && mappings.Count > 0)
-            {
-                var resolver = webApp.Services.GetService<IServiceAppMappingResolver>();
-                if (resolver != null)
-                {
-                    resolver.ImportMappings(mappings);
-                    Logger.Log(LogLevel.Information, null,
-                        $"Loaded {mappings.Count} persisted service mappings from Redis");
-                }
-            }
-            else
-            {
-                Logger.Log(LogLevel.Debug, null, "No persisted service mappings found in Redis");
-            }
-        }
-        catch (Exception ex)
-        {
-            // Non-fatal - orchestrator can rebuild from new deployments
-            Logger.Log(LogLevel.Warning, ex, "Could not load persisted mappings from Redis");
-        }
     }
 
     /// <summary>

@@ -144,7 +144,7 @@ public partial class TestingService : ITestingService
             try
             {
                 // Access a property on configuration to validate it's properly constructed
-                var _ = _configuration.Force_Service_ID; // Safe to access, validates object integrity
+                var _ = _configuration.ForceServiceId; // Safe to access, validates object integrity
                 configWorks = true;
             }
             catch (Exception ex)

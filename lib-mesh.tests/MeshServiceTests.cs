@@ -660,20 +660,10 @@ public class MeshServiceTests
     #region GetMappingsAsync Tests
 
     [Fact]
-    public async Task GetMappingsAsync_WhenCacheEmpty_ShouldFetchFromRedisAndReturnMappings()
+    public async Task GetMappingsAsync_WhenCacheEmpty_ShouldReturnEmptyMappings()
     {
         // Arrange - Reset cache to ensure clean state for this test
         MeshService.ResetCacheForTesting();
-
-        var mappings = new Dictionary<string, string> { ["auth"] = "bannou-auth" };
-
-        _mockRedisManager
-            .Setup(x => x.GetServiceMappingsAsync())
-            .ReturnsAsync(mappings);
-
-        _mockRedisManager
-            .Setup(x => x.GetMappingsVersionAsync())
-            .ReturnsAsync(10);
 
         var service = CreateService();
         var request = new GetMappingsRequest();
@@ -681,17 +671,12 @@ public class MeshServiceTests
         // Act
         var (statusCode, response) = await service.GetMappingsAsync(request, CancellationToken.None);
 
-        // Assert
+        // Assert - returns empty mappings from cache, no Redis fallback
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.Equal("bannou", response.DefaultAppId);
-        Assert.Equal(10, response.Version);
-        Assert.Single(response.Mappings);
-        Assert.Equal("bannou-auth", response.Mappings["auth"]);
-
-        // Verify Redis was called since cache was empty
-        _mockRedisManager.Verify(x => x.GetServiceMappingsAsync(), Times.Once);
-        _mockRedisManager.Verify(x => x.GetMappingsVersionAsync(), Times.Once);
+        Assert.Equal(0, response.Version);
+        Assert.Empty(response.Mappings);
     }
 
     [Fact]
@@ -716,32 +701,21 @@ public class MeshServiceTests
         Assert.Equal(50, response.Version);
         Assert.Single(response.Mappings);
         Assert.Equal("bannou-cached", response.Mappings["cached-service"]);
-
-        // Verify Redis was NOT called since cache was populated
-        _mockRedisManager.Verify(x => x.GetServiceMappingsAsync(), Times.Never);
-        _mockRedisManager.Verify(x => x.GetMappingsVersionAsync(), Times.Never);
     }
 
     [Fact]
     public async Task GetMappingsAsync_WithServiceNameFilter_ShouldFilterMappings()
     {
-        // Arrange - Reset cache and set up fresh state
+        // Arrange - Reset cache and populate with test data
         MeshService.ResetCacheForTesting();
-
-        var mappings = new Dictionary<string, string>
-        {
-            ["auth-login"] = "bannou-auth",
-            ["auth-logout"] = "bannou-auth",
-            ["connect-ws"] = "bannou"
-        };
-
-        _mockRedisManager
-            .Setup(x => x.GetServiceMappingsAsync())
-            .ReturnsAsync(mappings);
-
-        _mockRedisManager
-            .Setup(x => x.GetMappingsVersionAsync())
-            .ReturnsAsync(20);
+        MeshService.UpdateMappingsCache(
+            new Dictionary<string, string>
+            {
+                ["auth-login"] = "bannou-auth",
+                ["auth-logout"] = "bannou-auth",
+                ["connect-ws"] = "bannou"
+            },
+            version: 20);
 
         var service = CreateService();
         var request = new GetMappingsRequest { ServiceNameFilter = "auth" };

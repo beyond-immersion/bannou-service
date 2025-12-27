@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
 using Microsoft.Extensions.Logging;
@@ -25,7 +26,8 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     private long _mappingsVersion = 0;
 
     // Instance ID for this orchestrator (for source tracking in events)
-    private readonly Guid _instanceId = Guid.NewGuid();
+    // Uses the shared Program.ServiceGUID for consistent identification
+    private Guid _instanceId => Guid.Parse(Program.ServiceGUID);
 
     // Periodic publication timer
     private Timer? _fullMappingsTimer;
@@ -104,6 +106,13 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
             foreach (var serviceStatus in heartbeat.Services)
             {
                 var serviceName = serviceStatus.ServiceName;
+
+                // CRITICAL: Never process routing for infrastructure services
+                // These must always be handled locally, never delegated to another node
+                if (InfrastructureServices.Contains(serviceName))
+                {
+                    continue;
+                }
 
                 // Check if routing already exists for this service
                 if (_currentRoutings.TryGetValue(serviceName, out var existingRouting))
@@ -253,6 +262,17 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     }
 
     /// <summary>
+    /// Infrastructure services that should NEVER be included in routing mappings.
+    /// These services must always be handled by the local node, never delegated.
+    /// </summary>
+    private static readonly HashSet<string> InfrastructureServices = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "state",
+        "messaging",
+        "mesh"
+    };
+
+    /// <summary>
     /// Publish the complete service mappings to all bannou instances.
     /// </summary>
     public async Task PublishFullMappingsAsync(string reason)
@@ -262,10 +282,15 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
             // Get all current routings from Redis (source of truth)
             var routings = await _stateManager.GetServiceRoutingsAsync();
 
-            // Build mappings dictionary
+            // Build mappings dictionary, excluding infrastructure services
+            // Infrastructure libs (state, messaging, mesh) must always be handled locally
             var mappings = new Dictionary<string, string>();
             foreach (var routing in routings)
             {
+                if (InfrastructureServices.Contains(routing.Key))
+                {
+                    continue; // Never include infrastructure services in routing
+                }
                 mappings[routing.Key] = routing.Value.AppId;
             }
 

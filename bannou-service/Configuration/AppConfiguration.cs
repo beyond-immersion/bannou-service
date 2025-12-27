@@ -37,77 +37,78 @@ public class AppConfiguration : BaseServiceConfiguration
     /// <summary>
     /// Network mode- determines service -> app mappings.
     /// </summary>
-    public string? Network_Mode { get; set; } = "bannou";
+    public string? NetworkMode { get; set; } = "bannou";
 
     /// <summary>
     /// The assemblies to load from the /libs directory.
     /// </summary>
-    public string? Include_Assemblies { get; set; } = "all";
+    public string? IncludeAssemblies { get; set; } = "all";
 
     /// <summary>
     /// Mesh configuration store name to use.
     /// </summary>
-    public string? Mesh_Configuration_Store { get; set; }
+    public string? MeshConfigurationStore { get; set; }
 
     /// <summary>
     /// Secret store name to use.
     /// </summary>
-    public string? Secret_Store { get; set; }
+    public string? SecretStore { get; set; }
 
     /// <summary>
     /// Whether services are enabled by default.
     /// </summary>
-    public bool Services_Enabled { get; set; } = true;
+    public bool ServicesEnabled { get; set; } = true;
+
     /// <summary>
     /// Time in milliseconds for any given service startup to
     /// throw an error and start application shutdown.
     /// </summary>
-    public int Service_Start_Timeout { get; set; } = (int)TimeSpan.FromMinutes(3).TotalMilliseconds;
+    public int ServiceStartTimeout { get; set; } = (int)TimeSpan.FromMinutes(3).TotalMilliseconds;
 
     /// <summary>
     /// Time in milliseconds to wait for mesh connectivity before failing startup.
     /// Set to 0 to disable mesh readiness checks.
     /// </summary>
-    public int Mesh_Readiness_Timeout { get; set; } = (int)TimeSpan.FromMinutes(2).TotalMilliseconds;
+    public int MeshReadinessTimeout { get; set; } = (int)TimeSpan.FromMinutes(2).TotalMilliseconds;
 
     /// <summary>
     /// The port the HTTP webhost is listening on.
     /// </summary>
-    public int HTTP_Web_Host_Port { get; set; } = 80;
+    public int HttpWebHostPort { get; set; } = 80;
 
     /// <summary>
     /// The port the HTTPS webhost is listening on.
     /// </summary>
-    public int HTTPS_Web_Host_Port { get; set; } = 443;
+    public int HttpsWebHostPort { get; set; } = 443;
 
     /// <summary>
     /// The HTTP endpoint URL for service-to-service communication.
     /// Used by ServiceClientBase and ConnectService for mesh routing.
-    /// Environment variable: BANNOU_HTTP_ENDPOINT
-    /// Default: http://localhost:{HTTP_Web_Host_Port}
+    /// Environment variable: BANNOU_HTTPENDPOINT
+    /// Default: http://localhost:{HttpWebHostPort}
     /// </summary>
-    public string? Http_Endpoint { get; set; }
+    public string? HttpEndpoint { get; set; }
 
     /// <summary>
-    /// Gets the effective HTTP endpoint URL, with fallback to localhost:{HTTP_Web_Host_Port}.
+    /// Gets the effective HTTP endpoint URL, with fallback to localhost:{HttpWebHostPort}.
     /// Use this property instead of direct environment variable access.
     /// </summary>
-    public string EffectiveHttpEndpoint => Http_Endpoint ?? $"http://localhost:{HTTP_Web_Host_Port}";
+    public string EffectiveHttpEndpoint => HttpEndpoint ?? $"http://localhost:{HttpWebHostPort}";
 
     /// <summary>
     /// The log destination.
     /// </summary>
-    public virtual LogModes Log_Mode { get; set; } = LogModes.Console;
+    public virtual LogModes LogMode { get; set; } = LogModes.Console;
 
     /// <summary>
     /// The minimum level of logs for the application code to write to the console.
     /// </summary>
-    public virtual LogLevel App_Logging_Level { get; set; } = LogLevel.Information;
+    public virtual LogLevel AppLoggingLevel { get; set; } = LogLevel.Information;
 
     /// <summary>
     /// The minimum level of logs for kestrel to write to the console.
     /// </summary>
-    public virtual LogLevel Web_Host_Logging_Level { get; set; } = LogLevel.Information;
+    public virtual LogLevel WebHostLoggingLevel { get; set; } = LogLevel.Information;
 
     /// <summary>
     /// The app-id to query for initial service mappings during startup.
@@ -131,9 +132,15 @@ public class AppConfiguration : BaseServiceConfiguration
 
     /// <summary>
     /// The App ID for this service instance used for mesh routing.
-    /// Environment variable: BANNOU_APP_ID (or APP_ID for backwards compatibility)
+    /// Environment variable: BANNOU_APP_ID
     /// </summary>
-    public string? BannouAppId { get; set; }
+    public string? AppId { get; set; }
+
+    /// <summary>
+    /// Gets the effective App ID, with fallback to the default "bannou" if not configured.
+    /// Use this property for routing decisions to ensure consistent fallback behavior.
+    /// </summary>
+    public string EffectiveAppId => AppId ?? AppConstants.DEFAULT_APP_NAME;
 
     /// <summary>
     /// JWT secret key for token signing and validation.

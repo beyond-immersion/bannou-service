@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Asset;
 public class AssetServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
-    public string? Force_Service_ID { get; set; }
+    public string? ForceServiceId { get; set; }
 
     /// <summary>
     /// Storage backend type (minio, s3, r2, azure, filesystem)

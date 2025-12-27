@@ -21,7 +21,7 @@ namespace BeyondImmersion.BannouService.Connect.ClientEvents;
 /// <item>Queue name: CONNECT_SESSION_{sessionId} - persists during disconnect</item>
 /// <item>On disconnect: Consumer cancelled, queue buffers messages automatically</item>
 /// <item>On reconnect: Re-subscribe to same queue, RabbitMQ delivers pending messages</item>
-/// <item>Cleanup: Queue auto-expires via x-expires after 10 minutes with no consumers</item>
+/// <item>Cleanup: Queue auto-expires via RabbitMQ policy (x-expires: 5 min) after inactivity</item>
 /// </list>
 /// </para>
 /// <para>

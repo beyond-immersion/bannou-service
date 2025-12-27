@@ -604,7 +604,8 @@ public class PluginLoaderTests
         registerConfigMethod?.Invoke(pluginLoader, new object[] { registrationServices });
 
         // Assert - Check that configurations were registered
-        Assert.Equal(2, registrationServices.Count);
+        // Expect 3: AppConfiguration (global) + 2 test configurations
+        Assert.Equal(3, registrationServices.Count);
 
         var singletonConfig = registrationServices.FirstOrDefault(s => s.ServiceType == typeof(TestServiceWithAttrConfiguration));
         Assert.NotNull(singletonConfig);
@@ -861,7 +862,7 @@ public class PluginLoaderTests
             Assert.NotNull(instance);
 
             // These properties should exist (can be null but must exist)
-            Assert.True(configType.GetProperty("Force_Service_ID") != null);
+            Assert.True(configType.GetProperty("ForceServiceId") != null);
             // Service_Disabled property was removed - service enable/disable is now handled via environment variables
         }
     }
@@ -1749,7 +1750,7 @@ public class ConnectService
 public class ConnectServiceConfiguration : IServiceConfiguration
 {
     public string InstanceId { get; set; } = "test-instance";
-    public string? Force_Service_ID { get; } = null;
+    public string? ForceServiceId { get; } = null;
 }
 
 /// <summary>
@@ -1783,7 +1784,7 @@ public interface ITestConnectService
 public class TestServiceWithAttrConfiguration : IServiceConfiguration
 {
     public string TestSetting { get; set; } = "test";
-    public string? Force_Service_ID { get; } = null;
+    public string? ForceServiceId { get; } = null;
 }
 
 /// <summary>
@@ -1792,7 +1793,7 @@ public class TestServiceWithAttrConfiguration : IServiceConfiguration
 public class TestServiceConfiguration2 : IServiceConfiguration
 {
     public string TestSetting { get; set; } = "test2";
-    public string? Force_Service_ID { get; } = null;
+    public string? ForceServiceId { get; } = null;
 }
 
 /// <summary>
@@ -1842,7 +1843,7 @@ public class TestConnectServiceConfiguration : IServiceConfiguration
 {
     public string InstanceId { get; set; } = "test-connect-instance";
     public int MaxConnections { get; set; } = 1000;
-    public string? Force_Service_ID { get; } = null;
+    public string? ForceServiceId { get; } = null;
 }
 
 /// <summary>
@@ -1851,7 +1852,7 @@ public class TestConnectServiceConfiguration : IServiceConfiguration
 public class UnmatchedConfiguration : IServiceConfiguration
 {
     public string UnusedSetting { get; set; } = "unused";
-    public string? Force_Service_ID { get; } = null;
+    public string? ForceServiceId { get; } = null;
 }
 
 /// <summary>
@@ -1860,7 +1861,7 @@ public class UnmatchedConfiguration : IServiceConfiguration
 public class ComplexNamingTestServiceConfiguration : IServiceConfiguration
 {
     public string ComplexSetting { get; set; } = "complex";
-    public string? Force_Service_ID { get; } = null;
+    public string? ForceServiceId { get; } = null;
 }
 
 /// <summary>

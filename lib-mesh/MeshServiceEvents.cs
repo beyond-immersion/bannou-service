@@ -124,10 +124,10 @@ public partial class MeshService
                     evt.Version,
                     evt.Mappings.Count);
 
-                // Also persist to Redis for other instances
-                _ = _redisManager.UpdateServiceMappingsAsync(
-                    evt.Mappings.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
-                    evt.Version);
+                // Note: Not persisting to Redis here because:
+                // - All active instances receive this event and update their local cache
+                // - Newly deployed containers fetch mappings via HTTP from source app-id
+                // - The orchestrator persists routing data via OrchestratorStateManager
             }
             else
             {

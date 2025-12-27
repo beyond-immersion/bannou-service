@@ -1,6 +1,7 @@
 #nullable enable
 
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using MassTransit;
 using Microsoft.Extensions.Logging;
@@ -56,17 +57,38 @@ public sealed class MassTransitMessageBus : IMessageBus
 
         var messageId = Guid.NewGuid();
         var exchange = options?.Exchange ?? _configuration.DefaultExchange;
+        var exchangeType = options?.ExchangeType ?? PublishOptionsExchangeType.Fanout;
+        var routingKey = options?.RoutingKey ?? topic;
 
         try
         {
-            // Build the exchange URI for MassTransit
-            // Format: exchange:{exchangeName}?bind=true&queue={topicName}
-            var endpointUri = new Uri($"exchange:{exchange}?bind=true&queue={topic}");
+            // Build the exchange URI based on exchange type
+            // Fanout: broadcasts to ALL bound queues (service events like heartbeats)
+            // Direct/Topic: routes by routing key (client events to specific sessions)
+            Uri endpointUri;
+            if (exchangeType == PublishOptionsExchangeType.Fanout)
+            {
+                // Fanout: no queue binding - message broadcasts to all bound queues
+                endpointUri = new Uri($"exchange:{exchange}?type=fanout");
+            }
+            else
+            {
+                // Direct/Topic: routing key determines which queue(s) receive the message
+                var typeParam = exchangeType == PublishOptionsExchangeType.Direct ? "direct" : "topic";
+                endpointUri = new Uri($"exchange:{exchange}?type={typeParam}");
+            }
+
             var endpoint = await _bus.GetSendEndpoint(endpointUri);
 
             await endpoint.Send(eventData, context =>
             {
                 context.MessageId = messageId;
+
+                // Set routing key for direct/topic exchanges
+                if (exchangeType != PublishOptionsExchangeType.Fanout && !string.IsNullOrEmpty(routingKey))
+                {
+                    context.SetRoutingKey(routingKey);
+                }
 
                 if (options?.CorrelationId.HasValue == true)
                 {
@@ -97,10 +119,11 @@ public sealed class MassTransitMessageBus : IMessageBus
             }, cancellationToken);
 
             _logger.LogDebug(
-                "Published {EventType} to topic '{Topic}' (exchange: {Exchange}) with MessageId {MessageId}",
+                "Published {EventType} to topic '{Topic}' (exchange: {Exchange}, type: {ExchangeType}) with MessageId {MessageId}",
                 typeof(TEvent).Name,
                 topic,
                 exchange,
+                exchangeType,
                 messageId);
 
             return messageId;

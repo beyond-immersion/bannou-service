@@ -420,22 +420,36 @@
         <member name="T:BeyondImmersion.BannouService.ClientEvents.MessageBusClientEventPublisher">
             <summary>
             Message bus implementation of IClientEventPublisher.
-            Publishes client events to session-specific RabbitMQ topics via MassTransit.
+            Publishes client events to session-specific RabbitMQ queues via MassTransit.
             </summary>
             <remarks>
             <para>
-            Uses IMessageBus to publish to dynamic topics (CONNECT_SESSION_{sessionId}).
-            RabbitMQ creates fanout exchanges for each topic automatically.
+            Uses a dedicated direct exchange ("bannou-client-events") with routing keys
+            to deliver events only to the target session's queue. The routing key is
+            the queue name (CONNECT_SESSION_{sessionId}).
             </para>
             <para>
-            The Connect service uses direct RabbitMQ to subscribe to these exchanges
-            because MassTransit doesn't support dynamic runtime subscriptions.
+            This architecture ensures:
+            - No per-session exchange proliferation (single shared direct exchange)
+            - Efficient broker-level message filtering (only matching queues receive events)
+            - Clean separation from service events which use the "bannou" fanout exchange
+            </para>
+            <para>
+            The Connect service uses direct RabbitMQ to subscribe because MassTransit
+            doesn't support dynamic runtime queue creation. Session queues have 5-minute
+            TTL applied via RabbitMQ policy for automatic cleanup.
             </para>
             </remarks>
         </member>
         <member name="F:BeyondImmersion.BannouService.ClientEvents.MessageBusClientEventPublisher.SESSION_TOPIC_PREFIX">
             <summary>
-            Prefix for session-specific topics.
+            Prefix for session-specific queue names and routing keys.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ClientEvents.MessageBusClientEventPublisher.CLIENT_EVENTS_EXCHANGE">
+            <summary>
+            The dedicated direct exchange for client events.
+            Defined in provisioning/rabbitmq/definitions.json.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.ClientEvents.MessageBusClientEventPublisher.#ctor(BeyondImmersion.BannouService.Services.IMessageBus,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.ClientEvents.MessageBusClientEventPublisher})">
@@ -917,78 +931,78 @@
             Log output to all destinations (convenience flag).
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Network_Mode">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.NetworkMode">
             <summary>
             Network mode- determines service -> app mappings.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Include_Assemblies">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.IncludeAssemblies">
             <summary>
             The assemblies to load from the /libs directory.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Mesh_Configuration_Store">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.MeshConfigurationStore">
             <summary>
             Mesh configuration store name to use.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Secret_Store">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.SecretStore">
             <summary>
             Secret store name to use.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Services_Enabled">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.ServicesEnabled">
             <summary>
             Whether services are enabled by default.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Service_Start_Timeout">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.ServiceStartTimeout">
             <summary>
             Time in milliseconds for any given service startup to
             throw an error and start application shutdown.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Mesh_Readiness_Timeout">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.MeshReadinessTimeout">
             <summary>
             Time in milliseconds to wait for mesh connectivity before failing startup.
             Set to 0 to disable mesh readiness checks.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.HTTP_Web_Host_Port">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.HttpWebHostPort">
             <summary>
             The port the HTTP webhost is listening on.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.HTTPS_Web_Host_Port">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.HttpsWebHostPort">
             <summary>
             The port the HTTPS webhost is listening on.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Http_Endpoint">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.HttpEndpoint">
             <summary>
             The HTTP endpoint URL for service-to-service communication.
             Used by ServiceClientBase and ConnectService for mesh routing.
-            Environment variable: BANNOU_HTTP_ENDPOINT
-            Default: http://localhost:{HTTP_Web_Host_Port}
+            Environment variable: BANNOU_HTTPENDPOINT
+            Default: http://localhost:{HttpWebHostPort}
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.EffectiveHttpEndpoint">
             <summary>
-            Gets the effective HTTP endpoint URL, with fallback to localhost:{HTTP_Web_Host_Port}.
+            Gets the effective HTTP endpoint URL, with fallback to localhost:{HttpWebHostPort}.
             Use this property instead of direct environment variable access.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Log_Mode">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.LogMode">
             <summary>
             The log destination.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.App_Logging_Level">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.AppLoggingLevel">
             <summary>
             The minimum level of logs for the application code to write to the console.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Web_Host_Logging_Level">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.WebHostLoggingLevel">
             <summary>
             The minimum level of logs for kestrel to write to the console.
             </summary>
@@ -1013,10 +1027,16 @@
             Environment variable: PERMISSION_HEARTBEAT_ENABLED or BANNOU_PERMISSION_HEARTBEAT_ENABLED
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.BannouAppId">
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.AppId">
             <summary>
             The App ID for this service instance used for mesh routing.
-            Environment variable: BANNOU_APP_ID (or APP_ID for backwards compatibility)
+            Environment variable: BANNOU_APP_ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.EffectiveAppId">
+            <summary>
+            Gets the effective App ID, with fallback to the default "bannou" if not configured.
+            Use this property for routing decisions to ensure consistent fallback behavior.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.JwtSecret">
@@ -1139,7 +1159,7 @@
             Base configuration class for Bannou services with common configuration properties.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.BaseServiceConfiguration.Force_Service_ID">
+        <member name="P:BeyondImmersion.BannouService.Configuration.BaseServiceConfiguration.ForceServiceId">
             <summary>
             Set to override GUID for administrative service endpoints.
             If not set, will generate a new GUID automatically on service startup.
@@ -1159,7 +1179,15 @@
             This is critical for client event handling where event_name is matched by string value.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.Force_Service_ID">
+        <member name="F:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.LegacySwitchMappings">
+            <summary>
+            Legacy switch mappings for backward compatibility.
+            Maps legacy CLI switch names to their corresponding PascalCase property names.
+            This allows users to use traditional --kebab-case switches even when properties
+            are named in PascalCase (e.g., --force-service-id maps to ForceServiceId).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.ForceServiceId">
             <summary>
             Set to override GUID for administrative service endpoints.
             If not set, will generate a new GUID automatically on service startup.
@@ -1183,6 +1211,7 @@
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.BuildConfigurationRoot(System.String[],System.String)">
             <summary>
             Builds the service configuration root from available .env files, Config.json, ENVs, and command line switches.
+            Environment variables are normalized from UPPER_SNAKE_CASE to PascalCase.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.BuildConfiguration(System.String[],System.String)">
@@ -1206,6 +1235,7 @@
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.CreateAllSwitchMappings">
             <summary>
             Create and return the full lookup of switch mappings for all configuration classes.
+            Includes both generated switches and legacy switch mappings.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.CreateSwitchMappings``1">
@@ -1216,6 +1246,7 @@
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.CreateSwitchMappings(System.Type)">
             <summary>
             Create and return the full lookup of switch mappings for the configuration class.
+            Includes both generated switches from property names and legacy switch mappings.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.CreateSwitchFromName(System.String)">
@@ -9519,6 +9550,16 @@
             Exchange name for routing
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.RoutingKey">
+            <summary>
+            Routing key for direct/topic exchanges (ignored for fanout exchanges)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.ExchangeType">
+            <summary>
+            Exchange type - determines how messages are routed
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.PublishOptions.Persistent">
             <summary>
             Whether the message should be persisted to disk
@@ -17093,7 +17134,7 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.Program.GetRequestedPlugins">
             <summary>
-            Get the list of requested plugins based on Include_Assemblies configuration.
+            Get the list of requested plugins based on IncludeAssemblies configuration.
             </summary>
             <returns>List of plugin names to load, or null for all plugins</returns>
         </member>
@@ -17117,14 +17158,6 @@
             <param name="webApp">The web application for service resolution</param>
             <param name="cancellationToken">Cancellation token</param>
             <returns>True if import succeeded, false otherwise</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Program.LoadPersistedMappingsAsync(Microsoft.AspNetCore.Builder.WebApplication,System.Threading.CancellationToken)">
-            <summary>
-            Load persisted service mappings from state store (Redis).
-            Used by orchestrator containers on restart to recover their routing table.
-            </summary>
-            <param name="webApp">The web application for service resolution</param>
-            <param name="cancellationToken">Cancellation token</param>
         </member>
         <member name="T:BeyondImmersion.BannouService.Program.ServiceMappingsResponse">
             <summary>
@@ -18526,13 +18559,29 @@
             Supports atomic full-state updates from Orchestrator's FullServiceMappingsEvent.
             </summary>
         </member>
+        <member name="F:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver._localAppId">
+            <summary>
+            The local app-id for this node. Infrastructure services always route here.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.InfrastructureServices">
+            <summary>
+            Infrastructure services that must ALWAYS be handled locally, never routed to other nodes.
+            These provide the communication and storage fabric that all other services depend on.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.IsInfrastructureService(System.String)">
+            <summary>
+            Checks if a service is an infrastructure service that must always be local.
+            </summary>
+        </member>
         <member name="E:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.MappingChanged">
             <inheritdoc/>
         </member>
         <member name="P:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.CurrentVersion">
             <inheritdoc/>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.#ctor(Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Services.ServiceAppMappingResolver})">
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.#ctor(Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Services.ServiceAppMappingResolver},BeyondImmersion.BannouService.Configuration.AppConfiguration)">
             <inheritdoc/>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.GetAppIdForService(System.String)">
@@ -18589,7 +18638,7 @@
         <member name="P:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.InstanceId">
             <summary>
             Unique instance identifier for this bannou application instance.
-            Used for log correlation across distributed systems.
+            Uses the shared Program.ServiceGUID for consistent identification across mesh and heartbeat.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.AppId">

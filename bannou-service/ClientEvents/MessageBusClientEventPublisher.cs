@@ -7,16 +7,24 @@ namespace BeyondImmersion.BannouService.ClientEvents;
 
 /// <summary>
 /// Message bus implementation of IClientEventPublisher.
-/// Publishes client events to session-specific RabbitMQ topics via MassTransit.
+/// Publishes client events to session-specific RabbitMQ queues via MassTransit.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Uses IMessageBus to publish to dynamic topics (CONNECT_SESSION_{sessionId}).
-/// RabbitMQ creates fanout exchanges for each topic automatically.
+/// Uses a dedicated direct exchange ("bannou-client-events") with routing keys
+/// to deliver events only to the target session's queue. The routing key is
+/// the queue name (CONNECT_SESSION_{sessionId}).
 /// </para>
 /// <para>
-/// The Connect service uses direct RabbitMQ to subscribe to these exchanges
-/// because MassTransit doesn't support dynamic runtime subscriptions.
+/// This architecture ensures:
+/// - No per-session exchange proliferation (single shared direct exchange)
+/// - Efficient broker-level message filtering (only matching queues receive events)
+/// - Clean separation from service events which use the "bannou" fanout exchange
+/// </para>
+/// <para>
+/// The Connect service uses direct RabbitMQ to subscribe because MassTransit
+/// doesn't support dynamic runtime queue creation. Session queues have 5-minute
+/// TTL applied via RabbitMQ policy for automatic cleanup.
 /// </para>
 /// </remarks>
 public class MessageBusClientEventPublisher : IClientEventPublisher
@@ -25,9 +33,15 @@ public class MessageBusClientEventPublisher : IClientEventPublisher
     private readonly ILogger<MessageBusClientEventPublisher> _logger;
 
     /// <summary>
-    /// Prefix for session-specific topics.
+    /// Prefix for session-specific queue names and routing keys.
     /// </summary>
     private const string SESSION_TOPIC_PREFIX = "CONNECT_SESSION_";
+
+    /// <summary>
+    /// The dedicated direct exchange for client events.
+    /// Defined in provisioning/rabbitmq/definitions.json.
+    /// </summary>
+    private const string CLIENT_EVENTS_EXCHANGE = "bannou-client-events";
 
     /// <summary>
     /// Creates a new MessageBusClientEventPublisher.
@@ -64,15 +78,20 @@ public class MessageBusClientEventPublisher : IClientEventPublisher
             throw new ArgumentException($"Unknown client event type: {eventName}", nameof(eventData));
         }
 
-        var topic = $"{SESSION_TOPIC_PREFIX}{sessionId}";
+        // Queue/routing key format: CONNECT_SESSION_{sessionId}
+        var routingKey = $"{SESSION_TOPIC_PREFIX}{sessionId}";
 
         try
         {
-            // CRITICAL: Use topic as exchange name so it matches what ClientEventRabbitMQSubscriber expects
-            // Subscriber binds to fanout exchange named "CONNECT_SESSION_{sessionId}"
-            // If we used the default "bannou" exchange, messages would never reach the subscriber
-            var options = new PublishOptions { Exchange = topic };
-            await _messageBus.PublishAsync(topic, eventData, options, cancellationToken);
+            // Publish to direct exchange with routing key matching the subscriber's binding key
+            // The broker routes messages only to queues bound with matching routing key
+            var options = new PublishOptions
+            {
+                Exchange = CLIENT_EVENTS_EXCHANGE,
+                ExchangeType = PublishOptionsExchangeType.Direct,
+                RoutingKey = routingKey
+            };
+            await _messageBus.PublishAsync(routingKey, eventData, options, cancellationToken);
 
             _logger.LogDebug(
                 "Published client event {EventName} to session {SessionId}",
@@ -123,12 +142,17 @@ public class MessageBusClientEventPublisher : IClientEventPublisher
             .Where(s => !string.IsNullOrWhiteSpace(s))
             .Select(async sessionId =>
             {
-                var topic = $"{SESSION_TOPIC_PREFIX}{sessionId}";
+                var routingKey = $"{SESSION_TOPIC_PREFIX}{sessionId}";
                 try
                 {
-                    // CRITICAL: Use topic as exchange name (see comment in PublishToSessionAsync)
-                    var options = new PublishOptions { Exchange = topic };
-                    await _messageBus.PublishAsync(topic, eventData, options, cancellationToken);
+                    // Publish to direct exchange with session-specific routing key
+                    var options = new PublishOptions
+                    {
+                        Exchange = CLIENT_EVENTS_EXCHANGE,
+                        ExchangeType = PublishOptionsExchangeType.Direct,
+                        RoutingKey = routingKey
+                    };
+                    await _messageBus.PublishAsync(routingKey, eventData, options, cancellationToken);
                     Interlocked.Increment(ref successCount);
 
                     _logger.LogDebug(

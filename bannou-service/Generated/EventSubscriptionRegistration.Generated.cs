@@ -41,6 +41,9 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<ServiceHeartbeatEvent>("bannou-service-heartbeats");
         EventSubscriptionRegistry.Register<FullServiceMappingsEvent>("bannou-full-service-mappings");
 
+        // From orchestrator-events.yaml
+        EventSubscriptionRegistry.Register<ServiceHeartbeatEvent>("bannou-service-heartbeats");
+
         // From permissions-events.yaml
         EventSubscriptionRegistry.Register<ServiceRegistrationEvent>("permissions.service-registered");
         EventSubscriptionRegistry.Register<SessionStateChangeEvent>("permissions.session-state-changed");

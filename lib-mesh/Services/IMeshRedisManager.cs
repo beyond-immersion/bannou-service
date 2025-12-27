@@ -72,26 +72,6 @@ public interface IMeshRedisManager : IDisposable, IAsyncDisposable
     Task<List<MeshEndpoint>> GetAllEndpointsAsync(string? appIdPrefix = null);
 
     /// <summary>
-    /// Get the current service-to-app-id mappings.
-    /// </summary>
-    /// <returns>Dictionary of service name to app-id mappings.</returns>
-    Task<Dictionary<string, string>> GetServiceMappingsAsync();
-
-    /// <summary>
-    /// Update service-to-app-id mappings atomically.
-    /// </summary>
-    /// <param name="mappings">Complete dictionary of mappings.</param>
-    /// <param name="version">Version number for ordering.</param>
-    /// <returns>True if update was applied (version was newer).</returns>
-    Task<bool> UpdateServiceMappingsAsync(Dictionary<string, string> mappings, long version);
-
-    /// <summary>
-    /// Get the current mappings version.
-    /// </summary>
-    /// <returns>Current version number.</returns>
-    Task<long> GetMappingsVersionAsync();
-
-    /// <summary>
     /// Get a specific endpoint by instance ID.
     /// </summary>
     /// <param name="instanceId">Instance ID to look up.</param>
