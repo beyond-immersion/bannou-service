@@ -713,7 +713,7 @@ public partial class ServiceNameService : IServiceNameService
 |------------|----------------|
 | `I{Service}Client` | When the service plugin is loaded |
 | `IDistributedLockProvider` | When Redis-backed locking is configured |
-| `IClientEventPublisher` | Only in Connect service context |
+| `IClientEventPublisher` | When Connect service plugin is loaded (for pushing events to WebSocket clients) |
 
 ### Helper Service Decomposition
 
@@ -1326,6 +1326,18 @@ Client events and service events use **separate RabbitMQ exchanges** with differ
 - Queue per session: `CONNECT_SESSION_{sessionId}`
 - Routing key isolation: Only matching session receives events (broker-level filtering)
 - Queue expiry: RabbitMQ policy applies 5-minute TTL (see `provisioning/rabbitmq/definitions.json`)
+
+**⚠️ CRITICAL: Publishing to Sessions**
+
+To send events to specific WebSocket clients, you MUST use `IClientEventPublisher`:
+
+```csharp
+// ✅ CORRECT: Uses direct exchange with routing key
+await _clientEventPublisher.PublishToSessionAsync(sessionId, clientEvent);
+
+// ❌ WRONG: Uses fanout exchange - broadcasts to ALL nodes, never reaches client
+await _messageBus.PublishAsync($"CONNECT_SESSION_{sessionId}", clientEvent);
+```
 
 This separation ensures:
 - No flood of service events to client session queues
