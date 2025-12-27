@@ -1265,12 +1265,26 @@ public partial class GameSessionService : IGameSessionService
                 Replace_existing = true
             };
 
-            // Publish to session-specific topic
-            var topic = $"CONNECT_SESSION_{sessionId}";
-            await _messageBus.PublishAsync(topic, shortcutEvent);
+            // Publish to session-specific client event channel using direct exchange
+            // CRITICAL: Must use IClientEventPublisher for session-specific events (Tenet 6)
+            // Using _messageBus directly would publish to fanout exchange "bannou" instead
+            // of direct exchange "bannou-client-events" with proper routing key
+            if (_clientEventPublisher == null)
+            {
+                _logger.LogWarning("IClientEventPublisher not available - cannot publish shortcut to session {SessionId}", sessionId);
+                return;
+            }
 
-            _logger.LogInformation("Published join shortcut {RouteGuid} for session {SessionId} -> lobby {LobbyId} ({StubName})",
-                routeGuid, sessionId, lobbySessionId, stubName);
+            var published = await _clientEventPublisher.PublishToSessionAsync(sessionId, shortcutEvent);
+            if (published)
+            {
+                _logger.LogInformation("Published join shortcut {RouteGuid} for session {SessionId} -> lobby {LobbyId} ({StubName})",
+                    routeGuid, sessionId, lobbySessionId, stubName);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to publish join shortcut to session {SessionId}", sessionId);
+            }
         }
         catch (Exception ex)
         {
@@ -1295,11 +1309,24 @@ public partial class GameSessionService : IGameSessionService
                 Reason = $"Subscription to {stubName} ended"
             };
 
-            var topic = $"CONNECT_SESSION_{sessionId}";
-            await _messageBus.PublishAsync(topic, revokeEvent);
+            // Publish to session-specific client event channel using direct exchange
+            // CRITICAL: Must use IClientEventPublisher for session-specific events (Tenet 6)
+            if (_clientEventPublisher == null)
+            {
+                _logger.LogWarning("IClientEventPublisher not available - cannot revoke shortcuts for session {SessionId}", sessionId);
+                return;
+            }
 
-            _logger.LogInformation("Revoked game-session shortcuts for session {SessionId} (reason: {StubName} subscription ended)",
-                sessionId, stubName);
+            var published = await _clientEventPublisher.PublishToSessionAsync(sessionId, revokeEvent);
+            if (published)
+            {
+                _logger.LogInformation("Revoked game-session shortcuts for session {SessionId} (reason: {StubName} subscription ended)",
+                    sessionId, stubName);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to publish shortcut revocation to session {SessionId}", sessionId);
+            }
         }
         catch (Exception ex)
         {
