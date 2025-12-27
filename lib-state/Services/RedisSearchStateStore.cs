@@ -438,10 +438,19 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
                 ftQuery.SetSortBy(options.SortBy, options.SortDescending);
             }
 
+            // CRITICAL: For JSON indexes, we must explicitly request the full JSON document
+            // to be returned using RETURN 1 $ AS json. This follows NRedisStack conventions:
+            // https://redis.io/docs/latest/develop/clients/dotnet/queryjson/
+            // Without this, the search returns no document content.
+            var returnFields = new List<FieldName> { new FieldName("$", "json") };
             if (options.ReturnFields?.Count > 0)
             {
-                ftQuery.ReturnFields(options.ReturnFields.ToArray());
+                foreach (var field in options.ReturnFields)
+                {
+                    returnFields.Add(new FieldName(field, field));
+                }
             }
+            ftQuery.ReturnFields(returnFields.ToArray());
 
             if (!string.IsNullOrEmpty(options.Language))
             {
@@ -449,6 +458,10 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
             }
 
             var result = await _searchCommands.SearchAsync(indexName, ftQuery);
+
+            // Log search results for debugging
+            _logger.LogInformation("FT.SEARCH on '{Index}' with query '{Query}' found {TotalResults} documents",
+                indexName, query, result.TotalResults);
 
             var items = new List<SearchResult<TValue>>();
             foreach (var doc in result.Documents)
@@ -459,9 +472,17 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
                     ? fullKey[(_keyPrefix.Length + 1)..]
                     : fullKey;
 
-                // Get the JSON value
-                var jsonValue = doc["$"];
-                if (jsonValue != RedisValue.Null)
+                // Get the JSON value using the "json" alias we specified in ReturnFields
+                // Per NRedisStack convention: FieldName("$", "json") returns doc["json"]
+                var jsonValue = doc["json"];
+                if (jsonValue == RedisValue.Null)
+                {
+                    // Log what fields ARE available to diagnose the issue
+                    var availableFields = string.Join(", ", doc.GetProperties().Select(p => p.Key));
+                    _logger.LogWarning("Document {DocId} has no 'json' field. Available fields: [{Fields}]",
+                        fullKey, availableFields);
+                }
+                else
                 {
                     var value = BannouJson.Deserialize<TValue>(jsonValue.ToString());
                     if (value != null)

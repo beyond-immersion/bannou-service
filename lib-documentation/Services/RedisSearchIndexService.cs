@@ -25,6 +25,12 @@ public class RedisSearchIndexService : ISearchIndexService
     /// Schema fields for Redis Search index.
     /// Maps to StoredDocument properties.
     /// </summary>
+    /// <remarks>
+    /// NOTE: UpdatedAt is NOT indexed because DateTimeOffset serializes as ISO 8601 string,
+    /// not a numeric value. Redis Search NUMERIC fields require actual numbers.
+    /// If sorting by UpdatedAt is needed, StoredDocument.UpdatedAt must be changed to
+    /// store Unix timestamp (long) instead of DateTimeOffset.
+    /// </remarks>
     private static readonly IReadOnlyList<SearchSchemaField> DocumentSchema = new List<SearchSchemaField>
     {
         new() { Path = "$.Title", Alias = "title", Type = SearchFieldType.Text, Weight = 2.0, Sortable = true },
@@ -33,8 +39,7 @@ public class RedisSearchIndexService : ISearchIndexService
         new() { Path = "$.Summary", Alias = "summary", Type = SearchFieldType.Text, Weight = 1.2 },
         new() { Path = "$.Category", Alias = "category", Type = SearchFieldType.Tag, Sortable = true },
         new() { Path = "$.Tags[*]", Alias = "tags", Type = SearchFieldType.Tag },
-        new() { Path = "$.Namespace", Alias = "namespace", Type = SearchFieldType.Tag },
-        new() { Path = "$.UpdatedAt", Alias = "updated", Type = SearchFieldType.Numeric, Sortable = true }
+        new() { Path = "$.Namespace", Alias = "namespace", Type = SearchFieldType.Tag }
     };
 
     /// <summary>
