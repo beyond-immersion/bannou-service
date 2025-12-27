@@ -1,6 +1,6 @@
 # Generated Events Reference
 
-> **Auto-generated**: 2025-12-27 13:47:07
+> **Auto-generated**: 2025-12-27 16:24:27
 > **Source**: `schemas/*-events.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -71,10 +71,15 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `DocumentViewedEvent` | Custom | `document-viewed` | Published when a document is viewed |
+| `DocumentationArchiveCreatedEvent` | Lifecycle (Created) | `documentation-archive.created` | Published when a documentation archive is created |
+| `DocumentationBindingCreatedEvent` | Lifecycle (Created) | `documentation-binding.created` | Published when a repository binding is created |
+| `DocumentationBindingRemovedEvent` | Custom | `documentation-binding-removed` | Published when a repository binding is removed |
 | `DocumentationImportCompletedEvent` | Custom | `documentation-import-completed` | Published when an import operation completes |
 | `DocumentationImportStartedEvent` | Custom | `documentation-import-started` | Published when an import operation starts |
 | `DocumentationQueriedEvent` | Custom | `documentation-queried` | Published when documentation is queried with natur... |
 | `DocumentationSearchedEvent` | Custom | `documentation-searched` | Published when documentation is searched with keyw... |
+| `DocumentationSyncCompletedEvent` | Custom | `documentation-sync-completed` | Published when a repository sync completes |
+| `DocumentationSyncStartedEvent` | Custom | `documentation-sync-started` | Published when a repository sync starts |
 
 ### Game Session
 

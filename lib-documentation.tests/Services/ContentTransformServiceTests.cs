@@ -52,8 +52,8 @@ public class ContentTransformServiceTests
             title: Test Document
             category: Guide
             tags:
-              - test
-              - example
+            - test
+            - example
             ---
             # Content here
             """;
@@ -403,8 +403,8 @@ public class ContentTransformServiceTests
             summary: A complete test document
             voiceSummary: A summary for voice
             tags:
-              - test
-              - complete
+            - test
+            - complete
             ---
             # Complete Document
 
