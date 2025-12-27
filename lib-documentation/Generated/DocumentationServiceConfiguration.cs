@@ -81,4 +81,46 @@ public class DocumentationServiceConfiguration : IServiceConfiguration
     /// </summary>
     public string AiEmbeddingsModel { get; set; } = "";
 
+    /// <summary>
+    /// Local path for cloned git repositories
+    /// Environment variable: DOCUMENTATION_GIT_STORAGE_PATH
+    /// </summary>
+    public string GitStoragePath { get; set; } = "/tmp/bannou-git-repos";
+
+    /// <summary>
+    /// Hours before inactive repos are cleaned up
+    /// Environment variable: DOCUMENTATION_GIT_STORAGE_CLEANUP_HOURS
+    /// </summary>
+    public int GitStorageCleanupHours { get; set; } = 24;
+
+    /// <summary>
+    /// Clone/pull operation timeout in seconds
+    /// Environment variable: DOCUMENTATION_GIT_CLONE_TIMEOUT_SECONDS
+    /// </summary>
+    public int GitCloneTimeoutSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// Enable background sync scheduler
+    /// Environment variable: DOCUMENTATION_SYNC_SCHEDULER_ENABLED
+    /// </summary>
+    public bool SyncSchedulerEnabled { get; set; } = true;
+
+    /// <summary>
+    /// How often to check for repos needing sync
+    /// Environment variable: DOCUMENTATION_SYNC_SCHEDULER_CHECK_INTERVAL_MINUTES
+    /// </summary>
+    public int SyncSchedulerCheckIntervalMinutes { get; set; } = 5;
+
+    /// <summary>
+    /// Maximum concurrent sync operations
+    /// Environment variable: DOCUMENTATION_MAX_CONCURRENT_SYNCS
+    /// </summary>
+    public int MaxConcurrentSyncs { get; set; } = 3;
+
+    /// <summary>
+    /// Maximum documents per sync operation
+    /// Environment variable: DOCUMENTATION_MAX_DOCUMENTS_PER_SYNC
+    /// </summary>
+    public int MaxDocumentsPerSync { get; set; } = 1000;
+
 }

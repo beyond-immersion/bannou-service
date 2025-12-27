@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Documentation;
+using BeyondImmersion.BannouService.Documentation.Models;
 using BeyondImmersion.BannouService.Documentation.Services;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -21,11 +22,16 @@ public class DocumentationServiceTests
     private readonly Mock<IStateStore<DocumentationService.StoredDocument>> _mockDocumentStore;
     private readonly Mock<IStateStore<DocumentationService.TrashedDocument>> _mockTrashStore;
     private readonly Mock<IStateStore<List<Guid>>> _mockGuidListStore;
+    private readonly Mock<IStateStore<RepositoryBinding>> _mockBindingStore;
+    private readonly Mock<IStateStore<HashSet<string>>> _mockRegistryStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<DocumentationService>> _mockLogger;
     private readonly DocumentationServiceConfiguration _configuration;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<ISearchIndexService> _mockSearchIndexService;
+    private readonly Mock<IGitSyncService> _mockGitSyncService;
+    private readonly Mock<IContentTransformService> _mockContentTransformService;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly DocumentationService _service;
 
     private const string TEST_NAMESPACE = "test-namespace";
@@ -38,11 +44,16 @@ public class DocumentationServiceTests
         _mockDocumentStore = new Mock<IStateStore<DocumentationService.StoredDocument>>();
         _mockTrashStore = new Mock<IStateStore<DocumentationService.TrashedDocument>>();
         _mockGuidListStore = new Mock<IStateStore<List<Guid>>>();
+        _mockBindingStore = new Mock<IStateStore<RepositoryBinding>>();
+        _mockRegistryStore = new Mock<IStateStore<HashSet<string>>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<DocumentationService>>();
         _configuration = new DocumentationServiceConfiguration();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockSearchIndexService = new Mock<ISearchIndexService>();
+        _mockGitSyncService = new Mock<IGitSyncService>();
+        _mockContentTransformService = new Mock<IContentTransformService>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
@@ -53,6 +64,10 @@ public class DocumentationServiceTests
             .Returns(_mockTrashStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(STATE_STORE))
             .Returns(_mockGuidListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<RepositoryBinding>(STATE_STORE))
+            .Returns(_mockBindingStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<HashSet<string>>(STATE_STORE))
+            .Returns(_mockRegistryStore.Object);
 
         _service = new DocumentationService(
             _mockStateStoreFactory.Object,
@@ -60,7 +75,10 @@ public class DocumentationServiceTests
             _mockLogger.Object,
             _configuration,
             _mockEventConsumer.Object,
-            _mockSearchIndexService.Object);
+            _mockSearchIndexService.Object,
+            _mockGitSyncService.Object,
+            _mockContentTransformService.Object,
+            _mockLockProvider.Object);
     }
 
     #region Constructor Tests
@@ -75,7 +93,10 @@ public class DocumentationServiceTests
             _mockLogger.Object,
             _configuration,
             _mockEventConsumer.Object,
-            _mockSearchIndexService.Object);
+            _mockSearchIndexService.Object,
+            _mockGitSyncService.Object,
+            _mockContentTransformService.Object,
+            _mockLockProvider.Object);
 
         // Assert
         Assert.NotNull(service);
@@ -91,7 +112,10 @@ public class DocumentationServiceTests
             _mockLogger.Object,
             _configuration,
             _mockEventConsumer.Object,
-            _mockSearchIndexService.Object));
+            _mockSearchIndexService.Object,
+            _mockGitSyncService.Object,
+            _mockContentTransformService.Object,
+            _mockLockProvider.Object));
     }
 
     [Fact]
@@ -104,7 +128,10 @@ public class DocumentationServiceTests
             null!,
             _configuration,
             _mockEventConsumer.Object,
-            _mockSearchIndexService.Object));
+            _mockSearchIndexService.Object,
+            _mockGitSyncService.Object,
+            _mockContentTransformService.Object,
+            _mockLockProvider.Object));
     }
 
     [Fact]
@@ -117,7 +144,10 @@ public class DocumentationServiceTests
             _mockLogger.Object,
             null!,
             _mockEventConsumer.Object,
-            _mockSearchIndexService.Object));
+            _mockSearchIndexService.Object,
+            _mockGitSyncService.Object,
+            _mockContentTransformService.Object,
+            _mockLockProvider.Object));
     }
 
     [Fact]
@@ -130,7 +160,10 @@ public class DocumentationServiceTests
             _mockLogger.Object,
             _configuration,
             null!,
-            _mockSearchIndexService.Object));
+            _mockSearchIndexService.Object,
+            _mockGitSyncService.Object,
+            _mockContentTransformService.Object,
+            _mockLockProvider.Object));
     }
 
     [Fact]
@@ -143,6 +176,25 @@ public class DocumentationServiceTests
             _mockLogger.Object,
             _configuration,
             _mockEventConsumer.Object,
+            null!,
+            _mockGitSyncService.Object,
+            _mockContentTransformService.Object,
+            _mockLockProvider.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullLockProvider_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new DocumentationService(
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            _configuration,
+            _mockEventConsumer.Object,
+            _mockSearchIndexService.Object,
+            _mockGitSyncService.Object,
+            _mockContentTransformService.Object,
             null!));
     }
 

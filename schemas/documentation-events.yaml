@@ -35,6 +35,24 @@ info:
     - topic: documentation.import.completed
       event: DocumentationImportCompletedEvent
       description: Published when an import operation completes
+    # Repository binding events
+    - topic: documentation.binding.created
+      event: DocumentationBindingCreatedEvent
+      description: Published when a repository binding is created
+    - topic: documentation.binding.removed
+      event: DocumentationBindingRemovedEvent
+      description: Published when a repository binding is removed
+    # Sync events
+    - topic: documentation.sync.started
+      event: DocumentationSyncStartedEvent
+      description: Published when a repository sync starts
+    - topic: documentation.sync.completed
+      event: DocumentationSyncCompletedEvent
+      description: Published when a repository sync completes
+    # Archive events
+    - topic: documentation.archive.created
+      event: DocumentationArchiveCreatedEvent
+      description: Published when a documentation archive is created
 
 paths: {}  # Events don't have HTTP paths
 
@@ -221,3 +239,162 @@ components:
           type: integer
         durationMs:
           type: integer
+
+    # Repository binding events
+    DocumentationBindingCreatedEvent:
+      type: object
+      description: Published when a repository binding is created
+      required:
+        - eventId
+        - timestamp
+        - namespace
+        - bindingId
+        - repositoryUrl
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        namespace:
+          type: string
+        bindingId:
+          type: string
+          format: uuid
+        repositoryUrl:
+          type: string
+        branch:
+          type: string
+
+    DocumentationBindingRemovedEvent:
+      type: object
+      description: Published when a repository binding is removed
+      required:
+        - eventId
+        - timestamp
+        - namespace
+        - bindingId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        namespace:
+          type: string
+        bindingId:
+          type: string
+          format: uuid
+        documentsDeleted:
+          type: integer
+
+    # Sync events
+    DocumentationSyncStartedEvent:
+      type: object
+      description: Published when a repository sync starts
+      required:
+        - eventId
+        - timestamp
+        - namespace
+        - bindingId
+        - syncId
+        - triggeredBy
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        namespace:
+          type: string
+        bindingId:
+          type: string
+          format: uuid
+        syncId:
+          type: string
+          format: uuid
+        triggeredBy:
+          type: string
+          enum:
+            - manual
+            - scheduled
+
+    DocumentationSyncCompletedEvent:
+      type: object
+      description: Published when a repository sync completes
+      required:
+        - eventId
+        - timestamp
+        - namespace
+        - bindingId
+        - syncId
+        - status
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        namespace:
+          type: string
+        bindingId:
+          type: string
+          format: uuid
+        syncId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - success
+            - partial
+            - failed
+        commitHash:
+          type: string
+        documentsCreated:
+          type: integer
+        documentsUpdated:
+          type: integer
+        documentsDeleted:
+          type: integer
+        durationMs:
+          type: integer
+        errorMessage:
+          type: string
+          nullable: true
+
+    # Archive events
+    DocumentationArchiveCreatedEvent:
+      type: object
+      description: Published when a documentation archive is created
+      required:
+        - eventId
+        - timestamp
+        - namespace
+        - archiveId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        namespace:
+          type: string
+        archiveId:
+          type: string
+          format: uuid
+        bundleAssetId:
+          type: string
+          format: uuid
+        documentCount:
+          type: integer
+        sizeBytes:
+          type: integer
+        commitHash:
+          type: string
+          nullable: true

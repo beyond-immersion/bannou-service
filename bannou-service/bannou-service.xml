@@ -2871,6 +2871,31 @@
             Published when an import operation completes
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.DocumentationBindingCreatedEvent">
+            <summary>
+            Published when a repository binding is created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.DocumentationBindingRemovedEvent">
+            <summary>
+            Published when a repository binding is removed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.DocumentationSyncStartedEvent">
+            <summary>
+            Published when a repository sync starts
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.DocumentationSyncCompletedEvent">
+            <summary>
+            Published when a repository sync completes
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.DocumentationArchiveCreatedEvent">
+            <summary>
+            Published when a documentation archive is created
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.DocumentCreatedEvent">
             <summary>
             Published to document.created when a document is created
@@ -7422,6 +7447,122 @@
             <returns>Namespace statistics</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.BindRepositoryAsync(BeyondImmersion.BannouService.Documentation.BindRepositoryRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Bind a git repository to a documentation namespace
+            </summary>
+            <remarks>
+            Bind a git repository URL to a documentation namespace.
+            <br/>The namespace will be exclusively managed by the repository - manual edits will be blocked.
+            <br/>Triggers initial sync after binding.
+            </remarks>
+            <returns>Repository binding created</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.UnbindRepositoryAsync(BeyondImmersion.BannouService.Documentation.UnbindRepositoryRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Remove repository binding from namespace
+            </summary>
+            <remarks>
+            Remove repository binding from a namespace, making it manually editable again.
+            <br/>Optionally delete all documents imported from the repository.
+            </remarks>
+            <returns>Repository binding removed</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.SyncRepositoryAsync(BeyondImmersion.BannouService.Documentation.SyncRepositoryRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Manually trigger repository sync
+            </summary>
+            <remarks>
+            Manually trigger synchronization of a bound repository.
+            <br/>If force=true, performs full re-sync regardless of commit hash.
+            </remarks>
+            <returns>Sync completed</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.GetRepositoryStatusAsync(BeyondImmersion.BannouService.Documentation.RepositoryStatusRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get repository binding status
+            </summary>
+            <remarks>
+            Get current status of a repository binding including sync state and statistics.
+            </remarks>
+            <returns>Repository binding status</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.ListRepositoryBindingsAsync(BeyondImmersion.BannouService.Documentation.ListRepositoryBindingsRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List all repository bindings
+            </summary>
+            <remarks>
+            List all repository bindings with optional filtering by status.
+            </remarks>
+            <returns>List of repository bindings</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.UpdateRepositoryBindingAsync(BeyondImmersion.BannouService.Documentation.UpdateRepositoryBindingRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update repository binding configuration
+            </summary>
+            <remarks>
+            Update sync settings, file patterns, category mappings, or archive configuration.
+            </remarks>
+            <returns>Repository binding updated</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.CreateDocumentationArchiveAsync(BeyondImmersion.BannouService.Documentation.CreateArchiveRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create documentation archive
+            </summary>
+            <remarks>
+            Create a .bannou bundle archive of all documents in a namespace.
+            <br/>Archives are stored via Asset Service.
+            </remarks>
+            <returns>Archive created</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.ListDocumentationArchivesAsync(BeyondImmersion.BannouService.Documentation.ListArchivesRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List documentation archives
+            </summary>
+            <remarks>
+            List all archives for a namespace.
+            </remarks>
+            <returns>List of archives</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.RestoreDocumentationArchiveAsync(BeyondImmersion.BannouService.Documentation.RestoreArchiveRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Restore documentation from archive
+            </summary>
+            <remarks>
+            Restore documents from a .bannou bundle archive.
+            <br/>Replaces all documents in the namespace with archived content.
+            </remarks>
+            <returns>Archive restored</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.IDocumentationClient.DeleteDocumentationArchiveAsync(BeyondImmersion.BannouService.Documentation.DeleteArchiveRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete documentation archive
+            </summary>
+            <remarks>
+            Delete an archive from Asset Service storage.
+            </remarks>
+            <returns>Archive deleted</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="F:BeyondImmersion.BannouService.Documentation.DocumentationClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
@@ -7663,6 +7804,122 @@
             <returns>Namespace statistics</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.BindRepositoryAsync(BeyondImmersion.BannouService.Documentation.BindRepositoryRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Bind a git repository to a documentation namespace
+            </summary>
+            <remarks>
+            Bind a git repository URL to a documentation namespace.
+            <br/>The namespace will be exclusively managed by the repository - manual edits will be blocked.
+            <br/>Triggers initial sync after binding.
+            </remarks>
+            <returns>Repository binding created</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.UnbindRepositoryAsync(BeyondImmersion.BannouService.Documentation.UnbindRepositoryRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Remove repository binding from namespace
+            </summary>
+            <remarks>
+            Remove repository binding from a namespace, making it manually editable again.
+            <br/>Optionally delete all documents imported from the repository.
+            </remarks>
+            <returns>Repository binding removed</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.SyncRepositoryAsync(BeyondImmersion.BannouService.Documentation.SyncRepositoryRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Manually trigger repository sync
+            </summary>
+            <remarks>
+            Manually trigger synchronization of a bound repository.
+            <br/>If force=true, performs full re-sync regardless of commit hash.
+            </remarks>
+            <returns>Sync completed</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.GetRepositoryStatusAsync(BeyondImmersion.BannouService.Documentation.RepositoryStatusRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get repository binding status
+            </summary>
+            <remarks>
+            Get current status of a repository binding including sync state and statistics.
+            </remarks>
+            <returns>Repository binding status</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.ListRepositoryBindingsAsync(BeyondImmersion.BannouService.Documentation.ListRepositoryBindingsRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List all repository bindings
+            </summary>
+            <remarks>
+            List all repository bindings with optional filtering by status.
+            </remarks>
+            <returns>List of repository bindings</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.UpdateRepositoryBindingAsync(BeyondImmersion.BannouService.Documentation.UpdateRepositoryBindingRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update repository binding configuration
+            </summary>
+            <remarks>
+            Update sync settings, file patterns, category mappings, or archive configuration.
+            </remarks>
+            <returns>Repository binding updated</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.CreateDocumentationArchiveAsync(BeyondImmersion.BannouService.Documentation.CreateArchiveRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create documentation archive
+            </summary>
+            <remarks>
+            Create a .bannou bundle archive of all documents in a namespace.
+            <br/>Archives are stored via Asset Service.
+            </remarks>
+            <returns>Archive created</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.ListDocumentationArchivesAsync(BeyondImmersion.BannouService.Documentation.ListArchivesRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List documentation archives
+            </summary>
+            <remarks>
+            List all archives for a namespace.
+            </remarks>
+            <returns>List of archives</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.RestoreDocumentationArchiveAsync(BeyondImmersion.BannouService.Documentation.RestoreArchiveRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Restore documentation from archive
+            </summary>
+            <remarks>
+            Restore documents from a .bannou bundle archive.
+            <br/>Replaces all documents in the namespace with archived content.
+            </remarks>
+            <returns>Archive restored</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Documentation.DocumentationClient.DeleteDocumentationArchiveAsync(BeyondImmersion.BannouService.Documentation.DeleteArchiveRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete documentation archive
+            </summary>
+            <remarks>
+            Delete an archive from Asset Service storage.
+            </remarks>
+            <returns>Archive deleted</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Documentation.DocumentCategory">
             <summary>
             Fixed categories for type-safe filtering
@@ -7705,6 +7962,101 @@
         <member name="P:BeyondImmersion.BannouService.Documentation.PurgeTrashcanRequest.DocumentIds">
             <summary>
             If empty, purges all trashcan items
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.BindingStatus">
+            <summary>
+            Status of a repository binding
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.SyncStatus">
+            <summary>
+            Result status of a sync operation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Documentation.SyncTrigger">
+            <summary>
+            What triggered the sync operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.BindRepositoryRequest.Namespace">
+            <summary>
+            Documentation namespace to bind
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.BindRepositoryRequest.RepositoryUrl">
+            <summary>
+            Git clone URL (HTTPS for public repos)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.BindRepositoryRequest.Branch">
+            <summary>
+            Branch to sync from
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.BindRepositoryRequest.SyncIntervalMinutes">
+            <summary>
+            How often to sync (5 min to 24 hours)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.BindRepositoryRequest.FilePatterns">
+            <summary>
+            Glob patterns for files to include
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.BindRepositoryRequest.ExcludePatterns">
+            <summary>
+            Glob patterns for files to exclude
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.BindRepositoryRequest.CategoryMapping">
+            <summary>
+            Map directory prefixes to categories
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.BindRepositoryRequest.ArchiveEnabled">
+            <summary>
+            Enable archive functionality
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.BindRepositoryRequest.ArchiveOnSync">
+            <summary>
+            Create archive after each sync
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.UnbindRepositoryRequest.DeleteDocuments">
+            <summary>
+            Also delete all documents from the namespace
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.UnbindRepositoryResponse.DocumentsDeleted">
+            <summary>
+            Number of documents deleted (0 if deleteDocuments was false)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.SyncRepositoryRequest.Force">
+            <summary>
+            Force full re-sync even if commit hash unchanged
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.CreateArchiveRequest.Description">
+            <summary>
+            Optional description for the archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.CreateArchiveResponse.BundleAssetId">
+            <summary>
+            Asset ID in Asset Service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.CreateArchiveResponse.CommitHash">
+            <summary>
+            Git commit hash if namespace is bound
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Documentation.RestoreArchiveRequest.TargetNamespace">
+            <summary>
+            If not provided, restores to original namespace
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.GameSession.IGameSessionClient.ListGameSessionsAsync(BeyondImmersion.BannouService.GameSession.ListGameSessionsRequest,System.Threading.CancellationToken)">

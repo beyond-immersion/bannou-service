@@ -225,6 +225,234 @@ public partial class DocumentationImportCompletedEvent
 
 }
 
+/// <summary>
+/// Published when a repository binding is created
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DocumentationBindingCreatedEvent
+{
+
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid EventId { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("namespace")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Namespace { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("bindingId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid BindingId { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("repositoryUrl")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string RepositoryUrl { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("branch")]
+    public string Branch { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Published when a repository binding is removed
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DocumentationBindingRemovedEvent
+{
+
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid EventId { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("namespace")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Namespace { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("bindingId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid BindingId { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("documentsDeleted")]
+    public int DocumentsDeleted { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Published when a repository sync starts
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DocumentationSyncStartedEvent
+{
+
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid EventId { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("namespace")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Namespace { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("bindingId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid BindingId { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("syncId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid SyncId { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("triggeredBy")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DocumentationSyncStartedEventTriggeredBy TriggeredBy { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Published when a repository sync completes
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DocumentationSyncCompletedEvent
+{
+
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid EventId { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("namespace")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Namespace { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("bindingId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid BindingId { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("syncId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid SyncId { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DocumentationSyncCompletedEventStatus Status { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("commitHash")]
+    public string CommitHash { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("documentsCreated")]
+    public int DocumentsCreated { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("documentsUpdated")]
+    public int DocumentsUpdated { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("documentsDeleted")]
+    public int DocumentsDeleted { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("durationMs")]
+    public int DurationMs { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
+    public string? ErrorMessage { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Published when a documentation archive is created
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DocumentationArchiveCreatedEvent
+{
+
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid EventId { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("namespace")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Namespace { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("archiveId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid ArchiveId { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("bundleAssetId")]
+    public System.Guid BundleAssetId { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("documentCount")]
+    public int DocumentCount { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
+    public int SizeBytes { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("commitHash")]
+    public string? CommitHash { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum DocumentViewedEventSource
 {
@@ -243,6 +471,33 @@ public enum DocumentViewedEventSource
 
     [System.Runtime.Serialization.EnumMember(Value = @"browser")]
     Browser = 4,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum DocumentationSyncStartedEventTriggeredBy
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"manual")]
+    Manual = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"scheduled")]
+    Scheduled = 1,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum DocumentationSyncCompletedEventStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"success")]
+    Success = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"partial")]
+    Partial = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
+    Failed = 2,
 
 }
 

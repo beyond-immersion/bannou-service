@@ -25,6 +25,9 @@ public partial class DocumentationService : IDocumentationService
     private readonly ILogger<DocumentationService> _logger;
     private readonly DocumentationServiceConfiguration _configuration;
     private readonly ISearchIndexService _searchIndexService;
+    private readonly IGitSyncService _gitSyncService;
+    private readonly IContentTransformService _contentTransformService;
+    private readonly IDistributedLockProvider _lockProvider;
 
     private const string STATE_STORE = "documentation-statestore";
 
@@ -32,6 +35,11 @@ public partial class DocumentationService : IDocumentationService
     private const string DOCUMENT_CREATED_TOPIC = "document.created";
     private const string DOCUMENT_UPDATED_TOPIC = "document.updated";
     private const string DOCUMENT_DELETED_TOPIC = "document.deleted";
+    private const string BINDING_CREATED_TOPIC = "documentation.binding.created";
+    private const string BINDING_REMOVED_TOPIC = "documentation.binding.removed";
+    private const string SYNC_STARTED_TOPIC = "documentation.sync.started";
+    private const string SYNC_COMPLETED_TOPIC = "documentation.sync.completed";
+    private const string ARCHIVE_CREATED_TOPIC = "documentation.archive.created";
 
     // State store key prefixes per plan specification
     // NOTE: DOC_KEY_PREFIX is empty because the store already prefixes with "doc:" via KeyPrefix
@@ -40,6 +48,10 @@ public partial class DocumentationService : IDocumentationService
     private const string SLUG_INDEX_PREFIX = "slug-idx:";
     private const string NAMESPACE_DOCS_PREFIX = "ns-docs:";
     private const string TRASH_KEY_PREFIX = "trash:";
+    private const string BINDING_KEY_PREFIX = "repo-binding:";
+    private const string BINDINGS_REGISTRY_KEY = "repo-bindings";
+    private const string ARCHIVE_KEY_PREFIX = "archive:";
+    private const string SYNC_LOCK_PREFIX = "repo-sync:";
 
     /// <summary>
     /// Creates a new instance of the DocumentationService.
@@ -50,13 +62,19 @@ public partial class DocumentationService : IDocumentationService
         ILogger<DocumentationService> logger,
         DocumentationServiceConfiguration configuration,
         IEventConsumer eventConsumer,
-        ISearchIndexService searchIndexService)
+        ISearchIndexService searchIndexService,
+        IGitSyncService gitSyncService,
+        IContentTransformService contentTransformService,
+        IDistributedLockProvider lockProvider)
     {
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _searchIndexService = searchIndexService ?? throw new ArgumentNullException(nameof(searchIndexService));
+        _gitSyncService = gitSyncService ?? throw new ArgumentNullException(nameof(gitSyncService));
+        _contentTransformService = contentTransformService ?? throw new ArgumentNullException(nameof(contentTransformService));
+        _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
 
         // Register event handlers via partial class (minimal event subscriptions per schema)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
@@ -565,6 +583,14 @@ public partial class DocumentationService : IDocumentationService
                 return (StatusCodes.BadRequest, null);
             }
 
+            // Check if namespace is bound to a repository (403 for manual modifications)
+            var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
+            if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
+            {
+                _logger.LogWarning("CreateDocument rejected: namespace {Namespace} is bound to repository", body.Namespace);
+                return (StatusCodes.Forbidden, null);
+            }
+
             var namespaceId = body.Namespace;
             var slug = body.Slug;
             var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
@@ -658,6 +684,14 @@ public partial class DocumentationService : IDocumentationService
             {
                 _logger.LogWarning("UpdateDocument requires documentId");
                 return (StatusCodes.BadRequest, null);
+            }
+
+            // Check if namespace is bound to a repository (403 for manual modifications)
+            var binding = await GetBindingForNamespaceAsync(namespaceId, cancellationToken);
+            if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
+            {
+                _logger.LogWarning("UpdateDocument rejected: namespace {Namespace} is bound to repository", namespaceId);
+                return (StatusCodes.Forbidden, null);
             }
 
             var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
@@ -805,6 +839,14 @@ public partial class DocumentationService : IDocumentationService
             {
                 _logger.LogWarning("DeleteDocument failed: Either DocumentId or Slug is required");
                 return (StatusCodes.BadRequest, null);
+            }
+
+            // Check if namespace is bound to a repository (403 for manual modifications)
+            var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
+            if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
+            {
+                _logger.LogWarning("DeleteDocument rejected: namespace {Namespace} is bound to repository", body.Namespace);
+                return (StatusCodes.Forbidden, null);
             }
 
             var namespaceId = body.Namespace;
@@ -1843,6 +1885,963 @@ public partial class DocumentationService : IDocumentationService
             // Non-critical - don't propagate
         }
     }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, BindRepositoryResponse?)> BindRepositoryAsync(BindRepositoryRequest body, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        _logger.LogInformation("Binding repository {Url} to namespace {Namespace}", body.RepositoryUrl, body.Namespace);
+
+        try
+        {
+            // Check if namespace already has a binding
+            var existingBinding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
+            if (existingBinding != null)
+            {
+                _logger.LogWarning("Namespace {Namespace} already has a repository binding", body.Namespace);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Create binding record
+            var binding = new Models.RepositoryBinding
+            {
+                BindingId = Guid.NewGuid(),
+                Namespace = body.Namespace,
+                RepositoryUrl = body.RepositoryUrl,
+                Branch = body.Branch ?? "main",
+                Status = Models.BindingStatusInternal.Pending,
+                SyncEnabled = true,
+                SyncIntervalMinutes = body.SyncIntervalMinutes,
+                FilePatterns = body.FilePatterns?.ToList() ?? ["**/*.md"],
+                ExcludePatterns = body.ExcludePatterns?.ToList() ?? [".git/**", ".obsidian/**", "node_modules/**"],
+                CategoryMapping = body.CategoryMapping?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? [],
+                DefaultCategory = body.DefaultCategory.ToString(),
+                ArchiveEnabled = body.ArchiveEnabled,
+                ArchiveOnSync = body.ArchiveOnSync,
+                CreatedAt = DateTimeOffset.UtcNow,
+                CreatedBy = Guid.Empty // TODO: Get from session context when available
+            };
+
+            // Save binding
+            await SaveBindingAsync(binding, cancellationToken);
+
+            // Publish binding created event
+            await TryPublishBindingCreatedEventAsync(binding, cancellationToken);
+
+            _logger.LogInformation("Created repository binding {BindingId} for namespace {Namespace}", binding.BindingId, body.Namespace);
+
+            return (StatusCodes.Created, new BindRepositoryResponse
+            {
+                BindingId = binding.BindingId,
+                Namespace = binding.Namespace,
+                RepositoryUrl = binding.RepositoryUrl,
+                Branch = binding.Branch,
+                Status = MapBindingStatus(binding.Status),
+                CreatedAt = binding.CreatedAt
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to bind repository to namespace {Namespace}", body.Namespace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, UnbindRepositoryResponse?)> UnbindRepositoryAsync(UnbindRepositoryRequest body, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        _logger.LogInformation("Unbinding repository from namespace {Namespace}", body.Namespace);
+
+        try
+        {
+            var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
+            if (binding == null)
+            {
+                _logger.LogWarning("No repository binding found for namespace {Namespace}", body.Namespace);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var documentsDeleted = 0;
+
+            // Optionally delete all documents
+            if (body.DeleteDocuments)
+            {
+                documentsDeleted = await DeleteAllNamespaceDocumentsAsync(body.Namespace, cancellationToken);
+            }
+
+            // Delete binding
+            var bindingKey = $"{BINDING_KEY_PREFIX}{body.Namespace}";
+            var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(STATE_STORE);
+            await bindingStore.DeleteAsync(bindingKey, cancellationToken);
+
+            // Remove from bindings registry
+            var registryStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var registry = await registryStore.GetAsync(BINDINGS_REGISTRY_KEY, cancellationToken);
+            if (registry != null && registry.Remove(body.Namespace))
+            {
+                await registryStore.SaveAsync(BINDINGS_REGISTRY_KEY, registry, cancellationToken: cancellationToken);
+            }
+
+            // Cleanup local repository
+            var localPath = GetLocalRepositoryPath(binding.BindingId);
+            await _gitSyncService.CleanupRepositoryAsync(localPath, cancellationToken);
+
+            // Publish binding removed event
+            await TryPublishBindingRemovedEventAsync(binding, cancellationToken);
+
+            _logger.LogInformation("Removed repository binding from namespace {Namespace}, deleted {Count} documents", body.Namespace, documentsDeleted);
+
+            return (StatusCodes.OK, new UnbindRepositoryResponse
+            {
+                Namespace = body.Namespace,
+                DocumentsDeleted = documentsDeleted
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to unbind repository from namespace {Namespace}", body.Namespace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, SyncRepositoryResponse?)> SyncRepositoryAsync(SyncRepositoryRequest body, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        _logger.LogInformation("Manual sync requested for namespace {Namespace}", body.Namespace);
+
+        try
+        {
+            var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
+            if (binding == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Execute sync
+            var result = await ExecuteSyncAsync(binding, body.Force, SyncTrigger.Manual, cancellationToken);
+
+            return (StatusCodes.OK, new SyncRepositoryResponse
+            {
+                SyncId = result.SyncId,
+                Status = MapSyncStatus(result.Status),
+                CommitHash = result.CommitHash ?? string.Empty,
+                DocumentsCreated = result.DocumentsCreated,
+                DocumentsUpdated = result.DocumentsUpdated,
+                DocumentsDeleted = result.DocumentsDeleted,
+                DocumentsFailed = 0,
+                DurationMs = result.DurationMs,
+                ErrorMessage = result.ErrorMessage
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to sync repository for namespace {Namespace}", body.Namespace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, RepositoryStatusResponse?)> GetRepositoryStatusAsync(RepositoryStatusRequest body, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        try
+        {
+            var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
+            if (binding == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var response = new RepositoryStatusResponse
+            {
+                Binding = MapToBindingInfo(binding)
+            };
+
+            // Add last sync info if available
+            if (binding.LastSyncAt.HasValue)
+            {
+                response.LastSync = new SyncInfo
+                {
+                    SyncId = Guid.Empty, // Not tracked per-sync currently
+                    Status = binding.Status == Models.BindingStatusInternal.Error ? SyncStatus.Failed : SyncStatus.Success,
+                    TriggeredBy = SyncTrigger.Scheduled,
+                    StartedAt = binding.LastSyncAt.Value,
+                    CompletedAt = binding.LastSyncAt.Value,
+                    CommitHash = binding.LastCommitHash ?? string.Empty,
+                    DocumentsProcessed = binding.DocumentCount
+                };
+            }
+
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get repository status for namespace {Namespace}", body.Namespace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ListRepositoryBindingsResponse?)> ListRepositoryBindingsAsync(ListRepositoryBindingsRequest body, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        try
+        {
+            var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(STATE_STORE);
+
+            // Get all binding namespace IDs from registry
+            var registryStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var bindingNamespaces = await registryStore.GetAsync(BINDINGS_REGISTRY_KEY, cancellationToken) ?? [];
+
+            var allBindings = new List<Models.RepositoryBinding>();
+            foreach (var namespaceId in bindingNamespaces)
+            {
+                var bindingKey = $"{BINDING_KEY_PREFIX}{namespaceId}";
+                var binding = await bindingStore.GetAsync(bindingKey, cancellationToken);
+                if (binding != null)
+                {
+                    allBindings.Add(binding);
+                }
+            }
+
+            // Filter by status if specified (default enum value means no filter)
+            var filteredBindings = allBindings.AsEnumerable();
+            if (body.Status != default)
+            {
+                var targetStatus = MapToInternalBindingStatus(body.Status);
+                filteredBindings = filteredBindings.Where(b => b.Status == targetStatus);
+            }
+
+            var totalCount = filteredBindings.Count();
+            var paginatedBindings = filteredBindings
+                .Skip(body.Offset)
+                .Take(body.Limit)
+                .Select(MapToBindingInfo)
+                .ToList();
+
+            return (StatusCodes.OK, new ListRepositoryBindingsResponse
+            {
+                Bindings = paginatedBindings,
+                Total = totalCount
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to list repository bindings");
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, UpdateRepositoryBindingResponse?)> UpdateRepositoryBindingAsync(UpdateRepositoryBindingRequest body, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        try
+        {
+            var binding = await GetBindingForNamespaceAsync(body.Namespace, cancellationToken);
+            if (binding == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Update binding properties
+            binding.SyncEnabled = body.SyncEnabled;
+            binding.SyncIntervalMinutes = body.SyncIntervalMinutes;
+
+            if (body.FilePatterns != null)
+            {
+                binding.FilePatterns = body.FilePatterns.ToList();
+            }
+
+            if (body.ExcludePatterns != null)
+            {
+                binding.ExcludePatterns = body.ExcludePatterns.ToList();
+            }
+
+            if (body.CategoryMapping != null)
+            {
+                binding.CategoryMapping = body.CategoryMapping.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            }
+
+            if (body.DefaultCategory != default)
+            {
+                binding.DefaultCategory = body.DefaultCategory.ToString();
+            }
+
+            binding.ArchiveEnabled = body.ArchiveEnabled;
+            binding.ArchiveOnSync = body.ArchiveOnSync;
+
+            await SaveBindingAsync(binding, cancellationToken);
+
+            _logger.LogInformation("Updated repository binding for namespace {Namespace}", body.Namespace);
+
+            return (StatusCodes.OK, new UpdateRepositoryBindingResponse
+            {
+                Binding = MapToBindingInfo(binding)
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update repository binding for namespace {Namespace}", body.Namespace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, CreateArchiveResponse?)> CreateDocumentationArchiveAsync(CreateArchiveRequest body, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        _logger.LogInformation("Creating archive for namespace {Namespace}", body.Namespace);
+
+        // TODO: Implement archive creation with Asset Service integration
+        // For now, return a stub response indicating the feature is planned
+        await Task.CompletedTask;
+
+        return (StatusCodes.NotFound, null);
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ListArchivesResponse?)> ListDocumentationArchivesAsync(ListArchivesRequest body, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        // TODO: Implement archive listing with Asset Service integration
+        await Task.CompletedTask;
+
+        return (StatusCodes.OK, new ListArchivesResponse
+        {
+            Archives = [],
+            Total = 0
+        });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, RestoreArchiveResponse?)> RestoreDocumentationArchiveAsync(RestoreArchiveRequest body, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        // TODO: Implement archive restoration with Asset Service integration
+        await Task.CompletedTask;
+
+        return (StatusCodes.NotFound, null);
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, DeleteArchiveResponse?)> DeleteDocumentationArchiveAsync(DeleteArchiveRequest body, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+
+        // TODO: Implement archive deletion with Asset Service integration
+        await Task.CompletedTask;
+
+        return (StatusCodes.NotFound, null);
+    }
+
+    #region Repository Binding Helpers
+
+    /// <summary>
+    /// Gets the binding for a namespace if it exists.
+    /// </summary>
+    internal async Task<Models.RepositoryBinding?> GetBindingForNamespaceAsync(string namespaceId, CancellationToken cancellationToken = default)
+    {
+        var bindingKey = $"{BINDING_KEY_PREFIX}{namespaceId}";
+        var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(STATE_STORE);
+        return await bindingStore.GetAsync(bindingKey, cancellationToken);
+    }
+
+    /// <summary>
+    /// Saves a binding to the state store and updates the registry.
+    /// </summary>
+    private async Task SaveBindingAsync(Models.RepositoryBinding binding, CancellationToken cancellationToken = default)
+    {
+        var bindingKey = $"{BINDING_KEY_PREFIX}{binding.Namespace}";
+        var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(STATE_STORE);
+        await bindingStore.SaveAsync(bindingKey, binding, cancellationToken: cancellationToken);
+
+        // Update bindings registry
+        var registryStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+        var registry = await registryStore.GetAsync(BINDINGS_REGISTRY_KEY, cancellationToken) ?? [];
+        if (registry.Add(binding.Namespace))
+        {
+            await registryStore.SaveAsync(BINDINGS_REGISTRY_KEY, registry, cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Gets the local file system path for a repository.
+    /// </summary>
+    private string GetLocalRepositoryPath(Guid bindingId)
+    {
+        return Path.Combine(_configuration.GitStoragePath ?? "/tmp/bannou-git-repos", bindingId.ToString());
+    }
+
+    /// <summary>
+    /// Deletes all documents in a namespace.
+    /// </summary>
+    private async Task<int> DeleteAllNamespaceDocumentsAsync(string namespaceId, CancellationToken cancellationToken = default)
+    {
+        var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
+        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(STATE_STORE);
+        var docIds = await docsStore.GetAsync(docsKey, cancellationToken);
+
+        if (docIds == null || docIds.Count == 0)
+        {
+            return 0;
+        }
+
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+        var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+        var deletedCount = 0;
+
+        foreach (var docId in docIds)
+        {
+            var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
+            var doc = await docStore.GetAsync(docKey, cancellationToken);
+
+            if (doc != null)
+            {
+                // Delete slug index
+                var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{doc.Slug}";
+                await slugStore.DeleteAsync(slugKey, cancellationToken);
+
+                // Delete document
+                await docStore.DeleteAsync(docKey, cancellationToken);
+                deletedCount++;
+            }
+        }
+
+        // Clear namespace document list
+        await docsStore.DeleteAsync(docsKey, cancellationToken);
+
+        return deletedCount;
+    }
+
+    /// <summary>
+    /// Executes a sync operation for a binding.
+    /// </summary>
+    private async Task<Models.SyncResult> ExecuteSyncAsync(
+        Models.RepositoryBinding binding,
+        bool force,
+        SyncTrigger trigger,
+        CancellationToken cancellationToken = default)
+    {
+        var syncId = Guid.NewGuid();
+        var startedAt = DateTimeOffset.UtcNow;
+        var lockResourceId = $"{SYNC_LOCK_PREFIX}{binding.Namespace}";
+        var lockOwner = Guid.NewGuid().ToString();
+
+        // Acquire distributed lock to prevent concurrent syncs (Tenet 9: Multi-Instance Safety)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            STATE_STORE,
+            lockResourceId,
+            lockOwner,
+            1800, // 30 minutes max sync time
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire sync lock for namespace {Namespace}, sync already in progress", binding.Namespace);
+            return Models.SyncResult.Failed(syncId, "Sync already in progress", startedAt);
+        }
+
+        _logger.LogInformation("Starting sync {SyncId} for namespace {Namespace}", syncId, binding.Namespace);
+
+        // Update status to syncing
+        binding.Status = Models.BindingStatusInternal.Syncing;
+        await SaveBindingAsync(binding, cancellationToken);
+
+        // Publish sync started event
+        await TryPublishSyncStartedEventAsync(binding, syncId, trigger, cancellationToken);
+
+        try
+        {
+            // Get local repository path
+            var localPath = GetLocalRepositoryPath(binding.BindingId);
+
+            // Clone or pull repository
+            var gitResult = await _gitSyncService.SyncRepositoryAsync(
+                binding.RepositoryUrl,
+                binding.Branch,
+                localPath,
+                cancellationToken);
+
+            if (!gitResult.Success)
+            {
+                var failedResult = Models.SyncResult.Failed(syncId, gitResult.ErrorMessage ?? "Git sync failed", startedAt);
+                binding.Status = Models.BindingStatusInternal.Error;
+                binding.LastSyncError = gitResult.ErrorMessage;
+                await SaveBindingAsync(binding, cancellationToken);
+                await TryPublishSyncCompletedEventAsync(binding, syncId, failedResult, cancellationToken);
+                return failedResult;
+            }
+
+            // Check if we need to sync (commit hash unchanged)
+            if (!force && binding.LastCommitHash == gitResult.CommitHash)
+            {
+                _logger.LogDebug("Repository unchanged, skipping sync for namespace {Namespace}", binding.Namespace);
+                var noChangeResult = Models.SyncResult.Success(syncId, gitResult.CommitHash ?? string.Empty, 0, 0, 0, startedAt);
+                binding.Status = Models.BindingStatusInternal.Synced;
+                binding.LastSyncAt = DateTimeOffset.UtcNow;
+                await SaveBindingAsync(binding, cancellationToken);
+                await TryPublishSyncCompletedEventAsync(binding, syncId, noChangeResult, cancellationToken);
+                return noChangeResult;
+            }
+
+            // Get matching files
+            var matchingFiles = await _gitSyncService.GetMatchingFilesAsync(
+                localPath,
+                binding.FilePatterns,
+                binding.ExcludePatterns,
+                cancellationToken);
+
+            var documentsCreated = 0;
+            var documentsUpdated = 0;
+            var processedSlugs = new HashSet<string>();
+
+            // Process each matching file
+            foreach (var filePath in matchingFiles)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                try
+                {
+                    var content = await _gitSyncService.ReadFileContentAsync(localPath, filePath, cancellationToken);
+                    if (string.IsNullOrWhiteSpace(content))
+                    {
+                        continue;
+                    }
+
+                    var transformed = _contentTransformService.TransformFile(
+                        filePath,
+                        content,
+                        binding.CategoryMapping,
+                        binding.DefaultCategory);
+
+                    if (transformed.IsDraft)
+                    {
+                        _logger.LogDebug("Skipping draft document: {FilePath}", filePath);
+                        continue;
+                    }
+
+                    // Track this slug as processed
+                    processedSlugs.Add(transformed.Slug);
+
+                    // Check if document exists
+                    var existingDocId = await GetDocumentIdBySlugAsync(binding.Namespace, transformed.Slug, cancellationToken);
+
+                    if (existingDocId.HasValue)
+                    {
+                        // Update existing document
+                        await UpdateDocumentFromTransformAsync(binding.Namespace, existingDocId.Value, transformed, cancellationToken);
+                        documentsUpdated++;
+                    }
+                    else
+                    {
+                        // Create new document
+                        await CreateDocumentFromTransformAsync(binding.Namespace, transformed, cancellationToken);
+                        documentsCreated++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to process file {FilePath}", filePath);
+                }
+            }
+
+            // Delete orphan documents (documents not in processed slugs)
+            var documentsDeleted = await DeleteOrphanDocumentsAsync(binding.Namespace, processedSlugs, cancellationToken);
+
+            // Update binding state
+            binding.Status = Models.BindingStatusInternal.Synced;
+            binding.LastSyncAt = DateTimeOffset.UtcNow;
+            binding.LastCommitHash = gitResult.CommitHash;
+            binding.LastSyncError = null;
+            binding.DocumentCount = await GetNamespaceDocumentCountAsync(binding.Namespace, cancellationToken);
+            binding.NextSyncAt = DateTimeOffset.UtcNow.AddMinutes(binding.SyncIntervalMinutes);
+            await SaveBindingAsync(binding, cancellationToken);
+
+            var successResult = Models.SyncResult.Success(
+                syncId,
+                gitResult.CommitHash ?? string.Empty,
+                documentsCreated,
+                documentsUpdated,
+                documentsDeleted,
+                startedAt);
+
+            await TryPublishSyncCompletedEventAsync(binding, syncId, successResult, cancellationToken);
+
+            _logger.LogInformation("Sync completed for namespace {Namespace}: {Created} created, {Updated} updated, {Deleted} deleted",
+                binding.Namespace, documentsCreated, documentsUpdated, documentsDeleted);
+
+            return successResult;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Sync failed for namespace {Namespace}", binding.Namespace);
+
+            binding.Status = Models.BindingStatusInternal.Error;
+            binding.LastSyncError = ex.Message;
+            await SaveBindingAsync(binding, cancellationToken);
+
+            var failedResult = Models.SyncResult.Failed(syncId, ex.Message, startedAt);
+            await TryPublishSyncCompletedEventAsync(binding, syncId, failedResult, cancellationToken);
+            return failedResult;
+        }
+    }
+
+    /// <summary>
+    /// Gets a document ID by slug.
+    /// </summary>
+    private async Task<Guid?> GetDocumentIdBySlugAsync(string namespaceId, string slug, CancellationToken cancellationToken = default)
+    {
+        var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{slug}";
+        var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+        var docIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
+
+        if (string.IsNullOrEmpty(docIdStr) || !Guid.TryParse(docIdStr, out var docId))
+        {
+            return null;
+        }
+
+        return docId;
+    }
+
+    /// <summary>
+    /// Creates a document from a transformed file.
+    /// </summary>
+    private async Task CreateDocumentFromTransformAsync(
+        string namespaceId,
+        TransformedDocument transformed,
+        CancellationToken cancellationToken = default)
+    {
+        var documentId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        var storedDoc = new StoredDocument
+        {
+            DocumentId = documentId,
+            Namespace = namespaceId,
+            Slug = transformed.Slug,
+            Title = transformed.Title,
+            Category = transformed.Category,
+            Content = transformed.Content,
+            Summary = transformed.Summary,
+            VoiceSummary = transformed.VoiceSummary,
+            Tags = transformed.Tags,
+            RelatedDocuments = [],
+            Metadata = transformed.Metadata,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        // Store document
+        var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+        await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
+
+        // Store slug index
+        var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{transformed.Slug}";
+        var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+        await slugStore.SaveAsync(slugKey, documentId.ToString(), cancellationToken: cancellationToken);
+
+        // Add to namespace document list
+        var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
+        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(STATE_STORE);
+        var docIds = await docsStore.GetAsync(docsKey, cancellationToken) ?? [];
+        docIds.Add(documentId);
+        await docsStore.SaveAsync(docsKey, docIds, cancellationToken: cancellationToken);
+
+        // Index for search
+        _searchIndexService.IndexDocument(
+            namespaceId,
+            storedDoc.DocumentId,
+            storedDoc.Title,
+            storedDoc.Slug,
+            storedDoc.Content,
+            storedDoc.Category,
+            storedDoc.Tags);
+    }
+
+    /// <summary>
+    /// Updates a document from a transformed file.
+    /// </summary>
+    private async Task UpdateDocumentFromTransformAsync(
+        string namespaceId,
+        Guid documentId,
+        TransformedDocument transformed,
+        CancellationToken cancellationToken = default)
+    {
+        var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+        var existingDoc = await docStore.GetAsync(docKey, cancellationToken);
+
+        if (existingDoc == null)
+        {
+            return;
+        }
+
+        existingDoc.Title = transformed.Title;
+        existingDoc.Category = transformed.Category;
+        existingDoc.Content = transformed.Content;
+        existingDoc.Summary = transformed.Summary;
+        existingDoc.VoiceSummary = transformed.VoiceSummary;
+        existingDoc.Tags = transformed.Tags;
+        existingDoc.Metadata = transformed.Metadata;
+        existingDoc.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await docStore.SaveAsync(docKey, existingDoc, cancellationToken: cancellationToken);
+
+        // Re-index for search
+        _searchIndexService.IndexDocument(
+            existingDoc.Namespace,
+            existingDoc.DocumentId,
+            existingDoc.Title,
+            existingDoc.Slug,
+            existingDoc.Content,
+            existingDoc.Category,
+            existingDoc.Tags);
+    }
+
+    /// <summary>
+    /// Gets the count of documents in a namespace.
+    /// </summary>
+    private async Task<int> GetNamespaceDocumentCountAsync(string namespaceId, CancellationToken cancellationToken = default)
+    {
+        var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
+        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(STATE_STORE);
+        var docIds = await docsStore.GetAsync(docsKey, cancellationToken);
+        return docIds?.Count ?? 0;
+    }
+
+    /// <summary>
+    /// Deletes documents in a namespace that are not in the processed slugs set.
+    /// Used during sync to remove documents for files that have been deleted from the repository.
+    /// </summary>
+    private async Task<int> DeleteOrphanDocumentsAsync(
+        string namespaceId,
+        HashSet<string> processedSlugs,
+        CancellationToken cancellationToken = default)
+    {
+        var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
+        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(STATE_STORE);
+        var docIds = await docsStore.GetAsync(docsKey, cancellationToken);
+
+        if (docIds == null || docIds.Count == 0)
+        {
+            return 0;
+        }
+
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+        var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+        var deletedCount = 0;
+        var orphanIds = new List<Guid>();
+
+        // Find orphan documents (slugs not in processed set)
+        foreach (var docId in docIds)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
+            var doc = await docStore.GetAsync(docKey, cancellationToken);
+
+            if (doc != null && !processedSlugs.Contains(doc.Slug))
+            {
+                // This document's slug was not processed, it's an orphan
+                orphanIds.Add(docId);
+
+                // Delete slug index
+                var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{doc.Slug}";
+                await slugStore.DeleteAsync(slugKey, cancellationToken);
+
+                // Delete search index
+                _searchIndexService.RemoveDocument(namespaceId, docId);
+
+                // Delete document
+                await docStore.DeleteAsync(docKey, cancellationToken);
+                deletedCount++;
+
+                _logger.LogInformation("Deleted orphan document {DocumentId} with slug {Slug} from namespace {Namespace}",
+                    docId, doc.Slug, namespaceId);
+            }
+        }
+
+        // Update namespace document list to remove orphan IDs
+        if (orphanIds.Count > 0)
+        {
+            foreach (var orphanId in orphanIds)
+            {
+                docIds.Remove(orphanId);
+            }
+            await docsStore.SaveAsync(docsKey, docIds, cancellationToken: cancellationToken);
+        }
+
+        return deletedCount;
+    }
+
+    /// <summary>
+    /// Maps internal binding status to API enum.
+    /// </summary>
+    private static BindingStatus MapBindingStatus(Models.BindingStatusInternal status) => status switch
+    {
+        Models.BindingStatusInternal.Pending => BindingStatus.Pending,
+        Models.BindingStatusInternal.Syncing => BindingStatus.Syncing,
+        Models.BindingStatusInternal.Synced => BindingStatus.Synced,
+        Models.BindingStatusInternal.Error => BindingStatus.Error,
+        Models.BindingStatusInternal.Disabled => BindingStatus.Disabled,
+        _ => BindingStatus.Pending
+    };
+
+    /// <summary>
+    /// Maps API binding status to internal enum.
+    /// </summary>
+    private static Models.BindingStatusInternal MapToInternalBindingStatus(BindingStatus status) => status switch
+    {
+        BindingStatus.Pending => Models.BindingStatusInternal.Pending,
+        BindingStatus.Syncing => Models.BindingStatusInternal.Syncing,
+        BindingStatus.Synced => Models.BindingStatusInternal.Synced,
+        BindingStatus.Error => Models.BindingStatusInternal.Error,
+        BindingStatus.Disabled => Models.BindingStatusInternal.Disabled,
+        _ => Models.BindingStatusInternal.Pending
+    };
+
+    /// <summary>
+    /// Maps internal sync status to API enum.
+    /// </summary>
+    private static SyncStatus MapSyncStatus(Models.SyncStatusInternal status) => status switch
+    {
+        Models.SyncStatusInternal.Success => SyncStatus.Success,
+        Models.SyncStatusInternal.Partial => SyncStatus.Partial,
+        Models.SyncStatusInternal.Failed => SyncStatus.Failed,
+        _ => SyncStatus.Failed
+    };
+
+    /// <summary>
+    /// Maps binding to API info model.
+    /// </summary>
+    private static RepositoryBindingInfo MapToBindingInfo(Models.RepositoryBinding binding) => new()
+    {
+        BindingId = binding.BindingId,
+        Namespace = binding.Namespace,
+        RepositoryUrl = binding.RepositoryUrl,
+        Branch = binding.Branch,
+        Status = MapBindingStatus(binding.Status),
+        SyncEnabled = binding.SyncEnabled,
+        SyncIntervalMinutes = binding.SyncIntervalMinutes,
+        DocumentCount = binding.DocumentCount,
+        CreatedAt = binding.CreatedAt,
+        CreatedBy = binding.CreatedBy
+    };
+
+    /// <summary>
+    /// Publishes a binding created event.
+    /// </summary>
+    private async Task TryPublishBindingCreatedEventAsync(Models.RepositoryBinding binding, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var eventModel = new
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Namespace = binding.Namespace,
+                BindingId = binding.BindingId,
+                RepositoryUrl = binding.RepositoryUrl,
+                Branch = binding.Branch
+            };
+            await _messageBus.PublishAsync(BINDING_CREATED_TOPIC, eventModel, null, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish binding created event");
+        }
+    }
+
+    /// <summary>
+    /// Publishes a binding removed event.
+    /// </summary>
+    private async Task TryPublishBindingRemovedEventAsync(Models.RepositoryBinding binding, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var eventModel = new
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Namespace = binding.Namespace,
+                BindingId = binding.BindingId
+            };
+            await _messageBus.PublishAsync(BINDING_REMOVED_TOPIC, eventModel, null, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish binding removed event");
+        }
+    }
+
+    /// <summary>
+    /// Publishes a sync started event.
+    /// </summary>
+    private async Task TryPublishSyncStartedEventAsync(Models.RepositoryBinding binding, Guid syncId, SyncTrigger trigger, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var eventModel = new
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Namespace = binding.Namespace,
+                BindingId = binding.BindingId,
+                SyncId = syncId,
+                TriggeredBy = trigger.ToString().ToLowerInvariant()
+            };
+            await _messageBus.PublishAsync(SYNC_STARTED_TOPIC, eventModel, null, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish sync started event");
+        }
+    }
+
+    /// <summary>
+    /// Publishes a sync completed event.
+    /// </summary>
+    private async Task TryPublishSyncCompletedEventAsync(Models.RepositoryBinding binding, Guid syncId, Models.SyncResult result, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var eventModel = new
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Namespace = binding.Namespace,
+                BindingId = binding.BindingId,
+                SyncId = syncId,
+                Status = result.Status.ToString().ToLowerInvariant(),
+                CommitHash = result.CommitHash,
+                DocumentsCreated = result.DocumentsCreated,
+                DocumentsUpdated = result.DocumentsUpdated,
+                DocumentsDeleted = result.DocumentsDeleted,
+                DurationMs = result.DurationMs,
+                ErrorMessage = result.ErrorMessage
+            };
+            await _messageBus.PublishAsync(SYNC_COMPLETED_TOPIC, eventModel, null, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish sync completed event");
+        }
+    }
+
+    #endregion
 
     #endregion
 
