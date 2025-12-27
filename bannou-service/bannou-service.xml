@@ -313,59 +313,16 @@
             <param name="serviceImplementation">The service implementation type this configuration is for (required).</param>
             <param name="envPrefix">The prefix for environment variables used by this configuration.</param>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Attributes.TopicAttribute">
-            <summary>
-            Stub Topic attribute for backward compatibility.
-            This replaces the mesh's [Topic] attribute after transitioning to lib-mesh.
-            Actual pub/sub is handled by MassTransit consumers in lib-messaging.
-            </summary>
-            <remarks>
-            This attribute has no runtime effect - it exists only to allow
-            compilation of legacy event controllers that used the mesh's [Topic].
-            For new pub/sub handling, use MassTransit IConsumer pattern.
-            </remarks>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Attributes.TopicAttribute.PubsubName">
-            <summary>
-            The name of the pub/sub component (legacy, not used).
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Attributes.TopicAttribute.Name">
-            <summary>
-            The topic name to subscribe to (legacy, not used).
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Attributes.TopicAttribute.#ctor(System.String,System.String)">
-            <summary>
-            Creates a new Topic attribute.
-            </summary>
-            <param name="pubsubName">The pub/sub component name.</param>
-            <param name="name">The topic name.</param>
-        </member>
         <member name="T:BeyondImmersion.BannouService.BannouEventHelper">
             <summary>
             Helper class for parsing pub/sub events with CloudEvents format handling.
             Handles both CloudEvents-wrapped events and raw payloads since RabbitMQ
             can deliver events in either format depending on timing and configuration.
             </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.BannouEventHelper.ReadEventJsonAsync(Microsoft.AspNetCore.Http.HttpRequest)">
-            <summary>
-            Reads and parses a pub/sub event from the HTTP request body, returning the unwrapped JSON element.
-            Automatically handles both CloudEvents format (with 'data' wrapper) and raw format.
-            Use this method when you need to manually extract properties from the event.
-            </summary>
-            <param name="request">The HTTP request containing the event</param>
-            <returns>The unwrapped event JSON element, or null if parsing fails</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.BannouEventHelper.ReadEventAsync``1(Microsoft.AspNetCore.Http.HttpRequest)">
-            <summary>
-            Reads and parses a pub/sub event from the HTTP request body.
-            Automatically handles both CloudEvents format (with 'data' wrapper) and raw format.
-            </summary>
-            <typeparam name="T">The event model type to deserialize</typeparam>
-            <param name="request">The HTTP request containing the event</param>
-            <returns>The deserialized event model, or null if parsing fails</returns>
+            <remarks>
+            NOTE: HTTP-based ReadEventAsync methods were removed - events now flow via
+            IEventConsumer/MassTransit, not HTTP controllers with [Topic] attributes.
+            </remarks>
         </member>
         <member name="M:BeyondImmersion.BannouService.BannouEventHelper.UnwrapCloudEventsEnvelope(System.Byte[])">
             <summary>
@@ -1402,36 +1359,21 @@
             Optional message associated with the response.
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController">
+        <member name="T:BeyondImmersion.BannouService.Controllers.ServiceMappingDebugController">
             <summary>
-            Handles full service mapping events from Orchestrator.
-            Atomically updates the ServiceAppMappingResolver with complete routing state.
-            This controller subscribes to the bannou-full-service-mappings topic via Bannou pub/sub.
+            Debug controller for viewing service mapping state.
+            Provides endpoints to inspect current routing configuration.
             </summary>
-            <remarks>
-            Architecture:
-            - Orchestrator is the single source of truth for service-to-app-id mappings
-            - Orchestrator publishes FullServiceMappingsEvent every 30 seconds AND on routing changes
-            - All bannou instances consume this event to atomically update their local routing tables
-            - Version checking prevents out-of-order event application
-            </remarks>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController.#ctor(BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController})">
+        <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingDebugController.#ctor(BeyondImmersion.BannouService.Services.IServiceAppMappingResolver)">
             <inheritdoc/>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController.HandleFullServiceMappings(BeyondImmersion.BannouService.Events.FullServiceMappingsEvent)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingDebugController.GetCurrentMappings">
             <summary>
-            Handles full service mappings events from the Orchestrator.
-            Atomically replaces all local service mappings with the complete state from Orchestrator.
-            Implements version checking to reject out-of-order events.
+            Debug endpoint to view current service mappings.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController.GetCurrentMappings">
-            <summary>
-            Debug endpoint to view current service mappings and event statistics.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController.Health">
+        <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingDebugController.Health">
             <summary>
             Simple health check endpoint to verify the controller is reachable.
             </summary>

@@ -114,7 +114,7 @@ public class SubscriptionExpirationService : BackgroundService
 
         if (stateStoreFactory == null || messageBus == null)
         {
-            _logger.LogWarning("IStateStoreFactory or IMessageBus not available, skipping expiration check");
+            _logger.LogError("IStateStoreFactory or IMessageBus not available - subscription expiration checks cannot run. This is a critical infrastructure issue.");
             return;
         }
 

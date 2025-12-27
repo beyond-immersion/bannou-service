@@ -425,6 +425,11 @@ public class MessagingServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
+        // Set up HttpClientFactory to return a real HttpClient for subscription entry
+        _mockHttpClientFactory
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(new HttpClient());
+
         var (_, createResponse) = await _service.CreateSubscriptionAsync(createRequest, CancellationToken.None);
         Assert.NotNull(createResponse);
 

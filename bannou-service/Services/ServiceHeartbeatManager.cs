@@ -421,8 +421,9 @@ public class ServiceHeartbeatManager : IAsyncDisposable
                         worstServiceStatus = status.Status;
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    _logger.LogWarning(ex, "Service {ServiceName} OnHeartbeat threw exception, marking as degraded", plugin.PluginName);
                     worstServiceStatus = ServiceStatusStatus.Degraded;
                 }
             }

@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using LibOrchestrator;
 using LibOrchestrator.Backends;
 using Microsoft.Extensions.Logging;
@@ -1344,6 +1345,182 @@ public class OrchestratorStateManagerTests
         // Assert
         Assert.Equal(5, newVersion);
     }
+
+    #region OrchestratorStateManager Implementation Tests
+
+    [Fact]
+    public void OrchestratorStateManager_Constructor_WithNullStateStoreFactory_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        var ex = Assert.Throws<ArgumentNullException>(() => new OrchestratorStateManager(
+            null!,
+            Mock.Of<ILogger<OrchestratorStateManager>>()));
+        Assert.Equal("stateStoreFactory", ex.ParamName);
+    }
+
+    [Fact]
+    public void OrchestratorStateManager_Constructor_WithNullLogger_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        var ex = Assert.Throws<ArgumentNullException>(() => new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            null!));
+        Assert.Equal("logger", ex.ParamName);
+    }
+
+    [Fact]
+    public void OrchestratorStateManager_Constructor_WithValidParameters_ShouldNotThrow()
+    {
+        // Arrange & Act
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+
+        // Assert
+        Assert.NotNull(manager);
+    }
+
+    [Fact]
+    public async Task OrchestratorStateManager_CheckHealthAsync_WhenNotInitialized_ShouldReturnNotHealthy()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+
+        // Act
+        var (isHealthy, message, _) = await manager.CheckHealthAsync();
+
+        // Assert
+        Assert.False(isHealthy);
+        Assert.Contains("not initialized", message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task OrchestratorStateManager_GetConfigVersionAsync_WhenNotInitialized_ShouldReturnZero()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+
+        // Act
+        var result = await manager.GetConfigVersionAsync();
+
+        // Assert
+        Assert.Equal(0, result);
+    }
+
+    [Fact]
+    public async Task OrchestratorStateManager_GetServiceHeartbeatsAsync_WhenNotInitialized_ShouldReturnEmptyList()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+
+        // Act
+        var result = await manager.GetServiceHeartbeatsAsync();
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task OrchestratorStateManager_GetServiceRoutingsAsync_WhenNotInitialized_ShouldReturnEmptyDictionary()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+
+        // Act
+        var result = await manager.GetServiceRoutingsAsync();
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task OrchestratorStateManager_WriteServiceHeartbeatAsync_WhenNotInitialized_ShouldNotThrow()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+        var heartbeat = new ServiceHeartbeatEvent
+        {
+            ServiceId = Guid.NewGuid(),
+            AppId = "test-app",
+            Status = ServiceHeartbeatEventStatus.Healthy
+        };
+
+        // Act & Assert - should log warning but not throw
+        var exception = await Record.ExceptionAsync(() => manager.WriteServiceHeartbeatAsync(heartbeat));
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public async Task OrchestratorStateManager_WriteServiceRoutingAsync_WhenNotInitialized_ShouldNotThrow()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+        var routing = new ServiceRouting
+        {
+            AppId = "test-app",
+            Host = "localhost",
+            Port = 5012
+        };
+
+        // Act & Assert - should log warning but not throw
+        var exception = await Record.ExceptionAsync(() => manager.WriteServiceRoutingAsync("test-service", routing));
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public async Task OrchestratorStateManager_RestoreConfigurationVersionAsync_WhenNotInitialized_ShouldReturnFalse()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+
+        // Act
+        var result = await manager.RestoreConfigurationVersionAsync(1);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void OrchestratorStateManager_Dispose_ShouldNotThrow()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+
+        // Act & Assert - Should not throw
+        var exception = Record.Exception(() => manager.Dispose());
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public async Task OrchestratorStateManager_DisposeAsync_ShouldNotThrow()
+    {
+        // Arrange
+        var manager = new OrchestratorStateManager(
+            Mock.Of<IStateStoreFactory>(),
+            Mock.Of<ILogger<OrchestratorStateManager>>());
+
+        // Act & Assert - Should not throw
+        var exception = await Record.ExceptionAsync(async () => await manager.DisposeAsync());
+        Assert.Null(exception);
+    }
+
+    #endregion
 }
 
 /// <summary>

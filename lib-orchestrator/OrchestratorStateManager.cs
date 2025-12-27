@@ -277,6 +277,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error while retrieving service heartbeats");
+            throw; // Don't mask state store failures - empty list should mean "no heartbeats", not "error"
         }
 
         return heartbeats;
@@ -344,7 +345,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get heartbeat for {ServiceId}:{AppId}", serviceId, appId);
-            return null;
+            throw; // Don't mask state store failures - null should mean "not found", not "error"
         }
     }
 
@@ -465,6 +466,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error while retrieving service routings");
+            throw; // Don't mask state store failures - empty dict should mean "no routings", not "error"
         }
 
         return routings;

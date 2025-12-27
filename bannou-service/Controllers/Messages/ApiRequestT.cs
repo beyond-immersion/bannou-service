@@ -31,7 +31,10 @@ public class ApiRequest<T> : ApiRequest
             {
                 this.Response = base.Response as T;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Program.Logger.Log(LogLevel.Warning, ex, "Failed to cast response to type {ResponseType}", typeof(T).Name);
+            }
         }
 
         return result;
