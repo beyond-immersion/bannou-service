@@ -206,7 +206,7 @@ public sealed class MassTransitMessageBus : IMessageBus
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 ServiceId = serviceId,
-                AppId = Environment.GetEnvironmentVariable("BANNOU_APP_ID") ?? "bannou",
+                AppId = Environment.GetEnvironmentVariable(AppConstants.ENV_BANNOU_APP_ID) ?? AppConstants.DEFAULT_APP_NAME,
                 Operation = operation,
                 ErrorType = errorType,
                 Message = message,

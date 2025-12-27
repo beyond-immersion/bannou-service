@@ -1,5 +1,6 @@
+using BeyondImmersion.Bannou.Asset.ClientEvents;
 using BeyondImmersion.BannouService.Asset.Models;
-using BeyondImmersion.BannouService.Messaging.Services;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
@@ -15,9 +16,9 @@ public sealed class AssetProcessingWorker : BackgroundService
 {
     private readonly AssetProcessorRegistry _processorRegistry;
     private readonly IStateStore<AssetMetadata> _stateStore;
-    private readonly IMessageBus _messageBus;
     private readonly IAssetStorageProvider _storageProvider;
     private readonly IOrchestratorClient _orchestratorClient;
+    private readonly IClientEventPublisher? _clientEventPublisher;
     private readonly AssetServiceConfiguration _configuration;
     private readonly ILogger<AssetProcessingWorker> _logger;
 
@@ -29,18 +30,18 @@ public sealed class AssetProcessingWorker : BackgroundService
     public AssetProcessingWorker(
         AssetProcessorRegistry processorRegistry,
         IStateStoreFactory stateStoreFactory,
-        IMessageBus messageBus,
         IAssetStorageProvider storageProvider,
         IOrchestratorClient orchestratorClient,
         AssetServiceConfiguration configuration,
-        ILogger<AssetProcessingWorker> logger)
+        ILogger<AssetProcessingWorker> logger,
+        IClientEventPublisher? clientEventPublisher = null)
     {
         _processorRegistry = processorRegistry ?? throw new ArgumentNullException(nameof(processorRegistry));
         ArgumentNullException.ThrowIfNull(stateStoreFactory);
         _stateStore = stateStoreFactory.GetStore<AssetMetadata>("asset-statestore");
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _storageProvider = storageProvider ?? throw new ArgumentNullException(nameof(storageProvider));
         _orchestratorClient = orchestratorClient ?? throw new ArgumentNullException(nameof(orchestratorClient));
+        _clientEventPublisher = clientEventPublisher;
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -231,37 +232,52 @@ public sealed class AssetProcessingWorker : BackgroundService
         AssetProcessingResult result,
         CancellationToken cancellationToken)
     {
+        if (_clientEventPublisher == null)
+        {
+            _logger.LogWarning(
+                "Cannot emit processing result event for asset {AssetId}: IClientEventPublisher not available",
+                job.AssetId);
+            return;
+        }
+
         try
         {
             if (result.Success)
             {
                 var completionEvent = new AssetProcessingCompleteEvent
                 {
-                    EventId = Guid.NewGuid().ToString(),
-                    Timestamp = DateTimeOffset.UtcNow.ToString("o"),
-                    AssetId = job.AssetId,
-                    SessionId = job.SessionId,
-                    ProcessingTimeMs = result.ProcessingTimeMs,
-                    ProcessedStorageKey = result.ProcessedStorageKey,
-                    ProcessedSizeBytes = result.ProcessedSizeBytes ?? 0
+                    Event_id = Guid.NewGuid(),
+                    Event_name = AssetProcessingCompleteEventEvent_name.Asset_processing_complete,
+                    Asset_id = job.AssetId,
+                    Success = true,
+                    Outputs = result.ProcessedStorageKey != null
+                        ? new List<ProcessingOutput>
+                        {
+                            new ProcessingOutput
+                            {
+                                Output_type = "processed",
+                                Asset_id = job.AssetId,
+                                Size = result.ProcessedSizeBytes ?? 0
+                            }
+                        }
+                        : null
                 };
 
-                // Publish to session-specific channel for WebSocket delivery
-                await _messageBus.PublishAsync($"CONNECT_{job.SessionId}", completionEvent, null, cancellationToken);
+                await _clientEventPublisher.PublishToSessionAsync(job.SessionId, completionEvent, cancellationToken);
             }
             else
             {
                 var failureEvent = new AssetProcessingFailedEvent
                 {
-                    EventId = Guid.NewGuid().ToString(),
-                    Timestamp = DateTimeOffset.UtcNow.ToString("o"),
-                    AssetId = job.AssetId,
-                    SessionId = job.SessionId,
-                    ErrorMessage = result.ErrorMessage ?? "Unknown error",
-                    ErrorCode = result.ErrorCode ?? "UNKNOWN_ERROR"
+                    Event_id = Guid.NewGuid(),
+                    Event_name = AssetProcessingFailedEventEvent_name.Asset_processing_failed,
+                    Asset_id = job.AssetId,
+                    Error_message = result.ErrorMessage ?? "Unknown error",
+                    Error_code = MapErrorCode(result.ErrorCode),
+                    Retry_available = true
                 };
 
-                await _messageBus.PublishAsync($"CONNECT_{job.SessionId}", failureEvent, null, cancellationToken);
+                await _clientEventPublisher.PublishToSessionAsync(job.SessionId, failureEvent, cancellationToken);
             }
         }
         catch (Exception ex)
@@ -273,24 +289,45 @@ public sealed class AssetProcessingWorker : BackgroundService
         }
     }
 
+    private static ProcessingErrorCode? MapErrorCode(string? errorCode)
+    {
+        return errorCode switch
+        {
+            "PROCESSING_FAILED" => ProcessingErrorCode.PROCESSING_FAILED,
+            "INVALID_FORMAT" => ProcessingErrorCode.INVALID_FORMAT,
+            "RESOURCE_EXHAUSTED" => ProcessingErrorCode.RESOURCE_EXHAUSTED,
+            "TIMEOUT" => ProcessingErrorCode.TIMEOUT,
+            "PROCESSOR_UNAVAILABLE" => ProcessingErrorCode.PROCESSOR_UNAVAILABLE,
+            _ => ProcessingErrorCode.PROCESSING_FAILED
+        };
+    }
+
     private async Task EmitProcessingFailedEventAsync(
         AssetProcessingJobEvent job,
         string errorMessage,
         CancellationToken cancellationToken)
     {
+        if (_clientEventPublisher == null)
+        {
+            _logger.LogWarning(
+                "Cannot emit failure event for asset {AssetId}: IClientEventPublisher not available",
+                job.AssetId);
+            return;
+        }
+
         try
         {
             var failureEvent = new AssetProcessingFailedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
-                Timestamp = DateTimeOffset.UtcNow.ToString("o"),
-                AssetId = job.AssetId,
-                SessionId = job.SessionId,
-                ErrorMessage = errorMessage,
-                ErrorCode = "PROCESSING_EXCEPTION"
+                Event_id = Guid.NewGuid(),
+                Event_name = AssetProcessingFailedEventEvent_name.Asset_processing_failed,
+                Asset_id = job.AssetId,
+                Error_message = errorMessage,
+                Error_code = ProcessingErrorCode.PROCESSING_FAILED,
+                Retry_available = true
             };
 
-            await _messageBus.PublishAsync($"CONNECT_{job.SessionId}", failureEvent, null, cancellationToken);
+            await _clientEventPublisher.PublishToSessionAsync(job.SessionId, failureEvent, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -300,81 +337,4 @@ public sealed class AssetProcessingWorker : BackgroundService
                 job.AssetId);
         }
     }
-}
-
-/// <summary>
-/// Event emitted when asset processing completes successfully.
-/// </summary>
-public sealed class AssetProcessingCompleteEvent
-{
-    /// <summary>
-    /// Unique identifier for this event.
-    /// </summary>
-    public required string EventId { get; init; }
-
-    /// <summary>
-    /// Timestamp when the event was created.
-    /// </summary>
-    public required string Timestamp { get; init; }
-
-    /// <summary>
-    /// The asset ID that was processed.
-    /// </summary>
-    public required string AssetId { get; init; }
-
-    /// <summary>
-    /// The session ID that initiated the upload.
-    /// </summary>
-    public required string SessionId { get; init; }
-
-    /// <summary>
-    /// Time taken to process in milliseconds.
-    /// </summary>
-    public long ProcessingTimeMs { get; init; }
-
-    /// <summary>
-    /// The storage key of the processed asset.
-    /// </summary>
-    public string? ProcessedStorageKey { get; init; }
-
-    /// <summary>
-    /// Size of the processed asset in bytes.
-    /// </summary>
-    public long ProcessedSizeBytes { get; init; }
-}
-
-/// <summary>
-/// Event emitted when asset processing fails.
-/// </summary>
-public sealed class AssetProcessingFailedEvent
-{
-    /// <summary>
-    /// Unique identifier for this event.
-    /// </summary>
-    public required string EventId { get; init; }
-
-    /// <summary>
-    /// Timestamp when the event was created.
-    /// </summary>
-    public required string Timestamp { get; init; }
-
-    /// <summary>
-    /// The asset ID that failed processing.
-    /// </summary>
-    public required string AssetId { get; init; }
-
-    /// <summary>
-    /// The session ID that initiated the upload.
-    /// </summary>
-    public required string SessionId { get; init; }
-
-    /// <summary>
-    /// Error message describing the failure.
-    /// </summary>
-    public required string ErrorMessage { get; init; }
-
-    /// <summary>
-    /// Error code for programmatic handling.
-    /// </summary>
-    public required string ErrorCode { get; init; }
 }

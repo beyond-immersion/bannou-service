@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 
 namespace BeyondImmersion.BannouService.Messaging.Tests;
@@ -16,6 +17,7 @@ public class MessagingServiceTests
     private readonly MessagingServiceConfiguration _configuration;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IMessageSubscriber> _mockMessageSubscriber;
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly MessagingService _service;
 
     public MessagingServiceTests()
@@ -24,12 +26,14 @@ public class MessagingServiceTests
         _configuration = new MessagingServiceConfiguration();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockMessageSubscriber = new Mock<IMessageSubscriber>();
+        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
 
         _service = new MessagingService(
             _mockLogger.Object,
             _configuration,
             _mockMessageBus.Object,
-            _mockMessageSubscriber.Object);
+            _mockMessageSubscriber.Object,
+            _mockHttpClientFactory.Object);
     }
 
     #region Constructor Tests
@@ -42,7 +46,8 @@ public class MessagingServiceTests
             _mockLogger.Object,
             _configuration,
             _mockMessageBus.Object,
-            _mockMessageSubscriber.Object);
+            _mockMessageSubscriber.Object,
+            _mockHttpClientFactory.Object);
 
         // Assert
         Assert.NotNull(service);
@@ -56,7 +61,8 @@ public class MessagingServiceTests
             null!,
             _configuration,
             _mockMessageBus.Object,
-            _mockMessageSubscriber.Object));
+            _mockMessageSubscriber.Object,
+            _mockHttpClientFactory.Object));
         Assert.Equal("logger", ex.ParamName);
     }
 
@@ -68,7 +74,8 @@ public class MessagingServiceTests
             _mockLogger.Object,
             null!,
             _mockMessageBus.Object,
-            _mockMessageSubscriber.Object));
+            _mockMessageSubscriber.Object,
+            _mockHttpClientFactory.Object));
         Assert.Equal("configuration", ex.ParamName);
     }
 
@@ -80,7 +87,8 @@ public class MessagingServiceTests
             _mockLogger.Object,
             _configuration,
             null!,
-            _mockMessageSubscriber.Object));
+            _mockMessageSubscriber.Object,
+            _mockHttpClientFactory.Object));
         Assert.Equal("messageBus", ex.ParamName);
     }
 
@@ -92,8 +100,22 @@ public class MessagingServiceTests
             _mockLogger.Object,
             _configuration,
             _mockMessageBus.Object,
-            null!));
+            null!,
+            _mockHttpClientFactory.Object));
         Assert.Equal("messageSubscriber", ex.ParamName);
+    }
+
+    [Fact]
+    public void Constructor_WithNullHttpClientFactory_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        var ex = Assert.Throws<ArgumentNullException>(() => new MessagingService(
+            _mockLogger.Object,
+            _configuration,
+            _mockMessageBus.Object,
+            _mockMessageSubscriber.Object,
+            null!));
+        Assert.Equal("httpClientFactory", ex.ParamName);
     }
 
     #endregion

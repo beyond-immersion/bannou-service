@@ -61,7 +61,7 @@ public class RelationshipWebSocketTestHandler : IServiceTestHandler
                             relationshipTypeId = relationshipTypeId.ToString(),
                             startedAt = DateTimeOffset.UtcNow
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var relationshipIdStr = createJson?["relationshipId"]?.GetValue<string>();
@@ -80,7 +80,7 @@ public class RelationshipWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/relationship/get",
                         new { relationshipId = relationshipIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var getJson = JsonNode.Parse(getResponse.GetRawText())?.AsObject();
                     var retrievedId = getJson?["relationshipId"]?.GetValue<string>();
@@ -150,7 +150,7 @@ public class RelationshipWebSocketTestHandler : IServiceTestHandler
                             relationshipTypeId = Guid.NewGuid().ToString(),
                             startedAt = DateTimeOffset.UtcNow
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     // Now list by entity
                     Console.WriteLine("   Invoking /relationship/list-by-entity...");
@@ -163,7 +163,7 @@ public class RelationshipWebSocketTestHandler : IServiceTestHandler
                             entityType = "CHARACTER",
                             includeEnded = true
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var listJson = JsonNode.Parse(listResponse.GetRawText())?.AsObject();
                     var hasRelationshipsArray = listJson?["relationships"] != null &&
@@ -237,7 +237,7 @@ public class RelationshipWebSocketTestHandler : IServiceTestHandler
                             startedAt = DateTimeOffset.UtcNow,
                             metadata = new Dictionary<string, object> { { "testKey", "testValue" } }
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var relationshipIdStr = createJson?["relationshipId"]?.GetValue<string>();
@@ -258,7 +258,7 @@ public class RelationshipWebSocketTestHandler : IServiceTestHandler
                             relationshipId = relationshipIdStr,
                             metadata = new Dictionary<string, object> { { "testKey", "updatedValue" }, { "newKey", "newValue" } }
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var updateJson = JsonNode.Parse(updateResponse.GetRawText())?.AsObject();
                     var updatedId = updateJson?["relationshipId"]?.GetValue<string>();
@@ -279,7 +279,7 @@ public class RelationshipWebSocketTestHandler : IServiceTestHandler
                             relationshipId = relationshipIdStr,
                             reason = "WebSocket lifecycle test"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
                     Console.WriteLine($"   Ended relationship successfully");
 
                     // Step 4: Verify relationship has endedAt set
@@ -288,7 +288,7 @@ public class RelationshipWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/relationship/get",
                         new { relationshipId = relationshipIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var getJson = JsonNode.Parse(getResponse.GetRawText())?.AsObject();
                     var hasEndedAt = getJson?["endedAt"] != null &&

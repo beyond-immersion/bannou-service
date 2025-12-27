@@ -81,6 +81,20 @@ public class AppConfiguration : BaseServiceConfiguration
     public int HTTPS_Web_Host_Port { get; set; } = 443;
 
     /// <summary>
+    /// The HTTP endpoint URL for service-to-service communication.
+    /// Used by ServiceClientBase and ConnectService for mesh routing.
+    /// Environment variable: BANNOU_HTTP_ENDPOINT
+    /// Default: http://localhost:{HTTP_Web_Host_Port}
+    /// </summary>
+    public string? Http_Endpoint { get; set; }
+
+    /// <summary>
+    /// Gets the effective HTTP endpoint URL, with fallback to localhost:{HTTP_Web_Host_Port}.
+    /// Use this property instead of direct environment variable access.
+    /// </summary>
+    public string EffectiveHttpEndpoint => Http_Endpoint ?? $"http://localhost:{HTTP_Web_Host_Port}";
+
+    /// <summary>
     /// The log destination.
     /// </summary>
     public virtual LogModes Log_Mode { get; set; } = LogModes.Console;

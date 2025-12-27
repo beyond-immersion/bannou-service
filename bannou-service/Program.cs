@@ -634,8 +634,7 @@ public static class Program
         const int maxRetries = 3;
         const int retryDelayMs = 1000;
 
-        var bannouHttpEndpoint = Environment.GetEnvironmentVariable("BANNOU_HTTP_ENDPOINT")
-            ?? "http://127.0.0.1:3500";
+        var bannouHttpEndpoint = Configuration.EffectiveHttpEndpoint;
         var url = $"{bannouHttpEndpoint}/v1.0/invoke/{sourceAppId}/method/orchestrator/service-routing";
 
         using var httpClient = new HttpClient();

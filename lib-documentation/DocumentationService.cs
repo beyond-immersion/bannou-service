@@ -34,7 +34,9 @@ public partial class DocumentationService : IDocumentationService
     private const string DOCUMENT_DELETED_TOPIC = "document.deleted";
 
     // State store key prefixes per plan specification
-    private const string DOC_KEY_PREFIX = "doc:";
+    // NOTE: DOC_KEY_PREFIX is empty because the store already prefixes with "doc:" via KeyPrefix
+    // config in StateServicePlugin. Final Redis keys become: doc:{namespaceId}:{documentId}
+    private const string DOC_KEY_PREFIX = "";
     private const string SLUG_INDEX_PREFIX = "slug-idx:";
     private const string NAMESPACE_DOCS_PREFIX = "ns-docs:";
     private const string TRASH_KEY_PREFIX = "trash:";
@@ -599,6 +601,9 @@ public partial class DocumentationService : IDocumentationService
                 UpdatedAt = now
             };
 
+            // Ensure search index exists BEFORE saving (Redis Search only auto-indexes new documents)
+            await _searchIndexService.EnsureIndexExistsAsync(namespaceId, cancellationToken);
+
             // Save document to state store
             var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
             await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
@@ -930,6 +935,9 @@ public partial class DocumentationService : IDocumentationService
             var storedDoc = trashedDoc.Document;
             storedDoc.UpdatedAt = now;
 
+            // Ensure search index exists BEFORE saving (Redis Search only auto-indexes new documents)
+            await _searchIndexService.EnsureIndexExistsAsync(namespaceId, cancellationToken);
+
             // Restore to main storage
             var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
             await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
@@ -1241,6 +1249,9 @@ public partial class DocumentationService : IDocumentationService
                         CreatedAt = now,
                         UpdatedAt = now
                     };
+
+                    // Ensure search index exists BEFORE saving (Redis Search only auto-indexes new documents)
+                    await _searchIndexService.EnsureIndexExistsAsync(namespaceId, cancellationToken);
 
                     var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
                     await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);

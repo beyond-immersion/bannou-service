@@ -553,8 +553,8 @@ public partial class VoiceService : IVoiceService
 
             if (_clientEventPublisher == null)
             {
-                _logger.LogDebug("Client event publisher not available, cannot send answer to target");
-                return (StatusCodes.OK, null);
+                _logger.LogWarning("Client event publisher not available, cannot send answer to target");
+                return (StatusCodes.ServiceUnavailable, null);
             }
 
             // Get the sender's display name for the event

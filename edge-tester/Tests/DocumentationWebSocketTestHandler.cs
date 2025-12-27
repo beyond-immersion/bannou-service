@@ -90,7 +90,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             category = "GettingStarted",
                             tags = new[] { "test", "websocket" }
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var documentIdStr = createJson?["documentId"]?.GetValue<string>();
@@ -163,7 +163,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             title = "Get Test Document",
                             content = "Content for get test."
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var documentIdStr = createJson?["documentId"]?.GetValue<string>();
@@ -184,7 +184,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = TEST_NAMESPACE,
                             documentId = documentIdStr
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var getJson = JsonNode.Parse(getResponse.GetRawText())?.AsObject();
                     var docNode = getJson?["document"]?.AsObject();
@@ -252,7 +252,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             title = "Original Title",
                             content = "Original content."
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var documentIdStr = createJson?["documentId"]?.GetValue<string>();
@@ -275,7 +275,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             title = "Updated Title",
                             content = "Updated content."
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var updateJson = JsonNode.Parse(updateResponse.GetRawText())?.AsObject();
                     var updatedId = updateJson?["documentId"]?.GetValue<string>();
@@ -291,7 +291,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = TEST_NAMESPACE,
                             documentId = documentIdStr
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var getJson = JsonNode.Parse(getResponse.GetRawText())?.AsObject();
                     var docNode = getJson?["document"]?.AsObject();
@@ -358,7 +358,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             title = "Delete Test Document",
                             content = "Content for delete test."
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var documentIdStr = createJson?["documentId"]?.GetValue<string>();
@@ -379,7 +379,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = TEST_NAMESPACE,
                             documentId = documentIdStr
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var deleteJson = JsonNode.Parse(deleteResponse.GetRawText())?.AsObject();
                     var deletedId = deleteJson?["documentId"]?.GetValue<string>();
@@ -448,7 +448,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             title = "API Reference Guide",
                             content = "Complete API reference documentation for all endpoints."
                         },
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(5));
 
                     // Search for it
                     Console.WriteLine("   Invoking /documentation/search...");
@@ -460,7 +460,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = testNamespace,
                             searchTerm = "API reference"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var searchJson = JsonNode.Parse(searchResponse.GetRawText())?.AsObject();
                     var totalResults = searchJson?["totalResults"]?.GetValue<int>() ?? 0;
@@ -528,7 +528,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             title = "Authentication Guide",
                             content = "How to authenticate using OAuth2 providers."
                         },
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(5));
 
                     // Query for it
                     Console.WriteLine("   Invoking /documentation/query...");
@@ -540,7 +540,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = testNamespace,
                             query = "how do I authenticate with OAuth"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var queryJson = JsonNode.Parse(queryResponse.GetRawText())?.AsObject();
                     var totalResults = queryJson?["totalResults"]?.GetValue<int>() ?? 0;
@@ -608,7 +608,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             title = "Recover Test Document",
                             content = "Content for recover test."
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var documentIdStr = createJson?["documentId"]?.GetValue<string>();
@@ -629,7 +629,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = TEST_NAMESPACE,
                             documentId = documentIdStr
                         },
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(5));
 
                     // Recover it
                     Console.WriteLine($"   Invoking /documentation/recover for {documentIdStr}...");
@@ -641,7 +641,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = TEST_NAMESPACE,
                             documentId = documentIdStr
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var recoverJson = JsonNode.Parse(recoverResponse.GetRawText())?.AsObject();
                     var recoveredId = recoverJson?["documentId"]?.GetValue<string>();
@@ -657,7 +657,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = TEST_NAMESPACE,
                             documentId = documentIdStr
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var getJson = JsonNode.Parse(getResponse.GetRawText())?.AsObject();
                     var docNode = getJson?["document"]?.AsObject();
@@ -727,7 +727,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             category = "GettingStarted",
                             tags = new[] { "lifecycle", "test" }
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var documentIdStr = createJson?["documentId"]?.GetValue<string>();
@@ -750,7 +750,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             title = "Updated Lifecycle Document",
                             content = "Updated content."
                         },
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(5));
                     Console.WriteLine("   Document updated");
 
                     // Step 3: Search for document
@@ -763,7 +763,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = testNamespace,
                             searchTerm = "lifecycle"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var searchJson = JsonNode.Parse(searchResponse.GetRawText())?.AsObject();
                     var totalResults = searchJson?["totalResults"]?.GetValue<int>() ?? 0;
@@ -784,7 +784,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = testNamespace,
                             documentId = documentIdStr
                         },
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(5));
                     Console.WriteLine("   Document deleted to trashcan");
 
                     // Step 5: List trashcan
@@ -796,7 +796,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                         {
                             @namespace = testNamespace
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var trashJson = JsonNode.Parse(trashResponse.GetRawText())?.AsObject();
                     var items = trashJson?["items"]?.AsArray();
@@ -820,7 +820,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = testNamespace,
                             documentId = documentIdStr
                         },
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(5));
                     Console.WriteLine("   Document recovered");
 
                     // Step 7: Verify recovery
@@ -833,7 +833,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = testNamespace,
                             documentId = documentIdStr
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var getJson = JsonNode.Parse(getResponse.GetRawText())?.AsObject();
                     var docNode = getJson?["document"]?.AsObject();
@@ -854,7 +854,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = testNamespace,
                             documentId = documentIdStr
                         },
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(5));
 
                     var purgeResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
@@ -864,7 +864,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = testNamespace,
                             documentIds = new[] { documentIdStr }
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var purgeJson = JsonNode.Parse(purgeResponse.GetRawText())?.AsObject();
                     var purgedCount = purgeJson?["purgedCount"]?.GetValue<int>() ?? 0;
@@ -933,7 +933,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                                 content = $"Content for document {i}.",
                                 category = "GettingStarted"
                             },
-                            timeout: TimeSpan.FromSeconds(15));
+                            timeout: TimeSpan.FromSeconds(5));
                     }
 
                     // List documents
@@ -947,7 +947,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             page = 1,
                             pageSize = 10
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var listJson = JsonNode.Parse(listResponse.GetRawText())?.AsObject();
                     var documents = listJson?["documents"]?.AsArray();
@@ -1014,7 +1014,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             title = "Slug Test Document",
                             content = "Content for slug test."
                         },
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(5));
 
                     // Get by slug (not documentId)
                     Console.WriteLine($"   Invoking /documentation/get with slug={uniqueSlug}...");
@@ -1026,7 +1026,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = TEST_NAMESPACE,
                             slug = uniqueSlug
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var getJson = JsonNode.Parse(getResponse.GetRawText())?.AsObject();
                     var docNode = getJson?["document"]?.AsObject();
@@ -1096,7 +1096,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             category = "GettingStarted",
                             tags = new[] { "api", "reference" }
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var mainDocId = JsonNode.Parse(createResponse.GetRawText())?["documentId"]?.GetValue<string>();
 
@@ -1112,7 +1112,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             category = "GettingStarted",
                             tags = new[] { "api", "examples" }
                         },
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(5));
 
                     // Get suggestions
                     Console.WriteLine("   Invoking /documentation/suggest...");
@@ -1125,7 +1125,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             suggestionSource = "Document_id",
                             sourceValue = mainDocId
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var suggestJson = JsonNode.Parse(suggestResponse.GetRawText())?.AsObject();
                     var suggestions = suggestJson?["suggestions"]?.AsArray();
@@ -1192,7 +1192,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             content = "Content.",
                             category = "GettingStarted"
                         },
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(5));
 
                     await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
@@ -1205,7 +1205,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             content = "Content.",
                             category = "tutorials"
                         },
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(5));
 
                     // Get stats
                     Console.WriteLine("   Invoking /documentation/stats...");
@@ -1216,7 +1216,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                         {
                             @namespace = testNamespace
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var statsJson = JsonNode.Parse(statsResponse.GetRawText())?.AsObject();
                     var documentCount = statsJson?["documentCount"]?.GetValue<int>() ?? 0;
@@ -1288,7 +1288,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                                 title = $"Bulk Update Document {i}",
                                 content = $"Original content {i}."
                             },
-                            timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                            timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                         var docId = JsonNode.Parse(createResponse.GetRawText())?["documentId"]?.GetValue<string>();
                         if (!string.IsNullOrEmpty(docId))
@@ -1308,7 +1308,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             documentIds = documentIds,
                             tags = new[] { "bulk-updated", "test" }
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var bulkJson = JsonNode.Parse(bulkResponse.GetRawText())?.AsObject();
                     var succeeded = bulkJson?["succeeded"]?.AsArray();
@@ -1378,7 +1378,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                                 title = $"Bulk Delete Document {i}",
                                 content = $"Content {i}."
                             },
-                            timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                            timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                         var docId = JsonNode.Parse(createResponse.GetRawText())?["documentId"]?.GetValue<string>();
                         if (!string.IsNullOrEmpty(docId))
@@ -1397,7 +1397,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                             @namespace = testNamespace,
                             documentIds = documentIds
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var bulkJson = JsonNode.Parse(bulkResponse.GetRawText())?.AsObject();
                     var succeeded = bulkJson?["succeeded"]?.AsArray();
@@ -1485,7 +1485,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                                 }
                             }
                         },
-                        timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
 
                     var importJson = JsonNode.Parse(importResponse.GetRawText())?.AsObject();
                     var created = importJson?["created"]?.GetValue<int>() ?? 0;
@@ -1502,7 +1502,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                         {
                             @namespace = testNamespace
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var listJson = JsonNode.Parse(listResponse.GetRawText())?.AsObject();
                     var totalCount = listJson?["totalCount"]?.GetValue<int>() ?? 0;

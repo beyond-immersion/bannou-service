@@ -59,14 +59,14 @@ public sealed class LocalMeshRedisManager : IMeshRedisManager
     /// <inheritdoc/>
     public Task<bool> RegisterEndpointAsync(MeshEndpoint endpoint, int ttlSeconds)
     {
-        _logger.LogDebug("[Local] Endpoint registration ignored: {AppId}:{InstanceId}", endpoint.AppId, endpoint.InstanceId);
+        _logger.LogDebug("Endpoint registration ignored in local mode: {AppId}:{InstanceId}", endpoint.AppId, endpoint.InstanceId);
         return Task.FromResult(true);
     }
 
     /// <inheritdoc/>
     public Task<bool> DeregisterEndpointAsync(Guid instanceId, string appId)
     {
-        _logger.LogDebug("[Local] Endpoint deregistration ignored: {AppId}:{InstanceId}", appId, instanceId);
+        _logger.LogDebug("Endpoint deregistration ignored in local mode: {AppId}:{InstanceId}", appId, instanceId);
         return Task.FromResult(true);
     }
 
@@ -79,7 +79,7 @@ public sealed class LocalMeshRedisManager : IMeshRedisManager
         int currentConnections,
         int ttlSeconds)
     {
-        _logger.LogDebug("[Local] Heartbeat ignored: {AppId}:{InstanceId}", appId, instanceId);
+        _logger.LogDebug("Heartbeat ignored in local mode: {AppId}:{InstanceId}", appId, instanceId);
         return Task.FromResult(true);
     }
 
@@ -87,7 +87,7 @@ public sealed class LocalMeshRedisManager : IMeshRedisManager
     public Task<List<MeshEndpoint>> GetEndpointsForAppIdAsync(string appId, bool includeUnhealthy = false)
     {
         // Always return the local endpoint - all routing goes local
-        _logger.LogDebug("[Local] Returning local endpoint for app-id '{AppId}'", appId);
+        _logger.LogDebug("Returning local endpoint for app-id '{AppId}' (local mode)", appId);
         return Task.FromResult(new List<MeshEndpoint> { _localEndpoint });
     }
 
@@ -119,7 +119,7 @@ public sealed class LocalMeshRedisManager : IMeshRedisManager
         }
         _mappingsVersion = version;
 
-        _logger.LogDebug("[Local] Updated service mappings to version {Version} with {Count} entries",
+        _logger.LogDebug("Updated service mappings to version {Version} with {Count} entries (local mode)",
             version, mappings.Count);
 
         return Task.FromResult(true);
@@ -141,7 +141,7 @@ public sealed class LocalMeshRedisManager : IMeshRedisManager
         }
 
         // Otherwise, still return the local endpoint (all routing goes local)
-        _logger.LogDebug("[Local] Instance {InstanceId} not found, returning local endpoint", instanceId);
+        _logger.LogDebug("Instance {InstanceId} not found in local mode, returning local endpoint", instanceId);
         return Task.FromResult<MeshEndpoint?>(_localEndpoint);
     }
 

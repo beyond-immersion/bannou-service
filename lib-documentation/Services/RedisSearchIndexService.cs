@@ -50,11 +50,8 @@ public class RedisSearchIndexService : ISearchIndexService
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
-    /// <summary>
-    /// Ensures the Redis Search index exists for the given namespace.
-    /// Creates the index if it doesn't exist.
-    /// </summary>
-    private async Task EnsureIndexExistsAsync(string namespaceId, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task EnsureIndexExistsAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
         lock (_initLock)
         {

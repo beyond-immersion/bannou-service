@@ -1198,7 +1198,7 @@ public partial class LocationService : ILocationService
                 dependency: "state", endpoint: "post:/location/seed",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
             errors.Add($"Unexpected error: {ex.Message}");
-            return (StatusCodes.OK, new SeedLocationsResponse
+            return (StatusCodes.InternalServerError, new SeedLocationsResponse
             {
                 Created = created,
                 Updated = updated,

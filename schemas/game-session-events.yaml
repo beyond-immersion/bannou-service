@@ -43,7 +43,6 @@ info:
     - topic: game-session.player-left
       event: GameSessionPlayerLeftEvent
       description: Published when a player leaves a game session
-
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/game-session-lifecycle-events.yaml
 x-lifecycle:

@@ -27,6 +27,9 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<AccountUpdatedEvent>("account.updated");
         EventSubscriptionRegistry.Register<SubscriptionUpdatedEvent>("subscription.updated");
 
+        // From connect-events.yaml
+        EventSubscriptionRegistry.Register<SessionInvalidatedEvent>("session.invalidated");
+
         // From game-session-events.yaml
         EventSubscriptionRegistry.Register<SessionConnectedEvent>("session.connected");
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");

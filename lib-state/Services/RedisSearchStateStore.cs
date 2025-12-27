@@ -326,7 +326,7 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
                 _logger.LogDebug("Index '{Index}' already exists, dropping for recreation", indexName);
                 await _searchCommands.DropIndexAsync(indexName, false);
             }
-            catch (RedisException ex) when (ex.Message.Contains("Unknown index"))
+            catch (RedisException ex) when (ex.Message.Contains("Unknown index") || ex.Message.Contains("no such index"))
             {
                 // Index doesn't exist, which is fine
             }
@@ -360,12 +360,17 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
 
             // Build creation parameters
             var ftParams = new FTCreateParams()
-                .On(IndexDataType.JSON)
-                .Prefix($"{_keyPrefix}:");
+                .On(IndexDataType.JSON);
 
+            // Use custom prefix if specified, otherwise use store's key prefix
+            // NOTE: Prefix() appends to list, so we must only call it once
             if (!string.IsNullOrEmpty(options.Prefix))
             {
                 ftParams.Prefix(options.Prefix);
+            }
+            else
+            {
+                ftParams.Prefix($"{_keyPrefix}:");
             }
 
             // Create the index
@@ -399,7 +404,7 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
                 indexName, deleteDocuments);
             return true;
         }
-        catch (RedisException ex) when (ex.Message.Contains("Unknown index"))
+        catch (RedisException ex) when (ex.Message.Contains("Unknown index") || ex.Message.Contains("no such index"))
         {
             _logger.LogDebug("Index '{Index}' not found for deletion", indexName);
             return false;
@@ -558,7 +563,7 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
                 Fields = fieldNames
             };
         }
-        catch (RedisException ex) when (ex.Message.Contains("Unknown index"))
+        catch (RedisException ex) when (ex.Message.Contains("Unknown index") || ex.Message.Contains("no such index"))
         {
             return null;
         }

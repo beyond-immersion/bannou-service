@@ -233,6 +233,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetInfrastructureHealth operation");
+            await PublishErrorEventAsync("GetInfrastructureHealth", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -253,6 +254,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetServicesHealth operation");
+            await PublishErrorEventAsync("GetServicesHealth", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -288,6 +290,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing RestartService operation");
+            await PublishErrorEventAsync("RestartService", ex.GetType().Name, ex.Message, details: new { ServiceName = body.ServiceName });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -308,6 +311,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing ShouldRestartService operation");
+            await PublishErrorEventAsync("ShouldRestartService", ex.GetType().Name, ex.Message, details: new { ServiceName = body.ServiceName });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -328,6 +332,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetBackends operation");
+            await PublishErrorEventAsync("GetBackends", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -372,6 +377,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetPresets operation");
+            await PublishErrorEventAsync("GetPresets", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -863,6 +869,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing Deploy operation");
+            await PublishErrorEventAsync("Deploy", ex.GetType().Name, ex.Message, details: new { Preset = body.Preset, Backend = body.Backend });
 
             // Publish deployment failed event on exception
             await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
@@ -928,6 +935,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving service routing mappings");
+            await PublishErrorEventAsync("GetServiceRouting", ex.GetType().Name, ex.Message, dependency: "redis");
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -980,6 +988,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetStatus operation");
+            await PublishErrorEventAsync("GetStatus", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1115,6 +1124,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing Teardown operation");
+            await PublishErrorEventAsync("Teardown", ex.GetType().Name, ex.Message);
 
             // Publish teardown failed event on exception
             await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
@@ -1385,6 +1395,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing Clean operation");
+            await PublishErrorEventAsync("Clean", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1519,6 +1530,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetLogs operation");
+            await PublishErrorEventAsync("GetLogs", ex.GetType().Name, ex.Message, details: new { Service = body.Service });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1756,6 +1768,7 @@ public partial class OrchestratorService : IOrchestratorService
                     appliedChange.Error = ex.Message;
                     _logger.LogError(ex, "Error applying topology change: {Action} for {Target}",
                         change.Action, change.NodeName);
+                    _ = PublishErrorEventAsync("UpdateTopology", ex.GetType().Name, ex.Message, details: new { Action = change.Action, NodeName = change.NodeName });
                 }
 
                 appliedChanges.Add(appliedChange);
@@ -1782,6 +1795,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing UpdateTopology operation");
+            await PublishErrorEventAsync("UpdateTopology", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1820,6 +1834,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing RequestContainerRestart operation");
+            await PublishErrorEventAsync("RequestContainerRestart", ex.GetType().Name, ex.Message, details: new { AppName = body.AppName });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1849,6 +1864,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetContainerStatus operation");
+            await PublishErrorEventAsync("GetContainerStatus", ex.GetType().Name, ex.Message, details: new { AppName = body.AppName });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1901,6 +1917,7 @@ public partial class OrchestratorService : IOrchestratorService
             if (!success)
             {
                 _logger.LogError("Failed to restore configuration version {Version}", targetVersion);
+                await PublishErrorEventAsync("RollbackConfiguration", "restore_failed", $"Failed to restore configuration version {targetVersion}", dependency: "redis");
                 return (StatusCodes.InternalServerError, new ConfigRollbackResponse
                 {
                     Success = false,
@@ -1954,6 +1971,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing RollbackConfiguration operation");
+            await PublishErrorEventAsync("RollbackConfiguration", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -2007,6 +2025,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetConfigVersion operation");
+            await PublishErrorEventAsync("GetConfigVersion", ex.GetType().Name, ex.Message, dependency: "redis");
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -2027,6 +2046,7 @@ public partial class OrchestratorService : IOrchestratorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to register Orchestrator service permissions");
+            await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "permissions");
             throw;
         }
     }

@@ -33,6 +33,11 @@ namespace BeyondImmersion.BannouService.Connect;
 [BannouService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton)]
 public partial class ConnectService : IConnectService
 {
+    /// <summary>
+    /// Named HttpClient for mesh proxying. Configured via IHttpClientFactory.
+    /// </summary>
+    internal const string HttpClientName = "ConnectMeshProxy";
+
     // Static cached header values to avoid per-request allocations
     private static readonly MediaTypeWithQualityHeaderValue s_jsonAcceptHeader = new("application/json");
     private static readonly MediaTypeHeaderValue s_jsonContentType = new("application/json") { CharSet = "utf-8" };
@@ -40,7 +45,7 @@ public partial class ConnectService : IConnectService
     private readonly IAuthClient _authClient;
     private readonly IMeshInvocationClient _meshClient;
     private readonly IMessageBus _messageBus;
-    private readonly HttpClient _httpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly IServiceAppMappingResolver _appMappingResolver;
     private readonly ILogger<ConnectService> _logger;
     private readonly WebSocketConnectionManager _connectionManager;
@@ -61,6 +66,7 @@ public partial class ConnectService : IConnectService
         IAuthClient authClient,
         IMeshInvocationClient meshClient,
         IMessageBus messageBus,
+        IHttpClientFactory httpClientFactory,
         IServiceAppMappingResolver appMappingResolver,
         ConnectServiceConfiguration configuration,
         ILogger<ConnectService> logger,
@@ -72,13 +78,7 @@ public partial class ConnectService : IConnectService
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
         _meshClient = meshClient ?? throw new ArgumentNullException(nameof(meshClient));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _httpClient = new HttpClient
-        {
-            // Set timeout to 120 seconds to ensure Connect service doesn't hang indefinitely
-            // This should be longer than client timeouts (60s) but shorter than infinite
-            // If mesh/target service doesn't respond, we'll get TaskCanceledException
-            Timeout = TimeSpan.FromSeconds(120)
-        };
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _appMappingResolver = appMappingResolver ?? throw new ArgumentNullException(nameof(appMappingResolver));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
@@ -105,7 +105,7 @@ public partial class ConnectService : IConnectService
 
         // Register event handlers via partial class (ConnectServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
+        RegisterEventConsumers(eventConsumer);
 
         _logger.LogInformation("Connect service initialized with instance ID: {InstanceId}, SessionManager: {SessionManagerEnabled}",
             _instanceId, sessionManager != null ? "Enabled" : "Disabled");
@@ -243,6 +243,7 @@ public partial class ConnectService : IConnectService
             {
                 _logger.LogError(meshEx, "Bannou service invocation failed for {Service}/{Endpoint}",
                     body.TargetService, endpoint);
+                await PublishErrorEventAsync("ProxyInternalRequest", meshEx.GetType().Name, meshEx.Message, dependency: body.TargetService, details: new { Endpoint = endpoint });
 
                 var errorResponse = new InternalProxyResponse
                 {
@@ -258,6 +259,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing internal proxy request");
+            await PublishErrorEventAsync("ProxyInternalRequest", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -303,6 +305,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving client capabilities");
+            await PublishErrorEventAsync("GetClientCapabilities", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -343,6 +346,7 @@ public partial class ConnectService : IConnectService
                 if (validationResponse == null)
                 {
                     _logger.LogError("Auth service returned null validation response");
+                    await PublishErrorEventAsync("ValidateJWT", "null_response", "Auth service returned null validation response", dependency: "auth");
                     return (null, null, null, null, false);
                 }
 
@@ -414,6 +418,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "JWT validation failed with exception");
+            await PublishErrorEventAsync("ValidateJWT", ex.GetType().Name, ex.Message, dependency: "auth");
             return (null, null, null, null, false);
         }
     }
@@ -662,6 +667,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error in WebSocket communication for session {SessionId}", sessionId);
+            await PublishErrorEventAsync("WebSocketCommunication", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
         }
         finally
         {
@@ -690,6 +696,8 @@ public partial class ConnectService : IConnectService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to publish session.disconnected event for session {SessionId}", sessionId);
+                // Fire-and-forget error event - we're in finally cleanup
+                _ = PublishErrorEventAsync("PublishSessionDisconnected", ex.GetType().Name, ex.Message, dependency: "messaging", details: new { SessionId = sessionId });
             }
 
             // Remove from connection manager - use instance-matching removal to prevent
@@ -881,6 +889,7 @@ public partial class ConnectService : IConnectService
                 if (routeInfo.TargetGuid == null || routeInfo.InjectedPayload == null)
                 {
                     _logger.LogError("SessionShortcut route missing TargetGuid or InjectedPayload for session {SessionId}", sessionId);
+                    await PublishErrorEventAsync("HandleBinaryMessage", "shortcut_config_error", "SessionShortcut route missing TargetGuid or InjectedPayload", details: new { SessionId = sessionId });
                     var errorResponse = MessageRouter.CreateErrorResponse(
                         message, ResponseCodes.ShortcutTargetNotFound, "Shortcut configuration error");
                     await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
@@ -911,6 +920,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling binary message from session {SessionId}", sessionId);
+            await PublishErrorEventAsync("HandleBinaryMessage", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
 
             // Send generic error response if we can parse the message
             try
@@ -926,6 +936,7 @@ public partial class ConnectService : IConnectService
                 // If we can't even parse the message or send error response, log and continue
                 // This is a last resort - the outer exception handler already logged the original error
                 _logger.LogError(parseEx, "Failed to send error response to session {SessionId} - message may be corrupted", sessionId);
+                _ = PublishErrorEventAsync("HandleBinaryMessage", parseEx.GetType().Name, "Failed to send error response - message may be corrupted", details: new { SessionId = sessionId });
             }
         }
     }
@@ -982,9 +993,8 @@ public partial class ConnectService : IConnectService
 
             try
             {
-                // Build full mesh URL like ServiceClientBase does
-                var bannouHttpEndpoint = Environment.GetEnvironmentVariable("BANNOU_HTTP_ENDPOINT")
-                    ?? throw new InvalidOperationException("BANNOU_HTTP_ENDPOINT environment variable is not set. mesh must be configured.");
+                // Build full mesh URL using centralized configuration
+                var bannouHttpEndpoint = Program.Configuration.EffectiveHttpEndpoint;
                 var meshUrl = $"{bannouHttpEndpoint}/v1.0/invoke/{appId}/method/{path.TrimStart('/')}";
 
                 // Create HTTP request with proper headers
@@ -1018,8 +1028,11 @@ public partial class ConnectService : IConnectService
                 var requestStartTime = DateTimeOffset.UtcNow;
                 _logger.LogDebug("Sending HTTP request to mesh at {StartTime}", requestStartTime);
 
+                // Create HttpClient from factory (properly pooled, configured with 120s timeout)
+                using var httpClient = _httpClientFactory.CreateClient(HttpClientName);
+
                 // Invoke the service via direct HTTP (preserves full path)
-                httpResponse = await _httpClient.SendAsync(request, cancellationToken);
+                httpResponse = await httpClient.SendAsync(request, cancellationToken);
 
                 var requestDuration = DateTimeOffset.UtcNow - requestStartTime;
                 // Use Warning level for response timing to ensure visibility in CI
@@ -1048,6 +1061,7 @@ public partial class ConnectService : IConnectService
                 // HTTP client timeout reached (120 seconds)
                 _logger.LogError("mesh HTTP request timed out (120s) for {Service} {Method} {Path}",
                     serviceName, httpMethod, path);
+                await PublishErrorEventAsync("RouteToService", "timeout", $"mesh HTTP request timed out (120s) for {serviceName}", dependency: serviceName, details: new { Method = httpMethod, Path = path });
 
                 var errorPayload = new
                 {
@@ -1065,6 +1079,7 @@ public partial class ConnectService : IConnectService
                 {
                     _logger.LogError("mesh HTTP request timed out for {Service} {Method} {Path}",
                         serviceName, httpMethod, path);
+                    await PublishErrorEventAsync("RouteToService", "timeout", $"mesh HTTP request timed out for {serviceName}", dependency: serviceName, details: new { Method = httpMethod, Path = path });
 
                     var errorPayload = new
                     {
@@ -1106,6 +1121,7 @@ public partial class ConnectService : IConnectService
             {
                 _logger.LogError(ex, "Error invoking service {Service} {Method} {Path}",
                     serviceName, httpMethod, path);
+                await PublishErrorEventAsync("RouteToService", ex.GetType().Name, ex.Message, dependency: serviceName, details: new { Method = httpMethod, Path = path });
 
                 var errorPayload = new
                 {
@@ -1132,6 +1148,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error routing message to service {Service}", routeInfo.ServiceName);
+            await PublishErrorEventAsync("RouteToService", ex.GetType().Name, ex.Message, dependency: routeInfo.ServiceName, details: new { SessionId = sessionId });
 
             if (routeInfo.RequiresResponse)
             {
@@ -1255,6 +1272,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error routing message to client {TargetClient}", routeInfo.TargetId);
+            await PublishErrorEventAsync("RouteToClient", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId, TargetClient = routeInfo.TargetId });
 
             if (message.ExpectsResponse)
             {
@@ -1298,6 +1316,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling text message from session {SessionId}", sessionId);
+            await PublishErrorEventAsync("HandleTextMessage", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
         }
     }
 
@@ -1418,6 +1437,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process auth event for session {SessionId}", eventData.SessionId);
+            await PublishErrorEventAsync("ProcessAuthEvent", ex.GetType().Name, ex.Message, details: new { SessionId = eventData.SessionId, EventType = eventData.EventType });
             throw;
         }
     }
@@ -1456,6 +1476,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process service registration event for {ServiceId}", eventData.ServiceId);
+            await PublishErrorEventAsync("ProcessServiceRegistration", ex.GetType().Name, ex.Message, details: new { ServiceId = eventData.ServiceId });
             throw;
         }
     }
@@ -1507,6 +1528,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process client message event for {ClientId}", eventData.ClientId);
+            await PublishErrorEventAsync("ProcessClientMessage", ex.GetType().Name, ex.Message, details: new { ClientId = eventData.ClientId, ServiceName = eventData.ServiceName });
             throw;
         }
     }
@@ -1562,6 +1584,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process client RPC event for {ClientId}", eventData.ClientId);
+            await PublishErrorEventAsync("ProcessClientRPC", ex.GetType().Name, ex.Message, details: new { ClientId = eventData.ClientId, ServiceName = eventData.ServiceName });
             throw;
         }
     }
@@ -1673,6 +1696,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling client event for session {SessionId}", sessionId);
+            await PublishErrorEventAsync("HandleClientEvent", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
         }
     }
 
@@ -1819,6 +1843,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending message to session {SessionId}", sessionId);
+            _ = PublishErrorEventAsync("SendMessage", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
             return false;
         }
     }
@@ -1858,6 +1883,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error disconnecting session {SessionId}: {Reason}", sessionId, reason);
+            _ = PublishErrorEventAsync("Disconnect", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId, Reason = reason });
         }
     }
 
@@ -2032,6 +2058,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send capability manifest to session {SessionId}", sessionId);
+            await PublishErrorEventAsync("SendCapabilityManifest", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
             // Don't throw - capability manifest is informational, connection can continue
         }
     }
@@ -2167,6 +2194,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process capabilities for session {SessionId}", sessionId);
+            await PublishErrorEventAsync("ProcessCapabilities", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId, Reason = reason });
         }
     }
 
@@ -2252,6 +2280,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to register Connect service permissions");
+            await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "permissions");
             throw;
         }
     }
@@ -2427,6 +2456,7 @@ public partial class ConnectService : IConnectService
                 _logger.LogError("Shortcut '{ShortcutName}' missing required target_service in metadata for session {SessionId}. " +
                     "The shortcut publisher must provide target_service.",
                     shortcutData.Name, sessionId);
+                await PublishErrorEventAsync("HandleShortcutPublished", "missing_target_service", $"Shortcut '{shortcutData.Name}' missing required target_service", details: new { SessionId = sessionId, ShortcutName = shortcutData.Name });
                 return; // Reject invalid shortcut
             }
 
@@ -2435,6 +2465,7 @@ public partial class ConnectService : IConnectService
                 _logger.LogError("Shortcut '{ShortcutName}' missing required target_method in metadata for session {SessionId}. " +
                     "The shortcut publisher must provide target_method (e.g., 'POST').",
                     shortcutData.Name, sessionId);
+                await PublishErrorEventAsync("HandleShortcutPublished", "missing_target_method", $"Shortcut '{shortcutData.Name}' missing required target_method", details: new { SessionId = sessionId, ShortcutName = shortcutData.Name });
                 return; // Reject invalid shortcut
             }
 
@@ -2443,6 +2474,7 @@ public partial class ConnectService : IConnectService
                 _logger.LogError("Shortcut '{ShortcutName}' missing required target_endpoint in metadata for session {SessionId}. " +
                     "The shortcut publisher must provide target_endpoint (e.g., '/sessions/join').",
                     shortcutData.Name, sessionId);
+                await PublishErrorEventAsync("HandleShortcutPublished", "missing_target_endpoint", $"Shortcut '{shortcutData.Name}' missing required target_endpoint", details: new { SessionId = sessionId, ShortcutName = shortcutData.Name });
                 return; // Reject invalid shortcut
             }
 
@@ -2458,6 +2490,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling ShortcutPublishedEvent for session {SessionId}", sessionId);
+            await PublishErrorEventAsync("HandleShortcutPublished", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
         }
     }
 
@@ -2533,6 +2566,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling ShortcutRevokedEvent for session {SessionId}", sessionId);
+            await PublishErrorEventAsync("HandleShortcutRevoked", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
         }
     }
 
@@ -2639,6 +2673,7 @@ public partial class ConnectService : IConnectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send capability manifest with shortcuts to session {SessionId}", sessionId);
+            await PublishErrorEventAsync("SendCapabilityManifestWithShortcuts", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
         }
     }
 

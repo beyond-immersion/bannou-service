@@ -197,7 +197,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             Console.WriteLine("📥 Waiting for capability manifest to be pushed by server...");
 
             var receiveBuffer = new byte[65536]; // Large buffer for capability manifest
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
             try
             {
@@ -574,7 +574,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             // Wait for initial capability manifest
             Console.WriteLine("📥 Waiting for initial capability manifest...");
             var receiveBuffer = new byte[65536];
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
             var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);
             Console.WriteLine($"📥 Received {result.Count} bytes");
@@ -626,7 +626,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     "POST",
                     "/permissions/update-session-state",
                     stateUpdate,
-                    timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
+                    timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
 
                 Console.WriteLine($"✅ State update succeeded: {response.GetRawText().Substring(0, Math.Min(200, response.GetRawText().Length))}...");
             }
@@ -641,7 +641,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             Console.WriteLine("✅ State update succeeded, waiting for capability manifest update...");
 
             // Wait for updated capability manifest
-            cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             try
             {
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);

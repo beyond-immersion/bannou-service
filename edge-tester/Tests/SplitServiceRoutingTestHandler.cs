@@ -303,7 +303,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 "POST",
                 "/orchestrator/service-routing",
                 new { },
-                timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
             response = result.GetRawText();
         }
         catch (Exception ex)
@@ -486,7 +486,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 "POST",
                 "/accounts/list",
                 new { limit = 1 },
-                timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
             var content = response.GetRawText();
             Console.WriteLine($"   Accounts API response: {content[..Math.Min(200, content.Length)]}...");
@@ -726,7 +726,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 "POST",
                 "/orchestrator/clean",
                 cleanRequest,
-                timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
 
             var content = response.GetRawText();
             Console.WriteLine($"   Clean response: {content}");

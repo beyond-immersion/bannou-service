@@ -15,30 +15,37 @@ namespace BeyondImmersion.BannouService.State.Services;
 /// <summary>
 /// MySQL-backed state store for durable/queryable data.
 /// Uses EF Core for query support and raw SQL for efficient JSON queries.
+/// Creates a new DbContext per operation for thread-safety with concurrent requests.
 /// </summary>
 /// <typeparam name="TValue">Value type stored.</typeparam>
 public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     where TValue : class
 {
-    private readonly StateDbContext _context;
+    private readonly DbContextOptions<StateDbContext> _options;
     private readonly string _storeName;
     private readonly ILogger<MySqlStateStore<TValue>> _logger;
 
     /// <summary>
     /// Creates a new MySQL state store.
     /// </summary>
-    /// <param name="context">EF Core database context.</param>
+    /// <param name="options">EF Core database context options for creating per-operation contexts.</param>
     /// <param name="storeName">Name of this state store.</param>
     /// <param name="logger">Logger instance.</param>
     public MySqlStateStore(
-        StateDbContext context,
+        DbContextOptions<StateDbContext> options,
         string storeName,
         ILogger<MySqlStateStore<TValue>> logger)
     {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _options = options ?? throw new ArgumentNullException(nameof(options));
         _storeName = storeName ?? throw new ArgumentNullException(nameof(storeName));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
+
+    /// <summary>
+    /// Creates a new DbContext for an operation.
+    /// Each operation gets its own context for thread-safety.
+    /// </summary>
+    private StateDbContext CreateContext() => new StateDbContext(_options);
 
     private static string GenerateETag(string json)
     {
@@ -51,7 +58,8 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     {
         ArgumentNullException.ThrowIfNull(key);
 
-        var entry = await _context.StateEntries
+        using var context = CreateContext();
+        var entry = await context.StateEntries
             .AsNoTracking()
             .Where(e => e.StoreName == _storeName && e.Key == key)
             .FirstOrDefaultAsync(cancellationToken);
@@ -72,7 +80,8 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     {
         ArgumentNullException.ThrowIfNull(key);
 
-        var entry = await _context.StateEntries
+        using var context = CreateContext();
+        var entry = await context.StateEntries
             .AsNoTracking()
             .Where(e => e.StoreName == _storeName && e.Key == key)
             .FirstOrDefaultAsync(cancellationToken);
@@ -99,7 +108,8 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         var etag = GenerateETag(json);
         var now = DateTimeOffset.UtcNow;
 
-        var existing = await _context.StateEntries
+        using var context = CreateContext();
+        var existing = await context.StateEntries
             .Where(e => e.StoreName == _storeName && e.Key == key)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -112,7 +122,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         }
         else
         {
-            _context.StateEntries.Add(new StateEntry
+            context.StateEntries.Add(new StateEntry
             {
                 StoreName = _storeName,
                 Key = key,
@@ -124,7 +134,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             });
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
         _logger.LogDebug("Saved key '{Key}' in store '{Store}' (etag: {ETag})",
             key, _storeName, etag);
@@ -143,7 +153,8 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(etag);
 
-        var existing = await _context.StateEntries
+        using var context = CreateContext();
+        var existing = await context.StateEntries
             .Where(e => e.StoreName == _storeName && e.Key == key)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -164,7 +175,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
 
         try
         {
-            await _context.SaveChangesAsync(cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
             _logger.LogDebug("Optimistic save succeeded for key '{Key}' in store '{Store}'", key, _storeName);
             return true;
         }
@@ -181,7 +192,8 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     {
         ArgumentNullException.ThrowIfNull(key);
 
-        var deleted = await _context.StateEntries
+        using var context = CreateContext();
+        var deleted = await context.StateEntries
             .Where(e => e.StoreName == _storeName && e.Key == key)
             .ExecuteDeleteAsync(cancellationToken);
 
@@ -196,7 +208,8 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     {
         ArgumentNullException.ThrowIfNull(key);
 
-        return await _context.StateEntries
+        using var context = CreateContext();
+        return await context.StateEntries
             .AsNoTracking()
             .AnyAsync(e => e.StoreName == _storeName && e.Key == key, cancellationToken);
     }
@@ -214,7 +227,8 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             return new Dictionary<string, TValue>();
         }
 
-        var entries = await _context.StateEntries
+        using var context = CreateContext();
+        var entries = await context.StateEntries
             .AsNoTracking()
             .Where(e => e.StoreName == _storeName && keyList.Contains(e.Key))
             .ToListAsync(cancellationToken);
@@ -244,7 +258,8 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
 
         // Load all values for this store, deserialize, then filter
         // Note: For true efficiency with large datasets, use SQL JSON functions
-        var entries = await _context.StateEntries
+        using var context = CreateContext();
+        var entries = await context.StateEntries
             .AsNoTracking()
             .Where(e => e.StoreName == _storeName)
             .ToListAsync(cancellationToken);
@@ -275,7 +290,8 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         if (pageSize <= 0) throw new ArgumentOutOfRangeException(nameof(pageSize));
 
         // Load all values for this store
-        var entries = await _context.StateEntries
+        using var context = CreateContext();
+        var entries = await context.StateEntries
             .AsNoTracking()
             .Where(e => e.StoreName == _storeName)
             .ToListAsync(cancellationToken);
@@ -320,17 +336,19 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         Expression<Func<TValue, bool>>? predicate = null,
         CancellationToken cancellationToken = default)
     {
+        using var context = CreateContext();
+
         if (predicate == null)
         {
             // Fast path: just count entries in database
-            return await _context.StateEntries
+            return await context.StateEntries
                 .AsNoTracking()
                 .Where(e => e.StoreName == _storeName)
                 .LongCountAsync(cancellationToken);
         }
 
         // Slow path: load, deserialize, and filter
-        var entries = await _context.StateEntries
+        var entries = await context.StateEntries
             .AsNoTracking()
             .Where(e => e.StoreName == _storeName)
             .ToListAsync(cancellationToken);
@@ -366,7 +384,8 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         var allParams = new List<object?> { _storeName };
         allParams.AddRange(parameters);
 
-        var entries = await _context.StateEntries
+        using var context = CreateContext();
+        var entries = await context.StateEntries
             .FromSqlRaw(sql, allParams.ToArray())
             .AsNoTracking()
             .ToListAsync(cancellationToken);
@@ -419,7 +438,8 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         var allParams = new List<object?> { _storeName };
         allParams.AddRange(parameters);
 
-        var totalCount = await _context.Database
+        using var context = CreateContext();
+        var totalCount = await context.Database
             .SqlQueryRaw<long>(countSql, allParams.Where(p => p != null).ToArray()!)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -443,7 +463,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         dataSql = dataSql.Replace("@pOffset", $"@p{paramIndex}");
         dataParams.Add(offset);
 
-        var entries = await _context.StateEntries
+        var entries = await context.StateEntries
             .FromSqlRaw(dataSql, dataParams.ToArray())
             .AsNoTracking()
             .ToListAsync(cancellationToken);
@@ -481,7 +501,8 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         var allParams = new List<object?> { _storeName };
         allParams.AddRange(parameters);
 
-        var count = await _context.Database
+        using var context = CreateContext();
+        var count = await context.Database
             .SqlQueryRaw<long>(sql, allParams.Where(p => p != null).ToArray()!)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -510,7 +531,8 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         var allParams = new List<object?> { _storeName };
         allParams.AddRange(parameters);
 
-        var results = await _context.Database
+        using var context = CreateContext();
+        var results = await context.Database
             .SqlQueryRaw<string?>(sql, allParams.Where(p => p != null).ToArray()!)
             .ToListAsync(cancellationToken);
 
@@ -556,7 +578,8 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         var allParams = new List<object?> { _storeName };
         allParams.AddRange(parameters);
 
-        var result = await _context.Database
+        using var context = CreateContext();
+        var result = await context.Database
             .SqlQueryRaw<decimal?>(sql, allParams.Where(p => p != null).ToArray()!)
             .FirstOrDefaultAsync(cancellationToken);
 

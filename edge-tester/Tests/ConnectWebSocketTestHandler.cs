@@ -387,7 +387,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             Console.WriteLine("📥 Waiting for capability manifest to be pushed by server...");
 
             var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
             try
             {
@@ -526,7 +526,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             await webSocket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None);
 
             // Wait for Response message, skipping any Event messages
-            var responseResult = await WaitForResponseMessage(webSocket, TimeSpan.FromSeconds(15));
+            var responseResult = await WaitForResponseMessage(webSocket, TimeSpan.FromSeconds(5));
 
             if (responseResult == null)
             {
@@ -827,7 +827,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         // Step 5: Wait for user's WebSocket to be closed by the server
         Console.WriteLine("📋 Step 5: Waiting for server to close user's WebSocket connection...");
         var receiveBuffer = new ArraySegment<byte>(new byte[4096]);
-        using var receiveCts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        using var receiveCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
         try
         {
@@ -1426,7 +1426,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
     /// </summary>
     private static async Task<Guid> ReceiveCapabilityManifestAndFindAccountDeleteGuid(ClientWebSocket webSocket)
     {
-        var overallTimeout = TimeSpan.FromSeconds(30);
+        var overallTimeout = TimeSpan.FromSeconds(10);
         var startTime = DateTime.UtcNow;
         var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
 
@@ -1510,7 +1510,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
     private static async Task<(Guid serviceGuid, string method, string path)> ReceiveCapabilityManifestAndFindAnyServiceGuid(
         ClientWebSocket webSocket)
     {
-        var overallTimeout = TimeSpan.FromSeconds(15);
+        var overallTimeout = TimeSpan.FromSeconds(5);
         var startTime = DateTime.UtcNow;
         var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
 
@@ -1593,7 +1593,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         string method,
         string path)
     {
-        var overallTimeout = TimeSpan.FromSeconds(30);
+        var overallTimeout = TimeSpan.FromSeconds(10);
         var startTime = DateTime.UtcNow;
         var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
 
@@ -1946,7 +1946,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 "POST",
                 "/testing/debug/path",
                 new { }, // Empty body
-                timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
             // Verify we got a valid response with expected fields
             var hasPath = response.TryGetProperty("Path", out var pathProp) ||
@@ -2171,7 +2171,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
     /// </summary>
     private async Task<Guid> ReceiveAndCacheAllGuids(ClientWebSocket webSocket, string method, string path)
     {
-        var overallTimeout = TimeSpan.FromSeconds(30);
+        var overallTimeout = TimeSpan.FromSeconds(10);
         var startTime = DateTime.UtcNow;
         var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
 

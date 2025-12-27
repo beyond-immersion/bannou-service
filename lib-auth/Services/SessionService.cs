@@ -111,7 +111,7 @@ public class SessionService : ISessionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get sessions for account {AccountId}", accountId);
-            return new List<SessionInfo>();
+            throw; // Don't mask state store failures - empty list should mean "no sessions", not "error"
         }
     }
 

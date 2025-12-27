@@ -56,7 +56,7 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
                     description = "Test service for subscription tests",
                     serviceType = "game"
                 },
-                timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
             var responseJson = JsonNode.Parse(response.GetRawText())?.AsObject();
             var serviceIdStr = responseJson?["serviceId"]?.GetValue<string>();
@@ -91,7 +91,7 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
                     email = $"sub-test-{uniqueCode}@test.local",
                     displayName = $"SubTest{uniqueCode}"
                 },
-                timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
             var responseJson = JsonNode.Parse(response.GetRawText())?.AsObject();
             var accountIdStr = responseJson?["accountId"]?.GetValue<string>();
@@ -138,7 +138,7 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/subscriptions/account/list",
                         new { accountId = nonExistentAccountId },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var responseJson = JsonNode.Parse(response.GetRawText())?.AsObject();
                     var subscriptions = responseJson?["subscriptions"]?.AsArray();
@@ -224,7 +224,7 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
                             serviceId = serviceId,
                             durationDays = 30
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var subscriptionIdStr = createJson?["subscriptionId"]?.GetValue<string>();
@@ -244,7 +244,7 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/subscriptions/get",
                         new { subscriptionId = subscriptionIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var getJson = JsonNode.Parse(getResponse.GetRawText())?.AsObject();
                     var retrievedId = getJson?["subscriptionId"]?.GetValue<string>();
@@ -312,7 +312,7 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
                             serviceId = serviceId,
                             durationDays = 30
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var subscriptionId = createJson?["subscriptionId"]?.GetValue<string>();
@@ -329,7 +329,7 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/subscriptions/account/list",
                         new { accountId = accountId },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var listJson = JsonNode.Parse(listResponse.GetRawText())?.AsObject();
                     var subscriptions = listJson?["subscriptions"]?.AsArray();
@@ -351,7 +351,7 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
                             subscriptionId = subscriptionId,
                             expirationDate = newExpiration
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var updateJson = JsonNode.Parse(updateResponse.GetRawText())?.AsObject();
                     var updatedExpiration = updateJson?["expirationDate"]?.GetValue<string>();
@@ -367,7 +367,7 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
                             subscriptionId = subscriptionId,
                             reason = "WebSocket lifecycle test"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var cancelJson = JsonNode.Parse(cancelResponse.GetRawText())?.AsObject();
                     var isActiveAfterCancel = cancelJson?["isActive"]?.GetValue<bool>() ?? true;
@@ -388,7 +388,7 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
                             subscriptionId = subscriptionId,
                             extensionDays = 90
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var renewJson = JsonNode.Parse(renewResponse.GetRawText())?.AsObject();
                     var isActiveAfterRenew = renewJson?["isActive"]?.GetValue<bool>() ?? false;
@@ -459,7 +459,7 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
                             serviceId = serviceId,
                             durationDays = 30
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var subscriptionId = createJson?["subscriptionId"]?.GetValue<string>();
@@ -475,7 +475,7 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/subscriptions/account/current",
                         new { accountId = accountId },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var currentJson = JsonNode.Parse(currentResponse.GetRawText())?.AsObject();
                     var authorizations = currentJson?["authorizations"]?.AsArray();
@@ -547,7 +547,7 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
                             "POST",
                             "/subscriptions/get",
                             new { subscriptionId = nonExistentId },
-                            timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                            timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                         // If we get here without exception, check if it's an error response
                         var responseText = response.GetRawText();
@@ -636,7 +636,7 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
                             serviceId = serviceId,
                             durationDays = 30
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var firstJson = JsonNode.Parse(firstResponse.GetRawText())?.AsObject();
                     var firstId = firstJson?["subscriptionId"]?.GetValue<string>();
@@ -658,7 +658,7 @@ public class SubscriptionsWebSocketTestHandler : IServiceTestHandler
                             serviceId = serviceId,
                             durationDays = 30
                         },
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(5));
 
                     // Check if we got the expected 409 Conflict error
                     if (!duplicateApiResponse.IsSuccess)

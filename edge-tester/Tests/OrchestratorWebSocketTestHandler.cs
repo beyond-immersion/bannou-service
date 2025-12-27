@@ -236,7 +236,7 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
                 method,
                 path,
                 requestBody,
-                timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
 
             // Convert JsonElement to JsonObject for validation
             var responseJson = response.GetRawText();

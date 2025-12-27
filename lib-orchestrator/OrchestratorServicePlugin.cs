@@ -17,29 +17,28 @@ public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorServ
 
     /// <summary>
     /// Validate that this plugin should be loaded based on environment configuration.
-    /// CRITICAL: Orchestrator can ONLY run on the "bannou" app-id.
+    /// CRITICAL: Orchestrator can ONLY run on the default "bannou" app-id.
+    /// Service enabling is handled automatically by the plugin system - this only validates
+    /// that the orchestrator isn't being loaded on a non-control-plane instance.
     /// </summary>
     protected override bool OnValidatePlugin()
     {
-        var enabled = Environment.GetEnvironmentVariable("ORCHESTRATOR_SERVICE_ENABLED")?.ToLower();
-        Logger?.LogDebug("Orchestrator service enabled check: {EnabledValue}", enabled);
-
-        if (enabled != "true")
+        // Get current app-id, defaulting to the constant if not set
+        var currentAppId = Environment.GetEnvironmentVariable(AppConstants.ENV_BANNOU_APP_ID);
+        if (string.IsNullOrEmpty(currentAppId))
         {
-            return false;
+            currentAppId = AppConstants.DEFAULT_APP_NAME;
         }
 
-        // CRITICAL: Enforce that orchestrator ONLY runs on "bannou" app-id
-        var currentAppId = Environment.GetEnvironmentVariable("BANNOU_APP_ID") ?? AppConstants.DEFAULT_APP_NAME;
-        if (currentAppId != AppConstants.DEFAULT_APP_NAME)
+        // CRITICAL: Orchestrator can ONLY run on the default "bannou" app-id
+        // It's the control plane that manages all other services
+        if (!string.Equals(currentAppId, AppConstants.DEFAULT_APP_NAME, StringComparison.OrdinalIgnoreCase))
         {
-            Logger?.LogCritical(
-                "FATAL: Orchestrator service can ONLY run on '{DefaultAppId}' app-id, not '{CurrentAppId}'. " +
+            Logger?.LogWarning(
+                "Orchestrator service skipped: can ONLY run on '{DefaultAppId}' app-id, not '{CurrentAppId}'. " +
                 "The orchestrator is the control plane that manages all other services.",
                 AppConstants.DEFAULT_APP_NAME, currentAppId);
-
-            throw new InvalidOperationException(
-                $"Orchestrator service can ONLY run on '{AppConstants.DEFAULT_APP_NAME}' app-id, not '{currentAppId}'.");
+            return false;
         }
 
         Logger?.LogInformation("Orchestrator service validated: running on '{AppId}' (control plane)", currentAppId);

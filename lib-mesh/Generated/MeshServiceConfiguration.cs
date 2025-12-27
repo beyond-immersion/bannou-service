@@ -22,10 +22,10 @@ public class MeshServiceConfiguration : IServiceConfiguration
     public bool UseLocalRouting { get; set; } = false;
 
     /// <summary>
-    /// Redis connection string for service registry storage
+    /// Redis connection string for service registry storage. REQUIRED - no default value.
     /// Environment variable: MESH_REDIS_CONNECTION_STRING
     /// </summary>
-    public string RedisConnectionString { get; set; } = "localhost:6379";
+    public string RedisConnectionString { get; set; } = string.Empty;
 
     /// <summary>
     /// Prefix for all mesh-related Redis keys

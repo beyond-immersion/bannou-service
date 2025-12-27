@@ -793,8 +793,9 @@ public partial class AccountsService : IAccountsService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to get auth methods for account: {AccountId}", accountId);
-            return new List<AuthMethodInfo>();
+            _logger.LogError(ex, "Failed to get auth methods for account: {AccountId}", accountId);
+            _ = PublishErrorEventAsync("GetAuthMethodsForAccount", ex.GetType().Name, ex.Message, dependency: "state", details: new { AccountId = accountId });
+            throw; // Don't mask state store failures - empty list should mean "no auth methods", not "error"
         }
     }
 
@@ -1094,6 +1095,7 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to publish AccountCreatedEvent for account: {AccountId}", account.AccountId);
+            _ = PublishErrorEventAsync("PublishAccountCreatedEvent", ex.GetType().Name, ex.Message, dependency: "messaging", details: new { account.AccountId });
             // Don't throw - event publishing failure shouldn't break account creation
         }
     }
@@ -1126,6 +1128,7 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to publish AccountUpdatedEvent for account: {AccountId}", account.AccountId);
+            _ = PublishErrorEventAsync("PublishAccountUpdatedEvent", ex.GetType().Name, ex.Message, dependency: "messaging", details: new { account.AccountId });
             // Don't throw - event publishing failure shouldn't break account update
         }
     }
@@ -1161,6 +1164,7 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to publish AccountDeletedEvent for account {AccountId}", account.AccountId);
+            _ = PublishErrorEventAsync("PublishAccountDeletedEvent", ex.GetType().Name, ex.Message, dependency: "messaging", details: new { account.AccountId });
             // Don't throw - event publishing failure shouldn't break account deletion
         }
     }
@@ -1259,6 +1263,7 @@ public partial class AccountsService : IAccountsService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to remove account {AccountId} from index after {MaxRetries} attempts", accountId, maxRetries);
+                _ = PublishErrorEventAsync("RemoveAccountFromIndex", ex.GetType().Name, ex.Message, dependency: "state", details: new { AccountId = accountId, MaxRetries = maxRetries });
                 // Don't throw - index cleanup failure shouldn't break account deletion
                 return;
             }
@@ -1284,6 +1289,7 @@ public partial class AccountsService : IAccountsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to register Accounts service permissions");
+            await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "permissions");
             throw;
         }
     }

@@ -316,6 +316,7 @@ public class MeshRedisManager : IMeshRedisManager
         catch (RedisException ex)
         {
             _logger.LogError(ex, "Failed to get endpoints for app {AppId}", appId);
+            throw; // Don't mask Redis failures - caller needs to know if discovery failed
         }
 
         return endpoints;
@@ -367,6 +368,7 @@ public class MeshRedisManager : IMeshRedisManager
         catch (RedisException ex)
         {
             _logger.LogError(ex, "Failed to get all endpoints");
+            throw; // Don't mask Redis failures - caller needs to know if discovery failed
         }
 
         return endpoints;
@@ -395,7 +397,7 @@ public class MeshRedisManager : IMeshRedisManager
         catch (RedisException ex)
         {
             _logger.LogError(ex, "Failed to get service mappings");
-            return new Dictionary<string, string>();
+            throw; // Don't mask Redis failures - empty dict should mean "no mappings", not "error"
         }
     }
 
@@ -474,7 +476,7 @@ public class MeshRedisManager : IMeshRedisManager
         catch (RedisException ex)
         {
             _logger.LogError(ex, "Failed to get mappings version");
-            return 0;
+            throw; // Don't mask Redis failures - 0 should mean "no version set", not "error"
         }
     }
 
@@ -502,7 +504,7 @@ public class MeshRedisManager : IMeshRedisManager
         catch (RedisException ex)
         {
             _logger.LogError(ex, "Failed to get endpoint {InstanceId}", instanceId);
-            return null;
+            throw; // Don't mask Redis failures - null should mean "not found", not "error"
         }
     }
 

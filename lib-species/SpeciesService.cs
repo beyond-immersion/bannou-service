@@ -86,9 +86,9 @@ public partial class SpeciesService : ISpeciesService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Could not validate realm {RealmId} - proceeding with operation", realmId);
-            // If RealmService is unavailable, allow the operation with a warning
-            return (true, true);
+            _logger.LogError(ex, "Could not validate realm {RealmId} - failing operation (fail closed)", realmId);
+            // If RealmService is unavailable, fail the operation - don't assume realm is valid
+            throw new InvalidOperationException($"Cannot validate realm {realmId}: RealmService unavailable", ex);
         }
     }
 
@@ -556,8 +556,9 @@ public partial class SpeciesService : ISpeciesService
             }
             catch (Exception ex)
             {
-                // If CharacterService is unavailable, log and allow deletion with warning
-                _logger.LogWarning(ex, "Could not verify character usage for species {Code} - proceeding with deletion", model.Code);
+                // If CharacterService is unavailable, fail the operation - could cause data integrity issues
+                _logger.LogError(ex, "Could not verify character usage for species {Code} - failing deletion (fail closed)", model.Code);
+                throw new InvalidOperationException($"Cannot verify character usage for species {model.Code}: CharacterService unavailable", ex);
             }
 
             // Delete the model
@@ -707,9 +708,10 @@ public partial class SpeciesService : ISpeciesService
             }
             catch (Exception ex)
             {
-                // If CharacterService is unavailable, log and allow removal with warning
-                _logger.LogWarning(ex, "Could not verify character usage for species {Code} in realm {RealmId} - proceeding with removal",
+                // If CharacterService is unavailable, fail the operation - could cause data integrity issues
+                _logger.LogError(ex, "Could not verify character usage for species {Code} in realm {RealmId} - failing removal (fail closed)",
                     model.Code, body.RealmId);
+                throw new InvalidOperationException($"Cannot verify character usage for species {model.Code} in realm {body.RealmId}: CharacterService unavailable", ex);
             }
 
             model.RealmIds.Remove(realmIdStr);

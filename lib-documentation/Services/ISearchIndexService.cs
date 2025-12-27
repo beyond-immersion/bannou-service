@@ -15,6 +15,14 @@ public interface ISearchIndexService
     Task<int> RebuildIndexAsync(string namespaceId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Ensures the search index exists for the given namespace.
+    /// Must be called BEFORE saving documents to ensure Redis Search auto-indexing works.
+    /// </summary>
+    /// <param name="namespaceId">The namespace to ensure index for.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task EnsureIndexExistsAsync(string namespaceId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Adds or updates a document in the search index.
     /// </summary>
     /// <param name="namespaceId">The document's namespace.</param>

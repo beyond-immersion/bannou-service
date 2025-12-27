@@ -119,7 +119,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Failed to publish startup heartbeat - message bus may not be ready");
+            _logger.LogError(ex, "Failed to publish startup heartbeat - message bus may not be ready");
             return false;
         }
     }
@@ -148,7 +148,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
                 var publishSuccess = await PublishStartupHeartbeatAsync(cancellationToken);
                 if (publishSuccess)
                 {
-                    _logger.LogInformation("✅ Message bus connectivity confirmed on attempt {Attempt}", attempt);
+                    _logger.LogInformation("Message bus connectivity confirmed on attempt {Attempt}", attempt);
                     return true;
                 }
 
@@ -172,7 +172,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
             }
         }
 
-        _logger.LogError("❌ Message bus connectivity check failed after {MaxRetries} attempts", maxRetries);
+        _logger.LogError("Message bus connectivity check failed after {MaxRetries} attempts", maxRetries);
         return false;
     }
 

@@ -22,6 +22,10 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
     {
         Logger?.LogDebug("Configuring messaging service dependencies");
 
+        // Register named HttpClient for subscription callbacks (Tenet 4: use IHttpClientFactory)
+        services.AddHttpClient(MessagingService.HttpClientName);
+        Logger?.LogDebug("Registered named HttpClient '{ClientName}' for subscription callbacks", MessagingService.HttpClientName);
+
         // Get configuration to read RabbitMQ settings
         // Cache the provider to avoid multiple builds and ensure consistent config
         var tempProvider = services.BuildServiceProvider();

@@ -111,6 +111,7 @@ public partial class SubscriptionsService : ISubscriptionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting subscriptions for account {AccountId}", body.AccountId);
+            await PublishErrorEventAsync("GetSubscriptionsForAccount", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -171,6 +172,7 @@ public partial class SubscriptionsService : ISubscriptionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting current subscriptions for account {AccountId}", body.AccountId);
+            await PublishErrorEventAsync("GetCurrentSubscriptions", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.AccountId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -199,6 +201,7 @@ public partial class SubscriptionsService : ISubscriptionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting subscription {SubscriptionId}", body.SubscriptionId);
+            await PublishErrorEventAsync("GetSubscription", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.SubscriptionId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -305,6 +308,7 @@ public partial class SubscriptionsService : ISubscriptionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating subscription for account {AccountId}", body.AccountId);
+            await PublishErrorEventAsync("CreateSubscription", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.AccountId, body.ServiceId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -355,6 +359,7 @@ public partial class SubscriptionsService : ISubscriptionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating subscription {SubscriptionId}", body.SubscriptionId);
+            await PublishErrorEventAsync("UpdateSubscription", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.SubscriptionId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -399,6 +404,7 @@ public partial class SubscriptionsService : ISubscriptionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error cancelling subscription {SubscriptionId}", body.SubscriptionId);
+            await PublishErrorEventAsync("CancelSubscription", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.SubscriptionId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -465,6 +471,7 @@ public partial class SubscriptionsService : ISubscriptionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error renewing subscription {SubscriptionId}", body.SubscriptionId);
+            await PublishErrorEventAsync("RenewSubscription", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.SubscriptionId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -503,6 +510,7 @@ public partial class SubscriptionsService : ISubscriptionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error expiring subscription {SubscriptionId}", subscriptionId);
+            _ = PublishErrorEventAsync("ExpireSubscription", ex.GetType().Name, ex.Message, dependency: "state", details: new { SubscriptionId = subscriptionId });
             return false;
         }
     }

@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Web;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Auth.Tests;
@@ -181,10 +182,17 @@ public class OAuthProviderServiceTests
 
         // Assert
         Assert.NotNull(url);
-        Assert.Contains("discord.com/oauth2/authorize", url);
-        Assert.Contains("client_id=test-discord-client-id", url);
-        Assert.Contains("response_type=code", url);
-        Assert.Contains("state=test-state", url);
+
+        // Parse and validate URL structure
+        var uri = new Uri(url);
+        Assert.Equal("discord.com", uri.Host);
+        Assert.Equal("/oauth2/authorize", uri.AbsolutePath);
+
+        // Parse and validate query parameters
+        var queryParams = HttpUtility.ParseQueryString(uri.Query);
+        Assert.Equal("test-discord-client-id", queryParams["client_id"]);
+        Assert.Equal("code", queryParams["response_type"]);
+        Assert.Equal("test-state", queryParams["state"]);
     }
 
     [Fact]
@@ -195,10 +203,17 @@ public class OAuthProviderServiceTests
 
         // Assert
         Assert.NotNull(url);
-        Assert.Contains("accounts.google.com/o/oauth2/v2/auth", url);
-        Assert.Contains("client_id=test-google-client-id", url);
-        Assert.Contains("response_type=code", url);
-        Assert.Contains("state=test-state", url);
+
+        // Parse and validate URL structure
+        var uri = new Uri(url);
+        Assert.Equal("accounts.google.com", uri.Host);
+        Assert.Equal("/o/oauth2/v2/auth", uri.AbsolutePath);
+
+        // Parse and validate query parameters
+        var queryParams = HttpUtility.ParseQueryString(uri.Query);
+        Assert.Equal("test-google-client-id", queryParams["client_id"]);
+        Assert.Equal("code", queryParams["response_type"]);
+        Assert.Equal("test-state", queryParams["state"]);
     }
 
     [Fact]
@@ -209,10 +224,17 @@ public class OAuthProviderServiceTests
 
         // Assert
         Assert.NotNull(url);
-        Assert.Contains("id.twitch.tv/oauth2/authorize", url);
-        Assert.Contains("client_id=test-twitch-client-id", url);
-        Assert.Contains("response_type=code", url);
-        Assert.Contains("state=test-state", url);
+
+        // Parse and validate URL structure
+        var uri = new Uri(url);
+        Assert.Equal("id.twitch.tv", uri.Host);
+        Assert.Equal("/oauth2/authorize", uri.AbsolutePath);
+
+        // Parse and validate query parameters
+        var queryParams = HttpUtility.ParseQueryString(uri.Query);
+        Assert.Equal("test-twitch-client-id", queryParams["client_id"]);
+        Assert.Equal("code", queryParams["response_type"]);
+        Assert.Equal("test-state", queryParams["state"]);
     }
 
     [Fact]
@@ -226,7 +248,11 @@ public class OAuthProviderServiceTests
 
         // Assert
         Assert.NotNull(url);
-        Assert.Contains("redirect_uri=http", url);
+
+        // Parse and validate the redirect_uri query parameter
+        var uri = new Uri(url);
+        var queryParams = HttpUtility.ParseQueryString(uri.Query);
+        Assert.Equal(customRedirectUri, queryParams["redirect_uri"]);
     }
 
     [Fact]
@@ -237,7 +263,11 @@ public class OAuthProviderServiceTests
 
         // Assert
         Assert.NotNull(url);
-        Assert.Contains("discord.com/oauth2/authorize", url);
+
+        // Verify URL is still valid and well-formed
+        var uri = new Uri(url);
+        Assert.Equal("discord.com", uri.Host);
+        Assert.Equal("/oauth2/authorize", uri.AbsolutePath);
     }
 
     #endregion

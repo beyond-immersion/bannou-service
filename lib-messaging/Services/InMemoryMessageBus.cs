@@ -111,7 +111,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
             });
         }
 
-        _logger.LogDebug("[InMemory] Subscribed to topic '{Topic}' for {EventType}", topic, typeof(TEvent).Name);
+        _logger.LogDebug("Subscribed to topic '{Topic}' for {EventType} (in-memory mode)", topic, typeof(TEvent).Name);
         return Task.CompletedTask;
     }
 
@@ -139,7 +139,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
             handlers.Add(wrappedHandler);
         }
 
-        _logger.LogDebug("[InMemory] Dynamic subscription to topic '{Topic}' for {EventType}", topic, typeof(TEvent).Name);
+        _logger.LogDebug("Dynamic subscription to topic '{Topic}' for {EventType} (in-memory mode)", topic, typeof(TEvent).Name);
 
         return Task.FromResult<IAsyncDisposable>(new DynamicSubscription(this, topic, wrappedHandler));
     }
@@ -154,7 +154,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
             _subscriptions.TryRemove(topic, out _);
         }
 
-        _logger.LogDebug("[InMemory] Unsubscribed from topic '{Topic}'", topic);
+        _logger.LogDebug("Unsubscribed from topic '{Topic}' (in-memory mode)", topic);
         return Task.CompletedTask;
     }
 
@@ -180,7 +180,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[InMemory] Error delivering event to subscriber for topic '{Topic}'", topic);
+                _logger.LogError(ex, "Error delivering event to subscriber for topic '{Topic}' (in-memory mode)", topic);
             }
         }
     }

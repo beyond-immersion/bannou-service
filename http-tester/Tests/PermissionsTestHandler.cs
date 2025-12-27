@@ -1520,7 +1520,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             Console.WriteLine("  Event published via IMessageBus, waiting for processing...");
 
             // Wait for event to be processed
-            await Task.Delay(2000);
+            await Task.Delay(500);
 
             // Create a test session with the service state so we can query capabilities
             var sessionStateUpdate = new SessionStateUpdate
@@ -1561,7 +1561,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             {
                 // Try with a small delay - the event might still be processing
                 Console.WriteLine("  Service not found in first attempt, waiting and retrying...");
-                await Task.Delay(2000);
+                await Task.Delay(500);
                 capabilities = await permissionsClient.GetCapabilitiesAsync(capabilityRequest);
             }
 
@@ -1673,7 +1673,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             await messageBus.PublishAsync("permissions.session-state-changed", stateChangeEvent);
 
             // Step 5: Wait for event processing
-            await Task.Delay(2000);
+            await Task.Delay(500);
 
             // Step 6: Also update role to 'user' to get access to authenticated methods
             await permissionsClient.UpdateSessionRoleAsync(new SessionRoleUpdate
@@ -1778,7 +1778,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             await messageBus.PublishAsync("session.connected", sessionConnectedEvent);
 
             // Wait for event to be processed
-            await Task.Delay(2000);
+            await Task.Delay(500);
 
             // Step 3: Verify the session has capabilities (proving it was added to activeConnections)
             var capabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
@@ -1863,7 +1863,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             Console.WriteLine($"  Publishing session.connected with roles [user, admin]...");
             await messageBus.PublishAsync("session.connected", sessionConnectedEvent);
 
-            await Task.Delay(2000);
+            await Task.Delay(500);
 
             // Step 3: Verify session has admin capabilities
             var capabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
@@ -1935,7 +1935,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
 
             Console.WriteLine($"  Publishing session.connected for {testSessionId}...");
             await messageBus.PublishAsync("session.connected", connectEvent);
-            await Task.Delay(1500);
+            await Task.Delay(500);
 
             // Verify session is connected (has capabilities)
             var beforeCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
@@ -1962,7 +1962,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
 
             Console.WriteLine($"  Publishing session.disconnected for {testSessionId}...");
             await messageBus.PublishAsync("session.disconnected", disconnectEvent);
-            await Task.Delay(1500);
+            await Task.Delay(500);
 
             // Step 3: Verify the event handler completed successfully
             try
@@ -2030,7 +2030,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
 
             Console.WriteLine($"  Publishing session.connected...");
             await messageBus.PublishAsync("session.connected", connectEvent);
-            await Task.Delay(1500);
+            await Task.Delay(500);
 
             // Capture capabilities before disconnect
             var beforeCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
@@ -2055,7 +2055,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
 
             Console.WriteLine($"  Publishing session.disconnected with reconnectable=true...");
             await messageBus.PublishAsync("session.disconnected", disconnectEvent);
-            await Task.Delay(1500);
+            await Task.Delay(500);
 
             // Step 4: Verify session data is preserved (can still get capabilities)
             var afterCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest

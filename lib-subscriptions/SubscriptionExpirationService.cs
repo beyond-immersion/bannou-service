@@ -68,6 +68,24 @@ public class SubscriptionExpirationService : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during subscription expiration check");
+                try
+                {
+                    using var errorScope = _serviceProvider.CreateScope();
+                    var messageBus = errorScope.ServiceProvider.GetService<IMessageBus>();
+                    if (messageBus != null)
+                    {
+                        await messageBus.TryPublishErrorAsync(
+                            "subscriptions",
+                            "ExpirationCheck",
+                            ex.GetType().Name,
+                            ex.Message,
+                            severity: BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity.Error);
+                    }
+                }
+                catch
+                {
+                    // Don't let error publishing failures affect the loop
+                }
             }
 
             try

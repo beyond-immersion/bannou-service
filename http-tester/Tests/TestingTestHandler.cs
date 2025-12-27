@@ -21,7 +21,7 @@ public class TestingTestHandler : BaseHttpTestHandler
     {
         // Get base URL from environment or default to localhost
         // Note: When connecting via mesh, paths must include /v1.0/invoke/{appId}/method/ prefix
-        var bannouHttpEndpoint = Environment.GetEnvironmentVariable("BANNOU_HTTP_ENDPOINT") ?? "http://localhost:5012";
+        var bannouHttpEndpoint = Environment.GetEnvironmentVariable("BANNOU_HTTP_ENDPOINT") ?? "http://bannou:80";
         _baseUrl = bannouHttpEndpoint;
     }
 

@@ -84,7 +84,7 @@ public class ApiRequest : ApiMessage
     {
         try
         {
-            var coordinatorService = Program.Configuration.Network_Mode ?? "bannou";
+            var coordinatorService = Program.Configuration.Network_Mode ?? AppConstants.DEFAULT_APP_NAME;
 
             string? requestUrl = null;
             if (!string.IsNullOrWhiteSpace(service))
@@ -150,7 +150,7 @@ public class ApiRequest : ApiMessage
     {
         try
         {
-            var coordinatorService = Program.Configuration.Network_Mode ?? "bannou";
+            var coordinatorService = Program.Configuration.Network_Mode ?? AppConstants.DEFAULT_APP_NAME;
 
             string? requestUrl = null;
             if (!string.IsNullOrWhiteSpace(service))

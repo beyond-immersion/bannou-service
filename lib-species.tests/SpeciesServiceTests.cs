@@ -59,6 +59,15 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         _mockRealmClient
             .Setup(r => r.RealmExistsAsync(It.IsAny<RealmExistsRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RealmExistsResponse { Exists = true, IsActive = true });
+
+        // Default character validation to pass (no characters using species)
+        _mockCharacterClient
+            .Setup(c => c.ListCharactersAsync(It.IsAny<ListCharactersRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterListResponse { Characters = new List<CharacterResponse>(), TotalCount = 0 });
+
+        _mockCharacterClient
+            .Setup(c => c.GetCharactersByRealmAsync(It.IsAny<GetCharactersByRealmRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterListResponse { Characters = new List<CharacterResponse>(), TotalCount = 0 });
     }
 
     private SpeciesService CreateService()

@@ -45,7 +45,7 @@ public partial class BehaviorService : IBehaviorService
         try
         {
             _logger.LogWarning("Method CompileAbmlBehaviorAsync called but not implemented");
-            return (StatusCodes.OK, null);
+            return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
         {
@@ -69,7 +69,7 @@ public partial class BehaviorService : IBehaviorService
         try
         {
             _logger.LogWarning("Method CompileBehaviorStackAsync called but not implemented");
-            return (StatusCodes.OK, null);
+            return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
         {
@@ -93,7 +93,7 @@ public partial class BehaviorService : IBehaviorService
         try
         {
             _logger.LogWarning("Method ValidateAbmlAsync called but not implemented");
-            return (StatusCodes.OK, null);
+            return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
         {
@@ -117,7 +117,7 @@ public partial class BehaviorService : IBehaviorService
         try
         {
             _logger.LogWarning("Method GetCachedBehaviorAsync called but not implemented for: {BehaviorId}", body.BehaviorId);
-            return (StatusCodes.OK, null);
+            return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
         {
@@ -142,7 +142,7 @@ public partial class BehaviorService : IBehaviorService
         try
         {
             _logger.LogWarning("Method ResolveContextVariablesAsync called but not implemented");
-            return (StatusCodes.OK, null);
+            return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
         {
@@ -166,7 +166,7 @@ public partial class BehaviorService : IBehaviorService
         try
         {
             _logger.LogWarning("Method InvalidateCachedBehaviorAsync called but not implemented for: {BehaviorId}", body.BehaviorId);
-            return (StatusCodes.OK, null);
+            return (StatusCodes.NotImplemented, null);
         }
         catch (Exception ex)
         {

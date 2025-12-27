@@ -400,6 +400,49 @@ Generated clients automatically use mesh service resolution for routing, support
 
 Backend selection is handled by `IStateStoreFactory` based on service configuration.
 
+### Allowed Exceptions
+
+While infrastructure libs are mandatory for service code, certain specialized components have legitimate reasons for direct infrastructure access:
+
+#### 1. SDK/Client Bundle Code (Bannou.SDK)
+
+Client SDK packages that ship to external consumers may use `System.Text.Json` directly instead of `BannouJson`. This is because:
+- SDK must be self-contained without internal Bannou dependencies
+- Clients need standard .NET serialization they can configure
+- `BannouJson` is an internal abstraction not exposed to SDK consumers
+
+```csharp
+// In Bannou.SDK (allowed):
+var json = JsonSerializer.Serialize(request, options);
+
+// In lib-* or bannou-service (forbidden):
+var json = JsonSerializer.Serialize(request); // Use BannouJson.Serialize()
+```
+
+#### 2. MassTransit Dynamic RabbitMQ (lib-messaging internals)
+
+`MassTransitMessageBus` uses direct RabbitMQ management API for dynamic queue/exchange creation. This is internal to lib-messaging, not service code:
+- Dynamic subscriptions require runtime topology changes
+- MassTransit abstracts RabbitMQ but needs management API access
+- Service code still uses `IMessageBus`/`IMessageSubscriber` interfaces
+
+#### 3. Docker.DotNet (Orchestrator Service)
+
+The Orchestrator service uses `Docker.DotNet` for container management. This is legitimate because:
+- Container orchestration IS the service's core responsibility
+- No abstraction lib exists (Docker is the infrastructure being managed)
+- Service manages deployment topology, not application state
+
+```csharp
+// In OrchestratorService (allowed):
+using var client = new DockerClientConfiguration().CreateClient();
+await client.Containers.StartContainerAsync(containerId, new());
+
+// In any other service (forbidden - use lib-mesh for service calls)
+```
+
+**Key Principle**: These exceptions are for infrastructure lib internals or specialized services where the infrastructure IS the domain. Regular service code must always use the three infrastructure libs.
+
 ---
 
 ## Tenet 5: Event-Driven Architecture (REQUIRED)
@@ -578,17 +621,21 @@ public class AuthService : IAuthService
 ```
 
 **Why Partial is Required**:
-1. Event handlers are implemented in separate `{Service}ServiceEvents.cs` file
+1. Event handlers MAY be implemented in separate `{Service}ServiceEvents.cs` file
 2. Schema-driven event subscription generation needs partial class target
 3. Separation of concerns - business logic vs. event handling
 4. 15+ services required retroactive conversion when this wasn't followed
 
-**Required File Structure**:
+**File Structure**:
 ```
 lib-{service}/
-├── {Service}Service.cs          # Main implementation (partial class)
-└── {Service}ServiceEvents.cs    # Event handlers (partial class)
+├── {Service}Service.cs          # Main implementation (partial class, REQUIRED)
+└── {Service}ServiceEvents.cs    # Event handlers (partial class, OPTIONAL - only if service subscribes to events)
 ```
+
+**ServiceEvents.cs is OPTIONAL**: The `RegisterEventConsumers()` method has a default no-op implementation
+in `IEventConsumerRegistrar`. Services that don't subscribe to any events do NOT need a ServiceEvents.cs file.
+Only create this file when your service needs to handle events from the message bus.
 
 ### Service Class Pattern
 

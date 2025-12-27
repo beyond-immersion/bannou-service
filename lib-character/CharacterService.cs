@@ -460,9 +460,9 @@ public partial class CharacterService : ICharacterService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Could not validate realm {RealmId} - proceeding with operation", realmId);
-            // If RealmService is unavailable, allow the operation with a warning
-            return (true, true);
+            _logger.LogError(ex, "Could not validate realm {RealmId} - failing operation (fail closed)", realmId);
+            // If RealmService is unavailable, fail the operation - don't assume realm is valid
+            throw new InvalidOperationException($"Cannot validate realm {realmId}: RealmService unavailable", ex);
         }
     }
 
@@ -492,9 +492,9 @@ public partial class CharacterService : ICharacterService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Could not validate species {SpeciesId} - proceeding with operation", speciesId);
-            // If SpeciesService is unavailable, allow the operation with a warning
-            return (true, true);
+            _logger.LogError(ex, "Could not validate species {SpeciesId} - failing operation (fail closed)", speciesId);
+            // If SpeciesService is unavailable, fail the operation - don't assume species is valid
+            throw new InvalidOperationException($"Cannot validate species {speciesId}: SpeciesService unavailable", ex);
         }
     }
 

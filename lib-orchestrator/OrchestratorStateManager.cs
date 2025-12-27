@@ -179,6 +179,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to write heartbeat for instance {AppId}", heartbeat.AppId);
+            throw; // Don't mask state store failures - heartbeat system depends on reliable writes
         }
     }
 
@@ -379,6 +380,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to write routing for {ServiceName}", serviceName);
+            throw; // Don't mask state store failures - routing system depends on reliable writes
         }
     }
 
@@ -516,6 +518,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to remove routing for {ServiceName}", serviceName);
+            throw; // Don't mask state store failures - routing cleanup depends on reliable deletes
         }
     }
 
@@ -574,6 +577,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to clear service routings");
+            throw; // Don't mask state store failures - routing clear depends on reliable deletes
         }
     }
 
@@ -600,7 +604,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get configuration version");
-            return 0;
+            throw; // Don't mask state store failures - caller needs to know
         }
     }
 
@@ -644,7 +648,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to save configuration version");
-            return 0;
+            throw; // Don't mask state store failures - caller needs to know
         }
     }
 
@@ -674,7 +678,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get configuration version {Version}", version);
-            return null;
+            throw; // Don't mask state store failures - null return should mean "not found", not "error"
         }
     }
 
@@ -703,7 +707,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get current configuration");
-            return null;
+            throw; // Don't mask state store failures - null return should mean "not configured", not "error"
         }
     }
 
@@ -795,7 +799,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to clear current configuration");
-            return 0;
+            throw; // Don't mask state store failures - caller needs to know
         }
     }
 
@@ -823,7 +827,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get list from key {Key}", key);
-            return null;
+            throw; // Don't mask state store failures - null return should mean "not found", not "error"
         }
     }
 
@@ -846,6 +850,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to set list at key {Key}", key);
+            throw; // Don't mask state store failures - caller needs to know if data wasn't saved
         }
     }
 
@@ -868,7 +873,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get hash from key {Key}", key);
-            return null;
+            throw; // Don't mask state store failures - null return should mean "not found", not "error"
         }
     }
 
@@ -891,6 +896,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to set hash at key {Key}", key);
+            throw; // Don't mask state store failures - caller needs to know if data wasn't saved
         }
     }
 
@@ -913,7 +919,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get value from key {Key}", key);
-            return null;
+            throw; // Don't mask state store failures - null return should mean "not found", not "error"
         }
     }
 
@@ -937,6 +943,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to set value at key {Key}", key);
+            throw; // Don't mask state store failures - caller needs to know if data wasn't saved
         }
     }
 

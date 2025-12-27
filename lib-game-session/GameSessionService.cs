@@ -1,5 +1,7 @@
+using BeyondImmersion.Bannou.GameSession.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -37,6 +39,7 @@ public partial class GameSessionService : IGameSessionService
     private readonly IPermissionsClient? _permissionsClient;
     private readonly ISubscriptionsClient? _subscriptionsClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IClientEventPublisher? _clientEventPublisher;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
@@ -70,6 +73,12 @@ public partial class GameSessionService : IGameSessionService
     private static readonly ConcurrentDictionary<Guid, HashSet<string>> _accountSubscriptions = new();
 
     /// <summary>
+    /// Reverse index for client event publishing: AccountId -> Set of WebSocket session IDs.
+    /// Static for multi-instance safety (Tenet 4).
+    /// </summary>
+    private static readonly ConcurrentDictionary<Guid, HashSet<string>> _accountSessions = new();
+
+    /// <summary>
     /// Server salt for GUID generation. Comes from configuration, with fallback to random generation for development.
     /// Instance-based to support configuration injection (Tenet 21).
     /// </summary>
@@ -82,8 +91,9 @@ public partial class GameSessionService : IGameSessionService
     /// <param name="messageBus">Message bus for pub/sub operations.</param>
     /// <param name="logger">Logger for this service.</param>
     /// <param name="configuration">Service configuration.</param>
-    /// <param name="errorEventEmitter">Error event emitter for unexpected failures.</param>
     /// <param name="httpContextAccessor">HTTP context accessor for reading request headers.</param>
+    /// <param name="eventConsumer">Event consumer for pub/sub fan-out.</param>
+    /// <param name="clientEventPublisher">Optional client event publisher for pushing events to WebSocket clients. May be null in contexts without Connect service.</param>
     /// <param name="voiceClient">Optional voice client for voice room coordination. May be null if voice service is disabled.</param>
     /// <param name="permissionsClient">Optional permissions client for setting game-session:in_game state. May be null if Permissions service is not loaded.</param>
     /// <param name="subscriptionsClient">Optional subscriptions client for fetching account subscriptions. May be null if Subscriptions service is not loaded.</param>
@@ -94,6 +104,7 @@ public partial class GameSessionService : IGameSessionService
         GameSessionServiceConfiguration configuration,
         IHttpContextAccessor httpContextAccessor,
         IEventConsumer eventConsumer,
+        IClientEventPublisher? clientEventPublisher = null,
         IVoiceClient? voiceClient = null,
         IPermissionsClient? permissionsClient = null,
         ISubscriptionsClient? subscriptionsClient = null)
@@ -103,9 +114,10 @@ public partial class GameSessionService : IGameSessionService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
-        _voiceClient = voiceClient; // Nullable - voice service may be disabled (Tenet 5)
-        _permissionsClient = permissionsClient; // Nullable - permissions service may not be loaded (Tenet 5)
-        _subscriptionsClient = subscriptionsClient; // Nullable - subscriptions service may not be loaded (Tenet 5)
+        _clientEventPublisher = clientEventPublisher; // Nullable - may not be available in all contexts (Tenet 6)
+        _voiceClient = voiceClient; // Nullable - voice service may be disabled (Tenet 6)
+        _permissionsClient = permissionsClient; // Nullable - permissions service may not be loaded (Tenet 6)
+        _subscriptionsClient = subscriptionsClient; // Nullable - subscriptions service may not be loaded (Tenet 6)
 
         // Server salt from configuration - REQUIRED (fail-fast for production safety)
         if (string.IsNullOrEmpty(configuration.ServerSalt))
@@ -866,19 +878,106 @@ public partial class GameSessionService : IGameSessionService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Publish chat event to all session participants
-            await _messageBus.PublishAsync(
-                $"game-session.{sessionId}.chat",
-                new
-                {
-                    SessionId = sessionId,
-                    Message = body.Message,
-                    MessageType = body.MessageType.ToString(),
-                    TargetPlayerId = body.TargetPlayerId == Guid.Empty ? null : body.TargetPlayerId.ToString(),
-                    Timestamp = DateTimeOffset.UtcNow
-                });
+            // Check if client event publisher is available
+            if (_clientEventPublisher == null)
+            {
+                _logger.LogWarning("IClientEventPublisher not available - cannot send chat message to session {SessionId}", sessionId);
+                return (StatusCodes.InternalServerError, null);
+            }
 
-            _logger.LogDebug("Chat message sent in session {SessionId}", sessionId);
+            // Get sender info from request context
+            var senderAccountIdStr = _httpContextAccessor.HttpContext?.Request.Headers["X-Bannou-Account-Id"].FirstOrDefault();
+            var senderId = Guid.TryParse(senderAccountIdStr, out var parsedSenderId) ? parsedSenderId : Guid.Empty;
+            var senderPlayer = model.Players.FirstOrDefault(p => p.AccountId == senderId);
+
+            // Build typed client event
+            var chatEvent = new ChatMessageReceivedEvent
+            {
+                Event_id = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Event_name = ChatMessageReceivedEventEvent_name.Game_session_chat_received,
+                Session_id = body.SessionId,
+                Message_id = Guid.NewGuid(),
+                Sender_id = senderId,
+                Sender_name = senderPlayer?.DisplayName,
+                Message = body.Message,
+                Message_type = MapChatMessageType(body.MessageType),
+                Is_whisper_to_me = false // Will be set per-recipient for whispers
+            };
+
+            // Get WebSocket session IDs for all players in the game session
+            var targetSessionIds = new List<string>();
+            foreach (var player in model.Players)
+            {
+                if (_accountSessions.TryGetValue(player.AccountId, out var sessions))
+                {
+                    lock (sessions)
+                    {
+                        targetSessionIds.AddRange(sessions);
+                    }
+                }
+            }
+
+            if (targetSessionIds.Count == 0)
+            {
+                _logger.LogWarning("No connected WebSocket sessions found for game session {SessionId}", sessionId);
+                return (StatusCodes.OK, null); // Not an error - players may have disconnected
+            }
+
+            // Handle whisper messages - only send to sender and target
+            if (body.MessageType == ChatMessageRequestMessageType.Whisper && body.TargetPlayerId != Guid.Empty)
+            {
+                var whisperTargets = new List<string>();
+
+                // Add sender's sessions
+                if (_accountSessions.TryGetValue(senderId, out var senderSessions))
+                {
+                    lock (senderSessions)
+                    {
+                        whisperTargets.AddRange(senderSessions);
+                    }
+                }
+
+                // Add target's sessions with is_whisper_to_me = true
+                if (_accountSessions.TryGetValue(body.TargetPlayerId, out var targetSessions))
+                {
+                    List<string> targetSessionsCopy;
+                    lock (targetSessions)
+                    {
+                        targetSessionsCopy = targetSessions.ToList();
+                    }
+
+                    // Send to target with is_whisper_to_me = true
+                    var targetEvent = new ChatMessageReceivedEvent
+                    {
+                        Event_id = chatEvent.Event_id,
+                        Timestamp = chatEvent.Timestamp,
+                        Event_name = chatEvent.Event_name,
+                        Session_id = chatEvent.Session_id,
+                        Message_id = chatEvent.Message_id,
+                        Sender_id = chatEvent.Sender_id,
+                        Sender_name = chatEvent.Sender_name,
+                        Message = chatEvent.Message,
+                        Message_type = chatEvent.Message_type,
+                        Is_whisper_to_me = true
+                    };
+                    await _clientEventPublisher.PublishToSessionsAsync(targetSessionsCopy, targetEvent, cancellationToken);
+                }
+
+                // Send to sender with is_whisper_to_me = false
+                if (whisperTargets.Count > 0)
+                {
+                    await _clientEventPublisher.PublishToSessionsAsync(whisperTargets, chatEvent, cancellationToken);
+                }
+            }
+            else
+            {
+                // Public message - send to all session participants
+                var sentCount = await _clientEventPublisher.PublishToSessionsAsync(targetSessionIds, chatEvent, cancellationToken);
+                _logger.LogDebug("Chat message sent to {SentCount}/{TotalCount} sessions in game session {SessionId}",
+                    sentCount, targetSessionIds.Count, sessionId);
+            }
+
             return (StatusCodes.OK, null);
         }
         catch (Exception ex)
@@ -920,8 +1019,22 @@ public partial class GameSessionService : IGameSessionService
             return;
         }
 
-        // Track this session
+        // Track this session (forward index: SessionId -> AccountId)
         _connectedSessions[sessionId] = accountGuid;
+
+        // Maintain reverse index for client event publishing (AccountId -> Set<SessionId>)
+        _accountSessions.AddOrUpdate(
+            accountGuid,
+            _ => new HashSet<string> { sessionId },
+            (_, existingSet) =>
+            {
+                lock (existingSet)
+                {
+                    existingSet.Add(sessionId);
+                }
+                return existingSet;
+            });
+
         _logger.LogDebug("Tracking session {SessionId} for account {AccountId}", sessionId, accountId);
 
         // Fetch subscriptions if not cached
@@ -963,6 +1076,19 @@ public partial class GameSessionService : IGameSessionService
 
         if (_connectedSessions.TryRemove(sessionId, out var accountId))
         {
+            // Remove from reverse index
+            if (_accountSessions.TryGetValue(accountId, out var sessions))
+            {
+                lock (sessions)
+                {
+                    sessions.Remove(sessionId);
+                    // Clean up empty sets to prevent memory leaks
+                    if (sessions.Count == 0)
+                    {
+                        _accountSessions.TryRemove(accountId, out _);
+                    }
+                }
+            }
             _logger.LogDebug("Removed session {SessionId} (account {AccountId}) from tracking", sessionId, accountId);
         }
 
@@ -1296,6 +1422,17 @@ public partial class GameSessionService : IGameSessionService
             CreateGameSessionRequestGameType.Arcadia => GameSessionResponseGameType.Arcadia,
             CreateGameSessionRequestGameType.Generic => GameSessionResponseGameType.Generic,
             _ => GameSessionResponseGameType.Generic
+        };
+    }
+
+    private static ChatMessageReceivedEventMessage_type MapChatMessageType(ChatMessageRequestMessageType messageType)
+    {
+        return messageType switch
+        {
+            ChatMessageRequestMessageType.Public => ChatMessageReceivedEventMessage_type.Public,
+            ChatMessageRequestMessageType.Whisper => ChatMessageReceivedEventMessage_type.Whisper,
+            ChatMessageRequestMessageType.System => ChatMessageReceivedEventMessage_type.System,
+            _ => ChatMessageReceivedEventMessage_type.Public
         };
     }
 

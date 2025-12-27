@@ -30,6 +30,7 @@ public class ConnectServiceTests
     private readonly Mock<IMeshInvocationClient> _mockMeshClient;
     private readonly Mock<IServiceAppMappingResolver> _mockAppMappingResolver;
     private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly string _testServerSalt = "test-server-salt-2025";
 
@@ -49,6 +50,7 @@ public class ConnectServiceTests
         _mockMeshClient = new Mock<IMeshInvocationClient>();
         _mockAppMappingResolver = new Mock<IServiceAppMappingResolver>();
         _mockMessageBus = new Mock<IMessageBus>();
+        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
     }
 
@@ -575,6 +577,7 @@ public class ConnectServiceTests
             _mockAuthClient.Object,
             _mockMeshClient.Object,
             _mockMessageBus.Object,
+            _mockHttpClientFactory.Object,
             _mockAppMappingResolver.Object,
             _configuration,
             _mockLogger.Object,

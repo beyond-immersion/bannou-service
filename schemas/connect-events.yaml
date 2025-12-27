@@ -1,0 +1,17 @@
+openapi: 3.0.3
+info:
+  title: Connect Service Events
+  description: |
+    Event subscriptions for Connect service.
+    Connect receives session invalidation events to disconnect WebSocket clients.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Session lifecycle events from Auth service
+    - topic: session.invalidated
+      event: SessionInvalidatedEvent
+      handler: HandleSessionInvalidated
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas: {}  # SessionInvalidatedEvent is defined in auth-events.yaml

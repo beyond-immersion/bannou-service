@@ -882,6 +882,20 @@
             The port the HTTPS webhost is listening on.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Http_Endpoint">
+            <summary>
+            The HTTP endpoint URL for service-to-service communication.
+            Used by ServiceClientBase and ConnectService for mesh routing.
+            Environment variable: BANNOU_HTTP_ENDPOINT
+            Default: http://localhost:{HTTP_Web_Host_Port}
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.EffectiveHttpEndpoint">
+            <summary>
+            Gets the effective HTTP endpoint URL, with fallback to localhost:{HTTP_Web_Host_Port}.
+            Use this property instead of direct environment variable access.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Log_Mode">
             <summary>
             The log destination.
@@ -1547,6 +1561,18 @@
         <member name="F:BeyondImmersion.BannouService.StatusCodes.InternalServerError">
             <summary>
             Internal server error (500).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.StatusCodes.NotImplemented">
+            <summary>
+            Method not implemented (501).
+            Used for stub services that are planned but not yet implemented.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.StatusCodes.ServiceUnavailable">
+            <summary>
+            Service temporarily unavailable (503).
+            Used when a required dependency or subsystem is not available.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.EventConsumer">
@@ -17227,7 +17253,7 @@
              <summary>
              Gets the base URL for Bannou service invocation with dynamic app-id resolution.
              For parameterless constructor, falls back to "bannou" app-id.
-             Uses environment variable BANNOU_HTTP_ENDPOINT if available for containerized environments.
+             Uses Program.Configuration.EffectiveHttpEndpoint for containerized environments.
              </summary>
              <remarks>
              CRITICAL ARCHITECTURAL CONSTRAINT:

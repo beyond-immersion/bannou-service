@@ -4,13 +4,13 @@
 
 services:
 
-  # Redis Stack for state/caching with RediSearch (FT.* commands)
-  # Uses redis-stack-server which includes RediSearch, RedisJSON, RedisBloom, RedisTimeSeries
+  # Redis 8+ for state/caching - includes RediSearch, RedisJSON, etc. built-in
+  # DO NOT CHANGE TO redis-stack-server - Redis 8.4+ has all modules integrated
   bannou-redis:
-    image: redis/redis-stack-server:latest
+    image: redis:latest
     ports:
       - "6379:6379"  # For development access
-    command: redis-server --databases 16 --appendonly yes --loadmodule /opt/redis-stack/lib/redisearch.so
+    command: redis-server --databases 16 --appendonly yes
     volumes:
       - bannou-redis-data:/data
     healthcheck:

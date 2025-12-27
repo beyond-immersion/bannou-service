@@ -80,7 +80,7 @@ public class StateStoreFactoryConfiguration
 
 /// <summary>
 /// Factory for creating typed state stores.
-/// Manages Redis connections and MySQL DbContext.
+/// Manages Redis connections and MySQL DbContext options.
 /// </summary>
 public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
 {
@@ -89,7 +89,7 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     private readonly ILogger<StateStoreFactory> _logger;
 
     private ConnectionMultiplexer? _redis;
-    private StateDbContext? _mysqlContext;
+    private DbContextOptions<StateDbContext>? _mysqlOptions;
     private readonly SemaphoreSlim _initLock = new(1, 1);
     private bool _initialized;
 
@@ -161,10 +161,13 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                         optionsBuilder.UseMySql(
                             _configuration.MySqlConnectionString,
                             ServerVersion.AutoDetect(_configuration.MySqlConnectionString));
-                        _mysqlContext = new StateDbContext(optionsBuilder.Options);
 
-                        // Ensure database and tables exist - this will throw if connection fails
-                        await _mysqlContext.Database.EnsureCreatedAsync();
+                        // Store options for per-operation context creation (thread-safe)
+                        _mysqlOptions = optionsBuilder.Options;
+
+                        // Test connection with a temporary context - dispose immediately
+                        using var testContext = new StateDbContext(_mysqlOptions);
+                        await testContext.Database.EnsureCreatedAsync();
 
                         _logger.LogInformation("MySQL connection established successfully");
                         break; // Success - exit retry loop
@@ -175,19 +178,13 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                             "MySQL connection failed (attempt {Attempt}/{MaxAttempts}): {Message}",
                             attempt, maxRetries, ex.Message);
 
-                        // Dispose failed context before retry
-                        if (_mysqlContext != null)
-                        {
-                            await _mysqlContext.DisposeAsync();
-                            _mysqlContext = null;
-                        }
-
+                        _mysqlOptions = null;
                         await Task.Delay(retryDelayMs);
                     }
                     // Last attempt - let exception propagate
                 }
 
-                if (_mysqlContext == null)
+                if (_mysqlOptions == null)
                 {
                     throw new InvalidOperationException(
                         $"Failed to establish MySQL connection after {maxRetries} attempts");
@@ -308,14 +305,14 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             }
             else // MySql
             {
-                if (_mysqlContext == null)
+                if (_mysqlOptions == null)
                 {
                     throw new InvalidOperationException("MySQL connection not available");
                 }
 
                 var mysqlLogger = _loggerFactory.CreateLogger<MySqlStateStore<TValue>>();
                 return new MySqlStateStore<TValue>(
-                    _mysqlContext,
+                    _mysqlOptions,
                     storeConfig.TableName ?? storeName,
                     mysqlLogger);
             }
@@ -460,11 +457,9 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             _redis = null;
         }
 
-        if (_mysqlContext != null)
-        {
-            await _mysqlContext.DisposeAsync();
-            _mysqlContext = null;
-        }
+        // Note: _mysqlOptions doesn't need disposal - it's just configuration.
+        // Each MySqlStateStore creates and disposes its own DbContext per operation.
+        _mysqlOptions = null;
 
         _storeCache.Clear();
         _initLock.Dispose();

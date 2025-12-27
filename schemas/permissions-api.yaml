@@ -21,6 +21,7 @@ paths:
       operationId: getCapabilities
       tags:
       - Permission Lookup
+      x-permissions: []  # Internal only - not exposed to WebSocket clients
       requestBody:
         required: true
         content:
@@ -59,6 +60,7 @@ paths:
       operationId: validateApiAccess
       tags:
       - Permission Validation
+      x-permissions: []  # Internal only - not exposed to WebSocket clients
       requestBody:
         required: true
         content:
@@ -95,6 +97,7 @@ paths:
       operationId: registerServicePermissions
       tags:
       - Service Management
+      x-permissions: []  # Internal only - not exposed to WebSocket clients
       requestBody:
         required: true
         content:
@@ -192,6 +195,7 @@ paths:
       operationId: updateSessionRole
       tags:
       - Session Management
+      x-permissions: []  # Internal only - not exposed to WebSocket clients
       requestBody:
         required: true
         content:
@@ -237,6 +241,7 @@ paths:
       operationId: clearSessionState
       tags:
       - Session Management
+      x-permissions: []  # Internal only - not exposed to WebSocket clients
       requestBody:
         required: true
         content:
@@ -284,6 +289,7 @@ paths:
       operationId: getSessionInfo
       tags:
       - Session Management
+      x-permissions: []  # Internal only - not exposed to WebSocket clients
       requestBody:
         required: true
         content:

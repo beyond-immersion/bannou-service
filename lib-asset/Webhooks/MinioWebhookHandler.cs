@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Asset.Models;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
@@ -42,7 +43,7 @@ public class MinioWebhookHandler
     {
         try
         {
-            var notification = JsonSerializer.Deserialize<MinioNotification>(payload);
+            var notification = BannouJson.Deserialize<MinioNotification>(payload);
             if (notification?.Records == null || notification.Records.Count == 0)
             {
                 _logger.LogWarning("MinIO webhook: Empty or invalid notification");

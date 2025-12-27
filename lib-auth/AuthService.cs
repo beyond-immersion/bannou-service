@@ -129,6 +129,7 @@ public partial class AuthService : IAuthService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to lookup account by email via AccountsClient");
+                await PublishErrorEventAsync("Login", ex.GetType().Name, ex.Message, dependency: "accounts");
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -172,6 +173,7 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during login for email: {Email}", body.Email);
+            await PublishErrorEventAsync("Login", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -230,6 +232,7 @@ public partial class AuthService : IAuthService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to create account via AccountsClient");
+                await PublishErrorEventAsync("Register", ex.GetType().Name, ex.Message, dependency: "accounts");
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -253,6 +256,7 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during registration for username: {Username}", body.Username);
+            await PublishErrorEventAsync("Register", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -302,6 +306,7 @@ public partial class AuthService : IAuthService
             if (account == null)
             {
                 _logger.LogError("Failed to find or create account for OAuth user: {ProviderId}", userInfo.ProviderId);
+                await PublishErrorEventAsync("CompleteOAuth", "account_creation_failed", "Failed to find or create account for OAuth user", dependency: "accounts", details: new { Provider = provider.ToString(), ProviderId = userInfo.ProviderId });
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -325,6 +330,7 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during OAuth callback for provider: {Provider}", provider);
+            await PublishErrorEventAsync("CompleteOAuth", ex.GetType().Name, ex.Message, details: new { Provider = provider.ToString() });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -355,6 +361,7 @@ public partial class AuthService : IAuthService
                 string.IsNullOrWhiteSpace(_configuration.SteamAppId))
             {
                 _logger.LogError("Steam API Key or App ID not configured");
+                await PublishErrorEventAsync("VerifySteamAuth", "configuration_error", "Steam API Key or App ID not configured");
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -380,6 +387,7 @@ public partial class AuthService : IAuthService
             if (account == null)
             {
                 _logger.LogError("Failed to find or create account for Steam user: {SteamId}", steamId);
+                await PublishErrorEventAsync("VerifySteamAuth", "account_creation_failed", "Failed to find or create account for Steam user", dependency: "accounts", details: new { SteamId = steamId });
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -402,6 +410,7 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during Steam authentication verification");
+            await PublishErrorEventAsync("VerifySteamAuth", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -446,6 +455,7 @@ public partial class AuthService : IAuthService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to lookup account by ID via AccountsClient");
+                await PublishErrorEventAsync("RefreshToken", ex.GetType().Name, ex.Message, dependency: "accounts");
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -469,6 +479,7 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during token refresh");
+            await PublishErrorEventAsync("RefreshToken", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -495,6 +506,7 @@ public partial class AuthService : IAuthService
                     if (string.IsNullOrWhiteSpace(_configuration.DiscordClientId))
                     {
                         _logger.LogError("Discord Client ID not configured");
+                        await PublishErrorEventAsync("InitOAuth", "configuration_error", "Discord Client ID not configured");
                         return (StatusCodes.InternalServerError, null);
                     }
                     var discordRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.DiscordRedirectUri);
@@ -505,6 +517,7 @@ public partial class AuthService : IAuthService
                     if (string.IsNullOrWhiteSpace(_configuration.GoogleClientId))
                     {
                         _logger.LogError("Google Client ID not configured");
+                        await PublishErrorEventAsync("InitOAuth", "configuration_error", "Google Client ID not configured");
                         return (StatusCodes.InternalServerError, null);
                     }
                     var googleRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.GoogleRedirectUri);
@@ -515,6 +528,7 @@ public partial class AuthService : IAuthService
                     if (string.IsNullOrWhiteSpace(_configuration.TwitchClientId))
                     {
                         _logger.LogError("Twitch Client ID not configured");
+                        await PublishErrorEventAsync("InitOAuth", "configuration_error", "Twitch Client ID not configured");
                         return (StatusCodes.InternalServerError, null);
                     }
                     var twitchRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.TwitchRedirectUri);
@@ -532,6 +546,7 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error initializing OAuth for provider: {Provider}", provider);
+            await PublishErrorEventAsync("InitOAuth", ex.GetType().Name, ex.Message, details: new { Provider = provider.ToString() });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -563,6 +578,7 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error providing Steam authentication info");
+            await PublishErrorEventAsync("InitSteamAuth", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -665,6 +681,7 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during logout");
+            await PublishErrorEventAsync("Logout", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -712,6 +729,7 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error terminating session: {SessionId}", body.SessionId);
+            await PublishErrorEventAsync("TerminateSession", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -780,6 +798,7 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error requesting password reset for email: {Email}", body.Email);
+            await PublishErrorEventAsync("RequestPasswordReset", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -878,6 +897,7 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error confirming password reset");
+            await PublishErrorEventAsync("ConfirmPasswordReset", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -931,6 +951,7 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting sessions");
+            await PublishErrorEventAsync("GetSessions", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1040,12 +1061,14 @@ public partial class AuthService : IAuthService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error during JWT validation");
+                await PublishErrorEventAsync("ValidateToken", ex.GetType().Name, ex.Message);
                 return (StatusCodes.InternalServerError, null);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during token validation");
+            await PublishErrorEventAsync("ValidateToken", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1559,7 +1582,7 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get sessions for account {AccountId}", accountId);
-            return new List<SessionInfo>();
+            throw; // Don't mask state store failures - empty list should mean "no sessions", not "error"
         }
     }
 

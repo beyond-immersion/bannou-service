@@ -405,7 +405,7 @@ public class PluginLoader
             }
             else
             {
-                _logger.LogDebug("🚫 Skipping service {ServiceType} - missing [BannouService] attribute",
+                _logger.LogDebug("Skipping service {ServiceType} - missing BannouService attribute",
                     serviceType.Name);
             }
         }
@@ -871,7 +871,7 @@ public class PluginLoader
     /// <returns>True if all plugins and services initialized successfully</returns>
     public async Task<bool> InitializeAsync()
     {
-        _logger.LogInformation("🚀 Initializing {EnabledCount} enabled plugins", _enabledPlugins.Count);
+        _logger.LogInformation("Initializing {EnabledCount} enabled plugins", _enabledPlugins.Count);
 
         // STAGE 1: Initialize enabled plugins (infrastructure first due to sorting)
         foreach (var plugin in _enabledPlugins)
@@ -903,7 +903,7 @@ public class PluginLoader
 
                 if (isInfrastructure)
                 {
-                    _logger.LogInformation("✅ Infrastructure plugin '{PluginName}' initialized successfully",
+                    _logger.LogInformation("Infrastructure plugin '{PluginName}' initialized successfully",
                         plugin.PluginName);
                 }
             }

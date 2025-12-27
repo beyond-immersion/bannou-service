@@ -523,14 +523,66 @@ public class DocumentationServiceTests
 public class DocumentationConfigurationTests
 {
     [Fact]
-    public void Configuration_WithValidSettings_ShouldInitializeCorrectly()
+    public void Configuration_WithDefaultValues_ShouldHaveExpectedDefaults()
     {
-        // Arrange
+        // Arrange & Act
         var config = new DocumentationServiceConfiguration();
 
-        // Act & Assert
+        // Assert - Verify all default values are set correctly
         Assert.NotNull(config);
+        Assert.True(config.SearchIndexRebuildOnStartup, "SearchIndexRebuildOnStartup should default to true");
+        Assert.Equal(86400, config.SessionTtlSeconds); // 24 hours
+        Assert.Equal(524288, config.MaxContentSizeBytes); // 500KB
+        Assert.Equal(7, config.TrashcanTtlDays);
+        Assert.Equal(200, config.VoiceSummaryMaxLength);
+        Assert.Equal(300, config.SearchCacheTtlSeconds); // 5 minutes
+        Assert.Equal(0.3, config.MinRelevanceScore);
+        Assert.Equal(20, config.MaxSearchResults);
+        Assert.Equal(0, config.MaxImportDocuments); // 0 = unlimited
+        Assert.False(config.AiEnhancementsEnabled);
+        Assert.Equal("", config.AiEmbeddingsModel);
     }
 
-    // TODO: Add configuration-specific tests
+    [Fact]
+    public void Configuration_Force_Service_ID_ShouldBeNullByDefault()
+    {
+        // Arrange & Act
+        var config = new DocumentationServiceConfiguration();
+
+        // Assert
+        Assert.Null(config.Force_Service_ID);
+    }
+
+    [Fact]
+    public void Configuration_WithCustomValues_ShouldRetainValues()
+    {
+        // Arrange & Act
+        var config = new DocumentationServiceConfiguration
+        {
+            SearchIndexRebuildOnStartup = false,
+            SessionTtlSeconds = 3600,
+            MaxContentSizeBytes = 1048576, // 1MB
+            TrashcanTtlDays = 30,
+            VoiceSummaryMaxLength = 500,
+            SearchCacheTtlSeconds = 600,
+            MinRelevanceScore = 0.5,
+            MaxSearchResults = 50,
+            MaxImportDocuments = 100,
+            AiEnhancementsEnabled = true,
+            AiEmbeddingsModel = "text-embedding-ada-002"
+        };
+
+        // Assert
+        Assert.False(config.SearchIndexRebuildOnStartup);
+        Assert.Equal(3600, config.SessionTtlSeconds);
+        Assert.Equal(1048576, config.MaxContentSizeBytes);
+        Assert.Equal(30, config.TrashcanTtlDays);
+        Assert.Equal(500, config.VoiceSummaryMaxLength);
+        Assert.Equal(600, config.SearchCacheTtlSeconds);
+        Assert.Equal(0.5, config.MinRelevanceScore);
+        Assert.Equal(50, config.MaxSearchResults);
+        Assert.Equal(100, config.MaxImportDocuments);
+        Assert.True(config.AiEnhancementsEnabled);
+        Assert.Equal("text-embedding-ada-002", config.AiEmbeddingsModel);
+    }
 }

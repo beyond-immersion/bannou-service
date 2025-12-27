@@ -40,10 +40,10 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public int JwtExpirationMinutes { get; set; } = 60;
 
     /// <summary>
-    /// URL to the Connect service for WebSocket connections
+    /// URL to the Connect service for WebSocket connections. REQUIRED - no default value.
     /// Environment variable: AUTH_CONNECT_URL
     /// </summary>
-    public string ConnectUrl { get; set; } = "ws://localhost:5014/connect";
+    public string ConnectUrl { get; set; } = string.Empty;
 
     /// <summary>
     /// Enable mock OAuth providers for testing

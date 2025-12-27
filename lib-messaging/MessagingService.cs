@@ -19,10 +19,16 @@ namespace BeyondImmersion.BannouService.Messaging;
 [BannouService("messaging", typeof(IMessagingService), lifetime: ServiceLifetime.Singleton)]
 public partial class MessagingService : IMessagingService, IAsyncDisposable
 {
+    /// <summary>
+    /// Named HttpClient for subscription callbacks. Configured via IHttpClientFactory.
+    /// </summary>
+    internal const string HttpClientName = "MessagingCallbacks";
+
     private readonly ILogger<MessagingService> _logger;
     private readonly MessagingServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
     private readonly IMessageSubscriber _messageSubscriber;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     /// <summary>
     /// Tracks active dynamic subscriptions by subscriptionId for removal.
@@ -48,12 +54,14 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
         ILogger<MessagingService> logger,
         MessagingServiceConfiguration configuration,
         IMessageBus messageBus,
-        IMessageSubscriber messageSubscriber)
+        IMessageSubscriber messageSubscriber,
+        IHttpClientFactory httpClientFactory)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _messageSubscriber = messageSubscriber ?? throw new ArgumentNullException(nameof(messageSubscriber));
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
     }
 
     /// <inheritdoc />
@@ -122,8 +130,8 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
             var subscriptionId = Guid.NewGuid();
             var queueName = $"bannou-dynamic-{subscriptionId:N}";
 
-            // Create HTTP client that lives for the subscription duration
-            httpClient = new HttpClient();
+            // Create HTTP client that lives for the subscription duration (Tenet 4: use IHttpClientFactory)
+            httpClient = _httpClientFactory.CreateClient(HttpClientName);
             var callbackUrl = body.CallbackUrl;
 
             // Subscribe dynamically using GenericMessageEnvelope - MassTransit requires concrete types

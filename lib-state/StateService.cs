@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 
@@ -326,7 +327,19 @@ public partial class StateService : IStateService
             WithScores = true
         };
 
-        var result = await store.SearchAsync(indexName, searchQuery, options, cancellationToken);
+        SearchPagedResult<object> result;
+        try
+        {
+            result = await store.SearchAsync(indexName, searchQuery, options, cancellationToken);
+        }
+        catch (RedisServerException ex) when (ex.Message.Contains("No such index") || ex.Message.Contains("Unknown index"))
+        {
+            // Index doesn't exist - treat as search not configured (same as SupportsSearch=false)
+            _logger.LogWarning("Search index {IndexName} does not exist for store {StoreName}. " +
+                "The store has search enabled but the index has not been created.",
+                indexName, body.StoreName);
+            return (StatusCodes.BadRequest, null);
+        }
 
         // Convert results to response format
         var results = result.Items.Select(item => item.Value).ToList();

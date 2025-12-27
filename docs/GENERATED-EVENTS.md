@@ -1,6 +1,6 @@
 # Generated Events Reference
 
-> **Auto-generated**: 2025-12-26 13:15:52
+> **Auto-generated**: 2025-12-26 18:21:24
 > **Source**: `schemas/*-events.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -74,6 +74,13 @@ This document lists all events defined in Bannou's event schemas.
 | `DocumentationQueriedEvent` | Custom | `documentation-queried` | Published when documentation is queried with natur... |
 | `DocumentationSearchedEvent` | Custom | `documentation-searched` | Published when documentation is searched with keyw... |
 
+### Game Session
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `GameSessionPlayerJoinedEvent` | Custom | `game-session-player-joined` | Published when a player joins a game session |
+| `GameSessionPlayerLeftEvent` | Custom | `game-session-player-left` | Published when a player leaves a game session |
+
 ### Game Session (client)
 
 | Event | Type | Likely Topic | Description |
@@ -102,6 +109,12 @@ This document lists all events defined in Bannou's event schemas.
 | `MessagePublishedEvent` | Custom | `message-published` | Internal event for message tracking/debugging |
 | `SubscriptionCreatedEvent` | Lifecycle (Created) | `subscription.created` | Published when a dynamic subscription is created |
 | `SubscriptionRemovedEvent` | Custom | `subscription-removed` | Published when a subscription is removed |
+
+### Orchestrator
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `OrchestratorHealthPingEvent` | Custom | `orchestrator-health-ping` | Simple health ping event published to verify pub/s... |
 
 ### Permissions
 

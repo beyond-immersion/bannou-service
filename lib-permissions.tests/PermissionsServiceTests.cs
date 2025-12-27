@@ -246,7 +246,7 @@ public class PermissionsServiceTests
         var (statusCode, response) = await service.RegisterServicePermissionsAsync(permissions);
 
         // Assert
-        Assert.True(statusCode == StatusCodes.OK, $"Expected OK but got {statusCode}. Exception: {capturedException?.GetType().Name}: {capturedException?.Message}\nStack: {capturedException?.StackTrace}");
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.True(response.Success);
         Assert.Equal("orchestrator", response.ServiceId);

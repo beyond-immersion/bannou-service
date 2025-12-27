@@ -156,7 +156,7 @@ public class ClientEventQueueManager
             _logger.LogError(ex,
                 "Failed to dequeue events for session {SessionId}",
                 sessionId);
-            return new List<byte[]>();
+            throw; // Don't mask Redis failures - events could be lost
         }
     }
 
@@ -182,9 +182,10 @@ public class ClientEventQueueManager
 
             return queue?.Count ?? 0;
         }
-        catch
+        catch (Exception ex)
         {
-            return 0;
+            _logger.LogError(ex, "Failed to get queued event count for session {SessionId}", sessionId);
+            throw; // Don't mask Redis failures - caller needs to know
         }
     }
 

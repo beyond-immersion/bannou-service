@@ -70,9 +70,12 @@ public class OrchestratorServiceTests
     [Fact]
     public void Constructor_WithValidParameters_ShouldNotThrow()
     {
-        // Act & Assert
+        // Act
         var service = CreateService();
+
+        // Assert - Verify service was created and implements expected interface
         Assert.NotNull(service);
+        Assert.IsAssignableFrom<IOrchestratorService>(service);
     }
 
     [Fact]

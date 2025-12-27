@@ -99,7 +99,7 @@ public class RealmWebSocketTestHandler : IServiceTestHandler
                             description = "Created via WebSocket edge test",
                             category = "test"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var realmIdStr = createJson?["realmId"]?.GetValue<string>();
@@ -119,7 +119,7 @@ public class RealmWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/realm/get",
                         new { realmId = realmIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var getJson = JsonNode.Parse(getResponse.GetRawText())?.AsObject();
                     var retrievedId = getJson?["realmId"]?.GetValue<string>();
@@ -187,7 +187,7 @@ public class RealmWebSocketTestHandler : IServiceTestHandler
                             description = "Lifecycle test realm",
                             category = "test"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
                     var realmIdStr = createJson?["realmId"]?.GetValue<string>();
@@ -209,7 +209,7 @@ public class RealmWebSocketTestHandler : IServiceTestHandler
                             name = $"Updated Lifecycle Test {uniqueCode}",
                             description = "Updated description"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var updateJson = JsonNode.Parse(updateResponse.GetRawText())?.AsObject();
                     var updatedName = updateJson?["name"]?.GetValue<string>();
@@ -230,7 +230,7 @@ public class RealmWebSocketTestHandler : IServiceTestHandler
                             realmId = realmIdStr,
                             reason = "WebSocket lifecycle test"
                         },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var deprecateJson = JsonNode.Parse(deprecateResponse.GetRawText())?.AsObject();
                     var isDeprecated = deprecateJson?["isDeprecated"]?.GetValue<bool>() ?? false;
@@ -247,7 +247,7 @@ public class RealmWebSocketTestHandler : IServiceTestHandler
                         "POST",
                         "/realm/undeprecate",
                         new { realmId = realmIdStr },
-                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
                     var undeprecateJson = JsonNode.Parse(undeprecateResponse.GetRawText())?.AsObject();
                     var isUndeprecated = !(undeprecateJson?["isDeprecated"]?.GetValue<bool>() ?? true);
@@ -315,7 +315,7 @@ public class RealmWebSocketTestHandler : IServiceTestHandler
                 method,
                 path,
                 requestBody,
-                timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
+                timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
 
             var responseJson = response.GetRawText();
             Console.WriteLine($"📥 Received response: {responseJson.Substring(0, Math.Min(500, responseJson.Length))}...");

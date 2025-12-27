@@ -42,6 +42,14 @@ public partial class SearchIndexService : ISearchIndexService
     }
 
     /// <inheritdoc />
+    public Task EnsureIndexExistsAsync(string namespaceId, CancellationToken cancellationToken = default)
+    {
+        // In-memory index is created on first use, no pre-creation needed
+        _indices.GetOrAdd(namespaceId, _ => new NamespaceIndex());
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
     public async Task<int> RebuildIndexAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Rebuilding search index for namespace {Namespace}", namespaceId);
@@ -69,7 +77,8 @@ public partial class SearchIndexService : ISearchIndexService
         {
             try
             {
-                var docKey = $"doc:{namespaceId}:{docId}";
+                // Key without "doc:" prefix since store already prepends it via KeyPrefix config
+                var docKey = $"{namespaceId}:{docId}";
                 var doc = await docStore.GetAsync(docKey, cancellationToken);
 
                 if (doc != null)

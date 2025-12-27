@@ -88,7 +88,7 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve session service mappings for {SessionId}", sessionId);
-            return null;
+            throw; // Don't mask state store failures - null should mean "not found", not "error"
         }
     }
 
@@ -139,7 +139,7 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve connection state for {SessionId}", sessionId);
-            return null;
+            throw; // Don't mask state store failures - null should mean "not found", not "error"
         }
     }
 
@@ -221,7 +221,7 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to validate reconnection token");
-            return null;
+            throw; // Don't mask state store failures - null should mean "not found", not "error"
         }
     }
 
@@ -328,7 +328,7 @@ public class BannouSessionManager : ISessionManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to restore session {SessionId} from reconnection", sessionId);
-            return null;
+            throw; // Don't mask state store failures - reconnection depends on reliable state access
         }
     }
 

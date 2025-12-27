@@ -66,7 +66,7 @@ public abstract class ServiceClientBase : IServiceClient
     /// <summary>
     /// Gets the base URL for Bannou service invocation with dynamic app-id resolution.
     /// For parameterless constructor, falls back to "bannou" app-id.
-    /// Uses environment variable BANNOU_HTTP_ENDPOINT if available for containerized environments.
+    /// Uses Program.Configuration.EffectiveHttpEndpoint for containerized environments.
     /// </summary>
     /// <remarks>
     /// CRITICAL ARCHITECTURAL CONSTRAINT:
@@ -91,15 +91,8 @@ public abstract class ServiceClientBase : IServiceClient
     {
         get
         {
-            // Get mesh HTTP endpoint from environment (for container environments)
-            // Match ServiceHeartbeatManager pattern: check BANNOU_HTTP_ENDPOINT first, then BANNOU_HTTP_PORT
-            var bannouHttpEndpoint = Environment.GetEnvironmentVariable("BANNOU_HTTP_ENDPOINT");
-            if (string.IsNullOrEmpty(bannouHttpEndpoint))
-            {
-                var portStr = Environment.GetEnvironmentVariable("BANNOU_HTTP_PORT");
-                var port = int.TryParse(portStr, out var p) && p > 0 ? p : 3500;
-                bannouHttpEndpoint = $"http://localhost:{port}";
-            }
+            // Get HTTP endpoint from configuration (centralized, proper fallback)
+            var bannouHttpEndpoint = Program.Configuration.EffectiveHttpEndpoint;
 
             // If full dependencies available, use dynamic resolution
             if (_appMappingResolver != null && _serviceName != null)

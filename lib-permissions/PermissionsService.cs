@@ -412,6 +412,7 @@ public partial class PermissionsService : IPermissionsService
                         _logger.LogError(ex, "Exception while acquiring distributed lock for {ServiceId} after {MaxRetries} attempts. " +
                             "Lock store: {LockStore}, Resource: {LockResource}, Owner: {LockOwner}",
                             body.ServiceId, maxRetries, LOCK_STORE, LOCK_RESOURCE, lockOwnerId);
+                        await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.ServiceId, LockStore = LOCK_STORE, LockResource = LOCK_RESOURCE });
                         return (StatusCodes.InternalServerError, new RegistrationResponse
                         {
                             ServiceId = body.ServiceId,
@@ -429,6 +430,7 @@ public partial class PermissionsService : IPermissionsService
             if (serviceLock == null)
             {
                 _logger.LogError("Lock response was null for {ServiceId} - this should never happen", body.ServiceId);
+                await PublishErrorEventAsync("RegisterServicePermissions", "lock_null", "Lock acquisition returned null response", dependency: "state", details: new { body.ServiceId });
                 return (StatusCodes.InternalServerError, new RegistrationResponse
                 {
                     ServiceId = body.ServiceId,
@@ -444,6 +446,7 @@ public partial class PermissionsService : IPermissionsService
                     _logger.LogError("Failed to acquire distributed lock for {ServiceId} after {MaxRetries} attempts - " +
                         "cannot safely update registered services. This indicates persistent lock contention or Redis issues.",
                         body.ServiceId, maxRetries);
+                    await PublishErrorEventAsync("RegisterServicePermissions", "lock_failed", $"Failed to acquire distributed lock after {maxRetries} attempts", dependency: "state", details: new { body.ServiceId, MaxRetries = maxRetries });
                     return (StatusCodes.InternalServerError, new RegistrationResponse
                     {
                         ServiceId = body.ServiceId,
@@ -1038,6 +1041,7 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error publishing capabilities for session {SessionId}", sessionId);
+            _ = PublishErrorEventAsync("PublishCapabilities", ex.GetType().Name, ex.Message, dependency: "messaging", details: new { SessionId = sessionId });
         }
     }
 
@@ -1293,6 +1297,7 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to handle session connected for {SessionId}", sessionId);
+            await PublishErrorEventAsync("HandleSessionConnected", ex.GetType().Name, ex.Message, dependency: "state", details: new { SessionId = sessionId });
             return (StatusCodes.InternalServerError, new SessionUpdateResponse
             {
                 Success = false,
@@ -1362,6 +1367,7 @@ public partial class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to handle session disconnected for {SessionId}", sessionId);
+            await PublishErrorEventAsync("HandleSessionDisconnected", ex.GetType().Name, ex.Message, dependency: "state", details: new { SessionId = sessionId });
             return (StatusCodes.InternalServerError, new SessionUpdateResponse
             {
                 Success = false,
