@@ -54,6 +54,7 @@ public partial class ConnectService : IConnectService
     // Client event subscriber for session-specific RabbitMQ subscriptions (TENET exception)
     private ClientEventRabbitMQSubscriber? _clientEventSubscriber;
     private readonly ILoggerFactory _loggerFactory;
+    [Obsolete]
     private readonly ClientEventQueueManager? _clientEventQueueManager;
     private readonly string? _rabbitMqConnectionString;
 
@@ -62,6 +63,7 @@ public partial class ConnectService : IConnectService
     private readonly string _serverSalt;
     private readonly string _instanceId;
 
+    [Obsolete]
     public ConnectService(
         IAuthClient authClient,
         IMeshInvocationClient meshClient,
@@ -583,14 +585,18 @@ public partial class ConnectService : IConnectService
                 }
             }
 
-            // Deliver any queued events from the reconnection window
-            // Events are queued in Redis when client disconnects but session is still valid
+            // OBSOLETE: Redis event queue - transitional code only
+            // Primary buffering is now handled by RabbitMQ queue (see ClientEventRabbitMQSubscriber).
+            // When we re-subscribe above, RabbitMQ delivers pending messages automatically.
+            // This Redis code only handles events queued BEFORE the architecture change.
+            // TODO: Remove this section once RabbitMQ buffering is confirmed stable in production.
+#pragma warning disable CS0618 // Type or member is obsolete
             if (_clientEventQueueManager != null)
             {
                 var queuedEvents = await _clientEventQueueManager.DequeueEventsAsync(sessionId, cancellationToken);
                 if (queuedEvents.Count > 0)
                 {
-                    _logger.LogInformation("Delivering {Count} queued events to reconnected session {SessionId}",
+                    _logger.LogInformation("Delivering {Count} LEGACY Redis-queued events to session {SessionId}",
                         queuedEvents.Count, sessionId);
 
                     foreach (var eventPayload in queuedEvents)
@@ -607,13 +613,13 @@ public partial class ConnectService : IConnectService
                         var sent = await _connectionManager.SendMessageAsync(sessionId, eventMessage, cancellationToken);
                         if (!sent)
                         {
-                            _logger.LogWarning("Failed to deliver queued event to session {SessionId}", sessionId);
-                            // Don't re-queue - client just reconnected but send failed, likely connection issue
+                            _logger.LogWarning("Failed to deliver legacy queued event to session {SessionId}", sessionId);
                             break;
                         }
                     }
                 }
             }
+#pragma warning restore CS0618
 
             // Capability manifest is delivered via event-driven flow:
             // 1. session.connected event published above
@@ -724,11 +730,15 @@ public partial class ConnectService : IConnectService
                 else
                 {
                     // Normal disconnect - initiate reconnection window
-                    // IMPORTANT: Keep RabbitMQ subscription active so events can be queued during
-                    // the reconnection window. HandleClientEventAsync will detect the missing WebSocket
-                    // connection and queue events for delivery when the client reconnects.
-                    _logger.LogDebug("Keeping RabbitMQ subscription active for session {SessionId} during reconnection window",
-                        sessionId);
+                    // Cancel RabbitMQ consumer - queue will buffer messages automatically
+                    // RabbitMQ handles buffering natively: queue persists, messages accumulate
+                    // On reconnect, we re-subscribe and get all pending messages from queue
+                    if (_clientEventSubscriber != null)
+                    {
+                        await _clientEventSubscriber.UnsubscribeFromSessionAsync(sessionId);
+                        _logger.LogDebug("Cancelled RabbitMQ consumer for session {SessionId} - queue will buffer messages",
+                            sessionId);
+                    }
 
                     var reconnectionToken = connectionState.InitiateReconnectionWindow(
                         reconnectionWindowMinutes: 5,
@@ -986,16 +996,14 @@ public partial class ConnectService : IConnectService
             var payloadBytes = message.Payload;
 
             // Make the actual Bannou service invocation via direct HTTP
-            // This preserves the full path including /v1.0/invoke/{appId}/method/ prefix
-            // which is required because NSwag-generated controllers have route prefix [Route("v1.0/invoke/bannou/method")]
             string? responseJson = null;
             HttpResponseMessage? httpResponse = null;
 
             try
             {
-                // Build full mesh URL using centralized configuration
+                // Build mesh URL using direct path
                 var bannouHttpEndpoint = Program.Configuration.EffectiveHttpEndpoint;
-                var meshUrl = $"{bannouHttpEndpoint}/v1.0/invoke/{appId}/method/{path.TrimStart('/')}";
+                var meshUrl = $"{bannouHttpEndpoint}/{path.TrimStart('/')}";
 
                 // Create HTTP request with proper headers
                 using var request = new HttpRequestMessage(new HttpMethod(httpMethod), meshUrl);
@@ -1062,14 +1070,7 @@ public partial class ConnectService : IConnectService
                 _logger.LogError("mesh HTTP request timed out (120s) for {Service} {Method} {Path}",
                     serviceName, httpMethod, path);
                 await PublishErrorEventAsync("RouteToService", "timeout", $"mesh HTTP request timed out (120s) for {serviceName}", dependency: serviceName, details: new { Method = httpMethod, Path = path });
-
-                var errorPayload = new
-                {
-                    error = "Service request timeout",
-                    statusCode = 504,
-                    message = $"Request to {serviceName} timed out after 120 seconds"
-                };
-                responseJson = BannouJson.Serialize(errorPayload);
+                // Error payload discarded by BinaryMessage.CreateResponse for non-OK responses
             }
             catch (TaskCanceledException tcEx)
             {
@@ -1080,55 +1081,27 @@ public partial class ConnectService : IConnectService
                     _logger.LogError("mesh HTTP request timed out for {Service} {Method} {Path}",
                         serviceName, httpMethod, path);
                     await PublishErrorEventAsync("RouteToService", "timeout", $"mesh HTTP request timed out for {serviceName}", dependency: serviceName, details: new { Method = httpMethod, Path = path });
-
-                    var errorPayload = new
-                    {
-                        error = "Service request timeout",
-                        statusCode = 504,
-                        message = $"Request to {serviceName} timed out"
-                    };
-                    responseJson = BannouJson.Serialize(errorPayload);
                 }
                 else
                 {
                     _logger.LogWarning(tcEx, "mesh HTTP request cancelled for {Service} {Method} {Path}",
                         serviceName, httpMethod, path);
-
-                    var errorPayload = new
-                    {
-                        error = "Request cancelled",
-                        statusCode = 499,
-                        message = "Request was cancelled"
-                    };
-                    responseJson = BannouJson.Serialize(errorPayload);
                 }
+                // Error payload discarded by BinaryMessage.CreateResponse for non-OK responses
             }
             catch (HttpRequestException httpEx)
             {
                 _logger.LogWarning(httpEx, "HTTP request to mesh failed for {Service} {Method} {Path}",
                     serviceName, httpMethod, path);
-
-                // Create error response
-                var errorPayload = new
-                {
-                    error = "Service invocation failed",
-                    statusCode = (int?)httpEx.StatusCode ?? 500,
-                    message = httpEx.Message
-                };
-                responseJson = BannouJson.Serialize(errorPayload);
+                await PublishErrorEventAsync("RouteToService", "http_error", httpEx.Message, dependency: serviceName, details: new { Method = httpMethod, Path = path, StatusCode = (int?)httpEx.StatusCode });
+                // Error payload discarded by BinaryMessage.CreateResponse for non-OK responses
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error invoking service {Service} {Method} {Path}",
                     serviceName, httpMethod, path);
                 await PublishErrorEventAsync("RouteToService", ex.GetType().Name, ex.Message, dependency: serviceName, details: new { Method = httpMethod, Path = path });
-
-                var errorPayload = new
-                {
-                    error = "Internal server error",
-                    message = ex.Message
-                };
-                responseJson = BannouJson.Serialize(errorPayload);
+                // Error payload discarded by BinaryMessage.CreateResponse for non-OK responses
             }
 
             // Send response back to WebSocket client
@@ -1598,105 +1571,80 @@ public partial class ConnectService : IConnectService
     /// This is the callback invoked by ClientEventRabbitMQSubscriber when events arrive.
     /// Internal events (like CapabilitiesRefreshEvent) are handled locally without forwarding to client.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// IMPORTANT: This method throws exceptions on delivery failure to trigger RabbitMQ message requeue.
+    /// The subscriber NACKs with requeue=true when this method throws, causing RabbitMQ to buffer
+    /// the message until the client reconnects.
+    /// </para>
+    /// <para>
+    /// Delivery failure cases:
+    /// - Client disconnected: Message requeued, delivered on reconnect
+    /// - WebSocket send failed: Message requeued, retried on next connection
+    /// - Internal event handling failed: Message requeued for retry
+    /// </para>
+    /// </remarks>
     private async Task HandleClientEventAsync(string sessionId, byte[] eventPayload)
     {
-        try
+        // Check if this is an internal event that should be handled locally, not forwarded to client
+        if (await TryHandleInternalEventAsync(sessionId, eventPayload))
         {
-            // Unwrap CloudEvents envelope if present - Bannou pub/sub wraps events in CloudEvents format
-            // Clients should receive the actual event data, not the CloudEvents wrapper
-            var unwrappedPayload = BannouEventHelper.UnwrapCloudEventsEnvelope(eventPayload);
-
-            // Check if this is an internal event that should be handled locally, not forwarded to client
-            if (await TryHandleInternalEventAsync(sessionId, unwrappedPayload))
-            {
-                // Internal event was handled - don't forward to client
-                return;
-            }
-
-            // Validate event against whitelist and normalize the event_name
-            // NSwag/JSON serialization can mangle event names (e.g., "system.notification" -> "system_notification")
-            // We need to validate the mangled name and rewrite it to canonical form before sending to client
-            var (canonicalName, clientPayload) = ClientEventNormalizer.NormalizeEventPayload(unwrappedPayload);
-
-            if (string.IsNullOrEmpty(canonicalName))
-            {
-                _logger.LogWarning("Rejected client event for session {SessionId} - event name not in whitelist or missing",
-                    sessionId);
-                return;
-            }
-
-            _logger.LogDebug("Validated and normalized client event '{CanonicalName}' for session {SessionId}",
-                canonicalName, sessionId);
-
-            // Check if session has active WebSocket connection
-            var connection = _connectionManager.GetConnection(sessionId);
-            if (connection == null)
-            {
-                // Client disconnected - queue the event for later delivery during reconnection window
-                _logger.LogDebug("Session {SessionId} not connected, attempting to queue event for later delivery",
-                    sessionId);
-
-                // Queue event for delivery when client reconnects (if within reconnection window)
-                // Note: We queue the unwrapped payload so it's ready for client delivery
-                if (_clientEventQueueManager != null)
-                {
-                    var queued = await _clientEventQueueManager.QueueEventAsync(sessionId, clientPayload);
-                    if (queued)
-                    {
-                        _logger.LogDebug("Queued client event for disconnected session {SessionId} ({PayloadSize} bytes)",
-                            sessionId, clientPayload.Length);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Failed to queue client event for session {SessionId}", sessionId);
-                    }
-                }
-                else
-                {
-                    _logger.LogWarning("Session {SessionId} not connected - event dropped (queue manager not available)",
-                        sessionId);
-                }
-                return;
-            }
-
-            // Create binary message for the client event
-            var eventMessage = new BinaryMessage(
-                flags: MessageFlags.Event, // Server-initiated event, no response expected
-                channel: 0, // Event channel
-                sequenceNumber: 0, // Events don't need sequence numbers
-                serviceGuid: Guid.Empty, // System event
-                messageId: GuidGenerator.GenerateMessageId(),
-                payload: clientPayload
-            );
-
-            // Send to WebSocket client
-            var sent = await _connectionManager.SendMessageAsync(sessionId, eventMessage, CancellationToken.None);
-
-            if (sent)
-            {
-                _logger.LogDebug("Delivered client event to session {SessionId} ({PayloadSize} bytes)",
-                    sessionId, eventPayload.Length);
-            }
-            else
-            {
-                // Send failed - client may have disconnected between check and send
-                // Queue the event for reconnection delivery
-                if (_clientEventQueueManager != null)
-                {
-                    await _clientEventQueueManager.QueueEventAsync(sessionId, eventPayload);
-                    _logger.LogDebug("WebSocket send failed, queued event for session {SessionId}", sessionId);
-                }
-                else
-                {
-                    _logger.LogWarning("Failed to deliver client event to session {SessionId} - WebSocket send failed",
-                        sessionId);
-                }
-            }
+            // Internal event was handled - don't forward to client
+            return;
         }
-        catch (Exception ex)
+
+        // Validate event against whitelist and normalize the event_name
+        // NSwag/JSON serialization can mangle event names (e.g., "system.notification" -> "system_notification")
+        // We need to validate the mangled name and rewrite it to canonical form before sending to client
+        var (canonicalName, clientPayload) = ClientEventNormalizer.NormalizeEventPayload(eventPayload);
+
+        if (string.IsNullOrEmpty(canonicalName))
         {
-            _logger.LogError(ex, "Error handling client event for session {SessionId}", sessionId);
-            await PublishErrorEventAsync("HandleClientEvent", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
+            // Invalid event - don't requeue, just discard
+            _logger.LogWarning("Rejected client event for session {SessionId} - event name not in whitelist or missing",
+                sessionId);
+            return;
+        }
+
+        _logger.LogDebug("Validated and normalized client event '{CanonicalName}' for session {SessionId}",
+            canonicalName, sessionId);
+
+        // Check if session has active WebSocket connection
+        var connection = _connectionManager.GetConnection(sessionId);
+        if (connection == null)
+        {
+            // Client disconnected - throw to trigger NACK with requeue
+            // RabbitMQ will buffer the message until client reconnects
+            _logger.LogDebug("Session {SessionId} not connected - message will be requeued by RabbitMQ",
+                sessionId);
+            throw new InvalidOperationException($"Client not connected for session {sessionId} - requeue for later delivery");
+        }
+
+        // Create binary message for the client event
+        var eventMessage = new BinaryMessage(
+            flags: MessageFlags.Event, // Server-initiated event, no response expected
+            channel: 0, // Event channel
+            sequenceNumber: 0, // Events don't need sequence numbers
+            serviceGuid: Guid.Empty, // System event
+            messageId: GuidGenerator.GenerateMessageId(),
+            payload: clientPayload
+        );
+
+        // Send to WebSocket client
+        var sent = await _connectionManager.SendMessageAsync(sessionId, eventMessage, CancellationToken.None);
+
+        if (sent)
+        {
+            _logger.LogDebug("Delivered client event to session {SessionId} ({PayloadSize} bytes)",
+                sessionId, eventPayload.Length);
+        }
+        else
+        {
+            // Send failed - client may have disconnected between check and send
+            // Throw to trigger NACK with requeue
+            _logger.LogDebug("WebSocket send failed for session {SessionId} - message will be requeued by RabbitMQ",
+                sessionId);
+            throw new InvalidOperationException($"WebSocket send failed for session {sessionId} - requeue for later delivery");
         }
     }
 
@@ -1717,13 +1665,13 @@ public partial class ConnectService : IConnectService
         {
             // Try to parse just the event_name field to determine event type
             using var doc = JsonDocument.Parse(eventPayload);
-
-            // Handle CloudEvents envelope - RabbitMQ wraps pub/sub messages in CloudEvents format
-            // The actual event data is in the "data" property
             var root = doc.RootElement;
-            if (root.TryGetProperty("data", out var dataElement))
+
+            // Unwrap MassTransit envelope - MassTransit wraps messages with metadata,
+            // and the actual event data is in the "message" property
+            if (root.TryGetProperty("message", out var messageElement))
             {
-                root = dataElement;
+                root = messageElement;
             }
 
             if (!root.TryGetProperty("event_name", out var eventNameElement))

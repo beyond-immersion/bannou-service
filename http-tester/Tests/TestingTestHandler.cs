@@ -15,12 +15,10 @@ public class TestingTestHandler : BaseHttpTestHandler
 {
     private static readonly HttpClient _httpClient = new();
     private static readonly string _baseUrl;
-    private const string MESH_PREFIX = "/v1.0/invoke/bannou/method";
 
     static TestingTestHandler()
     {
         // Get base URL from environment or default to localhost
-        // Note: When connecting via mesh, paths must include /v1.0/invoke/{appId}/method/ prefix
         var bannouHttpEndpoint = Environment.GetEnvironmentVariable("BANNOU_HTTP_ENDPOINT") ?? "http://bannou:80";
         _baseUrl = bannouHttpEndpoint;
     }
@@ -45,7 +43,7 @@ public class TestingTestHandler : BaseHttpTestHandler
     private static Task<TestResult> TestHealthEndpoint(ITestClient client, string[] args) =>
         ExecuteTestAsync(async () =>
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}{MESH_PREFIX}/testing/health");
+            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/health");
 
             if (!response.IsSuccessStatusCode)
                 return TestResult.Failed($"Health endpoint returned {response.StatusCode}");
@@ -57,7 +55,7 @@ public class TestingTestHandler : BaseHttpTestHandler
     private static Task<TestResult> TestDebugPathEndpoint(ITestClient client, string[] args) =>
         ExecuteTestAsync(async () =>
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}{MESH_PREFIX}/testing/debug/path");
+            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
 
             if (!response.IsSuccessStatusCode)
                 return TestResult.Failed($"Debug path endpoint returned {response.StatusCode}");
@@ -75,7 +73,7 @@ public class TestingTestHandler : BaseHttpTestHandler
     private static Task<TestResult> TestDebugPathReceivedPath(ITestClient client, string[] args) =>
         ExecuteTestAsync(async () =>
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}{MESH_PREFIX}/testing/debug/path");
+            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
 
             if (!response.IsSuccessStatusCode)
                 return TestResult.Failed($"Debug path endpoint returned {response.StatusCode}");
@@ -95,22 +93,15 @@ public class TestingTestHandler : BaseHttpTestHandler
                 $"ControllerRoute={debugInfo.ControllerRoute}"
             };
 
-            // The key insight: what path does the controller actually receive?
-            // If mesh strips /v1.0/invoke/bannou/method/, the path should be just /testing/debug/path
-            // If mesh preserves it, the path would be /v1.0/invoke/bannou/method/testing/debug/path
             var receivedPath = debugInfo.Path;
 
-            if (receivedPath.Contains("/v1.0/invoke/"))
+            if (receivedPath.StartsWith("/testing/"))
             {
-                return TestResult.Successful($"Path INCLUDES mesh prefix (mesh NOT stripping): {string.Join(", ", pathDetails)}");
-            }
-            else if (receivedPath.StartsWith("/testing/"))
-            {
-                return TestResult.Successful($"Path EXCLUDES mesh prefix (mesh IS stripping): {string.Join(", ", pathDetails)}");
+                return TestResult.Successful($"Path correctly uses direct routing: {string.Join(", ", pathDetails)}");
             }
             else
             {
-                return TestResult.Successful($"Unexpected path format: {string.Join(", ", pathDetails)}");
+                return TestResult.Failed($"Unexpected path format (expected /testing/...): {string.Join(", ", pathDetails)}");
             }
         }, "Path received check");
 
@@ -119,7 +110,7 @@ public class TestingTestHandler : BaseHttpTestHandler
         {
             // Test with a nested path to see what the catch-all captures
             var testPath = "some/nested/path/segments";
-            var response = await _httpClient.GetAsync($"{_baseUrl}{MESH_PREFIX}/testing/debug/path/{testPath}");
+            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path/{testPath}");
 
             if (!response.IsSuccessStatusCode)
                 return TestResult.Failed($"Debug path catch-all returned {response.StatusCode}");
@@ -150,7 +141,7 @@ public class TestingTestHandler : BaseHttpTestHandler
     private static Task<TestResult> TestDebugPathControllerRoute(ITestClient client, string[] args) =>
         ExecuteTestAsync(async () =>
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}{MESH_PREFIX}/testing/debug/path");
+            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
 
             if (!response.IsSuccessStatusCode)
                 return TestResult.Failed($"Debug path endpoint returned {response.StatusCode}");
@@ -163,15 +154,9 @@ public class TestingTestHandler : BaseHttpTestHandler
 
             var controllerRoute = debugInfo.ControllerRoute;
 
-            // TestingController uses [Route("testing")] - not the mesh route prefix
-            // Generated controllers use [Route("v1.0/invoke/bannou/method")]
             if (controllerRoute == "testing")
             {
-                return TestResult.Successful($"Controller route is 'testing' (manual controller pattern)");
-            }
-            else if (controllerRoute.Contains("v1.0/invoke"))
-            {
-                return TestResult.Successful($"Controller route includes mesh prefix: '{controllerRoute}' (generated controller pattern)");
+                return TestResult.Successful($"Controller route is 'testing' (correct direct routing)");
             }
             else
             {
@@ -182,7 +167,7 @@ public class TestingTestHandler : BaseHttpTestHandler
     private static Task<TestResult> TestDebugPathMeshHeaders(ITestClient client, string[] args) =>
         ExecuteTestAsync(async () =>
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}{MESH_PREFIX}/testing/debug/path");
+            var response = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
 
             if (!response.IsSuccessStatusCode)
                 return TestResult.Failed($"Debug path endpoint returned {response.StatusCode}");
@@ -214,8 +199,7 @@ public class TestingTestHandler : BaseHttpTestHandler
     private static Task<TestResult> TestDirectVsMeshRouting(ITestClient client, string[] args) =>
         ExecuteTestAsync(async () =>
         {
-            // Call through mesh with proper prefix
-            var directResponse = await _httpClient.GetAsync($"{_baseUrl}{MESH_PREFIX}/testing/debug/path");
+            var directResponse = await _httpClient.GetAsync($"{_baseUrl}/testing/debug/path");
 
             if (!directResponse.IsSuccessStatusCode)
                 return TestResult.Failed($"Direct call returned {directResponse.StatusCode}");
@@ -226,64 +210,36 @@ public class TestingTestHandler : BaseHttpTestHandler
             if (directInfo == null)
                 return TestResult.Failed("Failed to deserialize direct call response");
 
-            // Try mesh-prefixed path (if mesh is configured and running)
-            var meshPort = Environment.GetEnvironmentVariable("BANNOU_HTTP_PORT") ?? "3500";
-            var meshUrl = $"http://localhost:{meshPort}/v1.0/invoke/bannou/method/testing/debug/path";
-
-            try
-            {
-                var bannouResponse = await _httpClient.GetAsync(meshUrl);
-
-                if (bannouResponse.IsSuccessStatusCode)
-                {
-                    var meshContent = await bannouResponse.Content.ReadAsStringAsync();
-                    var bannouInfo = BannouJson.Deserialize<RoutingDebugInfo>(meshContent);
-
-                    if (bannouInfo != null)
-                    {
-                        return TestResult.Successful(
-                            $"Direct path: {directInfo.Path}, mesh path: {bannouInfo.Path} - " +
-                            $"Routes {(directInfo.Path == bannouInfo.Path ? "MATCH" : "DIFFER")}");
-                    }
-                }
-
-                return TestResult.Successful($"Direct path works ({directInfo.Path}), mesh call returned {bannouResponse.StatusCode}");
-            }
-            catch
-            {
-                // mesh might not be available in test environment
-                return TestResult.Successful($"Direct path: {directInfo.Path} (mesh not reachable for comparison)");
-            }
-        }, "Direct vs mesh routing");
+            return TestResult.Successful($"Direct routing works: path={directInfo.Path}");
+        }, "Direct routing");
 
     private static Task<TestResult> TestPathWithDifferentPrefixes(ITestClient client, string[] args) =>
         ExecuteTestAsync(async () =>
         {
+            // Test direct path (should work) and legacy prefixed path (should 404)
             var testPaths = new[]
             {
-                "/testing/debug/path",
-                "/v1.0/invoke/bannou/method/testing/debug/path"
+                ("/testing/debug/path", true),  // Direct path - expected to succeed
+                ("/v1.0/invoke/bannou/method/testing/debug/path", false)  // Legacy prefixed path - should 404
             };
 
             var results = new List<string>();
 
-            foreach (var testPath in testPaths)
+            foreach (var (testPath, shouldSucceed) in testPaths)
             {
                 try
                 {
                     var url = $"{_baseUrl}{testPath}";
                     var response = await _httpClient.GetAsync(url);
+                    var succeeded = response.IsSuccessStatusCode;
 
-                    if (response.IsSuccessStatusCode)
+                    if (succeeded == shouldSucceed)
                     {
-                        var content = await response.Content.ReadAsStringAsync();
-                        var info = BannouJson.Deserialize<RoutingDebugInfo>(content);
-
-                        results.Add($"[{testPath}] => {response.StatusCode}, received: {info?.Path}");
+                        results.Add($"[{testPath}] => {response.StatusCode} (expected)");
                     }
                     else
                     {
-                        results.Add($"[{testPath}] => {response.StatusCode}");
+                        results.Add($"[{testPath}] => {response.StatusCode} (UNEXPECTED - expected {(shouldSucceed ? "success" : "404")})");
                     }
                 }
                 catch (Exception pathEx)

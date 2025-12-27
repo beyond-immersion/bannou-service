@@ -1,16 +1,13 @@
-using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Net.Http.Json;
 
 namespace BeyondImmersion.BannouService.Testing;
 
 /// <summary>
 /// Test handler for Bannou service mapping and routing functionality.
 /// Tests dynamic app-id resolution and service discovery events.
-/// TEMPORARILY DISABLED - Will be regenerated with new schema-first services
 /// </summary>
 public class BannouServiceMappingTestHandler : IServiceTestHandler
 {
@@ -21,7 +18,6 @@ public class BannouServiceMappingTestHandler : IServiceTestHandler
         [
             new ServiceTest(Isolated(TestServiceMappingResolver), "Service Mapping Resolver", "Infrastructure", "Tests basic service-to-app-id resolution"),
             new ServiceTest(Isolated(TestServiceMappingEvents), "Service Mapping Events", "Infrastructure", "Tests RabbitMQ service mapping events"),
-            new ServiceTest(Isolated(TestBannouServiceClientRouting), "Mesh Service Client Routing", "Infrastructure", "Tests Bannou service client routing"),
             new ServiceTest(Isolated(TestServiceMappingHealth), "Service Mapping Health", "Infrastructure", "Tests service mapping health endpoints")
         ];
     }
@@ -140,53 +136,6 @@ public class BannouServiceMappingTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Tests Bannou service client routing with app-id resolution.
-    /// </summary>
-    private static Task<TestResult> TestBannouServiceClientRouting(ITestClient testClient, string[] args)
-    {
-        try
-        {
-            Console.WriteLine("Testing Bannou service client routing...");
-
-            var resolver = new ServiceAppMappingResolver(CreateTestLogger<ServiceAppMappingResolver>());
-            var logger = CreateTestLogger<ServiceClientBase>();
-
-            // Create a mock service client base to test routing
-            using var httpClient = new HttpClient();
-            var serviceClient = new TestServiceClient(httpClient, resolver, logger, "accounts");
-
-            // Test base URL generation
-            var baseUrl = serviceClient.TestGetBaseUrl();
-            Console.WriteLine($"Generated base URL: {baseUrl}");
-
-            // BANNOU_HTTP_ENDPOINT is a legitimate Tenet 21 exception - mesh bootstrap variable
-            string meshEndpoint = Environment.GetEnvironmentVariable("BANNOU_HTTP_ENDPOINT") ?? "localhost:3500";
-            if (!baseUrl.Contains(meshEndpoint))
-                return Task.FromResult(new TestResult(false, $"Expected mesh URL {meshEndpoint}, got: {baseUrl}"));
-
-            if (!baseUrl.Contains("/bannou/"))
-                return Task.FromResult(new TestResult(false, $"Expected default app-id 'bannou' in URL, got: {baseUrl}"));
-
-            Console.WriteLine("✓ Default Bannou routing URL generated correctly");
-
-            // Test with dynamic mapping
-            resolver.UpdateServiceMapping("accounts", "accounts-east");
-            baseUrl = serviceClient.TestGetBaseUrl();
-
-            if (!baseUrl.Contains("/accounts-east/"))
-                return Task.FromResult(new TestResult(false, $"Expected dynamic app-id 'accounts-east' in URL, got: {baseUrl}"));
-
-            Console.WriteLine("✓ Dynamic Bannou routing URL generated correctly");
-
-            return Task.FromResult(new TestResult(true, "Bannou service client routing tests passed"));
-        }
-        catch (Exception ex)
-        {
-            return Task.FromResult(new TestResult(false, $"Bannou service client routing test failed: {ex.Message}", ex));
-        }
-    }
-
-    /// <summary>
     /// Tests service mapping health and monitoring functionality.
     /// </summary>
     private static Task<TestResult> TestServiceMappingHealth(ITestClient testClient, string[] args)
@@ -280,22 +229,5 @@ public class BannouServiceMappingTestHandler : IServiceTestHandler
         services.AddLogging(builder => builder.AddConsole());
         var serviceProvider = services.BuildServiceProvider();
         return serviceProvider.GetRequiredService<ILogger<T>>();
-    }
-
-    /// <summary>
-    /// Test implementation of ServiceClientBase for testing routing.
-    /// </summary>
-    private class TestServiceClient : ServiceClientBase
-    {
-        public TestServiceClient(
-            HttpClient httpClient,
-            IServiceAppMappingResolver appMappingResolver,
-            ILogger logger,
-            string serviceName)
-            : base(httpClient, appMappingResolver, logger, serviceName)
-        {
-        }
-
-        public string TestGetBaseUrl() => BaseUrl;
     }
 }

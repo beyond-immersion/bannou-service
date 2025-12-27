@@ -2009,6 +2009,159 @@
             When this notification expires/becomes irrelevant
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent">
+            <summary>
+            Published by services to create or update a session shortcut.
+            <br/>Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
+            <br/>Connect handles this event internally and does NOT forward to the client.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent.Event_name">
+            <summary>
+            Fixed event type identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent.Session_id">
+            <summary>
+            Target session for this shortcut.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent.Replace_existing">
+            <summary>
+            If true and a shortcut with the same route_guid exists, replace it.
+            <br/>If false and shortcut exists, the event is ignored.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent">
+            <summary>
+            Published by services to remove shortcuts.
+            <br/>Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
+            <br/>Supports both single-shortcut revocation (by route_guid) and
+            <br/>bulk revocation (all shortcuts from a source_service).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.Event_name">
+            <summary>
+            Fixed event type identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.Session_id">
+            <summary>
+            Target session for revocation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.Route_guid">
+            <summary>
+            Specific shortcut to revoke.
+            <br/>If provided, only this shortcut is removed.
+            <br/>Mutually exclusive with revoke_by_service.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.Revoke_by_service">
+            <summary>
+            Revoke ALL shortcuts from this source service.
+            <br/>Used when a service needs to clear all its shortcuts.
+            <br/>Mutually exclusive with route_guid.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.Reason">
+            <summary>
+            Optional reason for revocation (for logging/debugging).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.SessionShortcut">
+            <summary>
+            A pre-bound API call that clients can invoke with a single GUID.
+            <br/>The bound_payload is injected by Connect when the shortcut is invoked.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcut.Route_guid">
+            <summary>
+            Client-salted GUID for invoking this shortcut.
+            <br/>Uses UUID version 7 bits to distinguish from service GUIDs (version 5).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcut.Target_guid">
+            <summary>
+            The actual service capability GUID this shortcut invokes.
+            <br/>Must be a valid capability in the client's current capability manifest.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcut.Bound_payload">
+            <summary>
+            Pre-serialized JSON payload passed unchanged to the target service.
+            <br/>Connect treats this as opaque bytes - no deserialization or modification.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata">
+            <summary>
+            Metadata about a session shortcut for display, debugging, and lifecycle management.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Name">
+            <summary>
+            Machine-readable identifier for this shortcut.
+            <br/>Examples: "join_game_arcadia", "get_my_stats"
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Description">
+            <summary>
+            Human-readable description of what this shortcut does.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Source_service">
+            <summary>
+            The service that created this shortcut.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Target_service">
+            <summary>
+            The target service for routing.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Target_method">
+            <summary>
+            The target HTTP method for routing.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Target_endpoint">
+            <summary>
+            The target endpoint for routing.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Created_at">
+            <summary>
+            When this shortcut was created.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Expires_at">
+            <summary>
+            Optional TTL for this shortcut.
+            <br/>If set, Connect automatically removes the shortcut after this time.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Tags">
+            <summary>
+            Optional categorization tags for client-side organization.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Display_name">
+            <summary>
+            Optional user-friendly name for display in client UIs.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Realm.IRealmClient.GetRealmAsync(BeyondImmersion.BannouService.Realm.GetRealmRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
             <summary>

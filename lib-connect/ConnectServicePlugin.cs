@@ -13,6 +13,7 @@ public class ConnectServicePlugin : StandardServicePlugin<IConnectService>
     public override string PluginName => "connect";
     public override string DisplayName => "Connect Service";
 
+    [Obsolete]
     public override void ConfigureServices(IServiceCollection services)
     {
         Logger?.LogDebug("Configuring service dependencies");

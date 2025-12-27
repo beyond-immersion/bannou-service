@@ -451,21 +451,33 @@ await client.Containers.StartContainerAsync(containerId, new());
 
 ### No Anonymous Events (ABSOLUTE)
 
-**All events MUST be defined as typed schemas** - anonymous object publishing is FORBIDDEN:
+**All events MUST be defined as typed schemas** - anonymous object publishing is FORBIDDEN for BOTH service events AND client events:
 
 ```csharp
-// CORRECT: Use typed event model
+// CORRECT: Use typed event models
 await _messageBus.PublishAsync("account.created", new AccountCreatedEvent { ... });
+await _clientEventPublisher.PublishToSessionAsync(sessionId, new ShortcutPublishedEvent { ... });
 
-// FORBIDDEN: Anonymous object publishing
+// FORBIDDEN: Anonymous object publishing - causes MassTransit runtime error
 await _messageBus.PublishAsync("account.created", new { AccountId = id }); // NO!
+await _messageBus.PublishAsync(topic, new { event_name = "...", session_id = "..." }); // NO!
 ```
 
+**Critical Technical Limitation**: MassTransit (used by lib-messaging) throws `System.ArgumentException: Message types must not be anonymous types` at runtime when attempting to publish anonymous objects. This error is not caught at compile time.
+
 **Why Typed Events Are Required**:
+- **MassTransit Requirement**: MassTransit cannot serialize anonymous types for RabbitMQ transport
 - Event schemas enable code generation for consumers
 - Type safety catches breaking changes at compile time
 - Documentation is auto-generated from schemas
 - Event versioning and evolution require explicit contracts
+
+**Event Type Locations**:
+| Event Type | Schema File | Generated Output |
+|------------|-------------|------------------|
+| Service Events | `{service}-events.yaml` | `bannou-service/Generated/Events/{Service}EventsModels.cs` |
+| Client Events | `{service}-client-events.yaml` | `lib-{service}/Generated/{Service}ClientEventsModels.cs` |
+| Common Client Events | `common-client-events.yaml` | `bannou-service/Generated/CommonClientEventsModels.cs` |
 
 ### Required Events Per Service
 
@@ -1526,7 +1538,7 @@ x-service-configuration:
 | Direct Redis/MySQL connection | 4 | Use IStateStoreFactory via lib-state |
 | Direct RabbitMQ connection | 4 | Use IMessageBus via lib-messaging |
 | Direct HTTP service calls | 4 | Use IMeshInvocationClient or generated clients via lib-mesh |
-| Anonymous event objects | 5 | Define typed event in schema, use generated model |
+| Anonymous event objects | 5 | Define typed event in schema - MassTransit throws `ArgumentException: Message types must not be anonymous types` |
 | Manually defining lifecycle events | 5 | Use `x-lifecycle` in events schema - Created/Updated/Deleted are auto-generated |
 | Missing event publication | 5 | Use IMessageBus.PublishAsync |
 | Service class missing `partial` | 6 | Add `partial` keyword |

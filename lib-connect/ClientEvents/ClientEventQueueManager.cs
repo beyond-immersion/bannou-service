@@ -9,14 +9,34 @@ namespace BeyondImmersion.BannouService.Connect.ClientEvents;
 /// </summary>
 /// <remarks>
 /// <para>
-/// When a client disconnects but the session is still valid (within the 5-minute
-/// reconnection window), events are queued in Redis via state store.
+/// <strong>⚠️ OBSOLETE - CLEANUP CANDIDATE ⚠️</strong>
 /// </para>
 /// <para>
-/// When the client reconnects, queued events are delivered before normal
-/// event flow resumes.
+/// This Redis-based event queue is obsolete. Event buffering during disconnection is now
+/// handled natively by RabbitMQ via ClientEventRabbitMQSubscriber's queue-based consumption.
+/// </para>
+/// <para>
+/// The new architecture:
+/// <list type="bullet">
+/// <item>Queue name: CONNECT_SESSION_{sessionId} - persists during disconnect</item>
+/// <item>On disconnect: Consumer cancelled, queue buffers messages automatically</item>
+/// <item>On reconnect: Re-subscribe to same queue, RabbitMQ delivers pending messages</item>
+/// <item>Cleanup: Queue auto-expires via x-expires after 10 minutes with no consumers</item>
+/// </list>
+/// </para>
+/// <para>
+/// This class is retained temporarily for:
+/// <list type="bullet">
+/// <item>Delivering any events queued in Redis before the architecture change</item>
+/// <item>Potential fallback if RabbitMQ buffering has issues (not currently used)</item>
+/// </list>
+/// </para>
+/// <para>
+/// TODO: Remove this class and all references in a future cleanup once RabbitMQ-based
+/// buffering is confirmed stable in production.
 /// </para>
 /// </remarks>
+[Obsolete("Redis event queuing replaced by RabbitMQ queue-based buffering. See ClientEventRabbitMQSubscriber.")]
 public class ClientEventQueueManager
 {
     private readonly IStateStore<List<QueuedEvent>> _stateStore;

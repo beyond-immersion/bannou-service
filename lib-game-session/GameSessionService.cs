@@ -1240,28 +1240,29 @@ public partial class GameSessionService : IGameSessionService
                 AccountId = accountId
             };
 
-            var shortcutEvent = new
+            var shortcutEvent = new ShortcutPublishedEvent
             {
-                event_id = Guid.NewGuid(),
-                event_name = "session.shortcut_published",
-                session_id = sessionId,
-                shortcut = new
+                Event_id = Guid.NewGuid(),
+                Event_name = ShortcutPublishedEventEvent_name.Session_shortcut_published,
+                Timestamp = DateTimeOffset.UtcNow,
+                Session_id = sessionId,
+                Shortcut = new SessionShortcut
                 {
-                    route_guid = routeGuid.ToString(),
-                    target_guid = targetGuid.ToString(),
-                    bound_payload = BannouJson.Serialize(boundPayload),
-                    metadata = new
+                    Route_guid = routeGuid,
+                    Target_guid = targetGuid,
+                    Bound_payload = BannouJson.Serialize(boundPayload),
+                    Metadata = new SessionShortcutMetadata
                     {
-                        name = shortcutName,
-                        description = $"Join the {stubName} game lobby",
-                        source_service = "game-session",
-                        target_service = "game-session", // Required for routing
-                        target_method = "POST", // Required for routing
-                        target_endpoint = "/sessions/join", // Required for routing
-                        created_at = DateTimeOffset.UtcNow
+                        Name = shortcutName,
+                        Description = $"Join the {stubName} game lobby",
+                        Source_service = "game-session",
+                        Target_service = "game-session",
+                        Target_method = "POST",
+                        Target_endpoint = "/sessions/join",
+                        Created_at = DateTimeOffset.UtcNow
                     }
                 },
-                replace_existing = true
+                Replace_existing = true
             };
 
             // Publish to session-specific topic
@@ -1284,13 +1285,14 @@ public partial class GameSessionService : IGameSessionService
     {
         try
         {
-            var revokeEvent = new
+            var revokeEvent = new ShortcutRevokedEvent
             {
-                event_id = Guid.NewGuid(),
-                event_name = "session.shortcut_revoked",
-                session_id = sessionId,
-                revoke_by_service = "game-session",
-                reason = $"Subscription to {stubName} ended"
+                Event_id = Guid.NewGuid(),
+                Event_name = ShortcutRevokedEventEvent_name.Session_shortcut_revoked,
+                Timestamp = DateTimeOffset.UtcNow,
+                Session_id = sessionId,
+                Revoke_by_service = "game-session",
+                Reason = $"Subscription to {stubName} ended"
             };
 
             var topic = $"CONNECT_SESSION_{sessionId}";

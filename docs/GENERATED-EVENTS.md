@@ -1,6 +1,6 @@
 # Generated Events Reference
 
-> **Auto-generated**: 2025-12-26 20:09:26
+> **Auto-generated**: 2025-12-27 05:33:59
 > **Source**: `schemas/*-events.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -61,6 +61,8 @@ This document lists all events defined in Bannou's event schemas.
 | `CapabilityManifestEvent` | Custom | `capability-manifest` | Sent to client when their available API capabiliti... |
 | `DisconnectNotificationEvent` | Custom | `disconnect-notification` | Sent to client before WebSocket connection is clos... |
 | `SessionCapabilitiesEvent` | Custom | `session-capabilities` | Internal event carrying compiled capabilities from... |
+| `ShortcutPublishedEvent` | Custom | `shortcut-published` | Published by services to create or update a sessio... |
+| `ShortcutRevokedEvent` | Expiration | `shortcut.revoked` | Published by services to remove shortcuts. |
 | `SystemErrorEvent` | Error | `system.error` | Generic error notification sent to client. |
 | `SystemNotificationEvent` | Custom | `system-notification` | Generic notification event for system-level messag... |
 

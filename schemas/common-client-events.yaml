@@ -264,3 +264,174 @@ components:
           format: date-time
           nullable: true
           description: When this notification expires/becomes irrelevant
+
+    # ============================================================
+    # SESSION SHORTCUT EVENTS
+    # Internal events for services to publish/revoke session shortcuts.
+    # Sent to CONNECT_SESSION_{sessionId} topics, handled by Connect.
+    # NOT forwarded to clients - Connect updates internal state and
+    # sends updated CapabilityManifestEvent with shortcut info.
+    # ============================================================
+
+    ShortcutPublishedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Published by services to create or update a session shortcut.
+        Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
+        Connect handles this event internally and does NOT forward to the client.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - session_id
+        - shortcut
+      properties:
+        event_name:
+          type: string
+          enum: ["session.shortcut_published"]
+          description: Fixed event type identifier.
+        session_id:
+          type: string
+          description: Target session for this shortcut.
+        shortcut:
+          $ref: '#/components/schemas/SessionShortcut'
+        replace_existing:
+          type: boolean
+          default: true
+          description: |
+            If true and a shortcut with the same route_guid exists, replace it.
+            If false and shortcut exists, the event is ignored.
+
+    ShortcutRevokedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Published by services to remove shortcuts.
+        Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
+        Supports both single-shortcut revocation (by route_guid) and
+        bulk revocation (all shortcuts from a source_service).
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - session_id
+      properties:
+        event_name:
+          type: string
+          enum: ["session.shortcut_revoked"]
+          description: Fixed event type identifier.
+        session_id:
+          type: string
+          description: Target session for revocation.
+        route_guid:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Specific shortcut to revoke.
+            If provided, only this shortcut is removed.
+            Mutually exclusive with revoke_by_service.
+        revoke_by_service:
+          type: string
+          nullable: true
+          description: |
+            Revoke ALL shortcuts from this source service.
+            Used when a service needs to clear all its shortcuts.
+            Mutually exclusive with route_guid.
+        reason:
+          type: string
+          nullable: true
+          description: Optional reason for revocation (for logging/debugging).
+
+    SessionShortcut:
+      type: object
+      description: |
+        A pre-bound API call that clients can invoke with a single GUID.
+        The bound_payload is injected by Connect when the shortcut is invoked.
+      required:
+        - route_guid
+        - target_guid
+        - bound_payload
+        - metadata
+      properties:
+        route_guid:
+          type: string
+          format: uuid
+          description: |
+            Client-salted GUID for invoking this shortcut.
+            Uses UUID version 7 bits to distinguish from service GUIDs (version 5).
+        target_guid:
+          type: string
+          format: uuid
+          description: |
+            The actual service capability GUID this shortcut invokes.
+            Must be a valid capability in the client's current capability manifest.
+        bound_payload:
+          type: string
+          description: |
+            Pre-serialized JSON payload passed unchanged to the target service.
+            Connect treats this as opaque bytes - no deserialization or modification.
+        metadata:
+          $ref: '#/components/schemas/SessionShortcutMetadata'
+
+    SessionShortcutMetadata:
+      type: object
+      description: |
+        Metadata about a session shortcut for display, debugging, and lifecycle management.
+      required:
+        - name
+        - source_service
+        - created_at
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: |
+            Machine-readable identifier for this shortcut.
+            Examples: "join_game_arcadia", "get_my_stats"
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Human-readable description of what this shortcut does.
+        source_service:
+          type: string
+          description: The service that created this shortcut.
+        target_service:
+          type: string
+          description: The target service for routing.
+        target_method:
+          type: string
+          default: "POST"
+          description: The target HTTP method for routing.
+        target_endpoint:
+          type: string
+          description: The target endpoint for routing.
+        created_at:
+          type: string
+          format: date-time
+          description: When this shortcut was created.
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: |
+            Optional TTL for this shortcut.
+            If set, Connect automatically removes the shortcut after this time.
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Optional categorization tags for client-side organization.
+        display_name:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Optional user-friendly name for display in client UIs.

@@ -49,8 +49,8 @@ info:
   title: Example Service API
   version: 1.0.0
 servers:
-  - url: http://localhost:5012/v1.0/invoke/bannou/method
-    description: Service mesh endpoint
+  - url: http://localhost:5012
+    description: Bannou service endpoint
 
 paths:
   /example/greet:

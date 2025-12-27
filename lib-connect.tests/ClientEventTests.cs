@@ -15,9 +15,12 @@ namespace BeyondImmersion.BannouService.Connect.Tests;
 public class ClientEventTests
 {
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    [Obsolete]
     private readonly Mock<IStateStore<List<ClientEventQueueManager.QueuedEvent>>> _mockStateStore;
+    [Obsolete]
     private readonly Mock<ILogger<ClientEventQueueManager>> _mockLogger;
 
+    [Obsolete]
     public ClientEventTests()
     {
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
@@ -33,6 +36,7 @@ public class ClientEventTests
     #region ClientEventQueueManager Tests
 
     [Fact]
+    [Obsolete]
     public void Constructor_WithValidParameters_ShouldNotThrow()
     {
         // Arrange & Act & Assert
@@ -42,6 +46,7 @@ public class ClientEventTests
     }
 
     [Fact]
+    [Obsolete]
     public void Constructor_WithNullStateStoreFactory_ShouldThrow()
     {
         // Arrange & Act & Assert
@@ -50,6 +55,7 @@ public class ClientEventTests
     }
 
     [Fact]
+    [Obsolete]
     public void Constructor_WithNullLogger_ShouldThrow()
     {
         // Arrange & Act & Assert
@@ -58,6 +64,7 @@ public class ClientEventTests
     }
 
     [Fact]
+    [Obsolete]
     public async Task QueueEventAsync_WithNullSessionId_ShouldReturnFalse()
     {
         // Arrange
@@ -72,6 +79,7 @@ public class ClientEventTests
     }
 
     [Fact]
+    [Obsolete]
     public async Task QueueEventAsync_WithEmptySessionId_ShouldReturnFalse()
     {
         // Arrange
@@ -86,6 +94,7 @@ public class ClientEventTests
     }
 
     [Fact]
+    [Obsolete]
     public async Task QueueEventAsync_WithValidInput_ShouldSaveToStateStore()
     {
         // Arrange
@@ -111,6 +120,7 @@ public class ClientEventTests
     }
 
     [Fact]
+    [Obsolete]
     public async Task DequeueEventsAsync_WithNullSessionId_ShouldReturnEmptyList()
     {
         // Arrange
@@ -124,6 +134,7 @@ public class ClientEventTests
     }
 
     [Fact]
+    [Obsolete]
     public async Task DequeueEventsAsync_WithEmptySessionId_ShouldReturnEmptyList()
     {
         // Arrange
@@ -137,6 +148,7 @@ public class ClientEventTests
     }
 
     [Fact]
+    [Obsolete]
     public async Task DequeueEventsAsync_WithNoQueuedEvents_ShouldReturnEmptyList()
     {
         // Arrange
@@ -156,6 +168,7 @@ public class ClientEventTests
     }
 
     [Fact]
+    [Obsolete]
     public async Task GetQueuedEventCountAsync_WithNullSessionId_ShouldReturnZero()
     {
         // Arrange
@@ -169,6 +182,7 @@ public class ClientEventTests
     }
 
     [Fact]
+    [Obsolete]
     public async Task GetQueuedEventCountAsync_WithEmptySessionId_ShouldReturnZero()
     {
         // Arrange
@@ -182,6 +196,7 @@ public class ClientEventTests
     }
 
     [Fact]
+    [Obsolete]
     public async Task ClearQueueAsync_WithNullSessionId_ShouldNotThrow()
     {
         // Arrange
@@ -193,6 +208,7 @@ public class ClientEventTests
     }
 
     [Fact]
+    [Obsolete]
     public async Task ClearQueueAsync_WithValidSessionId_ShouldDeleteFromStateStore()
     {
         // Arrange

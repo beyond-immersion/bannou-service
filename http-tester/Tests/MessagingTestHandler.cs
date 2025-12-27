@@ -138,7 +138,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
             var createRequest = new CreateSubscriptionRequest
             {
                 Topic = "test.subscription-lifecycle",
-                CallbackUrl = new Uri("http://localhost:5012/v1.0/invoke/bannou/method/testing/callback")
+                CallbackUrl = new Uri("http://localhost:5012/testing/callback")
             };
 
             var createResponse = await messagingClient.CreateSubscriptionAsync(createRequest);

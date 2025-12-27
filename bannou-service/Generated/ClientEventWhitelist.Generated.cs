@@ -41,6 +41,8 @@ public static class ClientEventWhitelist
         "game_session.state_changed",
         "game_session.state_updated",
         "permissions.session_capabilities",
+        "session.shortcut_published",
+        "session.shortcut_revoked",
         "system.error",
         "system.notification",
         "voice.peer_joined",

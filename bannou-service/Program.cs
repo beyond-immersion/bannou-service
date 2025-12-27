@@ -635,7 +635,7 @@ public static class Program
         const int retryDelayMs = 1000;
 
         var bannouHttpEndpoint = Configuration.EffectiveHttpEndpoint;
-        var url = $"{bannouHttpEndpoint}/v1.0/invoke/{sourceAppId}/method/orchestrator/service-routing";
+        var url = $"{bannouHttpEndpoint}/orchestrator/service-routing";
 
         using var httpClient = new HttpClient();
         httpClient.Timeout = TimeSpan.FromSeconds(10);

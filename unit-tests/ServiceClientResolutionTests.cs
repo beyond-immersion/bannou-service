@@ -406,11 +406,6 @@ public class ServiceClientResolutionTests
         // Verify routing behavior
         var accountsAppId = resolver.GetAppIdForService("accounts");
         Assert.Equal("bannou", accountsAppId); // Development default
-
-        // This demonstrates the correct call pattern:
-        // var httpClient = httpClientFactory.CreateClient("AuthService");
-        // var baseUrl = $"http://localhost:3500/v1.0/invoke/{accountsAppId}/method";
-        // var response = await httpClient.PostAsync($"{baseUrl}/api/accounts/create", content);
     }
 
     /// <summary>
@@ -449,69 +444,4 @@ public class ServiceClientResolutionTests
             }
         }
     }
-}
-
-/// <summary>
-/// Example of how a service client SHOULD be implemented for distributed calls.
-/// This demonstrates the correct architecture pattern.
-/// </summary>
-public class ExampleAccountsClient : ServiceClientBase
-{
-    public ExampleAccountsClient(
-        HttpClient httpClient,
-        IServiceAppMappingResolver appMappingResolver,
-        ILogger<ExampleAccountsClient> logger)
-        : base(httpClient, appMappingResolver, logger, "accounts")
-    {
-    }
-
-    /// <summary>
-    /// Example of correct service-to-service call using Bannou routing.
-    /// </summary>
-    public async Task<CreateAccountResponse?> CreateAccountAsync(CreateAccountRequest request)
-    {
-        try
-        {
-            if (_httpClient == null)
-                throw new InvalidOperationException("HttpClient is not available");
-
-            // Use base class BaseUrl property which handles app-id resolution
-            var jsonContent = new StringContent(
-                BannouJson.Serialize(request),
-                System.Text.Encoding.UTF8,
-                "application/json");
-
-            var response = await _httpClient.PostAsync($"{BaseUrl}/api/accounts/create", jsonContent);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var responseContent = await response.Content.ReadAsStringAsync();
-                return BannouJson.Deserialize<CreateAccountResponse>(responseContent);
-            }
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error calling accounts service");
-            return null;
-        }
-    }
-}
-
-/// <summary>
-/// Mock request/response models for testing
-/// </summary>
-public class CreateAccountRequest
-{
-    public string Email { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-}
-
-public class CreateAccountResponse
-{
-    public string AccountId { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; }
 }

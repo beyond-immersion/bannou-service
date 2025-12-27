@@ -313,34 +313,6 @@
             <param name="serviceImplementation">The service implementation type this configuration is for (required).</param>
             <param name="envPrefix">The prefix for environment variables used by this configuration.</param>
         </member>
-        <member name="T:BeyondImmersion.BannouService.BannouEventHelper">
-            <summary>
-            Helper class for parsing pub/sub events with CloudEvents format handling.
-            Handles both CloudEvents-wrapped events and raw payloads since RabbitMQ
-            can deliver events in either format depending on timing and configuration.
-            </summary>
-            <remarks>
-            NOTE: HTTP-based ReadEventAsync methods were removed - events now flow via
-            IEventConsumer/MassTransit, not HTTP controllers with [Topic] attributes.
-            </remarks>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.BannouEventHelper.UnwrapCloudEventsEnvelope(System.Byte[])">
-            <summary>
-            Unwraps a CloudEvents envelope from raw byte payload.
-            Automatically handles both CloudEvents format (with 'data' wrapper) and raw format.
-            Used by Connect service for RabbitMQ subscriber which receives raw bytes.
-            </summary>
-            <param name="payload">Raw event payload bytes (potentially CloudEvents-wrapped)</param>
-            <returns>Unwrapped event data bytes, or original payload if not CloudEvents format</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.BannouEventHelper.UnwrapCloudEventsToJson(System.Byte[])">
-            <summary>
-            Unwraps a CloudEvents envelope and returns the data as a JsonElement.
-            Useful when you need to inspect or modify the unwrapped data before forwarding.
-            </summary>
-            <param name="payload">Raw event payload bytes (potentially CloudEvents-wrapped)</param>
-            <returns>Tuple of (unwrapped JsonElement, raw bytes), or (null, original bytes) if parsing fails</returns>
-        </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.ClientEventNormalizer">
              <summary>
              Normalizes client event names from their potentially mangled form (from JSON serialization)
@@ -755,6 +727,159 @@
         <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.Expires_at">
             <summary>
             When this notification expires/becomes irrelevant
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent">
+            <summary>
+            Published by services to create or update a session shortcut.
+            <br/>Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
+            <br/>Connect handles this event internally and does NOT forward to the client.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent.Event_name">
+            <summary>
+            Fixed event type identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent.Session_id">
+            <summary>
+            Target session for this shortcut.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent.Replace_existing">
+            <summary>
+            If true and a shortcut with the same route_guid exists, replace it.
+            <br/>If false and shortcut exists, the event is ignored.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent">
+            <summary>
+            Published by services to remove shortcuts.
+            <br/>Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
+            <br/>Supports both single-shortcut revocation (by route_guid) and
+            <br/>bulk revocation (all shortcuts from a source_service).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.Event_name">
+            <summary>
+            Fixed event type identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.Session_id">
+            <summary>
+            Target session for revocation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.Route_guid">
+            <summary>
+            Specific shortcut to revoke.
+            <br/>If provided, only this shortcut is removed.
+            <br/>Mutually exclusive with revoke_by_service.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.Revoke_by_service">
+            <summary>
+            Revoke ALL shortcuts from this source service.
+            <br/>Used when a service needs to clear all its shortcuts.
+            <br/>Mutually exclusive with route_guid.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.Reason">
+            <summary>
+            Optional reason for revocation (for logging/debugging).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.SessionShortcut">
+            <summary>
+            A pre-bound API call that clients can invoke with a single GUID.
+            <br/>The bound_payload is injected by Connect when the shortcut is invoked.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcut.Route_guid">
+            <summary>
+            Client-salted GUID for invoking this shortcut.
+            <br/>Uses UUID version 7 bits to distinguish from service GUIDs (version 5).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcut.Target_guid">
+            <summary>
+            The actual service capability GUID this shortcut invokes.
+            <br/>Must be a valid capability in the client's current capability manifest.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcut.Bound_payload">
+            <summary>
+            Pre-serialized JSON payload passed unchanged to the target service.
+            <br/>Connect treats this as opaque bytes - no deserialization or modification.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata">
+            <summary>
+            Metadata about a session shortcut for display, debugging, and lifecycle management.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Name">
+            <summary>
+            Machine-readable identifier for this shortcut.
+            <br/>Examples: "join_game_arcadia", "get_my_stats"
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Description">
+            <summary>
+            Human-readable description of what this shortcut does.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Source_service">
+            <summary>
+            The service that created this shortcut.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Target_service">
+            <summary>
+            The target service for routing.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Target_method">
+            <summary>
+            The target HTTP method for routing.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Target_endpoint">
+            <summary>
+            The target endpoint for routing.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Created_at">
+            <summary>
+            When this shortcut was created.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Expires_at">
+            <summary>
+            Optional TTL for this shortcut.
+            <br/>If set, Connect automatically removes the shortcut after this time.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Tags">
+            <summary>
+            Optional categorization tags for client-side organization.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Display_name">
+            <summary>
+            Optional user-friendly name for display in client UIs.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Configuration.AppConfiguration">
@@ -1264,79 +1389,16 @@
         <member name="T:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest">
             <summary>
             The basic API controller request payload model.
+            Used as a base class for request/response message handling with header transfer support.
+            This class is retained for ApiMessage header handling functionality used in unit tests.
             </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest.HttpClient">
-            <summary>
-            HTTP client for making service requests.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest.Response">
-            <summary>
-            The response from the API request.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest.ExecuteRequest``1(System.String,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.String}},BeyondImmersion.BannouService.HttpMethodTypes)">
-            <summary>
-            Executes an API request with a typed response.
-            </summary>
-            <typeparam name="T">The type of response expected.</typeparam>
-            <param name="service">The target service name.</param>
-            <param name="method">The method to invoke.</param>
-            <param name="additionalHeaders">Optional additional headers.</param>
-            <param name="httpMethod">The HTTP method to use.</param>
-            <returns>True if the request was successful, false otherwise.</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest.ExecuteRequest(System.String,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.String}},BeyondImmersion.BannouService.HttpMethodTypes)">
-            <summary>
-            Executes an API request.
-            </summary>
-            <param name="service">The target service name.</param>
-            <param name="method">The method to invoke.</param>
-            <param name="additionalHeaders">Optional additional headers.</param>
-            <param name="httpMethod">The HTTP method to use.</param>
-            <returns>True if the request was successful, false otherwise.</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest.ExecuteRequest_INTERNAL(System.String,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.String}},BeyondImmersion.BannouService.HttpMethodTypes)">
-            <summary>
-            Internal implementation for executing API requests.
-            </summary>
-            <param name="service">The target service name.</param>
-            <param name="method">The method to invoke.</param>
-            <param name="additionalHeaders">Optional additional headers.</param>
-            <param name="httpMethod">The HTTP method to use.</param>
-            <returns>True if the request was successful, false otherwise.</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest.ExecuteRequest_INTERNAL``1(System.String,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.String}},BeyondImmersion.BannouService.HttpMethodTypes)">
-            <summary>
-            Internal implementation for executing typed API requests.
-            </summary>
-            <typeparam name="T">The type of response expected.</typeparam>
-            <param name="service">The target service name.</param>
-            <param name="method">The method to invoke.</param>
-            <param name="additionalHeaders">Optional additional headers.</param>
-            <param name="httpMethod">The HTTP method to use.</param>
-            <returns>True if the request was successful, false otherwise.</returns>
         </member>
         <member name="T:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest`1">
             <summary>
-            The basic API controller request payload model.
+            Generic API controller request payload model with typed response support.
+            Used for header property transfer between requests and responses.
+            This class is retained for the CreateResponse functionality used in unit tests.
             </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest`1.Response">
-            <summary>
-            The typed response from the API request.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest`1.ExecuteRequest(System.String,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.String}},BeyondImmersion.BannouService.HttpMethodTypes)">
-            <summary>
-            Executes an API request with typed response handling.
-            </summary>
-            <param name="service">The target service name.</param>
-            <param name="method">The method to invoke.</param>
-            <param name="additionalHeaders">Optional additional headers.</param>
-            <param name="httpMethod">The HTTP method to use.</param>
-            <returns>True if the request was successful, false otherwise.</returns>
         </member>
         <member name="M:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest`1.CreateResponse">
             <summary>
@@ -17144,139 +17206,6 @@
             </summary>
             <param name="token">JWT token or authorization value</param>
             <returns>This client instance for method chaining</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase">
-            <summary>
-            Base class for all Bannou-aware service clients.
-            Handles dynamic app-id resolution and Bannou routing.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase._httpClient">
-            <summary>
-            HTTP client for making service requests.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase._appMappingResolver">
-            <summary>
-            Resolver for dynamic service-to-app-id mapping.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase._logger">
-            <summary>
-            Logger for tracing service calls.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase._serviceName">
-            <summary>
-            Name of the target service.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase.ServiceName">
-            <summary>
-            The name of the service this client communicates with.
-            Should match the service name in the corresponding BannouServiceAttribute.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase.#ctor">
-            <summary>
-            Parameterless constructor for NSwag generated clients that handle their own dependency injection.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase.#ctor(System.Net.Http.HttpClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger,System.String)">
-            <summary>
-            Full constructor for manual instantiation with all dependencies.
-            </summary>
-            <param name="httpClient">HTTP client for making requests.</param>
-            <param name="appMappingResolver">Resolver for dynamic app-id mapping.</param>
-            <param name="logger">Logger for tracing service calls.</param>
-            <param name="serviceName">Name of the target service.</param>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase.BaseUrl">
-             <summary>
-             Gets the base URL for Bannou service invocation with dynamic app-id resolution.
-             For parameterless constructor, falls back to "bannou" app-id.
-             Uses Program.Configuration.EffectiveHttpEndpoint for containerized environments.
-             </summary>
-             <remarks>
-             CRITICAL ARCHITECTURAL CONSTRAINT:
-             The app-id used here ("bannou" by default) becomes part of the URL path that mesh
-             forwards to the target service. mesh does NOT strip the /v1.0/invoke/{app-id}/method/
-             prefix - it preserves the full path.
-            
-             This means all OpenAPI schemas MUST use the same app-id in their `servers` URL:
-               servers:
-                 - url: http://localhost:3500/v1.0/invoke/bannou/method
-            
-             NSwag generates controller route prefixes from this URL. If the schema uses a different
-             app-id (e.g., "game-session"), the generated controller route won't match the path
-             that clients send, resulting in 404 errors.
-            
-             The ServiceAppMappingResolver can dynamically route to different meshs, but
-             the path structure (including app-id) must match what controllers expect.
-            
-             See docs/BANNOU_DESIGN.md "servers URL Constraint" section for full documentation.
-             </remarks>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase.PrepareRequest(System.Net.Http.HttpClient,System.Net.Http.HttpRequestMessage,System.String)">
-            <summary>
-            Prepares the HTTP request with proper routing headers and custom headers.
-            Works with both full constructor and parameterless constructor.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase.PrepareRequest(System.Net.Http.HttpClient,System.Net.Http.HttpRequestMessage,System.Text.StringBuilder)">
-            <summary>
-            Prepares the HTTP request with URL builder for Bannou routing and custom headers.
-            Works with both full constructor and parameterless constructor.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase.PrepareRequestCore(System.Net.Http.HttpRequestMessage,System.String)">
-            <summary>
-            Core implementation of request preparation. Applies routing headers, authorization, and custom headers.
-            </summary>
-            <param name="request">The HTTP request message to prepare.</param>
-            <param name="url">The target URL (for logging purposes).</param>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase.ProcessResponse(System.Net.Http.HttpClient,System.Net.Http.HttpResponseMessage)">
-            <summary>
-            Processes the HTTP response from Bannou service invocation.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase._customHeaders">
-            <summary>
-            Storage for custom headers to be applied to the next request.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase._authorizationHeader">
-            <summary>
-            Authorization header value for the next request.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase.SetHeader(System.String,System.String)">
-            <summary>
-            Sets a custom header for the next service request.
-            Headers are applied once and then cleared.
-            Used by generated clients for type-safe fluent API.
-            </summary>
-            <param name="name">Header name (e.g., "X-Custom-Header")</param>
-            <param name="value">Header value</param>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase.ClearAuthorization">
-            <summary>
-            Clears the Authorization header.
-            Used by generated clients for type-safe fluent API.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase.ClearHeaders">
-            <summary>
-            Clears all custom headers and authorization for a fresh request.
-            Called automatically after each request.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientBase.ExtractAppIdFromUrl(System.String)">
-            <summary>
-            Extracts the app-id from a mesh invoke URL.
-            URL pattern: http://localhost:3500/v1.0/invoke/{app-id}/method/...
-            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions">
             <summary>

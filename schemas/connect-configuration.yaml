@@ -70,7 +70,6 @@ x-service-configuration:
       description: WebSocket URL returned to clients for reconnection
       env: CONNECT_URL
 
-# Note: Event subscriptions are handled manually in ConnectEventsController.cs
-# because they require specialized CloudEvents parsing and custom service method calls.
+# Note: Event subscriptions are handled via MassTransit consumers in ConnectEventsController.cs
 # Topics subscribed: session.invalidated, permissions.capabilities-updated
 

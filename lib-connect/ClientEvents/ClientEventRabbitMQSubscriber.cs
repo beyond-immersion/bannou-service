@@ -16,9 +16,17 @@ namespace BeyondImmersion.BannouService.Connect.ClientEvents;
 /// dynamic runtime subscriptions. This is similar to how Orchestrator uses direct Redis.
 /// </para>
 /// <para>
-/// When a client connects, we create a queue and bind it to the session-specific
-/// exchange (CONNECT_SESSION_{sessionId}). These exchanges are created automatically
-/// when services publish to the topic.
+/// Uses queue-based consumption aligned with MassTransit's publishing pattern:
+/// - Queue name: CONNECT_SESSION_{sessionId} (matches MassTransit's topic parameter)
+/// - Bound to "bannou" exchange with routing key = queue name
+/// - Messages buffer in queue during client disconnect (RabbitMQ handles buffering)
+/// - On reconnect, client gets all pending messages automatically
+/// </para>
+/// <para>
+/// Queue lifecycle:
+/// - Created on first subscription OR first publish (whichever comes first)
+/// - Persists during disconnect to buffer messages (x-message-ttl for message expiry)
+/// - Auto-expires after extended inactivity (x-expires for queue cleanup)
 /// </para>
 /// </remarks>
 public class ClientEventRabbitMQSubscriber : IAsyncDisposable
@@ -38,15 +46,33 @@ public class ClientEventRabbitMQSubscriber : IAsyncDisposable
     private const int INITIAL_RETRY_DELAY_MS = 1000;
 
     /// <summary>
-    /// Prefix for session-specific topics/exchanges.
-    /// Must match MessageBusClientEventPublisher.SESSION_TOPIC_PREFIX.
+    /// Prefix for session-specific queues.
+    /// Must match the topic name used by services when publishing via lib-messaging.
     /// </summary>
-    private const string SESSION_TOPIC_PREFIX = "CONNECT_SESSION_";
+    private const string SESSION_QUEUE_PREFIX = "CONNECT_SESSION_";
 
     /// <summary>
-    /// Queue name prefix for this Connect instance.
+    /// Exchange name used by MassTransit/lib-messaging for publishing.
+    /// Must match MessagingServiceConfiguration.DefaultExchange.
     /// </summary>
-    private readonly string _queuePrefix;
+    private const string MASSTRANSIT_EXCHANGE = "bannou";
+
+    /// <summary>
+    /// Message TTL in milliseconds - matches reconnection window (5 minutes).
+    /// Messages older than this are discarded.
+    /// </summary>
+    private const int MESSAGE_TTL_MS = 300000;
+
+    /// <summary>
+    /// Queue expiry in milliseconds - queue auto-deletes after this time with no consumers (10 minutes).
+    /// This is longer than MESSAGE_TTL to allow for reconnection after all messages expire.
+    /// </summary>
+    private const int QUEUE_EXPIRES_MS = 600000;
+
+    /// <summary>
+    /// Unique identifier for this Connect instance (for logging/debugging).
+    /// </summary>
+    private readonly string _instanceId;
 
     /// <summary>
     /// Creates a new ClientEventRabbitMQSubscriber.
@@ -54,7 +80,7 @@ public class ClientEventRabbitMQSubscriber : IAsyncDisposable
     /// <param name="connectionString">RabbitMQ connection string from configuration.</param>
     /// <param name="logger">Logger for connection operations.</param>
     /// <param name="eventHandler">Callback to handle received events (sessionId, eventPayload).</param>
-    /// <param name="instanceId">Unique identifier for this Connect instance (for queue naming).</param>
+    /// <param name="instanceId">Unique identifier for this Connect instance (for logging).</param>
     public ClientEventRabbitMQSubscriber(
         string connectionString,
         ILogger<ClientEventRabbitMQSubscriber> logger,
@@ -65,8 +91,8 @@ public class ClientEventRabbitMQSubscriber : IAsyncDisposable
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _eventHandler = eventHandler ?? throw new ArgumentNullException(nameof(eventHandler));
 
-        // Create unique queue prefix for this instance
-        _queuePrefix = $"connect-session-{instanceId ?? Guid.NewGuid().ToString("N")[..8]}";
+        // Instance ID for logging/debugging (not used in queue naming anymore)
+        _instanceId = instanceId ?? Guid.NewGuid().ToString("N")[..8];
     }
 
     /// <summary>
@@ -126,8 +152,13 @@ public class ClientEventRabbitMQSubscriber : IAsyncDisposable
 
     /// <summary>
     /// Subscribe to client events for a specific session.
-    /// Creates a queue and binds it to the session's exchange.
+    /// Creates/declares a shared queue bound to the MassTransit exchange.
     /// </summary>
+    /// <remarks>
+    /// Queue naming matches MassTransit's topic parameter (CONNECT_SESSION_{sessionId}).
+    /// This ensures messages published via lib-messaging are routed to our queue.
+    /// Queue persists during disconnect to buffer messages - RabbitMQ handles buffering natively.
+    /// </remarks>
     /// <param name="sessionId">The session ID to subscribe to.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if subscription was successful.</returns>
@@ -154,46 +185,42 @@ public class ClientEventRabbitMQSubscriber : IAsyncDisposable
 
         try
         {
-            var exchangeName = $"{SESSION_TOPIC_PREFIX}{sessionId}";
-            var queueName = $"{_queuePrefix}-{sessionId}";
+            // Queue name matches the topic used by lib-messaging PublishAsync
+            // This is the key alignment with MassTransit's routing
+            var queueName = $"{SESSION_QUEUE_PREFIX}{sessionId}";
 
-            // Declare the queue (auto-delete when no consumers)
+            // Declare the queue with settings compatible with MassTransit
+            // Queue persists during disconnect to buffer messages (no autoDelete)
             await _channel.QueueDeclareAsync(
                 queue: queueName,
-                durable: false,
-                exclusive: false,
-                autoDelete: true,
+                durable: true,           // Match MassTransit default - survives broker restart
+                exclusive: false,        // Allow any Connect instance to consume (cross-instance reconnection)
+                autoDelete: false,       // Keep queue during disconnect - let x-expires handle cleanup
                 arguments: new Dictionary<string, object?>
                 {
-                    // Queue TTL matches reconnection window (5 minutes)
-                    ["x-message-ttl"] = 300000,
-                    // Max queue length to prevent memory issues
-                    ["x-max-length"] = 100
+                    // Message TTL = reconnection window (5 minutes)
+                    // Messages older than this are discarded even if undelivered
+                    ["x-message-ttl"] = MESSAGE_TTL_MS,
+                    // Queue auto-expires after 10 minutes with no consumers
+                    // This is cleanup safety net - longer than message TTL
+                    ["x-expires"] = QUEUE_EXPIRES_MS,
+                    // Max queue length to prevent memory issues during extended disconnect
+                    ["x-max-length"] = 1000,
+                    // Overflow behavior: drop oldest messages when full
+                    ["x-overflow"] = "drop-head"
                 },
                 cancellationToken: cancellationToken);
 
-            // Declare the exchange as fanout (lib-messaging creates these, but we declare to be safe)
-            // IMPORTANT: Must match RabbitMQ configuration settings:
-            //   - durable: true
-            //   - autoDelete: true
-            // Mismatched settings cause PRECONDITION_FAILED errors from RabbitMQ
-            await _channel.ExchangeDeclareAsync(
-                exchange: exchangeName,
-                type: ExchangeType.Fanout,
-                durable: true,
-                autoDelete: true,
-                arguments: null,
-                cancellationToken: cancellationToken);
-
-            // Bind queue to exchange
+            // Bind queue to MassTransit's exchange with routing key = queue name
+            // MassTransit uses direct exchange routing by default
             await _channel.QueueBindAsync(
                 queue: queueName,
-                exchange: exchangeName,
-                routingKey: "", // Fanout ignores routing key
+                exchange: MASSTRANSIT_EXCHANGE,
+                routingKey: queueName,   // MassTransit routes by topic name = queue name
                 arguments: null,
                 cancellationToken: cancellationToken);
 
-            // Create async consumer
+            // Create async consumer with manual acknowledgment
             var consumer = new AsyncEventingBasicConsumer(_channel);
             consumer.ReceivedAsync += async (sender, ea) =>
             {
@@ -202,7 +229,7 @@ public class ClientEventRabbitMQSubscriber : IAsyncDisposable
                     // Call the event handler with session ID and payload
                     await _eventHandler(sessionId, ea.Body.ToArray());
 
-                    // Acknowledge the message
+                    // Acknowledge the message - removes from queue
                     await _channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
                 }
                 catch (Exception ex)
@@ -211,8 +238,10 @@ public class ClientEventRabbitMQSubscriber : IAsyncDisposable
                         "Error processing client event for session {SessionId}",
                         sessionId);
 
-                    // Nack without requeue (dead letter or discard)
-                    await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                    // Nack WITH requeue - message goes back to queue for retry
+                    // This handles the case where delivery fails mid-processing
+                    // On disconnect, consumer cancellation handles unacked messages
+                    await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
                 }
             };
 
@@ -226,9 +255,9 @@ public class ClientEventRabbitMQSubscriber : IAsyncDisposable
             _sessionConsumerTags[sessionId] = consumerTag;
             _sessionQueueNames[sessionId] = queueName;
 
-            _logger.LogDebug(
-                "Subscribed to client events for session {SessionId} (queue: {QueueName})",
-                sessionId, queueName);
+            _logger.LogInformation(
+                "Subscribed to client events for session {SessionId} (queue: {QueueName}, instance: {InstanceId})",
+                sessionId, queueName, _instanceId);
 
             return true;
         }
@@ -244,6 +273,19 @@ public class ClientEventRabbitMQSubscriber : IAsyncDisposable
     /// <summary>
     /// Unsubscribe from client events for a specific session.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Cancels the consumer but does NOT delete the queue. The queue persists to buffer
+    /// messages during disconnect. RabbitMQ handles this natively - no Redis fallback needed.
+    /// </para>
+    /// <para>
+    /// On consumer cancellation, RabbitMQ automatically requeues any unacked messages.
+    /// When client reconnects, we re-subscribe and get all pending messages.
+    /// </para>
+    /// <para>
+    /// Queue cleanup is handled by x-expires - queue auto-deletes after 10 minutes with no consumers.
+    /// </para>
+    /// </remarks>
     /// <param name="sessionId">The session ID to unsubscribe from.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task UnsubscribeFromSessionAsync(string sessionId, CancellationToken cancellationToken = default)
@@ -257,8 +299,11 @@ public class ClientEventRabbitMQSubscriber : IAsyncDisposable
         {
             try
             {
+                // Cancel consumer - RabbitMQ requeues any unacked messages automatically
                 await _channel.BasicCancelAsync(consumerTag, cancellationToken: cancellationToken);
-                _logger.LogDebug("Unsubscribed from client events for session {SessionId}", sessionId);
+                _logger.LogInformation(
+                    "Unsubscribed from client events for session {SessionId} (queue persists for buffering)",
+                    sessionId);
             }
             catch (Exception ex)
             {
@@ -268,7 +313,8 @@ public class ClientEventRabbitMQSubscriber : IAsyncDisposable
             }
         }
 
-        // Queue will auto-delete when consumer is gone
+        // Note: Queue persists (no delete) - will buffer messages during disconnect
+        // Cleanup happens via x-expires after 10 minutes with no consumers
         _sessionQueueNames.TryRemove(sessionId, out _);
     }
 

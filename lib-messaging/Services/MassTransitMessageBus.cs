@@ -213,6 +213,7 @@ public sealed class MassTransitMessageBus : IMessageBus
                 Dependency = dependency,
                 Endpoint = endpoint,
                 Severity = severity,
+                Details = details,
                 Stack = stack,
                 CorrelationId = correlationId
             };
