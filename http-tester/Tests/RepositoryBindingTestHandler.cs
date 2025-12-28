@@ -213,14 +213,19 @@ public class RepositoryBindingTestHandler : BaseHttpTestHandler
             if (response.Namespace != TEST_NAMESPACE)
                 return TestResult.Failed($"UnbindRepository returned wrong namespace: {response.Namespace}");
 
-            // Verify binding is gone
-            var statusResponse = await docClient.GetRepositoryStatusAsync(new RepositoryStatusRequest
+            // Verify binding is gone - service returns 404 when no binding exists
+            try
             {
-                Namespace = TEST_NAMESPACE
-            });
-
-            if (statusResponse.Binding != null)
-                return TestResult.Failed("Binding still exists after unbind");
+                await docClient.GetRepositoryStatusAsync(new RepositoryStatusRequest
+                {
+                    Namespace = TEST_NAMESPACE
+                });
+                return TestResult.Failed("Expected 404 for non-existent binding, but got success");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // Expected - binding no longer exists
+            }
 
             return TestResult.Successful($"Unbound fixture repo, deleted {response.DocumentsDeleted} documents");
         }, "Unbind fixture repository");
