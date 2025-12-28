@@ -4,7 +4,7 @@
 > **Status**: DRAFT PROPOSAL
 > **Created**: 2024-12-28
 > **Based On**: [UNIFIED_SCRIPTING_LANGUAGE_RESEARCH.md](./research/UNIFIED_SCRIPTING_LANGUAGE_RESEARCH.md)
-> **Related**: arcadia-kb ABML v1.0 spec, ACTORS_ISSUES.md
+> **Related**: arcadia-kb ABML v1.0 spec, [ACTORS_PLUGIN_V2.md](./UPCOMING_-_ACTORS_PLUGIN_V2.md), [BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md)
 
 ---
 

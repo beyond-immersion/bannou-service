@@ -185,63 +185,30 @@ Running `make generate` produces:
 - `Generated/{Service}EventsController.cs` - Event subscription handlers (always regenerated)
 - `{Service}ServiceEvents.cs` - Handler registrations (generated once, then manual)
 
-### Service Constructor Pattern
+### Implementation Pattern
 
+In the service constructor (see Tenet 6 for full pattern):
 ```csharp
-public MyService(
-    IStateStoreFactory stateStoreFactory,
-    IMessageBus messageBus,
-    ILogger<MyService> logger,
-    MyServiceConfiguration configuration,
-    IEventConsumer eventConsumer)  // Required for event handling
-{
-    _stateStore = stateStoreFactory.Create<MyModel>("my-service");
-    _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-    _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+RegisterEventConsumers(eventConsumer);
+```
 
-    // Register event handlers via partial class
-    ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
-    RegisterEventConsumers(eventConsumer);
+In `{Service}ServiceEvents.cs` (partial class):
+```csharp
+protected void RegisterEventConsumers(IEventConsumer eventConsumer)
+{
+    eventConsumer.RegisterHandler<IMyService, AccountDeletedEvent>(
+        "account.deleted",
+        async (svc, evt) => await ((MyService)svc).HandleAccountDeletedAsync(evt));
+}
+
+public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
+{
+    // Business logic here
 }
 ```
 
-### Handler Registration (in `{Service}ServiceEvents.cs`)
-
-```csharp
-public partial class MyService
-{
-    protected void RegisterEventConsumers(IEventConsumer eventConsumer)
-    {
-        eventConsumer.RegisterHandler<IMyService, AccountDeletedEvent>(
-            "account.deleted",
-            async (svc, evt) => await ((MyService)svc).HandleAccountDeletedAsync(evt));
-
-        eventConsumer.RegisterHandler<IMyService, SessionConnectedEvent>(
-            "session.connected",
-            async (svc, evt) => await ((MyService)svc).HandleSessionConnectedAsync(evt));
-    }
-
-    public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
-    {
-        _logger.LogInformation("Processing account.deleted for {AccountId}", evt.AccountId);
-        // Business logic here
-    }
-
-    public async Task HandleSessionConnectedAsync(SessionConnectedEvent evt)
-    {
-        _logger.LogInformation("Processing session.connected for {SessionId}", evt.SessionId);
-        // Business logic here
-    }
-}
-```
-
-### Key Points
-
-- **Registration is idempotent** - calling multiple times with same key is safe
-- **Handlers are isolated** - one handler throwing doesn't prevent others from running
-- **Factory pattern** - handlers resolve fresh service instances from request scope
-- **Singleton consumer** - `IEventConsumer` is registered as singleton in DI
+**Key Points**: Registration is idempotent. Handlers are isolated (one throwing doesn't prevent others). `IEventConsumer` is singleton.
 
 ---
 
@@ -259,129 +226,38 @@ public partial class MyService
 | **lib-messaging** | Event pub/sub (RabbitMQ) | Direct RabbitMQ channel access |
 | **lib-mesh** | Service invocation (YARP) | Direct HTTP client calls |
 
-### State Management (lib-state)
+### Usage Patterns
 
 ```csharp
-// REQUIRED: Use IStateStore<T> for state operations
-public class MyService : IMyService
-{
-    private readonly IStateStore<MyModel> _stateStore;
+// lib-state: Use IStateStore<T> for state operations
+_stateStore = stateStoreFactory.Create<MyModel>("my-service");
+await _stateStore.SaveAsync(key, value, cancellationToken: ct);
+await _stateStore.SaveAsync(key, value, new StateOptions { Ttl = TimeSpan.FromMinutes(30) }); // TTL
+var (value, etag) = await _stateStore.GetWithETagAsync(key, ct); // Optimistic concurrency
 
-    public MyService(IStateStoreFactory stateStoreFactory)
-    {
-        _stateStore = stateStoreFactory.Create<MyModel>("my-service");
-    }
+// lib-messaging: Use IMessageBus for event publishing
+await _messageBus.PublishAsync("entity.action", evt, cancellationToken: ct);
+await _messageSubscriber.SubscribeAsync<MyEvent>("topic", async (evt, ct) => await HandleAsync(evt, ct));
 
-    public async Task SaveAsync(string key, MyModel value, CancellationToken ct)
-    {
-        await _stateStore.SaveAsync(key, value, cancellationToken: ct);
-    }
-
-    public async Task<MyModel?> GetAsync(string key, CancellationToken ct)
-    {
-        return await _stateStore.GetAsync(key, ct);
-    }
-}
-
-// FORBIDDEN: Direct Redis/MySQL access
-var connection = new MySqlConnection(connectionString); // NO!
-var redis = ConnectionMultiplexer.Connect(...); // NO!
-```
-
-**State Store Options**:
-```csharp
-// TTL for ephemeral data
-await _stateStore.SaveAsync(key, value, new StateOptions { Ttl = TimeSpan.FromMinutes(30) });
-
-// Optimistic concurrency with ETags
-var (value, etag) = await _stateStore.GetWithETagAsync(key, ct);
-var saved = await _stateStore.TrySaveAsync(key, modifiedValue, etag, ct);
-if (!saved) return (StatusCodes.Conflict, null); // Concurrent modification
-```
-
-### Pub/Sub Events (lib-messaging)
-
-```csharp
-// REQUIRED: Use IMessageBus for event publishing
-public class MyService : IMyService
-{
-    private readonly IMessageBus _messageBus;
-
-    public MyService(IMessageBus messageBus)
-    {
-        _messageBus = messageBus;
-    }
-
-    public async Task PublishEventAsync(MyEvent evt, CancellationToken ct)
-    {
-        await _messageBus.PublishAsync("entity.action", evt, cancellationToken: ct);
-    }
-}
-
-// FORBIDDEN: Direct RabbitMQ access
-channel.BasicPublish(...); // NO!
-```
-
-**Subscription via IMessageSubscriber**:
-```csharp
-// Static subscription (survives restarts)
-await _messageSubscriber.SubscribeAsync<MyEvent>(
-    "entity.action",
-    async (evt, ct) => await HandleEventAsync(evt, ct));
-
-// Dynamic subscription (per-session, disposable)
+// Dynamic subscription (per-session, disposable) - for WebSocket session handlers
 var subscription = await _messageSubscriber.SubscribeDynamicAsync<MyEvent>(
-    "session.events",
-    async (evt, ct) => await HandleSessionEventAsync(evt, ct));
-// Later: await subscription.DisposeAsync();
+    "session.events", async (evt, ct) => await HandleSessionEventAsync(evt, ct));
+await subscription.DisposeAsync();  // Clean up when session ends
+
+// lib-mesh: Use IMeshInvocationClient or generated clients for service calls
+await _meshClient.InvokeMethodAsync<Request, Response>("accounts", "get-account", request, ct);
+await _accountsClient.GetAccountAsync(request, ct);  // Generated client (preferred)
 ```
 
-### Service Invocation (lib-mesh)
-
+**FORBIDDEN**:
 ```csharp
-// REQUIRED: Use IMeshInvocationClient for service-to-service calls
-public class MyService : IMyService
-{
-    private readonly IMeshInvocationClient _meshClient;
-
-    public MyService(IMeshInvocationClient meshClient)
-    {
-        _meshClient = meshClient;
-    }
-
-    public async Task<AccountResponse> GetAccountAsync(string accountId, CancellationToken ct)
-    {
-        return await _meshClient.InvokeMethodAsync<GetAccountRequest, AccountResponse>(
-            "accounts",
-            "get-account",
-            new GetAccountRequest { AccountId = accountId },
-            ct);
-    }
-}
-
-// FORBIDDEN: Manual HTTP construction
-var response = await httpClient.PostAsync("http://accounts/api/..."); // NO!
+new MySqlConnection(connectionString);  // Use lib-state
+ConnectionMultiplexer.Connect(...);     // Use lib-state
+channel.BasicPublish(...);              // Use lib-messaging
+httpClient.PostAsync("http://accounts/api/...");  // Use lib-mesh
 ```
 
-### Generated Client Registration
-
-NSwag-generated clients are automatically registered as Singletons during plugin initialization. These clients use `IMeshInvocationClient` internally:
-
-```csharp
-public class MyService : IMyService
-{
-    private readonly IAccountsClient _accountsClient;  // Auto-registered Singleton
-    private readonly IAuthClient _authClient;          // Auto-registered Singleton
-
-    public MyService(IAccountsClient accountsClient, IAuthClient authClient)
-    {
-        _accountsClient = accountsClient;
-        _authClient = authClient;
-    }
-}
-```
-
-Generated clients automatically use mesh service resolution for routing, supporting both monolith ("bannou") and distributed deployment topologies.
+Generated clients are auto-registered as Singletons and use mesh service resolution internally.
 
 ### Why Infrastructure Libs?
 
@@ -532,49 +408,22 @@ x-lifecycle:
 - `EntityNameUpdatedEvent` - Full entity data + `changedFields` array
 - `EntityNameDeletedEvent` - Entity ID + `deletedReason`
 
-**Why This Rule Exists**:
-- Ensures consistent event structure across all services
-- Automatically handles sensitive field exclusion
-- Guarantees `changedFields` tracking on updates
-- Prevents copy-paste errors and inconsistent naming
-- Generated files are automatically maintained during schema changes
+**Why This Rule Exists**: Ensures consistent event structure, handles sensitive field exclusion, guarantees `changedFields` tracking on updates, and prevents copy-paste errors.
 
-```yaml
-# FORBIDDEN: Manually defining lifecycle events
-components:
-  schemas:
-    AccountCreatedEvent:     # NO! Use x-lifecycle instead
-      type: object
-      properties:
-        accountId: ...
-
-# CORRECT: Define in x-lifecycle, events are generated
-x-lifecycle:
-  Account:
-    model:
-      accountId: { type: string, format: uuid, primary: true, required: true }
-      email: { type: string, required: true }
-    sensitive: [passwordHash]  # Excluded from generated events
-```
+**FORBIDDEN**: Manually defining `*CreatedEvent`, `*UpdatedEvent`, `*DeletedEvent` in `components/schemas`. Use `x-lifecycle` instead.
 
 ### Full-State Events Pattern
 
-For state that must be atomically consistent across instances, use full-state events:
+For atomically consistent state across instances, include complete state + monotonic version:
 
 ```yaml
 FullServiceMappingsEvent:
   properties:
-    mappings:
-      type: object
-      additionalProperties: { type: string }
-      description: Complete dictionary of serviceName -> appId
-    version:
-      type: integer
-      format: int64
-      description: Monotonically increasing for ordering
+    mappings: { type: object, additionalProperties: { type: string } }
+    version: { type: integer, format: int64 }
 ```
 
-**Consumer Pattern**:
+**Consumer Pattern** (version-check-and-replace):
 ```csharp
 public bool ReplaceAllMappings(IReadOnlyDictionary<string, string> mappings, long version)
 {
@@ -746,88 +595,50 @@ lib-{service}/
 
 **Rule**: Wrap all external calls in try-catch, use specific exception types where available.
 
-### Pattern for State Operations
+### Standard Try-Catch Pattern
 
 ```csharp
 try
 {
-    var data = await _stateStore.GetAsync(key, ct);
-    if (data == null)
-        return (StatusCodes.NotFound, null);
-    return (StatusCodes.OK, data);
-}
-catch (Exception ex)
-{
-    _logger.LogError(ex, "Failed to get {Entity} with key {Key}", entityType, key);
-    await _messageBus.TryPublishErrorAsync(
-        serviceId: _configuration.ServiceId ?? "unknown",
-        operation: "GetEntity",
-        errorType: ex.GetType().Name,
-        message: ex.Message,
-        details: new { EntityType = entityType, Key = key },
-        stack: ex.StackTrace,
-        cancellationToken: ct);
-    return (StatusCodes.InternalServerError, null);
-}
-```
-
-### Pattern for Service Client Calls
-
-```csharp
-try
-{
-    var (statusCode, result) = await _accountsClient.GetAccountAsync(request, ct);
-    if (statusCode != StatusCodes.OK)
-        return (statusCode, null); // Propagate error
-    return (StatusCodes.OK, MapToResponse(result!));
+    // External call (state store, service client, etc.)
+    var result = await _stateStore.GetAsync(key, ct);
+    if (result == null) return (StatusCodes.NotFound, null);
+    return (StatusCodes.OK, result);
 }
 catch (ApiException ex)
 {
-    // Expected API error - log as warning, no error event
+    // Expected API error - log as warning, propagate status
     _logger.LogWarning(ex, "Service call failed with status {Status}", ex.StatusCode);
     return ((StatusCodes)ex.StatusCode, null);
 }
 catch (Exception ex)
 {
     // Unexpected error - log as error, emit error event
-    _logger.LogError(ex, "Unexpected error calling service");
+    _logger.LogError(ex, "Failed operation {Operation}", operationName);
     await _messageBus.TryPublishErrorAsync(
         serviceId: _configuration.ServiceId ?? "unknown",
-        operation: "ServiceCall",
-        errorType: ex.GetType().Name,
-        message: ex.Message,
-        dependency: "accounts",
-        cancellationToken: ct);
+        operation: operationName, errorType: ex.GetType().Name, message: ex.Message);
     return (StatusCodes.InternalServerError, null);
 }
 ```
 
-### Error Event Publishing via IMessageBus
+### Error Event Publishing
 
-Use `IMessageBus.TryPublishErrorAsync` for unexpected/internal failures (similar to Sentry error tracking):
+Use `IMessageBus.TryPublishErrorAsync` for unexpected/internal failures only. Returns `false` if publishing fails (prevents cascading failures). Replaces legacy `IErrorEventEmitter`.
 
-```csharp
-// On IMessageBus interface:
-Task<bool> TryPublishErrorAsync(
-    string serviceId,           // Service identifier (e.g., "accounts", "auth")
-    string operation,           // Operation that failed (e.g., "GetAccount")
-    string errorType,           // Exception type name
-    string message,             // Error message
-    string? dependency = null,  // External dependency that failed
-    string? endpoint = null,    // Endpoint being called
-    ServiceErrorEventSeverity severity = ServiceErrorEventSeverity.Error,
-    object? details = null,     // Additional context (will be serialized)
-    string? stack = null,       // Stack trace
-    string? correlationId = null,
-    CancellationToken cancellationToken = default);
-```
+**Emit for**:
+- Unexpected exceptions that should never happen in normal operation
+- Infrastructure failures (database unavailable, message broker down)
+- Programming errors caught at runtime (null references, invalid state)
 
-**Guidelines**:
-- Emit **only** for unexpected/internal failures that should never happen
-- Do **NOT** emit for validation/user errors or expected conflicts
-- Redact sensitive information; include correlation IDs and minimal structured context
-- Method returns `false` if publishing fails (prevents cascading failures)
-- This replaces the legacy `IErrorEventEmitter` interface
+**Do NOT emit for**:
+- Validation errors (400) - these are expected user input issues
+- Authentication failures (401) - expected when credentials are wrong
+- Authorization failures (403) - expected when permissions are insufficient
+- Not found (404) - expected when resources don't exist
+- Conflicts (409) - expected during concurrent modifications
+
+**Guidelines**: Redact sensitive information (passwords, tokens). Include correlation IDs for tracing. Keep structured context minimal.
 
 ### Error Granularity
 
@@ -852,31 +663,16 @@ Services MUST distinguish between:
 
 ### StatusCodes Enum
 
-**Important**: Use `BeyondImmersion.BannouService.StatusCodes` (our internal enum), NOT `Microsoft.AspNetCore.Http.StatusCodes` (a static class with constants).
+**Important**: Use `BeyondImmersion.BannouService.StatusCodes` (our internal enum), NOT `Microsoft.AspNetCore.Http.StatusCodes` (static class).
 
 ```csharp
-using BeyondImmersion.BannouService;  // Our StatusCodes enum
-
-// Success case
-return (StatusCodes.OK, new ResponseModel { ... });
-
-// Not found
-return (StatusCodes.NotFound, null);
-
-// Validation error
-return (StatusCodes.BadRequest, null);
-
-// Unauthorized
-return (StatusCodes.Unauthorized, null);
-
-// Forbidden (authenticated but insufficient permissions)
-return (StatusCodes.Forbidden, null);
-
-// Conflict (duplicate creation, concurrent modification, etc.)
-return (StatusCodes.Conflict, null);
-
-// Server error
-return (StatusCodes.InternalServerError, null);
+return (StatusCodes.OK, response);              // Success
+return (StatusCodes.BadRequest, null);          // Validation error
+return (StatusCodes.Unauthorized, null);        // Missing/invalid auth
+return (StatusCodes.Forbidden, null);           // Valid auth, insufficient permissions
+return (StatusCodes.NotFound, null);            // Resource doesn't exist
+return (StatusCodes.Conflict, null);            // State conflict
+return (StatusCodes.InternalServerError, null); // Unexpected failure
 ```
 
 ### Empty Payload for Error Responses
@@ -926,54 +722,23 @@ private readonly Dictionary<string, Item> _items = new(); // NO!
 
 ### IDistributedLockProvider Pattern
 
-For cross-instance coordination, use `IDistributedLockProvider`:
+For cross-instance coordination:
 
 ```csharp
-public class PermissionsService : IPermissionsService
-{
-    private readonly IDistributedLockProvider _lockProvider;
-
-    public async Task<(StatusCodes, Response?)> UpdateAsync(Request body, CancellationToken ct)
-    {
-        var lockOwnerId = Guid.NewGuid().ToString();
-
-        await using var lockResponse = await _lockProvider.LockAsync(
-            resourceId: $"permission-update:{body.EntityId}",
-            lockOwner: lockOwnerId,
-            expiryInSeconds: 30,
-            cancellationToken: ct);
-
-        if (!lockResponse.Success)
-            return (StatusCodes.Conflict, null);  // Could not acquire lock
-
-        // Critical section - safe across all instances
-        // ... perform update ...
-        return (StatusCodes.OK, response);
-    }
-}
-```
-
-**API Reference**:
-```csharp
-Task<ILockResponse> LockAsync(
-    string resourceId,      // Resource to lock (e.g., "permission-update:abc123")
-    string lockOwner,       // Unique owner ID (typically new Guid)
-    int expiryInSeconds,    // Lock TTL
-    CancellationToken cancellationToken = default);
-
-public interface ILockResponse : IAsyncDisposable
-{
-    bool Success { get; }  // Whether lock was acquired
-}
+await using var lockResponse = await _lockProvider.LockAsync(
+    resourceId: $"permission-update:{body.EntityId}",
+    lockOwner: Guid.NewGuid().ToString(),
+    expiryInSeconds: 30, cancellationToken: ct);
+if (!lockResponse.Success) return (StatusCodes.Conflict, null);
+// Critical section - safe across all instances
 ```
 
 ### Optimistic Concurrency with ETags
 
-For state operations that need consistency without locking, use lib-state's optimistic concurrency:
+For consistency without locking:
 
 ```csharp
 var (value, etag) = await _stateStore.GetWithETagAsync(key, ct);
-// Modify value...
 var saved = await _stateStore.TrySaveAsync(key, modifiedValue, etag, ct);
 if (!saved) return (StatusCodes.Conflict, null);  // Concurrent modification
 ```
@@ -1062,29 +827,12 @@ _logger.LogError("Failed to connect to {Endpoint}", endpoint);
 
 ### Retry Mechanism Logging
 
-For operations with retry logic, use appropriate log levels:
+Use **Debug** for individual retry attempts (expected during transient failures), **Error** only when all retries exhausted:
 
 ```csharp
-// CORRECT: Debug for individual retry attempts, Error only when exhausted
-for (int attempt = 1; attempt <= maxRetries; attempt++)
-{
-    try
-    {
-        return await DoOperationAsync();
-    }
-    catch (Exception ex) when (attempt < maxRetries)
-    {
-        // DEBUG for retry attempts - these are expected during transient failures
-        _logger.LogDebug(ex, "Attempt {Attempt}/{MaxRetries} failed, retrying", attempt, maxRetries);
-        await Task.Delay(retryDelay);
-    }
-    catch (Exception ex)
-    {
-        // ERROR only when all retries exhausted - this is the actual failure
-        _logger.LogError(ex, "All {MaxRetries} attempts exhausted for operation {Operation}", maxRetries, operationName);
-        throw;
-    }
-}
+_logger.LogDebug(ex, "Attempt {Attempt}/{MaxRetries} failed, retrying", attempt, maxRetries);
+// ... only after all retries exhausted:
+_logger.LogError(ex, "All {MaxRetries} attempts exhausted", maxRetries);
 ```
 
 ### Forbidden Logging
@@ -1309,40 +1057,20 @@ Browser-facing endpoints are:
 
 ### RabbitMQ Exchange Architecture
 
-Client events and service events use **separate RabbitMQ exchanges** with different routing patterns:
-
-| Exchange | Type | Purpose | Routing |
-|----------|------|---------|---------|
-| `bannou` | Fanout | Service events (heartbeats, mappings, IEventConsumer) | All bound queues receive all messages |
-| `bannou-client-events` | Direct | Client events (per-session push) | Routing key matches queue binding key |
-
-**Service Events** (`bannou` fanout):
-- Used by `lib-messaging` (`MassTransitMessageBus`, `MassTransitMessageSubscriber`)
-- All subscribers receive all events (fanout semantics)
-- Used for: `ServiceHeartbeatEvent`, `FullServiceMappingsEvent`, `IEventConsumer` subscriptions
-
-**Client Events** (`bannou-client-events` direct):
-- Used by `MessageBusClientEventPublisher` and `ClientEventRabbitMQSubscriber`
-- Queue per session: `CONNECT_SESSION_{sessionId}`
-- Routing key isolation: Only matching session receives events (broker-level filtering)
-- Queue expiry: RabbitMQ policy applies 5-minute TTL (see `provisioning/rabbitmq/definitions.json`)
+| Exchange | Type | Purpose |
+|----------|------|---------|
+| `bannou` | Fanout | Service events via `IMessageBus` (all subscribers receive all) |
+| `bannou-client-events` | Direct | Client events via `IClientEventPublisher` (per-session routing) |
 
 **⚠️ CRITICAL: Publishing to Sessions**
 
-To send events to specific WebSocket clients, you MUST use `IClientEventPublisher`:
-
 ```csharp
-// ✅ CORRECT: Uses direct exchange with routing key
+// ✅ CORRECT: Uses direct exchange with per-session routing
 await _clientEventPublisher.PublishToSessionAsync(sessionId, clientEvent);
 
-// ❌ WRONG: Uses fanout exchange - broadcasts to ALL nodes, never reaches client
+// ❌ WRONG: Uses fanout exchange - never reaches client
 await _messageBus.PublishAsync($"CONNECT_SESSION_{sessionId}", clientEvent);
 ```
-
-This separation ensures:
-- No flood of service events to client session queues
-- Efficient per-session message routing at broker level
-- Clean architecture boundary between internal and client-facing events
 
 ### Required Pattern
 
@@ -1461,31 +1189,9 @@ All serialization via `BannouJson` uses these settings:
 | **Null values** | Ignored when writing | `{ "name": "test" }` not `{ "name": "test", "optional": null }` |
 | **Numbers** | Strict parsing | `"123"` does NOT coerce to integer 123 |
 
-### Async and Stream Operations
+**Async/Stream**: `BannouJson.DeserializeAsync`, `SerializeAsync`, `SerializeToUtf8Bytes` also available.
 
-```csharp
-// Async stream operations
-var model = await BannouJson.DeserializeAsync<MyModel>(stream, ct);
-await BannouJson.SerializeAsync(stream, model, ct);
-
-// UTF-8 byte operations
-var bytes = BannouJson.SerializeToUtf8Bytes(model);
-var model = BannouJson.Deserialize<MyModel>(utf8Bytes);
-```
-
-### Exception: Serialization Unit Tests
-
-Unit tests that specifically validate serialization behavior MAY use `JsonSerializer` directly to test against the raw API:
-
-```csharp
-// Allowed in serialization-focused unit tests only
-[Fact]
-public void BannouJson_Options_SerializesEnumsAsPascalCase()
-{
-    var result = JsonSerializer.Serialize(MyEnum.SomeValue, BannouJson.Options);
-    Assert.Equal("\"SomeValue\"", result);
-}
-```
+**Exception**: Unit tests validating serialization behavior MAY use `JsonSerializer` directly with `BannouJson.Options`.
 
 ---
 
@@ -1517,51 +1223,16 @@ Document with code comments explaining the exception:
    - Test infrastructure, not production code
    - Tests specifically testing configuration-binding may use `SetEnvironmentVariable`
 
-### Required Pattern
+### Pattern
 
 ```csharp
 // CORRECT: Use injected configuration with fail-fast
-public class MyService
-{
-    public MyService(MyServiceConfiguration config)
-    {
-        _connectionString = config.ConnectionString
-            ?? throw new InvalidOperationException("SERVICE_CONNECTION_STRING required");
-    }
-}
-```
+_connectionString = config.ConnectionString
+    ?? throw new InvalidOperationException("SERVICE_CONNECTION_STRING required");
 
-### Forbidden Patterns
-
-```csharp
-// WRONG: Direct environment variable access
-var conn = Environment.GetEnvironmentVariable("MY_CONNECTION_STRING");
-
-// WRONG: Hidden credential fallback (masks configuration issues)
-var conn = Environment.GetEnvironmentVariable("RABBITMQ")
-    ?? "amqp://guest:guest@localhost:5672";  // NO!
-
-// WRONG: Hardcoded default bypassing configuration system
-private const string DEFAULT_REDIS = "localhost:6379";  // Should be in config
-```
-
-### Configuration Schema Pattern
-
-```yaml
-# schemas/{service}-configuration.yaml
-x-service-configuration:
-  properties:
-    ConnectionString:
-      type: string
-      description: Database connection string
-      env: SERVICE_CONNECTION_STRING
-      # NO default for required production values
-
-    CacheTtlSeconds:
-      type: integer
-      description: Cache TTL in seconds
-      env: SERVICE_CACHE_TTL_SECONDS
-      default: 300  # Safe default for optional settings
+// FORBIDDEN: Direct env var access, hidden fallbacks, hardcoded defaults
+Environment.GetEnvironmentVariable("...");  // NO - use config class
+?? "amqp://guest:guest@localhost";          // NO - masks config issues
 ```
 
 ---

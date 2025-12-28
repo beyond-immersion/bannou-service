@@ -1,9 +1,9 @@
 # Actors Plugin - General-Purpose Distributed Processing Units
 
-> **Status**: PLANNING (v2 - Reframed)
+> **Status**: PLANNING (v2.1 - Aligned with Behavior Plugin V2)
 > **Last Updated**: 2024-12-28
 > **Supersedes**: UPCOMING_-_ACTORS_PLUGIN.md
-> **Issues Resolved**: [ACTORS_ISSUES.md](./ACTORS_ISSUES.md)
+> **Aligned With**: [BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md), [ABML_V2_DESIGN_PROPOSAL.md](./ABML_V2_DESIGN_PROPOSAL.md)
 
 ---
 
@@ -34,7 +34,7 @@ Actors are **NOT** specific to any use case. They are primitives that can be use
 2. **Use-Case Agnostic**: No NPC-specific, chat-specific, or game-specific concepts in the core
 3. **Infrastructure Leverage**: Built entirely on existing lib-state, lib-messaging, lib-mesh
 4. **Familiar Patterns**: Follows Bannou's schema-first, plugin-based architecture
-5. **Horizontal Scale**: 1,000+ actors per node, auto-scaling via orchestrator
+5. **Horizontal Scale**: 1,000+ actors per node, auto-scaling via orchestrator (plan for 50% active as normal, 100% as peak)
 
 ---
 
@@ -210,19 +210,72 @@ components:
   schemas:
     NpcBrainState:
       type: object
+      description: |
+        State for NPC brain actors. Aligned with Behavior Plugin V2 expectations
+        for GOAP planning and cognition pipeline integration.
       properties:
         last_perception_at:
           type: string
           format: date-time
-        current_objectives:
+          description: Timestamp of last perception processed
+        behavior_stack_id:
+          type: string
+          description: ID of compiled ABML behavior document for this NPC
+        current_goals:
           type: array
+          description: Active GOAP goals ordered by priority
           items:
-            $ref: '#/components/schemas/Objective'
+            $ref: '#/components/schemas/GoapGoal'
+        current_plan:
+          description: Currently executing GOAP plan (null if idle)
+          nullable: true
+          $ref: '#/components/schemas/GoapPlan'
+        current_plan_index:
+          type: integer
+          default: 0
+          description: Index of next action to execute in current plan
         relationships:
           type: object
+          description: Relationship scores with other entities
           additionalProperties:
             type: number
             format: float
+
+    GoapGoal:
+      type: object
+      required: [name, priority, conditions]
+      properties:
+        name:
+          type: string
+        priority:
+          type: integer
+        conditions:
+          type: object
+          additionalProperties: true
+
+    GoapPlan:
+      type: object
+      required: [actions, total_cost, goal_id]
+      properties:
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlannedAction'
+        total_cost:
+          type: number
+        goal_id:
+          type: string
+
+    PlannedAction:
+      type: object
+      required: [action_id, name, cost]
+      properties:
+        action_id:
+          type: string
+        name:
+          type: string
+        cost:
+          type: number
 
     PerceptionEvent:
       type: object
@@ -268,13 +321,16 @@ public abstract partial class NpcBrainActorBase : ActorBase
     public override int MailboxCapacity => 100;
     public override MailboxFullMode FullMode => MailboxFullMode.DropOldest;
 
-    // Typed state access
+    // Typed state access (aligned with Behavior Plugin V2)
     protected NpcBrainState State { get; private set; } = new();
 
     // Infrastructure (injected)
     protected IMessageBus MessageBus { get; }
     protected IMeshInvocationClient MeshClient { get; }
     protected ILogger<NpcBrainActorBase> Logger { get; }
+
+    // Generated service clients (per Tenet 4 - use generated clients)
+    protected IBehaviorClient BehaviorClient { get; }
 
     // Lifecycle (sealed - handles state loading/saving)
     public sealed override async Task OnActivateAsync(CancellationToken ct)
@@ -310,21 +366,129 @@ The developer only writes business logic:
 // NpcBrainActor.cs (MANUAL - business logic only)
 public partial class NpcBrainActor : NpcBrainActorBase
 {
-    public override async Task HandlePerceptionAsync(PerceptionEvent message, CancellationToken ct)
+    public override async Task HandlePerceptionAsync(PerceptionEvent perception, CancellationToken ct)
     {
-        // Call behavior service for interpretation
-        var interpretation = await MeshClient.InvokeMethodAsync<PerceptionEvent, BehaviorResponse>(
-            "behavior", "interpret-perception", message, ct);
+        // 1. Run cognition pipeline via Behavior service (using generated client per Tenet 4)
+        var cognitionResult = await BehaviorClient.ProcessCognitionAsync(
+            new ProcessCognitionRequest
+            {
+                AgentId = ActorId,
+                Perception = perception,
+                CurrentState = GetWorldState(),
+                CurrentGoals = State.CurrentGoals
+            }, ct);
 
-        // Update state
+        // 2. Update state based on cognition result
         State.LastPerceptionAt = DateTimeOffset.UtcNow;
-        State.CurrentObjectives = interpretation.Objectives;
+        if (cognitionResult.MemoriesStored?.Count > 0)
+        {
+            Logger.LogDebug(
+                "Stored {Count} new memories for {ActorId}",
+                cognitionResult.MemoriesStored.Count,
+                ActorId);
+        }
 
-        // Emit objectives
-        await MessageBus.PublishAsync(
-            $"actor.objective.{ActorId}",
-            new ObjectivesUpdatedEvent { ActorId = ActorId, Objectives = State.CurrentObjectives },
-            cancellationToken: ct);
+        // 3. Check if replanning needed
+        if (cognitionResult.RequiresReplan)
+        {
+            await ReplanAsync(cognitionResult.UpdatedGoals ?? State.CurrentGoals, ct);
+        }
+        // 4. Continue current plan if valid
+        else if (State.CurrentPlan != null)
+        {
+            await ContinuePlanExecutionAsync(ct);
+        }
+    }
+
+    private async Task ReplanAsync(List<GoapGoal> goals, CancellationToken ct)
+    {
+        // Get available actions from compiled behaviors
+        var compiledBehavior = await BehaviorClient.GetCachedBehaviorAsync(
+            new GetCachedBehaviorRequest { BehaviorId = State.BehaviorStackId }, ct);
+
+        var availableActions = compiledBehavior?.GoapActions ?? new List<GoapAction>();
+
+        // Select highest priority unsatisfied goal
+        var targetGoal = goals
+            .Where(g => !GetWorldState().SatisfiesGoal(g))
+            .OrderByDescending(g => g.Priority)
+            .FirstOrDefault();
+
+        if (targetGoal == null)
+        {
+            Logger.LogDebug("No unsatisfied goals for {ActorId}", ActorId);
+            State.CurrentPlan = null;
+            return;
+        }
+
+        // Plan via GOAP (can use local planner or Behavior service)
+        var planResult = await BehaviorClient.GenerateGoapPlanAsync(
+            new GoapPlanRequest
+            {
+                AgentId = ActorId,
+                Goal = targetGoal,
+                WorldState = GetWorldState().ToDictionary(),
+                BehaviorId = State.BehaviorStackId
+            }, ct);
+
+        if (planResult?.Success == true && planResult.Plan != null)
+        {
+            State.CurrentPlan = planResult.Plan;
+            State.CurrentPlanIndex = 0;
+            State.CurrentGoals = goals;
+
+            // Emit plan started event (typed event per Tenet 5)
+            await MessageBus.PublishAsync(
+                $"actor.objective.{ActorId}",
+                new ObjectivesUpdatedEvent
+                {
+                    ActorId = ActorId,
+                    CurrentGoal = targetGoal.Name,
+                    PlannedActions = planResult.Plan.Actions.Select(a => a.Name).ToList()
+                },
+                cancellationToken: ct);
+        }
+    }
+
+    private async Task ContinuePlanExecutionAsync(CancellationToken ct)
+    {
+        if (State.CurrentPlan == null || State.CurrentPlanIndex >= State.CurrentPlan.Actions.Count)
+        {
+            // Plan complete, trigger replanning
+            await ReplanAsync(State.CurrentGoals, ct);
+            return;
+        }
+
+        var currentAction = State.CurrentPlan.Actions[State.CurrentPlanIndex];
+
+        // Execute action via Behavior service
+        var result = await BehaviorClient.ExecuteActionAsync(
+            new ExecuteActionRequest
+            {
+                AgentId = ActorId,
+                ActionId = currentAction.ActionId,
+                Context = GetWorldState().ToDictionary()
+            }, ct);
+
+        if (result?.Success == true)
+        {
+            State.CurrentPlanIndex++;
+        }
+        else
+        {
+            // Action failed, trigger replanning
+            Logger.LogWarning(
+                "Action {Action} failed for {ActorId}, replanning",
+                currentAction.Name,
+                ActorId);
+            await ReplanAsync(State.CurrentGoals, ct);
+        }
+    }
+
+    private WorldState GetWorldState()
+    {
+        // Build world state from actor state for GOAP planning
+        return new WorldState();
     }
 
     public override Task<NpcBrainState> HandleQueryStateAsync(QueryStateRequest message, CancellationToken ct)
@@ -334,9 +498,10 @@ public partial class NpcBrainActor : NpcBrainActorBase
 
     protected override async Task HandleConsolidateMemoryAsync(CancellationToken ct)
     {
-        // Periodic memory consolidation
+        // Periodic memory consolidation via Behavior service
         Logger.LogDebug("Consolidating memory for {ActorId}", ActorId);
-        // ... memory consolidation logic
+        await BehaviorClient.ConsolidateMemoryAsync(
+            new ConsolidateMemoryRequest { AgentId = ActorId }, ct);
     }
 }
 ```
@@ -590,6 +755,12 @@ public class ActorServicePlugin : IBannouServicePlugin
 ---
 
 ## Infrastructure Integration
+
+> **TENET Compliance**: All actor infrastructure follows Bannou TENETS:
+> - **Tenet 4**: Use lib-state, lib-messaging, lib-mesh exclusively (no direct Redis/RabbitMQ/HTTP)
+> - **Tenet 5**: All events use typed schemas (no anonymous objects)
+> - **Tenet 20**: All JSON serialization uses `BannouJson` for consistent behavior
+> - **Tenet 4**: Service calls use generated clients (e.g., `IBehaviorClient`) not raw mesh invocation
 
 ### State Persistence (lib-state)
 
@@ -1419,7 +1590,12 @@ Actor types defined in `schemas/actor-types/*.yaml` with code generation via `sc
 
 ## References
 
-- [ACTORS_ISSUES.md](./ACTORS_ISSUES.md) - Resolved issues from original design review
+### Design Documents
+- [BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md) - Companion logic layer for NPC behaviors
+- [ABML_V2_DESIGN_PROPOSAL.md](./ABML_V2_DESIGN_PROPOSAL.md) - ABML language specification
+- [TENETS.md](../reference/TENETS.md) - Bannou development tenets (compliance required)
+
+### Research
 - [DISTRIBUTED-ACTORS.md](../research/DISTRIBUTED-ACTORS.md) - Research on actor systems
 - [arcadia-kb: Distributed Agent Architecture](../../../arcadia-kb/05%20-%20NPC%20AI%20Design/Distributed%20Agent%20Architecture.md) - Avatar + Agent pattern
 - [Orleans Virtual Actors](https://learn.microsoft.com/en-us/dotnet/orleans/overview) - Inspiration

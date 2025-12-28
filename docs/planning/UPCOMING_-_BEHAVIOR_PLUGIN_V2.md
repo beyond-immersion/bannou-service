@@ -7,7 +7,6 @@
 > - [ACTORS_PLUGIN_V2.md](./UPCOMING_-_ACTORS_PLUGIN_V2.md) - Actor infrastructure
 > - [UNIFIED_SCRIPTING_LANGUAGE_RESEARCH.md](./research/UNIFIED_SCRIPTING_LANGUAGE_RESEARCH.md) - Research background
 > - [DSL_STANDARDS_RESEARCH.md](./research/DSL_STANDARDS_RESEARCH.md) - Industry standards analysis
-> - [ACTORS_ISSUES.md](./ACTORS_ISSUES.md) - Plugin boundary definitions
 
 **Important**: This document describes the **runtime implementation** of ABML. For the language specification itself (syntax, semantics, examples), see [ABML_V2_DESIGN_PROPOSAL.md](./ABML_V2_DESIGN_PROPOSAL.md).
 
