@@ -235,6 +235,132 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NamespaceStatsResponse>> GetNamespaceStatsAsync(GetNamespaceStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Bind a git repository to a documentation namespace
+    /// </summary>
+
+    /// <remarks>
+    /// Bind a git repository URL to a documentation namespace.
+    /// <br/>The namespace will be exclusively managed by the repository - manual edits will be blocked.
+    /// <br/>Triggers initial sync after binding.
+    /// </remarks>
+
+    /// <returns>Repository binding created</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BindRepositoryResponse>> BindRepositoryAsync(BindRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Remove repository binding from namespace
+    /// </summary>
+
+    /// <remarks>
+    /// Remove repository binding from a namespace, making it manually editable again.
+    /// <br/>Optionally delete all documents imported from the repository.
+    /// </remarks>
+
+    /// <returns>Repository binding removed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnbindRepositoryResponse>> UnbindRepositoryAsync(UnbindRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Manually trigger repository sync
+    /// </summary>
+
+    /// <remarks>
+    /// Manually trigger synchronization of a bound repository.
+    /// <br/>If force=true, performs full re-sync regardless of commit hash.
+    /// </remarks>
+
+    /// <returns>Sync completed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SyncRepositoryResponse>> SyncRepositoryAsync(SyncRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get repository binding status
+    /// </summary>
+
+    /// <remarks>
+    /// Get current status of a repository binding including sync state and statistics.
+    /// </remarks>
+
+    /// <returns>Repository binding status</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RepositoryStatusResponse>> GetRepositoryStatusAsync(RepositoryStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// List all repository bindings
+    /// </summary>
+
+    /// <remarks>
+    /// List all repository bindings with optional filtering by status.
+    /// </remarks>
+
+    /// <returns>List of repository bindings</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRepositoryBindingsResponse>> ListRepositoryBindingsAsync(ListRepositoryBindingsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Update repository binding configuration
+    /// </summary>
+
+    /// <remarks>
+    /// Update sync settings, file patterns, category mappings, or archive configuration.
+    /// </remarks>
+
+    /// <returns>Repository binding updated</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateRepositoryBindingResponse>> UpdateRepositoryBindingAsync(UpdateRepositoryBindingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Create documentation archive
+    /// </summary>
+
+    /// <remarks>
+    /// Create a .bannou bundle archive of all documents in a namespace.
+    /// <br/>Archives are stored via Asset Service.
+    /// </remarks>
+
+    /// <returns>Archive created</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateArchiveResponse>> CreateDocumentationArchiveAsync(CreateArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// List documentation archives
+    /// </summary>
+
+    /// <remarks>
+    /// List all archives for a namespace.
+    /// </remarks>
+
+    /// <returns>List of archives</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListArchivesResponse>> ListDocumentationArchivesAsync(ListArchivesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Restore documentation from archive
+    /// </summary>
+
+    /// <remarks>
+    /// Restore documents from a .bannou bundle archive.
+    /// <br/>Replaces all documents in the namespace with archived content.
+    /// </remarks>
+
+    /// <returns>Archive restored</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreArchiveResponse>> RestoreDocumentationArchiveAsync(RestoreArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Delete documentation archive
+    /// </summary>
+
+    /// <remarks>
+    /// Delete an archive from Asset Service storage.
+    /// </remarks>
+
+    /// <returns>Archive deleted</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteArchiveResponse>> DeleteDocumentationArchiveAsync(DeleteArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -552,6 +678,172 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     {
 
         var (statusCode, result) = await _implementation.GetNamespaceStatsAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Bind a git repository to a documentation namespace
+    /// </summary>
+    /// <remarks>
+    /// Bind a git repository URL to a documentation namespace.
+    /// <br/>The namespace will be exclusively managed by the repository - manual edits will be blocked.
+    /// <br/>Triggers initial sync after binding.
+    /// </remarks>
+    /// <returns>Repository binding created</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("documentation/repo/bind")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BindRepositoryResponse>> BindRepository([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BindRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.BindRepositoryAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Remove repository binding from namespace
+    /// </summary>
+    /// <remarks>
+    /// Remove repository binding from a namespace, making it manually editable again.
+    /// <br/>Optionally delete all documents imported from the repository.
+    /// </remarks>
+    /// <returns>Repository binding removed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("documentation/repo/unbind")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnbindRepositoryResponse>> UnbindRepository([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UnbindRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.UnbindRepositoryAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Manually trigger repository sync
+    /// </summary>
+    /// <remarks>
+    /// Manually trigger synchronization of a bound repository.
+    /// <br/>If force=true, performs full re-sync regardless of commit hash.
+    /// </remarks>
+    /// <returns>Sync completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("documentation/repo/sync")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SyncRepositoryResponse>> SyncRepository([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SyncRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.SyncRepositoryAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Get repository binding status
+    /// </summary>
+    /// <remarks>
+    /// Get current status of a repository binding including sync state and statistics.
+    /// </remarks>
+    /// <returns>Repository binding status</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("documentation/repo/status")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RepositoryStatusResponse>> GetRepositoryStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RepositoryStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetRepositoryStatusAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// List all repository bindings
+    /// </summary>
+    /// <remarks>
+    /// List all repository bindings with optional filtering by status.
+    /// </remarks>
+    /// <returns>List of repository bindings</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("documentation/repo/list")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRepositoryBindingsResponse>> ListRepositoryBindings([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListRepositoryBindingsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ListRepositoryBindingsAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Update repository binding configuration
+    /// </summary>
+    /// <remarks>
+    /// Update sync settings, file patterns, category mappings, or archive configuration.
+    /// </remarks>
+    /// <returns>Repository binding updated</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("documentation/repo/update")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateRepositoryBindingResponse>> UpdateRepositoryBinding([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateRepositoryBindingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.UpdateRepositoryBindingAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Create documentation archive
+    /// </summary>
+    /// <remarks>
+    /// Create a .bannou bundle archive of all documents in a namespace.
+    /// <br/>Archives are stored via Asset Service.
+    /// </remarks>
+    /// <returns>Archive created</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/create")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateArchiveResponse>> CreateDocumentationArchive([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.CreateDocumentationArchiveAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// List documentation archives
+    /// </summary>
+    /// <remarks>
+    /// List all archives for a namespace.
+    /// </remarks>
+    /// <returns>List of archives</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/list")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListArchivesResponse>> ListDocumentationArchives([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListArchivesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ListDocumentationArchivesAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Restore documentation from archive
+    /// </summary>
+    /// <remarks>
+    /// Restore documents from a .bannou bundle archive.
+    /// <br/>Replaces all documents in the namespace with archived content.
+    /// </remarks>
+    /// <returns>Archive restored</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/restore")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreArchiveResponse>> RestoreDocumentationArchive([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RestoreArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.RestoreDocumentationArchiveAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Delete documentation archive
+    /// </summary>
+    /// <remarks>
+    /// Delete an archive from Asset Service storage.
+    /// </remarks>
+    /// <returns>Archive deleted</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/delete")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteArchiveResponse>> DeleteDocumentationArchive([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.DeleteDocumentationArchiveAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -3225,6 +3517,1530 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             _GetNamespaceStats_Info,
             _GetNamespaceStats_RequestSchema,
             _GetNamespaceStats_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for BindRepository
+
+    private static readonly string _BindRepository_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/BindRepositoryRequest",
+  "$defs": {
+    "BindRepositoryRequest": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "repositoryUrl"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50,
+          "description": "Documentation namespace to bind"
+        },
+        "repositoryUrl": {
+          "type": "string",
+          "description": "Git clone URL (HTTPS for public repos)"
+        },
+        "branch": {
+          "type": "string",
+          "default": "main",
+          "description": "Branch to sync from"
+        },
+        "syncIntervalMinutes": {
+          "type": "integer",
+          "default": 60,
+          "minimum": 5,
+          "maximum": 1440,
+          "description": "How often to sync (5 min to 24 hours)"
+        },
+        "filePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/*.md"
+          ],
+          "description": "Glob patterns for files to include"
+        },
+        "excludePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            ".git/**",
+            ".obsidian/**",
+            "node_modules/**"
+          ],
+          "description": "Glob patterns for files to exclude"
+        },
+        "categoryMapping": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Map directory prefixes to categories"
+        },
+        "defaultCategory": {
+          "$ref": "#/$defs/DocumentCategory"
+        },
+        "archiveEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable archive functionality"
+        },
+        "archiveOnSync": {
+          "type": "boolean",
+          "default": false,
+          "description": "Create archive after each sync"
+        }
+      }
+    },
+    "DocumentCategory": {
+      "type": "string",
+      "enum": [
+        "getting-started",
+        "api-reference",
+        "architecture",
+        "deployment",
+        "troubleshooting",
+        "tutorials",
+        "game-systems",
+        "world-lore",
+        "npc-ai",
+        "other"
+      ],
+      "description": "Fixed categories for type-safe filtering"
+    }
+  }
+}
+""";
+
+    private static readonly string _BindRepository_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/BindRepositoryResponse",
+  "$defs": {
+    "BindRepositoryResponse": {
+      "type": "object",
+      "required": [
+        "bindingId",
+        "namespace",
+        "status"
+      ],
+      "properties": {
+        "bindingId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "repositoryUrl": {
+          "type": "string"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/BindingStatus"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "BindingStatus": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "syncing",
+        "synced",
+        "error",
+        "disabled"
+      ],
+      "description": "Status of a repository binding"
+    }
+  }
+}
+""";
+
+    private static readonly string _BindRepository_Info = """
+{
+  "summary": "Bind a git repository to a documentation namespace",
+  "description": "Bind a git repository URL to a documentation namespace.\nThe namespace will be exclusively managed by the repository - manual edits will be blocked.\nTriggers initial sync after binding.\n",
+  "tags": [
+    "Repository"
+  ],
+  "deprecated": false,
+  "operationId": "bindRepository"
+}
+""";
+
+    /// <summary>Returns endpoint information for BindRepository</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/bind/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BindRepository_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/bind",
+            _BindRepository_Info));
+
+    /// <summary>Returns request schema for BindRepository</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/bind/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BindRepository_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/bind",
+            "request-schema",
+            _BindRepository_RequestSchema));
+
+    /// <summary>Returns response schema for BindRepository</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/bind/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BindRepository_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/bind",
+            "response-schema",
+            _BindRepository_ResponseSchema));
+
+    /// <summary>Returns full schema for BindRepository</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/bind/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BindRepository_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/bind",
+            _BindRepository_Info,
+            _BindRepository_RequestSchema,
+            _BindRepository_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UnbindRepository
+
+    private static readonly string _UnbindRepository_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/UnbindRepositoryRequest",
+  "$defs": {
+    "UnbindRepositoryRequest": {
+      "type": "object",
+      "required": [
+        "namespace"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "deleteDocuments": {
+          "type": "boolean",
+          "default": false,
+          "description": "Also delete all documents from the namespace"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UnbindRepository_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/UnbindRepositoryResponse",
+  "$defs": {
+    "UnbindRepositoryResponse": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "documentsDeleted"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string"
+        },
+        "documentsDeleted": {
+          "type": "integer",
+          "description": "Number of documents deleted (0 if deleteDocuments was false)"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _UnbindRepository_Info = """
+{
+  "summary": "Remove repository binding from namespace",
+  "description": "Remove repository binding from a namespace, making it manually editable again.\nOptionally delete all documents imported from the repository.\n",
+  "tags": [
+    "Repository"
+  ],
+  "deprecated": false,
+  "operationId": "unbindRepository"
+}
+""";
+
+    /// <summary>Returns endpoint information for UnbindRepository</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/unbind/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UnbindRepository_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/unbind",
+            _UnbindRepository_Info));
+
+    /// <summary>Returns request schema for UnbindRepository</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/unbind/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UnbindRepository_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/unbind",
+            "request-schema",
+            _UnbindRepository_RequestSchema));
+
+    /// <summary>Returns response schema for UnbindRepository</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/unbind/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UnbindRepository_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/unbind",
+            "response-schema",
+            _UnbindRepository_ResponseSchema));
+
+    /// <summary>Returns full schema for UnbindRepository</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/unbind/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UnbindRepository_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/unbind",
+            _UnbindRepository_Info,
+            _UnbindRepository_RequestSchema,
+            _UnbindRepository_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for SyncRepository
+
+    private static readonly string _SyncRepository_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SyncRepositoryRequest",
+  "$defs": {
+    "SyncRepositoryRequest": {
+      "type": "object",
+      "required": [
+        "namespace"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "force": {
+          "type": "boolean",
+          "default": false,
+          "description": "Force full re-sync even if commit hash unchanged"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _SyncRepository_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/SyncRepositoryResponse",
+  "$defs": {
+    "SyncRepositoryResponse": {
+      "type": "object",
+      "required": [
+        "syncId",
+        "status"
+      ],
+      "properties": {
+        "syncId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "status": {
+          "$ref": "#/$defs/SyncStatus"
+        },
+        "commitHash": {
+          "type": "string"
+        },
+        "documentsCreated": {
+          "type": "integer"
+        },
+        "documentsUpdated": {
+          "type": "integer"
+        },
+        "documentsDeleted": {
+          "type": "integer"
+        },
+        "documentsFailed": {
+          "type": "integer"
+        },
+        "durationMs": {
+          "type": "integer"
+        },
+        "errorMessage": {
+          "type": "string",
+          "nullable": true
+        }
+      }
+    },
+    "SyncStatus": {
+      "type": "string",
+      "enum": [
+        "success",
+        "partial",
+        "failed"
+      ],
+      "description": "Result status of a sync operation"
+    }
+  }
+}
+""";
+
+    private static readonly string _SyncRepository_Info = """
+{
+  "summary": "Manually trigger repository sync",
+  "description": "Manually trigger synchronization of a bound repository.\nIf force=true, performs full re-sync regardless of commit hash.\n",
+  "tags": [
+    "Repository"
+  ],
+  "deprecated": false,
+  "operationId": "syncRepository"
+}
+""";
+
+    /// <summary>Returns endpoint information for SyncRepository</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/sync/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SyncRepository_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/sync",
+            _SyncRepository_Info));
+
+    /// <summary>Returns request schema for SyncRepository</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/sync/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SyncRepository_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/sync",
+            "request-schema",
+            _SyncRepository_RequestSchema));
+
+    /// <summary>Returns response schema for SyncRepository</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/sync/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SyncRepository_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/sync",
+            "response-schema",
+            _SyncRepository_ResponseSchema));
+
+    /// <summary>Returns full schema for SyncRepository</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/sync/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SyncRepository_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/sync",
+            _SyncRepository_Info,
+            _SyncRepository_RequestSchema,
+            _SyncRepository_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetRepositoryStatus
+
+    private static readonly string _GetRepositoryStatus_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/RepositoryStatusRequest",
+  "$defs": {
+    "RepositoryStatusRequest": {
+      "type": "object",
+      "required": [
+        "namespace"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GetRepositoryStatus_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/RepositoryStatusResponse",
+  "$defs": {
+    "RepositoryStatusResponse": {
+      "type": "object",
+      "properties": {
+        "binding": {
+          "$ref": "#/$defs/RepositoryBindingInfo"
+        },
+        "lastSync": {
+          "$ref": "#/$defs/SyncInfo"
+        }
+      }
+    },
+    "RepositoryBindingInfo": {
+      "type": "object",
+      "required": [
+        "bindingId",
+        "namespace",
+        "repositoryUrl",
+        "status"
+      ],
+      "properties": {
+        "bindingId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "repositoryUrl": {
+          "type": "string"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/BindingStatus"
+        },
+        "syncEnabled": {
+          "type": "boolean"
+        },
+        "syncIntervalMinutes": {
+          "type": "integer"
+        },
+        "documentCount": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "BindingStatus": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "syncing",
+        "synced",
+        "error",
+        "disabled"
+      ],
+      "description": "Status of a repository binding"
+    },
+    "SyncInfo": {
+      "type": "object",
+      "properties": {
+        "syncId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "status": {
+          "$ref": "#/$defs/SyncStatus"
+        },
+        "triggeredBy": {
+          "$ref": "#/$defs/SyncTrigger"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "commitHash": {
+          "type": "string"
+        },
+        "documentsProcessed": {
+          "type": "integer"
+        }
+      }
+    },
+    "SyncStatus": {
+      "type": "string",
+      "enum": [
+        "success",
+        "partial",
+        "failed"
+      ],
+      "description": "Result status of a sync operation"
+    },
+    "SyncTrigger": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "scheduled"
+      ],
+      "description": "What triggered the sync operation"
+    }
+  }
+}
+""";
+
+    private static readonly string _GetRepositoryStatus_Info = """
+{
+  "summary": "Get repository binding status",
+  "description": "Get current status of a repository binding including sync state and statistics.\n",
+  "tags": [
+    "Repository"
+  ],
+  "deprecated": false,
+  "operationId": "getRepositoryStatus"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetRepositoryStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/status/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRepositoryStatus_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/status",
+            _GetRepositoryStatus_Info));
+
+    /// <summary>Returns request schema for GetRepositoryStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/status/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRepositoryStatus_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/status",
+            "request-schema",
+            _GetRepositoryStatus_RequestSchema));
+
+    /// <summary>Returns response schema for GetRepositoryStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/status/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRepositoryStatus_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/status",
+            "response-schema",
+            _GetRepositoryStatus_ResponseSchema));
+
+    /// <summary>Returns full schema for GetRepositoryStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/status/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRepositoryStatus_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/status",
+            _GetRepositoryStatus_Info,
+            _GetRepositoryStatus_RequestSchema,
+            _GetRepositoryStatus_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ListRepositoryBindings
+
+    private static readonly string _ListRepositoryBindings_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ListRepositoryBindingsRequest",
+  "$defs": {
+    "ListRepositoryBindingsRequest": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/BindingStatus"
+        },
+        "limit": {
+          "type": "integer",
+          "default": 50,
+          "minimum": 1,
+          "maximum": 100
+        },
+        "offset": {
+          "type": "integer",
+          "default": 0,
+          "minimum": 0
+        }
+      }
+    },
+    "BindingStatus": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "syncing",
+        "synced",
+        "error",
+        "disabled"
+      ],
+      "description": "Status of a repository binding"
+    }
+  }
+}
+""";
+
+    private static readonly string _ListRepositoryBindings_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ListRepositoryBindingsResponse",
+  "$defs": {
+    "ListRepositoryBindingsResponse": {
+      "type": "object",
+      "required": [
+        "bindings",
+        "total"
+      ],
+      "properties": {
+        "bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RepositoryBindingInfo"
+          }
+        },
+        "total": {
+          "type": "integer"
+        }
+      }
+    },
+    "RepositoryBindingInfo": {
+      "type": "object",
+      "required": [
+        "bindingId",
+        "namespace",
+        "repositoryUrl",
+        "status"
+      ],
+      "properties": {
+        "bindingId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "repositoryUrl": {
+          "type": "string"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/BindingStatus"
+        },
+        "syncEnabled": {
+          "type": "boolean"
+        },
+        "syncIntervalMinutes": {
+          "type": "integer"
+        },
+        "documentCount": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "BindingStatus": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "syncing",
+        "synced",
+        "error",
+        "disabled"
+      ],
+      "description": "Status of a repository binding"
+    }
+  }
+}
+""";
+
+    private static readonly string _ListRepositoryBindings_Info = """
+{
+  "summary": "List all repository bindings",
+  "description": "List all repository bindings with optional filtering by status.\n",
+  "tags": [
+    "Repository"
+  ],
+  "deprecated": false,
+  "operationId": "listRepositoryBindings"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListRepositoryBindings</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListRepositoryBindings_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/list",
+            _ListRepositoryBindings_Info));
+
+    /// <summary>Returns request schema for ListRepositoryBindings</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListRepositoryBindings_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/list",
+            "request-schema",
+            _ListRepositoryBindings_RequestSchema));
+
+    /// <summary>Returns response schema for ListRepositoryBindings</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListRepositoryBindings_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/list",
+            "response-schema",
+            _ListRepositoryBindings_ResponseSchema));
+
+    /// <summary>Returns full schema for ListRepositoryBindings</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListRepositoryBindings_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/list",
+            _ListRepositoryBindings_Info,
+            _ListRepositoryBindings_RequestSchema,
+            _ListRepositoryBindings_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateRepositoryBinding
+
+    private static readonly string _UpdateRepositoryBinding_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/UpdateRepositoryBindingRequest",
+  "$defs": {
+    "UpdateRepositoryBindingRequest": {
+      "type": "object",
+      "required": [
+        "namespace"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "syncEnabled": {
+          "type": "boolean"
+        },
+        "syncIntervalMinutes": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 1440
+        },
+        "filePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "excludePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "categoryMapping": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "defaultCategory": {
+          "$ref": "#/$defs/DocumentCategory"
+        },
+        "archiveEnabled": {
+          "type": "boolean"
+        },
+        "archiveOnSync": {
+          "type": "boolean"
+        }
+      }
+    },
+    "DocumentCategory": {
+      "type": "string",
+      "enum": [
+        "getting-started",
+        "api-reference",
+        "architecture",
+        "deployment",
+        "troubleshooting",
+        "tutorials",
+        "game-systems",
+        "world-lore",
+        "npc-ai",
+        "other"
+      ],
+      "description": "Fixed categories for type-safe filtering"
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateRepositoryBinding_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/UpdateRepositoryBindingResponse",
+  "$defs": {
+    "UpdateRepositoryBindingResponse": {
+      "type": "object",
+      "required": [
+        "binding"
+      ],
+      "properties": {
+        "binding": {
+          "$ref": "#/$defs/RepositoryBindingInfo"
+        }
+      }
+    },
+    "RepositoryBindingInfo": {
+      "type": "object",
+      "required": [
+        "bindingId",
+        "namespace",
+        "repositoryUrl",
+        "status"
+      ],
+      "properties": {
+        "bindingId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "repositoryUrl": {
+          "type": "string"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/BindingStatus"
+        },
+        "syncEnabled": {
+          "type": "boolean"
+        },
+        "syncIntervalMinutes": {
+          "type": "integer"
+        },
+        "documentCount": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "BindingStatus": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "syncing",
+        "synced",
+        "error",
+        "disabled"
+      ],
+      "description": "Status of a repository binding"
+    }
+  }
+}
+""";
+
+    private static readonly string _UpdateRepositoryBinding_Info = """
+{
+  "summary": "Update repository binding configuration",
+  "description": "Update sync settings, file patterns, category mappings, or archive configuration.\n",
+  "tags": [
+    "Repository"
+  ],
+  "deprecated": false,
+  "operationId": "updateRepositoryBinding"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateRepositoryBinding</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/update/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateRepositoryBinding_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/update",
+            _UpdateRepositoryBinding_Info));
+
+    /// <summary>Returns request schema for UpdateRepositoryBinding</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/update/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateRepositoryBinding_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/update",
+            "request-schema",
+            _UpdateRepositoryBinding_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateRepositoryBinding</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/update/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateRepositoryBinding_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/update",
+            "response-schema",
+            _UpdateRepositoryBinding_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateRepositoryBinding</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/update/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateRepositoryBinding_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/update",
+            _UpdateRepositoryBinding_Info,
+            _UpdateRepositoryBinding_RequestSchema,
+            _UpdateRepositoryBinding_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CreateDocumentationArchive
+
+    private static readonly string _CreateDocumentationArchive_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CreateArchiveRequest",
+  "$defs": {
+    "CreateArchiveRequest": {
+      "type": "object",
+      "required": [
+        "namespace"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Optional description for the archive"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CreateDocumentationArchive_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/CreateArchiveResponse",
+  "$defs": {
+    "CreateArchiveResponse": {
+      "type": "object",
+      "required": [
+        "archiveId",
+        "namespace"
+      ],
+      "properties": {
+        "archiveId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "bundleAssetId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Asset ID in Asset Service"
+        },
+        "documentCount": {
+          "type": "integer"
+        },
+        "sizeBytes": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "commitHash": {
+          "type": "string",
+          "nullable": true,
+          "description": "Git commit hash if namespace is bound"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _CreateDocumentationArchive_Info = """
+{
+  "summary": "Create documentation archive",
+  "description": "Create a .bannou bundle archive of all documents in a namespace.\nArchives are stored via Asset Service.\n",
+  "tags": [
+    "Archive"
+  ],
+  "deprecated": false,
+  "operationId": "createDocumentationArchive"
+}
+""";
+
+    /// <summary>Returns endpoint information for CreateDocumentationArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/create/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateDocumentationArchive_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/archive/create",
+            _CreateDocumentationArchive_Info));
+
+    /// <summary>Returns request schema for CreateDocumentationArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/create/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateDocumentationArchive_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/archive/create",
+            "request-schema",
+            _CreateDocumentationArchive_RequestSchema));
+
+    /// <summary>Returns response schema for CreateDocumentationArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/create/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateDocumentationArchive_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/archive/create",
+            "response-schema",
+            _CreateDocumentationArchive_ResponseSchema));
+
+    /// <summary>Returns full schema for CreateDocumentationArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/create/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CreateDocumentationArchive_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/archive/create",
+            _CreateDocumentationArchive_Info,
+            _CreateDocumentationArchive_RequestSchema,
+            _CreateDocumentationArchive_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ListDocumentationArchives
+
+    private static readonly string _ListDocumentationArchives_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ListArchivesRequest",
+  "$defs": {
+    "ListArchivesRequest": {
+      "type": "object",
+      "required": [
+        "namespace"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50
+        },
+        "limit": {
+          "type": "integer",
+          "default": 20,
+          "minimum": 1,
+          "maximum": 100
+        },
+        "offset": {
+          "type": "integer",
+          "default": 0,
+          "minimum": 0
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ListDocumentationArchives_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ListArchivesResponse",
+  "$defs": {
+    "ListArchivesResponse": {
+      "type": "object",
+      "required": [
+        "archives",
+        "total"
+      ],
+      "properties": {
+        "archives": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ArchiveInfo"
+          }
+        },
+        "total": {
+          "type": "integer"
+        }
+      }
+    },
+    "ArchiveInfo": {
+      "type": "object",
+      "required": [
+        "archiveId",
+        "namespace",
+        "createdAt"
+      ],
+      "properties": {
+        "archiveId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "bundleAssetId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": {
+          "type": "string"
+        },
+        "documentCount": {
+          "type": "integer"
+        },
+        "sizeBytes": {
+          "type": "integer"
+        },
+        "commitHash": {
+          "type": "string",
+          "nullable": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ListDocumentationArchives_Info = """
+{
+  "summary": "List documentation archives",
+  "description": "List all archives for a namespace.\n",
+  "tags": [
+    "Archive"
+  ],
+  "deprecated": false,
+  "operationId": "listDocumentationArchives"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListDocumentationArchives</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListDocumentationArchives_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/archive/list",
+            _ListDocumentationArchives_Info));
+
+    /// <summary>Returns request schema for ListDocumentationArchives</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListDocumentationArchives_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/archive/list",
+            "request-schema",
+            _ListDocumentationArchives_RequestSchema));
+
+    /// <summary>Returns response schema for ListDocumentationArchives</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListDocumentationArchives_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/archive/list",
+            "response-schema",
+            _ListDocumentationArchives_ResponseSchema));
+
+    /// <summary>Returns full schema for ListDocumentationArchives</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListDocumentationArchives_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/archive/list",
+            _ListDocumentationArchives_Info,
+            _ListDocumentationArchives_RequestSchema,
+            _ListDocumentationArchives_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RestoreDocumentationArchive
+
+    private static readonly string _RestoreDocumentationArchive_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/RestoreArchiveRequest",
+  "$defs": {
+    "RestoreArchiveRequest": {
+      "type": "object",
+      "required": [
+        "archiveId"
+      ],
+      "properties": {
+        "archiveId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "targetNamespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 50,
+          "description": "If not provided, restores to original namespace"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _RestoreDocumentationArchive_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/RestoreArchiveResponse",
+  "$defs": {
+    "RestoreArchiveResponse": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "documentsRestored"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string"
+        },
+        "documentsRestored": {
+          "type": "integer"
+        },
+        "previousDocumentsDeleted": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _RestoreDocumentationArchive_Info = """
+{
+  "summary": "Restore documentation from archive",
+  "description": "Restore documents from a .bannou bundle archive.\nReplaces all documents in the namespace with archived content.\n",
+  "tags": [
+    "Archive"
+  ],
+  "deprecated": false,
+  "operationId": "restoreDocumentationArchive"
+}
+""";
+
+    /// <summary>Returns endpoint information for RestoreDocumentationArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/restore/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreDocumentationArchive_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/archive/restore",
+            _RestoreDocumentationArchive_Info));
+
+    /// <summary>Returns request schema for RestoreDocumentationArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/restore/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreDocumentationArchive_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/archive/restore",
+            "request-schema",
+            _RestoreDocumentationArchive_RequestSchema));
+
+    /// <summary>Returns response schema for RestoreDocumentationArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/restore/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreDocumentationArchive_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/archive/restore",
+            "response-schema",
+            _RestoreDocumentationArchive_ResponseSchema));
+
+    /// <summary>Returns full schema for RestoreDocumentationArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/restore/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreDocumentationArchive_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/archive/restore",
+            _RestoreDocumentationArchive_Info,
+            _RestoreDocumentationArchive_RequestSchema,
+            _RestoreDocumentationArchive_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeleteDocumentationArchive
+
+    private static readonly string _DeleteDocumentationArchive_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/DeleteArchiveRequest",
+  "$defs": {
+    "DeleteArchiveRequest": {
+      "type": "object",
+      "required": [
+        "archiveId"
+      ],
+      "properties": {
+        "archiveId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _DeleteDocumentationArchive_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/DeleteArchiveResponse",
+  "$defs": {
+    "DeleteArchiveResponse": {
+      "type": "object",
+      "required": [
+        "deleted"
+      ],
+      "properties": {
+        "deleted": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _DeleteDocumentationArchive_Info = """
+{
+  "summary": "Delete documentation archive",
+  "description": "Delete an archive from Asset Service storage.\n",
+  "tags": [
+    "Archive"
+  ],
+  "deprecated": false,
+  "operationId": "deleteDocumentationArchive"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteDocumentationArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteDocumentationArchive_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/archive/delete",
+            _DeleteDocumentationArchive_Info));
+
+    /// <summary>Returns request schema for DeleteDocumentationArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteDocumentationArchive_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/archive/delete",
+            "request-schema",
+            _DeleteDocumentationArchive_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteDocumentationArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteDocumentationArchive_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/archive/delete",
+            "response-schema",
+            _DeleteDocumentationArchive_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteDocumentationArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/repo/archive/delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteDocumentationArchive_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Documentation",
+            "Post",
+            "documentation/repo/archive/delete",
+            _DeleteDocumentationArchive_Info,
+            _DeleteDocumentationArchive_RequestSchema,
+            _DeleteDocumentationArchive_ResponseSchema));
 
     #endregion
 

@@ -36,4 +36,8 @@ python3 "$SCRIPT_DIR/generate-event-docs.py"
 echo "  → Generating configuration reference..."
 python3 "$SCRIPT_DIR/generate-config-docs.py"
 
+# Generate service details documentation
+echo "  → Generating service details reference..."
+python3 "$SCRIPT_DIR/generate-service-details-docs.py"
+
 echo "✅ Documentation generation complete"

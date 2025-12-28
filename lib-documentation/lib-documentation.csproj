@@ -24,6 +24,9 @@
     <!-- Only packages NOT provided by bannou-service - NSwag, etc. come transitively -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    <!-- Git repository binding dependencies -->
+    <PackageReference Include="LibGit2Sharp" Version="0.30.0" />
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
 
   <Import Project="../ServiceLib.targets" />

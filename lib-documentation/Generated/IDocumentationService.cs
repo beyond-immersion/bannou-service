@@ -90,4 +90,54 @@ public partial interface IDocumentationService : IBannouService
     /// </summary>
     Task<(StatusCodes, NamespaceStatsResponse?)> GetNamespaceStatsAsync(GetNamespaceStatsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+    /// <summary>
+    /// BindRepository operation
+    /// </summary>
+    Task<(StatusCodes, BindRepositoryResponse?)> BindRepositoryAsync(BindRepositoryRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
+    /// UnbindRepository operation
+    /// </summary>
+    Task<(StatusCodes, UnbindRepositoryResponse?)> UnbindRepositoryAsync(UnbindRepositoryRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
+    /// SyncRepository operation
+    /// </summary>
+    Task<(StatusCodes, SyncRepositoryResponse?)> SyncRepositoryAsync(SyncRepositoryRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
+    /// GetRepositoryStatus operation
+    /// </summary>
+    Task<(StatusCodes, RepositoryStatusResponse?)> GetRepositoryStatusAsync(RepositoryStatusRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
+    /// ListRepositoryBindings operation
+    /// </summary>
+    Task<(StatusCodes, ListRepositoryBindingsResponse?)> ListRepositoryBindingsAsync(ListRepositoryBindingsRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
+    /// UpdateRepositoryBinding operation
+    /// </summary>
+    Task<(StatusCodes, UpdateRepositoryBindingResponse?)> UpdateRepositoryBindingAsync(UpdateRepositoryBindingRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
+    /// CreateDocumentationArchive operation
+    /// </summary>
+    Task<(StatusCodes, CreateArchiveResponse?)> CreateDocumentationArchiveAsync(CreateArchiveRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
+    /// ListDocumentationArchives operation
+    /// </summary>
+    Task<(StatusCodes, ListArchivesResponse?)> ListDocumentationArchivesAsync(ListArchivesRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
+    /// RestoreDocumentationArchive operation
+    /// </summary>
+    Task<(StatusCodes, RestoreArchiveResponse?)> RestoreDocumentationArchiveAsync(RestoreArchiveRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
+    /// DeleteDocumentationArchive operation
+    /// </summary>
+    Task<(StatusCodes, DeleteArchiveResponse?)> DeleteDocumentationArchiveAsync(DeleteArchiveRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

@@ -877,6 +877,526 @@ paths:
         usage statistics and metadata for a documentation namespace.\\nUseful for monitoring, capacity planning, and administrative
         dashboards.\\n\",\n  \"tags\": [\n    \"Admin\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getNamespaceStats\"\
         \n}"
+
+  # ===== Repository Binding Endpoints =====
+  /documentation/repo/bind:
+    post:
+      operationId: bindRepository
+      summary: Bind a git repository to a documentation namespace
+      description: |
+        Bind a git repository URL to a documentation namespace.
+        The namespace will be exclusively managed by the repository - manual edits will be blocked.
+        Triggers initial sync after binding.
+      tags:
+      - Repository
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BindRepositoryRequest'
+      responses:
+        '201':
+          description: Repository binding created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BindRepositoryResponse'
+        '400':
+          description: Invalid request (malformed URL, invalid branch)
+        '409':
+          description: Namespace already bound to a repository
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/BindRepositoryRequest\"\
+        ,\n  \"$defs\": {\n    \"BindRepositoryRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        namespace\",\n        \"repositoryUrl\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"\
+        type\": \"string\",\n          \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50,\n          \"description\"\
+        : \"Documentation namespace to bind\"\n        },\n        \"repositoryUrl\": {\n          \"type\": \"string\",\n\
+        \          \"description\": \"Git clone URL (HTTPS for public repos)\"\n        },\n        \"branch\": {\n      \
+        \    \"type\": \"string\",\n          \"default\": \"main\",\n          \"description\": \"Branch to sync from\"\n\
+        \        },\n        \"syncIntervalMinutes\": {\n          \"type\": \"integer\",\n          \"default\": 60,\n  \
+        \        \"minimum\": 5,\n          \"maximum\": 1440,\n          \"description\": \"How often to sync (5 min to 24
+        hours)\"\n        },\n        \"filePatterns\": {\n          \"type\": \"array\",\n          \"items\": {\n      \
+        \      \"type\": \"string\"\n          },\n          \"default\": [\n            \"**/*.md\"\n          ],\n     \
+        \     \"description\": \"Glob patterns for files to include\"\n        },\n        \"excludePatterns\": {\n      \
+        \    \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"default\"\
+        : [\n            \".git/**\",\n            \".obsidian/**\",\n            \"node_modules/**\"\n          ],\n    \
+        \      \"description\": \"Glob patterns for files to exclude\"\n        },\n        \"categoryMapping\": {\n     \
+        \     \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n          },\n\
+        \          \"description\": \"Map directory prefixes to categories\"\n        },\n        \"defaultCategory\": {\n\
+        \          \"$ref\": \"#/$defs/DocumentCategory\"\n        },\n        \"archiveEnabled\": {\n          \"type\":
+        \"boolean\",\n          \"default\": false,\n          \"description\": \"Enable archive functionality\"\n       \
+        \ },\n        \"archiveOnSync\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n          \"\
+        description\": \"Create archive after each sync\"\n        }\n      }\n    },\n    \"DocumentCategory\": {\n     \
+        \ \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n        \"architecture\"\
+        ,\n        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n    \
+        \    \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\": \"Fixed categories
+        for type-safe filtering\"\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/BindRepositoryResponse\"\
+        ,\n  \"$defs\": {\n    \"BindRepositoryResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
+        \ \"bindingId\",\n        \"namespace\",\n        \"status\"\n      ],\n      \"properties\": {\n        \"bindingId\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"namespace\": {\n     \
+        \     \"type\": \"string\"\n        },\n        \"repositoryUrl\": {\n          \"type\": \"string\"\n        },\n\
+        \        \"branch\": {\n          \"type\": \"string\"\n        },\n        \"status\": {\n          \"$ref\": \"\
+        #/$defs/BindingStatus\"\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\"\
+        : \"date-time\"\n        }\n      }\n    },\n    \"BindingStatus\": {\n      \"type\": \"string\",\n      \"enum\"\
+        : [\n        \"pending\",\n        \"syncing\",\n        \"synced\",\n        \"error\",\n        \"disabled\"\n \
+        \     ],\n      \"description\": \"Status of a repository binding\"\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Bind a git repository to a documentation namespace\",\n  \"description\"\
+        : \"Bind a git repository URL to a documentation namespace.\\nThe namespace will be exclusively managed by the repository
+        - manual edits will be blocked.\\nTriggers initial sync after binding.\\n\",\n  \"tags\": [\n    \"Repository\"\n\
+        \  ],\n  \"deprecated\": false,\n  \"operationId\": \"bindRepository\"\n}"
+  /documentation/repo/unbind:
+    post:
+      operationId: unbindRepository
+      summary: Remove repository binding from namespace
+      description: |
+        Remove repository binding from a namespace, making it manually editable again.
+        Optionally delete all documents imported from the repository.
+      tags:
+      - Repository
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnbindRepositoryRequest'
+      responses:
+        '200':
+          description: Repository binding removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnbindRepositoryResponse'
+        '404':
+          description: No binding found for namespace
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UnbindRepositoryRequest\"\
+        ,\n  \"$defs\": {\n    \"UnbindRepositoryRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n      \
+        \  \"namespace\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\",\n \
+        \         \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        },\n        \"deleteDocuments\": {\n\
+        \          \"type\": \"boolean\",\n          \"default\": false,\n          \"description\": \"Also delete all documents
+        from the namespace\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UnbindRepositoryResponse\"\
+        ,\n  \"$defs\": {\n    \"UnbindRepositoryResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
+        \   \"namespace\",\n        \"documentsDeleted\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n  \
+        \        \"type\": \"string\"\n        },\n        \"documentsDeleted\": {\n          \"type\": \"integer\",\n   \
+        \       \"description\": \"Number of documents deleted (0 if deleteDocuments was false)\"\n        }\n      }\n  \
+        \  }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Remove repository binding from namespace\",\n  \"description\": \"Remove
+        repository binding from a namespace, making it manually editable again.\\nOptionally delete all documents imported
+        from the repository.\\n\",\n  \"tags\": [\n    \"Repository\"\n  ],\n  \"deprecated\": false,\n  \"operationId\":
+        \"unbindRepository\"\n}"
+  /documentation/repo/sync:
+    post:
+      operationId: syncRepository
+      summary: Manually trigger repository sync
+      description: |
+        Manually trigger synchronization of a bound repository.
+        If force=true, performs full re-sync regardless of commit hash.
+      tags:
+      - Repository
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncRepositoryRequest'
+      responses:
+        '200':
+          description: Sync completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncRepositoryResponse'
+        '404':
+          description: No binding found for namespace
+        '409':
+          description: Sync already in progress
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SyncRepositoryRequest\"\
+        ,\n  \"$defs\": {\n    \"SyncRepositoryRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        namespace\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\",\n      \
+        \    \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        },\n        \"force\": {\n          \"type\"\
+        : \"boolean\",\n          \"default\": false,\n          \"description\": \"Force full re-sync even if commit hash
+        unchanged\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SyncRepositoryResponse\"\
+        ,\n  \"$defs\": {\n    \"SyncRepositoryResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
+        \ \"syncId\",\n        \"status\"\n      ],\n      \"properties\": {\n        \"syncId\": {\n          \"type\": \"\
+        string\",\n          \"format\": \"uuid\"\n        },\n        \"status\": {\n          \"$ref\": \"#/$defs/SyncStatus\"\
+        \n        },\n        \"commitHash\": {\n          \"type\": \"string\"\n        },\n        \"documentsCreated\"\
+        : {\n          \"type\": \"integer\"\n        },\n        \"documentsUpdated\": {\n          \"type\": \"integer\"\
+        \n        },\n        \"documentsDeleted\": {\n          \"type\": \"integer\"\n        },\n        \"documentsFailed\"\
+        : {\n          \"type\": \"integer\"\n        },\n        \"durationMs\": {\n          \"type\": \"integer\"\n   \
+        \     },\n        \"errorMessage\": {\n          \"type\": \"string\",\n          \"nullable\": true\n        }\n\
+        \      }\n    },\n    \"SyncStatus\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"success\",\n  \
+        \      \"partial\",\n        \"failed\"\n      ],\n      \"description\": \"Result status of a sync operation\"\n\
+        \    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Manually trigger repository sync\",\n  \"description\": \"Manually trigger
+        synchronization of a bound repository.\\nIf force=true, performs full re-sync regardless of commit hash.\\n\",\n \
+        \ \"tags\": [\n    \"Repository\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"syncRepository\"\n}"
+  /documentation/repo/status:
+    post:
+      operationId: getRepositoryStatus
+      summary: Get repository binding status
+      description: |
+        Get current status of a repository binding including sync state and statistics.
+      tags:
+      - Repository
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RepositoryStatusRequest'
+      responses:
+        '200':
+          description: Repository binding status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryStatusResponse'
+        '404':
+          description: No binding found for namespace
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RepositoryStatusRequest\"\
+        ,\n  \"$defs\": {\n    \"RepositoryStatusRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n      \
+        \  \"namespace\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\",\n \
+        \         \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RepositoryStatusResponse\"\
+        ,\n  \"$defs\": {\n    \"RepositoryStatusResponse\": {\n      \"type\": \"object\",\n      \"properties\": {\n   \
+        \     \"binding\": {\n          \"$ref\": \"#/$defs/RepositoryBindingInfo\"\n        },\n        \"lastSync\": {\n\
+        \          \"$ref\": \"#/$defs/SyncInfo\"\n        }\n      }\n    },\n    \"RepositoryBindingInfo\": {\n      \"\
+        type\": \"object\",\n      \"required\": [\n        \"bindingId\",\n        \"namespace\",\n        \"repositoryUrl\"\
+        ,\n        \"status\"\n      ],\n      \"properties\": {\n        \"bindingId\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\"\n        },\n        \"namespace\": {\n          \"type\": \"string\"\n        },\n\
+        \        \"repositoryUrl\": {\n          \"type\": \"string\"\n        },\n        \"branch\": {\n          \"type\"\
+        : \"string\"\n        },\n        \"status\": {\n          \"$ref\": \"#/$defs/BindingStatus\"\n        },\n     \
+        \   \"syncEnabled\": {\n          \"type\": \"boolean\"\n        },\n        \"syncIntervalMinutes\": {\n        \
+        \  \"type\": \"integer\"\n        },\n        \"documentCount\": {\n          \"type\": \"integer\"\n        },\n\
+        \        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n    \
+        \    \"createdBy\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        }\n      }\n    },\n\
+        \    \"BindingStatus\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"pending\",\n        \"syncing\"\
+        ,\n        \"synced\",\n        \"error\",\n        \"disabled\"\n      ],\n      \"description\": \"Status of a repository
+        binding\"\n    },\n    \"SyncInfo\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"syncId\":
+        {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"status\": {\n          \"\
+        $ref\": \"#/$defs/SyncStatus\"\n        },\n        \"triggeredBy\": {\n          \"$ref\": \"#/$defs/SyncTrigger\"\
+        \n        },\n        \"startedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n   \
+        \     },\n        \"completedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n     \
+        \   },\n        \"commitHash\": {\n          \"type\": \"string\"\n        },\n        \"documentsProcessed\": {\n\
+        \          \"type\": \"integer\"\n        }\n      }\n    },\n    \"SyncStatus\": {\n      \"type\": \"string\",\n\
+        \      \"enum\": [\n        \"success\",\n        \"partial\",\n        \"failed\"\n      ],\n      \"description\"\
+        : \"Result status of a sync operation\"\n    },\n    \"SyncTrigger\": {\n      \"type\": \"string\",\n      \"enum\"\
+        : [\n        \"manual\",\n        \"scheduled\"\n      ],\n      \"description\": \"What triggered the sync operation\"\
+        \n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Get repository binding status\",\n  \"description\": \"Get current status
+        of a repository binding including sync state and statistics.\\n\",\n  \"tags\": [\n    \"Repository\"\n  ],\n  \"\
+        deprecated\": false,\n  \"operationId\": \"getRepositoryStatus\"\n}"
+  /documentation/repo/list:
+    post:
+      operationId: listRepositoryBindings
+      summary: List all repository bindings
+      description: |
+        List all repository bindings with optional filtering by status.
+      tags:
+      - Repository
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListRepositoryBindingsRequest'
+      responses:
+        '200':
+          description: List of repository bindings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListRepositoryBindingsResponse'
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListRepositoryBindingsRequest\"\
+        ,\n  \"$defs\": {\n    \"ListRepositoryBindingsRequest\": {\n      \"type\": \"object\",\n      \"properties\": {\n\
+        \        \"status\": {\n          \"$ref\": \"#/$defs/BindingStatus\"\n        },\n        \"limit\": {\n        \
+        \  \"type\": \"integer\",\n          \"default\": 50,\n          \"minimum\": 1,\n          \"maximum\": 100\n   \
+        \     },\n        \"offset\": {\n          \"type\": \"integer\",\n          \"default\": 0,\n          \"minimum\"\
+        : 0\n        }\n      }\n    },\n    \"BindingStatus\": {\n      \"type\": \"string\",\n      \"enum\": [\n      \
+        \  \"pending\",\n        \"syncing\",\n        \"synced\",\n        \"error\",\n        \"disabled\"\n      ],\n \
+        \     \"description\": \"Status of a repository binding\"\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListRepositoryBindingsResponse\"\
+        ,\n  \"$defs\": {\n    \"ListRepositoryBindingsResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n\
+        \        \"bindings\",\n        \"total\"\n      ],\n      \"properties\": {\n        \"bindings\": {\n          \"\
+        type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/RepositoryBindingInfo\"\n          }\n\
+        \        },\n        \"total\": {\n          \"type\": \"integer\"\n        }\n      }\n    },\n    \"RepositoryBindingInfo\"\
+        : {\n      \"type\": \"object\",\n      \"required\": [\n        \"bindingId\",\n        \"namespace\",\n        \"\
+        repositoryUrl\",\n        \"status\"\n      ],\n      \"properties\": {\n        \"bindingId\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"uuid\"\n        },\n        \"namespace\": {\n          \"type\": \"string\"\
+        \n        },\n        \"repositoryUrl\": {\n          \"type\": \"string\"\n        },\n        \"branch\": {\n  \
+        \        \"type\": \"string\"\n        },\n        \"status\": {\n          \"$ref\": \"#/$defs/BindingStatus\"\n\
+        \        },\n        \"syncEnabled\": {\n          \"type\": \"boolean\"\n        },\n        \"syncIntervalMinutes\"\
+        : {\n          \"type\": \"integer\"\n        },\n        \"documentCount\": {\n          \"type\": \"integer\"\n\
+        \        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n    \
+        \    },\n        \"createdBy\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        }\n  \
+        \    }\n    },\n    \"BindingStatus\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"pending\",\n \
+        \       \"syncing\",\n        \"synced\",\n        \"error\",\n        \"disabled\"\n      ],\n      \"description\"\
+        : \"Status of a repository binding\"\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"List all repository bindings\",\n  \"description\": \"List all repository
+        bindings with optional filtering by status.\\n\",\n  \"tags\": [\n    \"Repository\"\n  ],\n  \"deprecated\": false,\n\
+        \  \"operationId\": \"listRepositoryBindings\"\n}"
+  /documentation/repo/update:
+    post:
+      operationId: updateRepositoryBinding
+      summary: Update repository binding configuration
+      description: |
+        Update sync settings, file patterns, category mappings, or archive configuration.
+      tags:
+      - Repository
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRepositoryBindingRequest'
+      responses:
+        '200':
+          description: Repository binding updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateRepositoryBindingResponse'
+        '404':
+          description: No binding found for namespace
+
+  # ===== Archive Endpoints =====
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UpdateRepositoryBindingRequest\"\
+        ,\n  \"$defs\": {\n    \"UpdateRepositoryBindingRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n\
+        \        \"namespace\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\"\
+        ,\n          \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        },\n        \"syncEnabled\": {\n\
+        \          \"type\": \"boolean\"\n        },\n        \"syncIntervalMinutes\": {\n          \"type\": \"integer\"\
+        ,\n          \"minimum\": 5,\n          \"maximum\": 1440\n        },\n        \"filePatterns\": {\n          \"type\"\
+        : \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"excludePatterns\"\
+        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n     \
+        \   },\n        \"categoryMapping\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n \
+        \           \"type\": \"string\"\n          }\n        },\n        \"defaultCategory\": {\n          \"$ref\": \"\
+        #/$defs/DocumentCategory\"\n        },\n        \"archiveEnabled\": {\n          \"type\": \"boolean\"\n        },\n\
+        \        \"archiveOnSync\": {\n          \"type\": \"boolean\"\n        }\n      }\n    },\n    \"DocumentCategory\"\
+        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n  \
+        \      \"architecture\",\n        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n        \"\
+        game-systems\",\n        \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\"\
+        : \"Fixed categories for type-safe filtering\"\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UpdateRepositoryBindingResponse\"\
+        ,\n  \"$defs\": {\n    \"UpdateRepositoryBindingResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n\
+        \        \"binding\"\n      ],\n      \"properties\": {\n        \"binding\": {\n          \"$ref\": \"#/$defs/RepositoryBindingInfo\"\
+        \n        }\n      }\n    },\n    \"RepositoryBindingInfo\": {\n      \"type\": \"object\",\n      \"required\": [\n\
+        \        \"bindingId\",\n        \"namespace\",\n        \"repositoryUrl\",\n        \"status\"\n      ],\n      \"\
+        properties\": {\n        \"bindingId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n     \
+        \   },\n        \"namespace\": {\n          \"type\": \"string\"\n        },\n        \"repositoryUrl\": {\n     \
+        \     \"type\": \"string\"\n        },\n        \"branch\": {\n          \"type\": \"string\"\n        },\n      \
+        \  \"status\": {\n          \"$ref\": \"#/$defs/BindingStatus\"\n        },\n        \"syncEnabled\": {\n        \
+        \  \"type\": \"boolean\"\n        },\n        \"syncIntervalMinutes\": {\n          \"type\": \"integer\"\n      \
+        \  },\n        \"documentCount\": {\n          \"type\": \"integer\"\n        },\n        \"createdAt\": {\n     \
+        \     \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"createdBy\": {\n         \
+        \ \"type\": \"string\",\n          \"format\": \"uuid\"\n        }\n      }\n    },\n    \"BindingStatus\": {\n  \
+        \    \"type\": \"string\",\n      \"enum\": [\n        \"pending\",\n        \"syncing\",\n        \"synced\",\n \
+        \       \"error\",\n        \"disabled\"\n      ],\n      \"description\": \"Status of a repository binding\"\n  \
+        \  }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Update repository binding configuration\",\n  \"description\": \"Update sync
+        settings, file patterns, category mappings, or archive configuration.\\n\",\n  \"tags\": [\n    \"Repository\"\n \
+        \ ],\n  \"deprecated\": false,\n  \"operationId\": \"updateRepositoryBinding\"\n}"
+  /documentation/repo/archive/create:
+    post:
+      operationId: createDocumentationArchive
+      summary: Create documentation archive
+      description: |
+        Create a .bannou bundle archive of all documents in a namespace.
+        Archives are stored via Asset Service.
+      tags:
+      - Archive
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateArchiveRequest'
+      responses:
+        '201':
+          description: Archive created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateArchiveResponse'
+        '404':
+          description: Namespace not found
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateArchiveRequest\"\
+        ,\n  \"$defs\": {\n    \"CreateArchiveRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        namespace\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\",\n      \
+        \    \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        },\n        \"description\": {\n       \
+        \   \"type\": \"string\",\n          \"maxLength\": 500,\n          \"description\": \"Optional description for the
+        archive\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateArchiveResponse\"\
+        ,\n  \"$defs\": {\n    \"CreateArchiveResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        archiveId\",\n        \"namespace\"\n      ],\n      \"properties\": {\n        \"archiveId\": {\n          \"type\"\
+        : \"string\",\n          \"format\": \"uuid\"\n        },\n        \"namespace\": {\n          \"type\": \"string\"\
+        \n        },\n        \"bundleAssetId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n   \
+        \       \"description\": \"Asset ID in Asset Service\"\n        },\n        \"documentCount\": {\n          \"type\"\
+        : \"integer\"\n        },\n        \"sizeBytes\": {\n          \"type\": \"integer\"\n        },\n        \"createdAt\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"commitHash\": {\n\
+        \          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Git commit hash if namespace
+        is bound\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Create documentation archive\",\n  \"description\": \"Create a .bannou bundle
+        archive of all documents in a namespace.\\nArchives are stored via Asset Service.\\n\",\n  \"tags\": [\n    \"Archive\"\
+        \n  ],\n  \"deprecated\": false,\n  \"operationId\": \"createDocumentationArchive\"\n}"
+  /documentation/repo/archive/list:
+    post:
+      operationId: listDocumentationArchives
+      summary: List documentation archives
+      description: |
+        List all archives for a namespace.
+      tags:
+      - Archive
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListArchivesRequest'
+      responses:
+        '200':
+          description: List of archives
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListArchivesResponse'
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListArchivesRequest\"\
+        ,\n  \"$defs\": {\n    \"ListArchivesRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        namespace\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n          \"type\": \"string\",\n      \
+        \    \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50\n        },\n        \"limit\": {\n          \"type\"\
+        : \"integer\",\n          \"default\": 20,\n          \"minimum\": 1,\n          \"maximum\": 100\n        },\n  \
+        \      \"offset\": {\n          \"type\": \"integer\",\n          \"default\": 0,\n          \"minimum\": 0\n    \
+        \    }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListArchivesResponse\"\
+        ,\n  \"$defs\": {\n    \"ListArchivesResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        archives\",\n        \"total\"\n      ],\n      \"properties\": {\n        \"archives\": {\n          \"type\": \"\
+        array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/ArchiveInfo\"\n          }\n        },\n       \
+        \ \"total\": {\n          \"type\": \"integer\"\n        }\n      }\n    },\n    \"ArchiveInfo\": {\n      \"type\"\
+        : \"object\",\n      \"required\": [\n        \"archiveId\",\n        \"namespace\",\n        \"createdAt\"\n    \
+        \  ],\n      \"properties\": {\n        \"archiveId\": {\n          \"type\": \"string\",\n          \"format\": \"\
+        uuid\"\n        },\n        \"namespace\": {\n          \"type\": \"string\"\n        },\n        \"bundleAssetId\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"description\": {\n   \
+        \       \"type\": \"string\"\n        },\n        \"documentCount\": {\n          \"type\": \"integer\"\n        },\n\
+        \        \"sizeBytes\": {\n          \"type\": \"integer\"\n        },\n        \"commitHash\": {\n          \"type\"\
+        : \"string\",\n          \"nullable\": true\n        },\n        \"createdAt\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"date-time\"\n        },\n        \"createdBy\": {\n          \"type\": \"string\",\n  \
+        \        \"format\": \"uuid\"\n        }\n      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"List documentation archives\",\n  \"description\": \"List all archives for
+        a namespace.\\n\",\n  \"tags\": [\n    \"Archive\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"listDocumentationArchives\"\
+        \n}"
+  /documentation/repo/archive/restore:
+    post:
+      operationId: restoreDocumentationArchive
+      summary: Restore documentation from archive
+      description: |
+        Restore documents from a .bannou bundle archive.
+        Replaces all documents in the namespace with archived content.
+      tags:
+      - Archive
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreArchiveRequest'
+      responses:
+        '200':
+          description: Archive restored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreArchiveResponse'
+        '404':
+          description: Archive not found
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RestoreArchiveRequest\"\
+        ,\n  \"$defs\": {\n    \"RestoreArchiveRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        archiveId\"\n      ],\n      \"properties\": {\n        \"archiveId\": {\n          \"type\": \"string\",\n      \
+        \    \"format\": \"uuid\"\n        },\n        \"targetNamespace\": {\n          \"type\": \"string\",\n         \
+        \ \"pattern\": \"^[a-z0-9-]+$\",\n          \"maxLength\": 50,\n          \"description\": \"If not provided, restores
+        to original namespace\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RestoreArchiveResponse\"\
+        ,\n  \"$defs\": {\n    \"RestoreArchiveResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n       \
+        \ \"namespace\",\n        \"documentsRestored\"\n      ],\n      \"properties\": {\n        \"namespace\": {\n   \
+        \       \"type\": \"string\"\n        },\n        \"documentsRestored\": {\n          \"type\": \"integer\"\n    \
+        \    },\n        \"previousDocumentsDeleted\": {\n          \"type\": \"integer\"\n        }\n      }\n    }\n  }\n\
+        }"
+      x-endpoint-info-json: "{\n  \"summary\": \"Restore documentation from archive\",\n  \"description\": \"Restore documents
+        from a .bannou bundle archive.\\nReplaces all documents in the namespace with archived content.\\n\",\n  \"tags\"\
+        : [\n    \"Archive\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"restoreDocumentationArchive\"\n}"
+  /documentation/repo/archive/delete:
+    post:
+      operationId: deleteDocumentationArchive
+      summary: Delete documentation archive
+      description: |
+        Delete an archive from Asset Service storage.
+      tags:
+      - Archive
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteArchiveRequest'
+      responses:
+        '200':
+          description: Archive deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteArchiveResponse'
+        '404':
+          description: Archive not found
+
+      x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/DeleteArchiveRequest\"\
+        ,\n  \"$defs\": {\n    \"DeleteArchiveRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        archiveId\"\n      ],\n      \"properties\": {\n        \"archiveId\": {\n          \"type\": \"string\",\n      \
+        \    \"format\": \"uuid\"\n        }\n      }\n    }\n  }\n}"
+      x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/DeleteArchiveResponse\"\
+        ,\n  \"$defs\": {\n    \"DeleteArchiveResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        deleted\"\n      ],\n      \"properties\": {\n        \"deleted\": {\n          \"type\": \"boolean\"\n        }\n\
+        \      }\n    }\n  }\n}"
+      x-endpoint-info-json: "{\n  \"summary\": \"Delete documentation archive\",\n  \"description\": \"Delete an archive from
+        Asset Service storage.\\n\",\n  \"tags\": [\n    \"Archive\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"\
+        deleteDocumentationArchive\"\n}"
 components:
   schemas:
     # ===== Common Types =====
@@ -1801,3 +2321,461 @@ components:
           type: array
           items:
             type: string
+
+    # ===== Repository Binding Types =====
+    BindingStatus:
+      type: string
+      enum:
+      - pending
+      - syncing
+      - synced
+      - error
+      - disabled
+      description: Status of a repository binding
+
+    SyncStatus:
+      type: string
+      enum:
+      - success
+      - partial
+      - failed
+      description: Result status of a sync operation
+
+    SyncTrigger:
+      type: string
+      enum:
+      - manual
+      - scheduled
+      description: What triggered the sync operation
+
+    # ===== Repository Binding Request/Response Models =====
+    BindRepositoryRequest:
+      type: object
+      required:
+      - namespace
+      - repositoryUrl
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+          description: Documentation namespace to bind
+        repositoryUrl:
+          type: string
+          description: Git clone URL (HTTPS for public repos)
+        branch:
+          type: string
+          default: main
+          description: Branch to sync from
+        syncIntervalMinutes:
+          type: integer
+          default: 60
+          minimum: 5
+          maximum: 1440
+          description: How often to sync (5 min to 24 hours)
+        filePatterns:
+          type: array
+          items:
+            type: string
+          default: ["**/*.md"]
+          description: Glob patterns for files to include
+        excludePatterns:
+          type: array
+          items:
+            type: string
+          default: [".git/**", ".obsidian/**", "node_modules/**"]
+          description: Glob patterns for files to exclude
+        categoryMapping:
+          type: object
+          additionalProperties:
+            type: string
+          description: Map directory prefixes to categories
+        defaultCategory:
+          $ref: '#/components/schemas/DocumentCategory'
+        archiveEnabled:
+          type: boolean
+          default: false
+          description: Enable archive functionality
+        archiveOnSync:
+          type: boolean
+          default: false
+          description: Create archive after each sync
+
+    BindRepositoryResponse:
+      type: object
+      required:
+      - bindingId
+      - namespace
+      - status
+      properties:
+        bindingId:
+          type: string
+          format: uuid
+        namespace:
+          type: string
+        repositoryUrl:
+          type: string
+        branch:
+          type: string
+        status:
+          $ref: '#/components/schemas/BindingStatus'
+        createdAt:
+          type: string
+          format: date-time
+
+    UnbindRepositoryRequest:
+      type: object
+      required:
+      - namespace
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        deleteDocuments:
+          type: boolean
+          default: false
+          description: Also delete all documents from the namespace
+
+    UnbindRepositoryResponse:
+      type: object
+      required:
+      - namespace
+      - documentsDeleted
+      properties:
+        namespace:
+          type: string
+        documentsDeleted:
+          type: integer
+          description: Number of documents deleted (0 if deleteDocuments was false)
+
+    SyncRepositoryRequest:
+      type: object
+      required:
+      - namespace
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        force:
+          type: boolean
+          default: false
+          description: Force full re-sync even if commit hash unchanged
+
+    SyncRepositoryResponse:
+      type: object
+      required:
+      - syncId
+      - status
+      properties:
+        syncId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/SyncStatus'
+        commitHash:
+          type: string
+        documentsCreated:
+          type: integer
+        documentsUpdated:
+          type: integer
+        documentsDeleted:
+          type: integer
+        documentsFailed:
+          type: integer
+        durationMs:
+          type: integer
+        errorMessage:
+          type: string
+          nullable: true
+
+    RepositoryStatusRequest:
+      type: object
+      required:
+      - namespace
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+
+    RepositoryStatusResponse:
+      type: object
+      properties:
+        binding:
+          $ref: '#/components/schemas/RepositoryBindingInfo'
+        lastSync:
+          $ref: '#/components/schemas/SyncInfo'
+
+    RepositoryBindingInfo:
+      type: object
+      required:
+      - bindingId
+      - namespace
+      - repositoryUrl
+      - status
+      properties:
+        bindingId:
+          type: string
+          format: uuid
+        namespace:
+          type: string
+        repositoryUrl:
+          type: string
+        branch:
+          type: string
+        status:
+          $ref: '#/components/schemas/BindingStatus'
+        syncEnabled:
+          type: boolean
+        syncIntervalMinutes:
+          type: integer
+        documentCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+          format: uuid
+
+    SyncInfo:
+      type: object
+      properties:
+        syncId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/SyncStatus'
+        triggeredBy:
+          $ref: '#/components/schemas/SyncTrigger'
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        commitHash:
+          type: string
+        documentsProcessed:
+          type: integer
+
+    ListRepositoryBindingsRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/BindingStatus'
+        limit:
+          type: integer
+          default: 50
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          default: 0
+          minimum: 0
+
+    ListRepositoryBindingsResponse:
+      type: object
+      required:
+      - bindings
+      - total
+      properties:
+        bindings:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepositoryBindingInfo'
+        total:
+          type: integer
+
+    UpdateRepositoryBindingRequest:
+      type: object
+      required:
+      - namespace
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        syncEnabled:
+          type: boolean
+        syncIntervalMinutes:
+          type: integer
+          minimum: 5
+          maximum: 1440
+        filePatterns:
+          type: array
+          items:
+            type: string
+        excludePatterns:
+          type: array
+          items:
+            type: string
+        categoryMapping:
+          type: object
+          additionalProperties:
+            type: string
+        defaultCategory:
+          $ref: '#/components/schemas/DocumentCategory'
+        archiveEnabled:
+          type: boolean
+        archiveOnSync:
+          type: boolean
+
+    UpdateRepositoryBindingResponse:
+      type: object
+      required:
+      - binding
+      properties:
+        binding:
+          $ref: '#/components/schemas/RepositoryBindingInfo'
+
+    # ===== Archive Request/Response Models =====
+    CreateArchiveRequest:
+      type: object
+      required:
+      - namespace
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 500
+          description: Optional description for the archive
+
+    CreateArchiveResponse:
+      type: object
+      required:
+      - archiveId
+      - namespace
+      properties:
+        archiveId:
+          type: string
+          format: uuid
+        namespace:
+          type: string
+        bundleAssetId:
+          type: string
+          format: uuid
+          description: Asset ID in Asset Service
+        documentCount:
+          type: integer
+        sizeBytes:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        commitHash:
+          type: string
+          nullable: true
+          description: Git commit hash if namespace is bound
+
+    ListArchivesRequest:
+      type: object
+      required:
+      - namespace
+      properties:
+        namespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+        limit:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          default: 0
+          minimum: 0
+
+    ListArchivesResponse:
+      type: object
+      required:
+      - archives
+      - total
+      properties:
+        archives:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArchiveInfo'
+        total:
+          type: integer
+
+    ArchiveInfo:
+      type: object
+      required:
+      - archiveId
+      - namespace
+      - createdAt
+      properties:
+        archiveId:
+          type: string
+          format: uuid
+        namespace:
+          type: string
+        bundleAssetId:
+          type: string
+          format: uuid
+        description:
+          type: string
+        documentCount:
+          type: integer
+        sizeBytes:
+          type: integer
+        commitHash:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+          format: uuid
+
+    RestoreArchiveRequest:
+      type: object
+      required:
+      - archiveId
+      properties:
+        archiveId:
+          type: string
+          format: uuid
+        targetNamespace:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+          description: If not provided, restores to original namespace
+
+    RestoreArchiveResponse:
+      type: object
+      required:
+      - namespace
+      - documentsRestored
+      properties:
+        namespace:
+          type: string
+        documentsRestored:
+          type: integer
+        previousDocumentsDeleted:
+          type: integer
+
+    DeleteArchiveRequest:
+      type: object
+      required:
+      - archiveId
+      properties:
+        archiveId:
+          type: string
+          format: uuid
+
+    DeleteArchiveResponse:
+      type: object
+      required:
+      - deleted
+      properties:
+        deleted:
+          type: boolean

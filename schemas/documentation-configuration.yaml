@@ -78,3 +78,40 @@ x-service-configuration:
       description: Model for generating embeddings (when AI enabled)
       env: DOCUMENTATION_AI_EMBEDDINGS_MODEL
       default: ""
+
+    # Git Repository Binding Configuration
+    GitStoragePath:
+      type: string
+      description: Local path for cloned git repositories
+      env: DOCUMENTATION_GIT_STORAGE_PATH
+      default: "/tmp/bannou-git-repos"
+    GitStorageCleanupHours:
+      type: integer
+      description: Hours before inactive repos are cleaned up
+      env: DOCUMENTATION_GIT_STORAGE_CLEANUP_HOURS
+      default: 24
+    GitCloneTimeoutSeconds:
+      type: integer
+      description: Clone/pull operation timeout in seconds
+      env: DOCUMENTATION_GIT_CLONE_TIMEOUT_SECONDS
+      default: 300
+    SyncSchedulerEnabled:
+      type: boolean
+      description: Enable background sync scheduler
+      env: DOCUMENTATION_SYNC_SCHEDULER_ENABLED
+      default: true
+    SyncSchedulerCheckIntervalMinutes:
+      type: integer
+      description: How often to check for repos needing sync
+      env: DOCUMENTATION_SYNC_SCHEDULER_CHECK_INTERVAL_MINUTES
+      default: 5
+    MaxConcurrentSyncs:
+      type: integer
+      description: Maximum concurrent sync operations
+      env: DOCUMENTATION_MAX_CONCURRENT_SYNCS
+      default: 3
+    MaxDocumentsPerSync:
+      type: integer
+      description: Maximum documents per sync operation
+      env: DOCUMENTATION_MAX_DOCUMENTS_PER_SYNC
+      default: 1000

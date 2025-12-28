@@ -1,6 +1,6 @@
 # Generated Configuration Reference
 
-> **Auto-generated**: 2025-12-27 13:47:07
+> **Auto-generated**: 2025-12-28 02:41:54
 > **Source**: `schemas/*-configuration.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -107,13 +107,20 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `DOCUMENTATION_AI_EMBEDDINGS_MODEL` | string | `` | Model for generating embeddings (when AI enabled) |
 | `DOCUMENTATION_AI_ENHANCEMENTS_ENABLED` | bool | `false` | Enable AI-powered semantic search (future feature) |
+| `DOCUMENTATION_GIT_CLONE_TIMEOUT_SECONDS` | int | `300` | Clone/pull operation timeout in seconds |
+| `DOCUMENTATION_GIT_STORAGE_CLEANUP_HOURS` | int | `24` | Hours before inactive repos are cleaned up |
+| `DOCUMENTATION_GIT_STORAGE_PATH` | string | `/tmp/bannou-git-repos` | Local path for cloned git repositories |
+| `DOCUMENTATION_MAX_CONCURRENT_SYNCS` | int | `3` | Maximum concurrent sync operations |
 | `DOCUMENTATION_MAX_CONTENT_SIZE_BYTES` | int | `524288` | Maximum document content size in bytes (500KB default) |
+| `DOCUMENTATION_MAX_DOCUMENTS_PER_SYNC` | int | `1000` | Maximum documents per sync operation |
 | `DOCUMENTATION_MAX_IMPORT_DOCUMENTS` | int | `0` | Maximum documents per import (0 = unlimited) |
 | `DOCUMENTATION_MAX_SEARCH_RESULTS` | int | `20` | Maximum search results to return |
 | `DOCUMENTATION_MIN_RELEVANCE_SCORE` | double | `0.3` | Default minimum relevance score for search results |
 | `DOCUMENTATION_SEARCH_CACHE_TTL_SECONDS` | int | `300` | TTL for search result caching |
 | `DOCUMENTATION_SEARCH_INDEX_REBUILD_ON_STARTUP` | bool | `true` | Whether to rebuild search index on service startup |
 | `DOCUMENTATION_SESSION_TTL_SECONDS` | int | `86400` | TTL for informal session tracking (24 hours default) |
+| `DOCUMENTATION_SYNC_SCHEDULER_CHECK_INTERVAL_MINUTES` | int | `5` | How often to check for repos needing sync |
+| `DOCUMENTATION_SYNC_SCHEDULER_ENABLED` | bool | `true` | Enable background sync scheduler |
 | `DOCUMENTATION_TRASHCAN_TTL_DAYS` | int | `7` | Days before trashcan items are auto-purged |
 | `DOCUMENTATION_VOICE_SUMMARY_MAX_LENGTH` | int | `200` | Maximum characters for voice summaries |
 
@@ -285,9 +292,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 165
+- **Total properties**: 172
 - **Required (no default)**: 33
-- **Optional (has default)**: 132
+- **Optional (has default)**: 139
 
 ## Environment Variable Naming Convention
 

@@ -115,6 +115,13 @@ copy_service_dll() {
     # Copy all dependencies (all DLLs in the publish directory except the main service DLL)
     find "$service_publish_dir" -name "*.dll" ! -name "lib-$service_name.dll" -exec cp {} "$service_dir/" \;
 
+    # Copy linux-x64 native libraries to plugin directory (for LibGit2Sharp etc.)
+    # Plugin assembly loading doesn't search runtimes/ subdirs, so we copy the target platform's natives directly
+    if [[ -d "$service_publish_dir/runtimes/linux-x64/native" ]]; then
+        cp "$service_publish_dir/runtimes/linux-x64/native"/* "$service_dir/" 2>/dev/null || true
+        echo "📦 Linux-x64 native libraries copied for $service_name"
+    fi
+
     echo "✅ Service '$service_name' DLL copied -> $service_dir"
     services_built+=("$service_name")
 }

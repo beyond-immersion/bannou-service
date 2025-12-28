@@ -10,6 +10,7 @@ services:
       - BANNOU_APP_ID=bannou
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"  # Docker socket for orchestrator deployment
+      - "/tmp/bannou-test-fixtures:/fixtures:ro"  # Test fixtures prepared by scripts/prepare-test-fixtures.sh
 
   # Edge integration tester - simulates external client
   bannou-edge-tester:
