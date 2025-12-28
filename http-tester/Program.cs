@@ -179,6 +179,12 @@ public class Program
             // Register IMessageBus for event publishing
             serviceCollection.AddSingleton<IMessageBus, MassTransitMessageBus>();
 
+            // Register IMessageSubscriber for event subscriptions
+            serviceCollection.AddSingleton<IMessageSubscriber, MassTransitMessageSubscriber>();
+
+            // Register IMessageTap for event forwarding/tapping
+            serviceCollection.AddSingleton<IMessageTap, MassTransitMessageTap>();
+
             // =====================================================================
             // MESH INFRASTRUCTURE - Real Redis-based service discovery
             // =====================================================================

@@ -18304,6 +18304,145 @@
             <param name="topic">Topic/routing key to unsubscribe from</param>
             <returns>Task that completes when unsubscription is complete</returns>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Services.IMessageTap">
+            <summary>
+            Creates taps that forward events from a source topic to a destination.
+            A tap subscribes to events on a source topic and forwards them to a
+            different exchange/routing key, allowing multiple consumers to receive
+            copies of the same event stream.
+            </summary>
+            <remarks>
+            <para>
+            This interface is designed for scenarios like character event tapping,
+            where a client session needs to receive the same events that NPC actors
+            normally receive for characters they control.
+            </para>
+            <para>
+            Example use case: When a player logs in and possesses characters,
+            their session taps the character event streams (character.events.{id})
+            so they receive status updates (damage, heals, perception events).
+            </para>
+            <para>
+            Each tap is independent - removing one does not affect others.
+            Multiple taps can forward to the same destination from different sources.
+            </para>
+            <para>
+            <b>EXTENSION POINT:</b> Future versions could add filtering options
+            to the tap creation, allowing only certain event types to be forwarded.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IMessageTap.CreateTapAsync(System.String,BeyondImmersion.BannouService.Services.TapDestination,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Creates a tap that forwards events from a source topic to a destination.
+            </summary>
+            <param name="sourceTopic">The topic to subscribe to (e.g., "character.events.char-123")</param>
+            <param name="destination">The destination exchange/routing configuration</param>
+            <param name="sourceExchange">The source exchange to tap from (defaults to "bannou")</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>
+            A disposable tap handle. Dispose to remove the tap and stop forwarding.
+            The returned <see cref="T:BeyondImmersion.BannouService.Services.ITapHandle"/> provides the TapId for tracking.
+            </returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Services.ITapHandle">
+            <summary>
+            Handle to an active tap. Disposing removes the tap and stops forwarding.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ITapHandle.TapId">
+            <summary>
+            Unique identifier for this tap instance.
+            Can be used to track which events came from which tap.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ITapHandle.SourceTopic">
+            <summary>
+            The source topic being tapped.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ITapHandle.Destination">
+            <summary>
+            The destination configuration for this tap.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ITapHandle.CreatedAt">
+            <summary>
+            When this tap was created.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ITapHandle.IsActive">
+            <summary>
+            Whether this tap is currently active.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Services.TapDestination">
+            <summary>
+            Configuration for where tapped events should be forwarded.
+            </summary>
+            <remarks>
+            <para>
+            The destination specifies the exchange, routing key, and exchange type
+            for forwarding tapped messages.
+            </para>
+            <para>
+            For client session tapping, typical configuration would be:
+            <list type="bullet">
+            <item>Exchange: "bannou-client-events"</item>
+            <item>RoutingKey: "CONNECT_SESSION_{sessionId}"</item>
+            <item>ExchangeType: Direct</item>
+            </list>
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.TapDestination.Exchange">
+            <summary>
+            The exchange to forward tapped messages to.
+            </summary>
+            <example>bannou-client-events</example>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.TapDestination.RoutingKey">
+            <summary>
+            The routing key to use when forwarding messages.
+            For direct exchanges, this determines which queue receives the message.
+            </summary>
+            <example>CONNECT_SESSION_abc123</example>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.TapDestination.ExchangeType">
+            <summary>
+            The type of exchange to use for forwarding.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.TapDestination.CreateExchangeIfNotExists">
+            <summary>
+            Whether to create the destination exchange if it doesn't exist.
+            Defaults to true for convenience.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Services.TapExchangeType">
+            <summary>
+            Exchange types supported for tap destinations.
+            Maps to RabbitMQ exchange types.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.TapExchangeType.Fanout">
+            <summary>
+            Fanout exchange - broadcasts to all bound queues.
+            Use for service events where all listeners should receive copies.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.TapExchangeType.Direct">
+            <summary>
+            Direct exchange - routes by exact routing key match.
+            Use for client events where specific sessions should receive messages.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.TapExchangeType.Topic">
+            <summary>
+            Topic exchange - routes by routing key pattern.
+            Use for hierarchical routing patterns (e.g., "character.*.combat").
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Services.SearchResult`1">
             <summary>
             Search result from full-text search operations.

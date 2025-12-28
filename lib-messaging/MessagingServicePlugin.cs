@@ -43,6 +43,10 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
             services.AddSingleton<IMessageBus>(sp => sp.GetRequiredService<InMemoryMessageBus>());
             services.AddSingleton<IMessageSubscriber>(sp => sp.GetRequiredService<InMemoryMessageBus>());
 
+            // Register in-memory message tap
+            services.AddSingleton<IMessageTap, InMemoryMessageTap>();
+            Logger?.LogDebug("Registered InMemoryMessageTap for in-memory messaging");
+
             Logger?.LogDebug("In-memory messaging configured");
             return;
         }
@@ -88,6 +92,10 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
         // Register messaging interfaces
         services.AddSingleton<IMessageBus, MassTransitMessageBus>();
         services.AddSingleton<IMessageSubscriber, MassTransitMessageSubscriber>();
+
+        // Register message tap for forwarding events between exchanges
+        services.AddSingleton<IMessageTap, MassTransitMessageTap>();
+        Logger?.LogDebug("Registered MassTransitMessageTap for event tapping");
 
         // Register NativeEventConsumerBackend as IHostedService
         // This bridges RabbitMQ subscriptions to existing IEventConsumer fan-out

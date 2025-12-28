@@ -822,6 +822,204 @@ await _messageBus.PublishAsync(
 
 This uses the same pattern as client events (direct exchange, per-actor routing).
 
+### Event Tap Pattern (Multi-Subscriber Event Streams)
+
+Character agents emit events that multiple consumers need to receive:
+- The **character agent** itself (for internal state updates)
+- The **player client** (when a player is possessing the character)
+- **Event agents** (when monitoring for combat exchanges)
+- **Other systems** (relationship tracking, analytics, etc.)
+
+This uses RabbitMQ **fanout exchanges** - the same infrastructure as Connect/client eventing.
+
+#### Character Event Stream Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     CHARACTER EVENT STREAM                               │
+│                                                                          │
+│  Character Agent publishes to: character.events.{character-id}          │
+│                                                                          │
+│                    RabbitMQ Fanout Exchange                              │
+│                    (routing_key = character-123)                         │
+│                              │                                           │
+│              ┌───────────────┼───────────────┬───────────────┐          │
+│              │               │               │               │          │
+│              ▼               ▼               ▼               ▼          │
+│       ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐  │
+│       │  Character  │ │   Player    │ │   Event     │ │  Analytics  │  │
+│       │   Agent     │ │   Client    │ │   Agent     │ │   Service   │  │
+│       │  (always)   │ │ (if online) │ │  (if tap)   │ │ (if config) │  │
+│       └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Client Sign-On: Tapping Character Events
+
+When a player signs on and "possesses" a character, the Connect service establishes a tap on the character's event stream. This ensures the player receives all events their character agent is processing.
+
+**Sign-On Flow**:
+
+```
+1. Player authenticates via Auth service
+2. Player connects via WebSocket to Connect service
+3. Player requests character possession
+4. Connect service:
+   a. Verifies ownership/permissions
+   b. Subscribes to character.events.{character-id} for this client
+   c. Returns success + current character state
+5. From now on: Player client receives character events in real-time
+```
+
+**Implementation in Connect Service**:
+
+```csharp
+/// <summary>
+/// Handle player possession of a character.
+/// </summary>
+public async Task<(StatusCodes, PossessCharacterResponse?)> HandlePossessCharacterAsync(
+    PossessCharacterRequest request,
+    ClientSession session,
+    CancellationToken ct)
+{
+    // 1. Verify player owns this character
+    var (status, character) = await _characterClient.GetCharacterAsync(
+        new GetCharacterRequest { CharacterId = request.CharacterId }, ct);
+
+    if (status != StatusCodes.Status200OK || character?.OwnerId != session.AccountId)
+    {
+        return (StatusCodes.Status403Forbidden, null);
+    }
+
+    // 2. Subscribe this client to character's event stream
+    await _clientEventPublisher.SubscribeClientToTopicAsync(
+        session.ClientId,
+        $"character.events.{request.CharacterId}",
+        ct);
+
+    // 3. Notify the character agent that a player is now controlling
+    await _messageBus.PublishAsync(
+        $"actor.personal.npc-brain.{request.CharacterId}",
+        new PlayerPossessionEvent
+        {
+            CharacterId = request.CharacterId,
+            PlayerId = session.AccountId,
+            SessionId = session.SessionId,
+            PossessedAt = DateTimeOffset.UtcNow
+        },
+        cancellationToken: ct);
+
+    // 4. Get current character state for client
+    var (_, agentState) = await _behaviorClient.GetAgentStateAsync(
+        new GetAgentStateRequest { AgentId = request.CharacterId }, ct);
+
+    return (StatusCodes.Status200OK, new PossessCharacterResponse
+    {
+        CharacterId = request.CharacterId,
+        CurrentState = agentState,
+        SubscribedToEvents = true
+    });
+}
+```
+
+**What the Client Receives**:
+
+Once tapped, the client receives all events the character agent publishes:
+
+```csharp
+// These events flow to both character agent AND player client
+public class CharacterEventTypes
+{
+    // Perception events - what the character notices
+    public const string PerceptionReceived = "perception.received";
+
+    // Combat events - combat state changes
+    public const string CombatOptionPresented = "combat.option_presented";
+    public const string CombatActionResolved = "combat.action_resolved";
+
+    // State events - character state changes
+    public const string GoalChanged = "goal.changed";
+    public const string PlanStarted = "plan.started";
+    public const string ActionCompleted = "action.completed";
+
+    // Social events - relationship changes
+    public const string RelationshipChanged = "relationship.changed";
+    public const string DialogueStarted = "dialogue.started";
+}
+```
+
+#### Event Agent Tapping (Combat Monitoring)
+
+Event Agents use the same pattern to monitor characters during combat exchanges:
+
+```csharp
+/// <summary>
+/// Event Brain subscribes to participant event streams.
+/// </summary>
+public async Task OnActorActivatedAsync(CancellationToken ct)
+{
+    // Subscribe to each participant's event stream
+    foreach (var participant in State.Participants)
+    {
+        await SubscribeAsync<CharacterCombatEvent>(
+            $"character.events.{participant.CharacterId}",
+            ct);
+
+        _logger.LogDebug(
+            "Event Brain {ExchangeId} tapped into character {CharacterId}",
+            State.ExchangeId,
+            participant.CharacterId);
+    }
+}
+```
+
+#### Sign-Off: Releasing the Tap
+
+When a player disconnects or releases possession:
+
+```csharp
+/// <summary>
+/// Handle player releasing character possession.
+/// </summary>
+public async Task HandleReleasePossessionAsync(
+    ClientSession session,
+    string characterId,
+    CancellationToken ct)
+{
+    // 1. Unsubscribe client from character events
+    await _clientEventPublisher.UnsubscribeClientFromTopicAsync(
+        session.ClientId,
+        $"character.events.{characterId}",
+        ct);
+
+    // 2. Notify character agent that player released control
+    await _messageBus.PublishAsync(
+        $"actor.personal.npc-brain.{characterId}",
+        new PlayerReleasedEvent
+        {
+            CharacterId = characterId,
+            PlayerId = session.AccountId,
+            ReleasedAt = DateTimeOffset.UtcNow
+        },
+        cancellationToken: ct);
+
+    // Character agent continues autonomous behavior
+}
+```
+
+#### Key Insight: Same Infrastructure, Multiple Use Cases
+
+The event tap pattern uses **existing lib-messaging infrastructure**:
+
+| Use Case | Topic Pattern | Subscribers |
+|----------|---------------|-------------|
+| Player possession | `character.events.{id}` | Player client via Connect |
+| Combat monitoring | `character.events.{id}` | Event Agent actor |
+| Analytics | `character.events.{id}` | Analytics service |
+| Relationship tracking | `character.events.{id}` | Relationship service |
+
+No new infrastructure required - just proper use of fanout exchanges.
+
 ### Service Invocation (lib-mesh)
 
 Actors have full access to call any internal service:
@@ -1074,6 +1272,13 @@ public async Task<ActivationResult> ActivateActorAsync(string actorAddress, Canc
 
 ### Orchestrator Integration
 
+The Actors Plugin integrates with the Orchestrator for two purposes:
+
+1. **Actor Node Pool Scaling** - Horizontal scaling of actor worker nodes
+2. **Dynamic Instance Spawning** - Spinning up specialized processing instances on-demand
+
+#### Actor Node Pool Scaling
+
 Actor nodes register with orchestrator for scaling (same pattern as other services):
 
 ```yaml
@@ -1091,6 +1296,277 @@ processing_pools:
     environment:
       ACTOR_NODE_MODE: worker
       ACTOR_PLACEMENT_ENDPOINT: ${CONTROL_PLANE_ENDPOINT}
+```
+
+#### Dynamic Instance Spawning
+
+When an actor (or service) needs to spawn a specialized processing instance - such as an Event Agent for combat orchestration, or a dedicated AI inference node - it uses the Orchestrator's dynamic spawning API.
+
+**Use Cases**:
+- **Event Agent Spawning**: Regional Watcher spawns Event Agent for interesting combat
+- **Asset Processing**: Asset service spawns processing instances for heavy workloads
+- **AI Inference**: Behavior service spawns dedicated LLM inference nodes
+- **Custom Processing Pools**: Any specialized, short-lived processing
+
+**Spawning Flow**:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     DYNAMIC INSTANCE SPAWNING                            │
+│                                                                          │
+│  1. Requester (e.g., Regional Watcher) calls Orchestrator               │
+│                              │                                           │
+│                              ▼                                           │
+│  ┌─────────────────────────────────────────────────────────────────────┐│
+│  │                    ORCHESTRATOR                                     ││
+│  │                                                                      ││
+│  │  2. Orchestrator provisions new container/instance                   ││
+│  │     - Specific plugins enabled                                       ││
+│  │     - Unique app-id assigned                                         ││
+│  │     - Initial context passed as env vars                             ││
+│  │                                                                      ││
+│  └──────────────────────────────┬──────────────────────────────────────┘│
+│                                 │                                        │
+│                                 ▼                                        │
+│  ┌─────────────────────────────────────────────────────────────────────┐│
+│  │                    SPAWNED INSTANCE                                 ││
+│  │                                                                      ││
+│  │  app-id: event-agent-abc123                                          ││
+│  │  plugins: [lib-event-agent]                                          ││
+│  │  endpoint: http://10.0.1.45:5012                                     ││
+│  │                                                                      ││
+│  │  3. Instance registers with Orchestrator (heartbeat)                 ││
+│  │  4. Instance ready to receive API calls via app-id routing           ││
+│  │  5. Instance self-terminates when work complete                      ││
+│  │                                                                      ││
+│  └─────────────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**API: Requesting an Instance**
+
+```csharp
+/// <summary>
+/// Request a new specialized instance from Orchestrator.
+/// </summary>
+public async Task<SpawnInstanceResponse> SpawnEventAgentAsync(
+    string exchangeId,
+    List<string> participantIds,
+    CancellationToken ct)
+{
+    var request = new SpawnInstanceRequest
+    {
+        // What type of instance to spawn
+        InstanceType = "event-agent",
+
+        // Which plugins should be loaded
+        Plugins = new[] { "lib-event-agent" },
+
+        // Environment variables for the instance
+        Environment = new Dictionary<string, string>
+        {
+            ["EVENT_AGENT_EXCHANGE_ID"] = exchangeId,
+            ["EVENT_AGENT_PARTICIPANT_IDS"] = string.Join(",", participantIds)
+        },
+
+        // Optional: initial message to send on startup
+        InitialMessage = new EventAgentInitMessage
+        {
+            ExchangeId = exchangeId,
+            Participants = participantIds
+        },
+
+        // Resource constraints
+        Resources = new ResourceRequirements
+        {
+            MemoryMb = 512,
+            CpuMillicores = 500
+        },
+
+        // Lifecycle
+        MaxLifetimeSeconds = 300,  // Auto-terminate after 5 minutes
+        IdleTimeoutSeconds = 60    // Terminate if no activity
+    };
+
+    return await _orchestratorClient.SpawnInstanceAsync(request, ct);
+}
+```
+
+**Response Contains**:
+
+```csharp
+public class SpawnInstanceResponse
+{
+    /// <summary>Unique identifier for this instance.</summary>
+    public string InstanceId { get; init; } = string.Empty;
+
+    /// <summary>App-id for mesh routing to this specific instance.</summary>
+    public string AppId { get; init; } = string.Empty;
+
+    /// <summary>Direct HTTP endpoint (if needed for non-mesh calls).</summary>
+    public string Endpoint { get; init; } = string.Empty;
+
+    /// <summary>When the instance started.</summary>
+    public DateTimeOffset StartedAt { get; init; }
+
+    /// <summary>Instance status.</summary>
+    public InstanceStatus Status { get; init; }
+}
+```
+
+**Routing API Calls to Specific Instance**
+
+Once spawned, use the app-id to route mesh calls to that specific instance:
+
+```csharp
+// Standard mesh invocation routes to any instance of the service
+await _meshClient.InvokeMethodAsync<TReq, TResp>(
+    "behavior",     // Routes to any behavior service instance
+    "process",
+    request, ct);
+
+// Targeted invocation routes to a SPECIFIC instance via app-id
+await _meshClient.InvokeMethodAsync<TReq, TResp>(
+    spawnResult.AppId,  // e.g., "event-agent-abc123"
+    "process-exchange",
+    request, ct);
+```
+
+**Instance Self-Registration**
+
+Spawned instances register with the Orchestrator on startup:
+
+```csharp
+/// <summary>
+/// Register this instance with Orchestrator.
+/// Called during service startup for dynamically spawned instances.
+/// </summary>
+public class DynamicInstanceStartupService : IHostedService
+{
+    private readonly IOrchestratorClient _orchestratorClient;
+    private readonly IConfiguration _configuration;
+    private Timer? _heartbeatTimer;
+
+    public async Task StartAsync(CancellationToken ct)
+    {
+        var appId = _configuration["APP_ID"];
+        var instanceType = _configuration["INSTANCE_TYPE"];
+
+        if (string.IsNullOrEmpty(instanceType))
+        {
+            // Not a dynamically spawned instance, skip registration
+            return;
+        }
+
+        // Register with Orchestrator
+        await _orchestratorClient.RegisterInstanceAsync(
+            new InstanceRegistration
+            {
+                AppId = appId,
+                InstanceType = instanceType,
+                Endpoint = GetSelfEndpoint(),
+                StartedAt = DateTimeOffset.UtcNow,
+                Plugins = GetLoadedPlugins()
+            }, ct);
+
+        // Start heartbeat
+        _heartbeatTimer = new Timer(
+            async _ => await SendHeartbeatAsync(),
+            null,
+            TimeSpan.FromSeconds(10),
+            TimeSpan.FromSeconds(30));
+    }
+
+    private async Task SendHeartbeatAsync()
+    {
+        try
+        {
+            await _orchestratorClient.HeartbeatAsync(
+                new InstanceHeartbeat
+                {
+                    AppId = _configuration["APP_ID"],
+                    Status = InstanceStatus.Healthy,
+                    Metrics = GetCurrentMetrics()
+                }, default);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to send heartbeat");
+        }
+    }
+}
+```
+
+**Instance Self-Termination**
+
+Spawned instances can self-terminate when work is complete:
+
+```csharp
+/// <summary>
+/// Terminate this instance after work is complete.
+/// </summary>
+public async Task TerminateSelfAsync(string reason, CancellationToken ct)
+{
+    _logger.LogInformation(
+        "Instance {AppId} self-terminating: {Reason}",
+        _appId,
+        reason);
+
+    // Notify Orchestrator
+    await _orchestratorClient.NotifyTerminatingAsync(
+        new TerminationNotice
+        {
+            AppId = _appId,
+            Reason = reason,
+            TerminatingAt = DateTimeOffset.UtcNow
+        }, ct);
+
+    // Graceful shutdown
+    _applicationLifetime.StopApplication();
+}
+```
+
+**Orchestrator Monitoring**
+
+The Orchestrator tracks all dynamically spawned instances:
+
+```csharp
+/// <summary>
+/// Get status of all dynamic instances of a type.
+/// </summary>
+public async Task<List<InstanceStatus>> GetInstancesAsync(
+    string instanceType,
+    CancellationToken ct)
+{
+    var response = await _orchestratorClient.ListInstancesAsync(
+        new ListInstancesRequest { InstanceType = instanceType }, ct);
+
+    return response.Instances;
+}
+```
+
+**Failure Handling**
+
+If a spawned instance fails:
+
+1. **Heartbeat timeout** - Orchestrator marks instance unhealthy
+2. **Instance removed** - Orchestrator updates routing tables
+3. **Requester notified** - Via event or polling
+4. **Work can be retried** - Spawn a new instance if needed
+
+```csharp
+// Orchestrator publishes instance failure events
+await _messageBus.PublishAsync(
+    "orchestrator.instance.failed",
+    new InstanceFailedEvent
+    {
+        InstanceId = instance.InstanceId,
+        AppId = instance.AppId,
+        InstanceType = instance.InstanceType,
+        FailedAt = DateTimeOffset.UtcNow,
+        Reason = "heartbeat_timeout"
+    },
+    cancellationToken: ct);
 ```
 
 ### Node Failure Handling
