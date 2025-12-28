@@ -2082,7 +2082,7 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                     // Cleanup: delete the test document
                     try
                     {
-                        var viewResponse = (await adminClient.InvokeAsync<object, JsonElement>(
+                        var viewResponse = (await adminClient.InvokeAsync<object?, JsonElement>(
                             "GET",
                             $"/documentation/slug/archive-ws-test-doc?ns={ARCHIVE_TEST_NAMESPACE}",
                             null,

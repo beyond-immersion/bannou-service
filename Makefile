@@ -410,7 +410,7 @@ test-http: prepare-fixtures
 # Note: Uses 'up -d' + 'wait' instead of '--exit-code-from' for consistency
 #       with HTTP tests and to avoid abort issues with container lifecycle.
 
-test-edge: test-pre-cleanup
+test-edge: test-pre-cleanup prepare-fixtures
 	@echo "🧪 Running Edge/WebSocket integration tests..."
 	@docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
