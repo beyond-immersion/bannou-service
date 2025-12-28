@@ -54,6 +54,16 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                 "Test bulk document deletion via WebSocket binary protocol"),
             new ServiceTest(TestImportDocumentationViaWebSocket, "Documentation - Import (WebSocket)", "WebSocket",
                 "Test documentation import via WebSocket binary protocol"),
+
+            // Repository binding operations
+            new ServiceTest(TestRepositoryBindViaWebSocket, "Documentation - Repo Bind (WebSocket)", "WebSocket",
+                "Test repository binding via WebSocket binary protocol"),
+            new ServiceTest(TestRepositorySyncViaWebSocket, "Documentation - Repo Sync (WebSocket)", "WebSocket",
+                "Test repository sync via WebSocket binary protocol"),
+            new ServiceTest(TestRepositoryStatusViaWebSocket, "Documentation - Repo Status (WebSocket)", "WebSocket",
+                "Test repository status via WebSocket binary protocol"),
+            new ServiceTest(TestRepositoryUnbindViaWebSocket, "Documentation - Repo Unbind (WebSocket)", "WebSocket",
+                "Test repository unbind via WebSocket binary protocol"),
         };
     }
 
@@ -1535,4 +1545,334 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
             }
         }
     }
+
+    #region Repository Binding Tests
+
+    private const string REPO_TEST_NAMESPACE = "ws-repo-test";
+    private const string FIXTURE_REPO_URL = "file:///fixtures/test-docs-repo";
+
+    private void TestRepositoryBindViaWebSocket(string[] args)
+    {
+        Console.WriteLine("=== Documentation Repository Bind Test (WebSocket) ===");
+        Console.WriteLine("Testing /documentation/repo/bind via shared admin WebSocket...");
+
+        try
+        {
+            var result = Task.Run(async () =>
+            {
+                var adminClient = Program.AdminClient;
+                if (adminClient == null || !adminClient.IsConnected)
+                {
+                    Console.WriteLine("❌ Admin client not connected");
+                    return false;
+                }
+
+                try
+                {
+                    // First unbind if already bound (cleanup from previous run)
+                    try
+                    {
+                        await adminClient.InvokeAsync<object, JsonElement>(
+                            "POST",
+                            "/documentation/repo/unbind",
+                            new
+                            {
+                                @namespace = REPO_TEST_NAMESPACE,
+                                deleteDocuments = true
+                            },
+                            timeout: TimeSpan.FromSeconds(5));
+                    }
+                    catch
+                    {
+                        // Ignore - namespace may not be bound
+                    }
+
+                    // Bind the fixture repository
+                    Console.WriteLine($"   Binding fixture repository to namespace {REPO_TEST_NAMESPACE}...");
+                    var bindResponse = (await adminClient.InvokeAsync<object, JsonElement>(
+                        "POST",
+                        "/documentation/repo/bind",
+                        new
+                        {
+                            @namespace = REPO_TEST_NAMESPACE,
+                            repositoryUrl = FIXTURE_REPO_URL,
+                            branch = "main",
+                            filePatterns = new[] { "**/*.md" },
+                            excludePatterns = new[] { "drafts/**" },
+                            categoryMapping = new Dictionary<string, string>
+                            {
+                                { "guides/", "Guide" },
+                                { "api/", "Reference" },
+                                { "tutorials/", "Tutorial" }
+                            },
+                            defaultCategory = "Other"
+                        },
+                        timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+
+                    var bindJson = JsonNode.Parse(bindResponse.GetRawText())?.AsObject();
+                    var bindingIdStr = bindJson?["bindingId"]?.GetValue<string>();
+                    var responseNamespace = bindJson?["namespace"]?.GetValue<string>();
+
+                    if (string.IsNullOrEmpty(bindingIdStr))
+                    {
+                        Console.WriteLine("   BindRepository returned no bindingId");
+                        return false;
+                    }
+
+                    Console.WriteLine($"   Bound repository: bindingId={bindingIdStr}, namespace={responseNamespace}");
+                    return responseNamespace == REPO_TEST_NAMESPACE;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"   Invoke failed: {ex.Message}");
+                    return false;
+                }
+            }).Result;
+
+            if (result)
+            {
+                Console.WriteLine("✅ Documentation repo bind test PASSED");
+            }
+            else
+            {
+                Console.WriteLine("❌ Documentation repo bind test FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Documentation repo bind test FAILED with exception: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
+            }
+        }
+    }
+
+    private void TestRepositorySyncViaWebSocket(string[] args)
+    {
+        Console.WriteLine("=== Documentation Repository Sync Test (WebSocket) ===");
+        Console.WriteLine("Testing /documentation/repo/sync via shared admin WebSocket...");
+
+        try
+        {
+            var result = Task.Run(async () =>
+            {
+                var adminClient = Program.AdminClient;
+                if (adminClient == null || !adminClient.IsConnected)
+                {
+                    Console.WriteLine("❌ Admin client not connected");
+                    return false;
+                }
+
+                try
+                {
+                    Console.WriteLine($"   Syncing repository for namespace {REPO_TEST_NAMESPACE}...");
+                    var syncResponse = (await adminClient.InvokeAsync<object, JsonElement>(
+                        "POST",
+                        "/documentation/repo/sync",
+                        new
+                        {
+                            @namespace = REPO_TEST_NAMESPACE,
+                            force = true
+                        },
+                        timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
+
+                    var syncJson = JsonNode.Parse(syncResponse.GetRawText())?.AsObject();
+                    var syncIdStr = syncJson?["syncId"]?.GetValue<string>();
+                    var status = syncJson?["status"]?.GetValue<string>();
+                    var docsCreated = syncJson?["documentsCreated"]?.GetValue<int>() ?? 0;
+                    var docsUpdated = syncJson?["documentsUpdated"]?.GetValue<int>() ?? 0;
+                    var commitHash = syncJson?["commitHash"]?.GetValue<string>();
+
+                    Console.WriteLine($"   Sync result: status={status}, created={docsCreated}, updated={docsUpdated}");
+
+                    if (status == "Failed")
+                    {
+                        var errorMessage = syncJson?["errorMessage"]?.GetValue<string>();
+                        Console.WriteLine($"   Sync failed: {errorMessage}");
+                        return false;
+                    }
+
+                    // Expect at least 3 documents from fixture (README, guides/getting-started, api/reference, tutorials/first-tutorial)
+                    // Excluding drafts/
+                    return docsCreated >= 3 || docsUpdated >= 3;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"   Invoke failed: {ex.Message}");
+                    return false;
+                }
+            }).Result;
+
+            if (result)
+            {
+                Console.WriteLine("✅ Documentation repo sync test PASSED");
+            }
+            else
+            {
+                Console.WriteLine("❌ Documentation repo sync test FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Documentation repo sync test FAILED with exception: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
+            }
+        }
+    }
+
+    private void TestRepositoryStatusViaWebSocket(string[] args)
+    {
+        Console.WriteLine("=== Documentation Repository Status Test (WebSocket) ===");
+        Console.WriteLine("Testing /documentation/repo/status via shared admin WebSocket...");
+
+        try
+        {
+            var result = Task.Run(async () =>
+            {
+                var adminClient = Program.AdminClient;
+                if (adminClient == null || !adminClient.IsConnected)
+                {
+                    Console.WriteLine("❌ Admin client not connected");
+                    return false;
+                }
+
+                try
+                {
+                    Console.WriteLine($"   Getting status for namespace {REPO_TEST_NAMESPACE}...");
+                    var statusResponse = (await adminClient.InvokeAsync<object, JsonElement>(
+                        "POST",
+                        "/documentation/repo/status",
+                        new
+                        {
+                            @namespace = REPO_TEST_NAMESPACE
+                        },
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+
+                    var statusJson = JsonNode.Parse(statusResponse.GetRawText())?.AsObject();
+                    var binding = statusJson?["binding"]?.AsObject();
+
+                    if (binding == null)
+                    {
+                        Console.WriteLine("   No binding found in status response");
+                        return false;
+                    }
+
+                    var bindingStatus = binding?["status"]?.GetValue<string>();
+                    var documentCount = binding?["documentCount"]?.GetValue<int>() ?? 0;
+                    var repositoryUrl = binding?["repositoryUrl"]?.GetValue<string>();
+
+                    Console.WriteLine($"   Status: status={bindingStatus}, documentCount={documentCount}, repositoryUrl={repositoryUrl}");
+
+                    return bindingStatus == "Synced" && documentCount >= 3;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"   Invoke failed: {ex.Message}");
+                    return false;
+                }
+            }).Result;
+
+            if (result)
+            {
+                Console.WriteLine("✅ Documentation repo status test PASSED");
+            }
+            else
+            {
+                Console.WriteLine("❌ Documentation repo status test FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Documentation repo status test FAILED with exception: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
+            }
+        }
+    }
+
+    private void TestRepositoryUnbindViaWebSocket(string[] args)
+    {
+        Console.WriteLine("=== Documentation Repository Unbind Test (WebSocket) ===");
+        Console.WriteLine("Testing /documentation/repo/unbind via shared admin WebSocket...");
+
+        try
+        {
+            var result = Task.Run(async () =>
+            {
+                var adminClient = Program.AdminClient;
+                if (adminClient == null || !adminClient.IsConnected)
+                {
+                    Console.WriteLine("❌ Admin client not connected");
+                    return false;
+                }
+
+                try
+                {
+                    Console.WriteLine($"   Unbinding repository from namespace {REPO_TEST_NAMESPACE}...");
+                    var unbindResponse = (await adminClient.InvokeAsync<object, JsonElement>(
+                        "POST",
+                        "/documentation/repo/unbind",
+                        new
+                        {
+                            @namespace = REPO_TEST_NAMESPACE,
+                            deleteDocuments = true
+                        },
+                        timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+
+                    var unbindJson = JsonNode.Parse(unbindResponse.GetRawText())?.AsObject();
+                    var responseNamespace = unbindJson?["namespace"]?.GetValue<string>();
+                    var documentsDeleted = unbindJson?["documentsDeleted"]?.GetValue<int>() ?? 0;
+
+                    Console.WriteLine($"   Unbind result: namespace={responseNamespace}, documentsDeleted={documentsDeleted}");
+
+                    // Verify binding is gone by checking status returns 404
+                    try
+                    {
+                        await adminClient.InvokeAsync<object, JsonElement>(
+                            "POST",
+                            "/documentation/repo/status",
+                            new { @namespace = REPO_TEST_NAMESPACE },
+                            timeout: TimeSpan.FromSeconds(5));
+
+                        Console.WriteLine("   Expected 404 for non-existent binding, but got success");
+                        return false;
+                    }
+                    catch (Exception statusEx) when (statusEx.Message.Contains("404") || statusEx.Message.Contains("NotFound"))
+                    {
+                        Console.WriteLine("   Verified: binding no longer exists (404)");
+                    }
+
+                    return responseNamespace == REPO_TEST_NAMESPACE && documentsDeleted >= 3;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"   Invoke failed: {ex.Message}");
+                    return false;
+                }
+            }).Result;
+
+            if (result)
+            {
+                Console.WriteLine("✅ Documentation repo unbind test PASSED");
+            }
+            else
+            {
+                Console.WriteLine("❌ Documentation repo unbind test FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Documentation repo unbind test FAILED with exception: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
+            }
+        }
+    }
+
+    #endregion
 }

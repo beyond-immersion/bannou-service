@@ -518,6 +518,485 @@ public class DocumentationServiceTests
 
     #endregion
 
+    #region Repository Binding Tests
+
+    [Fact]
+    public async Task BindRepositoryAsync_WithValidRequest_ShouldCreateBinding()
+    {
+        // Arrange
+        var request = new BindRepositoryRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            RepositoryUrl = "https://github.com/test/repo.git",
+            Branch = "main",
+            FilePatterns = new List<string> { "**/*.md" },
+            ExcludePatterns = new List<string> { "node_modules/**" }
+        };
+
+        _mockBindingStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains("repo-binding")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RepositoryBinding?)null);
+
+        _mockRegistryStore.Setup(s => s.GetAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HashSet<string>?)null);
+
+        // Act
+        var (status, response) = await _service.BindRepositoryAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Created, status);
+        Assert.NotNull(response);
+        Assert.NotEqual(Guid.Empty, response.BindingId);
+        Assert.Equal(TEST_NAMESPACE, response.Namespace);
+    }
+
+    [Fact]
+    public async Task BindRepositoryAsync_WithEmptyNamespace_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var request = new BindRepositoryRequest
+        {
+            Namespace = "",
+            RepositoryUrl = "https://github.com/test/repo.git",
+            Branch = "main"
+        };
+
+        // Act
+        var (status, response) = await _service.BindRepositoryAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task BindRepositoryAsync_WithEmptyRepositoryUrl_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var request = new BindRepositoryRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            RepositoryUrl = "",
+            Branch = "main"
+        };
+
+        // Act
+        var (status, response) = await _service.BindRepositoryAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task BindRepositoryAsync_WithExistingBinding_ShouldReturnConflict()
+    {
+        // Arrange
+        var existingBinding = new RepositoryBinding
+        {
+            BindingId = Guid.NewGuid(),
+            Namespace = TEST_NAMESPACE,
+            RepositoryUrl = "https://github.com/test/existing.git"
+        };
+
+        var request = new BindRepositoryRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            RepositoryUrl = "https://github.com/test/new.git",
+            Branch = "main"
+        };
+
+        _mockBindingStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains("repo-binding")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingBinding);
+
+        // Act
+        var (status, response) = await _service.BindRepositoryAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UnbindRepositoryAsync_WithExistingBinding_ShouldRemoveBinding()
+    {
+        // Arrange
+        var existingBinding = new RepositoryBinding
+        {
+            BindingId = Guid.NewGuid(),
+            Namespace = TEST_NAMESPACE,
+            RepositoryUrl = "https://github.com/test/repo.git",
+            DocumentCount = 5
+        };
+
+        var request = new UnbindRepositoryRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            DeleteDocuments = true
+        };
+
+        _mockBindingStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains("repo-binding")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingBinding);
+
+        _mockRegistryStore.Setup(s => s.GetAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { TEST_NAMESPACE });
+
+        _mockGuidListStore.Setup(s => s.GetAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<Guid>?)null);
+
+        // Act
+        var (status, response) = await _service.UnbindRepositoryAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(TEST_NAMESPACE, response.Namespace);
+    }
+
+    [Fact]
+    public async Task UnbindRepositoryAsync_WithNoExistingBinding_ShouldReturnNotFound()
+    {
+        // Arrange
+        var request = new UnbindRepositoryRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            DeleteDocuments = false
+        };
+
+        _mockBindingStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains("repo-binding")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RepositoryBinding?)null);
+
+        // Act
+        var (status, response) = await _service.UnbindRepositoryAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetRepositoryStatusAsync_WithExistingBinding_ShouldReturnStatus()
+    {
+        // Arrange
+        var existingBinding = new RepositoryBinding
+        {
+            BindingId = Guid.NewGuid(),
+            Namespace = TEST_NAMESPACE,
+            RepositoryUrl = "https://github.com/test/repo.git",
+            Branch = "main",
+            Status = BindingStatusInternal.Synced,
+            LastCommitHash = "abc123",
+            DocumentCount = 10,
+            LastSyncAt = DateTimeOffset.UtcNow.AddHours(-1)
+        };
+
+        var request = new RepositoryStatusRequest
+        {
+            Namespace = TEST_NAMESPACE
+        };
+
+        _mockBindingStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains("repo-binding")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingBinding);
+
+        // Act
+        var (status, response) = await _service.GetRepositoryStatusAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(response.Binding);
+        Assert.Equal(TEST_NAMESPACE, response.Binding.Namespace);
+        Assert.Equal(BindingStatus.Synced, response.Binding.Status);
+    }
+
+    [Fact]
+    public async Task GetRepositoryStatusAsync_WithNoBinding_ShouldReturnNotFound()
+    {
+        // Arrange
+        var request = new RepositoryStatusRequest
+        {
+            Namespace = TEST_NAMESPACE
+        };
+
+        _mockBindingStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains("repo-binding")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RepositoryBinding?)null);
+
+        // Act
+        var (status, response) = await _service.GetRepositoryStatusAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ListRepositoryBindingsAsync_ShouldReturnAllBindings()
+    {
+        // Arrange
+        var binding1 = new RepositoryBinding
+        {
+            BindingId = Guid.NewGuid(),
+            Namespace = "namespace-1",
+            RepositoryUrl = "https://github.com/test/repo1.git"
+        };
+
+        var binding2 = new RepositoryBinding
+        {
+            BindingId = Guid.NewGuid(),
+            Namespace = "namespace-2",
+            RepositoryUrl = "https://github.com/test/repo2.git"
+        };
+
+        var request = new ListRepositoryBindingsRequest
+        {
+            Limit = 10,
+            Offset = 0
+        };
+
+        _mockRegistryStore.Setup(s => s.GetAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "namespace-1", "namespace-2" });
+
+        _mockBindingStore.SetupSequence(s => s.GetAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(binding1)
+            .ReturnsAsync(binding2);
+
+        // Act
+        var (status, response) = await _service.ListRepositoryBindingsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Total);
+        Assert.Equal(2, response.Bindings.Count);
+    }
+
+    [Fact]
+    public async Task ListRepositoryBindingsAsync_WithNoBindings_ShouldReturnEmptyList()
+    {
+        // Arrange
+        var request = new ListRepositoryBindingsRequest
+        {
+            Limit = 10,
+            Offset = 0
+        };
+
+        _mockRegistryStore.Setup(s => s.GetAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((HashSet<string>?)null);
+
+        // Act
+        var (status, response) = await _service.ListRepositoryBindingsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.Total);
+        Assert.Empty(response.Bindings);
+    }
+
+    [Fact]
+    public async Task UpdateRepositoryBindingAsync_WithExistingBinding_ShouldUpdateSettings()
+    {
+        // Arrange
+        var existingBinding = new RepositoryBinding
+        {
+            BindingId = Guid.NewGuid(),
+            Namespace = TEST_NAMESPACE,
+            RepositoryUrl = "https://github.com/test/repo.git",
+            SyncIntervalMinutes = 60,
+            SyncEnabled = true
+        };
+
+        var request = new UpdateRepositoryBindingRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            SyncIntervalMinutes = 120,
+            SyncEnabled = false
+        };
+
+        _mockBindingStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains("repo-binding")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingBinding);
+
+        // Act
+        var (status, response) = await _service.UpdateRepositoryBindingAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(response.Binding);
+        Assert.Equal(120, response.Binding.SyncIntervalMinutes);
+        Assert.False(response.Binding.SyncEnabled);
+    }
+
+    [Fact]
+    public async Task UpdateRepositoryBindingAsync_WithNoBinding_ShouldReturnNotFound()
+    {
+        // Arrange
+        var request = new UpdateRepositoryBindingRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            SyncIntervalMinutes = 120
+        };
+
+        _mockBindingStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains("repo-binding")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RepositoryBinding?)null);
+
+        // Act
+        var (status, response) = await _service.UpdateRepositoryBindingAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CreateDocumentAsync_InBoundNamespace_ShouldReturnForbidden()
+    {
+        // Arrange
+        var existingBinding = new RepositoryBinding
+        {
+            BindingId = Guid.NewGuid(),
+            Namespace = TEST_NAMESPACE,
+            RepositoryUrl = "https://github.com/test/repo.git",
+            Status = BindingStatusInternal.Synced
+        };
+
+        var request = new CreateDocumentRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            Slug = "manual-doc",
+            Title = "Manual Document",
+            Category = DocumentCategory.GettingStarted,
+            Content = "Content"
+        };
+
+        _mockBindingStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains("repo-binding")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingBinding);
+
+        // Act
+        var (status, response) = await _service.CreateDocumentAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Forbidden, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UpdateDocumentAsync_InBoundNamespace_ShouldReturnForbidden()
+    {
+        // Arrange
+        var existingBinding = new RepositoryBinding
+        {
+            BindingId = Guid.NewGuid(),
+            Namespace = TEST_NAMESPACE,
+            RepositoryUrl = "https://github.com/test/repo.git",
+            Status = BindingStatusInternal.Synced
+        };
+
+        var request = new UpdateDocumentRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            DocumentId = Guid.NewGuid(),
+            Title = "Updated Title"
+        };
+
+        _mockBindingStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains("repo-binding")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingBinding);
+
+        // Act
+        var (status, response) = await _service.UpdateDocumentAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Forbidden, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task DeleteDocumentAsync_InBoundNamespace_ShouldReturnForbidden()
+    {
+        // Arrange
+        var existingBinding = new RepositoryBinding
+        {
+            BindingId = Guid.NewGuid(),
+            Namespace = TEST_NAMESPACE,
+            RepositoryUrl = "https://github.com/test/repo.git",
+            Status = BindingStatusInternal.Synced
+        };
+
+        var request = new DeleteDocumentRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            DocumentId = Guid.NewGuid()
+        };
+
+        _mockBindingStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains("repo-binding")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingBinding);
+
+        // Act
+        var (status, response) = await _service.DeleteDocumentAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Forbidden, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task SyncRepositoryAsync_WithEmptyNamespace_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var request = new SyncRepositoryRequest
+        {
+            Namespace = "",
+            Force = false
+        };
+
+        // Act
+        var (status, response) = await _service.SyncRepositoryAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task SyncRepositoryAsync_WithNoBinding_ShouldReturnNotFound()
+    {
+        // Arrange
+        var request = new SyncRepositoryRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            Force = false
+        };
+
+        _mockBindingStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains("repo-binding")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RepositoryBinding?)null);
+
+        // Act
+        var (status, response) = await _service.SyncRepositoryAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
     #region Search Index Integration Tests
 
     [Fact]
