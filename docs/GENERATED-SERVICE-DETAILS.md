@@ -1,6 +1,6 @@
 # Generated Service Details Reference
 
-> **Auto-generated**: 2025-12-28 02:41:57
+> **Auto-generated**: 2025-12-28 10:40:43
 > **Source**: `schemas/*-api.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 

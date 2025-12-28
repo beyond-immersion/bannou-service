@@ -1,6 +1,6 @@
 # Generated Events Reference
 
-> **Auto-generated**: 2025-12-28 02:41:54
+> **Auto-generated**: 2025-12-28 10:40:40
 > **Source**: `schemas/*-events.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 

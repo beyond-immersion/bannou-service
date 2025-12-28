@@ -1,6 +1,6 @@
 # Generated State Store Reference
 
-> **Auto-generated**: 2025-12-28 02:41:54
+> **Auto-generated**: 2025-12-28 10:40:39
 > **Source**: `provisioning/state-stores/*.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
