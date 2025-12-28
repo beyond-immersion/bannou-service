@@ -62,8 +62,10 @@ make down-compose          # Stop and cleanup
 
 - [WebSocket Protocol](docs/WEBSOCKET-PROTOCOL.md) - Binary protocol specification
 - [Permissions System](docs/X-PERMISSIONS-SPECIFICATION.md) - Role-based access control schema
-- [Events Reference](docs/reference/GENERATED-EVENTS.md) - Auto-generated event documentation
-- [Configuration Reference](docs/reference/CONFIGURATION.md) - Environment variables
+- [Service Details](docs/GENERATED-SERVICE-DETAILS.md) - Service descriptions and API endpoints
+- [Events Reference](docs/GENERATED-EVENTS.md) - Auto-generated event documentation
+- [Configuration Reference](docs/GENERATED-CONFIGURATION.md) - Environment variables
+- [State Stores](docs/GENERATED-STATE-STORES.md) - Redis/MySQL state stores
 
 ## Project Structure
 

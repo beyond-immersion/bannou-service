@@ -1990,7 +1990,7 @@ public partial class DocumentationService : IDocumentationService
             await _gitSyncService.CleanupRepositoryAsync(localPath, cancellationToken);
 
             // Publish binding removed event
-            await TryPublishBindingRemovedEventAsync(binding, cancellationToken);
+            await TryPublishBindingRemovedEventAsync(binding, documentsDeleted, cancellationToken);
 
             _logger.LogInformation("Removed repository binding from namespace {Namespace}, deleted {Count} documents", body.Namespace, documentsDeleted);
 
@@ -2748,7 +2748,7 @@ public partial class DocumentationService : IDocumentationService
     {
         try
         {
-            var eventModel = new
+            var eventModel = new DocumentationBindingCreatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -2768,16 +2768,17 @@ public partial class DocumentationService : IDocumentationService
     /// <summary>
     /// Publishes a binding removed event.
     /// </summary>
-    private async Task TryPublishBindingRemovedEventAsync(Models.RepositoryBinding binding, CancellationToken cancellationToken)
+    private async Task TryPublishBindingRemovedEventAsync(Models.RepositoryBinding binding, int documentsDeleted, CancellationToken cancellationToken)
     {
         try
         {
-            var eventModel = new
+            var eventModel = new DocumentationBindingRemovedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Namespace = binding.Namespace,
-                BindingId = binding.BindingId
+                BindingId = binding.BindingId,
+                DocumentsDeleted = documentsDeleted
             };
             await _messageBus.PublishAsync(BINDING_REMOVED_TOPIC, eventModel, null, cancellationToken);
         }
@@ -2794,14 +2795,20 @@ public partial class DocumentationService : IDocumentationService
     {
         try
         {
-            var eventModel = new
+            var triggeredBy = trigger switch
+            {
+                SyncTrigger.Manual => DocumentationSyncStartedEventTriggeredBy.Manual,
+                SyncTrigger.Scheduled => DocumentationSyncStartedEventTriggeredBy.Scheduled,
+                _ => DocumentationSyncStartedEventTriggeredBy.Manual
+            };
+            var eventModel = new DocumentationSyncStartedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Namespace = binding.Namespace,
                 BindingId = binding.BindingId,
                 SyncId = syncId,
-                TriggeredBy = trigger.ToString().ToLowerInvariant()
+                TriggeredBy = triggeredBy
             };
             await _messageBus.PublishAsync(SYNC_STARTED_TOPIC, eventModel, null, cancellationToken);
         }
@@ -2818,15 +2825,22 @@ public partial class DocumentationService : IDocumentationService
     {
         try
         {
-            var eventModel = new
+            var status = result.Status switch
+            {
+                Models.SyncStatusInternal.Success => DocumentationSyncCompletedEventStatus.Success,
+                Models.SyncStatusInternal.Partial => DocumentationSyncCompletedEventStatus.Partial,
+                Models.SyncStatusInternal.Failed => DocumentationSyncCompletedEventStatus.Failed,
+                _ => DocumentationSyncCompletedEventStatus.Failed
+            };
+            var eventModel = new DocumentationSyncCompletedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Namespace = binding.Namespace,
                 BindingId = binding.BindingId,
                 SyncId = syncId,
-                Status = result.Status.ToString().ToLowerInvariant(),
-                CommitHash = result.CommitHash,
+                Status = status,
+                CommitHash = result.CommitHash ?? string.Empty,
                 DocumentsCreated = result.DocumentsCreated,
                 DocumentsUpdated = result.DocumentsUpdated,
                 DocumentsDeleted = result.DocumentsDeleted,

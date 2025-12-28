@@ -2,7 +2,15 @@
 
 ## ⛔ TENETS ARE LAW ⛔
 
-**ALWAYS REFER TO AND FOLLOW THE TENETS.MD FILE (`docs/reference/TENETS.md`) WITHOUT EXCEPTION. IF YOU DO NOT UNDERSTAND THE TENETS PERFECTLY, YOU MUST RE-READ THE FILE. ANY SITUATION WHICH CALLS INTO QUESTION ONE OF THE TENETS MUST BE EXPLICITLY PRESENTED TO THE USER, CONTEXT PROVIDED, AND THEN APPROVED TO CONTINUE.**
+**ALWAYS REFER TO AND FOLLOW THE TENETS WITHOUT EXCEPTION. ANY SITUATION WHICH CALLS INTO QUESTION ONE OF THE TENETS MUST BE EXPLICITLY PRESENTED TO THE USER, CONTEXT PROVIDED, AND THEN APPROVED TO CONTINUE.**
+
+# docs/reference/TENETS.md
+
+---
+
+## Core Architecture Reference
+
+# docs/BANNOU_DESIGN.md
 
 ---
 
@@ -12,10 +20,7 @@
 
 **COMPLETION VERIFICATION RULES**:
 - All code must compile without errors (`dotnet build` succeeds)
-- If the user ran tests and they were failing, those tests must now pass
-- All generated files must work together correctly
 - Architectural problems must be fully resolved, not worked around
-- **NOTE**: This does NOT mean "run tests after every change" - see "NEVER Run Integration Tests Unless Explicitly Asked" below
 
 **STEP-BY-STEP ENFORCEMENT**:
 - Complete each step fully before proceeding
@@ -29,38 +34,25 @@
 - Never mark todos as complete when issues persist
 - Always demonstrate working functionality before claiming success
 
-## ⚠️ MANDATORY REFERENCE - Architecture & Development Docs
+## ⚠️ Additional Reference Documentation
 
-**CRITICAL**: For ALL Bannou service design and development tasks, reference the following documentation before proceeding:
+**The TENETS and BANNOU_DESIGN documents are automatically included above.** For specific tasks, also reference:
 
-**Primary Documentation**:
-- **Architecture & Philosophy**: `docs/BANNOU_DESIGN.md` - Why the system works the way it does
 - **Plugin Development**: `docs/guides/PLUGIN_DEVELOPMENT.md` - How to add and extend services
-- **Current Tasks**: `CURRENT_TASKS.md` - Active implementation work
+- **WebSocket Protocol**: `docs/WEBSOCKET-PROTOCOL.md` - Protocol details
+- **Deployment**: `docs/guides/DEPLOYMENT.md` - Deployment patterns
 
-**⚠️ MANDATORY REFERENCE TRIGGERS**:
-- Service API design or modification → `BANNOU_DESIGN.md` + `PLUGIN_DEVELOPMENT.md`
-- Creating new services → `PLUGIN_DEVELOPMENT.md`
-- WebSocket protocol questions → `docs/WEBSOCKET-PROTOCOL.md`
-- Debugging service issues → `PLUGIN_DEVELOPMENT.md` + `docs/reference/TENETS.md`
-- Configuration questions → `docs/reference/CONFIGURATION.md`
-- Deployment patterns → `docs/guides/DEPLOYMENT.md`
+**Auto-Generated References** (regenerate with `make generate-docs`):
 
-**IMPLEMENTATION GUIDES**: For specific service implementation details:
-- **Behavior Service APIs**: Reference NPC-Behavior-Service-APIs-and-Testing.md for ABML and character behavior implementation
-- **Service-Specific Guides**: Reference implementation guides when working on complex service-specific patterns
+- **Service Details**: `docs/GENERATED-SERVICE-DETAILS.md` - Service descriptions and API endpoints
+- **Configuration**: `docs/GENERATED-CONFIGURATION.md` - Environment variables per service
+- **Events**: `docs/GENERATED-EVENTS.md` - Event schemas and topics
+- **State Stores**: `docs/GENERATED-STATE-STORES.md` - Redis/MySQL state stores
 
 ## Critical Development Rules
 
-### NEVER Manually Implement Library Functionality
-**MANDATORY**: YOU ARE FORBIDDEN FROM MANUALLY IMPLEMENTING SOMETHING THAT WE INSTALLED A LIBRARY TO HANDLE.
-- **Always use installed libraries**: Use the proper library APIs instead of manual implementations
-- **No custom implementations**: Never write manual JWT, crypto, serialization, or other functionality when libraries exist
 - **Research first**: Always research the correct library API before implementing
-- **Ask for clarification**: If library API is unclear, ask for help rather than implementing manually
-
-### NEVER Use Null-Forgiving Operators or Null Casts
-**MANDATORY**: Never use null-forgiving operators (`!`) or cast null to non-nullable types anywhere in Bannou code as they cause segmentation faults and hide null reference exceptions.
+- **Mandatory**: Never use null-forgiving operators (`!`) or cast null to non-nullable types anywhere in Bannou code as they cause segmentation faults and hide null reference exceptions.
 - **Prohibited**: `variable!`, `property!`, `method()!`, `null!`, `default!`, `(Type)null`
 - **Required**: Always use explicit null checks with meaningful exceptions or proper test data
 - **Example Correct**: `var value = variable ?? throw new ArgumentNullException(nameof(variable));`
@@ -69,7 +61,7 @@
 - **Principle**: Explicit null safety prevents segmentation faults and provides clear error messages
 
 ### NEVER Export Environment Variables
-**MANDATORY**: Never use `export` commands to set environment variables on the local machine. This confuses containerization workflows and creates debugging issues.
+- **Mandatory**: Never use `export` commands to set environment variables on the local machine. This confuses containerization workflows and creates debugging issues.
 - **Correct**: Use .env files and Docker Compose environment configuration
 - **Incorrect**: `export VARIABLE=value` commands
 - **Principle**: We use containerization workflows - configuration belongs in containers, not host environments
@@ -271,34 +263,6 @@ AUTH_JWT_EXPIRATION_MINUTES=60
 - **Hierarchy**: .env files checked in current directory, then parent directory
 - **Fallback**: Non-prefixed variables maintained for backwards compatibility
 
-### Code Generation Systems
-
-**NSwag (Primary)**: Generates controllers, models, and service clients from OpenAPI schemas
-- Uses custom file-scoped namespace templates in `templates/nswag/`
-- **Generated Files**: Controllers, request/response models, event models, client classes
-- **Command**: `scripts/generate-all-services.sh` (unified script)
-
-**Roslyn (Specialized)**: Generates patterns NSwag cannot handle
-- Unit test projects, DI registrations
-- **EventModelGenerator**: ✅ DISABLED (NSwag handles events)
-- **ServiceScaffoldGenerator**: ✅ DISABLED (NSwag handles service scaffolding)
-- **UnitTestGenerator**: ✅ WORKING
-
-## Service Implementation Patterns
-
-### Service Implementation Pattern
-```csharp
-// ONLY manual file - implements generated interface
-[BannouService("service-name", typeof(IServiceInterface), lifetime: ServiceLifetime.Scoped)]
-public class ServiceNameService : IServiceNameService // Implement generated interface
-{
-    private readonly IStateStore<ServiceModel> _stateStore;  // lib-state
-    private readonly IMessageBus _messageBus;                 // lib-messaging
-    private readonly ILogger<ServiceNameService> _logger;
-    private readonly ServiceNameServiceConfiguration _configuration; // Generated config class
-}
-```
-
 Configuration classes are generated in `Generated/` from schema - never edit manually.
 
 ### **MANDATORY**: Complex Service Implementation
@@ -376,20 +340,3 @@ git commit -m "Descriptive message
 
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
-
----
-
-## Reference Documentation
-
-### **MANDATORY References** (Must Use When Applicable):
-**Development Procedures**: See knowledge base implementation guides
-- Required for: Testing failures, debugging, complex service implementation, troubleshooting
-
-**Orchestrator Tasks**: See `docs/ORCHESTRATOR-SERVICE-DESIGN.md`
-- Required for: Deployment topology, preset creation, service discovery patterns, container orchestration
-- Key patterns: ExtraHosts IP injection, Redis heartbeat system, mesh routing
-
-### Additional References:
-**CI/CD Pipeline**: `/NUGET-SETUP.md` - 10-step CI pipeline, NuGet publishing, compatibility testing  
-**Project Architecture**: Referenced in core memory (BANNOU_CORE_MEMORY.md)  
-**Current Objectives**: Referenced in core memory (OBJECTIVES_CORE_MEMORY.md)

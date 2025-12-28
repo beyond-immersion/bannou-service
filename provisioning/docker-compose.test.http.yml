@@ -7,6 +7,7 @@ services:
     env_file: ../.env.test.http
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"  # Docker socket for orchestrator
+      - "/tmp/bannou-test-fixtures:/fixtures:ro"  # Test fixtures prepared by scripts/prepare-test-fixtures.sh (dot_git -> .git)
 
   # HTTP integration tester - simulates another service in datacenter
   bannou-http-tester:

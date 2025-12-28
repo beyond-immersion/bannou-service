@@ -350,12 +350,18 @@ test-infrastructure:
 		down --remove-orphans -v
 	@echo "✅ Infrastructure tests completed"
 
+# Prepare test fixtures (copies fixtures with dot_git -> .git rename)
+# Required for documentation git binding tests - follows LibGit2Sharp pattern
+prepare-fixtures:
+	@echo "📁 Preparing test fixtures..."
+	@./scripts/prepare-test-fixtures.sh
+
 # HTTP integration testing (matches CI workflow)
 # Usage: make test-http [PLUGIN=plugin-name]
 # Stack: base + services + test + test.http (service-to-service via mesh, no ingress)
 # Note: Uses 'up -d' + 'wait' instead of '--exit-code-from' to avoid aborting
 #       when orchestrator tests create/destroy containers during the test run.
-test-http:
+test-http: prepare-fixtures
 	@if [ "$(PLUGIN)" ]; then \
 		echo "🧪 Running HTTP integration tests for plugin: $(PLUGIN)..."; \
 	else \
@@ -382,13 +388,7 @@ test-http:
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.http.yml" \
 		logs -f bannou-http-tester & ); \
-	SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
-		-f "./provisioning/docker-compose.yml" \
-		-f "./provisioning/docker-compose.services.yml" \
-		-f "./provisioning/docker-compose.storage.yml" \
-		-f "./provisioning/docker-compose.test.yml" \
-		-f "./provisioning/docker-compose.test.http.yml" \
-		wait bannou-http-tester; \
+	docker wait bannou-test-http-bannou-http-tester-1; \
 	TEST_EXIT_CODE=$$?; \
 	docker compose -p bannou-test-http \
 		-f "./provisioning/docker-compose.yml" \
@@ -474,7 +474,7 @@ test-logs-dir:
 	@mkdir -p $(TEST_LOG_DIR)
 
 # HTTP testing with container persistence - keeps running for inspection
-test-http-dev: test-logs-dir ## HTTP tests: keep containers running, save logs to ./test-logs/
+test-http-dev: test-logs-dir prepare-fixtures ## HTTP tests: keep containers running, save logs to ./test-logs/
 	@echo "🧪 Starting HTTP integration tests (dev mode - containers stay running)..."
 	@echo "📁 Logs will be saved to $(TEST_LOG_DIR)/"
 	SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \

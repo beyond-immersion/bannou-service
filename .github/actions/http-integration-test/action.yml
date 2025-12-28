@@ -4,6 +4,12 @@ description: 'Run HTTP integration tests with coordinator service configuration'
 runs:
   using: 'composite'
   steps:
+    - name: Prepare Test Fixtures
+      shell: bash
+      run: |
+        echo "📁 Preparing test fixtures (dot_git -> .git rename)..."
+        ./scripts/prepare-test-fixtures.sh
+
     - name: Build HTTP Integration Services (All Services)
       shell: bash
       run: |
