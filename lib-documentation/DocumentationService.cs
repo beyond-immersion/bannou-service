@@ -1,5 +1,7 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Documentation.Services;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -7,7 +9,8 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
+using System.IO.Compression;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -28,6 +31,8 @@ public partial class DocumentationService : IDocumentationService
     private readonly IGitSyncService _gitSyncService;
     private readonly IContentTransformService _contentTransformService;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly IAssetClient? _assetClient;
+    private readonly IHttpClientFactory? _httpClientFactory;
 
     private const string STATE_STORE = "documentation-statestore";
 
@@ -65,7 +70,9 @@ public partial class DocumentationService : IDocumentationService
         ISearchIndexService searchIndexService,
         IGitSyncService gitSyncService,
         IContentTransformService contentTransformService,
-        IDistributedLockProvider lockProvider)
+        IDistributedLockProvider lockProvider,
+        IAssetClient? assetClient = null,
+        IHttpClientFactory? httpClientFactory = null)
     {
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
@@ -75,6 +82,8 @@ public partial class DocumentationService : IDocumentationService
         _gitSyncService = gitSyncService ?? throw new ArgumentNullException(nameof(gitSyncService));
         _contentTransformService = contentTransformService ?? throw new ArgumentNullException(nameof(contentTransformService));
         _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
+        _assetClient = assetClient; // Optional - archive features require Asset Service
+        _httpClientFactory = httpClientFactory; // Optional - for uploading bundles to pre-signed URLs
 
         // Register event handlers via partial class (minimal event subscriptions per schema)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
@@ -1891,6 +1900,18 @@ public partial class DocumentationService : IDocumentationService
     {
         ArgumentNullException.ThrowIfNull(body);
 
+        if (string.IsNullOrWhiteSpace(body.Namespace))
+        {
+            _logger.LogWarning("BindRepository failed: namespace is required");
+            return (StatusCodes.BadRequest, null);
+        }
+
+        if (string.IsNullOrWhiteSpace(body.RepositoryUrl))
+        {
+            _logger.LogWarning("BindRepository failed: repositoryUrl is required");
+            return (StatusCodes.BadRequest, null);
+        }
+
         _logger.LogInformation("Binding repository {Url} to namespace {Namespace}", body.RepositoryUrl, body.Namespace);
 
         try
@@ -2011,6 +2032,12 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, SyncRepositoryResponse?)> SyncRepositoryAsync(SyncRepositoryRequest body, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(body);
+
+        if (string.IsNullOrWhiteSpace(body.Namespace))
+        {
+            _logger.LogWarning("SyncRepository failed: namespace is required");
+            return (StatusCodes.BadRequest, null);
+        }
 
         _logger.LogInformation("Manual sync requested for namespace {Namespace}", body.Namespace);
 
@@ -2200,13 +2227,98 @@ public partial class DocumentationService : IDocumentationService
     {
         ArgumentNullException.ThrowIfNull(body);
 
+        if (string.IsNullOrWhiteSpace(body.Namespace))
+        {
+            _logger.LogWarning("CreateArchive failed: namespace is required");
+            return (StatusCodes.BadRequest, null);
+        }
+
         _logger.LogInformation("Creating archive for namespace {Namespace}", body.Namespace);
 
-        // TODO: Implement archive creation with Asset Service integration
-        // For now, return a stub response indicating the feature is planned
-        await Task.CompletedTask;
+        try
+        {
+            // Get all documents in namespace
+            var documents = await GetAllNamespaceDocumentsAsync(body.Namespace, cancellationToken);
+            if (documents.Count == 0)
+            {
+                _logger.LogWarning("No documents found in namespace {Namespace} to archive", body.Namespace);
+                return (StatusCodes.NotFound, null);
+            }
 
-        return (StatusCodes.NotFound, null);
+            // Create archive bundle (JSON format for simplicity)
+            var archiveId = Guid.NewGuid();
+            var bundleData = await CreateArchiveBundleAsync(body.Namespace, documents, cancellationToken);
+
+            // Store archive record
+            var archive = new Models.DocumentationArchive
+            {
+                ArchiveId = archiveId,
+                Namespace = body.Namespace,
+                DocumentCount = documents.Count,
+                SizeBytes = bundleData.Length,
+                CreatedAt = DateTimeOffset.UtcNow,
+                Description = body.Description,
+                CommitHash = await GetCurrentCommitHashForNamespaceAsync(body.Namespace, cancellationToken)
+            };
+
+            // If Asset Service is available, upload the bundle
+            if (_assetClient != null && _httpClientFactory != null)
+            {
+                try
+                {
+                    var uploadResponse = await _assetClient.RequestBundleUploadAsync(new BundleUploadRequest
+                    {
+                        Filename = $"docs-{body.Namespace}-{archiveId:N}.bannou",
+                        Size = bundleData.Length
+                    }, cancellationToken);
+
+                    // Upload to pre-signed URL
+                    using var httpClient = _httpClientFactory.CreateClient();
+                    using var content = new ByteArrayContent(bundleData);
+                    content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                    var uploadResult = await httpClient.PutAsync(uploadResponse.Upload_url.ToString(), content, cancellationToken);
+
+                    if (uploadResult.IsSuccessStatusCode)
+                    {
+                        archive.BundleAssetId = uploadResponse.Upload_id;
+                        _logger.LogInformation("Archive bundle uploaded to Asset Service: {BundleId}", archive.BundleAssetId);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Failed to upload archive bundle to Asset Service: {StatusCode}", uploadResult.StatusCode);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Asset Service integration failed, archive stored without bundle upload");
+                }
+            }
+            else
+            {
+                _logger.LogDebug("Asset Service not available, storing archive metadata only");
+            }
+
+            // Save archive record to state store
+            await SaveArchiveAsync(archive, cancellationToken);
+
+            // Publish archive created event
+            await TryPublishArchiveCreatedEventAsync(archive, cancellationToken);
+
+            return (StatusCodes.Created, new CreateArchiveResponse
+            {
+                ArchiveId = archiveId,
+                Namespace = body.Namespace,
+                DocumentCount = documents.Count,
+                SizeBytes = bundleData.Length,
+                CreatedAt = archive.CreatedAt
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create archive for namespace {Namespace}", body.Namespace);
+            await _messageBus.TryPublishErrorAsync("documentation", "CreateDocumentationArchive", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -2214,14 +2326,46 @@ public partial class DocumentationService : IDocumentationService
     {
         ArgumentNullException.ThrowIfNull(body);
 
-        // TODO: Implement archive listing with Asset Service integration
-        await Task.CompletedTask;
-
-        return (StatusCodes.OK, new ListArchivesResponse
+        if (string.IsNullOrWhiteSpace(body.Namespace))
         {
-            Archives = [],
-            Total = 0
-        });
+            _logger.LogWarning("ListArchives failed: namespace is required");
+            return (StatusCodes.BadRequest, null);
+        }
+
+        try
+        {
+            var archives = await GetArchivesForNamespaceAsync(body.Namespace, cancellationToken);
+            var offset = body.Offset;
+            var limit = body.Limit;
+
+            var pagedArchives = archives
+                .OrderByDescending(a => a.CreatedAt)
+                .Skip(offset)
+                .Take(limit)
+                .Select(a => new ArchiveInfo
+                {
+                    ArchiveId = a.ArchiveId,
+                    Namespace = a.Namespace,
+                    CreatedAt = a.CreatedAt,
+                    DocumentCount = a.DocumentCount,
+                    SizeBytes = (int)Math.Min(a.SizeBytes, int.MaxValue),
+                    Description = a.Description ?? string.Empty,
+                    CommitHash = a.CommitHash ?? string.Empty
+                })
+                .ToList();
+
+            return (StatusCodes.OK, new ListArchivesResponse
+            {
+                Archives = pagedArchives,
+                Total = archives.Count
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to list archives for namespace {Namespace}", body.Namespace);
+            await _messageBus.TryPublishErrorAsync("documentation", "ListDocumentationArchives", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -2229,10 +2373,75 @@ public partial class DocumentationService : IDocumentationService
     {
         ArgumentNullException.ThrowIfNull(body);
 
-        // TODO: Implement archive restoration with Asset Service integration
-        await Task.CompletedTask;
+        if (body.ArchiveId == Guid.Empty)
+        {
+            _logger.LogWarning("RestoreArchive failed: archiveId is required");
+            return (StatusCodes.BadRequest, null);
+        }
 
-        return (StatusCodes.NotFound, null);
+        try
+        {
+            // Get archive metadata
+            var archive = await GetArchiveByIdAsync(body.ArchiveId, cancellationToken);
+            if (archive == null)
+            {
+                _logger.LogWarning("Archive {ArchiveId} not found", body.ArchiveId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            _logger.LogInformation("Restoring archive {ArchiveId} for namespace {Namespace}", body.ArchiveId, archive.Namespace);
+
+            // Check if namespace is bound to a repository
+            var binding = await GetBindingForNamespaceAsync(archive.Namespace, cancellationToken);
+            if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
+            {
+                _logger.LogWarning("Cannot restore to bound namespace {Namespace}", archive.Namespace);
+                return (StatusCodes.Forbidden, null);
+            }
+
+            int documentsRestored = 0;
+
+            // If Asset Service is available and we have a bundle, download and restore from it
+            if (_assetClient != null && _httpClientFactory != null && archive.BundleAssetId != Guid.Empty)
+            {
+                try
+                {
+                    var bundleResponse = await _assetClient.GetBundleAsync(new GetBundleRequest
+                    {
+                        Bundle_id = archive.BundleAssetId.ToString()
+                    }, cancellationToken);
+
+                    if (bundleResponse.Download_url != null)
+                    {
+                        using var httpClient = _httpClientFactory.CreateClient();
+                        var bundleData = await httpClient.GetByteArrayAsync(bundleResponse.Download_url.ToString(), cancellationToken);
+                        documentsRestored = await RestoreFromBundleAsync(archive.Namespace, bundleData, cancellationToken);
+                    }
+                }
+                catch (ApiException ex) when (ex.StatusCode == 404)
+                {
+                    _logger.LogWarning("Archive bundle {BundleId} not found in Asset Service", archive.BundleAssetId);
+                    return (StatusCodes.NotFound, null);
+                }
+            }
+            else
+            {
+                _logger.LogWarning("Cannot restore archive {ArchiveId} - no bundle data available", body.ArchiveId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            return (StatusCodes.OK, new RestoreArchiveResponse
+            {
+                Namespace = archive.Namespace,
+                DocumentsRestored = documentsRestored
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to restore archive {ArchiveId}", body.ArchiveId);
+            await _messageBus.TryPublishErrorAsync("documentation", "RestoreDocumentationArchive", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     /// <inheritdoc />
@@ -2240,10 +2449,41 @@ public partial class DocumentationService : IDocumentationService
     {
         ArgumentNullException.ThrowIfNull(body);
 
-        // TODO: Implement archive deletion with Asset Service integration
-        await Task.CompletedTask;
+        if (body.ArchiveId == Guid.Empty)
+        {
+            _logger.LogWarning("DeleteArchive failed: archiveId is required");
+            return (StatusCodes.BadRequest, null);
+        }
 
-        return (StatusCodes.NotFound, null);
+        try
+        {
+            // Get archive metadata
+            var archive = await GetArchiveByIdAsync(body.ArchiveId, cancellationToken);
+            if (archive == null)
+            {
+                _logger.LogWarning("Archive {ArchiveId} not found", body.ArchiveId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            _logger.LogInformation("Deleting archive {ArchiveId} for namespace {Namespace}", body.ArchiveId, archive.Namespace);
+
+            // Delete archive record from state store
+            await DeleteArchiveAsync(archive, cancellationToken);
+
+            // Note: We don't delete the bundle from Asset Service as it may be used for other purposes
+            // or the Asset Service may have its own retention policies
+
+            return (StatusCodes.OK, new DeleteArchiveResponse
+            {
+                Deleted = true
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete archive {ArchiveId}", body.ArchiveId);
+            await _messageBus.TryPublishErrorAsync("documentation", "DeleteDocumentationArchive", "unexpected_exception", ex.Message, stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #region Repository Binding Helpers
@@ -2857,9 +3097,295 @@ public partial class DocumentationService : IDocumentationService
 
     #endregion
 
+    #region Archive Helpers
+
+    /// <summary>
+    /// Gets all documents in a namespace.
+    /// </summary>
+    private async Task<List<StoredDocument>> GetAllNamespaceDocumentsAsync(string namespaceId, CancellationToken cancellationToken = default)
+    {
+        var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
+        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(STATE_STORE);
+        var docIds = await docsStore.GetAsync(docsKey, cancellationToken);
+
+        if (docIds == null || docIds.Count == 0)
+        {
+            return [];
+        }
+
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+        var documents = new List<StoredDocument>();
+
+        foreach (var docId in docIds)
+        {
+            var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
+            var doc = await docStore.GetAsync(docKey, cancellationToken);
+            if (doc != null)
+            {
+                documents.Add(doc);
+            }
+        }
+
+        return documents;
+    }
+
+    /// <summary>
+    /// Creates a compressed archive bundle from documents.
+    /// </summary>
+    private async Task<byte[]> CreateArchiveBundleAsync(string namespaceId, List<StoredDocument> documents, CancellationToken cancellationToken)
+    {
+        // Create a JSON bundle with all documents
+        var bundle = new DocumentationBundle
+        {
+            Version = "1.0",
+            Namespace = namespaceId,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Documents = documents.Select(d => new BundledDocument
+            {
+                DocumentId = d.DocumentId,
+                Slug = d.Slug,
+                Title = d.Title,
+                Content = d.Content ?? string.Empty,
+                Category = d.Category,
+                Summary = d.Summary,
+                VoiceSummary = d.VoiceSummary,
+                Tags = d.Tags,
+                Metadata = d.Metadata,
+                CreatedAt = d.CreatedAt,
+                UpdatedAt = d.UpdatedAt
+            }).ToList()
+        };
+
+        // Serialize to JSON and compress with GZip
+        var json = BannouJson.Serialize(bundle);
+        using var output = new MemoryStream();
+        using (var gzip = new GZipStream(output, CompressionLevel.Optimal, leaveOpen: true))
+        {
+            var jsonBytes = Encoding.UTF8.GetBytes(json);
+            await gzip.WriteAsync(jsonBytes, cancellationToken);
+        }
+
+        return output.ToArray();
+    }
+
+    /// <summary>
+    /// Gets the current commit hash for a bound namespace.
+    /// </summary>
+    private async Task<string?> GetCurrentCommitHashForNamespaceAsync(string namespaceId, CancellationToken cancellationToken)
+    {
+        var binding = await GetBindingForNamespaceAsync(namespaceId, cancellationToken);
+        return binding?.LastCommitHash;
+    }
+
+    /// <summary>
+    /// Saves an archive record to state store.
+    /// </summary>
+    private async Task SaveArchiveAsync(Models.DocumentationArchive archive, CancellationToken cancellationToken)
+    {
+        var archiveKey = $"{ARCHIVE_KEY_PREFIX}{archive.ArchiveId}";
+        var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(STATE_STORE);
+        await archiveStore.SaveAsync(archiveKey, archive, cancellationToken: cancellationToken);
+
+        // Also update the namespace archive list
+        var listKey = $"{ARCHIVE_KEY_PREFIX}list:{archive.Namespace}";
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var archiveIds = await listStore.GetAsync(listKey, cancellationToken) ?? [];
+        if (!archiveIds.Contains(archive.ArchiveId))
+        {
+            archiveIds.Add(archive.ArchiveId);
+            await listStore.SaveAsync(listKey, archiveIds, cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Gets all archives for a namespace.
+    /// </summary>
+    private async Task<List<Models.DocumentationArchive>> GetArchivesForNamespaceAsync(string namespaceId, CancellationToken cancellationToken)
+    {
+        var listKey = $"{ARCHIVE_KEY_PREFIX}list:{namespaceId}";
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var archiveIds = await listStore.GetAsync(listKey, cancellationToken);
+
+        if (archiveIds == null || archiveIds.Count == 0)
+        {
+            return [];
+        }
+
+        var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(STATE_STORE);
+        var archives = new List<Models.DocumentationArchive>();
+
+        foreach (var archiveId in archiveIds)
+        {
+            var archiveKey = $"{ARCHIVE_KEY_PREFIX}{archiveId}";
+            var archive = await archiveStore.GetAsync(archiveKey, cancellationToken);
+            if (archive != null)
+            {
+                archives.Add(archive);
+            }
+        }
+
+        return archives;
+    }
+
+    /// <summary>
+    /// Gets an archive by ID.
+    /// </summary>
+    private async Task<Models.DocumentationArchive?> GetArchiveByIdAsync(Guid archiveId, CancellationToken cancellationToken)
+    {
+        var archiveKey = $"{ARCHIVE_KEY_PREFIX}{archiveId}";
+        var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(STATE_STORE);
+        return await archiveStore.GetAsync(archiveKey, cancellationToken);
+    }
+
+    /// <summary>
+    /// Restores documents from a bundle.
+    /// </summary>
+    private async Task<int> RestoreFromBundleAsync(string namespaceId, byte[] bundleData, CancellationToken cancellationToken)
+    {
+        // Decompress and deserialize the bundle
+        using var input = new MemoryStream(bundleData);
+        using var gzip = new GZipStream(input, CompressionMode.Decompress);
+        using var reader = new StreamReader(gzip, Encoding.UTF8);
+        var json = await reader.ReadToEndAsync(cancellationToken);
+
+        var bundle = BannouJson.Deserialize<DocumentationBundle>(json);
+        if (bundle?.Documents == null || bundle.Documents.Count == 0)
+        {
+            _logger.LogWarning("Archive bundle contains no documents");
+            return 0;
+        }
+
+        // Delete existing documents in namespace
+        await DeleteAllNamespaceDocumentsAsync(namespaceId, cancellationToken);
+
+        // Import all documents from bundle
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+        var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(STATE_STORE);
+        var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
+        var docIds = new HashSet<Guid>();
+
+        foreach (var bundledDoc in bundle.Documents)
+        {
+            var storedDoc = new StoredDocument
+            {
+                DocumentId = bundledDoc.DocumentId,
+                Namespace = namespaceId,
+                Slug = bundledDoc.Slug,
+                Title = bundledDoc.Title,
+                Content = bundledDoc.Content,
+                Category = bundledDoc.Category,
+                Summary = bundledDoc.Summary,
+                VoiceSummary = bundledDoc.VoiceSummary,
+                Tags = bundledDoc.Tags ?? [],
+                Metadata = bundledDoc.Metadata,
+                CreatedAt = bundledDoc.CreatedAt,
+                UpdatedAt = DateTimeOffset.UtcNow // Mark as updated on restore
+            };
+
+            var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{storedDoc.DocumentId}";
+            await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
+
+            var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{storedDoc.Slug}";
+            await slugStore.SaveAsync(slugKey, storedDoc.DocumentId.ToString(), cancellationToken: cancellationToken);
+
+            docIds.Add(storedDoc.DocumentId);
+
+            // Index for search
+            _searchIndexService.IndexDocument(
+                namespaceId,
+                storedDoc.DocumentId,
+                storedDoc.Title,
+                storedDoc.Slug,
+                storedDoc.Content,
+                storedDoc.Category,
+                storedDoc.Tags);
+        }
+
+        await docsStore.SaveAsync(docsKey, docIds, cancellationToken: cancellationToken);
+
+        return bundle.Documents.Count;
+    }
+
+    /// <summary>
+    /// Deletes an archive record from state store.
+    /// </summary>
+    private async Task DeleteArchiveAsync(Models.DocumentationArchive archive, CancellationToken cancellationToken)
+    {
+        var archiveKey = $"{ARCHIVE_KEY_PREFIX}{archive.ArchiveId}";
+        var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(STATE_STORE);
+        await archiveStore.DeleteAsync(archiveKey, cancellationToken);
+
+        // Remove from namespace archive list
+        var listKey = $"{ARCHIVE_KEY_PREFIX}list:{archive.Namespace}";
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var archiveIds = await listStore.GetAsync(listKey, cancellationToken);
+        if (archiveIds != null)
+        {
+            archiveIds.Remove(archive.ArchiveId);
+            await listStore.SaveAsync(listKey, archiveIds, cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Publishes an archive created event.
+    /// </summary>
+    private async Task TryPublishArchiveCreatedEventAsync(Models.DocumentationArchive archive, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var eventModel = new DocumentationArchiveCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Namespace = archive.Namespace,
+                ArchiveId = archive.ArchiveId,
+                BundleAssetId = archive.BundleAssetId,
+                DocumentCount = archive.DocumentCount,
+                SizeBytes = (int)Math.Min(archive.SizeBytes, int.MaxValue)
+            };
+            await _messageBus.PublishAsync(ARCHIVE_CREATED_TOPIC, eventModel, null, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish archive created event");
+        }
+    }
+
+    #endregion
+
     #endregion
 
     #region Internal Types
+
+    /// <summary>
+    /// Bundle format for documentation archives.
+    /// </summary>
+    internal sealed class DocumentationBundle
+    {
+        public string Version { get; set; } = "1.0";
+        public string Namespace { get; set; } = string.Empty;
+        public DateTimeOffset CreatedAt { get; set; }
+        public List<BundledDocument> Documents { get; set; } = [];
+    }
+
+    /// <summary>
+    /// Document data within a bundle.
+    /// </summary>
+    internal sealed class BundledDocument
+    {
+        public Guid DocumentId { get; set; }
+        public string Slug { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Content { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public string? Summary { get; set; }
+        public string? VoiceSummary { get; set; }
+        public List<string>? Tags { get; set; }
+        public object? Metadata { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset UpdatedAt { get; set; }
+    }
 
     /// <summary>
     /// Internal model for document storage in lib-state store.

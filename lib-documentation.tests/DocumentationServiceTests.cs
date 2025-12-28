@@ -22,6 +22,7 @@ public class DocumentationServiceTests
     private readonly Mock<IStateStore<DocumentationService.StoredDocument>> _mockDocumentStore;
     private readonly Mock<IStateStore<DocumentationService.TrashedDocument>> _mockTrashStore;
     private readonly Mock<IStateStore<List<Guid>>> _mockGuidListStore;
+    private readonly Mock<IStateStore<HashSet<Guid>>> _mockGuidSetStore;
     private readonly Mock<IStateStore<RepositoryBinding>> _mockBindingStore;
     private readonly Mock<IStateStore<HashSet<string>>> _mockRegistryStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
@@ -44,6 +45,7 @@ public class DocumentationServiceTests
         _mockDocumentStore = new Mock<IStateStore<DocumentationService.StoredDocument>>();
         _mockTrashStore = new Mock<IStateStore<DocumentationService.TrashedDocument>>();
         _mockGuidListStore = new Mock<IStateStore<List<Guid>>>();
+        _mockGuidSetStore = new Mock<IStateStore<HashSet<Guid>>>();
         _mockBindingStore = new Mock<IStateStore<RepositoryBinding>>();
         _mockRegistryStore = new Mock<IStateStore<HashSet<string>>>();
         _mockMessageBus = new Mock<IMessageBus>();
@@ -64,6 +66,8 @@ public class DocumentationServiceTests
             .Returns(_mockTrashStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(STATE_STORE))
             .Returns(_mockGuidListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<HashSet<Guid>>(STATE_STORE))
+            .Returns(_mockGuidSetStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<RepositoryBinding>(STATE_STORE))
             .Returns(_mockBindingStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<HashSet<string>>(STATE_STORE))
@@ -645,9 +649,10 @@ public class DocumentationServiceTests
             It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { TEST_NAMESPACE });
 
-        _mockGuidListStore.Setup(s => s.GetAsync(
+        // Mock the HashSet<Guid> store for namespace docs (returns null = no docs to delete)
+        _mockGuidSetStore.Setup(s => s.GetAsync(
             It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<Guid>?)null);
+            .ReturnsAsync((HashSet<Guid>?)null);
 
         // Act
         var (status, response) = await _service.UnbindRepositoryAsync(request);

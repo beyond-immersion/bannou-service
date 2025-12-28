@@ -667,6 +667,7 @@ public class Program
             new RealmTestHandler(),
             new RelationshipTestHandler(),
             new RepositoryBindingTestHandler(),
+            new ArchiveTestHandler(),
             new RelationshipTypeTestHandler(),
             new ServicedataTestHandler(),
             new SpeciesTestHandler(),

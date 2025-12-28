@@ -1,6 +1,6 @@
 # Generated Service Details Reference
 
-> **Auto-generated**: 2025-12-27 19:20:53
+> **Auto-generated**: 2025-12-28 02:41:57
 > **Source**: `schemas/*-api.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -10,28 +10,30 @@ This document provides a compact reference of all Bannou services and their API 
 
 | Service | Version | Endpoints | Description |
 |---------|---------|-----------|-------------|
-| [Accounts](#accounts) | 2.0.0 | 13 | Internal account management service. |
-| [Asset](#asset) | 1.0.0 | 8 | Asset management service for storage, versioning, and distribution. |
-| [Auth](#auth) | 4.0.0 | 12 | Authentication and session management service. |
-| [Behavior](#behavior) | 3.0.0 | 6 | Arcadia Behavior Markup Language (ABML) API for character behaviour. |
+| [Accounts](#accounts) | 2.0.0 | 13 | Internal account management service (CRUD operations only, n... |
+| [Asset](#asset) | 1.0.0 | 8 | Asset management service for storage, versioning, and distri... |
+| [Auth](#auth) | 4.0.0 | 12 | Authentication and session management service (Internet-faci... |
+| [Behavior](#behavior) | 3.0.0 | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
 | [Character](#character) | 1.0.0 | 6 | Character management service for Arcadia game world. |
-| [Connect](#connect) | 2.0.0 | 4 | Real-time communication and WebSocket connection management. |
-| [Documentation](#documentation) | 1.0.0 | 26 | Knowledge base API for AI agents to query documentation. |
+| [Connect](#connect) | 2.0.0 | 4 | Real-time communication and WebSocket connection management ... |
+| [Documentation](#documentation) | 1.0.0 | 26 | Knowledge base API for AI agents to query documentation.
+Des... |
 | [Game Session](#game-session) | 2.0.0 | 8 | Minimal game session management for Arcadia and other games. |
 | [Location](#location) | 1.0.0 | 17 | Location management service for Arcadia game world. |
-| [Mesh](#mesh) | 1.0.0 | 8 | Native service mesh plugin providing direct service-to-service communication. |
+| [Mesh](#mesh) | 1.0.0 | 8 | Native service mesh plugin providing direct service-to-servi... |
 | [Messaging](#messaging) | 1.0.0 | 4 | Native RabbitMQ pub/sub messaging with native serialization. |
-| [Orchestrator](#orchestrator) | 3.0.0 | 22 | Central intelligence for Bannou environment management. |
-| [Permissions](#permissions) | 3.0.0 | 8 | Redis-backed high-performance permission system for WebSocket clients. |
+| [Orchestrator](#orchestrator) | 3.0.0 | 22 | Central intelligence for Bannou environment management and s... |
+| [Permissions](#permissions) | 3.0.0 | 8 | Redis-backed high-performance permission system for WebSocke... |
 | [Realm](#realm) | 1.0.0 | 10 | Realm management service for Arcadia game world. |
-| [Relationship](#relationship) | 1.0.0 | 7 | Generic relationship management service for entity-to-entity.|
+| [Relationship](#relationship) | 1.0.0 | 7 | Generic relationship management service for entity-to-entity... |
 | [Relationship Type](#relationship-type) | 2.0.0 | 13 | Relationship type management service for Arcadia game world. |
-| [Service Data](#service-data) | 1.0.0 | 5 | Registry service for game services that users can subscribe to. |
+| [Servicedata](#servicedata) | 1.0.0 | 5 | Registry service for game services that users can subscribe ... |
 | [Species](#species) | 2.0.0 | 13 | Species management service for Arcadia game world. |
-| [State](#state) | 1.0.0 | 6 | Repository pattern state management with Redis and MySQL backends. |
-| [Subscriptions](#subscriptions) | 1.0.0 | 7 | Manages user subscriptions to game services. |
-| [Voice](#voice) | 1.1.0 | 7 | Voice communication coordination service for P2P and room-based scaling. |
-| [Website](#website) | 1.0.0 | 17 | Public-facing website service for registration and information. |
+| [State](#state) | 1.0.0 | 6 | Repository pattern state management with Redis and MySQL bac... |
+| [Subscriptions](#subscriptions) | 1.0.0 | 7 | Manages user subscriptions to game services.
+Tracks which ac... |
+| [Voice](#voice) | 1.1.0 | 7 | Voice communication coordination service for P2P and room-ba... |
+| [Website](#website) | 1.0.0 | 17 | Public-facing website service for registration, information,... |
 
 ---
 

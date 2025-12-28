@@ -64,6 +64,14 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
                 "Test repository status via WebSocket binary protocol"),
             new ServiceTest(TestRepositoryUnbindViaWebSocket, "Documentation - Repo Unbind (WebSocket)", "WebSocket",
                 "Test repository unbind via WebSocket binary protocol"),
+
+            // Archive operations
+            new ServiceTest(TestArchiveCreateViaWebSocket, "Documentation - Archive Create (WebSocket)", "WebSocket",
+                "Test archive creation via WebSocket binary protocol"),
+            new ServiceTest(TestArchiveListViaWebSocket, "Documentation - Archive List (WebSocket)", "WebSocket",
+                "Test archive listing via WebSocket binary protocol"),
+            new ServiceTest(TestArchiveDeleteViaWebSocket, "Documentation - Archive Delete (WebSocket)", "WebSocket",
+                "Test archive deletion via WebSocket binary protocol"),
         };
     }
 
@@ -1867,6 +1875,262 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Documentation repo unbind test FAILED with exception: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
+            }
+        }
+    }
+
+    #endregion
+
+    #region Archive Tests
+
+    private const string ARCHIVE_TEST_NAMESPACE = "ws-archive-test";
+    private static Guid _wsCreatedArchiveId = Guid.Empty;
+
+    private void TestArchiveCreateViaWebSocket(string[] args)
+    {
+        Console.WriteLine("=== Documentation Archive Create Test (WebSocket) ===");
+        Console.WriteLine("Testing /documentation/repo/archive/create via shared admin WebSocket...");
+
+        try
+        {
+            var result = Task.Run(async () =>
+            {
+                var adminClient = Program.AdminClient;
+                if (adminClient == null || !adminClient.IsConnected)
+                {
+                    Console.WriteLine("❌ Admin client not connected");
+                    return false;
+                }
+
+                try
+                {
+                    // First create a test document
+                    Console.WriteLine($"   Creating test document in namespace {ARCHIVE_TEST_NAMESPACE}...");
+                    await adminClient.InvokeAsync<object, JsonElement>(
+                        "POST",
+                        "/documentation/create",
+                        new
+                        {
+                            @namespace = ARCHIVE_TEST_NAMESPACE,
+                            slug = "archive-ws-test-doc",
+                            title = "Archive WebSocket Test Doc",
+                            category = "Other",
+                            content = "Test document for archive WebSocket testing"
+                        },
+                        timeout: TimeSpan.FromSeconds(10));
+
+                    // Create archive
+                    Console.WriteLine($"   Creating archive for namespace {ARCHIVE_TEST_NAMESPACE}...");
+                    var archiveResponse = (await adminClient.InvokeAsync<object, JsonElement>(
+                        "POST",
+                        "/documentation/repo/archive/create",
+                        new
+                        {
+                            @namespace = ARCHIVE_TEST_NAMESPACE,
+                            description = "WebSocket test archive"
+                        },
+                        timeout: TimeSpan.FromSeconds(10))).GetResultOrThrow();
+
+                    var archiveJson = JsonNode.Parse(archiveResponse.GetRawText())?.AsObject();
+                    var archiveIdStr = archiveJson?["archiveId"]?.GetValue<string>();
+                    var docCount = archiveJson?["documentCount"]?.GetValue<int>() ?? 0;
+                    var sizeBytes = archiveJson?["sizeBytes"]?.GetValue<int>() ?? 0;
+
+                    Console.WriteLine($"   Created archive: id={archiveIdStr}, docs={docCount}, size={sizeBytes}");
+
+                    if (string.IsNullOrEmpty(archiveIdStr) || !Guid.TryParse(archiveIdStr, out var archiveId))
+                    {
+                        Console.WriteLine("   CreateArchive returned invalid ID");
+                        return false;
+                    }
+
+                    _wsCreatedArchiveId = archiveId;
+                    return docCount >= 1;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"   Invoke failed: {ex.Message}");
+                    return false;
+                }
+            }).Result;
+
+            if (result)
+            {
+                Console.WriteLine("✅ Documentation archive create test PASSED");
+            }
+            else
+            {
+                Console.WriteLine("❌ Documentation archive create test FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Documentation archive create test FAILED with exception: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
+            }
+        }
+    }
+
+    private void TestArchiveListViaWebSocket(string[] args)
+    {
+        Console.WriteLine("=== Documentation Archive List Test (WebSocket) ===");
+        Console.WriteLine("Testing /documentation/repo/archive/list via shared admin WebSocket...");
+
+        try
+        {
+            var result = Task.Run(async () =>
+            {
+                var adminClient = Program.AdminClient;
+                if (adminClient == null || !adminClient.IsConnected)
+                {
+                    Console.WriteLine("❌ Admin client not connected");
+                    return false;
+                }
+
+                try
+                {
+                    Console.WriteLine($"   Listing archives for namespace {ARCHIVE_TEST_NAMESPACE}...");
+                    var listResponse = (await adminClient.InvokeAsync<object, JsonElement>(
+                        "POST",
+                        "/documentation/repo/archive/list",
+                        new
+                        {
+                            @namespace = ARCHIVE_TEST_NAMESPACE,
+                            limit = 10,
+                            offset = 0
+                        },
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+
+                    var listJson = JsonNode.Parse(listResponse.GetRawText())?.AsObject();
+                    var total = listJson?["total"]?.GetValue<int>() ?? 0;
+                    var archives = listJson?["archives"]?.AsArray();
+
+                    Console.WriteLine($"   Found {total} archive(s), array has {archives?.Count ?? 0} items");
+
+                    return total >= 1 && archives != null && archives.Count >= 1;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"   Invoke failed: {ex.Message}");
+                    return false;
+                }
+            }).Result;
+
+            if (result)
+            {
+                Console.WriteLine("✅ Documentation archive list test PASSED");
+            }
+            else
+            {
+                Console.WriteLine("❌ Documentation archive list test FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Documentation archive list test FAILED with exception: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
+            }
+        }
+    }
+
+    private void TestArchiveDeleteViaWebSocket(string[] args)
+    {
+        Console.WriteLine("=== Documentation Archive Delete Test (WebSocket) ===");
+        Console.WriteLine("Testing /documentation/repo/archive/delete via shared admin WebSocket...");
+
+        try
+        {
+            var result = Task.Run(async () =>
+            {
+                var adminClient = Program.AdminClient;
+                if (adminClient == null || !adminClient.IsConnected)
+                {
+                    Console.WriteLine("❌ Admin client not connected");
+                    return false;
+                }
+
+                try
+                {
+                    if (_wsCreatedArchiveId == Guid.Empty)
+                    {
+                        Console.WriteLine("   No archive ID from previous test, skipping");
+                        return true; // Skip, not fail
+                    }
+
+                    Console.WriteLine($"   Deleting archive {_wsCreatedArchiveId}...");
+                    var deleteResponse = (await adminClient.InvokeAsync<object, JsonElement>(
+                        "POST",
+                        "/documentation/repo/archive/delete",
+                        new
+                        {
+                            archiveId = _wsCreatedArchiveId
+                        },
+                        timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+
+                    var deleteJson = JsonNode.Parse(deleteResponse.GetRawText())?.AsObject();
+                    var deleted = deleteJson?["deleted"]?.GetValue<bool>() ?? false;
+
+                    Console.WriteLine($"   Delete result: deleted={deleted}");
+
+                    // Cleanup: delete the test document
+                    try
+                    {
+                        var viewResponse = (await adminClient.InvokeAsync<object, JsonElement>(
+                            "GET",
+                            $"/documentation/slug/archive-ws-test-doc?ns={ARCHIVE_TEST_NAMESPACE}",
+                            null,
+                            timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+
+                        var viewJson = JsonNode.Parse(viewResponse.GetRawText())?.AsObject();
+                        var docIdStr = viewJson?["documentId"]?.GetValue<string>();
+                        if (Guid.TryParse(docIdStr, out var docId))
+                        {
+                            await adminClient.InvokeAsync<object, JsonElement>(
+                                "POST",
+                                "/documentation/delete",
+                                new
+                                {
+                                    @namespace = ARCHIVE_TEST_NAMESPACE,
+                                    documentId = docId,
+                                    permanent = true
+                                },
+                                timeout: TimeSpan.FromSeconds(5));
+                            Console.WriteLine("   Cleaned up test document");
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore cleanup errors
+                    }
+
+                    return deleted;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"   Invoke failed: {ex.Message}");
+                    return false;
+                }
+            }).Result;
+
+            if (result)
+            {
+                Console.WriteLine("✅ Documentation archive delete test PASSED");
+            }
+            else
+            {
+                Console.WriteLine("❌ Documentation archive delete test FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Documentation archive delete test FAILED with exception: {ex.Message}");
             if (ex.InnerException != null)
             {
                 Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
