@@ -1012,22 +1012,58 @@ Channel B waits for @A.ready
    - What telemetry to emit?
    - IDE support (VS Code extension)?
 
-### 5.3 Integration Questions
+#### 6. Blocking/Waiting Semantics - DECIDED: Intent-Based, Handler-Interpreted
 
-1. **Game Engine Communication**:
-   - How do animate/camera actions reach the game client?
-   - Event-based or RPC-based?
-   - Batching for cutscene efficiency?
+**Decision**: ABML expresses intent (do, wait, wait-with-timeout). Handlers interpret based on runtime context. No inherent timeouts unless authored. Language is transport-agnostic.
+
+**Key Insight**: ABML is a language specification, not tied to any specific runtime. Questions like "how do actions reach the game client?" are implementation details for specific ABML consumers (Bannou behavior service, Unity editor, test harness, etc.).
+
+**What ABML Expresses (Spec Level)**:
+
+| Pattern | Syntax | Behavior |
+|---------|--------|----------|
+| Fire-and-forget | `- action: {...}` | Handler executes, ABML continues |
+| Await completion | `- action: {..., await: completion}` | Block until handler signals done |
+| Await input | `- choice: {...}` | Block until input received (indefinitely) |
+| Await with timeout | `- qte: {..., timeout: 1.5s}` | Block with explicit failure path |
+| Await sync point | `- wait_for: @channel.point` | Block until sync point emitted |
+
+**What Handlers Decide (Implementation Level)**:
+- Transport mechanism (events, RPC, direct API calls)
+- How to communicate with game clients
+- Connection management and reconnection
+- System-level timeouts (if any)
+- Batching optimizations for cutscenes
+
+**Handler Contract**:
+- Fire-and-forget: Execute action, return immediately
+- Await completion: Execute action, signal completion when done
+- ABML doesn't prescribe *how* the handler accomplishes this
+
+**Design Principle**: A player can sit on a dialogue choice for hours. ABML doesn't care - that's valid. Timeouts are opt-in game design choices, not system defaults.
+
+**Deferred to Implementation**: Bannou-specific decisions (lib-messaging events, batching strategies, etc.) are behavior plugin design questions, not ABML spec questions.
+
+---
+
+### 5.3 Remaining Integration Questions (Implementation-Level)
+
+These are deferred to specific runtime implementations:
+
+1. **Bannou Behavior Plugin**:
+   - Event transport via lib-messaging
+   - Batching strategy for cutscenes
+   - Service mesh integration patterns
 
 2. **Telephony Integration**:
-   - Direct integration with SignalWire/FreeSWITCH?
-   - Abstract telephony interface?
-   - How to handle real-time audio streams?
+   - SignalWire/FreeSWITCH adapter
+   - Real-time audio stream handling
+   - DTMF input mapping to ABML choices
 
 3. **Memory System Integration**:
-   - How does the cognition pipeline interact with memory service?
-   - Semantic vs episodic vs procedural memory APIs?
-   - Memory consolidation triggers?
+   - Cognition pipeline ↔ memory service interaction
+   - Memory consolidation triggers
+   - Semantic/episodic/procedural memory APIs
 
 ---
 

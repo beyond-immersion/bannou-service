@@ -211,7 +211,7 @@ These were in the original design but belong elsewhere:
 
 1. [x] Review arcadia-kb for Behavior plugin documentation
 2. [x] Resolve migration question → NOT NEEDED
-3. [ ] Check lib-state for atomic conditional save support
+3. [x] Check lib-state for atomic conditional save support
 4. [ ] Rewrite ACTORS_PLUGIN.md as general-purpose design
 5. [ ] Define actor type registration pattern
 6. [ ] Show NPC actor as ONE EXAMPLE, not the core design

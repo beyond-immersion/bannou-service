@@ -1837,17 +1837,28 @@ public class DocumentationWebSocketTestHandler : IServiceTestHandler
 
                     Console.WriteLine($"   Unbind result: namespace={responseNamespace}, documentsDeleted={documentsDeleted}");
 
-                    // Verify binding is gone by checking status returns 404
+                    // Verify binding is gone by checking status returns 404 or empty binding
                     try
                     {
-                        await adminClient.InvokeAsync<object, JsonElement>(
+                        var statusResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                             "POST",
                             "/documentation/repo/status",
                             new { @namespace = REPO_TEST_NAMESPACE },
-                            timeout: TimeSpan.FromSeconds(5));
+                            timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
-                        Console.WriteLine("   Expected 404 for non-existent binding, but got success");
-                        return false;
+                        // If we get a response, check if binding is null (acceptable 404 behavior)
+                        var statusJson = JsonNode.Parse(statusResponse.GetRawText())?.AsObject();
+                        var bindingAfterUnbind = statusJson?["binding"];
+
+                        if (bindingAfterUnbind == null || bindingAfterUnbind.GetValueKind() == JsonValueKind.Null)
+                        {
+                            Console.WriteLine("   Verified: binding no longer exists (null in response)");
+                        }
+                        else
+                        {
+                            Console.WriteLine("   ERROR: Binding still exists after unbind");
+                            return false;
+                        }
                     }
                     catch (Exception statusEx) when (statusEx.Message.Contains("404") || statusEx.Message.Contains("NotFound"))
                     {
