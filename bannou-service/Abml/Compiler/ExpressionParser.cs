@@ -54,12 +54,18 @@ public sealed class ExpressionParser
         // LITERALS
         // ═══════════════════════════════════════════════════════════════════
 
-        // Keywords - use Terms.Text which auto-skips whitespace
+        // Helper to check if character is an identifier continuation character
+        static bool IsIdentifierContinuation(char c) => char.IsLetterOrDigit(c) || c == '_';
+
+        // Keywords - require word boundary (not followed by identifier characters)
         var nullLiteral = Terms.Text("null")
+            .When(static (ctx, _) => ctx.Scanner.Cursor.Eof || !IsIdentifierContinuation(ctx.Scanner.Cursor.Current))
             .Then<ExpressionNode>(static _ => new LiteralNode(null));
         var trueLiteral = Terms.Text("true")
+            .When(static (ctx, _) => ctx.Scanner.Cursor.Eof || !IsIdentifierContinuation(ctx.Scanner.Cursor.Current))
             .Then<ExpressionNode>(static _ => new LiteralNode(true));
         var falseLiteral = Terms.Text("false")
+            .When(static (ctx, _) => ctx.Scanner.Cursor.Eof || !IsIdentifierContinuation(ctx.Scanner.Cursor.Current))
             .Then<ExpressionNode>(static _ => new LiteralNode(false));
 
         // Numbers (integer and floating point)
@@ -165,7 +171,8 @@ public sealed class ExpressionParser
         // MEMBERSHIP OPERATOR
         // ═══════════════════════════════════════════════════════════════════
 
-        var inKeyword = Terms.Text("in");
+        var inKeyword = Terms.Text("in")
+            .When(static (ctx, _) => ctx.Scanner.Cursor.Eof || !IsIdentifierContinuation(ctx.Scanner.Cursor.Current));
         var membership = postfix.And(inKeyword.SkipAnd(postfix).Optional())
             .Then<ExpressionNode>(static pair =>
             {

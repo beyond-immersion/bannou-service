@@ -348,6 +348,7 @@ public sealed class ExpressionVm
 
         switch (instr.Op)
         {
+            // LOADS
             case OpCode.LoadConst:
                 _registers[a] = constants[b];
                 break;
@@ -366,18 +367,102 @@ public sealed class ExpressionVm
             case OpCode.Move:
                 _registers[a] = _registers[b];
                 break;
+
+            // PROPERTY ACCESS
             case OpCode.GetProp:
             case OpCode.GetPropSafe:
-                var obj = _registers[b];
-                _registers[a] = obj == null ? null : AbmlTypeCoercion.GetProperty(obj, (string)constants[c]);
+                _registers[a] = _registers[b] == null ? null : AbmlTypeCoercion.GetProperty(_registers[b], (string)constants[c]);
                 break;
+            case OpCode.GetIndex:
+            case OpCode.GetIndexSafe:
+                _registers[a] = _registers[b] == null ? null : AbmlTypeCoercion.GetIndex(_registers[b], _registers[c]);
+                break;
+
+            // ARITHMETIC
             case OpCode.Add:
                 _registers[a] = AbmlTypeCoercion.Add(_registers[b], _registers[c]);
+                break;
+            case OpCode.Sub:
+                _registers[a] = AbmlTypeCoercion.Subtract(_registers[b], _registers[c]);
+                break;
+            case OpCode.Mul:
+                _registers[a] = AbmlTypeCoercion.Multiply(_registers[b], _registers[c]);
+                break;
+            case OpCode.Div:
+                _registers[a] = AbmlTypeCoercion.Divide(_registers[b], _registers[c]);
+                break;
+            case OpCode.Mod:
+                _registers[a] = AbmlTypeCoercion.Modulo(_registers[b], _registers[c]);
+                break;
+            case OpCode.Neg:
+                _registers[a] = AbmlTypeCoercion.Negate(_registers[b]);
+                break;
+
+            // COMPARISON
+            case OpCode.Eq:
+                _registers[a] = AbmlTypeCoercion.Equals(_registers[b], _registers[c]);
+                break;
+            case OpCode.Ne:
+                _registers[a] = !AbmlTypeCoercion.Equals(_registers[b], _registers[c]);
                 break;
             case OpCode.Lt:
                 _registers[a] = AbmlTypeCoercion.Compare(_registers[b], _registers[c]) < 0;
                 break;
-            default:
+            case OpCode.Le:
+                _registers[a] = AbmlTypeCoercion.Compare(_registers[b], _registers[c]) <= 0;
+                break;
+            case OpCode.Gt:
+                _registers[a] = AbmlTypeCoercion.Compare(_registers[b], _registers[c]) > 0;
+                break;
+            case OpCode.Ge:
+                _registers[a] = AbmlTypeCoercion.Compare(_registers[b], _registers[c]) >= 0;
+                break;
+
+            // LOGICAL
+            case OpCode.Not:
+                _registers[a] = !AbmlTypeCoercion.IsTrue(_registers[b]);
+                break;
+            case OpCode.And:
+                _registers[a] = AbmlTypeCoercion.IsTrue(_registers[b]) && AbmlTypeCoercion.IsTrue(_registers[c]);
+                break;
+            case OpCode.Or:
+                _registers[a] = AbmlTypeCoercion.IsTrue(_registers[b]) || AbmlTypeCoercion.IsTrue(_registers[c]);
+                break;
+
+            // NULL HANDLING
+            case OpCode.Coalesce:
+                _registers[a] = _registers[b] ?? _registers[c];
+                break;
+
+            // STRING/MEMBERSHIP
+            case OpCode.In:
+                _registers[a] = AbmlTypeCoercion.Contains(_registers[c], _registers[b]);
+                break;
+            case OpCode.Concat:
+                _registers[a] = AbmlTypeCoercion.Concat(_registers[b], _registers[c]);
+                break;
+
+            // FUNCTIONS
+            case OpCode.Call:
+                {
+                    var funcName = (string)constants[b];
+                    var argCount = c;
+                    var args = new object?[argCount];
+                    for (var i = 0; i < argCount; i++)
+                    {
+                        args[i] = _registers[i];
+                    }
+                    _registers[a] = _functions.Invoke(funcName, args);
+                }
+                break;
+
+            // CONTROL FLOW - no state change in trace mode
+            case OpCode.Jump:
+            case OpCode.JumpIfTrue:
+            case OpCode.JumpIfFalse:
+            case OpCode.JumpIfNull:
+            case OpCode.JumpIfNotNull:
+            case OpCode.Return:
                 break;
         }
     }
