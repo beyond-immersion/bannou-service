@@ -1588,6 +1588,20 @@
         <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelSignal.Timestamp">
             <summary>When the signal was emitted.</summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.ErrorHandleResult">
+            <summary>
+            Result of attempting to handle an error.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Execution.ErrorHandleResult.NotHandled">
+            <summary>Error was not handled - propagate to caller.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Execution.ErrorHandleResult.HandledStop">
+            <summary>Error was handled, stop flow execution (default behavior).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Execution.ErrorHandleResult.HandledContinue">
+            <summary>Error was handled and _error_handled=true, continue to next action.</summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Execution.IDocumentExecutor">
             <summary>
             Interface for executing ABML documents.
@@ -1623,10 +1637,18 @@
         <member name="M:BeyondImmersion.BannouService.Abml.Execution.DocumentExecutor.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.AbmlDocument,System.String,BeyondImmersion.BannouService.Abml.Expressions.IVariableScope,System.Threading.CancellationToken)">
             <inheritdoc/>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.DocumentExecutor.CheckErrorHandledFlag(BeyondImmersion.BannouService.Abml.Expressions.IVariableScope)">
+            <summary>
+            Checks if the _error_handled flag is set to true in the scope.
+            </summary>
+            <param name="scope">The scope to check.</param>
+            <returns>HandledContinue if _error_handled is true, HandledStop otherwise.</returns>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Abml.Execution.DocumentExecutor.TryHandleErrorAsync(BeyondImmersion.BannouService.Abml.Documents.Flow,BeyondImmersion.BannouService.Abml.Execution.ErrorResult,BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
             <summary>
             Tries to handle an error through the 3-level chain:
-            Action-level → Flow-level → Document-level
+            Action-level → Flow-level → Document-level.
+            Returns whether the error was handled and whether to continue execution.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Execution.ErrorInfo">

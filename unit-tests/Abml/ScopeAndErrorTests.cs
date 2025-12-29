@@ -418,17 +418,19 @@ public class ScopeAndErrorTests
     }
 
     [Fact]
-    public async Task Execute_OnError_ContinuesAfterHandling()
+    public async Task Execute_OnError_DefaultBehavior_StopsAfterHandling()
     {
+        // Default behavior: error is handled but flow execution STOPS
+        // (no continuation to next action unless _error_handled is set)
         var yaml = """
             version: "2.0"
             metadata:
-              id: continue_after
+              id: stop_after
             flows:
               start:
                 actions:
                   - goto: nowhere
-                  - log: "This should not run"
+                  - log: "This should NOT run (default stops after error)"
                 on_error:
                   - log: "Error handled"
             """;
@@ -438,10 +440,71 @@ public class ScopeAndErrorTests
 
         var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
 
-        // After handling error, execution continues with next action
-        // But since the error was in the first action and we handled it,
-        // we should see the "Error handled" log and then "This should not run" should NOT appear
-        // because goto would have exited the flow if it succeeded
+        // Default: error handled = success, but execution STOPS
+        // The second action ("This should NOT run") does not execute
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Logs);
+        Assert.Equal("Error handled", result.Logs[0].Message);
+    }
+
+    [Fact]
+    public async Task Execute_OnError_WithErrorHandledFlag_ContinuesToNextAction()
+    {
+        // When _error_handled is set to true, execution continues to next action
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: continue_after
+            flows:
+              start:
+                actions:
+                  - goto: nowhere
+                  - log: "This SHOULD run (error_handled=true)"
+                on_error:
+                  - log: "Error handled"
+                  - set:
+                      variable: _error_handled
+                      value: "${true}"
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+
+        // With _error_handled=true: error handled AND execution continues
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Logs.Count);
+        Assert.Equal("Error handled", result.Logs[0].Message);
+        Assert.Equal("This SHOULD run (error_handled=true)", result.Logs[1].Message);
+    }
+
+    [Fact]
+    public async Task Execute_OnError_ErrorHandledFalse_StopsExecution()
+    {
+        // Explicitly setting _error_handled to false still stops execution
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: explicit_false
+            flows:
+              start:
+                actions:
+                  - goto: nowhere
+                  - log: "This should NOT run"
+                on_error:
+                  - log: "Error handled"
+                  - set:
+                      variable: _error_handled
+                      value: "${false}"
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+
+        // _error_handled=false means stop (same as default)
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
         Assert.Equal("Error handled", result.Logs[0].Message);
@@ -613,9 +676,10 @@ public class ScopeAndErrorTests
     }
 
     [Fact]
-    public async Task Execute_ActionOnError_HandlesActionError()
+    public async Task Execute_ActionOnError_DefaultBehavior_StopsAfterHandling()
     {
-        // Create executor with a failing handler for testing
+        // Default behavior: action error is handled but flow STOPS
+        // (no continuation to next action unless _error_handled is set)
         var handlers = TestHandlerFactory.CreateWithFailingHandler();
         var executor = new DocumentExecutor(new ExpressionEvaluator(), handlers);
 
@@ -630,7 +694,7 @@ public class ScopeAndErrorTests
                       param: value
                       on_error:
                         - log: { message: "Action caught: ${_error.message}" }
-                  - log: "After failing action"
+                  - log: "This should NOT run (default stops)"
             """;
 
         var parseResult = _parser.Parse(yaml);
@@ -638,11 +702,46 @@ public class ScopeAndErrorTests
 
         var result = await executor.ExecuteAsync(parseResult.Value!, "start");
 
-        // After error handling, flow completes but doesn't continue with remaining actions
-        // This is consistent with flow-level on_error behavior
+        // Default: error handled = success, but execution STOPS
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
         Assert.Contains("Action caught:", result.Logs[0].Message);
+    }
+
+    [Fact]
+    public async Task Execute_ActionOnError_WithErrorHandledFlag_ContinuesToNextAction()
+    {
+        // When _error_handled is set in action's on_error, execution continues
+        var handlers = TestHandlerFactory.CreateWithFailingHandler();
+        var executor = new DocumentExecutor(new ExpressionEvaluator(), handlers);
+
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: action_continue
+            flows:
+              start:
+                actions:
+                  - failing_action:
+                      param: value
+                      on_error:
+                        - log: { message: "Action caught: ${_error.message}" }
+                        - set:
+                            variable: _error_handled
+                            value: "${true}"
+                  - log: "This SHOULD run (error_handled=true)"
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await executor.ExecuteAsync(parseResult.Value!, "start");
+
+        // With _error_handled=true: error handled AND execution continues
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Logs.Count);
+        Assert.Contains("Action caught:", result.Logs[0].Message);
+        Assert.Equal("This SHOULD run (error_handled=true)", result.Logs[1].Message);
     }
 
     [Fact]
@@ -865,6 +964,231 @@ public class ScopeAndErrorTests
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
         Assert.Equal("Flow caught handler error", result.Logs[0].Message);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // _ERROR_HANDLED CONTINUATION TESTS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public async Task Execute_ErrorHandled_DocumentLevel_ContinuesToNextAction()
+    {
+        // Document-level on_error with _error_handled=true allows continuation
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: doc_continue
+            on_error: error_handler
+            flows:
+              start:
+                actions:
+                  - goto: nowhere
+                  - log: "This SHOULD run after doc error handling"
+              error_handler:
+                actions:
+                  - log: "Document handler"
+                  - set:
+                      variable: _error_handled
+                      value: "${true}"
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Logs.Count);
+        Assert.Equal("Document handler", result.Logs[0].Message);
+        Assert.Equal("This SHOULD run after doc error handling", result.Logs[1].Message);
+    }
+
+    [Fact]
+    public async Task Execute_ErrorHandled_MultipleErrorsWithContinuation()
+    {
+        // Multiple failing actions with _error_handled allows continuing through all
+        var handlers = TestHandlerFactory.CreateWithFailingHandler();
+        var executor = new DocumentExecutor(new ExpressionEvaluator(), handlers);
+
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: multi_error
+            flows:
+              start:
+                actions:
+                  - failing_action:
+                      param: first
+                      on_error:
+                        - log: "First error handled"
+                        - set:
+                            variable: _error_handled
+                            value: "${true}"
+                  - log: "Between errors"
+                  - failing_action:
+                      param: second
+                      on_error:
+                        - log: "Second error handled"
+                        - set:
+                            variable: _error_handled
+                            value: "${true}"
+                  - log: "After all errors"
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await executor.ExecuteAsync(parseResult.Value!, "start");
+
+        // All 4 log messages should appear - both errors handled with continuation
+        Assert.True(result.IsSuccess);
+        Assert.Equal(4, result.Logs.Count);
+        Assert.Equal("First error handled", result.Logs[0].Message);
+        Assert.Equal("Between errors", result.Logs[1].Message);
+        Assert.Equal("Second error handled", result.Logs[2].Message);
+        Assert.Equal("After all errors", result.Logs[3].Message);
+    }
+
+    [Fact]
+    public async Task Execute_ErrorHandled_GracefulDegradation_UseCachedData()
+    {
+        // THE DREAM pattern: graceful degradation using cached data on error
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: graceful_degradation
+            context:
+              variables:
+                cached_data:
+                  default: "cached_value"
+                result:
+                  default: null
+            flows:
+              start:
+                actions:
+                  - goto: nonexistent_query_service
+                  - log: { message: "Using data: ${result}" }
+                on_error:
+                  - log: "Query failed, using cached data"
+                  - set:
+                      variable: result
+                      value: "${cached_data}"
+                  - set:
+                      variable: _error_handled
+                      value: "${true}"
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+
+        // Error handled, cached data used, execution continued
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Logs.Count);
+        Assert.Equal("Query failed, using cached data", result.Logs[0].Message);
+        Assert.Equal("Using data: cached_value", result.Logs[1].Message);
+    }
+
+    [Fact]
+    public async Task Execute_ErrorHandled_FlagIsLocalToScope()
+    {
+        // _error_handled set in one flow's error handler doesn't affect subsequent flows
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: flag_scope
+            flows:
+              start:
+                actions:
+                  - goto: nowhere
+                  - log: "This runs (error_handled=true)"
+                  - set:
+                      variable: result
+                      value: "completed"
+                on_error:
+                  - log: "Error handled, continuing"
+                  - set:
+                      variable: _error_handled
+                      value: "${true}"
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+
+        // Flow continues after error handling
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Logs.Count);
+        Assert.Equal("Error handled, continuing", result.Logs[0].Message);
+        Assert.Equal("This runs (error_handled=true)", result.Logs[1].Message);
+    }
+
+    [Fact]
+    public async Task Execute_ErrorHandled_CanSetAndCheckVariable()
+    {
+        // Can use variables set in error handler after continuation
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: use_error_var
+            flows:
+              start:
+                actions:
+                  - goto: nowhere
+                  - log: { message: "Recovered: ${recovered}" }
+                on_error:
+                  - log: "Error occurred"
+                  - set:
+                      variable: recovered
+                      value: "yes"
+                  - set:
+                      variable: _error_handled
+                      value: "${true}"
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+
+        // Variables set in error handler are available after continuation
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Logs.Count);
+        Assert.Equal("Error occurred", result.Logs[0].Message);
+        Assert.Equal("Recovered: yes", result.Logs[1].Message);
+    }
+
+    [Fact]
+    public async Task Execute_ErrorHandled_FlagMustBeExactlyTrue()
+    {
+        // _error_handled must be boolean true, not truthy string
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: flag_must_be_true
+            flows:
+              start:
+                actions:
+                  - goto: nowhere
+                  - log: "This should NOT run"
+                on_error:
+                  - log: "Error handled"
+                  - set:
+                      variable: _error_handled
+                      value: "yes"
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+
+        // String "yes" is not boolean true, so execution stops
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Logs);
+        Assert.Equal("Error handled", result.Logs[0].Message);
     }
 }
 

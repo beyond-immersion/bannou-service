@@ -11,6 +11,21 @@ using BeyondImmersion.BannouService.Abml.Runtime;
 namespace BeyondImmersion.BannouService.Abml.Execution;
 
 /// <summary>
+/// Result of attempting to handle an error.
+/// </summary>
+public enum ErrorHandleResult
+{
+    /// <summary>Error was not handled - propagate to caller.</summary>
+    NotHandled,
+
+    /// <summary>Error was handled, stop flow execution (default behavior).</summary>
+    HandledStop,
+
+    /// <summary>Error was handled and _error_handled=true, continue to next action.</summary>
+    HandledContinue
+}
+
+/// <summary>
 /// Interface for executing ABML documents.
 /// </summary>
 public interface IDocumentExecutor
@@ -150,14 +165,23 @@ public sealed class DocumentExecutor : IDocumentExecutor
                     {
                         // Flow not found is an error - try to handle with on_error
                         var gotoError = ActionResult.Error($"Flow not found: {gotoResult.FlowName}");
-                        var gotoErrorHandled = await TryHandleErrorAsync(
+                        var gotoHandleResult = await TryHandleErrorAsync(
                             flow, (ErrorResult)gotoError, action, context, ct);
-                        if (gotoErrorHandled)
+
+                        switch (gotoHandleResult)
                         {
-                            // Error was handled, flow completes successfully
-                            return ActionResult.Continue;
+                            case ErrorHandleResult.NotHandled:
+                                return gotoError;  // Propagate unhandled error
+
+                            case ErrorHandleResult.HandledContinue:
+                                // _error_handled was set - continue to next action
+                                continue;
+
+                            case ErrorHandleResult.HandledStop:
+                            default:
+                                // Error was handled - stop flow
+                                return ActionResult.Continue;
                         }
-                        return gotoError;  // Propagate unhandled error
                     }
 
                     // Pop current frame and push new one
@@ -184,14 +208,24 @@ public sealed class DocumentExecutor : IDocumentExecutor
 
                 case ErrorResult errorResult:
                     // Try to handle error with on_error handlers
-                    var handled = await TryHandleErrorAsync(
+                    var handleResult = await TryHandleErrorAsync(
                         flow, errorResult, action, context, ct);
-                    if (!handled)
+
+                    switch (handleResult)
                     {
-                        return errorResult;  // Propagate unhandled error
+                        case ErrorHandleResult.NotHandled:
+                            return errorResult;  // Propagate unhandled error
+
+                        case ErrorHandleResult.HandledContinue:
+                            // _error_handled was set to true - continue to next action
+                            break;
+
+                        case ErrorHandleResult.HandledStop:
+                        default:
+                            // Error was handled but _error_handled not set - stop flow
+                            return ActionResult.Continue;
                     }
-                    // Error was handled, flow completes successfully
-                    return ActionResult.Continue;
+                    break;
             }
         }
 
@@ -199,7 +233,7 @@ public sealed class DocumentExecutor : IDocumentExecutor
         return ActionResult.Continue;
     }
 
-    private async ValueTask<bool> TryHandleActionErrorAsync(
+    private async ValueTask<ErrorHandleResult> TryHandleActionErrorAsync(
         ActionNode failedAction,
         ErrorResult errorResult,
         string flowName,
@@ -209,7 +243,7 @@ public sealed class DocumentExecutor : IDocumentExecutor
         // Check if action supports on_error
         if (failedAction is not IHasOnError { OnError: { Count: > 0 } onError })
         {
-            return false;
+            return ErrorHandleResult.NotHandled;
         }
 
         // Create error info and set _error variable
@@ -222,10 +256,17 @@ public sealed class DocumentExecutor : IDocumentExecutor
         scope.SetValue("_error", errorInfo.ToDictionary());
 
         // Execute action-level error handlers
-        return await ExecuteErrorHandlersAsync(onError, context, ct);
+        var handled = await ExecuteErrorHandlersAsync(onError, context, ct);
+        if (!handled)
+        {
+            return ErrorHandleResult.NotHandled;
+        }
+
+        // Check if _error_handled was set to true for continuation
+        return CheckErrorHandledFlag(scope);
     }
 
-    private async ValueTask<bool> TryHandleFlowErrorAsync(
+    private async ValueTask<ErrorHandleResult> TryHandleFlowErrorAsync(
         Flow flow,
         ErrorResult errorResult,
         ActionNode failedAction,
@@ -235,7 +276,7 @@ public sealed class DocumentExecutor : IDocumentExecutor
         // No flow-level error handler? Cannot handle
         if (flow.OnError.Count == 0)
         {
-            return false;
+            return ErrorHandleResult.NotHandled;
         }
 
         // Create error info and set _error variable
@@ -248,10 +289,17 @@ public sealed class DocumentExecutor : IDocumentExecutor
         scope.SetValue("_error", errorInfo.ToDictionary());
 
         // Execute flow-level error handlers
-        return await ExecuteErrorHandlersAsync(flow.OnError, context, ct);
+        var handled = await ExecuteErrorHandlersAsync(flow.OnError, context, ct);
+        if (!handled)
+        {
+            return ErrorHandleResult.NotHandled;
+        }
+
+        // Check if _error_handled was set to true for continuation
+        return CheckErrorHandledFlag(scope);
     }
 
-    private async ValueTask<bool> TryHandleDocumentErrorAsync(
+    private async ValueTask<ErrorHandleResult> TryHandleDocumentErrorAsync(
         ErrorResult errorResult,
         ActionNode failedAction,
         string flowName,
@@ -261,13 +309,13 @@ public sealed class DocumentExecutor : IDocumentExecutor
         // No document-level error handler? Cannot handle
         if (context.Document.OnError == null)
         {
-            return false;
+            return ErrorHandleResult.NotHandled;
         }
 
         // Find the error handler flow
         if (!context.Document.Flows.TryGetValue(context.Document.OnError, out var errorFlow))
         {
-            return false;
+            return ErrorHandleResult.NotHandled;
         }
 
         // Create error info and set _error variable
@@ -286,12 +334,31 @@ public sealed class DocumentExecutor : IDocumentExecutor
         try
         {
             var result = await ExecuteFlowAsync(errorFlow, context, ct);
-            return result is not ErrorResult;
+            if (result is ErrorResult)
+            {
+                return ErrorHandleResult.NotHandled;
+            }
+
+            // Check if _error_handled was set to true for continuation
+            return CheckErrorHandledFlag(errorScope);
         }
         finally
         {
             context.CallStack.Pop();
         }
+    }
+
+    /// <summary>
+    /// Checks if the _error_handled flag is set to true in the scope.
+    /// </summary>
+    /// <param name="scope">The scope to check.</param>
+    /// <returns>HandledContinue if _error_handled is true, HandledStop otherwise.</returns>
+    private static ErrorHandleResult CheckErrorHandledFlag(IVariableScope scope)
+    {
+        var errorHandled = scope.GetValue("_error_handled");
+        return errorHandled is true
+            ? ErrorHandleResult.HandledContinue
+            : ErrorHandleResult.HandledStop;
     }
 
     private async ValueTask<bool> ExecuteErrorHandlersAsync(
@@ -335,9 +402,10 @@ public sealed class DocumentExecutor : IDocumentExecutor
 
     /// <summary>
     /// Tries to handle an error through the 3-level chain:
-    /// Action-level → Flow-level → Document-level
+    /// Action-level → Flow-level → Document-level.
+    /// Returns whether the error was handled and whether to continue execution.
     /// </summary>
-    private async ValueTask<bool> TryHandleErrorAsync(
+    private async ValueTask<ErrorHandleResult> TryHandleErrorAsync(
         Flow flow,
         ErrorResult errorResult,
         ActionNode failedAction,
@@ -345,24 +413,27 @@ public sealed class DocumentExecutor : IDocumentExecutor
         CancellationToken ct)
     {
         // Level 1: Action-level on_error
-        if (await TryHandleActionErrorAsync(failedAction, errorResult, flow.Name, context, ct))
+        var actionResult = await TryHandleActionErrorAsync(failedAction, errorResult, flow.Name, context, ct);
+        if (actionResult != ErrorHandleResult.NotHandled)
         {
-            return true;
+            return actionResult;
         }
 
         // Level 2: Flow-level on_error
-        if (await TryHandleFlowErrorAsync(flow, errorResult, failedAction, context, ct))
+        var flowResult = await TryHandleFlowErrorAsync(flow, errorResult, failedAction, context, ct);
+        if (flowResult != ErrorHandleResult.NotHandled)
         {
-            return true;
+            return flowResult;
         }
 
         // Level 3: Document-level on_error
-        if (await TryHandleDocumentErrorAsync(errorResult, failedAction, flow.Name, context, ct))
+        var docResult = await TryHandleDocumentErrorAsync(errorResult, failedAction, flow.Name, context, ct);
+        if (docResult != ErrorHandleResult.NotHandled)
         {
-            return true;
+            return docResult;
         }
 
-        return false;
+        return ErrorHandleResult.NotHandled;
     }
 
     private async ValueTask<ActionResult> ExecuteActionAsync(

@@ -1,11 +1,24 @@
 # ABML First Steps - Implementation Guide
 
-> **Status**: IMPLEMENTATION GUIDE
+> **Status**: ✅ IMPLEMENTED
 > **Created**: 2025-12-28
-> **Purpose**: Guidance for initial ABML runtime implementation
+> **Updated**: 2025-12-28
+> **Purpose**: Authoritative reference for ABML runtime implementation
 > **Related**: [ABML_V2_DESIGN_PROPOSAL.md](./ABML_V2_DESIGN_PROPOSAL.md), [BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md)
 
-This document provides implementation guidance for building the ABML runtime, including architecture decisions and phased implementation approach.
+This document provides the authoritative reference for the ABML runtime implementation, including architecture decisions, key patterns, and implementation details.
+
+## Implementation Status
+
+| Component | Status | Tests |
+|-----------|--------|-------|
+| Expression Parser & Compiler | ✅ Done | 100+ |
+| Register-based VM | ✅ Done | 50+ |
+| Variable Scope System | ✅ Done | 30+ |
+| Control Flow Handlers | ✅ Done | 40+ |
+| Error Handling (`on_error` + `_error_handled`) | ✅ Done | 37+ |
+| Multi-Channel Execution | ✅ Done | 15+ |
+| **Total** | **✅ Complete** | **414** |
 
 ---
 
@@ -413,7 +426,25 @@ public enum OpCode : byte
 }
 ```
 
-### 3.3 Compiled Expression Structure
+### 3.3 Additional OpCodes (Implemented)
+
+The following opcodes were added during implementation:
+
+```csharp
+// Boolean conversion
+/// <summary>R[A] = IsTrue(R[B]) - explicit boolean conversion</summary>
+ToBool,
+
+// Function calling
+/// <summary>Set arg count for next Call instruction</summary>
+CallArgs,
+
+// Range allocation for function arguments
+/// <summary>Allocate contiguous registers for function args</summary>
+// Uses RegisterAllocator.AllocateRange(count)
+```
+
+### 3.4 Compiled Expression Structure
 
 ```csharp
 /// <summary>
@@ -441,9 +472,227 @@ public sealed class CompiledExpression
 
 ---
 
-## 4. VM Implementation
+## 4. Variable Scope System
 
-### 4.1 Core VM Structure
+### 4.1 Scope Semantics
+
+The variable scope system provides three distinct write modes to prevent accidental variable clobbering:
+
+```csharp
+public interface IVariableScope
+{
+    /// <summary>Get a variable value, searching up scope chain.</summary>
+    object? GetValue(string name);
+
+    /// <summary>Set a variable, searching up scope chain. Creates locally if not found.</summary>
+    void SetValue(string name, object? value);
+
+    /// <summary>Set a variable in THIS scope only, shadowing any parent.</summary>
+    void SetLocalValue(string name, object? value);
+
+    /// <summary>Set a variable in the root (document) scope.</summary>
+    void SetGlobalValue(string name, object? value);
+
+    /// <summary>Create a child scope.</summary>
+    IVariableScope CreateChild();
+}
+```
+
+### 4.2 Scope Behavior
+
+| Operation | Behavior |
+|-----------|----------|
+| `SetValue` | Search up chain, update if found, else create locally |
+| `SetLocalValue` | Always create/update in current scope (shadows parent) |
+| `SetGlobalValue` | Always write to root scope |
+| `GetValue` | Search up chain, return first match or null |
+
+### 4.3 ForEach Loop Variable Isolation
+
+Loop variables use `SetLocalValue` to prevent clobbering outer scope:
+
+```yaml
+# Outer 'i' is preserved after loop
+- set: { variable: i, value: 100 }
+- for_each:
+    variable: i           # Uses SetLocalValue, shadows outer 'i'
+    collection: "${items}"
+    do:
+      - log: "${i}"       # Logs item values
+- log: "${i}"             # Still 100, not clobbered
+```
+
+### 4.4 Call Handler Scope Isolation
+
+Called flows execute in a child scope:
+
+```csharp
+// CallHandler creates isolated scope
+var callScope = currentScope.CreateChild();
+context.CallStack.Push(flowName, callScope);
+```
+
+This prevents called flows from accidentally modifying caller's variables.
+
+---
+
+## 5. Error Handling System
+
+### 5.1 Three-Level Error Chain
+
+Errors are handled through a hierarchical chain:
+
+```
+Action-level on_error → Flow-level on_error → Document-level on_error
+```
+
+### 5.2 Error Handler Syntax
+
+```yaml
+version: "2.0"
+metadata:
+  id: error_handling_example
+
+# Document-level error handler
+on_error: handle_fatal_error
+
+flows:
+  start:
+    # Flow-level error handler
+    on_error:
+      - log: { message: "Flow error: ${_error.message}", level: error }
+      - set: { variable: _error_handled, value: "${true}" }
+
+    actions:
+      # Action-level error handling
+      - query_service:
+          target: economy
+          on_error:
+            - log: "Service unavailable, using cached data"
+            - set: { variable: _error_handled, value: "${true}" }
+
+  handle_fatal_error:
+    actions:
+      - log: { message: "Fatal: ${_error.message}", level: error }
+```
+
+### 5.3 The `_error_handled` Opt-In Pattern
+
+By default, error handling **stops** flow execution. To continue to the next action (try/catch semantics), explicitly set `_error_handled = true`:
+
+| Scenario | `_error_handled` | Result |
+|----------|------------------|--------|
+| Default (not set) | N/A | Flow completes successfully but **stops** |
+| Set to `true` | `${true}` | Flow **continues** to next action |
+| Set to `false` | `${false}` | Flow completes successfully but **stops** |
+| Set to truthy string | `"yes"` | Flow completes successfully but **stops** |
+
+**Graceful Degradation Pattern (THE DREAM):**
+
+```yaml
+flows:
+  start:
+    actions:
+      - query_environment:
+          bounds: "${combat_bounds}"
+          result_variable: affordances
+      - for_each:
+          variable: affordance
+          collection: "${affordances}"
+          do:
+            - process: "${affordance}"
+    on_error:
+      - log: "Query failed, using cached data"
+      - set: { variable: affordances, value: "${cached_affordances}" }
+      - set: { variable: _error_handled, value: "${true}" }  # Continue!
+```
+
+### 5.4 Error Context Variable
+
+When an error occurs, `_error` is set with error details:
+
+```yaml
+on_error:
+  - log: { message: "Error in ${_error.flow}: ${_error.message}" }
+  - log: { message: "Failed action: ${_error.action}" }
+```
+
+---
+
+## 6. Multi-Channel Execution
+
+### 6.1 Cooperative Round-Robin Scheduling
+
+Channels execute cooperatively on a single thread with deterministic interleaving:
+
+```
+Tick 1:  camera[0] → actors[0] → effects[0]
+Tick 2:  camera[1] → actors[1] → effects[1]
+Tick 3:  camera[2] → actors[WAIT] → effects[2]  (actors waiting)
+Tick 4:  camera[3] → effects[3]                  (actors still waiting)
+Tick 5:  camera[EMIT] → actors[2] → effects[4]  (actors wake)
+```
+
+### 6.2 Sync Points: emit and wait_for
+
+```yaml
+channels:
+  camera:
+    - log: "Camera: Establishing shot"
+    - wait_for: @actors.in_position
+    - log: "Camera: Crane up"
+    - emit: crane_complete
+
+  actors:
+    - log: "Actors: Walking to marks"
+    - emit: in_position
+    - wait_for: @camera.crane_complete
+    - log: "Actors: Starting dialogue"
+```
+
+### 6.3 Wait Modes
+
+```yaml
+# Wait for all signals (default)
+- wait_for:
+    signals:
+      - @channel_a.signal1
+      - @channel_b.signal2
+    mode: all_of
+
+# Wait for any signal
+- wait_for:
+    signals:
+      - @channel_a.done
+      - @channel_b.done
+    mode: any_of
+```
+
+### 6.4 Deadlock Detection
+
+The scheduler detects when all active channels are waiting for signals that will never arrive:
+
+```yaml
+# DEADLOCK - detected at runtime
+channels:
+  a:
+    - wait_for: @b.signal  # A waits for B
+  b:
+    - wait_for: @a.signal  # B waits for A
+```
+
+### 6.5 Channel Scope Isolation
+
+Each channel has its own scope (child of document scope). Channels can:
+- Read from document scope
+- Write locally without affecting other channels
+- Communicate via sync points, not shared variables
+
+---
+
+## 7. VM Implementation
+
+### 7.1 Core VM Structure
 
 ```csharp
 /// <summary>
@@ -715,7 +964,7 @@ public sealed class ExpressionVM
 }
 ```
 
-### 4.2 Type Coercion Helpers
+### 7.2 Type Coercion Helpers
 
 ```csharp
 // ═══════════════════════════════════════════════════════════════════════════
@@ -853,7 +1102,7 @@ private static string Concat(object? left, object? right)
 }
 ```
 
-### 4.3 Debugging Support
+### 7.3 Debugging Support
 
 ```csharp
 /// <summary>
@@ -919,9 +1168,9 @@ Constants: entity, health, 0.3, critical, stable
 
 ---
 
-## 5. Compilation Example
+## 8. Compilation Example
 
-### 5.1 Expression to Bytecode
+### 8.1 Expression to Bytecode
 
 Expression: `${entity?.health < 0.3 ? 'critical' : 'stable'}`
 
@@ -948,7 +1197,7 @@ Code:
 RegisterCount: 4
 ```
 
-### 5.2 Code Representation
+### 8.2 Code Representation
 
 ```csharp
 var compiled = new CompiledExpression
@@ -974,117 +1223,76 @@ var compiled = new CompiledExpression
 
 ---
 
-## 6. Phase 1 Implementation Plan
+## 9. Implementation Summary
 
-### Week 1-2: Parser & Expression Evaluator
-
-```
-├── ABML Parser (YamlDotNet)
-│   ├── Document structure validation
-│   ├── Version checking (2.0.0)
-│   ├── Metadata extraction
-│   ├── Flow/channel parsing
-│   ├── Error reporting with line numbers
-│   └── Tests: 50+ parsing scenarios
-│
-├── Expression Evaluator (Parlot)
-│   ├── Lexer
-│   ├── Parser (operators, functions, paths)
-│   ├── AST representation
-│   ├── Bytecode compiler
-│   ├── Bytecode VM
-│   ├── Expression cache (ConcurrentDictionary)
-│   └── Tests: 100+ expression scenarios
-│       ├── Arithmetic: ${a + b * c}
-│       ├── Comparison: ${x > 5 && y < 10}
-│       ├── Ternary: ${cond ? a : b}
-│       ├── Null safety: ${obj?.prop ?? default}
-│       ├── Path navigation: ${entity.inventory.items[0].name}
-│       ├── Functions: ${distance_to(target)}
-│       └── Edge cases: overflow, division by zero, null paths
-```
-
-### Week 3-4: Executor & Control Flow
+### Components Implemented
 
 ```
-├── Tree-Walking Executor
-│   ├── Action dispatch
-│   ├── Result handling
-│   ├── Context propagation
-│   └── Tests: execution lifecycle
+bannou-service/Abml/
+├── Compiler/
+│   ├── ExpressionCompiler.cs      # AST → Bytecode
+│   ├── OpCode.cs                  # Instruction definitions
+│   ├── RegisterAllocator.cs       # Register management
+│   └── InstructionBuilder.cs      # Bytecode generation
 │
-├── Variable Scoping
-│   ├── Local scope (flow-level)
-│   ├── Document scope (document lifetime)
-│   ├── Entity scope (mock initially)
-│   ├── World scope (mock initially)
-│   └── Tests: 20+ scoping scenarios
+├── Runtime/
+│   ├── ExpressionVm.cs            # Bytecode execution
+│   └── ExpressionCache.cs         # Compiled expression cache
 │
-├── Control Flow Handlers
-│   ├── cond (if/else branching)
-│   ├── for_each (iteration)
-│   ├── repeat (count-based loop)
-│   ├── goto (flow transfer)
-│   ├── call (flow invocation)
-│   ├── return (flow exit)
-│   └── Tests: 30+ control flow scenarios
+├── Parser/
+│   ├── ExpressionParser.cs        # Parlot-based parser
+│   ├── DocumentParser.cs          # YAML document parsing
+│   └── ExpressionLexer.cs         # Tokenization
 │
-├── Variable Handlers
-│   ├── set
-│   ├── increment/decrement
-│   ├── clear
-│   └── Tests: 15+ variable scenarios
+├── Documents/
+│   ├── AbmlDocument.cs            # Document model
+│   ├── Flow.cs                    # Flow definition
+│   └── Actions/                   # Action node types
 │
-├── Error Handling
-│   ├── Action-level on_error
-│   ├── Document-level error handlers
-│   ├── Error context propagation
-│   └── Tests: 15+ error scenarios
+├── Execution/
+│   ├── DocumentExecutor.cs        # Main execution engine
+│   ├── ExecutionContext.cs        # Runtime context
+│   ├── CallStack.cs               # Flow call tracking
+│   ├── Channel/
+│   │   ├── ChannelScheduler.cs    # Multi-channel coordinator
+│   │   └── ChannelState.cs        # Per-channel state
+│   └── Handlers/                  # Action handlers
+│       ├── SetHandler.cs
+│       ├── CallHandler.cs
+│       ├── GotoHandler.cs
+│       ├── CondHandler.cs
+│       ├── ForEachHandler.cs
+│       ├── RepeatHandler.cs
+│       ├── LogHandler.cs
+│       ├── EmitHandler.cs
+│       ├── WaitForHandler.cs
+│       └── SyncHandler.cs
+│
+└── Expressions/
+    ├── VariableScope.cs           # Scope chain implementation
+    ├── ExpressionEvaluator.cs     # High-level evaluation API
+    └── AbmlTypeCoercion.cs        # Type conversion helpers
 ```
 
-### Week 5: Multi-Channel Execution
+### Test Coverage
 
-```
-├── Channel Executor
-│   ├── Independent channel threads/tasks
-│   ├── Channel state tracking
-│   ├── Parallel execution
-│   └── Tests: basic multi-channel
-│
-├── Sync Point System
-│   ├── emit action
-│   ├── wait_for action
-│   ├── Sync point registry
-│   ├── Wait registry (who's waiting for what)
-│   └── Tests: 10+ sync scenarios
-│
-├── Barrier Synchronization
-│   ├── all_of (wait for all)
-│   ├── any_of (wait for first)
-│   ├── timeout handling
-│   └── Tests: 10+ barrier scenarios
-│
-├── Deadlock Detection
-│   ├── Compile-time cycle detection
-│   ├── Runtime timeout fallbacks
-│   └── Tests: 5+ deadlock scenarios
-```
-
-### Test Coverage Goals
-
-| Component | Unit Tests | Coverage Target |
-|-----------|------------|-----------------|
-| Expression Evaluator | 100+ | 95%+ |
-| Control Flow | 50+ | 90%+ |
-| Multi-Channel | 30+ | 90%+ |
-| Error Handling | 20+ | 85%+ |
-| **Total Phase 1** | **200+** | **90%+** |
+| Component | Tests | Status |
+|-----------|-------|--------|
+| Expression Parser | 100+ | ✅ |
+| Expression Compiler | 50+ | ✅ |
+| Expression VM | 50+ | ✅ |
+| Variable Scoping | 30+ | ✅ |
+| Control Flow Handlers | 40+ | ✅ |
+| Error Handling | 37+ | ✅ |
+| Multi-Channel | 15+ | ✅ |
+| Edge Cases | 50+ | ✅ |
+| **Total** | **414** | ✅ |
 
 ---
 
-## 7. What You Have After Phase 1
+## 10. Example: Complete ABML Document
 
-A working ABML runtime that can execute:
+The ABML runtime can execute complex behaviors like:
 
 ```yaml
 # Complex behavior with all features
@@ -1136,32 +1344,39 @@ All testable with zero infrastructure.
 
 ---
 
-## 8. Key Design Principles
+## 11. Key Design Principles
 
-### 8.1 Expression Evaluation
+### 11.1 Expression Evaluation
 
 - **Cache compiled expressions** - Parse/compile once, execute many times
 - **256 registers is enough** - ABML expressions are small, never need spilling
 - **Null-safety first** - `?.` and `??` are critical for game state access
 - **Type coercion is permissive** - Like JavaScript, auto-convert when reasonable
 
-### 8.2 Execution Model
+### 11.2 Execution Model
 
 - **Tree-walk for control flow** - Simple, debuggable, hot-reload friendly
 - **Bytecode for expressions** - Compiled for performance where it matters
 - **Mock handlers for testing** - Action handlers can be mocked for unit tests
 
-### 8.3 Testing Philosophy
+### 11.3 Testing Philosophy
 
-- **No infrastructure in Phase 1** - Everything testable with pure unit tests
+- **Pure unit tests** - Everything testable with zero infrastructure
 - **Edge cases matter** - Division by zero, null paths, overflow
-- **Deadlock detection at compile time** - Fail fast, not at runtime
+- **Deadlock detection at runtime** - Scheduler detects and reports
+
+### 11.4 Error Handling Philosophy
+
+- **Safe default** - Error handling stops flow (prevents cascading failures)
+- **Explicit opt-in** - Set `_error_handled = true` to continue (try/catch)
+- **Graceful degradation** - THE DREAM pattern for cached fallback data
 
 ---
 
-*This document should be used as the primary reference for ABML runtime implementation.*
+*This document is the authoritative reference for ABML runtime implementation.*
 
 *Related documents:*
 - *[ABML_V2_DESIGN_PROPOSAL.md](./ABML_V2_DESIGN_PROPOSAL.md) - Language specification*
 - *[BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md) - Runtime integration*
 - *[THE_DREAM_GAP_ANALYSIS.md](./THE_DREAM_GAP_ANALYSIS.md) - Future extensions*
+- *[THE_DREAM.md](./THE_DREAM.md) - Long-term vision*
