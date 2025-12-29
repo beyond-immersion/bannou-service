@@ -688,6 +688,451 @@
         <member name="F:BeyondImmersion.BannouService.Abml.Compiler.VmConfig.MaxNestingDepth">
             <summary>Maximum nesting depth.</summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.AbmlDocument">
+            <summary>
+            Represents a complete ABML document.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.AbmlDocument.Version">
+            <summary>
+            The ABML version (e.g., "2.0").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.AbmlDocument.Metadata">
+            <summary>
+            Document metadata (id, type, description, etc.).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.AbmlDocument.Imports">
+            <summary>
+            Import definitions for schemas and other documents.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.AbmlDocument.Context">
+            <summary>
+            Context definition with variables, requirements, and services.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.AbmlDocument.Flows">
+            <summary>
+            Named flows containing action sequences.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.DocumentMetadata">
+            <summary>
+            Document metadata.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.DocumentMetadata.Id">
+            <summary>
+            Unique identifier for this document.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.DocumentMetadata.Type">
+            <summary>
+            Document type: behavior, dialogue, cutscene, dialplan, or timeline.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.DocumentMetadata.Description">
+            <summary>
+            Human-readable description.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.DocumentMetadata.Tags">
+            <summary>
+            Categorization tags.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.DocumentMetadata.Deterministic">
+            <summary>
+            Hint for runtime that execution is deterministic.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.ImportDefinition">
+            <summary>
+            Import definition for schemas or other ABML documents.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.ImportDefinition.Schema">
+            <summary>
+            Schema file path (for type imports).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.ImportDefinition.Types">
+            <summary>
+            Types to import from schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.ImportDefinition.File">
+            <summary>
+            ABML document file path (for document imports).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.ImportDefinition.As">
+            <summary>
+            Namespace alias for imported document.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.ContextDefinition">
+            <summary>
+            Context definition with variables, requirements, and services.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.ContextDefinition.Variables">
+            <summary>
+            Variable definitions.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.ContextDefinition.Requirements">
+            <summary>
+            Requirements that must be met to execute this document.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.ContextDefinition.Services">
+            <summary>
+            Service dependencies.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.VariableDefinition">
+            <summary>
+            Variable definition within context.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.VariableDefinition.Type">
+            <summary>
+            Variable type (e.g., "int", "string", "bool").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.VariableDefinition.Default">
+            <summary>
+            Default value for the variable.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.VariableDefinition.Source">
+            <summary>
+            Source expression for bound variables.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.VariableDefinition.Computed">
+            <summary>
+            Computed expression for derived variables.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.ServiceDependency">
+            <summary>
+            Service dependency declaration.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.ServiceDependency.Name">
+            <summary>
+            Service name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.ServiceDependency.Required">
+            <summary>
+            Whether the service is required.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Flow">
+            <summary>
+            Represents a named flow containing action sequences.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Flow.Name">
+            <summary>
+            Flow name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Flow.Triggers">
+            <summary>
+            Triggers that can activate this flow.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Flow.Actions">
+            <summary>
+            Actions to execute in this flow.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.FlowTrigger">
+            <summary>
+            Flow trigger definition.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.FlowTrigger.Event">
+            <summary>
+            Event pattern to trigger on.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.FlowTrigger.Condition">
+            <summary>
+            Condition expression that must be true.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.FlowTrigger.TimeRange">
+            <summary>
+            Time range for triggering (e.g., "08:00-17:00").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.FlowTrigger.Schedule">
+            <summary>
+            Cron-style schedule.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode">
+            <summary>
+            Base type for all action nodes in an ABML document.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.CondAction">
+            <summary>
+            Conditional branching action (if/else-if/else).
+            </summary>
+            <param name="Branches">Ordered list of condition branches.</param>
+            <param name="ElseBranch">Actions to execute if no condition matches.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.CondAction.#ctor(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Abml.Documents.Actions.CondBranch},System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode})">
+            <summary>
+            Conditional branching action (if/else-if/else).
+            </summary>
+            <param name="Branches">Ordered list of condition branches.</param>
+            <param name="ElseBranch">Actions to execute if no condition matches.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.CondAction.Branches">
+            <summary>Ordered list of condition branches.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.CondAction.ElseBranch">
+            <summary>Actions to execute if no condition matches.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.CondBranch">
+            <summary>
+            A single branch in a conditional action.
+            </summary>
+            <param name="When">Condition expression string.</param>
+            <param name="Then">Actions to execute if condition is true.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.CondBranch.#ctor(System.String,System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode})">
+            <summary>
+            A single branch in a conditional action.
+            </summary>
+            <param name="When">Condition expression string.</param>
+            <param name="Then">Actions to execute if condition is true.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.CondBranch.When">
+            <summary>Condition expression string.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.CondBranch.Then">
+            <summary>Actions to execute if condition is true.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.ForEachAction">
+            <summary>
+            Iteration over a collection.
+            </summary>
+            <param name="Variable">Loop variable name.</param>
+            <param name="Collection">Expression string evaluating to a collection.</param>
+            <param name="Do">Actions to execute for each item.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.ForEachAction.#ctor(System.String,System.String,System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode})">
+            <summary>
+            Iteration over a collection.
+            </summary>
+            <param name="Variable">Loop variable name.</param>
+            <param name="Collection">Expression string evaluating to a collection.</param>
+            <param name="Do">Actions to execute for each item.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.ForEachAction.Variable">
+            <summary>Loop variable name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.ForEachAction.Collection">
+            <summary>Expression string evaluating to a collection.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.ForEachAction.Do">
+            <summary>Actions to execute for each item.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.RepeatAction">
+            <summary>
+            Bounded repetition.
+            </summary>
+            <param name="Times">Number of times to repeat.</param>
+            <param name="Do">Actions to execute each iteration.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.RepeatAction.#ctor(System.Int32,System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode})">
+            <summary>
+            Bounded repetition.
+            </summary>
+            <param name="Times">Number of times to repeat.</param>
+            <param name="Do">Actions to execute each iteration.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.RepeatAction.Times">
+            <summary>Number of times to repeat.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.RepeatAction.Do">
+            <summary>Actions to execute each iteration.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.GotoAction">
+            <summary>
+            Transfer control to another flow (tail call - does not return).
+            </summary>
+            <param name="Flow">Target flow name.</param>
+            <param name="Args">Arguments to pass to the target flow.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.GotoAction.#ctor(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+            <summary>
+            Transfer control to another flow (tail call - does not return).
+            </summary>
+            <param name="Flow">Target flow name.</param>
+            <param name="Args">Arguments to pass to the target flow.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.GotoAction.Flow">
+            <summary>Target flow name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.GotoAction.Args">
+            <summary>Arguments to pass to the target flow.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.CallAction">
+            <summary>
+            Call another flow as a subroutine (returns to caller).
+            </summary>
+            <param name="Flow">Target flow name.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.CallAction.#ctor(System.String)">
+            <summary>
+            Call another flow as a subroutine (returns to caller).
+            </summary>
+            <param name="Flow">Target flow name.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.CallAction.Flow">
+            <summary>Target flow name.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.ReturnAction">
+            <summary>
+            Return from the current flow.
+            </summary>
+            <param name="Value">Optional return value expression.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.ReturnAction.#ctor(System.String)">
+            <summary>
+            Return from the current flow.
+            </summary>
+            <param name="Value">Optional return value expression.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.ReturnAction.Value">
+            <summary>Optional return value expression.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.SetAction">
+            <summary>
+            Set a variable to a value.
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="Value">Expression string for the value.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.SetAction.#ctor(System.String,System.String)">
+            <summary>
+            Set a variable to a value.
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="Value">Expression string for the value.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.SetAction.Variable">
+            <summary>Variable name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.SetAction.Value">
+            <summary>Expression string for the value.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.IncrementAction">
+            <summary>
+            Increment a numeric variable.
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="By">Amount to increment by (default 1).</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.IncrementAction.#ctor(System.String,System.Int32)">
+            <summary>
+            Increment a numeric variable.
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="By">Amount to increment by (default 1).</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.IncrementAction.Variable">
+            <summary>Variable name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.IncrementAction.By">
+            <summary>Amount to increment by (default 1).</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.DecrementAction">
+            <summary>
+            Decrement a numeric variable.
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="By">Amount to decrement by (default 1).</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.DecrementAction.#ctor(System.String,System.Int32)">
+            <summary>
+            Decrement a numeric variable.
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="By">Amount to decrement by (default 1).</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.DecrementAction.Variable">
+            <summary>Variable name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.DecrementAction.By">
+            <summary>Amount to decrement by (default 1).</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.ClearAction">
+            <summary>
+            Clear/unset a variable.
+            </summary>
+            <param name="Variable">Variable name to clear.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.ClearAction.#ctor(System.String)">
+            <summary>
+            Clear/unset a variable.
+            </summary>
+            <param name="Variable">Variable name to clear.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.ClearAction.Variable">
+            <summary>Variable name to clear.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.LogAction">
+            <summary>
+            Log a message (for debugging and testing).
+            </summary>
+            <param name="Message">Message to log (may contain expressions).</param>
+            <param name="Level">Log level (info, debug, warn, error).</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.LogAction.#ctor(System.String,System.String)">
+            <summary>
+            Log a message (for debugging and testing).
+            </summary>
+            <param name="Message">Message to log (may contain expressions).</param>
+            <param name="Level">Log level (info, debug, warn, error).</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.LogAction.Message">
+            <summary>Message to log (may contain expressions).</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.LogAction.Level">
+            <summary>Log level (info, debug, warn, error).</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.DomainAction">
+            <summary>
+            Generic domain action (handler-provided).
+            </summary>
+            <param name="Name">Action name (e.g., "animate", "speak", "move_to").</param>
+            <param name="Parameters">Action parameters.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.DomainAction.#ctor(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object})">
+            <summary>
+            Generic domain action (handler-provided).
+            </summary>
+            <param name="Name">Action name (e.g., "animate", "speak", "move_to").</param>
+            <param name="Parameters">Action parameters.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.DomainAction.Name">
+            <summary>Action name (e.g., "animate", "speak", "move_to").</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.DomainAction.Parameters">
+            <summary>Action parameters.</summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Exceptions.AbmlCompilationException">
             <summary>
             Exception thrown when an ABML expression fails to parse or compile.
@@ -848,6 +1293,568 @@
         </member>
         <member name="F:BeyondImmersion.BannouService.Abml.Exceptions.UndefinedReferenceType.Index">
             <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.IDocumentExecutor">
+            <summary>
+            Interface for executing ABML documents.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.IDocumentExecutor.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.AbmlDocument,System.String,BeyondImmersion.BannouService.Abml.Expressions.IVariableScope,System.Threading.CancellationToken)">
+            <summary>
+            Executes an ABML document starting from the specified flow.
+            </summary>
+            <param name="document">The document to execute.</param>
+            <param name="startFlow">The flow to start execution from.</param>
+            <param name="initialScope">Optional initial variable scope.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Execution result.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.DocumentExecutor">
+            <summary>
+            Tree-walking interpreter for ABML documents.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.DocumentExecutor.#ctor">
+            <summary>
+            Creates a new document executor with default configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.DocumentExecutor.#ctor(BeyondImmersion.BannouService.Abml.Runtime.IExpressionEvaluator,BeyondImmersion.BannouService.Abml.Execution.IActionHandlerRegistry)">
+            <summary>
+            Creates a new document executor with custom evaluator and handlers.
+            </summary>
+            <param name="evaluator">Expression evaluator.</param>
+            <param name="handlers">Action handler registry.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.DocumentExecutor.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.AbmlDocument,System.String,BeyondImmersion.BannouService.Abml.Expressions.IVariableScope,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.ExecutionContext">
+            <summary>
+            Runtime context for ABML document execution.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ExecutionContext.Document">
+            <summary>
+            The document being executed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ExecutionContext.RootScope">
+            <summary>
+            Root variable scope.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ExecutionContext.Evaluator">
+            <summary>
+            Expression evaluator for evaluating ${...} expressions.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ExecutionContext.Handlers">
+            <summary>
+            Action handler registry for dispatching actions.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ExecutionContext.CallStack">
+            <summary>
+            Call stack for flow execution.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ExecutionContext.State">
+            <summary>
+            Current execution state.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ExecutionContext.ReturnValue">
+            <summary>
+            Return value from the execution.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ExecutionContext.Logs">
+            <summary>
+            Log messages collected during execution.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.ExecutionState">
+            <summary>
+            Execution state.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Execution.ExecutionState.Running">
+            <summary>Execution is in progress.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Execution.ExecutionState.Completed">
+            <summary>Execution completed successfully.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Execution.ExecutionState.Failed">
+            <summary>Execution failed with an error.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Execution.ExecutionState.Yielded">
+            <summary>Execution yielded (for async operations).</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.LogEntry">
+            <summary>
+            A log entry captured during execution.
+            </summary>
+            <param name="Level">Log level (info, debug, warn, error).</param>
+            <param name="Message">Log message.</param>
+            <param name="Timestamp">When the log was recorded.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.LogEntry.#ctor(System.String,System.String,System.DateTime)">
+            <summary>
+            A log entry captured during execution.
+            </summary>
+            <param name="Level">Log level (info, debug, warn, error).</param>
+            <param name="Message">Log message.</param>
+            <param name="Timestamp">When the log was recorded.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.LogEntry.Level">
+            <summary>Log level (info, debug, warn, error).</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.LogEntry.Message">
+            <summary>Log message.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.LogEntry.Timestamp">
+            <summary>When the log was recorded.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.FlowStack">
+            <summary>
+            Call stack for tracking flow execution.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.FlowStack.Push(System.String,BeyondImmersion.BannouService.Abml.Expressions.IVariableScope)">
+            <summary>
+            Pushes a new flow frame onto the stack.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.FlowStack.Pop">
+            <summary>
+            Pops the top flow frame from the stack.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.FlowStack.Current">
+            <summary>
+            Gets the current flow frame without removing it.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.FlowStack.Depth">
+            <summary>
+            Gets the current stack depth.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.FlowStack.Clear">
+            <summary>
+            Clears all frames from the stack.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.FlowFrame">
+            <summary>
+            A frame on the flow call stack.
+            </summary>
+            <param name="FlowName">Name of the flow being executed.</param>
+            <param name="Scope">Variable scope for this flow.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.FlowFrame.#ctor(System.String,BeyondImmersion.BannouService.Abml.Expressions.IVariableScope)">
+            <summary>
+            A frame on the flow call stack.
+            </summary>
+            <param name="FlowName">Name of the flow being executed.</param>
+            <param name="Scope">Variable scope for this flow.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.FlowFrame.FlowName">
+            <summary>Name of the flow being executed.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.FlowFrame.Scope">
+            <summary>Variable scope for this flow.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.ExecutionResult">
+            <summary>
+            Result of document execution.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ExecutionResult.IsSuccess">
+            <summary>
+            Whether execution succeeded.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ExecutionResult.Value">
+            <summary>
+            Return value from execution (if any).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ExecutionResult.Error">
+            <summary>
+            Error message (if failed).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ExecutionResult.Logs">
+            <summary>
+            Log entries collected during execution.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ExecutionResult.Success(System.Object,System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Abml.Execution.LogEntry})">
+            <summary>
+            Creates a successful execution result.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ExecutionResult.Failure(System.String,System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Abml.Execution.LogEntry})">
+            <summary>
+            Creates a failed execution result.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.ActionResult">
+            <summary>
+            Result of executing a single action.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ActionResult.Continue">
+            <summary>
+            Continue to the next action.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ActionResult.Complete(System.Object)">
+            <summary>
+            Complete execution with a value.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ActionResult.Goto(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object})">
+            <summary>
+            Transfer control to another flow (tail call).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ActionResult.Return(System.Object)">
+            <summary>
+            Return from the current flow to the caller.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ActionResult.Error(System.String)">
+            <summary>
+            Execution failed with an error.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.ContinueResult">
+            <summary>
+            Continue to the next action in the current flow.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.CompleteResult">
+            <summary>
+            Execution completed with a value.
+            </summary>
+            <param name="Value">The return value.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.CompleteResult.#ctor(System.Object)">
+            <summary>
+            Execution completed with a value.
+            </summary>
+            <param name="Value">The return value.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.CompleteResult.Value">
+            <summary>The return value.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.GotoResult">
+            <summary>
+            Transfer control to another flow (tail call - does not return).
+            </summary>
+            <param name="FlowName">Target flow name.</param>
+            <param name="Args">Arguments to pass to the flow.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.GotoResult.#ctor(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object})">
+            <summary>
+            Transfer control to another flow (tail call - does not return).
+            </summary>
+            <param name="FlowName">Target flow name.</param>
+            <param name="Args">Arguments to pass to the flow.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.GotoResult.FlowName">
+            <summary>Target flow name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.GotoResult.Args">
+            <summary>Arguments to pass to the flow.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.ReturnResult">
+            <summary>
+            Return from the current flow to the caller.
+            </summary>
+            <param name="Value">Optional return value.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ReturnResult.#ctor(System.Object)">
+            <summary>
+            Return from the current flow to the caller.
+            </summary>
+            <param name="Value">Optional return value.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ReturnResult.Value">
+            <summary>Optional return value.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.ErrorResult">
+            <summary>
+            Execution failed with an error.
+            </summary>
+            <param name="Message">Error message.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ErrorResult.#ctor(System.String)">
+            <summary>
+            Execution failed with an error.
+            </summary>
+            <param name="Message">Error message.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ErrorResult.Message">
+            <summary>Error message.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Handlers.CallHandler">
+            <summary>
+            Handles call actions (flow call with return).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.CallHandler.CanHandle(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.CallHandler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Handlers.ClearHandler">
+            <summary>
+            Handles clear variable actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.ClearHandler.CanHandle(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.ClearHandler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Handlers.CondHandler">
+            <summary>
+            Handles conditional branching (cond) actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.CondHandler.CanHandle(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.CondHandler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Handlers.DomainActionHandler">
+            <summary>
+            Handles domain-specific actions.
+            In a full implementation, this would dispatch to registered domain handlers.
+            For now, it logs the action for testing purposes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.DomainActionHandler.#ctor(System.Func{System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.Threading.Tasks.ValueTask{BeyondImmersion.BannouService.Abml.Execution.ActionResult}})">
+            <summary>
+            Creates a domain action handler.
+            </summary>
+            <param name="callback">Optional callback for handling domain actions.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.DomainActionHandler.CanHandle(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.DomainActionHandler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Handlers.ForEachHandler">
+            <summary>
+            Handles for_each iteration actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.ForEachHandler.CanHandle(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.ForEachHandler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Handlers.GotoHandler">
+            <summary>
+            Handles goto actions (flow transfer without return).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.GotoHandler.CanHandle(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.GotoHandler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Handlers.LogHandler">
+            <summary>
+            Handles log actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.LogHandler.CanHandle(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.LogHandler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.LogHandler.ExpressionPattern">
+            <remarks>
+            Pattern:<br/>
+            <code>\\$\\{([^}]+)\\}</code><br/>
+            Explanation:<br/>
+            <code>
+            ○ Match the string "${".<br/>
+            ○ 1st capture group.<br/>
+                ○ Match a character other than '}' atomically at least once.<br/>
+            ○ Match '}'.<br/>
+            </code>
+            </remarks>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Handlers.NumericOperationHandler">
+            <summary>
+            Handles numeric operations (increment and decrement actions).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.NumericOperationHandler.CanHandle(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.NumericOperationHandler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Handlers.RepeatHandler">
+            <summary>
+            Handles repeat actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.RepeatHandler.CanHandle(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.RepeatHandler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Handlers.ReturnHandler">
+            <summary>
+            Handles return actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.ReturnHandler.CanHandle(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.ReturnHandler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Handlers.SetHandler">
+            <summary>
+            Handles set variable actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.SetHandler.CanHandle(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.SetHandler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.IActionHandler">
+            <summary>
+            Interface for action handlers.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.IActionHandler.CanHandle(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode)">
+            <summary>
+            Determines if this handler can execute the given action.
+            </summary>
+            <param name="action">The action to check.</param>
+            <returns>True if this handler can execute the action.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.IActionHandler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
+            <summary>
+            Executes the action.
+            </summary>
+            <param name="action">The action to execute.</param>
+            <param name="context">Execution context.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The result of execution.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.IActionHandlerRegistry">
+            <summary>
+            Registry for action handlers.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.IActionHandlerRegistry.Register(BeyondImmersion.BannouService.Abml.Execution.IActionHandler)">
+            <summary>
+            Registers an action handler.
+            </summary>
+            <param name="handler">The handler to register.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.IActionHandlerRegistry.GetHandler(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode)">
+            <summary>
+            Gets the handler for an action.
+            </summary>
+            <param name="action">The action to find a handler for.</param>
+            <returns>The handler, or null if no handler found.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.ActionHandlerRegistry">
+            <summary>
+            Default implementation of action handler registry.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ActionHandlerRegistry.Register(BeyondImmersion.BannouService.Abml.Execution.IActionHandler)">
+            <summary>
+            Registers an action handler.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ActionHandlerRegistry.GetHandler(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode)">
+            <summary>
+            Gets the handler for an action.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ActionHandlerRegistry.CreateWithBuiltins">
+            <summary>
+            Creates a registry with all built-in handlers registered.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ActionHandlerRegistry.RegisterBuiltinHandlers">
+            <summary>
+            Registers all built-in control flow and variable handlers.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.ValueEvaluator">
+            <summary>
+            Utility for evaluating action parameter values.
+            Handles the distinction between literal values and expression values.
+            </summary>
+            <remarks>
+            <para>
+            Values containing <c>${...}</c> are evaluated as expressions.
+            Plain values are parsed as literals (numbers, booleans, null, or strings).
+            </para>
+            <para>
+            Examples:
+            <list type="bullet">
+            <item><c>"Hello"</c> → string "Hello"</item>
+            <item><c>"42"</c> → int 42</item>
+            <item><c>"3.14"</c> → double 3.14</item>
+            <item><c>"true"</c> → bool true</item>
+            <item><c>"null"</c> → null</item>
+            <item><c>"${x + 1}"</c> → evaluated expression result</item>
+            <item><c>"Hello ${name}"</c> → interpolated template result</item>
+            </list>
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ValueEvaluator.Evaluate(System.String,BeyondImmersion.BannouService.Abml.Expressions.IVariableScope,BeyondImmersion.BannouService.Abml.Runtime.IExpressionEvaluator)">
+            <summary>
+            Evaluates a value string, handling both expressions and literals.
+            </summary>
+            <param name="valueStr">The value string to evaluate.</param>
+            <param name="scope">The variable scope for expression evaluation.</param>
+            <param name="evaluator">The expression evaluator.</param>
+            <returns>The evaluated value.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ValueEvaluator.ParseLiteral(System.String)">
+            <summary>
+            Parses a literal value string into the appropriate type.
+            </summary>
+            <param name="valueStr">The value string to parse.</param>
+            <returns>The parsed value.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ValueEvaluator.EvaluateParameters(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},BeyondImmersion.BannouService.Abml.Expressions.IVariableScope,BeyondImmersion.BannouService.Abml.Runtime.IExpressionEvaluator)">
+            <summary>
+            Evaluates a dictionary of parameters, evaluating expressions in values.
+            </summary>
+            <param name="parameters">The parameters to evaluate.</param>
+            <param name="scope">The variable scope for expression evaluation.</param>
+            <param name="evaluator">The expression evaluator.</param>
+            <returns>Dictionary with evaluated values.</returns>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Expressions.AbmlTypeCoercion">
             <summary>
@@ -1013,6 +2020,11 @@
         <member name="M:BeyondImmersion.BannouService.Abml.Expressions.VariableScope.SetValue(System.String,System.Object)">
             <inheritdoc/>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Expressions.VariableScope.FindScopeWithVariable(System.String)">
+            <summary>
+            Finds the scope that contains the given variable.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Abml.Expressions.VariableScope.CreateChild">
             <inheritdoc/>
         </member>
@@ -1163,6 +2175,94 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.Abml.Functions.FunctionEntry.ValidateArgCount(System.Int32)">
             <summary>Validates argument count.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Parser.DocumentParser">
+            <summary>
+            Parses ABML YAML documents into AST representation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.DocumentParser.#ctor">
+            <summary>
+            Creates a new document parser.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.DocumentParser.Parse(System.String)">
+            <summary>
+            Parses a YAML string into an ABML document.
+            </summary>
+            <param name="yaml">The YAML content to parse.</param>
+            <returns>Parse result with document or errors.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Parser.ParseResult`1">
+            <summary>
+            Result of a parse operation.
+            </summary>
+            <typeparam name="T">The type of the parsed value.</typeparam>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Parser.ParseResult`1.IsSuccess">
+            <summary>
+            Whether parsing succeeded.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Parser.ParseResult`1.Value">
+            <summary>
+            The parsed value (if successful).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Parser.ParseResult`1.Errors">
+            <summary>
+            Parse errors (if unsuccessful).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.ParseResult`1.Success(`0)">
+            <summary>
+            Creates a successful parse result.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.ParseResult`1.Failure(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Abml.Parser.ParseError})">
+            <summary>
+            Creates a failed parse result.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.ParseResult`1.Failure(BeyondImmersion.BannouService.Abml.Parser.ParseError)">
+            <summary>
+            Creates a failed parse result with a single error.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.ParseResult`1.Failure(System.String,System.Int32,System.Int32)">
+            <summary>
+            Creates a failed parse result with a message.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Parser.ParseError">
+            <summary>
+            Represents a parse error with location information.
+            </summary>
+            <param name="Message">Error message.</param>
+            <param name="Line">Line number (1-based).</param>
+            <param name="Column">Column number (1-based).</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.ParseError.#ctor(System.String,System.Int32,System.Int32)">
+            <summary>
+            Represents a parse error with location information.
+            </summary>
+            <param name="Message">Error message.</param>
+            <param name="Line">Line number (1-based).</param>
+            <param name="Column">Column number (1-based).</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Parser.ParseError.Message">
+            <summary>Error message.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Parser.ParseError.Line">
+            <summary>Line number (1-based).</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Parser.ParseError.Column">
+            <summary>Column number (1-based).</summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.ParseError.ToString">
+            <summary>
+            Returns a formatted error message with location.
+            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Runtime.ExpressionCache">
             <summary>
@@ -21337,88 +22437,120 @@
             Generates a test timestamp.
             </summary>
         </member>
-        <member name="T:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_0">
+        <member name="T:System.Text.RegularExpressions.Generated.ExpressionPattern_0">
+            <summary>Custom <see cref="T:System.Text.RegularExpressions.Regex"/>-derived type for the ExpressionPattern method.</summary>
+        </member>
+        <member name="F:System.Text.RegularExpressions.Generated.ExpressionPattern_0.Instance">
+            <summary>Cached, thread-safe singleton instance.</summary>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.ExpressionPattern_0.#ctor">
+            <summary>Initializes the instance.</summary>
+        </member>
+        <member name="T:System.Text.RegularExpressions.Generated.ExpressionPattern_0.RunnerFactory">
+            <summary>Provides a factory for creating <see cref="T:System.Text.RegularExpressions.RegexRunner"/> instances to be used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.ExpressionPattern_0.RunnerFactory.CreateInstance">
+            <summary>Creates an instance of a <see cref="T:System.Text.RegularExpressions.RegexRunner"/> used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
+        </member>
+        <member name="T:System.Text.RegularExpressions.Generated.ExpressionPattern_0.RunnerFactory.Runner">
+            <summary>Provides the runner that contains the custom logic implementing the specified regular expression.</summary>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.ExpressionPattern_0.RunnerFactory.Runner.Scan(System.ReadOnlySpan{System.Char})">
+            <summary>Scan the <paramref name="inputSpan"/> starting from base.runtextstart for the next match.</summary>
+            <param name="inputSpan">The text being scanned by the regular expression.</param>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.ExpressionPattern_0.RunnerFactory.Runner.TryFindNextPossibleStartingPosition(System.ReadOnlySpan{System.Char})">
+            <summary>Search <paramref name="inputSpan"/> starting from base.runtextpos for the next location a match could possibly start.</summary>
+            <param name="inputSpan">The text being scanned by the regular expression.</param>
+            <returns>true if a possible match was found; false if no more matches are possible.</returns>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.ExpressionPattern_0.RunnerFactory.Runner.TryMatchAtCurrentPosition(System.ReadOnlySpan{System.Char})">
+            <summary>Determine whether <paramref name="inputSpan"/> at base.runtextpos is a match for the regular expression.</summary>
+            <param name="inputSpan">The text being scanned by the regular expression.</param>
+            <returns>true if the regular expression matches at the current position; otherwise, false.</returns>
+        </member>
+        <member name="T:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_1">
             <summary>Custom <see cref="T:System.Text.RegularExpressions.Regex"/>-derived type for the REGEX_InvalidChars method.</summary>
         </member>
-        <member name="F:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_0.Instance">
+        <member name="F:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_1.Instance">
             <summary>Cached, thread-safe singleton instance.</summary>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_0.#ctor">
+        <member name="M:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_1.#ctor">
             <summary>Initializes the instance.</summary>
         </member>
-        <member name="T:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_0.RunnerFactory">
+        <member name="T:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_1.RunnerFactory">
             <summary>Provides a factory for creating <see cref="T:System.Text.RegularExpressions.RegexRunner"/> instances to be used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_0.RunnerFactory.CreateInstance">
+        <member name="M:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_1.RunnerFactory.CreateInstance">
             <summary>Creates an instance of a <see cref="T:System.Text.RegularExpressions.RegexRunner"/> used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
         </member>
-        <member name="T:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_0.RunnerFactory.Runner">
+        <member name="T:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_1.RunnerFactory.Runner">
             <summary>Provides the runner that contains the custom logic implementing the specified regular expression.</summary>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_0.RunnerFactory.Runner.Scan(System.ReadOnlySpan{System.Char})">
+        <member name="M:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_1.RunnerFactory.Runner.Scan(System.ReadOnlySpan{System.Char})">
             <summary>Scan the <paramref name="inputSpan"/> starting from base.runtextstart for the next match.</summary>
             <param name="inputSpan">The text being scanned by the regular expression.</param>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_0.RunnerFactory.Runner.TryFindNextPossibleStartingPosition(System.ReadOnlySpan{System.Char})">
+        <member name="M:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_1.RunnerFactory.Runner.TryFindNextPossibleStartingPosition(System.ReadOnlySpan{System.Char})">
             <summary>Search <paramref name="inputSpan"/> starting from base.runtextpos for the next location a match could possibly start.</summary>
             <param name="inputSpan">The text being scanned by the regular expression.</param>
             <returns>true if a possible match was found; false if no more matches are possible.</returns>
         </member>
-        <member name="T:System.Text.RegularExpressions.Generated.REGEX_Spaces_1">
+        <member name="T:System.Text.RegularExpressions.Generated.REGEX_Spaces_2">
             <summary>Custom <see cref="T:System.Text.RegularExpressions.Regex"/>-derived type for the REGEX_Spaces method.</summary>
         </member>
-        <member name="F:System.Text.RegularExpressions.Generated.REGEX_Spaces_1.Instance">
+        <member name="F:System.Text.RegularExpressions.Generated.REGEX_Spaces_2.Instance">
             <summary>Cached, thread-safe singleton instance.</summary>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.REGEX_Spaces_1.#ctor">
+        <member name="M:System.Text.RegularExpressions.Generated.REGEX_Spaces_2.#ctor">
             <summary>Initializes the instance.</summary>
         </member>
-        <member name="T:System.Text.RegularExpressions.Generated.REGEX_Spaces_1.RunnerFactory">
+        <member name="T:System.Text.RegularExpressions.Generated.REGEX_Spaces_2.RunnerFactory">
             <summary>Provides a factory for creating <see cref="T:System.Text.RegularExpressions.RegexRunner"/> instances to be used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.REGEX_Spaces_1.RunnerFactory.CreateInstance">
+        <member name="M:System.Text.RegularExpressions.Generated.REGEX_Spaces_2.RunnerFactory.CreateInstance">
             <summary>Creates an instance of a <see cref="T:System.Text.RegularExpressions.RegexRunner"/> used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
         </member>
-        <member name="T:System.Text.RegularExpressions.Generated.REGEX_Spaces_1.RunnerFactory.Runner">
+        <member name="T:System.Text.RegularExpressions.Generated.REGEX_Spaces_2.RunnerFactory.Runner">
             <summary>Provides the runner that contains the custom logic implementing the specified regular expression.</summary>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.REGEX_Spaces_1.RunnerFactory.Runner.Scan(System.ReadOnlySpan{System.Char})">
+        <member name="M:System.Text.RegularExpressions.Generated.REGEX_Spaces_2.RunnerFactory.Runner.Scan(System.ReadOnlySpan{System.Char})">
             <summary>Scan the <paramref name="inputSpan"/> starting from base.runtextstart for the next match.</summary>
             <param name="inputSpan">The text being scanned by the regular expression.</param>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.REGEX_Spaces_1.RunnerFactory.Runner.TryFindNextPossibleStartingPosition(System.ReadOnlySpan{System.Char})">
+        <member name="M:System.Text.RegularExpressions.Generated.REGEX_Spaces_2.RunnerFactory.Runner.TryFindNextPossibleStartingPosition(System.ReadOnlySpan{System.Char})">
             <summary>Search <paramref name="inputSpan"/> starting from base.runtextpos for the next location a match could possibly start.</summary>
             <param name="inputSpan">The text being scanned by the regular expression.</param>
             <returns>true if a possible match was found; false if no more matches are possible.</returns>
         </member>
-        <member name="T:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_2">
+        <member name="T:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_3">
             <summary>Custom <see cref="T:System.Text.RegularExpressions.Regex"/>-derived type for the REGEX_MultipleSpaces method.</summary>
         </member>
-        <member name="F:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_2.Instance">
+        <member name="F:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_3.Instance">
             <summary>Cached, thread-safe singleton instance.</summary>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_2.#ctor">
+        <member name="M:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_3.#ctor">
             <summary>Initializes the instance.</summary>
         </member>
-        <member name="T:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_2.RunnerFactory">
+        <member name="T:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_3.RunnerFactory">
             <summary>Provides a factory for creating <see cref="T:System.Text.RegularExpressions.RegexRunner"/> instances to be used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_2.RunnerFactory.CreateInstance">
+        <member name="M:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_3.RunnerFactory.CreateInstance">
             <summary>Creates an instance of a <see cref="T:System.Text.RegularExpressions.RegexRunner"/> used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
         </member>
-        <member name="T:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_2.RunnerFactory.Runner">
+        <member name="T:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_3.RunnerFactory.Runner">
             <summary>Provides the runner that contains the custom logic implementing the specified regular expression.</summary>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_2.RunnerFactory.Runner.Scan(System.ReadOnlySpan{System.Char})">
+        <member name="M:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_3.RunnerFactory.Runner.Scan(System.ReadOnlySpan{System.Char})">
             <summary>Scan the <paramref name="inputSpan"/> starting from base.runtextstart for the next match.</summary>
             <param name="inputSpan">The text being scanned by the regular expression.</param>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_2.RunnerFactory.Runner.TryFindNextPossibleStartingPosition(System.ReadOnlySpan{System.Char})">
+        <member name="M:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_3.RunnerFactory.Runner.TryFindNextPossibleStartingPosition(System.ReadOnlySpan{System.Char})">
             <summary>Search <paramref name="inputSpan"/> starting from base.runtextpos for the next location a match could possibly start.</summary>
             <param name="inputSpan">The text being scanned by the regular expression.</param>
             <returns>true if a possible match was found; false if no more matches are possible.</returns>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_2.RunnerFactory.Runner.TryMatchAtCurrentPosition(System.ReadOnlySpan{System.Char})">
+        <member name="M:System.Text.RegularExpressions.Generated.REGEX_MultipleSpaces_3.RunnerFactory.Runner.TryMatchAtCurrentPosition(System.ReadOnlySpan{System.Char})">
             <summary>Determine whether <paramref name="inputSpan"/> at base.runtextpos is a match for the regular expression.</summary>
             <param name="inputSpan">The text being scanned by the regular expression.</param>
             <returns>true if the regular expression matches at the current position; otherwise, false.</returns>
@@ -21437,6 +22569,9 @@
         </member>
         <member name="F:System.Text.RegularExpressions.Generated.Utilities.s_ascii_3E00000120FF03FEFFFF07FEFFFF07">
             <summary>Supports searching for characters in or not in "\t\n\v\f\r -0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".</summary>
+        </member>
+        <member name="F:System.Text.RegularExpressions.Generated.Utilities.s_indexOfString_0EB7C57F1E1613EE8D069A853AC87996AAC4AB66EE1DBD194489F3BEE08ED9A3">
+            <summary>Supports searching for the string "${".</summary>
         </member>
         <member name="F:System.Text.RegularExpressions.Generated.Utilities.s_whitespace">
             <summary>Supports searching for characters in or not in "\t\n\v\f\r \u0085             \u2028\u2029  　".</summary>

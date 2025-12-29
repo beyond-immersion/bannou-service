@@ -59,7 +59,34 @@ public sealed class VariableScope : IVariableScope
             throw new ArgumentException("Variable name cannot be null or empty", nameof(name));
         if (name.Contains('.'))
             throw new ArgumentException("SetValue only accepts simple variable names", nameof(name));
-        _variables[name] = value;
+
+        // If the variable exists in an ancestor scope, update it there
+        // This allows loop bodies and called flows to modify outer variables
+        var targetScope = FindScopeWithVariable(name);
+        if (targetScope is VariableScope vs)
+        {
+            vs._variables[name] = value;
+        }
+        else
+        {
+            // Variable doesn't exist anywhere, create it in local scope
+            _variables[name] = value;
+        }
+    }
+
+    /// <summary>
+    /// Finds the scope that contains the given variable.
+    /// </summary>
+    private VariableScope? FindScopeWithVariable(string name)
+    {
+        if (_variables.ContainsKey(name))
+        {
+            return this;
+        }
+
+        return Parent is VariableScope parentScope
+            ? parentScope.FindScopeWithVariable(name)
+            : null;
     }
 
     /// <inheritdoc/>
