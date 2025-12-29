@@ -55,13 +55,10 @@ public sealed class VariableScope : IVariableScope
     /// <inheritdoc/>
     public void SetValue(string name, object? value)
     {
-        if (string.IsNullOrEmpty(name))
-            throw new ArgumentException("Variable name cannot be null or empty", nameof(name));
-        if (name.Contains('.'))
-            throw new ArgumentException("SetValue only accepts simple variable names", nameof(name));
+        ValidateName(name);
 
         // If the variable exists in an ancestor scope, update it there
-        // This allows loop bodies and called flows to modify outer variables
+        // This allows explicit modification of outer scope variables
         var targetScope = FindScopeWithVariable(name);
         if (targetScope is VariableScope vs)
         {
@@ -72,6 +69,45 @@ public sealed class VariableScope : IVariableScope
             // Variable doesn't exist anywhere, create it in local scope
             _variables[name] = value;
         }
+    }
+
+    /// <summary>
+    /// Sets a variable in this scope only, shadowing any parent variable.
+    /// Used by loop variables and explicit 'local:' actions.
+    /// </summary>
+    public void SetLocalValue(string name, object? value)
+    {
+        ValidateName(name);
+        _variables[name] = value;  // Always local, ignores parent
+    }
+
+    /// <summary>
+    /// Sets a variable in the root scope.
+    /// Used by explicit 'global:' actions.
+    /// </summary>
+    public void SetGlobalValue(string name, object? value)
+    {
+        ValidateName(name);
+        GetRootScope()._variables[name] = value;
+    }
+
+    /// <summary>
+    /// Gets the root scope (topmost parent).
+    /// </summary>
+    private VariableScope GetRootScope()
+    {
+        var current = this;
+        while (current.Parent is VariableScope parent)
+            current = parent;
+        return current;
+    }
+
+    private static void ValidateName(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            throw new ArgumentException("Variable name cannot be null or empty", nameof(name));
+        if (name.Contains('.'))
+            throw new ArgumentException("Variable name cannot contain dots", nameof(name));
     }
 
     /// <summary>

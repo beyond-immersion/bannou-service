@@ -78,11 +78,29 @@ public sealed record ReturnAction(string? Value = null) : ActionNode;
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// <summary>
-/// Set a variable to a value.
+/// Set a variable, searching scope chain. Creates locally if not found.
 /// </summary>
 /// <param name="Variable">Variable name.</param>
 /// <param name="Value">Expression string for the value.</param>
 public sealed record SetAction(
+    string Variable,
+    string Value) : ActionNode;
+
+/// <summary>
+/// Create/set a variable in the current local scope (shadows parent).
+/// </summary>
+/// <param name="Variable">Variable name.</param>
+/// <param name="Value">Expression string for the value.</param>
+public sealed record LocalAction(
+    string Variable,
+    string Value) : ActionNode;
+
+/// <summary>
+/// Set a variable in the document root scope.
+/// </summary>
+/// <param name="Variable">Variable name.</param>
+/// <param name="Value">Expression string for the value.</param>
+public sealed record GlobalAction(
     string Variable,
     string Value) : ActionNode;
 
@@ -135,3 +153,28 @@ public sealed record LogAction(
 public sealed record DomainAction(
     string Name,
     IReadOnlyDictionary<string, object?> Parameters) : ActionNode;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHANNEL ACTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Emit a signal to other channels.
+/// </summary>
+/// <param name="Signal">Signal name to emit.</param>
+/// <param name="Payload">Optional payload expression.</param>
+public sealed record EmitAction(
+    string Signal,
+    string? Payload = null) : ActionNode;
+
+/// <summary>
+/// Wait for a signal from another channel.
+/// </summary>
+/// <param name="Signal">Signal name to wait for.</param>
+public sealed record WaitForAction(string Signal) : ActionNode;
+
+/// <summary>
+/// Synchronization barrier - all channels wait here until all arrive.
+/// </summary>
+/// <param name="Point">Sync point name.</param>
+public sealed record SyncAction(string Point) : ActionNode;

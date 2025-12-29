@@ -208,6 +208,10 @@ public sealed class ExpressionVm
                     _registers[a] = AbmlTypeCoercion.IsTrue(_registers[b]) || AbmlTypeCoercion.IsTrue(_registers[c]);
                     break;
 
+                case OpCode.ToBool:
+                    _registers[a] = AbmlTypeCoercion.IsTrue(_registers[b]);
+                    break;
+
                 // ═══════════════════════════════════════════════════════════
                 // CONTROL FLOW
                 // ═══════════════════════════════════════════════════════════
@@ -246,16 +250,29 @@ public sealed class ExpressionVm
                 // ═══════════════════════════════════════════════════════════
                 // FUNCTIONS
                 // ═══════════════════════════════════════════════════════════
+                case OpCode.CallArgs:
+                    // Just store arg count for next Call instruction
+                    // A = argCount, we'll read it from the next Call
+                    // This is handled by reading the previous instruction in Call
+                    break;
+
                 case OpCode.Call:
                     {
-                        var funcName = (string)constants[b];
-                        var argCount = c;
+                        // Look at previous instruction for CallArgs to get arg count
+                        var argCount = 0;
+                        if (pc > 0 && code[pc - 1].Op == OpCode.CallArgs)
+                        {
+                            argCount = code[pc - 1].A;
+                        }
 
-                        // Collect arguments from registers (convention: args in R0..R(argCount-1))
+                        var funcName = (string)constants[b];
+                        var argStart = c;  // Args start at R[C]
+
+                        // Collect arguments from registers R[C]..R[C+argCount-1]
                         var args = new object?[argCount];
                         for (var i = 0; i < argCount; i++)
                         {
-                            args[i] = _registers[i];
+                            args[i] = _registers[argStart + i];
                         }
 
                         _registers[a] = _functions.Invoke(funcName, args);
@@ -428,6 +445,9 @@ public sealed class ExpressionVm
             case OpCode.Or:
                 _registers[a] = AbmlTypeCoercion.IsTrue(_registers[b]) || AbmlTypeCoercion.IsTrue(_registers[c]);
                 break;
+            case OpCode.ToBool:
+                _registers[a] = AbmlTypeCoercion.IsTrue(_registers[b]);
+                break;
 
             // NULL HANDLING
             case OpCode.Coalesce:
@@ -443,14 +463,20 @@ public sealed class ExpressionVm
                 break;
 
             // FUNCTIONS
+            case OpCode.CallArgs:
+                // No-op for trace, arg count is read by Call
+                break;
             case OpCode.Call:
                 {
                     var funcName = (string)constants[b];
-                    var argCount = c;
+                    var argStart = c;
+                    // For trace, get arg count from previous CallArgs if present
+                    var argCount = 0;
+                    // Note: In trace mode we can't easily look back, assume 0 args for display
                     var args = new object?[argCount];
                     for (var i = 0; i < argCount; i++)
                     {
-                        args[i] = _registers[i];
+                        args[i] = _registers[argStart + i];
                     }
                     _registers[a] = _functions.Invoke(funcName, args);
                 }

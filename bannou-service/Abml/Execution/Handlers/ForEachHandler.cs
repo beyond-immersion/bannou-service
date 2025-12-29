@@ -44,11 +44,19 @@ public sealed class ForEachHandler : IActionHandler
         {
             ct.ThrowIfCancellationRequested();
 
-            // Create child scope with loop variable
-            // Child scope inherits from parent, so variable reads work
-            // Variable writes to existing variables propagate to parent via VariableScope.SetValue
+            // Create child scope for loop body
             var loopScope = scope.CreateChild();
-            loopScope.SetValue(forEach.Variable, item);
+
+            // Loop variable is LOCAL to the loop scope (shadows parent)
+            // This prevents clobbering outer variables with the same name
+            if (loopScope is VariableScope vs)
+            {
+                vs.SetLocalValue(forEach.Variable, item);
+            }
+            else
+            {
+                loopScope.SetValue(forEach.Variable, item);
+            }
 
             // Push a new frame for the loop iteration
             // This is safer than swapping the scope of the existing frame

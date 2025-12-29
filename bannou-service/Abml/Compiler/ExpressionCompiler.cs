@@ -138,62 +138,80 @@ public sealed class ExpressionCompiler : IExpressionVisitor<byte>
     {
         // left && right (always returns boolean):
         // 1. eval left -> R0
-        // 2. convert to bool: And R0, R0, R0 (IsTrue(left))
-        // 3. if false, jump to END (result already false)
-        // 4. eval right -> R1
-        // 5. convert to bool: And R0, R1, R1 (IsTrue(right))
-        // 6. END: result in R0
+        // 2. if falsy, jump to FALSE case
+        // 3. eval right -> R1
+        // 4. convert right to bool -> result
+        // 5. jump to END
+        // 6. FALSE: load false
+        // 7. END:
 
         var leftReg = node.Left.Accept(this);
 
-        // Convert left to boolean: And R0, R0, R0 produces IsTrue(left)
-        _builder.Emit(OpCode.And, leftReg, leftReg, leftReg);
+        // Short-circuit: if left is falsy, skip right evaluation
+        var jumpToFalseIdx = _builder.Emit(OpCode.JumpIfFalse, leftReg, 0, 0);
+        _builder.Registers.Free(leftReg);
 
-        // Short-circuit: if false, skip right evaluation (result is already false)
-        var jumpIfFalseIdx = _builder.Emit(OpCode.JumpIfFalse, leftReg, 0, 0);
-
+        // Evaluate right side
         var rightReg = node.Right.Accept(this);
+        var resultReg = _builder.Registers.Allocate();
 
-        // Convert right to boolean and store in leftReg
-        _builder.Emit(OpCode.And, leftReg, rightReg, rightReg);
+        // Convert right to boolean using explicit ToBool
+        _builder.Emit(OpCode.ToBool, resultReg, rightReg);
         _builder.Registers.Free(rightReg);
 
-        // Patch the jump to here
-        var endIdx = _builder.CodeLength;
-        _builder.PatchJump(jumpIfFalseIdx, endIdx);
+        // Jump over the false case
+        var jumpToEndIdx = _builder.Emit(OpCode.Jump, 0, 0, 0);
 
-        return leftReg;
+        // False case: load false
+        var falseCaseIdx = _builder.CodeLength;
+        _builder.PatchJump(jumpToFalseIdx, falseCaseIdx);
+        _builder.Emit(OpCode.LoadFalse, resultReg);
+
+        // End
+        var endIdx = _builder.CodeLength;
+        _builder.PatchJump(jumpToEndIdx, endIdx);
+
+        return resultReg;
     }
 
     private byte CompileShortCircuitOr(BinaryNode node)
     {
         // left || right (always returns boolean):
         // 1. eval left -> R0
-        // 2. convert to bool: Or R0, R0, R0 (IsTrue(left))
-        // 3. if true, jump to END (result already true)
-        // 4. eval right -> R1
-        // 5. convert to bool: Or R0, R1, R1 (IsTrue(right))
-        // 6. END: result in R0
+        // 2. if truthy, jump to TRUE case
+        // 3. eval right -> R1
+        // 4. convert right to bool -> result
+        // 5. jump to END
+        // 6. TRUE: load true
+        // 7. END:
 
         var leftReg = node.Left.Accept(this);
 
-        // Convert left to boolean: Or R0, R0, R0 produces IsTrue(left)
-        _builder.Emit(OpCode.Or, leftReg, leftReg, leftReg);
+        // Short-circuit: if left is truthy, skip right evaluation
+        var jumpToTrueIdx = _builder.Emit(OpCode.JumpIfTrue, leftReg, 0, 0);
+        _builder.Registers.Free(leftReg);
 
-        // Short-circuit: if true, skip right evaluation (result is already true)
-        var jumpIfTrueIdx = _builder.Emit(OpCode.JumpIfTrue, leftReg, 0, 0);
-
+        // Evaluate right side
         var rightReg = node.Right.Accept(this);
+        var resultReg = _builder.Registers.Allocate();
 
-        // Convert right to boolean and store in leftReg
-        _builder.Emit(OpCode.Or, leftReg, rightReg, rightReg);
+        // Convert right to boolean using explicit ToBool
+        _builder.Emit(OpCode.ToBool, resultReg, rightReg);
         _builder.Registers.Free(rightReg);
 
-        // Patch the jump to here
-        var endIdx = _builder.CodeLength;
-        _builder.PatchJump(jumpIfTrueIdx, endIdx);
+        // Jump over the true case
+        var jumpToEndIdx = _builder.Emit(OpCode.Jump, 0, 0, 0);
 
-        return leftReg;
+        // True case: load true
+        var trueCaseIdx = _builder.CodeLength;
+        _builder.PatchJump(jumpToTrueIdx, trueCaseIdx);
+        _builder.Emit(OpCode.LoadTrue, resultReg);
+
+        // End
+        var endIdx = _builder.CodeLength;
+        _builder.PatchJump(jumpToEndIdx, endIdx);
+
+        return resultReg;
     }
 
     /// <inheritdoc/>
@@ -270,41 +288,51 @@ public sealed class ExpressionCompiler : IExpressionVisitor<byte>
     {
         var argCount = node.Arguments.Count;
 
-        // Compile each argument first (they'll go into arbitrary registers)
-        var argRegisters = new byte[argCount];
-        for (var i = 0; i < argCount; i++)
-        {
-            argRegisters[i] = node.Arguments[i].Accept(this);
-        }
+        // For nested calls to work correctly, we need args in contiguous registers
+        // that don't conflict with other computations. We allocate a contiguous
+        // block BEFORE compiling args to guarantee they're adjacent.
+        var argStartReg = (byte)0;
 
-        // Move arguments to R0..R(argCount-1) as required by Call convention
-        // We need to be careful about overwrites - copy in reverse if there are conflicts
-        for (var i = 0; i < argCount; i++)
+        if (argCount > 0)
         {
-            var targetReg = (byte)i;
-            var sourceReg = argRegisters[i];
-            if (sourceReg != targetReg)
+            // Reserve contiguous block for arguments
+            var argRegisters = new byte[argCount];
+            for (var i = 0; i < argCount; i++)
             {
-                _builder.Emit(OpCode.Move, targetReg, sourceReg, 0);
+                argRegisters[i] = _builder.Registers.Allocate();
             }
-        }
+            argStartReg = argRegisters[0];
 
-        // Free the original argument registers (those above argCount)
-        for (var i = 0; i < argCount; i++)
-        {
-            if (argRegisters[i] >= argCount)
+            // Compile each argument into its designated register
+            for (var i = 0; i < argCount; i++)
             {
-                _builder.Registers.Free(argRegisters[i]);
+                var valueReg = node.Arguments[i].Accept(this);
+                if (valueReg != argRegisters[i])
+                {
+                    _builder.Emit(OpCode.Move, argRegisters[i], valueReg, 0);
+                    _builder.Registers.Free(valueReg);
+                }
             }
+
+            // Keep arg registers allocated during call, free them after
         }
 
-        // Allocate destination register (must be >= argCount to avoid conflict)
+        // Allocate destination register
         var destReg = _builder.Registers.Allocate();
         var funcIdx = _builder.Constants.Add(node.FunctionName);
 
-        // Call instruction: dest = call(funcName, argCount)
-        // Convention: args are in R0..R(argCount-1)
-        _builder.Emit(OpCode.Call, destReg, funcIdx, (byte)argCount);
+        // Emit CallArgs to specify arg count, then Call with start register
+        _builder.Emit(OpCode.CallArgs, (byte)argCount);
+        _builder.Emit(OpCode.Call, destReg, funcIdx, argStartReg);
+
+        // Free argument registers after call
+        if (argCount > 0)
+        {
+            for (var i = 0; i < argCount; i++)
+            {
+                _builder.Registers.Free((byte)(argStartReg + i));
+            }
+        }
 
         return destReg;
     }

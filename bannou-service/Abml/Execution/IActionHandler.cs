@@ -101,6 +101,8 @@ public sealed class ActionHandlerRegistry : IActionHandlerRegistry
         Register(new Handlers.CallHandler());
         Register(new Handlers.ReturnHandler());
         Register(new Handlers.SetHandler());
+        Register(new Handlers.LocalHandler());
+        Register(new Handlers.GlobalHandler());
         Register(new Handlers.NumericOperationHandler());
         Register(new Handlers.ClearHandler());
         Register(new Handlers.LogHandler());

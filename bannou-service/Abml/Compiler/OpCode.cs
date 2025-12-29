@@ -64,10 +64,12 @@ public enum OpCode : byte
     // LOGICAL
     /// <summary>R[A] = !R[B]</summary>
     Not = 40,
-    /// <summary>R[A] = R[B] &amp;&amp; R[C]</summary>
+    /// <summary>R[A] = R[B] &amp;&amp; R[C] (non-short-circuit, use jumps for short-circuit)</summary>
     And = 41,
-    /// <summary>R[A] = R[B] || R[C]</summary>
+    /// <summary>R[A] = R[B] || R[C] (non-short-circuit)</summary>
     Or = 42,
+    /// <summary>R[A] = IsTrue(R[B]) - explicit boolean conversion</summary>
+    ToBool = 43,
 
     // CONTROL FLOW
     /// <summary>PC = (B &lt;&lt; 8) | C</summary>
@@ -82,7 +84,14 @@ public enum OpCode : byte
     JumpIfNotNull = 54,
 
     // FUNCTIONS
-    /// <summary>R[A] = Call(constants[B], args at R[C])</summary>
+    /// <summary>Specifies arg count for following Call. A = argCount</summary>
+    CallArgs = 59,
+    /// <summary>R[A] = Call(constants[B], args starting at R[C])</summary>
+    /// <remarks>
+    /// Must be preceded by CallArgs instruction that specifies arg count.
+    /// B encodes function name index in constants.
+    /// Args are in R[C], R[C+1], ..., R[C+argCount-1].
+    /// </remarks>
     Call = 60,
 
     // NULL HANDLING

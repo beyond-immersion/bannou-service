@@ -245,12 +245,14 @@ public sealed class DocumentParser
 
             var triggers = ParseTriggers(flowDict, errors);
             var actions = ParseActions(flowDict.TryGetValue("actions", out var actionsObj) ? actionsObj : null, errors);
+            var onError = ParseActions(flowDict.TryGetValue("on_error", out var onErrorObj) ? onErrorObj : null, errors);
 
             flows[flowName] = new Flow
             {
                 Name = flowName,
                 Triggers = triggers,
-                Actions = actions
+                Actions = actions,
+                OnError = onError
             };
         }
 
@@ -325,10 +327,15 @@ public sealed class DocumentParser
             "call" => ParseCallAction(actionValue, errors),
             "return" => ParseReturnAction(actionValue, errors),
             "set" => ParseSetAction(actionValue, errors),
+            "local" => ParseLocalAction(actionValue, errors),
+            "global" => ParseGlobalAction(actionValue, errors),
             "increment" => ParseIncrementAction(actionValue, errors),
             "decrement" => ParseDecrementAction(actionValue, errors),
             "clear" => ParseClearAction(actionValue, errors),
             "log" => ParseLogAction(actionValue, errors),
+            "emit" => ParseEmitAction(actionValue, errors),
+            "wait_for" => ParseWaitForAction(actionValue, errors),
+            "sync" => ParseSyncAction(actionValue, errors),
             _ => ParseDomainAction(actionName, actionValue, errors)
         };
     }
@@ -525,6 +532,58 @@ public sealed class DocumentParser
         return new SetAction(variable, valueStr);
     }
 
+    private LocalAction? ParseLocalAction(object? value, List<ParseError> errors)
+    {
+        if (value is not Dictionary<object, object> dict)
+        {
+            errors.Add(new ParseError("'local' must be an object"));
+            return null;
+        }
+
+        if (!dict.TryGetValue("variable", out var varObj) || varObj is not string variable)
+        {
+            errors.Add(new ParseError("'local' requires 'variable' field"));
+            return null;
+        }
+
+        if (!dict.TryGetValue("value", out var valObj))
+        {
+            errors.Add(new ParseError("'local' requires 'value' field"));
+            return null;
+        }
+
+        // Convert value to string (expression)
+        var valueStr = valObj?.ToString() ?? "null";
+
+        return new LocalAction(variable, valueStr);
+    }
+
+    private GlobalAction? ParseGlobalAction(object? value, List<ParseError> errors)
+    {
+        if (value is not Dictionary<object, object> dict)
+        {
+            errors.Add(new ParseError("'global' must be an object"));
+            return null;
+        }
+
+        if (!dict.TryGetValue("variable", out var varObj) || varObj is not string variable)
+        {
+            errors.Add(new ParseError("'global' requires 'variable' field"));
+            return null;
+        }
+
+        if (!dict.TryGetValue("value", out var valObj))
+        {
+            errors.Add(new ParseError("'global' requires 'value' field"));
+            return null;
+        }
+
+        // Convert value to string (expression)
+        var valueStr = valObj?.ToString() ?? "null";
+
+        return new GlobalAction(variable, valueStr);
+    }
+
     private IncrementAction? ParseIncrementAction(object? value, List<ParseError> errors)
     {
         if (value is not Dictionary<object, object> dict)
@@ -634,6 +693,82 @@ public sealed class DocumentParser
         }
 
         return new LogAction(message, level);
+    }
+
+    private EmitAction? ParseEmitAction(object? value, List<ParseError> errors)
+    {
+        string? signal = null;
+        string? payload = null;
+
+        if (value is string str)
+        {
+            signal = str;
+        }
+        else if (value is Dictionary<object, object> dict)
+        {
+            if (dict.TryGetValue("signal", out var sigObj) && sigObj is string sig)
+            {
+                signal = sig;
+            }
+            if (dict.TryGetValue("payload", out var payObj) && payObj is string pay)
+            {
+                payload = pay;
+            }
+        }
+
+        if (string.IsNullOrEmpty(signal))
+        {
+            errors.Add(new ParseError("'emit' requires 'signal' field"));
+            return null;
+        }
+
+        return new EmitAction(signal, payload);
+    }
+
+    private WaitForAction? ParseWaitForAction(object? value, List<ParseError> errors)
+    {
+        string? signal = null;
+
+        if (value is string str)
+        {
+            signal = str;
+        }
+        else if (value is Dictionary<object, object> dict &&
+                 dict.TryGetValue("signal", out var sigObj) && sigObj is string sig)
+        {
+            signal = sig;
+        }
+
+        if (string.IsNullOrEmpty(signal))
+        {
+            errors.Add(new ParseError("'wait_for' requires 'signal' field"));
+            return null;
+        }
+
+        return new WaitForAction(signal);
+    }
+
+    private SyncAction? ParseSyncAction(object? value, List<ParseError> errors)
+    {
+        string? point = null;
+
+        if (value is string str)
+        {
+            point = str;
+        }
+        else if (value is Dictionary<object, object> dict &&
+                 dict.TryGetValue("point", out var ptObj) && ptObj is string pt)
+        {
+            point = pt;
+        }
+
+        if (string.IsNullOrEmpty(point))
+        {
+            errors.Add(new ParseError("'sync' requires 'point' field"));
+            return null;
+        }
+
+        return new SyncAction(point);
     }
 
     private DomainAction ParseDomainAction(string name, object? value, List<ParseError> errors)

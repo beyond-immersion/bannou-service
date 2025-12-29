@@ -179,6 +179,12 @@ public sealed class Flow
     /// Actions to execute in this flow.
     /// </summary>
     public IReadOnlyList<ActionNode> Actions { get; init; } = [];
+
+    /// <summary>
+    /// Error handler actions for this flow.
+    /// When an error occurs, these actions execute with _error variable set.
+    /// </summary>
+    public IReadOnlyList<ActionNode> OnError { get; init; } = [];
 }
 
 /// <summary>

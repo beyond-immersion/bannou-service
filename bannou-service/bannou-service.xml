@@ -601,10 +601,13 @@
             <summary>R[A] = !R[B]</summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Abml.Compiler.OpCode.And">
-            <summary>R[A] = R[B] &amp;&amp; R[C]</summary>
+            <summary>R[A] = R[B] &amp;&amp; R[C] (non-short-circuit, use jumps for short-circuit)</summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Abml.Compiler.OpCode.Or">
-            <summary>R[A] = R[B] || R[C]</summary>
+            <summary>R[A] = R[B] || R[C] (non-short-circuit)</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Compiler.OpCode.ToBool">
+            <summary>R[A] = IsTrue(R[B]) - explicit boolean conversion</summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Abml.Compiler.OpCode.Jump">
             <summary>PC = (B &lt;&lt; 8) | C</summary>
@@ -621,8 +624,16 @@
         <member name="F:BeyondImmersion.BannouService.Abml.Compiler.OpCode.JumpIfNotNull">
             <summary>if R[A] != null then PC = (B &lt;&lt; 8) | C</summary>
         </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Compiler.OpCode.CallArgs">
+            <summary>Specifies arg count for following Call. A = argCount</summary>
+        </member>
         <member name="F:BeyondImmersion.BannouService.Abml.Compiler.OpCode.Call">
-            <summary>R[A] = Call(constants[B], args at R[C])</summary>
+            <summary>R[A] = Call(constants[B], args starting at R[C])</summary>
+            <remarks>
+            Must be preceded by CallArgs instruction that specifies arg count.
+            B encodes function name index in constants.
+            Args are in R[C], R[C+1], ..., R[C+argCount-1].
+            </remarks>
         </member>
         <member name="F:BeyondImmersion.BannouService.Abml.Compiler.OpCode.Coalesce">
             <summary>R[A] = R[B] ?? R[C]</summary>
@@ -853,6 +864,12 @@
             Actions to execute in this flow.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Flow.OnError">
+            <summary>
+            Error handler actions for this flow.
+            When an error occurs, these actions execute with _error variable set.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Documents.FlowTrigger">
             <summary>
             Flow trigger definition.
@@ -1020,14 +1037,14 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.SetAction">
             <summary>
-            Set a variable to a value.
+            Set a variable, searching scope chain. Creates locally if not found.
             </summary>
             <param name="Variable">Variable name.</param>
             <param name="Value">Expression string for the value.</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.SetAction.#ctor(System.String,System.String)">
             <summary>
-            Set a variable to a value.
+            Set a variable, searching scope chain. Creates locally if not found.
             </summary>
             <param name="Variable">Variable name.</param>
             <param name="Value">Expression string for the value.</param>
@@ -1036,6 +1053,46 @@
             <summary>Variable name.</summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.SetAction.Value">
+            <summary>Expression string for the value.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.LocalAction">
+            <summary>
+            Create/set a variable in the current local scope (shadows parent).
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="Value">Expression string for the value.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.LocalAction.#ctor(System.String,System.String)">
+            <summary>
+            Create/set a variable in the current local scope (shadows parent).
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="Value">Expression string for the value.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.LocalAction.Variable">
+            <summary>Variable name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.LocalAction.Value">
+            <summary>Expression string for the value.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.GlobalAction">
+            <summary>
+            Set a variable in the document root scope.
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="Value">Expression string for the value.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.GlobalAction.#ctor(System.String,System.String)">
+            <summary>
+            Set a variable in the document root scope.
+            </summary>
+            <param name="Variable">Variable name.</param>
+            <param name="Value">Expression string for the value.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.GlobalAction.Variable">
+            <summary>Variable name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.GlobalAction.Value">
             <summary>Expression string for the value.</summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.IncrementAction">
@@ -1132,6 +1189,56 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.DomainAction.Parameters">
             <summary>Action parameters.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.EmitAction">
+            <summary>
+            Emit a signal to other channels.
+            </summary>
+            <param name="Signal">Signal name to emit.</param>
+            <param name="Payload">Optional payload expression.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.EmitAction.#ctor(System.String,System.String)">
+            <summary>
+            Emit a signal to other channels.
+            </summary>
+            <param name="Signal">Signal name to emit.</param>
+            <param name="Payload">Optional payload expression.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.EmitAction.Signal">
+            <summary>Signal name to emit.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.EmitAction.Payload">
+            <summary>Optional payload expression.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.WaitForAction">
+            <summary>
+            Wait for a signal from another channel.
+            </summary>
+            <param name="Signal">Signal name to wait for.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.WaitForAction.#ctor(System.String)">
+            <summary>
+            Wait for a signal from another channel.
+            </summary>
+            <param name="Signal">Signal name to wait for.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.WaitForAction.Signal">
+            <summary>Signal name to wait for.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.SyncAction">
+            <summary>
+            Synchronization barrier - all channels wait here until all arrive.
+            </summary>
+            <param name="Point">Sync point name.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.SyncAction.#ctor(System.String)">
+            <summary>
+            Synchronization barrier - all channels wait here until all arrive.
+            </summary>
+            <param name="Point">Sync point name.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.SyncAction.Point">
+            <summary>Sync point name.</summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Exceptions.AbmlCompilationException">
             <summary>
@@ -1294,6 +1401,163 @@
         <member name="F:BeyondImmersion.BannouService.Abml.Exceptions.UndefinedReferenceType.Index">
             <inheritdoc/>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelSchedulerConfig">
+            <summary>
+            Configuration for channel scheduler timeouts.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelSchedulerConfig.GlobalTimeout">
+            <summary>Maximum total execution time for all channels.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelSchedulerConfig.WaitTimeout">
+            <summary>Maximum time any single wait_for can block.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelSchedulerConfig.MaxCycles">
+            <summary>Maximum cycles before detecting potential infinite loop.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelSchedulerConfig.Default">
+            <summary>Default configuration.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelScheduler">
+            <summary>
+            Cooperative scheduler for multi-channel ABML execution.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelScheduler.#ctor(BeyondImmersion.BannouService.Abml.Runtime.IExpressionEvaluator,BeyondImmersion.BannouService.Abml.Execution.IActionHandlerRegistry,BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelSchedulerConfig)">
+            <summary>
+            Creates a new channel scheduler.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelScheduler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.AbmlDocument,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},BeyondImmersion.BannouService.Abml.Expressions.IVariableScope,System.Threading.CancellationToken)">
+            <summary>
+            Executes a document with multiple channels.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Channel.StepResult">
+            <summary>
+            Internal step result.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Channel.SyncPoint">
+            <summary>
+            Synchronization point for barrier synchronization.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelExecutionResult">
+            <summary>
+            Result of multi-channel execution.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelExecutionResult.IsSuccess">
+            <summary>Whether execution succeeded.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelExecutionResult.ErrorMessage">
+            <summary>Error message if failed.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelExecutionResult.FailedChannel">
+            <summary>Channel that caused the error, if any.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelExecutionResult.ChannelResults">
+            <summary>Return values from each channel.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelExecutionResult.Logs">
+            <summary>Logs collected during execution.</summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelExecutionResult.Success(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Abml.Execution.LogEntry})">
+            <summary>Creates a success result.</summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelExecutionResult.Failure(System.String,System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Abml.Execution.LogEntry},System.String)">
+            <summary>Creates a failure result.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelStatus">
+            <summary>
+            Execution state for a single channel.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelStatus.Ready">
+            <summary>Channel is ready to run.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelStatus.Waiting">
+            <summary>Channel is waiting for a signal.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelStatus.Completed">
+            <summary>Channel completed execution.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelStatus.Failed">
+            <summary>Channel encountered an error.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelState">
+            <summary>
+            State for a single execution channel.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelState.Name">
+            <summary>Channel name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelState.Status">
+            <summary>Current execution status.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelState.Scope">
+            <summary>Channel-local variable scope.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelState.CallStack">
+            <summary>Call stack for this channel.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelState.PendingSignals">
+            <summary>Pending signals received.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelState.WaitingFor">
+            <summary>Signal this channel is waiting for (if any).</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelState.WaitStartTime">
+            <summary>When the channel started waiting (for timeout).</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelState.ActionIndex">
+            <summary>Current action index in the flow.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelState.ReturnValue">
+            <summary>Return value from channel execution.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelState.ErrorMessage">
+            <summary>Error message if failed.</summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelState.#ctor(System.String,BeyondImmersion.BannouService.Abml.Expressions.IVariableScope)">
+            <summary>
+            Creates a new channel state.
+            </summary>
+            <param name="name">Channel name.</param>
+            <param name="parentScope">Parent scope to inherit from.</param>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelSignal">
+            <summary>
+            Signal sent between channels.
+            </summary>
+            <param name="Name">Signal name.</param>
+            <param name="Payload">Optional signal payload.</param>
+            <param name="SourceChannel">Channel that emitted the signal.</param>
+            <param name="Timestamp">When the signal was emitted.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelSignal.#ctor(System.String,System.Object,System.String,System.DateTime)">
+            <summary>
+            Signal sent between channels.
+            </summary>
+            <param name="Name">Signal name.</param>
+            <param name="Payload">Optional signal payload.</param>
+            <param name="SourceChannel">Channel that emitted the signal.</param>
+            <param name="Timestamp">When the signal was emitted.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelSignal.Name">
+            <summary>Signal name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelSignal.Payload">
+            <summary>Optional signal payload.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelSignal.SourceChannel">
+            <summary>Channel that emitted the signal.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.Channel.ChannelSignal.Timestamp">
+            <summary>When the signal was emitted.</summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Execution.IDocumentExecutor">
             <summary>
             Interface for executing ABML documents.
@@ -1328,6 +1592,56 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.Abml.Execution.DocumentExecutor.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.AbmlDocument,System.String,BeyondImmersion.BannouService.Abml.Expressions.IVariableScope,System.Threading.CancellationToken)">
             <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.ErrorInfo">
+            <summary>
+            Structured error information for ABML error handlers.
+            </summary>
+            <param name="Message">The error message.</param>
+            <param name="FlowName">The flow where the error occurred.</param>
+            <param name="ActionType">The action type that caused the error.</param>
+            <param name="ChannelName">The channel name (for multi-channel execution).</param>
+            <param name="Exception">The underlying exception, if any.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ErrorInfo.#ctor(System.String,System.String,System.String,System.String,System.Exception)">
+            <summary>
+            Structured error information for ABML error handlers.
+            </summary>
+            <param name="Message">The error message.</param>
+            <param name="FlowName">The flow where the error occurred.</param>
+            <param name="ActionType">The action type that caused the error.</param>
+            <param name="ChannelName">The channel name (for multi-channel execution).</param>
+            <param name="Exception">The underlying exception, if any.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ErrorInfo.Message">
+            <summary>The error message.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ErrorInfo.FlowName">
+            <summary>The flow where the error occurred.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ErrorInfo.ActionType">
+            <summary>The action type that caused the error.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ErrorInfo.ChannelName">
+            <summary>The channel name (for multi-channel execution).</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ErrorInfo.Exception">
+            <summary>The underlying exception, if any.</summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ErrorInfo.FromErrorResult(System.String,System.String,System.String,System.String)">
+            <summary>
+            Creates an ErrorInfo from an ActionResult.Error.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ErrorInfo.FromException(System.Exception,System.String,System.String,System.String)">
+            <summary>
+            Creates an ErrorInfo from an exception.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ErrorInfo.ToDictionary">
+            <summary>
+            Gets a dictionary representation for use as _error variable.
+            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Execution.ExecutionContext">
             <summary>
@@ -1664,6 +1978,17 @@
         <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.ForEachHandler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
             <inheritdoc/>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Handlers.GlobalHandler">
+            <summary>
+            Handles global variable actions (writes to document root scope).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.GlobalHandler.CanHandle(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.GlobalHandler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Execution.Handlers.GotoHandler">
             <summary>
             Handles goto actions (flow transfer without return).
@@ -1673,6 +1998,17 @@
             <inheritdoc/>
         </member>
         <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.GotoHandler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Execution.Handlers.LocalHandler">
+            <summary>
+            Handles local variable actions (creates in current scope, shadows parent).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.LocalHandler.CanHandle(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.LocalHandler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
             <inheritdoc/>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Execution.Handlers.LogHandler">
@@ -2019,6 +2355,23 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.Abml.Expressions.VariableScope.SetValue(System.String,System.Object)">
             <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Expressions.VariableScope.SetLocalValue(System.String,System.Object)">
+            <summary>
+            Sets a variable in this scope only, shadowing any parent variable.
+            Used by loop variables and explicit 'local:' actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Expressions.VariableScope.SetGlobalValue(System.String,System.Object)">
+            <summary>
+            Sets a variable in the root scope.
+            Used by explicit 'global:' actions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Expressions.VariableScope.GetRootScope">
+            <summary>
+            Gets the root scope (topmost parent).
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Abml.Expressions.VariableScope.FindScopeWithVariable(System.String)">
             <summary>

@@ -171,13 +171,68 @@ public sealed class DocumentExecutor : IDocumentExecutor
 
                 case ReturnResult:
                 case CompleteResult:
-                case ErrorResult:
                     return result;
+
+                case ErrorResult errorResult:
+                    // Try to handle error with on_error handlers
+                    var handled = await TryHandleErrorAsync(
+                        flow, errorResult, action, context, ct);
+                    if (!handled)
+                    {
+                        return errorResult;  // Propagate unhandled error
+                    }
+                    // Error was handled, continue with next action
+                    break;
             }
         }
 
         // Flow completed normally
         return ActionResult.Continue;
+    }
+
+    private async ValueTask<bool> TryHandleErrorAsync(
+        Flow flow,
+        ErrorResult errorResult,
+        ActionNode failedAction,
+        ExecutionContext context,
+        CancellationToken ct)
+    {
+        // No error handler? Cannot handle
+        if (flow.OnError.Count == 0)
+        {
+            return false;
+        }
+
+        // Create error info and set _error variable
+        var errorInfo = ErrorInfo.FromErrorResult(
+            errorResult.Message,
+            flow.Name,
+            failedAction.GetType().Name);
+
+        var scope = context.CallStack.Current?.Scope ?? context.RootScope;
+        scope.SetValue("_error", errorInfo.ToDictionary());
+
+        // Execute error handlers
+        foreach (var errorAction in flow.OnError)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var result = await ExecuteActionAsync(errorAction, context, ct);
+
+            // If error handler itself errors, propagate
+            if (result is ErrorResult)
+            {
+                return false;
+            }
+
+            // If error handler returns, that's fine
+            if (result is ReturnResult or CompleteResult)
+            {
+                break;
+            }
+        }
+
+        return true;  // Error was handled
     }
 
     private async ValueTask<ActionResult> ExecuteActionAsync(

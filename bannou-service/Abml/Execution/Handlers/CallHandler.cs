@@ -28,11 +28,15 @@ public sealed class CallHandler : IActionHandler
             return ActionResult.Error($"Flow not found: {flowName}");
         }
 
-        // Use the current scope directly so called flow can modify caller's variables
+        // Get current scope
         var currentScope = context.CallStack.Current?.Scope ?? context.RootScope;
 
-        // Push new frame with the same scope (allows variable sharing)
-        context.CallStack.Push(flowName, currentScope);
+        // Create CHILD scope - called flow gets its own namespace
+        // but can still READ from parent (for parameters passed via variables)
+        var callScope = currentScope.CreateChild();
+
+        // Push new frame with child scope for isolation
+        context.CallStack.Push(flowName, callScope);
 
         try
         {
