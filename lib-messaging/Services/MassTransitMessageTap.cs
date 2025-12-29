@@ -77,7 +77,13 @@ public sealed class MassTransitMessageTap : IMessageTap, IAsyncDisposable
             {
                 endpoint.PrefetchCount = _configuration.DefaultPrefetchCount;
 
+                // Disable MassTransit's automatic consume topology - we want to receive
+                // directly from our bound exchange without type-based routing
+                endpoint.ConfigureConsumeTopology = false;
+
                 // Bind to source exchange for receiving messages
+                // Uses Fanout exchange type - each tapped source (e.g., character event stream)
+                // is its own fanout exchange that broadcasts all events to bound queues
                 if (endpoint is IRabbitMqReceiveEndpointConfigurator rmqEndpoint)
                 {
                     rmqEndpoint.Bind(effectiveSourceExchange, x =>

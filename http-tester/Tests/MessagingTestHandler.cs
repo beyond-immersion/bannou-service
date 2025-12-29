@@ -259,11 +259,15 @@ public class MessagingTestHandler : BaseHttpTestHandler
             var receivedMessages = new ConcurrentBag<TappedMessageEnvelope>();
             var messageReceived = new TaskCompletionSource<bool>();
 
-            // Create destination for tap
+            // Source exchange simulates a character's event stream (fanout exchange)
+            var sourceExchange = $"character-events-{testId}";
+            var sourceTopic = "events";  // For fanout, topic is just for naming/logging
+
+            // Create destination for tap (session's event queue)
             var destination = new TapDestination
             {
-                Exchange = $"tap-forward-dest-{testId}",
-                RoutingKey = $"tap.forward.{testId}",
+                Exchange = $"session-events-{testId}",
+                RoutingKey = $"session.{testId}",
                 ExchangeType = TapExchangeType.Fanout,
                 CreateExchangeIfNotExists = true
             };
@@ -279,13 +283,22 @@ public class MessagingTestHandler : BaseHttpTestHandler
                     await Task.CompletedTask;
                 });
 
-            // Create tap from source to destination
-            var sourceTopic = $"tap.source.forward.{testId}";
-            await using var tapHandle = await messageTap.CreateTapAsync(sourceTopic, destination);
+            // Create tap from character's event exchange to session's destination
+            await using var tapHandle = await messageTap.CreateTapAsync(
+                sourceTopic,
+                destination,
+                sourceExchange);  // Explicit source exchange
 
-            // Publish message to source topic
+            // Publish message to the character's event exchange (fanout)
+            // Messages must be wrapped in GenericMessageEnvelope for tap interception
             var testPayload = new TapTestMessage("Tap forward test", "forward-test", DateTimeOffset.UtcNow);
-            await messageBus.PublishAsync(sourceTopic, testPayload);
+            var envelope = new GenericMessageEnvelope(sourceTopic, testPayload);
+            var publishOptions = new PublishOptions
+            {
+                Exchange = sourceExchange,
+                ExchangeType = PublishOptionsExchangeType.Fanout
+            };
+            await messageBus.PublishAsync(sourceTopic, envelope, publishOptions);
 
             // Wait for message to be forwarded (with timeout)
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
@@ -305,7 +318,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
             if (received.TapId != tapHandle.TapId)
                 return TestResult.Failed($"TapId mismatch: expected {tapHandle.TapId}, got {received.TapId}");
 
-            return TestResult.Successful($"Tap {tapHandle.TapId} successfully forwarded message to {destinationTopic}");
+            return TestResult.Successful($"Tap {tapHandle.TapId} successfully forwarded message from {sourceExchange} to {destinationTopic}");
         }, "Tap forwards messages");
 
     private static Task<TestResult> TestMultipleTapsToSameDestination(ITestClient client, string[] args) =>
@@ -320,11 +333,15 @@ public class MessagingTestHandler : BaseHttpTestHandler
             var messagesReceived = new TaskCompletionSource<bool>();
             var expectedCount = 2;
 
-            // Shared destination for both taps
+            // Two character event exchanges (simulating two characters owned by same session)
+            var sourceExchange1 = $"character-events-A-{testId}";
+            var sourceExchange2 = $"character-events-B-{testId}";
+
+            // Shared destination (session's event queue)
             var destination = new TapDestination
             {
-                Exchange = $"tap-multi-dest-{testId}",
-                RoutingKey = $"tap.multi.{testId}",
+                Exchange = $"session-events-{testId}",
+                RoutingKey = $"session.{testId}",
                 ExchangeType = TapExchangeType.Fanout,
                 CreateExchangeIfNotExists = true
             };
@@ -341,16 +358,17 @@ public class MessagingTestHandler : BaseHttpTestHandler
                     await Task.CompletedTask;
                 });
 
-            // Create two taps from different sources to same destination
-            var source1 = $"tap.source.multi1.{testId}";
-            var source2 = $"tap.source.multi2.{testId}";
+            // Create taps from both character exchanges to session destination
+            await using var tap1 = await messageTap.CreateTapAsync("events", destination, sourceExchange1);
+            await using var tap2 = await messageTap.CreateTapAsync("events", destination, sourceExchange2);
 
-            await using var tap1 = await messageTap.CreateTapAsync(source1, destination);
-            await using var tap2 = await messageTap.CreateTapAsync(source2, destination);
-
-            // Publish to both sources
-            await messageBus.PublishAsync(source1, new TapTestMessage("Multi-tap test", "source1", DateTimeOffset.UtcNow));
-            await messageBus.PublishAsync(source2, new TapTestMessage("Multi-tap test", "source2", DateTimeOffset.UtcNow));
+            // Publish to both character exchanges (wrapped in GenericMessageEnvelope for tap interception)
+            var publishOptions1 = new PublishOptions { Exchange = sourceExchange1, ExchangeType = PublishOptionsExchangeType.Fanout };
+            var publishOptions2 = new PublishOptions { Exchange = sourceExchange2, ExchangeType = PublishOptionsExchangeType.Fanout };
+            var envelope1 = new GenericMessageEnvelope("events", new TapTestMessage("Multi-tap test", "charA", DateTimeOffset.UtcNow));
+            var envelope2 = new GenericMessageEnvelope("events", new TapTestMessage("Multi-tap test", "charB", DateTimeOffset.UtcNow));
+            await messageBus.PublishAsync("events", envelope1, publishOptions1);
+            await messageBus.PublishAsync("events", envelope2, publishOptions2);
 
             // Wait for both messages
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
@@ -371,7 +389,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
             if (!tapIds.Contains(tap1.TapId) || !tapIds.Contains(tap2.TapId))
                 return TestResult.Failed("Did not receive messages from both expected taps");
 
-            return TestResult.Successful($"Both taps ({tap1.TapId}, {tap2.TapId}) forwarded to {destinationTopic}");
+            return TestResult.Successful($"Both character taps ({tap1.TapId}, {tap2.TapId}) forwarded to session {destinationTopic}");
         }, "Multiple taps to same destination");
 
     private static Task<TestResult> TestDisposeTapStopsForwarding(ITestClient client, string[] args) =>
@@ -385,10 +403,13 @@ public class MessagingTestHandler : BaseHttpTestHandler
             var receivedMessages = new ConcurrentBag<TappedMessageEnvelope>();
             var firstMessageReceived = new TaskCompletionSource<bool>();
 
+            // Source exchange (character's event stream)
+            var sourceExchange = $"character-events-dispose-{testId}";
+
             var destination = new TapDestination
             {
-                Exchange = $"tap-dispose-dest-{testId}",
-                RoutingKey = $"tap.dispose.{testId}",
+                Exchange = $"session-events-dispose-{testId}",
+                RoutingKey = $"session.{testId}",
                 ExchangeType = TapExchangeType.Fanout,
                 CreateExchangeIfNotExists = true
             };
@@ -403,14 +424,14 @@ public class MessagingTestHandler : BaseHttpTestHandler
                     await Task.CompletedTask;
                 });
 
-            var sourceTopic = $"tap.source.dispose.{testId}";
-
-            // Create and use tap
-            var tapHandle = await messageTap.CreateTapAsync(sourceTopic, destination);
+            // Create tap with explicit source exchange
+            var tapHandle = await messageTap.CreateTapAsync("events", destination, sourceExchange);
             var tapId = tapHandle.TapId;
 
-            // Publish first message - should be forwarded
-            await messageBus.PublishAsync(sourceTopic, new TapTestMessage("Dispose test", "before_dispose", DateTimeOffset.UtcNow));
+            // Publish first message - should be forwarded (wrapped in GenericMessageEnvelope)
+            var publishOptions = new PublishOptions { Exchange = sourceExchange, ExchangeType = PublishOptionsExchangeType.Fanout };
+            var envelope1 = new GenericMessageEnvelope("events", new TapTestMessage("Dispose test", "before_dispose", DateTimeOffset.UtcNow));
+            await messageBus.PublishAsync("events", envelope1, publishOptions);
 
             using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             try
@@ -436,7 +457,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
             await Task.Delay(500);
 
             // Publish second message - should NOT be forwarded
-            await messageBus.PublishAsync(sourceTopic, new TapTestMessage("Dispose test", "after_dispose", DateTimeOffset.UtcNow));
+            var envelope2 = new GenericMessageEnvelope("events", new TapTestMessage("Dispose test", "after_dispose", DateTimeOffset.UtcNow));
+            await messageBus.PublishAsync("events", envelope2, publishOptions);
 
             // Wait to see if message arrives (it shouldn't)
             await Task.Delay(2000);
@@ -461,10 +483,14 @@ public class MessagingTestHandler : BaseHttpTestHandler
             TappedMessageEnvelope? receivedEnvelope = null;
             var messageReceived = new TaskCompletionSource<bool>();
 
+            // Source exchange (character's event stream)
+            var sourceExchange = $"character-events-meta-{testId}";
+            var sourceTopic = "events";
+
             var destination = new TapDestination
             {
-                Exchange = $"tap-meta-dest-{testId}",
-                RoutingKey = $"tap.meta.{testId}",
+                Exchange = $"session-events-meta-{testId}",
+                RoutingKey = $"session.{testId}",
                 ExchangeType = TapExchangeType.Direct,
                 CreateExchangeIfNotExists = true
             };
@@ -479,13 +505,14 @@ public class MessagingTestHandler : BaseHttpTestHandler
                     await Task.CompletedTask;
                 });
 
-            var sourceTopic = $"tap.source.meta.{testId}";
             var beforeCreate = DateTimeOffset.UtcNow;
 
-            await using var tapHandle = await messageTap.CreateTapAsync(sourceTopic, destination);
+            await using var tapHandle = await messageTap.CreateTapAsync(sourceTopic, destination, sourceExchange);
 
-            // Publish message
-            await messageBus.PublishAsync(sourceTopic, new TapTestMessage("Metadata test", "metadata-test", DateTimeOffset.UtcNow));
+            // Publish message to source exchange (wrapped in GenericMessageEnvelope)
+            var publishOptions = new PublishOptions { Exchange = sourceExchange, ExchangeType = PublishOptionsExchangeType.Fanout };
+            var envelope = new GenericMessageEnvelope(sourceTopic, new TapTestMessage("Metadata test", "metadata-test", DateTimeOffset.UtcNow));
+            await messageBus.PublishAsync(sourceTopic, envelope, publishOptions);
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             try
@@ -527,6 +554,6 @@ public class MessagingTestHandler : BaseHttpTestHandler
             if (errors.Count > 0)
                 return TestResult.Failed($"Metadata errors: {string.Join("; ", errors)}");
 
-            return TestResult.Successful($"TappedMessageEnvelope metadata verified: TapId={receivedEnvelope.TapId}, SourceTopic={receivedEnvelope.SourceTopic}");
+            return TestResult.Successful($"TappedMessageEnvelope metadata verified: TapId={receivedEnvelope.TapId}, SourceExchange={sourceExchange}");
         }, "Tapped envelope metadata");
 }

@@ -1009,7 +1009,7 @@ public partial class AccountsService : IAccountsService
             _logger.LogInformation("Password hash updated for account: {AccountId}", accountId);
             await PublishAccountUpdatedEventAsync(account, new[] { "passwordHash" });
 
-            return (StatusCodes.OK, new { Message = "Password updated successfully" });
+            return (StatusCodes.OK, null);
         }
         catch (Exception ex)
         {
@@ -1055,7 +1055,7 @@ public partial class AccountsService : IAccountsService
                 accountId, body.EmailVerified);
 
             await PublishAccountUpdatedEventAsync(account, new[] { "isVerified" });
-            return (StatusCodes.OK, new { Message = "Verification status updated successfully" });
+            return (StatusCodes.OK, null);
         }
         catch (Exception ex)
         {

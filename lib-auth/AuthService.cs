@@ -676,7 +676,7 @@ public partial class AuthService : IAuthService
                     SessionInvalidatedEventReason.Logout);
             }
 
-            return (StatusCodes.OK, new { Message = "Logout successful" });
+            return (StatusCodes.OK, null);
         }
         catch (Exception ex)
         {
@@ -745,7 +745,7 @@ public partial class AuthService : IAuthService
 
             if (string.IsNullOrWhiteSpace(body.Email))
             {
-                return (StatusCodes.BadRequest, new { Error = "Email is required" });
+                return (StatusCodes.BadRequest, null);
             }
 
             // Verify account exists (but always return success to prevent email enumeration)
@@ -793,7 +793,7 @@ public partial class AuthService : IAuthService
             }
 
             // Always return success to prevent email enumeration attacks
-            return (StatusCodes.OK, new { Message = "If the email exists, a password reset link has been sent" });
+            return (StatusCodes.OK, null);
         }
         catch (Exception ex)
         {
@@ -866,7 +866,7 @@ public partial class AuthService : IAuthService
             if (resetData == null)
             {
                 _logger.LogWarning("Invalid or expired password reset token");
-                return (StatusCodes.BadRequest, new { Error = "Invalid or expired reset token" });
+                return (StatusCodes.BadRequest, null);
             }
 
             // Check if token has expired
@@ -875,7 +875,7 @@ public partial class AuthService : IAuthService
                 _logger.LogWarning("Password reset token has expired");
                 // Clean up expired token
                 await resetStore.DeleteAsync($"password-reset:{body.Token}", cancellationToken);
-                return (StatusCodes.BadRequest, new { Error = "Reset token has expired" });
+                return (StatusCodes.BadRequest, null);
             }
 
             // Hash the new password
@@ -892,7 +892,7 @@ public partial class AuthService : IAuthService
             await resetStore.DeleteAsync($"password-reset:{body.Token}", cancellationToken);
 
             _logger.LogInformation("Password reset successful for account {AccountId}", resetData.AccountId);
-            return (StatusCodes.OK, new { Message = "Password reset successful" });
+            return (StatusCodes.OK, null);
         }
         catch (Exception ex)
         {

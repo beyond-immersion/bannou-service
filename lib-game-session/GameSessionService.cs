@@ -464,7 +464,7 @@ public partial class GameSessionService : IGameSessionService
                 Success = true,
                 SessionId = sessionId,
                 PlayerRole = JoinGameSessionResponsePlayerRole.Player,
-                GameData = model.GameSettings ?? new { },
+                GameData = model.GameSettings ?? new object(),
                 NewPermissions = new List<string>
                 {
                     $"game-session:{sessionId}:action",
@@ -1440,7 +1440,7 @@ public partial class GameSessionService : IGameSessionService
             Owner = model.Owner,
             Players = model.Players,
             CreatedAt = model.CreatedAt,
-            GameSettings = model.GameSettings ?? new { }
+            GameSettings = model.GameSettings ?? new object()
         };
     }
 
