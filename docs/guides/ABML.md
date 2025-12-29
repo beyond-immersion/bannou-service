@@ -1442,20 +1442,87 @@ ABML is designed to be handler-agnostic. Non-Bannou implementations (Unity edito
 ## Appendix B: Grammar Summary
 
 ```
-document      := version metadata? imports? context? events? goals? flows? channels?
-version       := "version:" string
-metadata      := "metadata:" { id, type, description?, tags?, deterministic? }
-imports       := "imports:" [ import_spec+ ]
-import_spec   := { schema: string, types: [string+] } | { file: string, as: string }
-context       := "context:" { variables?, requirements?, services? }
-flows         := "flows:" { flow_name: flow_def }+
+# Document structure
+document      := version metadata? imports? context? events? goals? flows? channels? on_error?
+version       := "version:" STRING
+metadata      := "metadata:" metadata_def
+metadata_def  := { id: STRING, type: DOC_TYPE, description?: STRING,
+                   tags?: STRING[], deterministic?: BOOL }
+DOC_TYPE      := "behavior" | "dialogue" | "cutscene" | "dialplan" | "timeline"
+
+# Imports
+imports       := "imports:" import_spec+
+import_spec   := { schema: STRING, types: STRING[] }
+               | { file: STRING, as: STRING }
+
+# Context
+context       := "context:" { variables?: var_defs, requirements?: req_defs, services?: svc_defs }
+var_defs      := { VAR_NAME: var_def }+
+var_def       := { type: TYPE, default?: VALUE, source?: EXPR, computed?: EXPR }
+
+# Events
+events        := "events:" event_spec+
+event_spec    := { pattern: STRING, handler: STRING, condition?: EXPR }
+
+# Goals (GOAP)
+goals         := "goals:" { GOAL_NAME: goal_def }+
+goal_def      := { priority: NUMBER, conditions: { KEY: CONDITION }+ }
+
+# Flows
+flows         := "flows:" { FLOW_NAME: flow_def }+
 flow_def      := { triggers?: trigger+, goap?: goap_def, actions: action+, on_error?: action+ }
-channels      := "channels:" { channel_name: action+ }+
+trigger       := { event?: STRING, condition?: EXPR, time_range?: STRING, schedule?: STRING }
+goap_def      := { preconditions: { KEY: CONDITION }+, effects: { KEY: EFFECT }+, cost: NUMBER }
+
+# Channels
+channels      := "channels:" { CHANNEL_NAME: action+ }+
+
+# Actions
 action        := control_action | domain_action
-control_action := cond | for_each | repeat | goto | call | return | branch | emit | wait_for | set
-domain_action := action_name ":" ( value | { param: value }+ )
-expression    := "${" expr "}"
-template      := "{{" template_expr "}}"
+control_action := cond | for_each | repeat | goto | call | return | branch | emit | wait_for | set | log
+cond          := "cond:" ( when_clause+ else_clause? )
+when_clause   := { when: EXPR, then: action+ }
+else_clause   := { else: action+ }
+for_each      := "for_each:" { variable: STRING, collection: EXPR, do: action+ }
+repeat        := "repeat:" { times: NUMBER, do: action+ }
+goto          := "goto:" { flow: STRING, args?: { KEY: VALUE }+ }
+call          := "call:" { flow: STRING }
+return        := "return:" { value?: VALUE }
+branch        := "branch:" STRING
+emit          := "emit:" STRING
+wait_for      := "wait_for:" ( STRING | wait_spec )
+wait_spec     := { signals: STRING[], mode: "all_of" | "any_of", timeout?: DURATION }
+set           := "set:" { variable: STRING, value: VALUE }
+domain_action := ACTION_NAME ":" ( VALUE | { PARAM: VALUE }+ )
+
+# Expressions
+EXPR          := "${" expression "}"
+expression    := ternary
+ternary       := or ( "?" expression ":" expression )?
+or            := and ( "||" and )*
+and           := equality ( "&&" equality )*
+equality      := comparison ( ( "==" | "!=" ) comparison )*
+comparison    := addition ( ( "<" | "<=" | ">" | ">=" ) addition )*
+addition      := multiplication ( ( "+" | "-" ) multiplication )*
+multiplication := unary ( ( "*" | "/" | "%" ) unary )*
+unary         := ( "!" | "-" )? postfix
+postfix       := primary ( "." IDENT | "?." IDENT | "[" expression "]" | "(" args? ")" )*
+primary       := NUMBER | STRING | BOOL | NULL | IDENT | "(" expression ")"
+
+# Templates (Liquid-style)
+template      := "{{" template_expr ( "|" filter )* "}}"
+filter        := IDENT ( ":" VALUE )?
+
+# Primitives
+STRING        := quoted string
+NUMBER        := integer or float
+BOOL          := "true" | "false"
+NULL          := "null"
+DURATION      := NUMBER ("ms" | "s" | "m" | "h")
+CONDITION     := OPERATOR VALUE    # e.g., "> 0.5", "== true"
+EFFECT        := VALUE | DELTA     # e.g., "0.5", "-0.3", "+10"
+OPERATOR      := ">" | ">=" | "<" | "<=" | "==" | "!="
+DELTA         := ("+" | "-") NUMBER
 ```
 
 ---

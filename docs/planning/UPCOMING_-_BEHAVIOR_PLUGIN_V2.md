@@ -242,7 +242,7 @@ GOAP metadata are **optional annotations** in ABML behaviors. This allows:
 - Single source of truth for behaviors and their GOAP properties
 
 ```yaml
-version: "2.0.0"
+version: "2.0"
 metadata:
   id: "blacksmith_behaviors"
   type: "behavior"  # Enables GOAP planning
@@ -676,7 +676,7 @@ The cognition pipeline transforms raw perceptions into intentions and goals:
 The cognition pipeline can be expressed in ABML for customization per agent type:
 
 ```yaml
-version: "2.0.0"
+version: "2.0"
 metadata:
   id: "npc_cognition_pipeline"
   type: "cognition"
