@@ -10,6 +10,17 @@ namespace BeyondImmersion.BannouService.Abml.Documents.Actions;
 /// </summary>
 public abstract record ActionNode;
 
+/// <summary>
+/// Interface for actions that support action-level error handling.
+/// </summary>
+public interface IHasOnError
+{
+    /// <summary>
+    /// Actions to execute if this action fails.
+    /// </summary>
+    IReadOnlyList<ActionNode>? OnError { get; }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // CONTROL FLOW ACTIONS
 // ═══════════════════════════════════════════════════════════════════════════
@@ -147,12 +158,15 @@ public sealed record LogAction(
 
 /// <summary>
 /// Generic domain action (handler-provided).
+/// Supports action-level on_error for handling failures.
 /// </summary>
-/// <param name="Name">Action name (e.g., "animate", "speak", "move_to").</param>
+/// <param name="Name">Action name (e.g., "animate", "speak", "move_to", "service_call").</param>
 /// <param name="Parameters">Action parameters.</param>
+/// <param name="OnError">Optional action-level error handlers.</param>
 public sealed record DomainAction(
     string Name,
-    IReadOnlyDictionary<string, object?> Parameters) : ActionNode;
+    IReadOnlyDictionary<string, object?> Parameters,
+    IReadOnlyList<ActionNode>? OnError = null) : ActionNode, IHasOnError;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CHANNEL ACTIONS

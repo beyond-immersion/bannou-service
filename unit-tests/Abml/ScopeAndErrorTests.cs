@@ -7,6 +7,7 @@ using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Abml.Expressions;
 using BeyondImmersion.BannouService.Abml.Parser;
+using BeyondImmersion.BannouService.Abml.Runtime;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.UnitTests.Abml;
@@ -444,5 +445,456 @@ public class ScopeAndErrorTests
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
         Assert.Equal("Error handled", result.Logs[0].Message);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // DOCUMENT-LEVEL ON_ERROR TESTS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Parse_DocumentOnError_ParsesCorrectly()
+    {
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: doc_error_parse
+            on_error: error_handler
+            flows:
+              start:
+                actions:
+                  - log: "Main"
+              error_handler:
+                actions:
+                  - log: "Document error handled"
+            """;
+
+        var result = _parser.Parse(yaml);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("error_handler", result.Value!.OnError);
+    }
+
+    [Fact]
+    public async Task Execute_DocumentOnError_HandlesUnhandledFlowError()
+    {
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: doc_error_exec
+            on_error: error_handler
+            flows:
+              start:
+                actions:
+                  - goto: nonexistent_flow
+              error_handler:
+                actions:
+                  - log: { message: "Document caught: ${_error.message}" }
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Logs);
+        Assert.Contains("Document caught:", result.Logs[0].Message);
+    }
+
+    [Fact]
+    public async Task Execute_DocumentOnError_FlowLevelTakesPrecedence()
+    {
+        // Flow-level on_error should handle before document-level
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: doc_precedence
+            on_error: doc_handler
+            flows:
+              start:
+                actions:
+                  - goto: nowhere
+                on_error:
+                  - log: "Flow handled"
+              doc_handler:
+                actions:
+                  - log: "Document handled"
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Logs);
+        Assert.Equal("Flow handled", result.Logs[0].Message);  // Flow-level wins
+    }
+
+    [Fact]
+    public async Task Execute_DocumentOnError_InvalidFlowPropagatesError()
+    {
+        // If the document-level on_error points to a non-existent flow, error propagates
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: doc_invalid
+            on_error: nonexistent_handler
+            flows:
+              start:
+                actions:
+                  - goto: nowhere
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("not found", result.Error);
+    }
+
+    [Fact]
+    public async Task Execute_DocumentOnError_SetsErrorVariable()
+    {
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: doc_error_var
+            on_error: error_handler
+            flows:
+              start:
+                actions:
+                  - goto: nowhere
+              error_handler:
+                actions:
+                  - log: { message: "Flow: ${_error.flow}, Action: ${_error.action}" }
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Logs);
+        Assert.Contains("Flow: start", result.Logs[0].Message);
+        Assert.Contains("Action:", result.Logs[0].Message);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // ACTION-LEVEL ON_ERROR TESTS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Parse_ActionOnError_ParsesCorrectly()
+    {
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: action_error_parse
+            flows:
+              start:
+                actions:
+                  - failing_action:
+                      param: value
+                      on_error:
+                        - log: "Action error handled"
+            """;
+
+        var result = _parser.Parse(yaml);
+
+        Assert.True(result.IsSuccess);
+        var action = result.Value!.Flows["start"].Actions[0] as DomainAction;
+        Assert.NotNull(action);
+        Assert.NotNull(action.OnError);
+        Assert.Single(action.OnError);
+    }
+
+    [Fact]
+    public async Task Execute_ActionOnError_HandlesActionError()
+    {
+        // Create executor with a failing handler for testing
+        var handlers = TestHandlerFactory.CreateWithFailingHandler();
+        var executor = new DocumentExecutor(new ExpressionEvaluator(), handlers);
+
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: action_error_exec
+            flows:
+              start:
+                actions:
+                  - failing_action:
+                      param: value
+                      on_error:
+                        - log: { message: "Action caught: ${_error.message}" }
+                  - log: "After failing action"
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await executor.ExecuteAsync(parseResult.Value!, "start");
+
+        // After error handling, flow completes but doesn't continue with remaining actions
+        // This is consistent with flow-level on_error behavior
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Logs);
+        Assert.Contains("Action caught:", result.Logs[0].Message);
+    }
+
+    [Fact]
+    public async Task Execute_ActionOnError_TakesPrecedenceOverFlow()
+    {
+        // Action-level on_error should handle before flow-level
+        var handlers = TestHandlerFactory.CreateWithFailingHandler();
+        var executor = new DocumentExecutor(new ExpressionEvaluator(), handlers);
+
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: action_precedence
+            flows:
+              start:
+                actions:
+                  - failing_action:
+                      param: value
+                      on_error:
+                        - log: "Action handled"
+                on_error:
+                  - log: "Flow handled"
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await executor.ExecuteAsync(parseResult.Value!, "start");
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Logs);
+        Assert.Equal("Action handled", result.Logs[0].Message);  // Action-level wins
+    }
+
+    [Fact]
+    public async Task Execute_ActionOnError_FallsBackToFlowLevel()
+    {
+        // Action without on_error falls back to flow-level
+        var handlers = TestHandlerFactory.CreateWithFailingHandler();
+        var executor = new DocumentExecutor(new ExpressionEvaluator(), handlers);
+
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: action_fallback
+            flows:
+              start:
+                actions:
+                  - failing_action:
+                      param: value
+                on_error:
+                  - log: "Flow handled"
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await executor.ExecuteAsync(parseResult.Value!, "start");
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Logs);
+        Assert.Equal("Flow handled", result.Logs[0].Message);  // Falls back to flow
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 3-LEVEL ERROR CHAIN TESTS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public async Task Execute_ErrorChain_ActionToFlowToDocument()
+    {
+        // Test that errors cascade through all 3 levels
+        var handlers = TestHandlerFactory.CreateWithFailingHandler();
+        var executor = new DocumentExecutor(new ExpressionEvaluator(), handlers);
+
+        // Action with no on_error → Flow with no on_error → Document on_error
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: chain_all
+            on_error: doc_handler
+            flows:
+              start:
+                actions:
+                  - failing_action:
+                      param: value
+              doc_handler:
+                actions:
+                  - log: "Document handled"
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await executor.ExecuteAsync(parseResult.Value!, "start");
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Logs);
+        Assert.Equal("Document handled", result.Logs[0].Message);
+    }
+
+    [Fact]
+    public async Task Execute_ErrorChain_NoHandlersPropagatesToResult()
+    {
+        // Error with no handlers at any level results in failure
+        var handlers = TestHandlerFactory.CreateWithFailingHandler();
+        var executor = new DocumentExecutor(new ExpressionEvaluator(), handlers);
+
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: chain_none
+            flows:
+              start:
+                actions:
+                  - failing_action:
+                      param: value
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await executor.ExecuteAsync(parseResult.Value!, "start");
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("failed", result.Error);
+    }
+
+    [Fact]
+    public async Task Execute_ErrorChain_NestedCallError()
+    {
+        // Error in called flow bubbles up through call stack
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: chain_nested
+            on_error: doc_handler
+            flows:
+              start:
+                actions:
+                  - call: { flow: level1 }
+              level1:
+                actions:
+                  - call: { flow: level2 }
+              level2:
+                actions:
+                  - goto: nowhere
+              doc_handler:
+                actions:
+                  - log: { message: "Caught from: ${_error.flow}" }
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Logs);
+        Assert.Contains("Caught from:", result.Logs[0].Message);
+    }
+
+    [Fact]
+    public async Task Execute_ErrorChain_FlowHandlerStopsDocumentHandler()
+    {
+        // If flow-level handles the error, document-level should NOT be called
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: chain_stop
+            on_error: doc_handler
+            flows:
+              start:
+                actions:
+                  - goto: nowhere
+                on_error:
+                  - log: "Flow handled"
+              doc_handler:
+                actions:
+                  - log: "Document handled"
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Logs);
+        Assert.Equal("Flow handled", result.Logs[0].Message);  // Only flow handler runs
+    }
+
+    [Fact]
+    public async Task Execute_ErrorChain_ErrorInHandlerPropagatesToNext()
+    {
+        // If action on_error handler itself errors, it propagates to flow level
+        var handlers = TestHandlerFactory.CreateWithFailingHandler();
+        var executor = new DocumentExecutor(new ExpressionEvaluator(), handlers);
+
+        var yaml = """
+            version: "2.0"
+            metadata:
+              id: chain_handler_error
+            flows:
+              start:
+                actions:
+                  - failing_action:
+                      param: value
+                      on_error:
+                        - goto: nowhere
+                on_error:
+                  - log: "Flow caught handler error"
+            """;
+
+        var parseResult = _parser.Parse(yaml);
+        Assert.True(parseResult.IsSuccess);
+
+        var result = await executor.ExecuteAsync(parseResult.Value!, "start");
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Logs);
+        Assert.Equal("Flow caught handler error", result.Logs[0].Message);
+    }
+}
+
+/// <summary>
+/// Test action handler that always fails.
+/// </summary>
+internal class FailingActionHandler : IActionHandler
+{
+    public bool CanHandle(ActionNode action) => action is DomainAction { Name: "failing_action" };
+
+    public ValueTask<ActionResult> ExecuteAsync(
+        ActionNode action,
+        BeyondImmersion.BannouService.Abml.Execution.ExecutionContext context,
+        CancellationToken ct = default)
+    {
+        return ValueTask.FromResult(ActionResult.Error("Action intentionally failed"));
+    }
+}
+
+/// <summary>
+/// Creates a registry with the FailingActionHandler registered first
+/// so it takes precedence over the default DomainActionHandler.
+/// </summary>
+internal static class TestHandlerFactory
+{
+    public static ActionHandlerRegistry CreateWithFailingHandler()
+    {
+        var registry = new ActionHandlerRegistry();
+        registry.Register(new FailingActionHandler());  // Register FIRST so it takes precedence
+        registry.RegisterBuiltinHandlers();             // Then register builtins
+        return registry;
     }
 }

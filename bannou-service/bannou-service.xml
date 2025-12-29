@@ -390,6 +390,7 @@
         <member name="T:BeyondImmersion.BannouService.Abml.Compiler.ExpressionCompiler">
             <summary>
             Compiles ABML expression AST into bytecode.
+            Thread-safe: each compilation uses its own state.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Abml.Compiler.ExpressionCompiler.Compile(System.String)">
@@ -407,31 +408,37 @@
             <param name="sourceText">The original source text.</param>
             <returns>The compiled expression.</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.ExpressionCompiler.VisitLiteral(BeyondImmersion.BannouService.Abml.Compiler.Ast.LiteralNode)">
+        <member name="T:BeyondImmersion.BannouService.Abml.Compiler.CompilerVisitor">
+            <summary>
+            Internal visitor that holds compilation state.
+            A new instance is created for each compilation to ensure thread safety.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.CompilerVisitor.VisitLiteral(BeyondImmersion.BannouService.Abml.Compiler.Ast.LiteralNode)">
             <inheritdoc/>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.ExpressionCompiler.VisitVariable(BeyondImmersion.BannouService.Abml.Compiler.Ast.VariableNode)">
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.CompilerVisitor.VisitVariable(BeyondImmersion.BannouService.Abml.Compiler.Ast.VariableNode)">
             <inheritdoc/>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.ExpressionCompiler.VisitUnary(BeyondImmersion.BannouService.Abml.Compiler.Ast.UnaryNode)">
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.CompilerVisitor.VisitUnary(BeyondImmersion.BannouService.Abml.Compiler.Ast.UnaryNode)">
             <inheritdoc/>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.ExpressionCompiler.VisitBinary(BeyondImmersion.BannouService.Abml.Compiler.Ast.BinaryNode)">
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.CompilerVisitor.VisitBinary(BeyondImmersion.BannouService.Abml.Compiler.Ast.BinaryNode)">
             <inheritdoc/>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.ExpressionCompiler.VisitTernary(BeyondImmersion.BannouService.Abml.Compiler.Ast.TernaryNode)">
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.CompilerVisitor.VisitTernary(BeyondImmersion.BannouService.Abml.Compiler.Ast.TernaryNode)">
             <inheritdoc/>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.ExpressionCompiler.VisitPropertyAccess(BeyondImmersion.BannouService.Abml.Compiler.Ast.PropertyAccessNode)">
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.CompilerVisitor.VisitPropertyAccess(BeyondImmersion.BannouService.Abml.Compiler.Ast.PropertyAccessNode)">
             <inheritdoc/>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.ExpressionCompiler.VisitIndexAccess(BeyondImmersion.BannouService.Abml.Compiler.Ast.IndexAccessNode)">
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.CompilerVisitor.VisitIndexAccess(BeyondImmersion.BannouService.Abml.Compiler.Ast.IndexAccessNode)">
             <inheritdoc/>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.ExpressionCompiler.VisitFunctionCall(BeyondImmersion.BannouService.Abml.Compiler.Ast.FunctionCallNode)">
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.CompilerVisitor.VisitFunctionCall(BeyondImmersion.BannouService.Abml.Compiler.Ast.FunctionCallNode)">
             <inheritdoc/>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.ExpressionCompiler.VisitNullCoalesce(BeyondImmersion.BannouService.Abml.Compiler.Ast.NullCoalesceNode)">
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.CompilerVisitor.VisitNullCoalesce(BeyondImmersion.BannouService.Abml.Compiler.Ast.NullCoalesceNode)">
             <inheritdoc/>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Compiler.ExpressionParser">
@@ -729,6 +736,12 @@
             Named flows containing action sequences.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.AbmlDocument.OnError">
+            <summary>
+            Document-level error handler flow name.
+            Called when an error is not handled by action-level or flow-level handlers.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Documents.DocumentMetadata">
             <summary>
             Document metadata.
@@ -898,6 +911,16 @@
         <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode">
             <summary>
             Base type for all action nodes in an ABML document.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.IHasOnError">
+            <summary>
+            Interface for actions that support action-level error handling.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.IHasOnError.OnError">
+            <summary>
+            Actions to execute if this action fails.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.CondAction">
@@ -1173,22 +1196,29 @@
         <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.DomainAction">
             <summary>
             Generic domain action (handler-provided).
+            Supports action-level on_error for handling failures.
             </summary>
-            <param name="Name">Action name (e.g., "animate", "speak", "move_to").</param>
+            <param name="Name">Action name (e.g., "animate", "speak", "move_to", "service_call").</param>
             <param name="Parameters">Action parameters.</param>
+            <param name="OnError">Optional action-level error handlers.</param>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.DomainAction.#ctor(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object})">
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.DomainAction.#ctor(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode})">
             <summary>
             Generic domain action (handler-provided).
+            Supports action-level on_error for handling failures.
             </summary>
-            <param name="Name">Action name (e.g., "animate", "speak", "move_to").</param>
+            <param name="Name">Action name (e.g., "animate", "speak", "move_to", "service_call").</param>
             <param name="Parameters">Action parameters.</param>
+            <param name="OnError">Optional action-level error handlers.</param>
         </member>
         <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.DomainAction.Name">
-            <summary>Action name (e.g., "animate", "speak", "move_to").</summary>
+            <summary>Action name (e.g., "animate", "speak", "move_to", "service_call").</summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.DomainAction.Parameters">
             <summary>Action parameters.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.DomainAction.OnError">
+            <summary>Optional action-level error handlers.</summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.EmitAction">
             <summary>
@@ -1592,6 +1622,12 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.Abml.Execution.DocumentExecutor.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.AbmlDocument,System.String,BeyondImmersion.BannouService.Abml.Expressions.IVariableScope,System.Threading.CancellationToken)">
             <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.DocumentExecutor.TryHandleErrorAsync(BeyondImmersion.BannouService.Abml.Documents.Flow,BeyondImmersion.BannouService.Abml.Execution.ErrorResult,BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
+            <summary>
+            Tries to handle an error through the 3-level chain:
+            Action-level → Flow-level → Document-level
+            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Execution.ErrorInfo">
             <summary>

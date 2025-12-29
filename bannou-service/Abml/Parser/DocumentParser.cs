@@ -72,6 +72,13 @@ public sealed class DocumentParser
             var context = ParseContext(dict, errors);
             var flows = ParseFlows(dict, errors);
 
+            // Parse document-level on_error (flow name to call on unhandled error)
+            string? docOnError = null;
+            if (dict.TryGetValue("on_error", out var docOnErrorObj) && docOnErrorObj is string onErrorFlow)
+            {
+                docOnError = onErrorFlow;
+            }
+
             if (errors.Count > 0)
             {
                 return ParseResult<AbmlDocument>.Failure(errors);
@@ -83,7 +90,8 @@ public sealed class DocumentParser
                 Metadata = metadata,
                 Imports = imports,
                 Context = context,
-                Flows = flows
+                Flows = flows,
+                OnError = docOnError
             });
         }
         catch (YamlException ex)
@@ -774,6 +782,7 @@ public sealed class DocumentParser
     private DomainAction ParseDomainAction(string name, object? value, List<ParseError> errors)
     {
         var parameters = new Dictionary<string, object?>();
+        IReadOnlyList<ActionNode>? onError = null;
 
         if (value is Dictionary<object, object> dict)
         {
@@ -781,7 +790,15 @@ public sealed class DocumentParser
             {
                 if (k is string key)
                 {
-                    parameters[key] = v;
+                    if (key == "on_error")
+                    {
+                        // Parse action-level on_error handlers
+                        onError = ParseActions(v, errors);
+                    }
+                    else
+                    {
+                        parameters[key] = v;
+                    }
                 }
             }
         }
@@ -791,7 +808,7 @@ public sealed class DocumentParser
             parameters["value"] = value;
         }
 
-        return new DomainAction(name, parameters);
+        return new DomainAction(name, parameters, onError);
     }
 
     private static IReadOnlyList<string> ParseStringList(object? value)

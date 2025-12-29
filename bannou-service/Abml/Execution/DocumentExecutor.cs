@@ -199,14 +199,40 @@ public sealed class DocumentExecutor : IDocumentExecutor
         return ActionResult.Continue;
     }
 
-    private async ValueTask<bool> TryHandleErrorAsync(
+    private async ValueTask<bool> TryHandleActionErrorAsync(
+        ActionNode failedAction,
+        ErrorResult errorResult,
+        string flowName,
+        ExecutionContext context,
+        CancellationToken ct)
+    {
+        // Check if action supports on_error
+        if (failedAction is not IHasOnError { OnError: { Count: > 0 } onError })
+        {
+            return false;
+        }
+
+        // Create error info and set _error variable
+        var errorInfo = ErrorInfo.FromErrorResult(
+            errorResult.Message,
+            flowName,
+            failedAction.GetType().Name);
+
+        var scope = context.CallStack.Current?.Scope ?? context.RootScope;
+        scope.SetValue("_error", errorInfo.ToDictionary());
+
+        // Execute action-level error handlers
+        return await ExecuteErrorHandlersAsync(onError, context, ct);
+    }
+
+    private async ValueTask<bool> TryHandleFlowErrorAsync(
         Flow flow,
         ErrorResult errorResult,
         ActionNode failedAction,
         ExecutionContext context,
         CancellationToken ct)
     {
-        // No error handler? Cannot handle
+        // No flow-level error handler? Cannot handle
         if (flow.OnError.Count == 0)
         {
             return false;
@@ -221,8 +247,59 @@ public sealed class DocumentExecutor : IDocumentExecutor
         var scope = context.CallStack.Current?.Scope ?? context.RootScope;
         scope.SetValue("_error", errorInfo.ToDictionary());
 
-        // Execute error handlers
-        foreach (var errorAction in flow.OnError)
+        // Execute flow-level error handlers
+        return await ExecuteErrorHandlersAsync(flow.OnError, context, ct);
+    }
+
+    private async ValueTask<bool> TryHandleDocumentErrorAsync(
+        ErrorResult errorResult,
+        ActionNode failedAction,
+        string flowName,
+        ExecutionContext context,
+        CancellationToken ct)
+    {
+        // No document-level error handler? Cannot handle
+        if (context.Document.OnError == null)
+        {
+            return false;
+        }
+
+        // Find the error handler flow
+        if (!context.Document.Flows.TryGetValue(context.Document.OnError, out var errorFlow))
+        {
+            return false;
+        }
+
+        // Create error info and set _error variable
+        var errorInfo = ErrorInfo.FromErrorResult(
+            errorResult.Message,
+            flowName,
+            failedAction.GetType().Name);
+
+        var scope = context.CallStack.Current?.Scope ?? context.RootScope;
+        scope.SetValue("_error", errorInfo.ToDictionary());
+
+        // Push error handler flow and execute it
+        var errorScope = scope.CreateChild();
+        context.CallStack.Push(context.Document.OnError, errorScope);
+
+        try
+        {
+            var result = await ExecuteFlowAsync(errorFlow, context, ct);
+            return result is not ErrorResult;
+        }
+        finally
+        {
+            context.CallStack.Pop();
+        }
+    }
+
+    private async ValueTask<bool> ExecuteErrorHandlersAsync(
+        IReadOnlyList<ActionNode> handlers,
+        ExecutionContext context,
+        CancellationToken ct)
+    {
+        foreach (var errorAction in handlers)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -239,9 +316,53 @@ public sealed class DocumentExecutor : IDocumentExecutor
             {
                 break;
             }
+
+            // If error handler uses goto, validate the target flow exists
+            if (result is GotoResult gotoResult)
+            {
+                if (!context.Document.Flows.ContainsKey(gotoResult.FlowName))
+                {
+                    // Goto to non-existent flow is an error
+                    return false;
+                }
+                // Valid goto from error handler - stop executing further handlers
+                break;
+            }
         }
 
         return true;  // Error was handled
+    }
+
+    /// <summary>
+    /// Tries to handle an error through the 3-level chain:
+    /// Action-level → Flow-level → Document-level
+    /// </summary>
+    private async ValueTask<bool> TryHandleErrorAsync(
+        Flow flow,
+        ErrorResult errorResult,
+        ActionNode failedAction,
+        ExecutionContext context,
+        CancellationToken ct)
+    {
+        // Level 1: Action-level on_error
+        if (await TryHandleActionErrorAsync(failedAction, errorResult, flow.Name, context, ct))
+        {
+            return true;
+        }
+
+        // Level 2: Flow-level on_error
+        if (await TryHandleFlowErrorAsync(flow, errorResult, failedAction, context, ct))
+        {
+            return true;
+        }
+
+        // Level 3: Document-level on_error
+        if (await TryHandleDocumentErrorAsync(errorResult, failedAction, flow.Name, context, ct))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private async ValueTask<ActionResult> ExecuteActionAsync(

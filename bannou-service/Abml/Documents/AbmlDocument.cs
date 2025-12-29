@@ -36,6 +36,12 @@ public sealed class AbmlDocument
     /// Named flows containing action sequences.
     /// </summary>
     public IReadOnlyDictionary<string, Flow> Flows { get; init; } = new Dictionary<string, Flow>();
+
+    /// <summary>
+    /// Document-level error handler flow name.
+    /// Called when an error is not handled by action-level or flow-level handlers.
+    /// </summary>
+    public string? OnError { get; init; }
 }
 
 /// <summary>
