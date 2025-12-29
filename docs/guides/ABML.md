@@ -1,10 +1,29 @@
-# ABML v2.0 Language Design Proposal
-## Arcadia Behavior Markup Language - Unified Scripting Specification
+# ABML - Arcadia Behavior Markup Language
 
-> **Status**: DRAFT PROPOSAL
-> **Created**: 2024-12-28
-> **Based On**: [UNIFIED_SCRIPTING_LANGUAGE_RESEARCH.md](./research/UNIFIED_SCRIPTING_LANGUAGE_RESEARCH.md)
-> **Related**: arcadia-kb ABML v1.0 spec, [ACTORS_PLUGIN_V2.md](./UPCOMING_-_ACTORS_PLUGIN_V2.md), [BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md)
+> **Version**: 2.0
+> **Status**: Implemented (414 tests passing)
+> **Location**: `bannou-service/Abml/`
+
+ABML is a YAML-based domain-specific language for authoring event-driven, stateful sequences of actions. It powers NPC behaviors, dialogue systems, cutscenes, and agent cognition in Arcadia.
+
+---
+
+## Table of Contents
+
+1. [Overview](#1-overview)
+2. [Document Structure](#2-document-structure)
+3. [Type System](#3-type-system)
+4. [Expression Language](#4-expression-language)
+5. [Control Flow](#5-control-flow)
+6. [Channels and Parallelism](#6-channels-and-parallelism)
+7. [Actions](#7-actions)
+8. [Flows](#8-flows)
+9. [GOAP Integration](#9-goap-integration)
+10. [Events](#10-events)
+11. [Context and Variables](#11-context-and-variables)
+12. [Error Handling](#12-error-handling)
+13. [Runtime Architecture](#13-runtime-architecture)
+14. [Examples](#14-examples)
 
 ---
 
@@ -12,21 +31,21 @@
 
 ### 1.1 What is ABML?
 
-ABML (Arcadia Behavior Markup Language) is a YAML-based domain-specific language for authoring event-driven, stateful sequences of actions. It is designed to express:
+ABML enables authoring of:
 
 - **NPC Behaviors** - Autonomous character decision-making
 - **Dialogue Systems** - Branching conversations with choices
 - **Cutscenes/Timelines** - Choreographed multi-track sequences
 - **Dialplans** - Call routing and IVR flows
-- **Agent Cognition** - Perception → memory → action pipelines
+- **Agent Cognition** - Perception, memory, action pipelines
 
 ### 1.2 Design Philosophy
 
-1. **YAML-first**: Human-readable, version-control friendly, editor-friendly
+1. **YAML-first**: Human-readable, version-control friendly
 2. **Intent-based**: Express what should happen, not how
 3. **Handler-agnostic**: Runtime interprets actions; ABML doesn't prescribe transport
 4. **Composable**: Documents can import and reference other documents
-5. **Type-safe**: Structural typing with schema imports, explicit dynamic escape hatches
+5. **Type-safe**: Structural typing with schema imports
 6. **Parallel-native**: Multi-channel execution with named synchronization points
 
 ### 1.3 What ABML Is Not
@@ -75,6 +94,8 @@ flows:                    # Named action sequences (for behaviors/dialogues)
 
 channels:                 # Parallel execution tracks (for cutscenes/timelines)
   channel_name: [ ... ]
+
+on_error: flow_name       # Document-level error handler
 ```
 
 ### 2.2 Document Types
@@ -153,18 +174,16 @@ When flexibility is needed:
 ```yaml
 context:
   variables:
-    # Fully dynamic - any value allowed
     custom_data:
-      type: any
+      type: any                    # Fully dynamic
 
-    # String-keyed bag of values
     extension_data:
-      type: ExtensionData  # Alias for map<string, any>
+      type: ExtensionData          # Alias for map<string, any>
 ```
 
 ### 3.6 Null Safety
 
-ABML supports null propagation operators in expressions:
+ABML supports null propagation operators:
 
 | Operator | Name | Behavior |
 |----------|------|----------|
@@ -285,11 +304,7 @@ narrate:
     {% endif %}
 ```
 
-Template filters:
-- `capitalize`, `upcase`, `downcase`
-- `truncate`, `strip`
-- `default`
-- `date` (formatting)
+Template filters: `capitalize`, `upcase`, `downcase`, `truncate`, `strip`, `default`, `date`
 
 ### 4.4 Expression vs Template
 
@@ -300,13 +315,11 @@ Template filters:
 | Display text | `"{{ ... }}"` | User-visible strings |
 
 ```yaml
-# Condition uses ${}
 - cond:
-    - when: "${player.gold >= item.price}"
+    - when: "${player.gold >= item.price}"  # Expression
       then:
-        # Display text uses {{}}
         - speak:
-            text: "That'll be {{ item.price }} gold, {{ player.name }}."
+            text: "That'll be {{ item.price }} gold."  # Template
 ```
 
 ---
@@ -422,20 +435,59 @@ channels:
 - wait_for: @channel.point_name
 
 # Wait for multiple (barrier - all must complete)
-- wait_for: [point_a, point_b, point_c]
+- wait_for:
+    signals:
+      - @channel_a.signal1
+      - @channel_b.signal2
+    mode: all_of
 
 # Wait for any (race - first one wins)
 - wait_for:
-    any_of: [player_input, timeout_signal]
+    signals:
+      - @player_input
+      - @timeout_signal
+    mode: any_of
 
-# Wait with timeout (explicit failure path)
+# Wait with timeout
 - wait_for:
     all_of: [a_ready, b_ready]
     timeout: 5s
     on_timeout: handle_timeout_channel
 ```
 
-### 6.3 Branching Between Channels
+### 6.3 Cooperative Scheduling
+
+Channels execute cooperatively on a single thread with deterministic interleaving:
+
+```
+Tick 1:  camera[0] -> actors[0] -> effects[0]
+Tick 2:  camera[1] -> actors[1] -> effects[1]
+Tick 3:  camera[2] -> actors[WAIT] -> effects[2]  (actors waiting)
+Tick 4:  camera[3] -> effects[3]                  (actors still waiting)
+Tick 5:  camera[EMIT] -> actors[2] -> effects[4]  (actors wake)
+```
+
+### 6.4 Deadlock Detection
+
+The scheduler detects when all active channels are waiting for signals that will never arrive:
+
+```yaml
+# DEADLOCK - detected at runtime
+channels:
+  a:
+    - wait_for: @b.signal  # A waits for B
+  b:
+    - wait_for: @a.signal  # B waits for A
+```
+
+### 6.5 Channel Scope Isolation
+
+Each channel has its own scope (child of document scope). Channels can:
+- Read from document scope
+- Write locally without affecting other channels
+- Communicate via sync points, not shared variables
+
+### 6.6 Branching Between Channels
 
 ```yaml
 channels:
@@ -458,42 +510,6 @@ channels:
     - hero.take_hit: { damage: 50 }
     - emit: qte_resolved
     - branch: continue_main
-
-  continue_main:
-    - wait_for: @main.qte_resolved
-    - next_scene_action
-```
-
-### 6.4 Document Composition
-
-```yaml
-imports:
-  - file: camera_library.abml
-    as: camera
-  - file: character_blocking.abml
-    as: blocking
-
-channels:
-  main:
-    # Start imported document, wait for completion
-    - start_document:
-        file: intro_sequence.abml
-        wait_for_complete: true
-
-    # Launch imported channels in parallel
-    - start_channels:
-        - camera.dramatic_reveal
-        - blocking.hero_entrance
-
-    # Wait for sync points from imported channels
-    - wait_for: [@camera.reveal_done, @blocking.hero_at_mark]
-
-    # Pass context to child document
-    - start_document:
-        file: boss_dialogue.abml
-        pass_context:
-          hero_health: "${hero.current_hp}"
-          boss_mood: "${boss.disposition}"
 ```
 
 ---
@@ -501,8 +517,6 @@ channels:
 ## 7. Actions
 
 ### 7.1 Action Syntax
-
-Actions are the leaves of execution - things that happen:
 
 ```yaml
 # Simple action
@@ -525,9 +539,7 @@ Actions are the leaves of execution - things that happen:
     await: completion
 ```
 
-### 7.2 Core Action Categories
-
-#### Control Actions (Built-in)
+### 7.2 Control Actions (Built-in)
 
 | Action | Purpose |
 |--------|---------|
@@ -542,8 +554,9 @@ Actions are the leaves of execution - things that happen:
 | `wait_for` | Sync point wait |
 | `set` | Variable assignment |
 | `parallel` | Inline parallel block |
+| `log` | Debug logging |
 
-#### Variable Actions
+### 7.3 Variable Actions
 
 ```yaml
 # Set variable
@@ -559,7 +572,7 @@ Actions are the leaves of execution - things that happen:
 - clear: { variable: temp_data }
 ```
 
-### 7.3 Domain Actions (Handler-Provided)
+### 7.4 Domain Actions (Handler-Provided)
 
 These are interpreted by the runtime handler:
 
@@ -620,7 +633,7 @@ These are interpreted by the runtime handler:
       - handle_purchase_error
 ```
 
-### 7.4 Handler Contract
+### 7.5 Handler Contract
 
 Actions follow this contract with handlers:
 
@@ -662,7 +675,21 @@ flows:
               - goto: { flow: "merchant_work" }
 ```
 
-### 8.2 Triggers
+### 8.2 Flow-Level Error Handling
+
+```yaml
+flows:
+  risky_operation:
+    on_error:
+      - log: { message: "Operation failed: ${_error.message}" }
+      - set: { variable: _error_handled, value: "${true}" }
+
+    actions:
+      - dangerous_action: { ... }
+      - next_action: { ... }  # Continues if _error_handled is true
+```
+
+### 8.3 Triggers
 
 ```yaml
 triggers:
@@ -684,7 +711,12 @@ triggers:
 
 ---
 
-## 9. GOAP Integration (Optional)
+## 9. GOAP Integration
+
+GOAP (Goal-Oriented Action Planning) metadata are **optional annotations** on ABML flows. This allows:
+- Same ABML documents to work without GOAP (cutscenes, dialogues)
+- GOAP-aware systems to extract planning metadata
+- Single source of truth for behaviors and their GOAP properties
 
 ### 9.1 Goal Definitions
 
@@ -712,8 +744,8 @@ flows:
         gold: ">= 5"
         location: "near_tavern"
       effects:
-        hunger: "-0.7"
-        gold: "-5"
+        hunger: "-0.7"    # Delta: subtract 0.7
+        gold: "-5"        # Delta: subtract 5
       cost: 3
 
     actions:
@@ -722,18 +754,40 @@ flows:
       - consume: { item: meal }
 ```
 
-### 9.3 GOAP is External
+### 9.3 GOAP Condition Syntax
+
+```
+condition := operator value
+operator  := ">" | ">=" | "<" | "<=" | "==" | "!="
+value     := number | boolean | string
+
+Examples:
+"> 0.6"     -> Greater than 0.6
+">= 5"      -> Greater than or equal to 5
+"== true"   -> Equals true
+"!= 'idle'" -> Not equals "idle"
+```
+
+### 9.4 Effect Syntax
+
+```
+effect := value | delta
+delta  := ("+" | "-") number
+
+Examples:
+"-0.8"      -> Subtract 0.8 from current value
+"+5"        -> Add 5 to current value
+"0.5"       -> Set to 0.5 (absolute)
+"tavern"    -> Set to "tavern" (string)
+```
+
+### 9.5 GOAP is External
 
 ABML only stores GOAP metadata. Actual planning (A* search, plan generation) happens in an external service:
 
-1. **ABML Compiler** extracts GOAP annotations
+1. **ABML Parser** extracts GOAP annotations
 2. **Planning Service** builds action graph, runs planner
 3. **Executor** receives plan, executes ABML flows in order
-
-This separation allows:
-- ABML consumers without GOAP (cutscene editors, dialogue tools)
-- Swappable planning algorithms
-- Clean plugin boundary (Actor plugin vs Behavior plugin)
 
 ---
 
@@ -757,22 +811,20 @@ events:
 ### 10.2 Event Publishing
 
 ```yaml
-# Option A: Reference a typed event (preferred for typed systems)
+# Reference a typed event (preferred)
 - publish:
     event: NpcStateChangedEvent
     data:
       npc_id: "${npc.id}"
       new_state: "${current_state}"
 
-# Option B: Topic with inline payload (for flexible systems)
+# Topic with inline payload
 - publish:
     topic: "npc.state_changed"
     payload:
       npc_id: "${npc.id}"
       new_state: "${current_state}"
 ```
-
-> **Note**: Handler implementations may require specific patterns. See Appendix C for Bannou-specific requirements.
 
 ---
 
@@ -799,12 +851,10 @@ context:
       computed: "${energy < 0.3}"
 
   requirements:
-    # Must be true to execute this document
     has_voice_lines: true
     is_adult_npc: true
 
   services:
-    # Required service dependencies
     - name: economy_service
       required: true
     - name: relationship_service
@@ -820,43 +870,234 @@ context:
 | `entity` | Entity lifetime | `${entity.property}` |
 | `world` | Persistent world state | `${world.property}` |
 
+### 11.3 Scope Behavior
+
+| Operation | Behavior |
+|-----------|----------|
+| `SetValue` | Search up chain, update if found, else create locally |
+| `SetLocalValue` | Always create/update in current scope (shadows parent) |
+| `SetGlobalValue` | Always write to root scope |
+| `GetValue` | Search up chain, return first match or null |
+
+### 11.4 Loop Variable Isolation
+
+Loop variables use local scope to prevent clobbering:
+
+```yaml
+# Outer 'i' is preserved after loop
+- set: { variable: i, value: 100 }
+- for_each:
+    variable: i           # Shadows outer 'i'
+    collection: "${items}"
+    do:
+      - log: "${i}"       # Logs item values
+- log: "${i}"             # Still 100, not clobbered
+```
+
 ---
 
 ## 12. Error Handling
 
-### 12.1 Action-Level Errors
+### 12.1 Three-Level Error Chain
 
-```yaml
-- service_call:
-    service: economy_service
-    method: transfer_gold
-    parameters: { ... }
-    on_error:
-      - log: { message: "Transfer failed: ${error.message}" }
-      - speak:
-          text: "Sorry, something went wrong with the transaction."
-      - goto: { flow: "handle_failed_transaction" }
+Errors are handled through a hierarchical chain:
+
+```
+Action-level on_error -> Flow-level on_error -> Document-level on_error
 ```
 
-### 12.2 Document-Level Errors
+### 12.2 Error Handler Syntax
 
 ```yaml
-errors:
-  service_unavailable:
-    - speak:
-        text: "I can't help you right now. Come back later."
-    - end_interaction
+version: "2.0"
+metadata:
+  id: error_handling_example
 
-  invalid_state:
-    - log: { level: error, message: "Invalid state: ${error.details}" }
-    - reset_to_idle
+# Document-level error handler
+on_error: handle_fatal_error
+
+flows:
+  start:
+    # Flow-level error handler
+    on_error:
+      - log: { message: "Flow error: ${_error.message}", level: error }
+      - set: { variable: _error_handled, value: "${true}" }
+
+    actions:
+      # Action-level error handling
+      - query_service:
+          target: economy
+          on_error:
+            - log: "Service unavailable, using cached data"
+            - set: { variable: _error_handled, value: "${true}" }
+
+  handle_fatal_error:
+    actions:
+      - log: { message: "Fatal: ${_error.message}", level: error }
+```
+
+### 12.3 The `_error_handled` Pattern
+
+By default, error handling **stops** flow execution. To continue (try/catch semantics), explicitly set `_error_handled = true`:
+
+| Scenario | `_error_handled` | Result |
+|----------|------------------|--------|
+| Default (not set) | N/A | Flow completes but **stops** |
+| Set to `true` | `${true}` | Flow **continues** to next action |
+| Set to `false` | `${false}` | Flow completes but **stops** |
+
+**Graceful Degradation Pattern:**
+
+```yaml
+flows:
+  start:
+    actions:
+      - query_environment:
+          bounds: "${combat_bounds}"
+          result_variable: affordances
+      - for_each:
+          variable: affordance
+          collection: "${affordances}"
+          do:
+            - process: "${affordance}"
+    on_error:
+      - log: "Query failed, using cached data"
+      - set: { variable: affordances, value: "${cached_affordances}" }
+      - set: { variable: _error_handled, value: "${true}" }  # Continue!
+```
+
+### 12.4 Error Context Variable
+
+When an error occurs, `_error` is set with error details:
+
+```yaml
+on_error:
+  - log: { message: "Error in ${_error.flow}: ${_error.message}" }
+  - log: { message: "Failed action: ${_error.action}" }
 ```
 
 ---
 
-## 13. Complete Examples
+## 13. Runtime Architecture
 
-### 13.1 NPC Behavior
+### 13.1 Execution Model
+
+ABML uses a hybrid execution model:
+
+- **Control flow**: Tree-walking interpretation (simple, debuggable)
+- **Expressions**: Register-based bytecode VM (fast, cached)
+
+This optimizes for:
+- I/O dominance (service calls >> expression evaluation)
+- Hot reload capability (re-parse YAML, rebuild AST)
+- Debuggability (step through nodes)
+
+### 13.2 Register-Based VM
+
+The expression VM uses a register-based architecture for efficient null-safety handling:
+
+```
+Expression: ${entity?.health < 0.3 ? 'critical' : 'stable'}
+
+Bytecode:
+  0: LoadVar R0, "entity"
+  1: JumpIfNull R0, 8
+  2: GetProp R1, R0, "health"
+  3: LoadConst R2, 0.3
+  4: Lt R3, R1, R2
+  5: JumpIfFalse R3, 8
+  6: LoadConst R0, "critical"
+  7: Return R0
+  8: LoadConst R0, "stable"
+  9: Return R0
+```
+
+**Why register-based?**
+- Clean null-safety patterns (no stack management)
+- Value reuse without DUP/SWAP gymnastics
+- Debuggable state (named registers vs anonymous stack)
+
+### 13.3 Instruction Set Summary
+
+| Category | OpCodes |
+|----------|---------|
+| Loads | `LoadConst`, `LoadVar`, `LoadNull`, `LoadTrue`, `LoadFalse` |
+| Property | `GetProp`, `GetPropSafe`, `GetIndex`, `GetIndexSafe` |
+| Arithmetic | `Add`, `Sub`, `Mul`, `Div`, `Mod`, `Neg` |
+| Comparison | `Eq`, `Ne`, `Lt`, `Le`, `Gt`, `Ge` |
+| Logical | `Not`, `And`, `Or` |
+| Control | `Jump`, `JumpIfTrue`, `JumpIfFalse`, `JumpIfNull`, `JumpIfNotNull` |
+| Functions | `Call`, `CallArgs` |
+| Null | `Coalesce` |
+| String | `In`, `Concat` |
+| Result | `Return` |
+
+### 13.4 Compiled Expression Structure
+
+```csharp
+public sealed class CompiledExpression
+{
+    public required Instruction[] Code { get; init; }
+    public required object[] Constants { get; init; }
+    public required int RegisterCount { get; init; }
+    public required string SourceText { get; init; }
+}
+```
+
+### 13.5 File Structure
+
+```
+bannou-service/Abml/
+├── Compiler/
+│   ├── ExpressionCompiler.cs
+│   ├── OpCode.cs
+│   ├── RegisterAllocator.cs
+│   └── InstructionBuilder.cs
+│
+├── Runtime/
+│   ├── ExpressionVm.cs
+│   └── ExpressionCache.cs
+│
+├── Parser/
+│   ├── ExpressionParser.cs
+│   ├── DocumentParser.cs
+│   └── ExpressionLexer.cs
+│
+├── Documents/
+│   ├── AbmlDocument.cs
+│   ├── Flow.cs
+│   └── Actions/
+│
+├── Execution/
+│   ├── DocumentExecutor.cs
+│   ├── ExecutionContext.cs
+│   ├── CallStack.cs
+│   ├── Channel/
+│   │   ├── ChannelScheduler.cs
+│   │   └── ChannelState.cs
+│   └── Handlers/
+│       ├── SetHandler.cs
+│       ├── CallHandler.cs
+│       ├── GotoHandler.cs
+│       ├── CondHandler.cs
+│       ├── ForEachHandler.cs
+│       ├── RepeatHandler.cs
+│       ├── LogHandler.cs
+│       ├── EmitHandler.cs
+│       ├── WaitForHandler.cs
+│       └── SyncHandler.cs
+│
+└── Expressions/
+    ├── VariableScope.cs
+    ├── ExpressionEvaluator.cs
+    └── AbmlTypeCoercion.cs
+```
+
+---
+
+## 14. Examples
+
+### 14.1 NPC Behavior
 
 ```yaml
 version: "2.0"
@@ -926,7 +1167,7 @@ flows:
               - idle: { animation: tend_forge, duration: 30s }
 ```
 
-### 13.2 Dialogue
+### 14.2 Dialogue
 
 ```yaml
 version: "2.0"
@@ -1002,7 +1243,7 @@ flows:
               - goto: { flow: start_haggle }
 ```
 
-### 13.3 Cutscene with QTE
+### 14.3 Cutscene with QTE
 
 ```yaml
 version: "2.0"
@@ -1103,134 +1344,102 @@ channels:
           hero_hp: "${hero.current_hp}"
 ```
 
----
+### 14.4 Complete Behavior with All Features
 
-## 14. Compilation and Execution Model
+```yaml
+version: "2.0"
+metadata:
+  id: "blacksmith_morning_routine"
 
-### 14.1 Compilation Pipeline
+flows:
+  start:
+    actions:
+      - set: { variable: energy, value: 100 }
+      - call: { flow: check_inventory }
+      - cond:
+          - when: "${needs_supplies}"
+            then:
+              - call: { flow: go_to_market }
+          - else:
+            - call: { flow: open_shop }
 
+  check_inventory:
+    actions:
+      - set: { variable: iron_count, value: "${entity.inventory.iron ?? 0}" }
+      - set: { variable: needs_supplies, value: "${iron_count < 5}" }
+
+  go_to_market:
+    actions:
+      - log: { message: "Heading to market for supplies" }
+
+  open_shop:
+    actions:
+      - log: { message: "Opening shop for business" }
+
+# Multi-channel cutscene
+channels:
+  camera:
+    - wait_for: @actors.positions_set
+    - log: { message: "Camera: Starting crane shot" }
+    - emit: crane_complete
+
+  actors:
+    - log: { message: "Actors: Moving to marks" }
+    - emit: positions_set
+    - wait_for: @camera.crane_complete
+    - log: { message: "Actors: Starting dialogue" }
 ```
-YAML Source
-    │
-    ▼
-┌─────────────┐
-│   Parser    │  YamlDotNet → AST
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│  Resolver   │  Import resolution, type binding
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│  Validator  │  Type checking, reference validation
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│  Compiler   │  Expression bytecode, flow graphs
-└──────┬──────┘
-       │
-       ▼
-  Compiled Document
-```
-
-### 14.2 Execution Model
-
-**Control flow**: Tree-walking interpretation (simple, debuggable)
-**Expressions**: Bytecode VM (fast, cached)
-
-This hybrid approach optimizes for:
-- I/O dominance (service calls >> expression evaluation)
-- Hot reload capability (re-parse YAML, rebuild AST)
-- Debuggability (step through nodes)
-
-### 14.3 Handler Interface
-
-```
-┌─────────────────────────────────────────┐
-│           ABML Executor                 │
-│                                         │
-│  ┌─────────────┐    ┌───────────────┐  │
-│  │ Control Flow│    │  Expression   │  │
-│  │ Interpreter │    │  Evaluator    │  │
-│  └──────┬──────┘    └───────────────┘  │
-│         │                               │
-│         ▼                               │
-│  ┌─────────────────────────────────┐   │
-│  │      Action Handler Registry    │   │
-│  └──────────────┬──────────────────┘   │
-└─────────────────┼───────────────────────┘
-                  │
-    ┌─────────────┼─────────────┐
-    ▼             ▼             ▼
-┌────────┐  ┌──────────┐  ┌──────────┐
-│ Entity │  │  Speech  │  │ Service  │
-│Handler │  │ Handler  │  │ Handler  │
-└────────┘  └──────────┘  └──────────┘
-```
-
-Handlers are registered by action type. The executor dispatches to handlers; handlers interpret actions for their runtime.
 
 ---
 
-## 15. Tooling Considerations
+## Appendix A: Bannou Implementation Requirements
 
-### 15.1 IDE Support
+When implementing ABML handlers within the Bannou service architecture, the following constraints from the [Tenets](../reference/TENETS.md) apply:
 
-- **Syntax highlighting**: YAML with ABML-specific keywords
-- **Schema validation**: JSON Schema for structure validation
-- **Type checking**: Expression type inference and validation
-- **Autocomplete**: Context-aware suggestions for actions, variables
-- **Go to definition**: Navigate to flow/channel definitions
-- **Find references**: Find all usages of a flow/variable
+### A.1 Infrastructure Libs (Tenet 4)
 
-### 15.2 Visual Editor Mapping
+All ABML action handlers MUST use infrastructure abstractions:
 
-The channel model maps to timeline editors:
-- Horizontal tracks per channel
-- Blocks for actions with duration
-- Vertical lines for sync points
-- Arrows showing wait dependencies
-- Branch nodes for QTEs
+| Action Type | Required Implementation |
+|-------------|------------------------|
+| `service_call` | Use `IMeshInvocationClient` or generated clients via lib-mesh |
+| `publish` | Use `IMessageBus.PublishAsync()` via lib-messaging |
+| State access | Use `IStateStore<T>` via lib-state |
 
-### 15.3 Debugging
+**Forbidden**: Direct Redis, MySQL, RabbitMQ, or HTTP client usage in handlers.
 
-- Step-through execution
-- Breakpoints on actions/sync points
-- Variable inspection
-- Sync point visualization
-- Deadlock detection
+### A.2 Typed Events (Tenet 5)
 
----
+Event publishing handlers MUST use typed event models:
 
-## 16. Open Items and Future Considerations
+```csharp
+// CORRECT
+await _messageBus.PublishAsync("npc.state_changed", new NpcStateChangedEvent
+{
+    NpcId = npcId,
+    NewState = newState
+});
 
-### 16.1 Deferred to Implementation
+// FORBIDDEN
+await _messageBus.PublishAsync("npc.state_changed", new { npc_id = npcId });
+```
 
-- Transport mechanisms (events vs RPC)
-- Batching strategies for cutscenes
-- Service mesh integration patterns
-- Memory service integration
+### A.3 JSON Serialization (Tenet 20)
 
-### 16.2 Future Extensions
+All serialization within Bannou handlers MUST use `BannouJson`:
 
-- **Behavior stacking**: Multiple ABML documents merged at runtime
-- **Hot patching**: Modify running behaviors
-- **Replay/recording**: Capture execution for debugging
-- **Analytics hooks**: Telemetry integration points
+```csharp
+var compiled = BannouJson.Deserialize<CompiledDocument>(yamlJson);
+var serialized = BannouJson.Serialize(executionState);
+```
 
-### 16.3 Needs Further Design
+### A.4 Non-Bannou Implementations
 
-- Detailed expression grammar specification
-- Complete built-in function library
-- Error recovery semantics
-- Localization integration patterns
+ABML is designed to be handler-agnostic. Non-Bannou implementations (Unity editor, standalone tools, test harnesses) are not bound by these constraints.
 
 ---
 
-## Appendix A: Grammar Summary (Informal)
+## Appendix B: Grammar Summary
 
 ```
 document      := version metadata? imports? context? events? goals? flows? channels?
@@ -1240,7 +1449,7 @@ imports       := "imports:" [ import_spec+ ]
 import_spec   := { schema: string, types: [string+] } | { file: string, as: string }
 context       := "context:" { variables?, requirements?, services? }
 flows         := "flows:" { flow_name: flow_def }+
-flow_def      := { triggers?: trigger+, goap?: goap_def, actions: action+ }
+flow_def      := { triggers?: trigger+, goap?: goap_def, actions: action+, on_error?: action+ }
 channels      := "channels:" { channel_name: action+ }+
 action        := control_action | domain_action
 control_action := cond | for_each | repeat | goto | call | return | branch | emit | wait_for | set
@@ -1251,111 +1460,4 @@ template      := "{{" template_expr "}}"
 
 ---
 
-## Appendix B: Comparison with ABML v1.0
-
-| Feature | v1.0 | v2.0 |
-|---------|------|------|
-| Parallel execution | Limited (timeline tracks) | First-class channels |
-| Sync points | Markers with timestamps | Named emit/wait_for |
-| QTE support | Not specified | Built-in with branching |
-| Document composition | Not specified | import/start_document |
-| Type system | Implicit | Explicit with schema imports |
-| GOAP | Tightly coupled | Optional annotations |
-| Expression syntax | `${...}` | `${...}` (unchanged) |
-| Template syntax | Not specified | `{{...}}` Liquid-style |
-
----
-
-## Appendix C: Bannou Implementation Requirements
-
-When implementing ABML handlers within the Bannou service architecture, the following constraints from the [Bannou Tenets](../reference/TENETS.md) apply:
-
-### C.1 Infrastructure Libs (Tenet 4)
-
-All ABML action handlers MUST use infrastructure abstractions:
-
-| Action Type | Required Implementation |
-|-------------|------------------------|
-| `service_call` | Use `IMeshInvocationClient` or generated clients via lib-mesh |
-| `publish` | Use `IMessageBus.PublishAsync()` via lib-messaging |
-| State access (`${world.*}`, `${entity.*}`) | Use `IStateStore<T>` via lib-state |
-
-**Forbidden**: Direct Redis, MySQL, RabbitMQ, or HTTP client usage in handlers.
-
-### C.2 Typed Events (Tenet 5)
-
-Event publishing handlers MUST use typed event models:
-
-```csharp
-// CORRECT: Typed event from schema
-await _messageBus.PublishAsync("npc.state_changed", new NpcStateChangedEvent
-{
-    NpcId = npcId,
-    NewState = newState
-});
-
-// FORBIDDEN: Anonymous objects (causes MassTransit runtime error)
-await _messageBus.PublishAsync("npc.state_changed", new { npc_id = npcId });
-```
-
-ABML `publish` actions using inline payloads must be mapped to typed events by the handler.
-
-### C.3 JSON Serialization (Tenet 20)
-
-All serialization within Bannou handlers MUST use `BannouJson`:
-
-```csharp
-var compiled = BannouJson.Deserialize<CompiledDocument>(yamlJson);
-var serialized = BannouJson.Serialize(executionState);
-```
-
-### C.4 State Store Patterns (Tenet 4)
-
-Variable scopes map to Bannou infrastructure:
-
-| ABML Scope | Bannou Implementation |
-|------------|----------------------|
-| `local` | In-memory execution context |
-| `document` | In-memory, lifetime of execution |
-| `entity` | `IStateStore<T>` with entity key prefix |
-| `world` | `IStateStore<T>` with world state key prefix |
-
-### C.5 Service Dependencies
-
-The `context.services` declaration maps to Bannou service clients:
-
-```yaml
-# ABML
-context:
-  services:
-    - name: economy_service
-      required: true
-```
-
-```csharp
-// Handler implementation
-public class BehaviorExecutor
-{
-    private readonly IEconomyClient? _economyClient;
-
-    public BehaviorExecutor(IEconomyClient? economyClient = null)
-    {
-        _economyClient = economyClient;
-    }
-
-    public async Task ExecuteServiceCall(ServiceCallAction action, CancellationToken ct)
-    {
-        if (action.Service == "economy_service" && _economyClient == null)
-            throw new ServiceUnavailableException("economy_service is required but not available");
-        // ...
-    }
-}
-```
-
-### C.6 Non-Bannou Implementations
-
-ABML is designed to be handler-agnostic. Non-Bannou implementations (Unity editor, standalone tools, test harnesses) are not bound by these constraints and may use whatever infrastructure is appropriate for their context.
-
----
-
-*Document Status: DRAFT PROPOSAL - Ready for review and refinement*
+*This document is the authoritative reference for ABML.*

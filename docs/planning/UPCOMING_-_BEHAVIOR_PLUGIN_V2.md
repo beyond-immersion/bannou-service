@@ -1,16 +1,19 @@
 # Behavior Plugin V2 - GOAP Planning & ABML Runtime
 
-> **Status**: PLANNING
+> **Status**: PARTIALLY IMPLEMENTED (ABML Runtime complete, GOAP in progress)
 > **Created**: 2024-12-28
+> **Updated**: 2025-12-29
 > **Related Documents**:
-> - **[ABML_V2_DESIGN_PROPOSAL.md](./ABML_V2_DESIGN_PROPOSAL.md)** - **ABML Language Specification** (authoritative)
+> - **[ABML Guide](../guides/ABML.md)** - **ABML Language Specification & Runtime** (authoritative)
+> - [GOAP_FIRST_STEPS.md](./GOAP_FIRST_STEPS.md) - GOAP implementation details
 > - [ACTORS_PLUGIN_V2.md](./UPCOMING_-_ACTORS_PLUGIN_V2.md) - Actor infrastructure
-> - [UNIFIED_SCRIPTING_LANGUAGE_RESEARCH.md](./research/UNIFIED_SCRIPTING_LANGUAGE_RESEARCH.md) - Research background
-> - [DSL_STANDARDS_RESEARCH.md](./research/DSL_STANDARDS_RESEARCH.md) - Industry standards analysis
 
-**Important**: This document describes the **runtime implementation** of ABML. For the language specification itself (syntax, semantics, examples), see [ABML_V2_DESIGN_PROPOSAL.md](./ABML_V2_DESIGN_PROPOSAL.md).
+**Implementation Status**:
+- **Phase 1 (ABML Runtime)**: COMPLETE - 414 tests passing. See [ABML Guide](../guides/ABML.md).
+- **Phase 2 (GOAP)**: IN PROGRESS - See [GOAP_FIRST_STEPS.md](./GOAP_FIRST_STEPS.md).
+- **Phase 3-5**: PLANNED
 
-**Bannou-Specific Constraints**: See [ABML_V2 Appendix C](./ABML_V2_DESIGN_PROPOSAL.md#appendix-c-bannou-implementation-requirements) for mandatory infrastructure patterns (lib-state, lib-messaging, lib-mesh, typed events, BannouJson).
+**Bannou-Specific Constraints**: See [ABML Guide Appendix A](../guides/ABML.md#appendix-a-bannou-implementation-requirements) for mandatory infrastructure patterns.
 
 ---
 
@@ -896,7 +899,7 @@ speak:
 
 ### 4.5 Variable Scopes
 
-Per [ABML_V2 Section 11.2](./ABML_V2_DESIGN_PROPOSAL.md#112-variable-scopes) and [Appendix C.4](./ABML_V2_DESIGN_PROPOSAL.md#c4-state-store-patterns):
+Per [ABML Guide Section 11](../guides/ABML.md#11-context-and-variables):
 
 | Scope | Lifetime | Access | Bannou Implementation |
 |-------|----------|--------|----------------------|
@@ -955,7 +958,7 @@ public class ExecutionScope : IVariableScope
 
 ### 5.1 Handler Interface
 
-Per [ABML_V2 Section 7.4](./ABML_V2_DESIGN_PROPOSAL.md#74-handler-contract), actions follow this contract:
+Per [ABML Guide Section 7.5](../guides/ABML.md#75-handler-contract), actions follow this contract:
 
 | Execution Mode | ABML Syntax | Handler Behavior |
 |----------------|-------------|------------------|
@@ -1006,7 +1009,7 @@ public enum ActionResultType
 
 ### 5.2 Action Categories
 
-Per [ABML_V2 Section 7](./ABML_V2_DESIGN_PROPOSAL.md#7-actions):
+Per [ABML Guide Section 7](../guides/ABML.md#7-actions):
 
 | Category | Actions | Handler | Notes |
 |----------|---------|---------|-------|
@@ -1020,11 +1023,11 @@ Per [ABML_V2 Section 7](./ABML_V2_DESIGN_PROPOSAL.md#7-actions):
 | **GOAP** | `trigger_goap_replan`, `update_goal` | `GoapActionHandler` | Behavior plugin internal |
 | **Memory** | `remember`, `query_memory` | `MemoryHandler` | Memory service integration |
 
-**Note**: `goto` = flow transfer (within `flows:`), `branch` = channel transfer (within `channels:`). See ABML_V2 Section 5.4.
+**Note**: `goto` = flow transfer (within `flows:`), `branch` = channel transfer (within `channels:`). See [ABML Guide Section 5](../guides/ABML.md#5-control-flow).
 
 ### 5.3 Error Handling
 
-Per [ABML_V2 Section 12](./ABML_V2_DESIGN_PROPOSAL.md#12-error-handling), errors can be handled at two levels:
+Per [ABML Guide Section 12](../guides/ABML.md#12-error-handling), errors can be handled at two levels:
 
 **Action-level** (`on_error` block):
 ```yaml
@@ -1090,7 +1093,7 @@ public async Task<bool> TryHandleErrorAsync(
 
 ### 5.4 Publish Action Handler
 
-Per [ABML_V2 Appendix C.2](./ABML_V2_DESIGN_PROPOSAL.md#c2-typed-events-tenet-5), ABML `publish` actions with inline payloads must be mapped to typed events:
+Per [ABML Guide Appendix A](../guides/ABML.md#appendix-a-bannou-implementation-requirements), ABML `publish` actions with inline payloads must be mapped to typed events:
 
 ```yaml
 # ABML allows inline payloads
@@ -1765,31 +1768,34 @@ components:
 
 ## Part 8: Implementation Roadmap
 
-### Phase 1: Core ABML Runtime (Foundation)
+### Phase 1: Core ABML Runtime (Foundation) - COMPLETE
 
 **Goal**: Parse, compile, and execute basic ABML documents.
 
-- [ ] ABML Parser (YamlDotNet-based)
-  - [ ] Document structure validation
-  - [ ] Error reporting with line numbers
-  - [ ] Schema version checking
+**Status**: COMPLETE - 414 tests passing. See [ABML Guide](../guides/ABML.md) for full documentation.
 
-- [ ] Expression Evaluator
-  - [ ] Lexer and parser (Parlot)
-  - [ ] Bytecode compiler
-  - [ ] Expression cache
+- [x] ABML Parser (YamlDotNet-based)
+  - [x] Document structure validation
+  - [x] Error reporting with line numbers
+  - [x] Schema version checking
 
-- [ ] Basic Action Handlers
-  - [ ] Control flow (cond, for_each, goto)
-  - [ ] Variable operations (set, increment)
-  - [ ] Service call handler
+- [x] Expression Evaluator
+  - [x] Lexer and parser (Parlot)
+  - [x] Bytecode compiler (register-based VM)
+  - [x] Expression cache
 
-- [ ] ABML Executor
-  - [ ] Tree-walking interpreter
-  - [ ] Variable scope management
-  - [ ] Result propagation
+- [x] Basic Action Handlers
+  - [x] Control flow (cond, for_each, goto, call, return)
+  - [x] Variable operations (set, increment)
+  - [x] Error handling (on_error, _error_handled)
 
-**Tests**: Unit tests for parser, expression evaluator, and executor.
+- [x] ABML Executor
+  - [x] Tree-walking interpreter
+  - [x] Variable scope management (local, document, entity, world)
+  - [x] Multi-channel execution with sync points
+  - [x] Deadlock detection
+
+**Tests**: 414 unit tests covering parser, expression evaluator, executor, channels, and error handling.
 
 ### Phase 2: GOAP Integration
 
@@ -1816,29 +1822,31 @@ components:
 
 **Tests**: Planning scenarios with various goal/action combinations.
 
-### Phase 3: Multi-Channel Execution
+### Phase 3: Multi-Channel Execution - COMPLETE
 
 **Goal**: Support parallel execution with sync points.
 
-- [ ] Channel Executor
-  - [ ] Independent channel threads
-  - [ ] Sync point registry
-  - [ ] Emit/wait_for mechanics
+**Status**: COMPLETE - Included in Phase 1 implementation. See [ABML Guide Section 6](../guides/ABML.md#6-channels-and-parallelism).
 
-- [ ] Barrier Synchronization
-  - [ ] All-of waiting
-  - [ ] Any-of racing
-  - [ ] Timeout handling
+- [x] Channel Executor
+  - [x] Cooperative round-robin scheduling
+  - [x] Sync point registry
+  - [x] Emit/wait_for mechanics
 
-- [ ] Deadlock Detection
-  - [ ] Circular wait detection at compile time
-  - [ ] Runtime timeout fallbacks
+- [x] Barrier Synchronization
+  - [x] All-of waiting
+  - [x] Any-of racing
+  - [x] Channel scope isolation
 
-- [ ] Document Composition
+- [x] Deadlock Detection
+  - [x] Runtime deadlock detection
+  - [x] Clear error reporting
+
+- [ ] Document Composition (PLANNED)
   - [ ] Import resolution
   - [ ] Context passing
 
-**Tests**: Multi-channel cutscene and dialogue scenarios.
+**Tests**: 15+ multi-channel tests covering sync points, barriers, and deadlock detection.
 
 ### Phase 4: Cognition Pipeline
 

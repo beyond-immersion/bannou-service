@@ -123,6 +123,123 @@ The compiled model is essentially: "Here is the complete decision tree of all ac
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
+### 2.3 SDK Architecture & Compilation Boundary
+
+A critical architectural decision: the **client-side runtime has zero dependency on ABML source code or the bannou-service ABML libraries**. The bytecode format is completely self-contained.
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     COMPILATION VS RUNTIME BOUNDARY                     │
+│                                                                         │
+│  SERVER (lib-behavior + bannou-service)         CLIENT (Bannou.SDK)     │
+│  ─────────────────────────────────────         ────────────────────     │
+│                                                                         │
+│  ┌──────────────┐                                                       │
+│  │  ABML YAML   │                                                       │
+│  │  (source)    │                                                       │
+│  └──────┬───────┘                                                       │
+│         │                                                               │
+│         ▼                                                               │
+│  ┌──────────────┐                                                       │
+│  │DocumentParser│  ← bannou-service/Abml/                               │
+│  │ AbmlDocument │    (parser, AST, expressions)                         │
+│  └──────┬───────┘                                                       │
+│         │                                                               │
+│         ▼                                                               │
+│  ┌──────────────┐                                                       │
+│  │   Behavior   │  ← lib-behavior (NEW)                                 │
+│  │   Compiler   │    (semantic analysis, optimization, codegen)         │
+│  └──────┬───────┘                                                       │
+│         │                                                               │
+│         ▼                                                               │
+│  ┌──────────────┐         Binary            ┌──────────────┐           │
+│  │BehaviorModel │ ════════════════════════► │BehaviorModel │           │
+│  │   (bytes)    │         Transfer          │   (bytes)    │           │
+│  └──────────────┘                           └──────┬───────┘           │
+│                                                    │                    │
+│         ║                                          ▼                    │
+│         ║                                   ┌──────────────┐           │
+│    NO DEPENDENCY                            │  Interpreter │           │
+│         ║                                   │ (bytecode VM)│           │
+│         ╚══════════════════════════════════►└──────────────┘           │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**SDK knows NOTHING about:**
+- ABML YAML syntax or structure
+- `DocumentParser`, `AbmlDocument`, `Flow`, `ActionNode`
+- `ExpressionEvaluator`, `ExpressionCompiler`
+- Tree-walking `DocumentExecutor`
+- Any bannou-service/Abml/* code
+
+**SDK ONLY knows:**
+- Binary format (header, schema, constants, strings, bytecode)
+- Opcode definitions (PUSH_INPUT, ADD, JMP_IF, SET_OUTPUT, etc.)
+- How to execute those opcodes
+
+This is analogous to how the JVM doesn't need the Java compiler, or .NET runtime doesn't need the C# compiler. The bytecode is the contract.
+
+#### SDK Package Structure
+
+```
+Bannou.SDK/
+├── Behavior/
+│   ├── Runtime/
+│   │   ├── BehaviorModel.cs              # Binary format deserialization
+│   │   ├── BehaviorModelInterpreter.cs   # Stack-based bytecode VM
+│   │   ├── StateSchema.cs                # Input/output schema handling
+│   │   ├── Opcodes.cs                    # Instruction definitions
+│   │   └── BehaviorOutput.cs             # Structured output from evaluation
+│   ├── Intent/
+│   │   ├── IntentMerger.cs               # Urgency-based channel merging
+│   │   ├── MergedIntent.cs               # Unified output structure
+│   │   ├── IntentChannels.cs             # Channel definitions
+│   │   └── ContributionTrace.cs          # Debug support (DEBUG builds)
+│   └── BehaviorModelCache.cs             # Model caching and variant lookup
+```
+
+#### Component Placement Decisions
+
+| Component | Location | Rationale |
+|-----------|----------|-----------|
+| `BehaviorCompiler` | lib-behavior | Compilation is server-side only |
+| `BehaviorDistributionService` | lib-behavior | Manages storage, sync, versioning |
+| `BehaviorModel` | Bannou.SDK | Clients need to deserialize models |
+| `BehaviorModelInterpreter` | Bannou.SDK | Portable, game-agnostic VM |
+| `StateSchema` | Bannou.SDK | Shared format understanding |
+| `IntentMerger` | Bannou.SDK | Generic urgency logic, no game specifics |
+| `BehaviorModelCache` | Bannou.SDK* | Generic enough for SDK (see note) |
+| `BehaviorEvaluationSystem` | Game Client | Stride-specific game system |
+| `IntentSystem` | Game Client | Maps intents → animations/physics |
+| `IVariantSelector` impls | Game Client | Game-specific equipment logic |
+| State providers | Game Client | Game-specific state mapping |
+
+**\*Note on `BehaviorModelCache`**: This component is generic enough to live in the SDK - it just manages model storage, interpreter instances, and variant lookup. However, games with specific caching needs (memory budgets, streaming priorities, LOD-based model selection) may choose to implement their own. The SDK version serves as a solid default and reference implementation.
+
+#### Benefits of This Separation
+
+1. **SDK stays lightweight** - No parser, no AST, no compiler overhead
+2. **Fast client startup** - Just deserialize bytes and execute
+3. **No accidental coupling** - Can't accidentally reference server-side ABML types
+4. **Independent evolution** - Server compiler can improve without SDK updates (bytecode format is versioned)
+5. **Multiple compilers possible** - Could have optimized compilers for different use cases
+6. **Offline capable** - Client can run cached models without server connection
+
+#### Format as Contract
+
+The only "shared" knowledge between server and client is the binary format specification:
+
+| Element | Server | Client |
+|---------|--------|--------|
+| Magic bytes "ABML" | Writes | Validates |
+| Version field | Sets | Checks compatibility |
+| Opcode values | Emits | Interprets |
+| Schema encoding | Serializes | Deserializes |
+| Constant pool format | Writes | Reads |
+
+This is documented agreement, not code sharing. The format specification (Section 3.2) is the contract.
+
 ---
 
 ## 3. Behavior Model Format
