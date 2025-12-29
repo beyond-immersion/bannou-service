@@ -1,0 +1,16 @@
+version: "2.0"
+metadata:
+  id: scope_isolation
+flows:
+  ch1:
+    actions:
+      - set:
+          variable: x
+          value: "from_ch1"
+      - log: { message: "CH1: ${x}" }
+  ch2:
+    actions:
+      - set:
+          variable: x
+          value: "from_ch2"
+      - log: { message: "CH2: ${x}" }

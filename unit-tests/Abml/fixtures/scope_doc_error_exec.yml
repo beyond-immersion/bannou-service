@@ -1,0 +1,11 @@
+version: "2.0"
+metadata:
+  id: doc_error_exec
+on_error: error_handler
+flows:
+  start:
+    actions:
+      - goto: nonexistent_flow
+  error_handler:
+    actions:
+      - log: { message: "Document caught: ${_error.message}" }

@@ -1,0 +1,9 @@
+version: "2.0"
+metadata:
+  id: multi_action
+flows:
+  start:
+    actions:
+      - log: "First"
+      - log: "Second"
+      - log: "Third"

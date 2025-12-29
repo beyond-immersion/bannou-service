@@ -108,6 +108,32 @@ public interface IBehaviorController : BeyondImmersion.BannouService.Controllers
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ResolveContextResponse>> ResolveContextVariablesAsync(ResolveContextRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Generate GOAP plan
+    /// </summary>
+
+    /// <remarks>
+    /// Generates a GOAP plan to achieve a goal from the current world state.
+    /// <br/>Uses A* search to find the optimal sequence of actions.
+    /// </remarks>
+
+    /// <returns>Plan generated successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GoapPlanResponse>> GenerateGoapPlanAsync(GoapPlanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Validate existing GOAP plan
+    /// </summary>
+
+    /// <remarks>
+    /// Validates an existing GOAP plan against the current world state.
+    /// <br/>Returns whether the plan is still valid or needs replanning.
+    /// </remarks>
+
+    /// <returns>Plan validation completed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateGoapPlanResponse>> ValidateGoapPlanAsync(ValidateGoapPlanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -260,6 +286,40 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     {
 
         var (statusCode, result) = await _implementation.ResolveContextVariablesAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Generate GOAP plan
+    /// </summary>
+    /// <remarks>
+    /// Generates a GOAP plan to achieve a goal from the current world state.
+    /// <br/>Uses A* search to find the optimal sequence of actions.
+    /// </remarks>
+    /// <returns>Plan generated successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("goap/plan")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GoapPlanResponse>> GenerateGoapPlan([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GoapPlanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GenerateGoapPlanAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Validate existing GOAP plan
+    /// </summary>
+    /// <remarks>
+    /// Validates an existing GOAP plan against the current world state.
+    /// <br/>Returns whether the plan is still valid or needs replanning.
+    /// </remarks>
+    /// <returns>Plan validation completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("goap/validate-plan")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateGoapPlanResponse>> ValidateGoapPlan([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ValidateGoapPlanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ValidateGoapPlanAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -517,11 +577,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         "conditions": {
           "type": "object",
           "additionalProperties": {
-            "type": "number"
+            "type": "string"
           },
-          "description": "World state conditions that satisfy this goal",
+          "description": "World state conditions that satisfy this goal (literal conditions)",
           "example": {
-            "hunger_level": 0.0
+            "hunger": "<= 0.3",
+            "gold": ">= 50"
           }
         },
         "priority": {
@@ -533,7 +594,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         "preconditions": {
           "type": "object",
           "additionalProperties": {
-            "type": "number"
+            "type": "string"
           },
           "description": "World state conditions required to pursue this goal"
         }
@@ -894,11 +955,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         "conditions": {
           "type": "object",
           "additionalProperties": {
-            "type": "number"
+            "type": "string"
           },
-          "description": "World state conditions that satisfy this goal",
+          "description": "World state conditions that satisfy this goal (literal conditions)",
           "example": {
-            "hunger_level": 0.0
+            "hunger": "<= 0.3",
+            "gold": ">= 50"
           }
         },
         "priority": {
@@ -910,7 +972,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         "preconditions": {
           "type": "object",
           "additionalProperties": {
-            "type": "number"
+            "type": "string"
           },
           "description": "World state conditions required to pursue this goal"
         }
@@ -1258,11 +1320,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         "conditions": {
           "type": "object",
           "additionalProperties": {
-            "type": "number"
+            "type": "string"
           },
-          "description": "World state conditions that satisfy this goal",
+          "description": "World state conditions that satisfy this goal (literal conditions)",
           "example": {
-            "hunger_level": 0.0
+            "hunger": "<= 0.3",
+            "gold": ">= 50"
           }
         },
         "priority": {
@@ -1274,7 +1337,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         "preconditions": {
           "type": "object",
           "additionalProperties": {
-            "type": "number"
+            "type": "string"
           },
           "description": "World state conditions required to pursue this goal"
         }
@@ -1617,6 +1680,493 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
             _ResolveContextVariables_Info,
             _ResolveContextVariables_RequestSchema,
             _ResolveContextVariables_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GenerateGoapPlan
+
+    private static readonly string _GenerateGoapPlan_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GoapPlanRequest",
+  "$defs": {
+    "GoapPlanRequest": {
+      "type": "object",
+      "required": [
+        "goal",
+        "world_state",
+        "behavior_id"
+      ],
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "description": "Unique identifier for the agent requesting the plan"
+        },
+        "goal": {
+          "$ref": "#/$defs/GoapGoal"
+        },
+        "world_state": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Current world state as key-value pairs",
+          "example": {
+            "hunger": 0.8,
+            "gold": 50,
+            "location": "home"
+          }
+        },
+        "behavior_id": {
+          "type": "string",
+          "description": "ID of compiled behavior containing GOAP actions"
+        },
+        "options": {
+          "$ref": "#/$defs/GoapPlanningOptions"
+        }
+      }
+    },
+    "GoapGoal": {
+      "type": "object",
+      "required": [
+        "name",
+        "conditions",
+        "priority"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the goal",
+          "example": "satisfy_hunger"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the goal"
+        },
+        "conditions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "World state conditions that satisfy this goal (literal conditions)",
+          "example": {
+            "hunger": "<= 0.3",
+            "gold": ">= 50"
+          }
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Priority of this goal relative to others"
+        },
+        "preconditions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "World state conditions required to pursue this goal"
+        }
+      }
+    },
+    "GoapPlanningOptions": {
+      "type": "object",
+      "properties": {
+        "max_depth": {
+          "type": "integer",
+          "default": 10,
+          "description": "Maximum plan depth (number of actions)"
+        },
+        "max_nodes": {
+          "type": "integer",
+          "default": 1000,
+          "description": "Maximum nodes to expand during search"
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "default": 100,
+          "description": "Planning timeout in milliseconds"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GenerateGoapPlan_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/GoapPlanResponse",
+  "$defs": {
+    "GoapPlanResponse": {
+      "type": "object",
+      "required": [
+        "success"
+      ],
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Whether planning was successful"
+        },
+        "plan": {
+          "$ref": "#/$defs/GoapPlanResult"
+        },
+        "planning_time_ms": {
+          "type": "integer",
+          "description": "Time spent planning in milliseconds"
+        },
+        "nodes_expanded": {
+          "type": "integer",
+          "description": "Number of nodes expanded during A* search"
+        },
+        "failure_reason": {
+          "type": "string",
+          "description": "Reason for planning failure if unsuccessful",
+          "example": "No plan found - goal unreachable"
+        }
+      }
+    },
+    "GoapPlanResult": {
+      "type": "object",
+      "required": [
+        "goal_id",
+        "actions",
+        "total_cost"
+      ],
+      "properties": {
+        "goal_id": {
+          "type": "string",
+          "description": "ID of the goal this plan achieves"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PlannedActionResponse"
+          },
+          "description": "Ordered sequence of actions to execute"
+        },
+        "total_cost": {
+          "type": "number",
+          "format": "float",
+          "description": "Total cost of all actions in the plan"
+        }
+      }
+    },
+    "PlannedActionResponse": {
+      "type": "object",
+      "required": [
+        "action_id",
+        "index",
+        "cost"
+      ],
+      "properties": {
+        "action_id": {
+          "type": "string",
+          "description": "ID of the action (flow name)"
+        },
+        "index": {
+          "type": "integer",
+          "description": "Position in the plan sequence"
+        },
+        "cost": {
+          "type": "number",
+          "format": "float",
+          "description": "Cost of this action"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _GenerateGoapPlan_Info = """
+{
+  "summary": "Generate GOAP plan",
+  "description": "Generates a GOAP plan to achieve a goal from the current world state.\nUses A* search to find the optimal sequence of actions.\n",
+  "tags": [
+    "GOAP"
+  ],
+  "deprecated": false,
+  "operationId": "GenerateGoapPlan"
+}
+""";
+
+    /// <summary>Returns endpoint information for GenerateGoapPlan</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("goap/plan/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GenerateGoapPlan_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Behavior",
+            "Post",
+            "goap/plan",
+            _GenerateGoapPlan_Info));
+
+    /// <summary>Returns request schema for GenerateGoapPlan</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("goap/plan/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GenerateGoapPlan_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Behavior",
+            "Post",
+            "goap/plan",
+            "request-schema",
+            _GenerateGoapPlan_RequestSchema));
+
+    /// <summary>Returns response schema for GenerateGoapPlan</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("goap/plan/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GenerateGoapPlan_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Behavior",
+            "Post",
+            "goap/plan",
+            "response-schema",
+            _GenerateGoapPlan_ResponseSchema));
+
+    /// <summary>Returns full schema for GenerateGoapPlan</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("goap/plan/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GenerateGoapPlan_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Behavior",
+            "Post",
+            "goap/plan",
+            _GenerateGoapPlan_Info,
+            _GenerateGoapPlan_RequestSchema,
+            _GenerateGoapPlan_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ValidateGoapPlan
+
+    private static readonly string _ValidateGoapPlan_RequestSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ValidateGoapPlanRequest",
+  "$defs": {
+    "ValidateGoapPlanRequest": {
+      "type": "object",
+      "required": [
+        "plan",
+        "current_action_index",
+        "world_state"
+      ],
+      "properties": {
+        "plan": {
+          "$ref": "#/$defs/GoapPlanResult"
+        },
+        "current_action_index": {
+          "type": "integer",
+          "description": "Index of the action currently being executed"
+        },
+        "world_state": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Current world state"
+        },
+        "active_goals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GoapGoal"
+          },
+          "description": "All active goals for priority checking"
+        }
+      }
+    },
+    "GoapPlanResult": {
+      "type": "object",
+      "required": [
+        "goal_id",
+        "actions",
+        "total_cost"
+      ],
+      "properties": {
+        "goal_id": {
+          "type": "string",
+          "description": "ID of the goal this plan achieves"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PlannedActionResponse"
+          },
+          "description": "Ordered sequence of actions to execute"
+        },
+        "total_cost": {
+          "type": "number",
+          "format": "float",
+          "description": "Total cost of all actions in the plan"
+        }
+      }
+    },
+    "PlannedActionResponse": {
+      "type": "object",
+      "required": [
+        "action_id",
+        "index",
+        "cost"
+      ],
+      "properties": {
+        "action_id": {
+          "type": "string",
+          "description": "ID of the action (flow name)"
+        },
+        "index": {
+          "type": "integer",
+          "description": "Position in the plan sequence"
+        },
+        "cost": {
+          "type": "number",
+          "format": "float",
+          "description": "Cost of this action"
+        }
+      }
+    },
+    "GoapGoal": {
+      "type": "object",
+      "required": [
+        "name",
+        "conditions",
+        "priority"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the goal",
+          "example": "satisfy_hunger"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the goal"
+        },
+        "conditions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "World state conditions that satisfy this goal (literal conditions)",
+          "example": {
+            "hunger": "<= 0.3",
+            "gold": ">= 50"
+          }
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Priority of this goal relative to others"
+        },
+        "preconditions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "World state conditions required to pursue this goal"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ValidateGoapPlan_ResponseSchema = """
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/$defs/ValidateGoapPlanResponse",
+  "$defs": {
+    "ValidateGoapPlanResponse": {
+      "type": "object",
+      "required": [
+        "is_valid",
+        "reason",
+        "suggested_action"
+      ],
+      "properties": {
+        "is_valid": {
+          "type": "boolean",
+          "description": "Whether the plan is still valid"
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "none",
+            "precondition_invalidated",
+            "action_failed",
+            "better_goal_available",
+            "plan_completed",
+            "goal_already_satisfied",
+            "suboptimal_plan"
+          ],
+          "description": "Reason for the validation result"
+        },
+        "suggested_action": {
+          "type": "string",
+          "enum": [
+            "continue",
+            "replan",
+            "abort"
+          ],
+          "description": "Suggested action based on validation"
+        },
+        "invalidated_at_index": {
+          "type": "integer",
+          "description": "Index where plan became invalid (if applicable)"
+        },
+        "message": {
+          "type": "string",
+          "description": "Additional details about the validation result"
+        }
+      }
+    }
+  }
+}
+""";
+
+    private static readonly string _ValidateGoapPlan_Info = """
+{
+  "summary": "Validate existing GOAP plan",
+  "description": "Validates an existing GOAP plan against the current world state.\nReturns whether the plan is still valid or needs replanning.\n",
+  "tags": [
+    "GOAP"
+  ],
+  "deprecated": false,
+  "operationId": "ValidateGoapPlan"
+}
+""";
+
+    /// <summary>Returns endpoint information for ValidateGoapPlan</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("goap/validate-plan/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateGoapPlan_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Behavior",
+            "Post",
+            "goap/validate-plan",
+            _ValidateGoapPlan_Info));
+
+    /// <summary>Returns request schema for ValidateGoapPlan</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("goap/validate-plan/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateGoapPlan_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Behavior",
+            "Post",
+            "goap/validate-plan",
+            "request-schema",
+            _ValidateGoapPlan_RequestSchema));
+
+    /// <summary>Returns response schema for ValidateGoapPlan</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("goap/validate-plan/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateGoapPlan_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Behavior",
+            "Post",
+            "goap/validate-plan",
+            "response-schema",
+            _ValidateGoapPlan_ResponseSchema));
+
+    /// <summary>Returns full schema for ValidateGoapPlan</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("goap/validate-plan/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateGoapPlan_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Behavior",
+            "Post",
+            "goap/validate-plan",
+            _ValidateGoapPlan_Info,
+            _ValidateGoapPlan_RequestSchema,
+            _ValidateGoapPlan_ResponseSchema));
 
     #endregion
 

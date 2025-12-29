@@ -1,0 +1,13 @@
+version: "2.0"
+metadata:
+  id: multi_flow
+flows:
+  start:
+    actions:
+      - log: "Starting"
+  process:
+    actions:
+      - log: "Processing"
+  end:
+    actions:
+      - log: "Ending"

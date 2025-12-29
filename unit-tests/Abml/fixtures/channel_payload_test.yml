@@ -1,0 +1,13 @@
+version: "2.0"
+metadata:
+  id: payload_test
+flows:
+  sender:
+    actions:
+      - emit:
+          signal: "data"
+          payload: "${'hello world'}"
+  receiver:
+    actions:
+      - wait_for: { signal: "data" }
+      - log: { message: "Got: ${_signal.payload}" }

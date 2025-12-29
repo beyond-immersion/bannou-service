@@ -1,7 +1,7 @@
-// ═══════════════════════════════════════════════════════════════════════════
+// =============================================================================
 // ABML Document Parser Tests
 // Tests for YAML document parsing.
-// ═══════════════════════════════════════════════════════════════════════════
+// =============================================================================
 
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Parser;
@@ -16,23 +16,14 @@ public class DocumentParserTests
 {
     private readonly DocumentParser _parser = new();
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
     // VERSION AND METADATA TESTS
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
 
     [Fact]
     public void Parse_ValidDocument_ReturnsSuccess()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: test_doc
-              type: behavior
-            flows:
-              start:
-                actions:
-                  - log: "Hello"
-            """;
+        var yaml = TestFixtures.Load("parser_valid_doc");
 
         var result = _parser.Parse(yaml);
 
@@ -46,10 +37,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_MissingVersion_ReturnsError()
     {
-        var yaml = """
-            metadata:
-              id: test_doc
-            """;
+        var yaml = TestFixtures.Load("parser_missing_version");
 
         var result = _parser.Parse(yaml);
 
@@ -60,11 +48,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_UnsupportedVersion_ReturnsError()
     {
-        var yaml = """
-            version: "1.0"
-            metadata:
-              id: test_doc
-            """;
+        var yaml = TestFixtures.Load("parser_unsupported_version");
 
         var result = _parser.Parse(yaml);
 
@@ -75,9 +59,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_MissingMetadata_ReturnsError()
     {
-        var yaml = """
-            version: "2.0"
-            """;
+        var yaml = TestFixtures.Load("parser_missing_metadata");
 
         var result = _parser.Parse(yaml);
 
@@ -88,11 +70,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_MissingMetadataId_ReturnsError()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              type: behavior
-            """;
+        var yaml = TestFixtures.Load("parser_missing_metadata_id");
 
         var result = _parser.Parse(yaml);
 
@@ -103,20 +81,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_FullMetadata_ParsesAllFields()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: full_doc
-              type: cutscene
-              description: "A test document"
-              tags:
-                - combat
-                - boss
-              deterministic: true
-            flows:
-              start:
-                actions: []
-            """;
+        var yaml = TestFixtures.Load("parser_full_metadata");
 
         var result = _parser.Parse(yaml);
 
@@ -131,28 +96,14 @@ public class DocumentParserTests
         Assert.True(meta.Deterministic);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
     // FLOW PARSING TESTS
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
 
     [Fact]
     public void Parse_MultipleFlows_ParsesAll()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: multi_flow
-            flows:
-              start:
-                actions:
-                  - log: "Starting"
-              process:
-                actions:
-                  - log: "Processing"
-              end:
-                actions:
-                  - log: "Ending"
-            """;
+        var yaml = TestFixtures.Load("parser_multi_flow");
 
         var result = _parser.Parse(yaml);
 
@@ -166,19 +117,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_FlowWithTriggers_ParsesTriggers()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: triggered_flow
-            flows:
-              morning:
-                triggers:
-                  - event: "wake_up"
-                    condition: "${energy > 0}"
-                  - time_range: "06:00-09:00"
-                actions:
-                  - log: "Good morning"
-            """;
+        var yaml = TestFixtures.Load("parser_triggers");
 
         var result = _parser.Parse(yaml);
 
@@ -190,30 +129,14 @@ public class DocumentParserTests
         Assert.Equal("06:00-09:00", flow.Triggers[1].TimeRange);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
     // CONTROL FLOW ACTION TESTS
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
 
     [Fact]
     public void Parse_CondAction_ParsesBranches()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: cond_test
-            flows:
-              start:
-                actions:
-                  - cond:
-                      - when: "${x > 10}"
-                        then:
-                          - log: "High"
-                      - when: "${x > 5}"
-                        then:
-                          - log: "Medium"
-                      - else:
-                          - log: "Low"
-            """;
+        var yaml = TestFixtures.Load("parser_cond");
 
         var result = _parser.Parse(yaml);
 
@@ -230,19 +153,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_ForEachAction_ParsesCorrectly()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: foreach_test
-            flows:
-              start:
-                actions:
-                  - for_each:
-                      variable: item
-                      collection: "${items}"
-                      do:
-                        - log: { message: "${item}" }
-            """;
+        var yaml = TestFixtures.Load("parser_foreach");
 
         var result = _parser.Parse(yaml);
 
@@ -257,18 +168,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_RepeatAction_ParsesCorrectly()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: repeat_test
-            flows:
-              start:
-                actions:
-                  - repeat:
-                      times: 3
-                      do:
-                        - log: "Again"
-            """;
+        var yaml = TestFixtures.Load("parser_repeat");
 
         var result = _parser.Parse(yaml);
 
@@ -282,15 +182,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_GotoAction_ParsesSimpleForm()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: goto_test
-            flows:
-              start:
-                actions:
-                  - goto: other_flow
-            """;
+        var yaml = TestFixtures.Load("parser_goto_simple");
 
         var result = _parser.Parse(yaml);
 
@@ -304,19 +196,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_GotoAction_ParsesWithArgs()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: goto_args_test
-            flows:
-              start:
-                actions:
-                  - goto:
-                      flow: process
-                      args:
-                        value: "${x}"
-                        name: test
-            """;
+        var yaml = TestFixtures.Load("parser_goto_args");
 
         var result = _parser.Parse(yaml);
 
@@ -332,15 +212,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_CallAction_ParsesCorrectly()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: call_test
-            flows:
-              start:
-                actions:
-                  - call: { flow: subroutine }
-            """;
+        var yaml = TestFixtures.Load("parser_call");
 
         var result = _parser.Parse(yaml);
 
@@ -353,15 +225,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_ReturnAction_ParsesWithValue()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: return_test
-            flows:
-              start:
-                actions:
-                  - return: { value: "${result}" }
-            """;
+        var yaml = TestFixtures.Load("parser_return");
 
         var result = _parser.Parse(yaml);
 
@@ -371,24 +235,14 @@ public class DocumentParserTests
         Assert.Equal("${result}", action.Value);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
     // VARIABLE ACTION TESTS
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
 
     [Fact]
     public void Parse_SetAction_ParsesCorrectly()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: set_test
-            flows:
-              start:
-                actions:
-                  - set:
-                      variable: counter
-                      value: "${x + 1}"
-            """;
+        var yaml = TestFixtures.Load("parser_set");
 
         var result = _parser.Parse(yaml);
 
@@ -402,16 +256,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_IncrementAction_ParsesWithDefaultBy()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: inc_test
-            flows:
-              start:
-                actions:
-                  - increment:
-                      variable: counter
-            """;
+        var yaml = TestFixtures.Load("parser_increment_default");
 
         var result = _parser.Parse(yaml);
 
@@ -425,17 +270,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_IncrementAction_ParsesWithCustomBy()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: inc_by_test
-            flows:
-              start:
-                actions:
-                  - increment:
-                      variable: counter
-                      by: 5
-            """;
+        var yaml = TestFixtures.Load("parser_increment_custom");
 
         var result = _parser.Parse(yaml);
 
@@ -449,17 +284,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_DecrementAction_ParsesCorrectly()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: dec_test
-            flows:
-              start:
-                actions:
-                  - decrement:
-                      variable: lives
-                      by: 1
-            """;
+        var yaml = TestFixtures.Load("parser_decrement");
 
         var result = _parser.Parse(yaml);
 
@@ -473,15 +298,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_ClearAction_ParsesSimpleForm()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: clear_test
-            flows:
-              start:
-                actions:
-                  - clear: temp_data
-            """;
+        var yaml = TestFixtures.Load("parser_clear");
 
         var result = _parser.Parse(yaml);
 
@@ -491,22 +308,14 @@ public class DocumentParserTests
         Assert.Equal("temp_data", action.Variable);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
     // LOG AND DOMAIN ACTION TESTS
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
 
     [Fact]
     public void Parse_LogAction_ParsesSimpleForm()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: log_test
-            flows:
-              start:
-                actions:
-                  - log: "Hello world"
-            """;
+        var yaml = TestFixtures.Load("parser_log_simple");
 
         var result = _parser.Parse(yaml);
 
@@ -520,17 +329,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_LogAction_ParsesWithLevel()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: log_level_test
-            flows:
-              start:
-                actions:
-                  - log:
-                      message: "Error occurred"
-                      level: error
-            """;
+        var yaml = TestFixtures.Load("parser_log_level");
 
         var result = _parser.Parse(yaml);
 
@@ -544,18 +343,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_DomainAction_ParsesParameters()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: domain_test
-            flows:
-              start:
-                actions:
-                  - animate:
-                      target: hero
-                      animation: wave
-                      duration: 2
-            """;
+        var yaml = TestFixtures.Load("parser_domain");
 
         var result = _parser.Parse(yaml);
 
@@ -567,29 +355,14 @@ public class DocumentParserTests
         Assert.Equal("wave", action.Parameters["animation"]);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
     // CONTEXT TESTS
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
 
     [Fact]
     public void Parse_Context_ParsesVariables()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: context_test
-            context:
-              variables:
-                counter:
-                  type: int
-                  default: 0
-                name:
-                  type: string
-                  source: "${entity.name}"
-            flows:
-              start:
-                actions: []
-            """;
+        var yaml = TestFixtures.Load("parser_context_vars");
 
         var result = _parser.Parse(yaml);
 
@@ -609,20 +382,7 @@ public class DocumentParserTests
     [Fact]
     public void Parse_Context_ParsesServices()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: services_test
-            context:
-              services:
-                - name: economy_service
-                  required: true
-                - name: relationship_service
-                  required: false
-            flows:
-              start:
-                actions: []
-            """;
+        var yaml = TestFixtures.Load("parser_context_services");
 
         var result = _parser.Parse(yaml);
 
@@ -635,18 +395,14 @@ public class DocumentParserTests
         Assert.False(result.Value.Context.Services[1].Required);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
     // ERROR HANDLING TESTS
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
 
     [Fact]
     public void Parse_InvalidYaml_ReturnsError()
     {
-        var yaml = """
-            version: "2.0"
-            metadata
-              id: broken
-            """;
+        var yaml = TestFixtures.Load("parser_invalid");
 
         var result = _parser.Parse(yaml);
 

@@ -1,6 +1,6 @@
 # Generated Service Details Reference
 
-> **Auto-generated**: 2025-12-28 17:11:54
+> **Auto-generated**: 2025-12-29 08:29:08
 > **Source**: `schemas/*-api.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -13,7 +13,7 @@ This document provides a compact reference of all Bannou services and their API 
 | [Accounts](#accounts) | 2.0.0 | 13 | Internal account management service (CRUD operations only, n... |
 | [Asset](#asset) | 1.0.0 | 8 | Asset management service for storage, versioning, and distri... |
 | [Auth](#auth) | 4.0.0 | 12 | Authentication and session management service (Internet-faci... |
-| [Behavior](#behavior) | 3.0.0 | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
+| [Behavior](#behavior) | 3.0.0 | 8 | Arcadia Behavior Markup Language (ABML) API for character be... |
 | [Character](#character) | 1.0.0 | 6 | Character management service for Arcadia game world. |
 | [Connect](#connect) | 2.0.0 | 4 | Real-time communication and WebSocket connection management ... |
 | [Documentation](#documentation) | 1.0.0 | 26 | Knowledge base API for AI agents to query documentation.
@@ -184,6 +184,13 @@ Arcadia Behavior Markup Language (ABML) API for character behavior management.
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
 | `POST` | `/context/resolve` | Resolve context variables | developer |
+
+### GOAP
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/goap/plan` | Generate GOAP plan | developer |
+| `POST` | `/goap/validate-plan` | Validate existing GOAP plan | developer |
 
 ### Validation
 
@@ -754,7 +761,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 22
-- **Total endpoints**: 227
+- **Total endpoints**: 229
 
 ---
 

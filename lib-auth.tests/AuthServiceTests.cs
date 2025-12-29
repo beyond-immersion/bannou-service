@@ -796,9 +796,9 @@ public class AuthServiceTests
         // Act
         var (status, response) = await service.RequestPasswordResetAsync(request);
 
-        // Assert
+        // Assert - per schema, this endpoint returns no body (prevents email enumeration)
         Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(response);
+        Assert.Null(response);  // Correct: no response body per schema (security design)
     }
 
     [Fact]
@@ -831,9 +831,9 @@ public class AuthServiceTests
         // Act
         var (status, response) = await service.ConfirmPasswordResetAsync(request);
 
-        // Assert
+        // Assert - per schema, this endpoint returns no body
         Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(response);
+        Assert.Null(response);  // Correct: no response body per schema
     }
 
     [Fact]

@@ -1,0 +1,7 @@
+version: "2.0"
+metadata:
+  id: clear_test
+flows:
+  start:
+    actions:
+      - clear: temp_data

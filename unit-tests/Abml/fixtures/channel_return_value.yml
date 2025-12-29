@@ -1,0 +1,7 @@
+version: "2.0"
+metadata:
+  id: return_value
+flows:
+  returner:
+    actions:
+      - return: { value: "${'result_data'}" }

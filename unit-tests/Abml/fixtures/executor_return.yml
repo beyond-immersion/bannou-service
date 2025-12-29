@@ -1,0 +1,9 @@
+version: "2.0"
+metadata:
+  id: return_test
+flows:
+  start:
+    actions:
+      - log: "Before return"
+      - return: { value: "done" }
+      - log: "After return"

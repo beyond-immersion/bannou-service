@@ -1,0 +1,16 @@
+version: "2.0"
+metadata:
+  id: sync_three
+flows:
+  ch1:
+    actions:
+      - sync: { point: "all_ready" }
+      - log: { message: "CH1 done" }
+  ch2:
+    actions:
+      - sync: { point: "all_ready" }
+      - log: { message: "CH2 done" }
+  ch3:
+    actions:
+      - sync: { point: "all_ready" }
+      - log: { message: "CH3 done" }

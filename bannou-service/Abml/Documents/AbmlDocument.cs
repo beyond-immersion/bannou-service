@@ -33,6 +33,13 @@ public sealed class AbmlDocument
     public ContextDefinition? Context { get; init; }
 
     /// <summary>
+    /// GOAP goal definitions for behavior planning.
+    /// Maps goal name to its definition with priority and conditions.
+    /// </summary>
+    public IReadOnlyDictionary<string, GoapGoalDefinition> Goals { get; init; } =
+        new Dictionary<string, GoapGoalDefinition>();
+
+    /// <summary>
     /// Named flows containing action sequences.
     /// </summary>
     public IReadOnlyDictionary<string, Flow> Flows { get; init; } = new Dictionary<string, Flow>();
@@ -182,6 +189,12 @@ public sealed class Flow
     public IReadOnlyList<FlowTrigger> Triggers { get; init; } = [];
 
     /// <summary>
+    /// GOAP metadata for this flow (preconditions, effects, cost).
+    /// When present, this flow can be used as a GOAP action.
+    /// </summary>
+    public GoapFlowMetadata? Goap { get; init; }
+
+    /// <summary>
     /// Actions to execute in this flow.
     /// </summary>
     public IReadOnlyList<ActionNode> Actions { get; init; } = [];
@@ -217,4 +230,54 @@ public sealed class FlowTrigger
     /// Cron-style schedule.
     /// </summary>
     public string? Schedule { get; init; }
+}
+
+/// <summary>
+/// GOAP goal definition from ABML goals: section.
+/// Goals define desired world state conditions with priorities.
+/// </summary>
+public sealed class GoapGoalDefinition
+{
+    /// <summary>
+    /// Goal priority (higher = more important).
+    /// Default is 50 for normal priority.
+    /// </summary>
+    public int Priority { get; init; } = 50;
+
+    /// <summary>
+    /// Conditions that define goal satisfaction.
+    /// Keys are world state property names, values are literal conditions.
+    /// Examples: "hunger" -> "&lt;= 0.3", "gold" -> "&gt;= 50"
+    /// </summary>
+    public IReadOnlyDictionary<string, string> Conditions { get; init; } =
+        new Dictionary<string, string>();
+}
+
+/// <summary>
+/// GOAP metadata from flow goap: block.
+/// Describes a flow as a GOAP action with preconditions, effects, and cost.
+/// </summary>
+public sealed class GoapFlowMetadata
+{
+    /// <summary>
+    /// Preconditions that must be satisfied to execute this action.
+    /// Keys are world state property names, values are literal conditions.
+    /// Examples: "hunger" -> "&gt; 0.6", "gold" -> "&gt;= 5"
+    /// </summary>
+    public IReadOnlyDictionary<string, string> Preconditions { get; init; } =
+        new Dictionary<string, string>();
+
+    /// <summary>
+    /// Effects applied to world state when action completes.
+    /// Values can be absolute ("0.5", "tavern") or delta ("-0.8", "+5").
+    /// Examples: "hunger" -> "-0.8", "location" -> "tavern"
+    /// </summary>
+    public IReadOnlyDictionary<string, string> Effects { get; init; } =
+        new Dictionary<string, string>();
+
+    /// <summary>
+    /// Action cost for A* planning (lower = preferred).
+    /// Default is 1.0 for unit cost.
+    /// </summary>
+    public float Cost { get; init; } = 1.0f;
 }

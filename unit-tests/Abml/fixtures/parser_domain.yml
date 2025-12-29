@@ -1,0 +1,10 @@
+version: "2.0"
+metadata:
+  id: domain_test
+flows:
+  start:
+    actions:
+      - animate:
+          target: hero
+          animation: wave
+          duration: 2

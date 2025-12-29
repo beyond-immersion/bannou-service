@@ -1,0 +1,15 @@
+version: "2.0"
+metadata:
+  id: multi_receiver
+flows:
+  sender:
+    actions:
+      - emit: { signal: "broadcast" }
+  receiver1:
+    actions:
+      - wait_for: { signal: "broadcast" }
+      - log: { message: "R1 got it" }
+  receiver2:
+    actions:
+      - wait_for: { signal: "broadcast" }
+      - log: { message: "R2 got it" }

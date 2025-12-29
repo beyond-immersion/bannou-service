@@ -1,0 +1,22 @@
+version: "2.0"
+metadata:
+  id: graceful_degradation
+context:
+  variables:
+    cached_data:
+      default: "cached_value"
+    result:
+      default: null
+flows:
+  start:
+    actions:
+      - goto: nonexistent_query_service
+      - log: { message: "Using data: ${result}" }
+    on_error:
+      - log: "Query failed, using cached data"
+      - set:
+          variable: result
+          value: "${cached_data}"
+      - set:
+          variable: _error_handled
+          value: "${true}"

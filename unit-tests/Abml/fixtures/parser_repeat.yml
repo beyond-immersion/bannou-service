@@ -1,0 +1,10 @@
+version: "2.0"
+metadata:
+  id: repeat_test
+flows:
+  start:
+    actions:
+      - repeat:
+          times: 3
+          do:
+            - log: "Again"

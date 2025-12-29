@@ -1,0 +1,14 @@
+version: "2.0"
+metadata:
+  id: set_new
+flows:
+  start:
+    actions:
+      - call: { flow: creator }
+      - log: { message: "Outer: ${new_var ?? 'not found'}" }
+  creator:
+    actions:
+      - set:
+          variable: new_var
+          value: "created"
+      - log: { message: "Inner: ${new_var}" }

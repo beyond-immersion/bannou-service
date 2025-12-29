@@ -731,6 +731,12 @@
             Context definition with variables, requirements, and services.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.AbmlDocument.Goals">
+            <summary>
+            GOAP goal definitions for behavior planning.
+            Maps goal name to its definition with priority and conditions.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Abml.Documents.AbmlDocument.Flows">
             <summary>
             Named flows containing action sequences.
@@ -872,6 +878,12 @@
             Triggers that can activate this flow.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Flow.Goap">
+            <summary>
+            GOAP metadata for this flow (preconditions, effects, cost).
+            When present, this flow can be used as a GOAP action.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Abml.Documents.Flow.Actions">
             <summary>
             Actions to execute in this flow.
@@ -906,6 +918,51 @@
         <member name="P:BeyondImmersion.BannouService.Abml.Documents.FlowTrigger.Schedule">
             <summary>
             Cron-style schedule.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.GoapGoalDefinition">
+            <summary>
+            GOAP goal definition from ABML goals: section.
+            Goals define desired world state conditions with priorities.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.GoapGoalDefinition.Priority">
+            <summary>
+            Goal priority (higher = more important).
+            Default is 50 for normal priority.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.GoapGoalDefinition.Conditions">
+            <summary>
+            Conditions that define goal satisfaction.
+            Keys are world state property names, values are literal conditions.
+            Examples: "hunger" -> "&lt;= 0.3", "gold" -> "&gt;= 50"
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.GoapFlowMetadata">
+            <summary>
+            GOAP metadata from flow goap: block.
+            Describes a flow as a GOAP action with preconditions, effects, and cost.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.GoapFlowMetadata.Preconditions">
+            <summary>
+            Preconditions that must be satisfied to execute this action.
+            Keys are world state property names, values are literal conditions.
+            Examples: "hunger" -> "&gt; 0.6", "gold" -> "&gt;= 5"
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.GoapFlowMetadata.Effects">
+            <summary>
+            Effects applied to world state when action completes.
+            Values can be absolute ("0.5", "tavern") or delta ("-0.8", "+5").
+            Examples: "hunger" -> "-0.8", "location" -> "tavern"
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.GoapFlowMetadata.Cost">
+            <summary>
+            Action cost for A* planning (lower = preferred).
+            Default is 1.0 for unit cost.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode">
@@ -8740,6 +8797,30 @@
             <returns>Context variables resolved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.GenerateGoapPlanAsync(BeyondImmersion.BannouService.Behavior.GoapPlanRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Generate GOAP plan
+            </summary>
+            <remarks>
+            Generates a GOAP plan to achieve a goal from the current world state.
+            <br/>Uses A* search to find the optimal sequence of actions.
+            </remarks>
+            <returns>Plan generated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.ValidateGoapPlanAsync(BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Validate existing GOAP plan
+            </summary>
+            <remarks>
+            Validates an existing GOAP plan against the current world state.
+            <br/>Returns whether the plan is still valid or needs replanning.
+            </remarks>
+            <returns>Plan validation completed</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="F:BeyondImmersion.BannouService.Behavior.BehaviorClient._serviceName">
             <summary>
             Service name used for app-id resolution. Extracted from class name.
@@ -8864,6 +8945,30 @@
             <br/>Used for dynamic behavior adaptation based on current game state.
             </remarks>
             <returns>Context variables resolved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.GenerateGoapPlanAsync(BeyondImmersion.BannouService.Behavior.GoapPlanRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Generate GOAP plan
+            </summary>
+            <remarks>
+            Generates a GOAP plan to achieve a goal from the current world state.
+            <br/>Uses A* search to find the optimal sequence of actions.
+            </remarks>
+            <returns>Plan generated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ValidateGoapPlanAsync(BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Validate existing GOAP plan
+            </summary>
+            <remarks>
+            Validates an existing GOAP plan against the current world state.
+            <br/>Returns whether the plan is still valid or needs replanning.
+            </remarks>
+            <returns>Plan validation completed</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.GetCachedBehaviorRequest">
@@ -9078,7 +9183,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.GoapGoal.Conditions">
             <summary>
-            World state conditions that satisfy this goal
+            World state conditions that satisfy this goal (literal conditions)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.GoapGoal.Priority">
@@ -9089,6 +9194,126 @@
         <member name="P:BeyondImmersion.BannouService.Behavior.GoapGoal.Preconditions">
             <summary>
             World state conditions required to pursue this goal
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.Agent_id">
+            <summary>
+            Unique identifier for the agent requesting the plan
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.World_state">
+            <summary>
+            Current world state as key-value pairs
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.Behavior_id">
+            <summary>
+            ID of compiled behavior containing GOAP actions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.Success">
+            <summary>
+            Whether planning was successful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.Planning_time_ms">
+            <summary>
+            Time spent planning in milliseconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.Nodes_expanded">
+            <summary>
+            Number of nodes expanded during A* search
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.Failure_reason">
+            <summary>
+            Reason for planning failure if unsuccessful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResult.Goal_id">
+            <summary>
+            ID of the goal this plan achieves
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResult.Actions">
+            <summary>
+            Ordered sequence of actions to execute
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResult.Total_cost">
+            <summary>
+            Total cost of all actions in the plan
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.PlannedActionResponse.Action_id">
+            <summary>
+            ID of the action (flow name)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.PlannedActionResponse.Index">
+            <summary>
+            Position in the plan sequence
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.PlannedActionResponse.Cost">
+            <summary>
+            Cost of this action
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.Current_action_index">
+            <summary>
+            Index of the action currently being executed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.World_state">
+            <summary>
+            Current world state
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.Active_goals">
+            <summary>
+            All active goals for priority checking
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.Is_valid">
+            <summary>
+            Whether the plan is still valid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.Reason">
+            <summary>
+            Reason for the validation result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.Suggested_action">
+            <summary>
+            Suggested action based on validation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.Invalidated_at_index">
+            <summary>
+            Index where plan became invalid (if applicable)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.Message">
+            <summary>
+            Additional details about the validation result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions.Max_depth">
+            <summary>
+            Maximum plan depth (number of actions)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions.Max_nodes">
+            <summary>
+            Maximum nodes to expand during search
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions.Timeout_ms">
+            <summary>
+            Planning timeout in milliseconds
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.Enable_optimizations">

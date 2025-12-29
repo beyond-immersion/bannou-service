@@ -1,0 +1,16 @@
+version: "2.0"
+metadata:
+  id: use_error_var
+flows:
+  start:
+    actions:
+      - goto: nowhere
+      - log: { message: "Recovered: ${recovered}" }
+    on_error:
+      - log: "Error occurred"
+      - set:
+          variable: recovered
+          value: "yes"
+      - set:
+          variable: _error_handled
+          value: "${true}"

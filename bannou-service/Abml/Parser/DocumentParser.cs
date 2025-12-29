@@ -70,6 +70,7 @@ public sealed class DocumentParser
             // Parse optional sections
             var imports = ParseImports(dict, errors);
             var context = ParseContext(dict, errors);
+            var goals = ParseGoals(dict, errors);
             var flows = ParseFlows(dict, errors);
 
             // Parse document-level on_error (flow name to call on unhandled error)
@@ -90,6 +91,7 @@ public sealed class DocumentParser
                 Metadata = metadata,
                 Imports = imports,
                 Context = context,
+                Goals = goals,
                 Flows = flows,
                 OnError = docOnError
             });
@@ -230,6 +232,63 @@ public sealed class DocumentParser
         };
     }
 
+    private IReadOnlyDictionary<string, GoapGoalDefinition> ParseGoals(
+        Dictionary<string, object?> dict, List<ParseError> errors)
+    {
+        if (!dict.TryGetValue("goals", out var goalsObj) || goalsObj is not Dictionary<object, object> goalsDict)
+        {
+            return new Dictionary<string, GoapGoalDefinition>();
+        }
+
+        var goals = new Dictionary<string, GoapGoalDefinition>();
+        foreach (var (key, value) in goalsDict)
+        {
+            if (key is not string goalName)
+            {
+                continue;
+            }
+
+            if (value is not Dictionary<object, object> goalDict)
+            {
+                errors.Add(new ParseError($"Goal '{goalName}' must be an object"));
+                continue;
+            }
+
+            var priority = 50;
+            if (goalDict.TryGetValue("priority", out var priorityObj))
+            {
+                priority = priorityObj switch
+                {
+                    int i => i,
+                    long l => (int)l,
+                    string s when int.TryParse(s, out var parsed) => parsed,
+                    _ => 50
+                };
+            }
+
+            var conditions = new Dictionary<string, string>();
+            if (goalDict.TryGetValue("conditions", out var condObj) &&
+                condObj is Dictionary<object, object> condDict)
+            {
+                foreach (var (condKey, condValue) in condDict)
+                {
+                    if (condKey is string condName && condValue is string condExpr)
+                    {
+                        conditions[condName] = condExpr;
+                    }
+                }
+            }
+
+            goals[goalName] = new GoapGoalDefinition
+            {
+                Priority = priority,
+                Conditions = conditions
+            };
+        }
+
+        return goals;
+    }
+
     private IReadOnlyDictionary<string, Flow> ParseFlows(Dictionary<string, object?> dict, List<ParseError> errors)
     {
         if (!dict.TryGetValue("flows", out var flowsObj) || flowsObj is not Dictionary<object, object> flowsDict)
@@ -252,6 +311,7 @@ public sealed class DocumentParser
             }
 
             var triggers = ParseTriggers(flowDict, errors);
+            var goap = ParseGoapMetadata(flowDict, errors);
             var actions = ParseActions(flowDict.TryGetValue("actions", out var actionsObj) ? actionsObj : null, errors);
             var onError = ParseActions(flowDict.TryGetValue("on_error", out var onErrorObj) ? onErrorObj : null, errors);
 
@@ -259,6 +319,7 @@ public sealed class DocumentParser
             {
                 Name = flowName,
                 Triggers = triggers,
+                Goap = goap,
                 Actions = actions,
                 OnError = onError
             };
@@ -290,6 +351,61 @@ public sealed class DocumentParser
         }
 
         return triggers;
+    }
+
+    private GoapFlowMetadata? ParseGoapMetadata(Dictionary<object, object> flowDict, List<ParseError> errors)
+    {
+        if (!flowDict.TryGetValue("goap", out var goapObj) || goapObj is not Dictionary<object, object> goapDict)
+        {
+            return null;
+        }
+
+        var preconditions = new Dictionary<string, string>();
+        if (goapDict.TryGetValue("preconditions", out var preObj) &&
+            preObj is Dictionary<object, object> preDict)
+        {
+            foreach (var (key, value) in preDict)
+            {
+                if (key is string propName && value is string condition)
+                {
+                    preconditions[propName] = condition;
+                }
+            }
+        }
+
+        var effects = new Dictionary<string, string>();
+        if (goapDict.TryGetValue("effects", out var effObj) &&
+            effObj is Dictionary<object, object> effDict)
+        {
+            foreach (var (key, value) in effDict)
+            {
+                if (key is string propName && value is string effect)
+                {
+                    effects[propName] = effect;
+                }
+            }
+        }
+
+        var cost = 1.0f;
+        if (goapDict.TryGetValue("cost", out var costObj))
+        {
+            cost = costObj switch
+            {
+                int i => i,
+                long l => l,
+                float f => f,
+                double d => (float)d,
+                string s when float.TryParse(s, out var parsed) => parsed,
+                _ => 1.0f
+            };
+        }
+
+        return new GoapFlowMetadata
+        {
+            Preconditions = preconditions,
+            Effects = effects,
+            Cost = cost
+        };
     }
 
     private IReadOnlyList<ActionNode> ParseActions(object? actionsObj, List<ParseError> errors)
@@ -483,7 +599,7 @@ public sealed class DocumentParser
             flowName = str;
         }
         else if (value is Dictionary<object, object> dict &&
-                 dict.TryGetValue("flow", out var flowObj) && flowObj is string fn)
+                dict.TryGetValue("flow", out var flowObj) && flowObj is string fn)
         {
             flowName = fn;
         }
@@ -506,7 +622,7 @@ public sealed class DocumentParser
             returnValue = str;
         }
         else if (value is Dictionary<object, object> dict &&
-                 dict.TryGetValue("value", out var valObj) && valObj is string val)
+                dict.TryGetValue("value", out var valObj) && valObj is string val)
         {
             returnValue = val;
         }
@@ -659,7 +775,7 @@ public sealed class DocumentParser
             variable = str;
         }
         else if (value is Dictionary<object, object> dict &&
-                 dict.TryGetValue("variable", out var varObj) && varObj is string v)
+                dict.TryGetValue("variable", out var varObj) && varObj is string v)
         {
             variable = v;
         }
@@ -742,7 +858,7 @@ public sealed class DocumentParser
             signal = str;
         }
         else if (value is Dictionary<object, object> dict &&
-                 dict.TryGetValue("signal", out var sigObj) && sigObj is string sig)
+                dict.TryGetValue("signal", out var sigObj) && sigObj is string sig)
         {
             signal = sig;
         }
@@ -765,7 +881,7 @@ public sealed class DocumentParser
             point = str;
         }
         else if (value is Dictionary<object, object> dict &&
-                 dict.TryGetValue("point", out var ptObj) && ptObj is string pt)
+                dict.TryGetValue("point", out var ptObj) && ptObj is string pt)
         {
             point = pt;
         }

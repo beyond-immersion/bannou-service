@@ -1,0 +1,11 @@
+version: "2.0"
+metadata:
+  id: goto_args_test
+flows:
+  start:
+    actions:
+      - goto:
+          flow: process
+          args:
+            value: "${x}"
+            name: test

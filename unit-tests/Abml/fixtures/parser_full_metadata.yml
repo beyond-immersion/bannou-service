@@ -1,0 +1,12 @@
+version: "2.0"
+metadata:
+  id: full_doc
+  type: cutscene
+  description: "A test document"
+  tags:
+    - combat
+    - boss
+  deterministic: true
+flows:
+  start:
+    actions: []

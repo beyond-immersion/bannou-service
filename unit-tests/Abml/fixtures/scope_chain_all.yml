@@ -1,0 +1,12 @@
+version: "2.0"
+metadata:
+  id: chain_all
+on_error: doc_handler
+flows:
+  start:
+    actions:
+      - failing_action:
+          param: value
+  doc_handler:
+    actions:
+      - log: "Document handled"

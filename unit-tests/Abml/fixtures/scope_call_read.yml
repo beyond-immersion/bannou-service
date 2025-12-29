@@ -1,0 +1,13 @@
+version: "2.0"
+metadata:
+  id: call_read
+flows:
+  start:
+    actions:
+      - set:
+          variable: message
+          value: "hello"
+      - call: { flow: reader }
+  reader:
+    actions:
+      - log: { message: "Read: ${message}" }

@@ -1,0 +1,7 @@
+version: "2.0"
+metadata:
+  id: goto_test
+flows:
+  start:
+    actions:
+      - goto: other_flow

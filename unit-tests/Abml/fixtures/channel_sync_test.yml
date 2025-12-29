@@ -1,0 +1,15 @@
+version: "2.0"
+metadata:
+  id: sync_test
+flows:
+  fast:
+    actions:
+      - log: { message: "Fast before" }
+      - sync: { point: "barrier1" }
+      - log: { message: "Fast after" }
+  slow:
+    actions:
+      - log: { message: "Slow before" }
+      - log: { message: "Slow extra work" }
+      - sync: { point: "barrier1" }
+      - log: { message: "Slow after" }

@@ -1,0 +1,12 @@
+version: "2.0"
+metadata:
+  id: deadlock
+flows:
+  ch1:
+    actions:
+      - wait_for: { signal: "from_ch2" }
+      - emit: { signal: "from_ch1" }
+  ch2:
+    actions:
+      - wait_for: { signal: "from_ch1" }
+      - emit: { signal: "from_ch2" }

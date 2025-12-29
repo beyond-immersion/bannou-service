@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Behavior.Goap;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -18,6 +19,7 @@ public class BehaviorServiceTests
     private readonly Mock<BehaviorServiceConfiguration> _mockConfiguration;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<IGoapPlanner> _mockGoapPlanner;
 
     public BehaviorServiceTests()
     {
@@ -25,6 +27,7 @@ public class BehaviorServiceTests
         _mockConfiguration = new Mock<BehaviorServiceConfiguration>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockGoapPlanner = new Mock<IGoapPlanner>();
     }
 
     [Fact]
@@ -35,12 +38,12 @@ public class BehaviorServiceTests
             _mockLogger.Object,
             _mockConfiguration.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            _mockGoapPlanner.Object);
 
         Assert.NotNull(service);
     }
 
 
-    // Note: BehaviorService methods are not yet implemented - planned for future release.
-    // Additional tests will be added when service implementation begins.
+    // Note: Additional tests for GOAP methods will be added in Phase 2.6.
 }

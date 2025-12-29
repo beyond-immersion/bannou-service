@@ -1,0 +1,8 @@
+version: "2.0"
+metadata:
+  id: test_doc
+  type: behavior
+flows:
+  start:
+    actions:
+      - log: "Hello"

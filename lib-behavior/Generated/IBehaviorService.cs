@@ -40,4 +40,14 @@ public partial interface IBehaviorService : IBannouService
     /// </summary>
     Task<(StatusCodes, ResolveContextResponse?)> ResolveContextVariablesAsync(ResolveContextRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+    /// <summary>
+    /// GenerateGoapPlan operation
+    /// </summary>
+    Task<(StatusCodes, GoapPlanResponse?)> GenerateGoapPlanAsync(GoapPlanRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
+    /// ValidateGoapPlan operation
+    /// </summary>
+    Task<(StatusCodes, ValidateGoapPlanResponse?)> ValidateGoapPlanAsync(ValidateGoapPlanRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

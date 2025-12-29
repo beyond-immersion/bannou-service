@@ -6,6 +6,28 @@
 
 ---
 
+## ⛔ FORBIDDEN DESTRUCTIVE COMMANDS ⛔
+
+**The following commands are ABSOLUTELY FORBIDDEN without explicit user approval:**
+
+- `git checkout` - Destroys uncommitted work
+- `git stash` - Hides changes that may be lost
+- `git reset` - Can destroy commit history
+- `mv` (for code files) - Can lose files or break references
+
+**Why these are forbidden:**
+These commands can destroy work in progress, hide changes, or cause data loss. Claude has repeatedly caused damage by using these commands without understanding the consequences.
+
+**If you need to undo changes:**
+1. ASK the user first
+2. Explain what you want to undo and why
+3. Wait for explicit approval
+4. Use the least destructive method possible
+
+**Principle**: Understand before acting. Never assume reverting is safe.
+
+---
+
 ## Core Architecture Reference
 
 @docs/reference/TENETS.md

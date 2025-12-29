@@ -1,0 +1,12 @@
+version: "2.0"
+metadata:
+  id: two_channels
+flows:
+  channel_a:
+    actions:
+      - log: { message: "A1" }
+      - log: { message: "A2" }
+  channel_b:
+    actions:
+      - log: { message: "B1" }
+      - log: { message: "B2" }

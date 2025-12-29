@@ -1,0 +1,13 @@
+version: "2.0"
+metadata:
+  id: error_var
+flows:
+  start:
+    actions:
+      - call: { flow: failing }
+    on_error:
+      - log: { message: "Flow: ${_error.flow}" }
+      - log: { message: "Action: ${_error.action}" }
+  failing:
+    actions:
+      - goto: nowhere

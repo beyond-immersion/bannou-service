@@ -1,0 +1,15 @@
+version: "2.0"
+metadata:
+  id: repeat_test
+flows:
+  start:
+    actions:
+      - set:
+          variable: count
+          value: "0"
+      - repeat:
+          times: 3
+          do:
+            - increment:
+                variable: count
+      - log: { message: "Count: ${count}" }

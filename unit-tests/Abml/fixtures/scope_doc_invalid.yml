@@ -1,0 +1,8 @@
+version: "2.0"
+metadata:
+  id: doc_invalid
+on_error: nonexistent_handler
+flows:
+  start:
+    actions:
+      - goto: nowhere

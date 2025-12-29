@@ -1,0 +1,15 @@
+version: "2.0"
+metadata:
+  id: doc_continue
+on_error: error_handler
+flows:
+  start:
+    actions:
+      - goto: nowhere
+      - log: "This SHOULD run after doc error handling"
+  error_handler:
+    actions:
+      - log: "Document handler"
+      - set:
+          variable: _error_handled
+          value: "${true}"

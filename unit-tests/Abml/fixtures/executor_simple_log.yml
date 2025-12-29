@@ -1,0 +1,7 @@
+version: "2.0"
+metadata:
+  id: simple_log
+flows:
+  start:
+    actions:
+      - log: "Hello World"

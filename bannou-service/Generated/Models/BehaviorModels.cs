@@ -521,11 +521,11 @@ public partial class GoapGoal
     public string Description { get; set; } = default!;
 
     /// <summary>
-    /// World state conditions that satisfy this goal
+    /// World state conditions that satisfy this goal (literal conditions)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("conditions")]
     [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.IDictionary<string, double> Conditions { get; set; } = new System.Collections.Generic.Dictionary<string, double>();
+    public System.Collections.Generic.IDictionary<string, string> Conditions { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
 
     /// <summary>
     /// Priority of this goal relative to others
@@ -538,7 +538,280 @@ public partial class GoapGoal
     /// World state conditions required to pursue this goal
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("preconditions")]
-    public System.Collections.Generic.IDictionary<string, double> Preconditions { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string> Preconditions { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GoapPlanRequest
+{
+
+    /// <summary>
+    /// Unique identifier for the agent requesting the plan
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("agent_id")]
+    public string Agent_id { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("goal")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public GoapGoal Goal { get; set; } = new GoapGoal();
+
+    /// <summary>
+    /// Current world state as key-value pairs
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("world_state")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public object World_state { get; set; } = new object();
+
+    /// <summary>
+    /// ID of compiled behavior containing GOAP actions
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("behavior_id")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Behavior_id { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("options")]
+    public GoapPlanningOptions Options { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GoapPlanResponse
+{
+
+    /// <summary>
+    /// Whether planning was successful
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    [System.Text.Json.Serialization.JsonPropertyName("plan")]
+    public GoapPlanResult Plan { get; set; } = default!;
+
+    /// <summary>
+    /// Time spent planning in milliseconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("planning_time_ms")]
+    public int Planning_time_ms { get; set; } = default!;
+
+    /// <summary>
+    /// Number of nodes expanded during A* search
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("nodes_expanded")]
+    public int Nodes_expanded { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for planning failure if unsuccessful
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failure_reason")]
+    public string Failure_reason { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GoapPlanResult
+{
+
+    /// <summary>
+    /// ID of the goal this plan achieves
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("goal_id")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Goal_id { get; set; } = default!;
+
+    /// <summary>
+    /// Ordered sequence of actions to execute
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actions")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<PlannedActionResponse> Actions { get; set; } = new System.Collections.ObjectModel.Collection<PlannedActionResponse>();
+
+    /// <summary>
+    /// Total cost of all actions in the plan
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("total_cost")]
+    public float Total_cost { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PlannedActionResponse
+{
+
+    /// <summary>
+    /// ID of the action (flow name)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("action_id")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Action_id { get; set; } = default!;
+
+    /// <summary>
+    /// Position in the plan sequence
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("index")]
+    public int Index { get; set; } = default!;
+
+    /// <summary>
+    /// Cost of this action
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cost")]
+    public float Cost { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ValidateGoapPlanRequest
+{
+
+    [System.Text.Json.Serialization.JsonPropertyName("plan")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public GoapPlanResult Plan { get; set; } = new GoapPlanResult();
+
+    /// <summary>
+    /// Index of the action currently being executed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("current_action_index")]
+    public int Current_action_index { get; set; } = default!;
+
+    /// <summary>
+    /// Current world state
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("world_state")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public object World_state { get; set; } = new object();
+
+    /// <summary>
+    /// All active goals for priority checking
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("active_goals")]
+    public System.Collections.Generic.ICollection<GoapGoal> Active_goals { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ValidateGoapPlanResponse
+{
+
+    /// <summary>
+    /// Whether the plan is still valid
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("is_valid")]
+    public bool Is_valid { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for the validation result
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ValidateGoapPlanResponseReason Reason { get; set; } = default!;
+
+    /// <summary>
+    /// Suggested action based on validation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("suggested_action")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ValidateGoapPlanResponseSuggested_action Suggested_action { get; set; } = default!;
+
+    /// <summary>
+    /// Index where plan became invalid (if applicable)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("invalidated_at_index")]
+    public int Invalidated_at_index { get; set; } = default!;
+
+    /// <summary>
+    /// Additional details about the validation result
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("message")]
+    public string Message { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GoapPlanningOptions
+{
+
+    /// <summary>
+    /// Maximum plan depth (number of actions)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("max_depth")]
+    public int Max_depth { get; set; } = 10;
+
+    /// <summary>
+    /// Maximum nodes to expand during search
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("max_nodes")]
+    public int Max_nodes { get; set; } = 1000;
+
+    /// <summary>
+    /// Planning timeout in milliseconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timeout_ms")]
+    public int Timeout_ms { get; set; } = 100;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -798,6 +1071,48 @@ public partial class Execution_metadata
         get => _additionalProperties;
         set { _additionalProperties = value; }
     }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ValidateGoapPlanResponseReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"none")]
+    None = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"precondition_invalidated")]
+    Precondition_invalidated = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"action_failed")]
+    Action_failed = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"better_goal_available")]
+    Better_goal_available = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"plan_completed")]
+    Plan_completed = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"goal_already_satisfied")]
+    Goal_already_satisfied = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"suboptimal_plan")]
+    Suboptimal_plan = 6,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ValidateGoapPlanResponseSuggested_action
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"continue")]
+    Continue = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"replan")]
+    Replan = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"abort")]
+    Abort = 2,
 
 }
 

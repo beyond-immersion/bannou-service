@@ -1,7 +1,7 @@
-// ═══════════════════════════════════════════════════════════════════════════
+// =============================================================================
 // ABML Scope and Error Handling Tests
 // Tests for variable scope semantics, call isolation, and error handling.
-// ═══════════════════════════════════════════════════════════════════════════
+// =============================================================================
 
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
@@ -20,24 +20,14 @@ public class ScopeAndErrorTests
     private readonly DocumentParser _parser = new();
     private readonly DocumentExecutor _executor = new();
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
     // LOCAL ACTION TESTS
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
 
     [Fact]
     public void Parse_LocalAction_ParsesCorrectly()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: local_parse
-            flows:
-              start:
-                actions:
-                  - local:
-                      variable: temp
-                      value: "42"
-            """;
+        var yaml = TestFixtures.Load("scope_local_parse");
 
         var result = _parser.Parse(yaml);
 
@@ -51,25 +41,7 @@ public class ScopeAndErrorTests
     [Fact]
     public async Task Execute_LocalAction_ShadowsParentVariable()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: local_shadow
-            flows:
-              start:
-                actions:
-                  - set:
-                      variable: x
-                      value: "outer"
-                  - call: { flow: inner }
-                  - log: { message: "After call: ${x}" }
-              inner:
-                actions:
-                  - local:
-                      variable: x
-                      value: "inner"
-                  - log: { message: "In inner: ${x}" }
-            """;
+        var yaml = TestFixtures.Load("scope_local_shadow");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -85,23 +57,7 @@ public class ScopeAndErrorTests
     [Fact]
     public async Task Execute_ForEach_LoopVariableShadowsOuter()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: foreach_shadow
-            flows:
-              start:
-                actions:
-                  - set:
-                      variable: item
-                      value: "original"
-                  - for_each:
-                      variable: item
-                      collection: "${items}"
-                      do:
-                        - log: { message: "Loop: ${item}" }
-                  - log: { message: "After loop: ${item}" }
-            """;
+        var yaml = TestFixtures.Load("scope_foreach_shadow");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -118,24 +74,14 @@ public class ScopeAndErrorTests
         Assert.Equal("After loop: original", result.Logs[2].Message);  // Restored
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
     // GLOBAL ACTION TESTS
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
 
     [Fact]
     public void Parse_GlobalAction_ParsesCorrectly()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: global_parse
-            flows:
-              start:
-                actions:
-                  - global:
-                      variable: shared
-                      value: "value"
-            """;
+        var yaml = TestFixtures.Load("scope_global_parse");
 
         var result = _parser.Parse(yaml);
 
@@ -149,24 +95,7 @@ public class ScopeAndErrorTests
     [Fact]
     public async Task Execute_GlobalAction_SetsInRootScope()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: global_set
-            flows:
-              start:
-                actions:
-                  - call: { flow: nested }
-                  - log: { message: "Root: ${result}" }
-              nested:
-                actions:
-                  - call: { flow: deep }
-              deep:
-                actions:
-                  - global:
-                      variable: result
-                      value: "from_deep"
-            """;
+        var yaml = TestFixtures.Load("scope_global_set");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -178,31 +107,14 @@ public class ScopeAndErrorTests
         Assert.Equal("Root: from_deep", result.Logs[0].Message);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
     // SET VS LOCAL BEHAVIOR TESTS
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
 
     [Fact]
     public async Task Execute_SetAction_ModifiesExistingInParent()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: set_parent
-            flows:
-              start:
-                actions:
-                  - set:
-                      variable: counter
-                      value: "0"
-                  - call: { flow: increment }
-                  - log: { message: "Final: ${counter}" }
-              increment:
-                actions:
-                  - set:
-                      variable: counter
-                      value: "${counter + 1}"
-            """;
+        var yaml = TestFixtures.Load("scope_set_parent");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -217,22 +129,7 @@ public class ScopeAndErrorTests
     [Fact]
     public async Task Execute_SetAction_CreatesLocalIfNotExists()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: set_new
-            flows:
-              start:
-                actions:
-                  - call: { flow: creator }
-                  - log: { message: "Outer: ${new_var ?? 'not found'}" }
-              creator:
-                actions:
-                  - set:
-                      variable: new_var
-                      value: "created"
-                  - log: { message: "Inner: ${new_var}" }
-            """;
+        var yaml = TestFixtures.Load("scope_set_new");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -245,34 +142,14 @@ public class ScopeAndErrorTests
         Assert.Equal("Outer: not found", result.Logs[1].Message);  // Not visible in parent
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
     // CALL HANDLER ISOLATION TESTS
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
 
     [Fact]
     public async Task Execute_Call_CalledFlowHasOwnScope()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: call_isolation
-            flows:
-              start:
-                actions:
-                  - set:
-                      variable: x
-                      value: "10"
-                  - call: { flow: modify }
-                  - log: { message: "x = ${x}" }
-              modify:
-                actions:
-                  - local:
-                      variable: x
-                      value: "99"
-                  - local:
-                      variable: y
-                      value: "new"
-            """;
+        var yaml = TestFixtures.Load("scope_call_isolation");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -287,21 +164,7 @@ public class ScopeAndErrorTests
     [Fact]
     public async Task Execute_Call_CanReadParentVariables()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: call_read
-            flows:
-              start:
-                actions:
-                  - set:
-                      variable: message
-                      value: "hello"
-                  - call: { flow: reader }
-              reader:
-                actions:
-                  - log: { message: "Read: ${message}" }
-            """;
+        var yaml = TestFixtures.Load("scope_call_read");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -313,24 +176,14 @@ public class ScopeAndErrorTests
         Assert.Equal("Read: hello", result.Logs[0].Message);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
     // ERROR HANDLING TESTS (on_error)
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
 
     [Fact]
     public void Parse_OnError_ParsesCorrectly()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: on_error_parse
-            flows:
-              start:
-                actions:
-                  - log: "Try"
-                on_error:
-                  - log: "Error handled"
-            """;
+        var yaml = TestFixtures.Load("scope_on_error_parse");
 
         var result = _parser.Parse(yaml);
 
@@ -342,17 +195,7 @@ public class ScopeAndErrorTests
     [Fact]
     public async Task Execute_OnError_HandlesActionError()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: on_error_exec
-            flows:
-              start:
-                actions:
-                  - goto: nonexistent_flow
-                on_error:
-                  - log: { message: "Caught: ${_error.message}" }
-            """;
+        var yaml = TestFixtures.Load("scope_on_error_exec");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -367,21 +210,7 @@ public class ScopeAndErrorTests
     [Fact]
     public async Task Execute_OnError_SetsErrorVariable()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: error_var
-            flows:
-              start:
-                actions:
-                  - call: { flow: failing }
-                on_error:
-                  - log: { message: "Flow: ${_error.flow}" }
-                  - log: { message: "Action: ${_error.action}" }
-              failing:
-                actions:
-                  - goto: nowhere
-            """;
+        var yaml = TestFixtures.Load("scope_error_var");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -398,15 +227,7 @@ public class ScopeAndErrorTests
     [Fact]
     public async Task Execute_NoOnError_PropagatesError()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: no_handler
-            flows:
-              start:
-                actions:
-                  - goto: nonexistent
-            """;
+        var yaml = TestFixtures.Load("scope_no_handler");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -422,18 +243,7 @@ public class ScopeAndErrorTests
     {
         // Default behavior: error is handled but flow execution STOPS
         // (no continuation to next action unless _error_handled is set)
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: stop_after
-            flows:
-              start:
-                actions:
-                  - goto: nowhere
-                  - log: "This should NOT run (default stops after error)"
-                on_error:
-                  - log: "Error handled"
-            """;
+        var yaml = TestFixtures.Load("scope_stop_after");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -451,21 +261,7 @@ public class ScopeAndErrorTests
     public async Task Execute_OnError_WithErrorHandledFlag_ContinuesToNextAction()
     {
         // When _error_handled is set to true, execution continues to next action
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: continue_after
-            flows:
-              start:
-                actions:
-                  - goto: nowhere
-                  - log: "This SHOULD run (error_handled=true)"
-                on_error:
-                  - log: "Error handled"
-                  - set:
-                      variable: _error_handled
-                      value: "${true}"
-            """;
+        var yaml = TestFixtures.Load("scope_continue_after");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -483,21 +279,7 @@ public class ScopeAndErrorTests
     public async Task Execute_OnError_ErrorHandledFalse_StopsExecution()
     {
         // Explicitly setting _error_handled to false still stops execution
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: explicit_false
-            flows:
-              start:
-                actions:
-                  - goto: nowhere
-                  - log: "This should NOT run"
-                on_error:
-                  - log: "Error handled"
-                  - set:
-                      variable: _error_handled
-                      value: "${false}"
-            """;
+        var yaml = TestFixtures.Load("scope_explicit_false");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -510,26 +292,14 @@ public class ScopeAndErrorTests
         Assert.Equal("Error handled", result.Logs[0].Message);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
     // DOCUMENT-LEVEL ON_ERROR TESTS
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
 
     [Fact]
     public void Parse_DocumentOnError_ParsesCorrectly()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: doc_error_parse
-            on_error: error_handler
-            flows:
-              start:
-                actions:
-                  - log: "Main"
-              error_handler:
-                actions:
-                  - log: "Document error handled"
-            """;
+        var yaml = TestFixtures.Load("scope_doc_error_parse");
 
         var result = _parser.Parse(yaml);
 
@@ -540,19 +310,7 @@ public class ScopeAndErrorTests
     [Fact]
     public async Task Execute_DocumentOnError_HandlesUnhandledFlowError()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: doc_error_exec
-            on_error: error_handler
-            flows:
-              start:
-                actions:
-                  - goto: nonexistent_flow
-              error_handler:
-                actions:
-                  - log: { message: "Document caught: ${_error.message}" }
-            """;
+        var yaml = TestFixtures.Load("scope_doc_error_exec");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -568,21 +326,7 @@ public class ScopeAndErrorTests
     public async Task Execute_DocumentOnError_FlowLevelTakesPrecedence()
     {
         // Flow-level on_error should handle before document-level
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: doc_precedence
-            on_error: doc_handler
-            flows:
-              start:
-                actions:
-                  - goto: nowhere
-                on_error:
-                  - log: "Flow handled"
-              doc_handler:
-                actions:
-                  - log: "Document handled"
-            """;
+        var yaml = TestFixtures.Load("scope_doc_precedence");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -598,16 +342,7 @@ public class ScopeAndErrorTests
     public async Task Execute_DocumentOnError_InvalidFlowPropagatesError()
     {
         // If the document-level on_error points to a non-existent flow, error propagates
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: doc_invalid
-            on_error: nonexistent_handler
-            flows:
-              start:
-                actions:
-                  - goto: nowhere
-            """;
+        var yaml = TestFixtures.Load("scope_doc_invalid");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -621,19 +356,7 @@ public class ScopeAndErrorTests
     [Fact]
     public async Task Execute_DocumentOnError_SetsErrorVariable()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: doc_error_var
-            on_error: error_handler
-            flows:
-              start:
-                actions:
-                  - goto: nowhere
-              error_handler:
-                actions:
-                  - log: { message: "Flow: ${_error.flow}, Action: ${_error.action}" }
-            """;
+        var yaml = TestFixtures.Load("scope_doc_error_var");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -646,25 +369,14 @@ public class ScopeAndErrorTests
         Assert.Contains("Action:", result.Logs[0].Message);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
     // ACTION-LEVEL ON_ERROR TESTS
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
 
     [Fact]
     public void Parse_ActionOnError_ParsesCorrectly()
     {
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: action_error_parse
-            flows:
-              start:
-                actions:
-                  - failing_action:
-                      param: value
-                      on_error:
-                        - log: "Action error handled"
-            """;
+        var yaml = TestFixtures.Load("scope_action_error_parse");
 
         var result = _parser.Parse(yaml);
 
@@ -683,19 +395,7 @@ public class ScopeAndErrorTests
         var handlers = TestHandlerFactory.CreateWithFailingHandler();
         var executor = new DocumentExecutor(new ExpressionEvaluator(), handlers);
 
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: action_error_exec
-            flows:
-              start:
-                actions:
-                  - failing_action:
-                      param: value
-                      on_error:
-                        - log: { message: "Action caught: ${_error.message}" }
-                  - log: "This should NOT run (default stops)"
-            """;
+        var yaml = TestFixtures.Load("scope_action_error_exec");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -715,22 +415,7 @@ public class ScopeAndErrorTests
         var handlers = TestHandlerFactory.CreateWithFailingHandler();
         var executor = new DocumentExecutor(new ExpressionEvaluator(), handlers);
 
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: action_continue
-            flows:
-              start:
-                actions:
-                  - failing_action:
-                      param: value
-                      on_error:
-                        - log: { message: "Action caught: ${_error.message}" }
-                        - set:
-                            variable: _error_handled
-                            value: "${true}"
-                  - log: "This SHOULD run (error_handled=true)"
-            """;
+        var yaml = TestFixtures.Load("scope_action_continue");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -751,20 +436,7 @@ public class ScopeAndErrorTests
         var handlers = TestHandlerFactory.CreateWithFailingHandler();
         var executor = new DocumentExecutor(new ExpressionEvaluator(), handlers);
 
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: action_precedence
-            flows:
-              start:
-                actions:
-                  - failing_action:
-                      param: value
-                      on_error:
-                        - log: "Action handled"
-                on_error:
-                  - log: "Flow handled"
-            """;
+        var yaml = TestFixtures.Load("scope_action_precedence");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -783,18 +455,7 @@ public class ScopeAndErrorTests
         var handlers = TestHandlerFactory.CreateWithFailingHandler();
         var executor = new DocumentExecutor(new ExpressionEvaluator(), handlers);
 
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: action_fallback
-            flows:
-              start:
-                actions:
-                  - failing_action:
-                      param: value
-                on_error:
-                  - log: "Flow handled"
-            """;
+        var yaml = TestFixtures.Load("scope_action_fallback");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -806,9 +467,9 @@ public class ScopeAndErrorTests
         Assert.Equal("Flow handled", result.Logs[0].Message);  // Falls back to flow
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
     // 3-LEVEL ERROR CHAIN TESTS
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
 
     [Fact]
     public async Task Execute_ErrorChain_ActionToFlowToDocument()
@@ -817,21 +478,8 @@ public class ScopeAndErrorTests
         var handlers = TestHandlerFactory.CreateWithFailingHandler();
         var executor = new DocumentExecutor(new ExpressionEvaluator(), handlers);
 
-        // Action with no on_error → Flow with no on_error → Document on_error
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: chain_all
-            on_error: doc_handler
-            flows:
-              start:
-                actions:
-                  - failing_action:
-                      param: value
-              doc_handler:
-                actions:
-                  - log: "Document handled"
-            """;
+        // Action with no on_error -> Flow with no on_error -> Document on_error
+        var yaml = TestFixtures.Load("scope_chain_all");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -850,16 +498,7 @@ public class ScopeAndErrorTests
         var handlers = TestHandlerFactory.CreateWithFailingHandler();
         var executor = new DocumentExecutor(new ExpressionEvaluator(), handlers);
 
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: chain_none
-            flows:
-              start:
-                actions:
-                  - failing_action:
-                      param: value
-            """;
+        var yaml = TestFixtures.Load("scope_chain_none");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -874,25 +513,7 @@ public class ScopeAndErrorTests
     public async Task Execute_ErrorChain_NestedCallError()
     {
         // Error in called flow bubbles up through call stack
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: chain_nested
-            on_error: doc_handler
-            flows:
-              start:
-                actions:
-                  - call: { flow: level1 }
-              level1:
-                actions:
-                  - call: { flow: level2 }
-              level2:
-                actions:
-                  - goto: nowhere
-              doc_handler:
-                actions:
-                  - log: { message: "Caught from: ${_error.flow}" }
-            """;
+        var yaml = TestFixtures.Load("scope_chain_nested");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -908,21 +529,7 @@ public class ScopeAndErrorTests
     public async Task Execute_ErrorChain_FlowHandlerStopsDocumentHandler()
     {
         // If flow-level handles the error, document-level should NOT be called
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: chain_stop
-            on_error: doc_handler
-            flows:
-              start:
-                actions:
-                  - goto: nowhere
-                on_error:
-                  - log: "Flow handled"
-              doc_handler:
-                actions:
-                  - log: "Document handled"
-            """;
+        var yaml = TestFixtures.Load("scope_chain_stop");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -941,20 +548,7 @@ public class ScopeAndErrorTests
         var handlers = TestHandlerFactory.CreateWithFailingHandler();
         var executor = new DocumentExecutor(new ExpressionEvaluator(), handlers);
 
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: chain_handler_error
-            flows:
-              start:
-                actions:
-                  - failing_action:
-                      param: value
-                      on_error:
-                        - goto: nowhere
-                on_error:
-                  - log: "Flow caught handler error"
-            """;
+        var yaml = TestFixtures.Load("scope_chain_handler_error");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -966,31 +560,15 @@ public class ScopeAndErrorTests
         Assert.Equal("Flow caught handler error", result.Logs[0].Message);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
     // _ERROR_HANDLED CONTINUATION TESTS
-    // ═══════════════════════════════════════════════════════════════════════
+    // =========================================================================
 
     [Fact]
     public async Task Execute_ErrorHandled_DocumentLevel_ContinuesToNextAction()
     {
         // Document-level on_error with _error_handled=true allows continuation
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: doc_continue
-            on_error: error_handler
-            flows:
-              start:
-                actions:
-                  - goto: nowhere
-                  - log: "This SHOULD run after doc error handling"
-              error_handler:
-                actions:
-                  - log: "Document handler"
-                  - set:
-                      variable: _error_handled
-                      value: "${true}"
-            """;
+        var yaml = TestFixtures.Load("scope_doc_continue");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -1010,30 +588,7 @@ public class ScopeAndErrorTests
         var handlers = TestHandlerFactory.CreateWithFailingHandler();
         var executor = new DocumentExecutor(new ExpressionEvaluator(), handlers);
 
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: multi_error
-            flows:
-              start:
-                actions:
-                  - failing_action:
-                      param: first
-                      on_error:
-                        - log: "First error handled"
-                        - set:
-                            variable: _error_handled
-                            value: "${true}"
-                  - log: "Between errors"
-                  - failing_action:
-                      param: second
-                      on_error:
-                        - log: "Second error handled"
-                        - set:
-                            variable: _error_handled
-                            value: "${true}"
-                  - log: "After all errors"
-            """;
+        var yaml = TestFixtures.Load("scope_multi_error");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -1053,30 +608,7 @@ public class ScopeAndErrorTests
     public async Task Execute_ErrorHandled_GracefulDegradation_UseCachedData()
     {
         // THE DREAM pattern: graceful degradation using cached data on error
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: graceful_degradation
-            context:
-              variables:
-                cached_data:
-                  default: "cached_value"
-                result:
-                  default: null
-            flows:
-              start:
-                actions:
-                  - goto: nonexistent_query_service
-                  - log: { message: "Using data: ${result}" }
-                on_error:
-                  - log: "Query failed, using cached data"
-                  - set:
-                      variable: result
-                      value: "${cached_data}"
-                  - set:
-                      variable: _error_handled
-                      value: "${true}"
-            """;
+        var yaml = TestFixtures.Load("scope_graceful_degradation");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -1094,24 +626,7 @@ public class ScopeAndErrorTests
     public async Task Execute_ErrorHandled_FlagIsLocalToScope()
     {
         // _error_handled set in one flow's error handler doesn't affect subsequent flows
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: flag_scope
-            flows:
-              start:
-                actions:
-                  - goto: nowhere
-                  - log: "This runs (error_handled=true)"
-                  - set:
-                      variable: result
-                      value: "completed"
-                on_error:
-                  - log: "Error handled, continuing"
-                  - set:
-                      variable: _error_handled
-                      value: "${true}"
-            """;
+        var yaml = TestFixtures.Load("scope_flag_scope");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -1129,24 +644,7 @@ public class ScopeAndErrorTests
     public async Task Execute_ErrorHandled_CanSetAndCheckVariable()
     {
         // Can use variables set in error handler after continuation
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: use_error_var
-            flows:
-              start:
-                actions:
-                  - goto: nowhere
-                  - log: { message: "Recovered: ${recovered}" }
-                on_error:
-                  - log: "Error occurred"
-                  - set:
-                      variable: recovered
-                      value: "yes"
-                  - set:
-                      variable: _error_handled
-                      value: "${true}"
-            """;
+        var yaml = TestFixtures.Load("scope_use_error_var");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -1164,21 +662,7 @@ public class ScopeAndErrorTests
     public async Task Execute_ErrorHandled_FlagMustBeExactlyTrue()
     {
         // _error_handled must be boolean true, not truthy string
-        var yaml = """
-            version: "2.0"
-            metadata:
-              id: flag_must_be_true
-            flows:
-              start:
-                actions:
-                  - goto: nowhere
-                  - log: "This should NOT run"
-                on_error:
-                  - log: "Error handled"
-                  - set:
-                      variable: _error_handled
-                      value: "yes"
-            """;
+        var yaml = TestFixtures.Load("scope_flag_must_be_true");
 
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);

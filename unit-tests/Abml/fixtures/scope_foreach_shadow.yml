@@ -1,0 +1,15 @@
+version: "2.0"
+metadata:
+  id: foreach_shadow
+flows:
+  start:
+    actions:
+      - set:
+          variable: item
+          value: "original"
+      - for_each:
+          variable: item
+          collection: "${items}"
+          do:
+            - log: { message: "Loop: ${item}" }
+      - log: { message: "After loop: ${item}" }
