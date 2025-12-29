@@ -1,966 +1,662 @@
-# THE DREAM - Gap Analysis
+# THE DREAM - Gap Analysis v2
 
-> **Status**: ANALYSIS DOCUMENT
+> **Status**: ANALYSIS DOCUMENT (Revised)
 > **Created**: 2025-12-28
-> **Related**: [THE_DREAM.md](./THE_DREAM.md), [ACTORS_PLUGIN_V2](./UPCOMING_-_ACTORS_PLUGIN_V2.md), [BEHAVIOR_PLUGIN_V2](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md)
+> **Revised**: 2025-12-29
+> **Related**: [THE_DREAM.md](./THE_DREAM.md), [ABML_LOCAL_RUNTIME.md](./UPCOMING_-_ABML_LOCAL_RUNTIME.md), [BEHAVIOR_PLUGIN_V2](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md)
 
-This document analyzes the gaps between what THE_DREAM requires and what the current plugin designs provide.
+This document analyzes the gap between THE_DREAM's vision and our current ABML implementation. Unlike the original gap analysis (written before ABML existed), this revision is grounded in what we've actually built and the architectural decisions we've made.
 
 ---
 
 ## 1. Executive Summary
 
-THE_DREAM describes a procedural cinematic exchange system requiring these major capabilities:
+**Key Insight**: THE_DREAM's original technical requirements assumed a service-to-service composition model that doesn't match what we've built or what we actually need. The real composition challenge is **streaming runtime extension** - the ability for a game server to receive a complete compiled behavior/cinematic and then seamlessly extend it mid-execution.
 
-| Capability | Current Status | Owner Plugin |
-|------------|----------------|--------------|
-| Event Brain Actor | **Missing** | Actors Plugin |
-| Regional Watcher | **Missing** | Actors Plugin |
-| Character Agent Query Interface | **Missing** | Behavior Plugin |
-| Event Tap Pattern | Partial (personal channels exist) | Actors Plugin |
-| Orchestrator Spawning | Mentioned but underdocumented | Actors Plugin |
-| Environmental Query Actions | **Missing** | ABML / Map Service |
-| Dynamic Option Presentation | **Missing** | ABML / Behavior Plugin |
-| Exchange Protocol Primitives | **Missing** | ABML |
-| Affordance Binding | **Missing** | ABML / Behavior Plugin |
-| VIP Tracking | **Missing** | Actors Plugin |
+**What We Have**:
+- Complete ABML parser, AST, expression evaluator (414 tests passing)
+- Tree-walking `DocumentExecutor` for cloud-side interpretation
+- Designed (not yet built) bytecode format for client-side execution
+- Intent channel architecture for multi-model coordination
 
----
+**What THE_DREAM Actually Needs**:
 
-## 2. ACTORS_PLUGIN_V2 Gaps
+| Need | Original Assumption | Actual Requirement |
+|------|---------------------|-------------------|
+| Event Brain ↔ Agent communication | Service-to-service calls | ✓ Correct - HTTP/mesh queries work |
+| Character behavior execution | Service calls | ✗ Wrong - needs local bytecode |
+| Cinematic extension | Import/include | ✗ Wrong - needs streaming append |
+| Multi-character coordination | Complex arbitration | ✓ Solved - Intent channels with urgency |
 
-### 2.1 What's Already There (Reusable)
-
-The Actors Plugin V2 provides solid infrastructure that THE_DREAM can build on:
-
-| Feature | Description | THE_DREAM Usage |
-|---------|-------------|-----------------|
-| Actor Identity | `{type}:{id}` addressing | `event-brain:exchange-123` |
-| Turn-Based Processing | Sequential mailbox processing | Combat state machine |
-| State Persistence | lib-state integration | Exchange state, combat logs |
-| Event Subscriptions | `SubscribeAsync<T>()` | Tap into character events |
-| Personal Channels | `actor.personal.{type}.{id}` | Direct character queries |
-| Scheduled Callbacks | `ScheduleOnceAsync()` | Phase timeouts |
-| Placement Service | Centralized single-instance guarantee | Event Brain uniqueness |
-
-### 2.2 Missing: Event Brain Actor Type
-
-**Gap**: No schema exists for the Event Brain orchestrator actor.
-
-**Required Schema** (`schemas/actor-types/event-brain.yaml`):
-
-```yaml
-x-actor-type:
-  name: event-brain
-  idle_timeout_seconds: 60  # Short - exchanges don't last long
-  mailbox_capacity: 200     # High - combat events come fast
-  mailbox_full_mode: drop_oldest
-
-  state:
-    $ref: '#/components/schemas/EventBrainState'
-
-  subscriptions:
-    # Tap into participant event streams
-    - topic_pattern: "actor.combat.*"  # Dynamic subscription
-
-  schedules:
-    - name: phase-timeout
-      message_type: phase-timeout
-      # Scheduled dynamically, not fixed interval
-
-paths:
-  /participant-joined:
-    post:
-      operationId: HandleParticipantJoined
-      x-actor-message: participant-joined
-      # ...
-
-  /participant-action:
-    post:
-      operationId: HandleParticipantAction
-      x-actor-message: participant-action
-      # ...
-
-  /environment-changed:
-    post:
-      operationId: HandleEnvironmentChanged
-      x-actor-message: environment-changed
-      # ...
-
-  /query-options:
-    post:
-      operationId: HandleQueryOptions
-      x-actor-message: query-options
-      # Request-response for character agent queries
-
-components:
-  schemas:
-    EventBrainState:
-      type: object
-      properties:
-        exchange_id:
-          type: string
-        participants:
-          type: array
-          items:
-            $ref: '#/components/schemas/ExchangeParticipant'
-        phase:
-          type: string
-          enum: [setup, action_selection, resolution, aftermath]
-        environment_cache:
-          $ref: '#/components/schemas/EnvironmentSnapshot'
-        combat_log:
-          type: array
-          items:
-            $ref: '#/components/schemas/CombatLogEntry'
-        # ...
-```
-
-### 2.3 Missing: Regional Watcher Actor Type
-
-**Gap**: No schema for the area-monitoring actor that spawns Event Agents.
-
-**Required Schema** (`schemas/actor-types/regional-watcher.yaml`):
-
-```yaml
-x-actor-type:
-  name: regional-watcher
-  idle_timeout_seconds: 0  # Never deactivates - always watching
-  mailbox_capacity: 500
-
-  state:
-    $ref: '#/components/schemas/RegionalWatcherState'
-
-  subscriptions:
-    - topic: "map.region.{region_id}.updates"  # Dynamic region subscription
-    - topic: "character.proximity.*"
-    - topic: "character.antagonism.*"
-
-paths:
-  /evaluate-situation:
-    post:
-      operationId: HandleEvaluateSituation
-      x-actor-message: evaluate-situation
-      # Checks if Event Agent should spawn
-
-  /spawn-event-agent:
-    post:
-      operationId: HandleSpawnEventAgent
-      x-actor-message: spawn-event-agent
-      # Requests Orchestrator to spin up Event Agent
-
-components:
-  schemas:
-    RegionalWatcherState:
-      type: object
-      properties:
-        region_id:
-          type: string
-        watched_characters:
-          type: array
-          items:
-            type: string
-        active_event_agents:
-          type: array
-          items:
-            $ref: '#/components/schemas/EventAgentRef'
-        vip_list:
-          type: array
-          description: Characters that always have Event Agents
-          items:
-            type: string
-        interestingness_thresholds:
-          $ref: '#/components/schemas/InterestingnessConfig'
-```
-
-### 2.4 Missing: VIP Registry
-
-**Gap**: No mechanism to track which characters should always have Event Agents.
-
-**Design Options**:
-
-1. **Actor State** (Recommended): Regional Watcher maintains VIP list in state
-2. **Separate Service**: New `vip-tracking` service
-3. **Character Metadata**: Flag on character data
-
-**Recommendation**: Store in Regional Watcher state + query from Character service for initial population.
-
-### 2.5 Missing: Orchestrator Spawning Documentation
-
-**Gap**: The plugin references Orchestrator integration but lacks details on:
-- How to request a new Bannou instance with specific plugins
-- How to get the unique app-id for the spawned instance
-- How to route API calls to that specific instance
-
-**Required Additions to ACTORS_PLUGIN_V2.md**:
-
-```markdown
-### Orchestrator Integration for Dynamic Instance Spawning
-
-When an actor needs to spawn a specialized processing instance (e.g., Event Agent):
-
-#### 1. Request Instance via Orchestrator API
-
-```csharp
-// Request new instance with specific configuration
-var spawnRequest = new SpawnInstanceRequest
-{
-    InstanceType = "event-agent",
-    Plugins = new[] { "lib-event-agent" },
-    InitialContext = new Dictionary<string, object>
-    {
-        ["exchange_id"] = exchangeId,
-        ["participants"] = participantIds
-    }
-};
-
-var spawnResult = await _orchestratorClient.SpawnInstanceAsync(spawnRequest, ct);
-
-// spawnResult contains:
-// - InstanceId: unique identifier
-// - AppId: app-id for mesh routing (e.g., "event-agent-abc123")
-// - Endpoint: direct HTTP endpoint (if needed)
-```
-
-#### 2. Route API Calls to Specific Instance
-
-```csharp
-// Use app-id in mesh invocation
-var response = await _meshClient.InvokeMethodAsync<Request, Response>(
-    appId: spawnResult.AppId,  // Target specific instance
-    method: "process-exchange",
-    request,
-    ct);
-```
-
-#### 3. Instance Lifecycle
-
-- Instance reports heartbeat to Orchestrator
-- Orchestrator tracks instance health
-- Instance can self-terminate when work complete
-- Orchestrator can force-terminate unhealthy instances
-```
-
-### 2.6 Gap: Event Tap Pattern Clarification
-
-**Current State**: Personal channels exist (`actor.personal.{type}.{id}`) but no explicit "tap" pattern.
-
-**What THE_DREAM Needs**: Event Agent subscribes to a character's combat event stream.
-
-**Solution**: This already works via lib-messaging fanout. Document the pattern:
-
-```markdown
-### Event Tap Pattern (Character Event Streams)
-
-Characters emit events to their personal topic:
-
-```csharp
-// In character agent actor
-await MessageBus.PublishAsync(
-    $"character.events.{characterId}",
-    new CharacterCombatEvent { ... });
-```
-
-Event Agents subscribe to character event streams:
-
-```csharp
-// In event brain actor - tap into participant streams
-foreach (var participant in exchange.Participants)
-{
-    await SubscribeAsync<CharacterCombatEvent>(
-        $"character.events.{participant.CharacterId}",
-        ct);
-}
-```
-
-This uses existing lib-messaging fanout exchange pattern - no new infrastructure needed.
-```
+**The Real Gaps** (in priority order):
+1. **Streaming execution model** - ability to extend running behavior
+2. **Bytecode compilation** - LOCAL_RUNTIME implementation
+3. **Behavior distribution** - pushing models to game servers
+4. **Event Brain actor type** - the orchestrator itself
 
 ---
 
-## 3. BEHAVIOR_PLUGIN_V2 Gaps
+## 2. Composition Models Clarified
 
-### 3.1 What's Already There (Reusable)
+### 2.1 Three Types of "Composition"
 
-| Feature | Description | THE_DREAM Usage |
-|---------|-------------|-----------------|
-| GOAP Planner | A* search over action space | Combat option evaluation |
-| World State | Key-value state representation | Combat context |
-| Cognition Pipeline | Perception → Memory → Intention | Perceiving combat events |
-| Action Handler Registry | Extensible action execution | Combat actions |
-| NPC Brain Actor Integration | Actor + Behavior communication | Character agents |
+The original gap analysis conflated different types of composition. Let's be precise:
 
-### 3.2 Missing: Character Agent Combat Query Interface
-
-**Gap**: No API for Event Brain to query character agents for combat options.
-
-THE_DREAM Section 7.4 describes:
-> "The Event Brain doesn't compute options alone. It queries character agents who have intimate knowledge of their capabilities, state, and preferences."
-
-**Required API** (additions to `behavior-api.yaml`):
+#### Type A: Static Composition (Design-Time Import)
 
 ```yaml
-paths:
-  /agent/query-combat-options:
-    post:
-      summary: Query combat options from character agent
-      description: |
-        Event Brain calls this to get combat options from a character agent.
-        The agent considers current state, equipment, injuries, emotional state,
-        and returns available options with preferences.
-      operationId: QueryCombatOptions
-      tags:
-        - Combat
-      x-permissions:
-        - role: service
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QueryCombatOptionsRequest'
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QueryCombatOptionsResponse'
+# A behavior imports reusable snippets at parse time
+imports:
+  - "./shared/basic-attacks.abml"
+  - "./shared/defensive-moves.abml"
 
-components:
-  schemas:
-    QueryCombatOptionsRequest:
-      type: object
-      required:
-        - agent_id
-        - combat_context
-      properties:
-        agent_id:
-          type: string
-          description: Character agent to query
-        combat_context:
-          $ref: '#/components/schemas/CombatContext'
-        nearby_affordances:
-          type: array
-          description: Environmental objects from Map Service
-          items:
-            $ref: '#/components/schemas/EnvironmentalAffordance'
-        time_pressure:
-          type: string
-          enum: [low, medium, high, critical]
-          description: Urgency level for response
-
-    QueryCombatOptionsResponse:
-      type: object
-      required:
-        - available_options
-        - preferred_option
-      properties:
-        available_options:
-          type: array
-          description: What CAN this character do right now?
-          items:
-            $ref: '#/components/schemas/CombatOption'
-        preferred_option:
-          type: string
-          description: What WOULD this character do? (QTE timeout default)
-        option_preferences:
-          type: object
-          description: Scoring adjustments based on personality
-          additionalProperties:
-            type: number
-        confidence:
-          type: number
-          description: Agent's confidence in the assessment
-
-    CombatOption:
-      type: object
-      required:
-        - id
-        - capability
-        - label
-      properties:
-        id:
-          type: string
-        capability:
-          type: string
-          description: Base capability (e.g., "throw", "dodge", "strike")
-        label:
-          type: string
-          description: Display text (e.g., "Throw the barrel")
-        description:
-          type: string
-        target:
-          type: string
-          description: Target entity ID (if applicable)
-        object:
-          type: string
-          description: Environmental object ID (if applicable)
-        score:
-          type: number
-          description: Computed option score
-        requires_object_type:
-          type: string
-          description: Required environmental object type
-        range:
-          type: number
-          description: Maximum range for this option
+flows:
+  combat_decision:
+    - call: basic_sword_attack  # From imported document
 ```
 
-### 3.3 Missing: Combat Context World State Extensions
+**When resolved**: Parse time (before compilation)
+**Result**: Single merged AST → single compiled bytecode
+**Use cases**: Reusable behavior libraries, shared constants, DRY authoring
 
-**Gap**: World state vocabulary doesn't include combat-specific properties.
+**Status**: Not yet implemented, but straightforward - it's just AST merging before compilation.
 
-**Required Extensions** to World State:
+#### Type B: Dynamic Composition (Runtime Lookup)
 
 ```yaml
-# Extended world_state_schema for combat
-world_state_schema:
-  # Standard (existing)
-  health: float
-  stamina: float
-  mana: float
-
-  # Combat context (NEW)
-  in_exchange: bool
-  exchange_role: string  # attacker | defender | bystander
-  opponent_id: string
-  opponent_staggered: bool
-  opponent_health_percent: float
-
-  # Environmental awareness (NEW)
-  has_throwable_nearby: bool
-  has_climbable_nearby: bool
-  near_ledge: bool
-  near_hazard: bool
-  falling: bool
-
-  # Combat state (NEW)
-  weapon_equipped: string
-  weapon_condition: float
-  armor_damaged: bool
-  injured_limbs: array<string>
-
-  # Emotional state (NEW - affects option preferences)
-  emotional_state: string  # calm | angry | fearful | determined
-  relationship_to_opponent: float  # -1.0 to 1.0
+# Event Brain queries character agents at runtime
+flows:
+  generate_options:
+    - query_character_agent:
+        character_id: "${participant.id}"
+        query: "combat_options"
+        context: "${combat_context}"
+        result_variable: agent_options
 ```
 
-### 3.4 Missing: Dynamic Combat Option Integration with GOAP
+**When resolved**: Runtime (during execution)
+**Result**: Service call returns data, execution continues
+**Use cases**: Event Brain querying Character Agents, Map Service affordance queries
 
-**Gap**: GOAP planner evaluates options but doesn't integrate with environmental affordances.
+**Status**: This is what THE_DREAM originally described. It works for cloud-side execution where latency is acceptable. We need the `query_character_agent` action type.
 
-**Required Enhancement**:
+#### Type C: Streaming Composition (Runtime Extension)
+
+```
+Timeline:
+0s     Game Server receives Cinematic A (compiled bytecode)
+0-10s  Executes Cinematic A
+8s     Event Brain decides to extend based on player action
+8.5s   Game Server receives Extension B (compiled bytecode)
+10s    Cinematic A completes, seamlessly transitions to B
+10-18s Executes Extension B
+```
+
+**When resolved**: Runtime (during execution)
+**Result**: Execution state extended without restart
+**Use cases**: THE_DREAM's "extend before time runs out", dynamic dramatic acts
+
+**Status**: **This is the gap**. Our execution model doesn't support this yet.
+
+### 2.2 Why Streaming Composition Matters
+
+THE_DREAM's core promise is:
+
+> "The game engine is always capable of completing the cinematic with what it was initially given. Event Agent *enriches* but isn't required for completion."
+
+This requires:
+1. Game server receives **complete, executable** cinematic
+2. Game server **can** execute without further server contact
+3. Event Brain **may** send extensions that enhance the experience
+4. Extensions **must not** break the ongoing execution
+
+This is fundamentally different from:
+- Import (design-time, not runtime)
+- Service calls (synchronous, blocking, requires connectivity)
+
+### 2.3 Streaming Composition Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    STREAMING COMPOSITION MODEL                          │
+│                                                                         │
+│  ┌─────────────────┐                     ┌─────────────────┐           │
+│  │   Event Brain   │                     │   Game Server   │           │
+│  │    (Cloud)      │                     │    (Client)     │           │
+│  └────────┬────────┘                     └────────┬────────┘           │
+│           │                                       │                     │
+│           │  1. Initial Cinematic (complete)      │                     │
+│           │  ─────────────────────────────────► │                     │
+│           │     [Header][Schema][Bytecode A]      │  ← Can execute      │
+│           │                                       │    independently    │
+│           │  2. Execution begins                  │                     │
+│           │                                 ──────┼──────► Playing A    │
+│           │                                       │                     │
+│           │  3. Extension (optional)              │                     │
+│           │  ─────────────────────────────────► │                     │
+│           │     [Extension Header][Bytecode B]   │  ← Attaches to A    │
+│           │     [Attach Point: "act_2_start"]    │                     │
+│           │                                       │                     │
+│           │  4. A completes, B continues          │                     │
+│           │                                 ──────┼──────► Playing B    │
+│           │                                       │                     │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Key Properties**:
+- Initial delivery is **complete** - game server doesn't need to wait
+- Extensions are **additive** - don't modify what's already executing
+- Attach points are **named** - extensions declare where they connect
+- Missing extensions are **fine** - original completes gracefully
+
+---
+
+## 3. Current State Assessment
+
+### 3.1 What We've Built (Complete)
+
+| Component | Location | Status | Tests |
+|-----------|----------|--------|-------|
+| ABML Parser | `bannou-service/Abml/Documents/` | ✅ Complete | Extensive |
+| Document AST | `bannou-service/Abml/Documents/` | ✅ Complete | Extensive |
+| Expression Lexer | `bannou-service/Abml/Expressions/` | ✅ Complete | 100+ tests |
+| Expression Parser | `bannou-service/Abml/Expressions/` | ✅ Complete | 100+ tests |
+| Expression Evaluator | `bannou-service/Abml/Expressions/` | ✅ Complete | 100+ tests |
+| Document Executor | `bannou-service/Abml/Execution/` | ✅ Complete | Extensive |
+| Variable Scopes | `bannou-service/Abml/Runtime/` | ✅ Complete | Tested |
+| Error Handling | `bannou-service/Abml/Execution/` | ✅ Complete | `_error_handled` |
+| Built-in Actions | Various | ✅ Core set | `cond`, `set`, `goto`, etc. |
+
+**Total**: 414 tests passing
+
+### 3.2 What's Designed but Not Built
+
+| Component | Document | Status |
+|-----------|----------|--------|
+| Bytecode Format | LOCAL_RUNTIME §3.2 | Designed |
+| Bytecode Compiler | LOCAL_RUNTIME §5.3 | Designed |
+| Bytecode Interpreter | LOCAL_RUNTIME §4.2 | Designed |
+| Behavior Distribution | LOCAL_RUNTIME §5.4 | Designed |
+| Intent Merger | LOCAL_RUNTIME §6.4 | Designed |
+| Multi-Channel Cutscenes | BEHAVIOR_PLUGIN §1.4 | Partially designed |
+
+### 3.3 What's Not Yet Designed
+
+| Component | Needed For | Priority |
+|-----------|------------|----------|
+| Streaming extension format | Cinematic extension | **Critical** |
+| Attach point mechanism | Extension targeting | **Critical** |
+| Extension delivery protocol | Game server updates | High |
+| Event Brain actor schema | Orchestration | High |
+| Character Agent query API | Option generation | High |
+| Static import resolution | DRY authoring | Medium |
+
+---
+
+## 4. THE_DREAM Requirements Mapped to Architecture
+
+### 4.1 Event Brain Orchestration
+
+**THE_DREAM Says**: Event Brain watches combat, generates options, presents QTEs, emits choreography.
+
+**Architecture**:
+- **Runs in**: Cloud (Character Agent layer or above)
+- **Executes via**: Tree-walking `DocumentExecutor` (not bytecode)
+- **Communicates via**: lib-messaging events, mesh service calls
+- **Produces**: Compiled cinematics/extensions for game servers
+
+**Gap**: Event Brain actor type schema. Not a composition gap.
+
+### 4.2 Character Agent Co-Pilot
+
+**THE_DREAM Says**: Character agent knows capabilities, provides QTE defaults, computes options.
+
+**Architecture**:
+- **Runs in**: Cloud (Character Agent layer)
+- **Has access to**: Character's behavior models (bytecode)
+- **Responds to**: Event Brain queries
+- **Uses models for**: "What would I do?" evaluation
+
+**Gap**: Query API endpoint. The agent can already evaluate models locally.
+
+### 4.3 Seamless Combat Escalation
+
+**THE_DREAM Says**: Basic combat → Event Agent spawns → Cinematic treatment → Returns to basic.
+
+**Architecture**:
+- **Basic combat**: Bytecode models on game server, per-frame evaluation
+- **Escalation**: Regional Watcher detects, Event Brain spawns
+- **Cinematic**: Event Brain sends compiled cinematic to game server
+- **Resolution**: Cinematic completes, game server returns to basic
+
+**Gap**: The transition mechanics. How does game server know to pause basic evaluation during cinematic?
+
+**Solution Sketch**:
+```yaml
+# Cinematic bytecode includes:
+header:
+  takes_control_of: ["character-123", "character-456"]
+  control_mode: exclusive  # Suspends basic behavior
+  on_complete: resume_basic
+```
+
+### 4.4 Dynamic Cinematic Extension
+
+**THE_DREAM Says**: Event Agent enriches but isn't required; game engine can complete with initial plan.
+
+**Architecture**:
+- **Initial delivery**: Complete cinematic with default ending
+- **Optional extension**: Additional acts if Event Brain generates them
+- **Attach mechanism**: Named points where extensions can connect
+
+**Gap**: **This is the streaming composition gap**. Detailed in Section 5.
+
+### 4.5 Environmental Affordance Integration
+
+**THE_DREAM Says**: Query Map Service for throwables, climbables, hazards.
+
+**Architecture**:
+- **Event Brain queries**: Map Service at orchestration time
+- **Generates options**: Based on what's available
+- **Compiles into cinematic**: Specific object references baked into bytecode
+
+**Gap**: Map Service affordance API. Not a composition gap.
+
+---
+
+## 5. The Streaming Composition Gap (Critical)
+
+### 5.1 Problem Statement
+
+A game server receives a compiled cinematic:
+
+```
+[Cinematic: "Dramatic Duel" - 20 seconds]
+  Act 1: Opening clash (0-5s)
+  Act 2: Exchange of blows (5-15s)
+  Act 3: Resolution (15-20s) ← Default: dramatic stalemate
+```
+
+At second 12, Event Brain decides player's actions warrant an extended ending:
+
+```
+[Extension: "Dramatic Finish"]
+  Attaches to: "before_act_3"
+  New Act 3: Environmental kill using nearby chandelier (15-25s)
+```
+
+**Requirements**:
+1. Game server already executing original cinematic
+2. Extension arrives before Act 3 starts
+3. Execution seamlessly transitions to extended version
+4. If extension arrives late, original Act 3 plays (graceful degradation)
+
+### 5.2 Current Executor Limitations
+
+The `DocumentExecutor` is a tree-walker that:
+- Takes an `AbmlDocument` (parsed YAML)
+- Executes `Flow` by `Flow`
+- Cannot accept new flows mid-execution
+
+For streaming composition, we need:
+- Execution state that can be extended
+- Named attach points that extensions reference
+- Late-binding of "what comes next"
+
+### 5.3 Proposed Solution: Continuation Points
+
+**Concept**: Cinematics declare **continuation points** - named locations where execution may continue with additional content or fall through to default.
+
+```yaml
+# Original cinematic
+version: "2.0"
+metadata:
+  id: "dramatic_duel"
+  type: "cinematic"
+
+flows:
+  main:
+    - parallel:
+        camera: { flow: camera_track }
+        hero: { flow: hero_actions }
+        villain: { flow: villain_actions }
+
+    - continuation_point:
+        name: "before_resolution"
+        timeout: 2s                    # Wait up to 2s for extension
+        default_flow: default_ending   # If no extension arrives
+
+  default_ending:
+    - parallel:
+        camera: { flow: stalemate_camera }
+        hero: { flow: hero_backs_off }
+        villain: { flow: villain_retreats }
+```
+
+**Extension format**:
+
+```yaml
+# Extension (sent separately)
+version: "2.0"
+metadata:
+  id: "dramatic_finish_chandelier"
+  type: "cinematic_extension"
+  extends: "dramatic_duel"
+  attach_point: "before_resolution"
+
+flows:
+  main:  # Replaces default_ending
+    - parallel:
+        camera: { flow: chandelier_focus }
+        hero: { flow: hero_uses_chandelier }
+        villain: { flow: villain_crushed }
+```
+
+### 5.4 Bytecode Format Extension
+
+The bytecode format needs:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    EXTENDED BYTECODE FORMAT                             │
+├─────────────────────────────────────────────────────────────────────────┤
+│  HEADER (extended)                                                      │
+│  ├── ... existing fields ...                                           │
+│  ├── Continuation Point Count: uint16                                  │
+│  └── Is Extension: bool                                                │
+├─────────────────────────────────────────────────────────────────────────┤
+│  CONTINUATION POINTS TABLE (if count > 0)                               │
+│  └── For each continuation point:                                      │
+│      ├── Name Hash: uint32                                             │
+│      ├── Timeout Ms: uint32                                            │
+│      ├── Default Flow Offset: uint32                                   │
+│      └── Extended Flow Offset: uint32 (0 = not yet set)                │
+├─────────────────────────────────────────────────────────────────────────┤
+│  EXTENSION HEADER (if Is Extension = true)                              │
+│  ├── Parent Model ID: GUID                                             │
+│  ├── Attach Point Name Hash: uint32                                    │
+│  └── Replacement Flow Offset: uint32                                   │
+├─────────────────────────────────────────────────────────────────────────┤
+│  ... rest of bytecode ...                                               │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### 5.5 Runtime Behavior
+
+**Game Server Interpreter**:
 
 ```csharp
-/// <summary>
-/// Extended GOAP planner that incorporates environmental affordances.
-/// </summary>
-public interface ICombatGoapPlanner : IGoapPlanner
+public sealed class CinematicInterpreter
 {
-    /// <summary>
-    /// Generate combat options from capabilities + environment.
-    /// </summary>
-    Task<List<CombatOption>> GenerateCombatOptionsAsync(
-        WorldState currentState,
-        List<GoapAction> capabilities,
-        List<EnvironmentalAffordance> affordances,
-        CancellationToken ct);
+    private readonly BehaviorModel _baseModel;
+    private readonly Dictionary<uint, BehaviorModel> _extensions = new();
 
     /// <summary>
-    /// Score options considering both strategic value and personality.
+    /// Attach an extension to a continuation point.
+    /// Can be called during execution.
     /// </summary>
-    Task<List<ScoredOption>> ScoreOptionsAsync(
-        List<CombatOption> options,
-        WorldState combatState,
-        PersonalityProfile personality,
-        CancellationToken ct);
-}
-```
-
----
-
-## 4. ABML Extensions Needed
-
-THE_DREAM Section 8 describes several ABML extensions. Here's the detailed design:
-
-### 4.1 Environmental Query Action
-
-**Gap**: No action to query Map Service for affordances.
-
-```yaml
-# New action type: query_environment
-- query_environment:
-    query_type: affordance_search
-    bounds: "${combat_bounds}"
-    object_types: ["throwable", "climbable", "breakable", "hazard"]
-    max_results: 10
-    result_variable: nearby_affordances
-
-# Implementation in action handler registry
-```
-
-**Handler Implementation**:
-
-```csharp
-public class QueryEnvironmentHandler : IActionHandler
-{
-    private readonly IMapClient _mapClient;
-
-    public string ActionType => "query_environment";
-
-    public async Task<ActionResult> ExecuteAsync(
-        ActionDefinition action,
-        ExecutionContext context,
-        bool awaitCompletion,
-        CancellationToken ct)
+    public void AttachExtension(BehaviorModel extension)
     {
-        var queryType = context.ResolveString(action.Parameters["query_type"]);
-        var bounds = context.ResolveObject<SpatialBounds>(action.Parameters["bounds"]);
-        var objectTypes = context.ResolveList<string>(action.Parameters["object_types"]);
-        var maxResults = context.ResolveInt(action.Parameters.GetValueOrDefault("max_results", 10));
+        if (!extension.IsExtension)
+            throw new ArgumentException("Not an extension model");
 
-        var affordances = await _mapClient.QueryAffordancesAsync(
-            new AffordanceQueryRequest
-            {
-                Bounds = bounds,
-                ObjectTypes = objectTypes,
-                MaxResults = maxResults
-            }, ct);
-
-        var resultVar = action.Parameters["result_variable"].ToString();
-        context.SetVariable(resultVar!, affordances);
-
-        return new ActionResult { Success = true };
+        _extensions[extension.AttachPointHash] = extension;
     }
-}
-```
 
-### 4.2 Dynamic Choice Action
-
-**Gap**: No action for runtime-generated QTE options.
-
-```yaml
-# New action type: dynamic_choice
-- dynamic_choice:
-    prompt: "Combat action:"
-    options_source: "${generated_options}"
-    timeout: "${option_window_ms}ms"
-    timeout_default: "${preferred_option}"
-
-    on_selection:
-      - set: { variable: chosen_option, value: "${selection}" }
-      - emit: option_chosen
-
-    on_timeout:
-      - set: { variable: chosen_option, value: "${timeout_default}" }
-      - emit: option_chosen
-```
-
-**Handler Implementation**:
-
-```csharp
-public class DynamicChoiceHandler : IActionHandler
-{
-    public string ActionType => "dynamic_choice";
-
-    public async Task<ActionResult> ExecuteAsync(
-        ActionDefinition action,
-        ExecutionContext context,
-        bool awaitCompletion,
-        CancellationToken ct)
+    /// <summary>
+    /// Called when execution reaches a continuation point.
+    /// </summary>
+    private void HandleContinuationPoint(ContinuationPoint cp)
     {
-        var prompt = context.ResolveString(action.Parameters["prompt"]);
-        var options = context.ResolveList<CombatOption>(action.Parameters["options_source"]);
-        var timeout = context.ResolveDuration(action.Parameters["timeout"]);
-        var timeoutDefault = context.ResolveString(action.Parameters["timeout_default"]);
-
-        // Present QTE to participant (via game engine integration)
-        var qteRequest = new QteRequest
+        // Check if extension has arrived
+        if (_extensions.TryGetValue(cp.NameHash, out var extension))
         {
-            Prompt = prompt,
-            Options = options.Select(o => new QteOption
-            {
-                Id = o.Id,
-                Label = o.Label,
-                Description = o.Description
-            }).ToList(),
-            TimeoutMs = (int)timeout.TotalMilliseconds,
-            DefaultOptionId = timeoutDefault
-        };
-
-        // Fire-and-forget to game engine - it handles input capture
-        await context.GameEngineClient.PresentQteAsync(qteRequest, ct);
-
-        // Wait for response or timeout
-        var selection = await WaitForSelectionOrTimeoutAsync(
-            context, timeout, timeoutDefault, ct);
-
-        context.SetVariable("selection", selection);
-
-        // Execute on_selection or on_timeout handlers
-        var handlers = selection == timeoutDefault
-            ? action.Parameters.GetValueOrDefault("on_timeout") as List<ActionDefinition>
-            : action.Parameters.GetValueOrDefault("on_selection") as List<ActionDefinition>;
-
-        if (handlers != null)
-        {
-            await context.ExecuteActionsAsync(handlers, ct);
+            // Extension available - use it
+            _currentModel = extension;
+            _instructionPointer = extension.MainFlowOffset;
+            return;
         }
 
-        return new ActionResult { Success = true };
+        // No extension yet - wait up to timeout
+        var deadline = DateTime.UtcNow.AddMilliseconds(cp.TimeoutMs);
+
+        // Set callback for when extension might arrive
+        _pendingContinuation = new PendingContinuation
+        {
+            Point = cp,
+            Deadline = deadline,
+            OnTimeout = () => {
+                // Use default flow
+                _instructionPointer = cp.DefaultFlowOffset;
+            }
+        };
     }
 }
 ```
 
-### 4.3 Exchange Protocol Primitives
+### 5.6 Graceful Degradation
 
-**Gap**: No primitives for multi-participant exchange coordination.
+The streaming composition model ensures graceful degradation:
 
-```yaml
-# join_exchange - Declare participant in exchange
-- join_exchange:
-    exchange_id: "${exchange_id}"
-    role: defender
-    capabilities: "${self.combat_capabilities}"
+| Scenario | Behavior |
+|----------|----------|
+| Extension arrives early | Used immediately at continuation point |
+| Extension arrives just in time | Used (within timeout window) |
+| Extension arrives late | Ignored, default already playing |
+| Extension never arrives | Default plays, cinematic completes normally |
+| Network failure | Default plays, player sees complete experience |
 
-# wait_for_phase - Wait for exchange phase
-- wait_for_phase:
-    phase: action_selection
-    timeout: 5s
-    on_timeout:
-      - log: { message: "Phase timeout, using default" }
-
-# submit_action - Submit action to exchange
-- submit_action:
-    exchange_id: "${exchange_id}"
-    action: "${chosen_option.capability}"
-    target: "${chosen_option.target}"
-    object: "${chosen_option.object}"
-
-# receive_choreography - Get choreography instructions from Event Brain
-- receive_choreography:
-    exchange_id: "${exchange_id}"
-    result_variable: my_choreography
-    # Contains: animation, timing, sync_points, camera_hints
-```
-
-### 4.4 Affordance Binding System
-
-**Gap**: No way to connect capabilities to environmental requirements.
-
-This is **schema-level**, defining capability requirements:
-
-```yaml
-# In behavior ABML document
-capabilities:
-  throw_object:
-    goap:
-      preconditions:
-        has_throwable_nearby: true
-        stamina: ">= 10"
-      effects:
-        stamina: "-10"
-      cost: 3
-
-    # NEW: Affordance binding
-    affordance_requirements:
-      object_type: throwable
-      object_in_range: 3.0  # meters
-
-    option_generation:
-      per_matching_object: true  # Generate one option per nearby throwable
-      template:
-        label: "Throw {{ object.name }}"
-        description: "Hurl {{ object.name }} at {{ target.name }}"
-        damage_formula: "${object.mass * 5 + strength / 2}"
-
-  wall_slam:
-    goap:
-      preconditions:
-        opponent_in_grapple_range: true
-        stamina: ">= 20"
-      effects:
-        opponent_staggered: true
-        stamina: "-20"
-      cost: 5
-
-    affordance_requirements:
-      surface_type: solid_wall
-      opponent_toward_surface: true  # Spatial relationship
-      distance_to_surface: "<= 2.0"
-
-    option_generation:
-      template:
-        label: "Slam into wall"
-        description: "Drive {{ target.name }} into the wall"
-```
+**This is THE_DREAM's requirement**: "game engine can complete with initial plan."
 
 ---
 
-## 5. New Plugins/APIs Needed
+## 6. Updated Gap List
 
-### 5.1 Event Agent Plugin (`lib-event-agent`)
+### 6.1 Critical Gaps (Required for THE_DREAM)
 
-**Purpose**: Specialized plugin for Event Brain actors.
+| Gap | Description | Effort | Dependencies |
+|-----|-------------|--------|--------------|
+| **Continuation Points** | ABML syntax for declaring extension points | Medium | None |
+| **Extension Format** | ABML syntax for extensions that attach to points | Medium | Continuation Points |
+| **Bytecode Extensions** | Extended format for continuation/extension | Medium | LOCAL_RUNTIME Phase 1 |
+| **Streaming Interpreter** | Runtime support for mid-execution attachment | High | Bytecode format |
+| **Extension Delivery** | Protocol for pushing extensions to game servers | Medium | Distribution service |
 
-**Contents**:
-- Event Brain actor type implementation
-- Exchange protocol state machine
-- Option generation algorithm
-- Choreography emission
+### 6.2 High Priority Gaps (Enable Core Functionality)
 
-**Note**: Could be part of lib-actors or separate. Recommend **separate** for:
-- Clear ownership
-- Testability (can test Event Brain without full actor infrastructure)
-- Optional loading (not all deployments need Event Agents)
+| Gap | Description | Effort | Dependencies |
+|-----|-------------|--------|--------------|
+| **Bytecode Compiler** | AST → bytecode compilation | High | LOCAL_RUNTIME Phase 1-2 |
+| **Bytecode Interpreter** | Stack-based VM for client execution | High | Bytecode format |
+| **Event Brain Actor Schema** | Actor type definition | Medium | Actor plugin |
+| **Character Agent Query API** | `/agent/query-combat-options` | Medium | Behavior plugin |
+| **Control Handoff** | How cinematics take control from basic behavior | Medium | Intent system |
 
-### 5.2 Regional Watcher Service/Actor
+### 6.3 Medium Priority Gaps (Quality of Life)
 
-**Purpose**: Monitor regions for interesting situations.
+| Gap | Description | Effort | Dependencies |
+|-----|-------------|--------|--------------|
+| **Static Imports** | Design-time ABML document composition | Medium | Parser changes |
+| **Regional Watcher** | Area monitoring for event spawning | Medium | Actor plugin |
+| **Affordance Query Actions** | `query_environment` ABML action | Medium | Map Service |
+| **Dynamic Choice Action** | Runtime-generated QTE options | Medium | UI integration |
 
-**Implementation Options**:
-1. **Actor Type** (Recommended): One Regional Watcher actor per region
-2. **Service**: Single service monitoring all regions
-3. **Part of Map Service**: Extension to Map Service
+### 6.4 Lower Priority Gaps (Can Defer)
 
-**Recommendation**: Actor type - benefits from:
-- Independent scaling per region
-- State persistence
-- Event subscription per region
-
-### 5.3 Combat Query API Extensions
-
-**New endpoints for `behavior-api.yaml`**:
-
-| Endpoint | Purpose |
-|----------|---------|
-| `POST /agent/query-combat-options` | Get available options from character agent |
-| `POST /combat/generate-options` | Generate options from capabilities + affordances |
-| `POST /combat/score-options` | Score options with personality weighting |
-| `POST /exchange/register-participant` | Register in exchange |
-| `POST /exchange/submit-action` | Submit combat action |
-
-### 5.4 Map Service Affordance Extensions
-
-**Required additions to Map Service** (reference UPCOMING_-_MAP_SERVICE.md):
-
-| Endpoint | Purpose |
-|----------|---------|
-| `POST /maps/affordances/query` | Query affordances in spatial bounds |
-| `POST /maps/affordances/subscribe` | Subscribe to affordance changes in region |
-
-**Affordance Schema**:
-
-```yaml
-EnvironmentalAffordance:
-  type: object
-  required:
-    - id
-    - object_type
-    - position
-  properties:
-    id:
-      type: string
-    object_type:
-      type: string
-      enum: [throwable, climbable, breakable, hazard, cover, ledge, grapple_point]
-    position:
-      $ref: '#/components/schemas/Vector3'
-    properties:
-      type: object
-      additionalProperties: true
-      description: |
-        Type-specific properties:
-        - throwable: mass, fragile
-        - climbable: height, grip_quality
-        - breakable: health, material
-        - hazard: damage_type, damage_per_second
-```
+| Gap | Description | Notes |
+|-----|-------------|-------|
+| VIP Registry | Always-on Event Agents for important characters | Can use regular spawning initially |
+| Crisis Interruption | Third-party joining mid-cinematic | Extension system handles this |
+| Dramatic Pacing AI | "Beat templates" for authored feel | Content design problem |
 
 ---
 
-## 6. Orchestrator Integration Details
+## 7. What's NOT a Gap (Clarifications)
 
-### 6.1 Current State
+### 7.1 Service-to-Service Composition
 
-The ACTORS_PLUGIN_V2 mentions orchestrator integration but lacks:
-- API details for spawning instances
-- App-id routing patterns
-- Instance lifecycle management
+**Original Gap Analysis Said**: Need complex service-to-service composition for Event Brain to query Character Agents.
 
-### 6.2 Required Documentation
+**Actual Status**: This is just normal service calls. The `DocumentExecutor` can already make service calls via action handlers. We need the specific `query_character_agent` action, but the composition model is fine.
 
-**Add to ACTORS_PLUGIN_V2.md**:
+### 7.2 Complex Arbitration for Multi-Model Coordination
 
-```markdown
-## Dynamic Instance Spawning via Orchestrator
+**Original Gap Analysis Said**: Need sophisticated AI to decide when combat overrides movement.
 
-### Use Cases
+**Actual Status**: Solved by Intent Channels with urgency values. No arbitration AI needed - just compare floats. See LOCAL_RUNTIME §6.4.
 
-1. **Event Agent Spawning**: Regional Watcher spawns Event Agent for interesting situation
-2. **Actor Pool Expansion**: Placement service requests more actor nodes
-3. **Specialized Processing**: Asset processing, AI inference, etc.
+### 7.3 Event Tap Pattern
 
-### API Pattern
+**Original Gap Analysis Said**: Need special infrastructure for Event Agents to tap character event streams.
 
-```csharp
-// 1. Request instance from Orchestrator
-var request = new SpawnInstanceRequest
-{
-    InstanceType = "event-agent",
-    Plugins = ["lib-event-agent"],
-    Environment = new Dictionary<string, string>
-    {
-        ["EVENT_AGENT_EXCHANGE_ID"] = exchangeId
-    },
-    InitialMessage = new EventAgentInitMessage
-    {
-        ExchangeId = exchangeId,
-        Participants = participantIds
-    }
-};
+**Actual Status**: This is just lib-messaging subscriptions. No new infrastructure needed.
 
-var result = await _orchestratorClient.SpawnInstanceAsync(request, ct);
+### 7.4 Orchestrator Spawning
 
-// result.AppId = "event-agent-abc123"
-// result.Endpoint = "http://10.0.1.45:5012"
+**Original Gap Analysis Said**: Need detailed documentation on spawning Event Agent instances.
 
-// 2. Route subsequent calls via app-id
-await _meshClient.InvokeMethodAsync<TReq, TResp>(
-    appId: result.AppId,  // Routes to specific instance
-    method: "some-method",
-    request, ct);
-
-// 3. Instance self-terminates when work complete
-// OR Orchestrator terminates on unhealthy heartbeat
-```
-
-### Instance Registration
-
-Spawned instances register with Orchestrator:
-
-```csharp
-// In spawned instance startup
-await _orchestratorClient.RegisterInstanceAsync(
-    new InstanceRegistration
-    {
-        AppId = _appId,
-        InstanceType = "event-agent",
-        Endpoint = _selfEndpoint,
-        StartedAt = DateTimeOffset.UtcNow
-    }, ct);
-
-// Heartbeat loop
-while (!ct.IsCancellationRequested)
-{
-    await _orchestratorClient.HeartbeatAsync(
-        new InstanceHeartbeat { AppId = _appId }, ct);
-    await Task.Delay(TimeSpan.FromSeconds(30), ct);
-}
-```
-```
+**Actual Status**: This is standard Orchestrator API usage. The gap is just documentation, not implementation.
 
 ---
 
-## 7. Implementation Priority
+## 8. Implementation Phases (Revised)
 
-### Phase 1: Foundation (Required for THE_DREAM prototype)
+### Phase 1: Bytecode Foundation
+**Goal**: Basic compilation and execution working
 
-| Item | Priority | Effort | Owner |
-|------|----------|--------|-------|
-| Character Agent Query API | **Critical** | Medium | Behavior Plugin |
-| Event Brain Actor Schema | **Critical** | Medium | Actors Plugin |
-| Environmental Query Action | **Critical** | Medium | ABML |
-| Orchestrator Spawning Docs | High | Low | Actors Plugin |
+- [ ] Bytecode format implementation (without continuation points)
+- [ ] AST → bytecode compiler (basic)
+- [ ] Stack-based interpreter (basic)
+- [ ] Round-trip test: ABML → bytecode → execution → same result as tree-walker
 
-### Phase 2: Core Exchange System
+### Phase 2: Streaming Composition
+**Goal**: Continuation points and extensions working
 
-| Item | Priority | Effort | Owner |
-|------|----------|--------|-------|
-| Dynamic Choice Action | High | Medium | ABML |
-| Exchange Protocol Primitives | High | High | ABML |
-| Combat World State Extensions | High | Low | Behavior Plugin |
-| Affordance Binding System | Medium | High | ABML |
+- [ ] Continuation point ABML syntax
+- [ ] Extension ABML syntax
+- [ ] Extended bytecode format
+- [ ] Streaming interpreter (handles mid-execution attachment)
+- [ ] Tests: extension arrives early/on-time/late/never
 
-### Phase 3: Full System
+### Phase 3: Distribution & Integration
+**Goal**: Models flow to game servers, cinematics can be triggered
 
-| Item | Priority | Effort | Owner |
-|------|----------|--------|-------|
-| Regional Watcher Actor | Medium | Medium | Actors Plugin |
-| VIP Tracking | Medium | Low | Actors Plugin |
-| Map Service Affordances | Medium | Medium | Map Service |
-| Event Tap Documentation | Low | Low | Actors Plugin |
+- [ ] Behavior Distribution Service
+- [ ] `/behavior/models/sync` API
+- [ ] Extension delivery protocol
+- [ ] Control handoff mechanism (cinematic takes control)
+- [ ] Integration tests with mock game server
 
----
+### Phase 4: Event Brain
+**Goal**: Cloud-side orchestration working
 
-## 8. Recommendations
+- [ ] Event Brain actor schema
+- [ ] Character Agent query API
+- [ ] Event tap subscriptions
+- [ ] Option generation algorithm
+- [ ] Choreography emission (produces cinematics)
 
-### 8.1 ACTORS_PLUGIN_V2 Updates
+### Phase 5: Full Integration
+**Goal**: THE_DREAM works end-to-end
 
-1. **Add Section**: "Orchestrator Integration for Dynamic Instance Spawning"
-2. **Add Section**: "Event Tap Pattern" documenting character event stream subscription
-3. **Add Example Schema**: `event-brain.yaml` actor type
-4. **Add Example Schema**: `regional-watcher.yaml` actor type
-
-### 8.2 BEHAVIOR_PLUGIN_V2 Updates
-
-1. **Add API Endpoint**: `/agent/query-combat-options`
-2. **Extend World State Schema**: Combat-specific properties
-3. **Add Interface**: `ICombatGoapPlanner` with affordance integration
-4. **Add Section**: "Combat Option Generation" describing THE_DREAM integration
-
-### 8.3 ABML Updates
-
-1. **Add Action Type**: `query_environment`
-2. **Add Action Type**: `dynamic_choice`
-3. **Add Action Types**: Exchange protocol primitives
-4. **Add Schema Feature**: Affordance binding in capability definitions
-
-### 8.4 New Documentation Needed
-
-1. **Event Agent Plugin Design** (`UPCOMING_-_EVENT_AGENT.md`)
-2. **Combat Exchange Protocol** (detailed state machine)
-3. **Affordance System Design** (Map Service integration)
+- [ ] Regional Watcher (spawns Event Agents)
+- [ ] Map Service affordance queries
+- [ ] Dynamic QTE presentation
+- [ ] End-to-end test: basic combat → escalation → cinematic → resolution
 
 ---
 
-## 9. Open Questions
+## 9. Key Architectural Decisions
 
-### 9.1 Event Agent Placement
+### 9.1 Streaming vs Import for Runtime Extension
 
-**Question**: Should Event Agents be:
-- A. Regular actors placed by Placement Service?
-- B. Dedicated instances spawned by Orchestrator?
+**Decision**: Runtime extension uses **streaming composition** (continuation points + extensions), not imports.
 
-**Recommendation**: B (Dedicated instances) because:
-- Event Agents have short, intense lifetimes
-- May need co-location with participants for latency
-- Easier to scale independently
+**Rationale**:
+- Imports are design-time, can't handle runtime decisions
+- Service calls add latency, break offline capability
+- Streaming allows "complete initial delivery" + "optional enhancement"
 
-### 9.2 Affordance Source of Truth
+### 9.2 Continuation Point Timeout
 
-**Question**: Where do affordance definitions live?
-- A. Map Service (objects tagged with affordances)
-- B. Behavior Plugin (capabilities define affordance requirements)
-- C. Both (Map tags objects, Behavior queries)
+**Decision**: Continuation points have a **configurable timeout** (default 2s).
 
-**Recommendation**: C (Both) - Map Service provides "what's there", Behavior Plugin provides "what can I do with it"
+**Rationale**:
+- Can't wait forever (would freeze cinematic)
+- Can't wait zero (would miss close-call extensions)
+- Designer-configurable allows tuning per-situation
 
-### 9.3 QTE Input Path
+### 9.3 Extension Replaces Default (No Merge)
 
-**Question**: How does player input reach Event Agent?
-- A. Via Bannou (player → Connect → Event Agent)
-- B. Direct to Game Engine (THE_DREAM Section 4.4)
+**Decision**: Extensions **replace** the default continuation, they don't merge.
 
-**Recommendation**: B - Game engine handles input for lowest latency, Event Agent only provides options/defaults
+**Rationale**:
+- Merging is complex (what if both want to move camera?)
+- Extensions are designed knowing the context
+- Simpler implementation, clearer authoring model
+
+### 9.4 Cloud-Side Event Brain, Client-Side Execution
+
+**Decision**: Event Brain runs in cloud, produces cinematics; game server executes them locally.
+
+**Rationale**:
+- Event Brain needs Map Service access, character knowledge, dramatic AI
+- Execution needs <1ms latency for smooth playback
+- This matches the LOCAL_RUNTIME layer model
 
 ---
 
-*Document Status: ANALYSIS - Informing plugin update priorities*
+## 10. Success Criteria (Updated)
+
+### Technical Criteria
+
+| Metric | Target | Notes |
+|--------|--------|-------|
+| Extension attachment latency | <50ms | From receive to execution transition |
+| Graceful degradation rate | 100% | Every cinematic must be completable without extension |
+| Continuation point overhead | <1ms | Don't slow down normal execution |
+| Extension delivery latency | <500ms | From Event Brain decision to game server receive |
+
+### Experience Criteria
+
+- Extensions feel seamless (no visible "loading" or "switching")
+- Players never see incomplete cinematics
+- Network issues result in simpler (not broken) experiences
+- Event Brain enrichment is noticeable when present
+
+### Development Criteria
+
+- Continuation points are easy to author
+- Extensions can be tested independently
+- Debug tools show continuation point state
+- Clear error messages when extensions don't match
+
+---
+
+## 11. Conclusion
+
+The original gap analysis was written when ABML was theoretical. Now that we have a working implementation, the gaps are clearer:
+
+1. **The big gap is streaming composition** - not imports, not service calls, but runtime extension of executing behaviors
+2. **The Intent Channel system solved multi-model coordination** - no complex arbitration needed
+3. **Most "service integration" gaps are just normal service calls** - the architecture supports them
+4. **The bytecode format needs continuation point support** - this is a format extension, not a new system
+
+THE_DREAM is achievable with:
+- Continuation points in ABML/bytecode
+- Streaming interpreter that accepts extensions
+- Event Brain that produces cinematics + extensions
+- Distribution protocol that delivers them to game servers
+
+The path is clear. The composition model is defined. Let's build it.
+
+---
+
+*Document Status: ANALYSIS (Revised) - Supersedes original gap analysis*
 
 ## Related Documents
 
 - [THE_DREAM.md](./THE_DREAM.md) - Vision document
-- [UPCOMING_-_ACTORS_PLUGIN_V2.md](./UPCOMING_-_ACTORS_PLUGIN_V2.md) - Actor infrastructure
+- [UPCOMING_-_ABML_LOCAL_RUNTIME.md](./UPCOMING_-_ABML_LOCAL_RUNTIME.md) - Local bytecode execution
 - [UPCOMING_-_BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md) - Behavior runtime
-- [ABML_V2_DESIGN_PROPOSAL.md](./ABML_V2_DESIGN_PROPOSAL.md) - ABML language spec
+- [ABML Guide](../guides/ABML.md) - ABML language specification

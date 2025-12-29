@@ -5,6 +5,7 @@
 > **Updated**: 2025-12-29
 > **Related Documents**:
 > - **[ABML Guide](../guides/ABML.md)** - **ABML Language Specification & Runtime** (authoritative)
+> - [ABML_LOCAL_RUNTIME.md](./UPCOMING_-_ABML_LOCAL_RUNTIME.md) - Local client execution & bytecode compilation
 > - [GOAP_FIRST_STEPS.md](./GOAP_FIRST_STEPS.md) - GOAP implementation details
 > - [ACTORS_PLUGIN_V2.md](./UPCOMING_-_ACTORS_PLUGIN_V2.md) - Actor infrastructure
 
@@ -60,6 +61,19 @@ The Behavior Plugin is the **logic layer** for autonomous agent decision-making 
 
 **Actor plugin routes events. Behavior plugin interprets them.**
 
+### Execution Layer Model
+
+The behavior system operates across four execution layers with different latency characteristics:
+
+| Layer | Location | Latency | Use Case |
+|-------|----------|---------|----------|
+| **Event Brain** | Cloud | 100-500ms | Cinematic orchestration, QTE presentation, dramatic pacing |
+| **Character Agent** | Cloud | 50-200ms | Tactical decisions, personality-informed choices, memory integration |
+| **Local Runtime** | Client | <1ms | Frame-by-frame combat decisions, action selection |
+| **Game Engine** | Client | Per-frame | Animation state machines, physics, collision response |
+
+See [ABML_LOCAL_RUNTIME.md](./UPCOMING_-_ABML_LOCAL_RUNTIME.md) for client-side bytecode execution details.
+
 ---
 
 ## Part 1: Core Architecture
@@ -113,20 +127,51 @@ The ABML runtime follows a hybrid execution model (see UNIFIED_SCRIPTING_LANGUAG
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### Execution Model Decision: Hybrid (Tree-Walk + Bytecode Expressions)
+#### Execution Model Decision: Dual-Target Compilation
 
-**Rationale** (from research):
-- Control flow is rarely the bottleneck (I/O dominates: service calls 1-10ms, Redis 0.5-2ms)
-- Expressions execute frequently and benefit from compilation
-- Hot-reload stays simple (just reload YAML, rebuild AST)
-- Debugging remains straightforward (step through nodes)
+ABML compiles to **two different execution targets** based on use case:
 
-**Performance Expectations**:
-- Control flow: ~10-50μs per node
-- Expressions: ~1-5μs per evaluation (bytecode VM)
-- Upgrade path: Full bytecode VM if profiling shows need
+| Target | Executor | Use Case | Performance |
+|--------|----------|----------|-------------|
+| **Cloud Interpreter** | Tree-walking `DocumentExecutor` | Cutscenes, dialogues, GOAP actions | 10-50μs/node |
+| **Local Runtime** | Stack-based `BehaviorModelInterpreter` | Frame-by-frame combat decisions | <0.5ms total |
 
-### 1.3 Multi-Channel Execution Model
+**Cloud Interpreter (this document)**:
+- Tree-walking interpreter with bytecode expression VM
+- Full ABML feature support (service calls, events, async)
+- Hot-reload friendly (just reload YAML, rebuild AST)
+- Used by Character Agent and Event Brain layers
+
+**Local Runtime (see [ABML_LOCAL_RUNTIME.md](./UPCOMING_-_ABML_LOCAL_RUNTIME.md))**:
+- Full bytecode compilation for client execution
+- Allocation-free evaluation for 60fps combat
+- SDK contains interpreter with zero ABML source dependency
+- Used by Game Client layer
+
+### 1.3 Behavior Types and Variants
+
+Characters have multiple **behavior types**, and each type can have **variants** representing different styles:
+
+```
+Character Behaviors
+├── combat (type)
+│   ├── sword-and-shield (variant)
+│   ├── dual-wield (variant)
+│   └── unarmed (variant)
+├── movement (type)
+│   ├── standard (variant)
+│   └── mounted (variant)
+└── interaction (type)
+    └── default (variant)
+```
+
+When multiple behavior types are active simultaneously, they output to **Intent Channels** (locomotion, action, attention, stance) with urgency values. An `IntentMerger` resolves conflicts - highest urgency wins for exclusive channels, blending for compatible channels.
+
+See [ABML_LOCAL_RUNTIME.md](./UPCOMING_-_ABML_LOCAL_RUNTIME.md) Section 6.4 for full details on Intent Channels.
+
+### 1.4 Multi-Channel Execution Model (Cutscenes)
+
+> **Note**: "Multi-Channel" here refers to **cutscene synchronization channels** (camera, hero, audio), not the Intent Channels used for behavior coordination. These are distinct concepts.
 
 For cutscenes, dialogues, and complex sequences, ABML v2.0 uses multi-channel parallel execution with named sync points:
 
@@ -1842,11 +1887,13 @@ components:
   - [x] Runtime deadlock detection
   - [x] Clear error reporting
 
-- [ ] Document Composition (PLANNED)
-  - [ ] Import resolution
-  - [ ] Context passing
+- [x] Document Composition
+  - [x] Import resolution (DocumentLoader, IDocumentResolver, LoadedDocument)
+  - [x] Context passing (ExecutionContext.TryResolveFlow, namespaced flow references)
+  - [x] Context-relative resolution (imported documents resolve flows relative to their own imports)
+  - [x] FileSystemDocumentResolver for production use with path traversal protection
 
-**Tests**: 15+ multi-channel tests covering sync points, barriers, and deadlock detection.
+**Tests**: 15+ multi-channel tests covering sync points, barriers, and deadlock detection; 21 document loader tests covering import resolution, circular detection, namespaced flow execution, context-relative resolution, goto across imports, and file system loading.
 
 ### Phase 4: Cognition Pipeline
 

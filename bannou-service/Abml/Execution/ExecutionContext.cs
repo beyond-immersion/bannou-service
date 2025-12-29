@@ -5,6 +5,7 @@
 
 using BeyondImmersion.BannouService.Abml.Documents;
 using BeyondImmersion.BannouService.Abml.Expressions;
+using BeyondImmersion.BannouService.Abml.Parser;
 using BeyondImmersion.BannouService.Abml.Runtime;
 
 namespace BeyondImmersion.BannouService.Abml.Execution;
@@ -18,6 +19,19 @@ public sealed class ExecutionContext
     /// The document being executed.
     /// </summary>
     public required AbmlDocument Document { get; init; }
+
+    /// <summary>
+    /// The root loaded document with resolved imports.
+    /// When null, only local flows are accessible.
+    /// </summary>
+    public LoadedDocument? LoadedDocument { get; init; }
+
+    /// <summary>
+    /// The current document context for flow resolution.
+    /// This changes when calling flows in imported documents.
+    /// Defaults to LoadedDocument if not explicitly set.
+    /// </summary>
+    public LoadedDocument? CurrentDocument { get; set; }
 
     /// <summary>
     /// Root variable scope.
@@ -53,6 +67,48 @@ public sealed class ExecutionContext
     /// Log messages collected during execution.
     /// </summary>
     public List<LogEntry> Logs { get; } = [];
+
+    /// <summary>
+    /// Tries to resolve a flow reference, supporting namespaced imports.
+    /// Resolution is relative to CurrentDocument (context-relative).
+    /// </summary>
+    /// <param name="flowRef">Flow reference (e.g., "my_flow" or "common.my_flow").</param>
+    /// <param name="flow">The resolved flow if found.</param>
+    /// <returns>True if the flow was found.</returns>
+    public bool TryResolveFlow(string flowRef, out Flow? flow)
+    {
+        return TryResolveFlow(flowRef, out flow, out _);
+    }
+
+    /// <summary>
+    /// Tries to resolve a flow reference, supporting namespaced imports.
+    /// Resolution is relative to CurrentDocument (context-relative).
+    /// </summary>
+    /// <param name="flowRef">Flow reference (e.g., "my_flow" or "common.my_flow").</param>
+    /// <param name="flow">The resolved flow if found.</param>
+    /// <param name="resolvedDocument">The document containing the resolved flow.</param>
+    /// <returns>True if the flow was found.</returns>
+    public bool TryResolveFlow(string flowRef, out Flow? flow, out LoadedDocument? resolvedDocument)
+    {
+        // Use CurrentDocument if set, otherwise fall back to LoadedDocument
+        var contextDoc = CurrentDocument ?? LoadedDocument;
+
+        if (contextDoc != null)
+        {
+            return contextDoc.TryResolveFlow(flowRef, out flow, out resolvedDocument);
+        }
+
+        // Fallback: direct lookup in Document.Flows (no namespace support)
+        if (Document.Flows.TryGetValue(flowRef, out flow))
+        {
+            resolvedDocument = null;
+            return true;
+        }
+
+        flow = null;
+        resolvedDocument = null;
+        return false;
+    }
 }
 
 /// <summary>

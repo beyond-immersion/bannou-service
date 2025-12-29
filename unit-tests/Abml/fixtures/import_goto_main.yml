@@ -1,0 +1,14 @@
+version: "2.0"
+metadata:
+  id: goto_main
+
+imports:
+  - file: "import_goto_target.yml"
+    as: "target"
+
+flows:
+  start:
+    actions:
+      - log: { message: "Before goto" }
+      - goto: { flow: "target.destination" }
+      - log: { message: "After goto (should not execute)" }

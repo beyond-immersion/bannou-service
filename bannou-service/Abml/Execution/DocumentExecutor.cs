@@ -6,6 +6,7 @@
 using BeyondImmersion.BannouService.Abml.Documents;
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Expressions;
+using BeyondImmersion.BannouService.Abml.Parser;
 using BeyondImmersion.BannouService.Abml.Runtime;
 
 namespace BeyondImmersion.BannouService.Abml.Execution;
@@ -40,6 +41,20 @@ public interface IDocumentExecutor
     /// <returns>Execution result.</returns>
     ValueTask<ExecutionResult> ExecuteAsync(
         AbmlDocument document,
+        string startFlow,
+        IVariableScope? initialScope = null,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Executes a loaded ABML document with resolved imports.
+    /// </summary>
+    /// <param name="loadedDocument">The loaded document with imports.</param>
+    /// <param name="startFlow">The flow to start execution from (can be namespaced).</param>
+    /// <param name="initialScope">Optional initial variable scope.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Execution result.</returns>
+    ValueTask<ExecutionResult> ExecuteAsync(
+        LoadedDocument loadedDocument,
         string startFlow,
         IVariableScope? initialScope = null,
         CancellationToken ct = default);
@@ -126,6 +141,67 @@ public sealed class DocumentExecutor : IDocumentExecutor
         }
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<ExecutionResult> ExecuteAsync(
+        LoadedDocument loadedDocument,
+        string startFlow,
+        IVariableScope? initialScope = null,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(loadedDocument);
+        ArgumentNullException.ThrowIfNull(startFlow);
+
+        var document = loadedDocument.Document;
+
+        // Find the start flow (supports namespaced imports)
+        // Also get the resolved document for context-relative resolution
+        if (!loadedDocument.TryResolveFlow(startFlow, out var flow, out var startDocument) || flow == null)
+        {
+            return ExecutionResult.Failure($"Flow not found: {startFlow}");
+        }
+
+        // Create execution context with LoadedDocument for import resolution
+        var rootScope = initialScope ?? new VariableScope();
+        var context = new ExecutionContext
+        {
+            Document = document,
+            LoadedDocument = loadedDocument,
+            // Set CurrentDocument to the document containing the start flow
+            // This enables context-relative resolution from the start
+            CurrentDocument = startDocument ?? loadedDocument,
+            RootScope = rootScope,
+            Evaluator = _evaluator,
+            Handlers = _handlers
+        };
+
+        // Initialize context variables from document
+        InitializeContextVariables(document, context);
+
+        // Push initial flow frame
+        context.CallStack.Push(startFlow, rootScope);
+
+        try
+        {
+            var result = await ExecuteFlowAsync(flow, context, ct);
+
+            return result switch
+            {
+                CompleteResult complete => ExecutionResult.Success(complete.Value, context.Logs),
+                ReturnResult returnResult => ExecutionResult.Success(returnResult.Value, context.Logs),
+                ErrorResult error => ExecutionResult.Failure(error.Message, context.Logs),
+                _ => ExecutionResult.Success(null, context.Logs)
+            };
+        }
+        catch (OperationCanceledException)
+        {
+            return ExecutionResult.Failure("Execution cancelled", context.Logs);
+        }
+        catch (Exception ex)
+        {
+            return ExecutionResult.Failure($"Execution error: {ex.Message}", context.Logs);
+        }
+    }
+
     private static void InitializeContextVariables(AbmlDocument document, ExecutionContext context)
     {
         if (document.Context?.Variables == null)
@@ -160,8 +236,9 @@ public sealed class DocumentExecutor : IDocumentExecutor
             switch (result)
             {
                 case GotoResult gotoResult:
-                    // Transfer control to another flow
-                    if (!context.Document.Flows.TryGetValue(gotoResult.FlowName, out var targetFlow))
+                    // Transfer control to another flow (supports namespaced imports)
+                    // Also get the resolved document for context-relative resolution
+                    if (!context.TryResolveFlow(gotoResult.FlowName, out var targetFlow, out var targetDocument) || targetFlow == null)
                     {
                         // Flow not found is an error - try to handle with on_error
                         var gotoError = ActionResult.Error($"Flow not found: {gotoResult.FlowName}");
@@ -198,6 +275,12 @@ public sealed class DocumentExecutor : IDocumentExecutor
                     }
 
                     context.CallStack.Push(gotoResult.FlowName, gotoScope);
+
+                    // Update document context for goto (tail call switches context)
+                    if (targetDocument != null)
+                    {
+                        context.CurrentDocument = targetDocument;
+                    }
 
                     // Execute the target flow (tail call)
                     return await ExecuteFlowAsync(targetFlow, context, ct);
@@ -387,7 +470,7 @@ public sealed class DocumentExecutor : IDocumentExecutor
             // If error handler uses goto, validate the target flow exists
             if (result is GotoResult gotoResult)
             {
-                if (!context.Document.Flows.ContainsKey(gotoResult.FlowName))
+                if (!context.TryResolveFlow(gotoResult.FlowName, out _))
                 {
                     // Goto to non-existent flow is an error
                     return false;

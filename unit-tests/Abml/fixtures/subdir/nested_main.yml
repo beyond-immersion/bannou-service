@@ -1,0 +1,17 @@
+version: "2.0"
+metadata:
+  id: nested_main
+
+imports:
+  - file: "./sibling.yml"
+    as: "sibling"
+  - file: "../other/parent_sibling.yml"
+    as: "parent"
+
+flows:
+  start:
+    actions:
+      - log: { message: "In nested_main" }
+      - call: { flow: "sibling.greet" }
+      - call: { flow: "parent.hello" }
+      - log: { message: "Done" }

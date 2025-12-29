@@ -262,10 +262,19 @@ The compiled behavior model format must be:
 │  HEADER (32 bytes)                                                      │
 │  ├── Magic: "ABML" (4 bytes)                                           │
 │  ├── Version: uint16 (2 bytes)                                         │
-│  ├── Flags: uint16 (2 bytes) [debug, compressed, etc.]                 │
+│  ├── Flags: uint16 (2 bytes)                                           │
+│  │   ├── Bit 0: Has debug info                                         │
+│  │   ├── Bit 1: Compressed                                             │
+│  │   ├── Bit 2: Has continuation points                                │
+│  │   └── Bit 3: Is extension (attaches to another model)               │
 │  ├── Model ID: GUID (16 bytes)                                         │
 │  ├── Checksum: uint32 (4 bytes)                                        │
 │  └── Reserved (4 bytes)                                                │
+├─────────────────────────────────────────────────────────────────────────┤
+│  EXTENSION HEADER (only if Is Extension flag set)                       │
+│  ├── Parent Model ID: GUID (16 bytes)                                  │
+│  ├── Attach Point Name Hash: uint32                                    │
+│  └── Replacement Flow Offset: uint32                                   │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  STATE SCHEMA                                                           │
 │  ├── Input variable count: uint16                                      │
@@ -277,6 +286,14 @@ The compiled behavior model format must be:
 │  └── For each output variable:                                         │
 │      ├── Name hash: uint32                                             │
 │      └── Type: uint8                                                   │
+├─────────────────────────────────────────────────────────────────────────┤
+│  CONTINUATION POINTS TABLE (only if Has Continuation Points flag set)   │
+│  ├── Continuation point count: uint16                                  │
+│  └── For each continuation point:                                      │
+│      ├── Name hash: uint32                                             │
+│      ├── Timeout ms: uint32 (max wait for extension)                   │
+│      ├── Default flow offset: uint32 (fallback if no extension)        │
+│      └── Bytecode offset: uint32 (where CONTINUATION_POINT opcode is)  │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  CONSTANT POOL                                                          │
 │  ├── Constant count: uint16                                            │
@@ -299,6 +316,8 @@ The compiled behavior model format must be:
 │  └── Line number mapping                                               │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
+
+See [Section 3.6](#36-streaming-composition--continuation-points) for continuation point semantics.
 
 ### 3.3 Behavior Types and Variants
 
@@ -468,6 +487,13 @@ The bytecode uses a stack-based virtual machine with these instruction categorie
 | 0x62 | LERP | Linear interpolation |
 | 0x63 | CLAMP | Clamp value to range |
 
+#### Streaming Composition Operations
+| Opcode | Mnemonic | Description |
+|--------|----------|-------------|
+| 0x70 | CONTINUATION_POINT | Pause for possible extension (see §3.6) |
+| 0x71 | YIELD_TO_EXTENSION | Transfer control to attached extension |
+| 0x72 | EXTENSION_AVAILABLE | Push 1 if extension attached, 0 otherwise |
+
 ### 3.5 Example Compilation
 
 **ABML Source:**
@@ -518,6 +544,129 @@ flows:
 002A: SET_OUTPUT    0        ; action = "quick_attack"
 002C: HALT
 ```
+
+### 3.6 Streaming Composition & Continuation Points
+
+Streaming composition enables **runtime extension** of executing behaviors. A game server receives a complete, executable cinematic/behavior, starts executing immediately, and can optionally receive extensions that attach to named points.
+
+#### Why Streaming Composition?
+
+THE_DREAM requires: *"The game engine is always capable of completing the cinematic with what it was initially given. Event Agent enriches but isn't required for completion."*
+
+This means:
+- Initial delivery must be **complete** - can execute without server contact
+- Extensions are **optional enhancements** - arrival is not guaranteed
+- Missing extensions must **degrade gracefully** - default behavior plays
+
+Import/include (design-time) and service calls (synchronous, blocking) don't satisfy these requirements.
+
+#### ABML Syntax: Continuation Points
+
+```yaml
+# Cinematic with continuation point
+version: "2.0"
+metadata:
+  id: "dramatic_duel"
+  type: "cinematic"
+
+flows:
+  main:
+    - parallel:
+        camera: { flow: camera_track }
+        hero: { flow: hero_actions }
+        villain: { flow: villain_actions }
+
+    - continuation_point:
+        name: "before_resolution"
+        timeout: 2s                    # Wait up to 2s for extension
+        default_flow: default_ending   # Fallback if no extension arrives
+
+  default_ending:
+    - parallel:
+        camera: { flow: stalemate_camera }
+        hero: { flow: hero_backs_off }
+        villain: { flow: villain_retreats }
+```
+
+#### ABML Syntax: Extensions
+
+```yaml
+# Extension that attaches to a continuation point
+version: "2.0"
+metadata:
+  id: "dramatic_finish_chandelier"
+  type: "cinematic_extension"
+  extends: "dramatic_duel"            # Parent model ID
+  attach_point: "before_resolution"   # Which continuation point
+
+flows:
+  main:  # Replaces default_ending when attached
+    - parallel:
+        camera: { flow: chandelier_focus }
+        hero: { flow: hero_uses_chandelier }
+        villain: { flow: villain_crushed }
+```
+
+#### Bytecode Representation
+
+The `CONTINUATION_POINT` opcode (0x70) takes two operands:
+- `continuation_point_index` (uint16) - Index into continuation points table
+- Implicit: timeout and default flow offset from table
+
+```
+; At continuation point
+0100: CONTINUATION_POINT 0    ; Index 0 in continuation points table
+                              ; Interpreter pauses, checks for extension
+                              ; If extension attached: jumps to extension
+                              ; If timeout expires: jumps to default flow
+```
+
+#### Runtime Behavior
+
+```
+Timeline:
+0s     Game Server receives Cinematic (complete, standalone)
+0-10s  Executes Act 1, Act 2
+8s     Event Brain decides to extend based on player action
+8.5s   Extension arrives, attached to "before_resolution"
+10s    Execution hits CONTINUATION_POINT
+       → Extension available → transfers control to extension
+10-20s Extended Act 3 plays seamlessly
+
+Alternative (extension doesn't arrive):
+10s    Execution hits CONTINUATION_POINT
+       → No extension → waits up to timeout (2s)
+12s    Timeout expires → jumps to default_ending
+12-17s Default Act 3 plays (stalemate)
+```
+
+#### Graceful Degradation
+
+| Scenario | Behavior |
+|----------|----------|
+| Extension arrives early | Used immediately at continuation point |
+| Extension arrives within timeout | Used (waited for it) |
+| Extension arrives late | Ignored, default already playing |
+| Extension never arrives | Default plays after timeout |
+| Network failure | Default plays, complete experience |
+
+#### Control Handoff for Cinematics
+
+Cinematics that take control of characters include control metadata:
+
+```yaml
+metadata:
+  id: "dramatic_duel"
+  type: "cinematic"
+  takes_control_of: ["character-123", "character-456"]
+  control_mode: exclusive    # Suspends basic behavior evaluation
+  on_complete: resume_basic  # Returns control after cinematic
+```
+
+When a cinematic arrives with `takes_control_of`, the game server:
+1. Pauses basic behavior evaluation for listed characters
+2. Executes cinematic (which controls those characters)
+3. On completion, resumes basic behavior evaluation
 
 ---
 
@@ -643,7 +792,138 @@ public sealed class BehaviorModelInterpreter
 }
 ```
 
-### 4.3 State Provider Pattern
+### 4.3 Cinematic Interpreter (Streaming Composition)
+
+For cinematics with continuation points, a specialized interpreter handles extension attachment:
+
+```csharp
+/// <summary>
+/// Interpreter for cinematics that supports streaming extension attachment.
+/// Unlike BehaviorModelInterpreter (single-frame evaluation), this executes
+/// over time and can receive extensions mid-execution.
+/// </summary>
+public sealed class CinematicInterpreter
+{
+    private BehaviorModel _currentModel;
+    private readonly Dictionary<uint, BehaviorModel> _attachedExtensions = new();
+    private readonly List<ContinuationPoint> _continuationPoints;
+    private PendingContinuation? _pendingContinuation;
+    private int _instructionPointer;
+
+    public CinematicInterpreter(BehaviorModel baseModel)
+    {
+        _currentModel = baseModel;
+        _continuationPoints = baseModel.ContinuationPoints.ToList();
+    }
+
+    /// <summary>
+    /// Attach an extension to a continuation point.
+    /// Thread-safe - can be called while cinematic is executing.
+    /// </summary>
+    public void AttachExtension(BehaviorModel extension)
+    {
+        if (!extension.IsExtension)
+            throw new ArgumentException("Model is not an extension");
+
+        lock (_attachedExtensions)
+        {
+            _attachedExtensions[extension.AttachPointHash] = extension;
+        }
+
+        // If we're waiting at this continuation point, signal arrival
+        if (_pendingContinuation?.Point.NameHash == extension.AttachPointHash)
+        {
+            _pendingContinuation.ExtensionArrived = true;
+        }
+    }
+
+    /// <summary>
+    /// Called when execution reaches a CONTINUATION_POINT opcode.
+    /// </summary>
+    private ExecutionState HandleContinuationPoint(ushort cpIndex)
+    {
+        var cp = _continuationPoints[cpIndex];
+
+        // Check if extension already attached
+        lock (_attachedExtensions)
+        {
+            if (_attachedExtensions.TryGetValue(cp.NameHash, out var extension))
+            {
+                // Extension available - transfer control
+                _currentModel = extension;
+                _instructionPointer = extension.MainFlowOffset;
+                return ExecutionState.Running;
+            }
+        }
+
+        // No extension yet - set up wait
+        _pendingContinuation = new PendingContinuation
+        {
+            Point = cp,
+            Deadline = DateTime.UtcNow.AddMilliseconds(cp.TimeoutMs),
+            ExtensionArrived = false
+        };
+
+        return ExecutionState.WaitingForExtension;
+    }
+
+    /// <summary>
+    /// Called each frame while waiting at a continuation point.
+    /// Returns true if we should continue execution.
+    /// </summary>
+    public bool CheckContinuationPoint()
+    {
+        if (_pendingContinuation == null)
+            return true;  // Not waiting
+
+        // Extension arrived?
+        if (_pendingContinuation.ExtensionArrived)
+        {
+            var cp = _pendingContinuation.Point;
+            _pendingContinuation = null;
+
+            lock (_attachedExtensions)
+            {
+                var extension = _attachedExtensions[cp.NameHash];
+                _currentModel = extension;
+                _instructionPointer = extension.MainFlowOffset;
+            }
+            return true;  // Continue with extension
+        }
+
+        // Timeout expired?
+        if (DateTime.UtcNow >= _pendingContinuation.Deadline)
+        {
+            var cp = _pendingContinuation.Point;
+            _pendingContinuation = null;
+
+            // Use default flow
+            _instructionPointer = cp.DefaultFlowOffset;
+            return true;  // Continue with default
+        }
+
+        return false;  // Still waiting
+    }
+
+    private sealed class PendingContinuation
+    {
+        public ContinuationPoint Point { get; init; }
+        public DateTime Deadline { get; init; }
+        public bool ExtensionArrived { get; set; }
+    }
+}
+```
+
+**Key Differences from BehaviorModelInterpreter**:
+
+| Aspect | BehaviorModelInterpreter | CinematicInterpreter |
+|--------|--------------------------|----------------------|
+| Execution model | Single-frame evaluation | Runs over time |
+| Extensions | Not supported | Can attach mid-execution |
+| State | Resets each evaluation | Persists across frames |
+| Use case | Per-frame combat decisions | Multi-second cinematics |
+
+### 4.4 State Provider Pattern
 
 The game client implements a state provider that maps game state to model inputs:
 
@@ -691,7 +971,7 @@ public class CombatStateProvider : IBehaviorStateProvider
 }
 ```
 
-### 4.4 Intent System Integration
+### 4.5 Intent System Integration
 
 The output of behavior evaluation is an **action intent** - a request for the game engine to perform an action:
 
@@ -2167,46 +2447,15 @@ logging:
 
 #### Example: Walking to Tavern, Bandit Appears
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    MULTI-MODEL COORDINATION EXAMPLE                     │
-│                                                                         │
-│  FRAME 1: Peaceful walking                                              │
-│  ─────────────────────────                                              │
-│  Movement: locomotion=walk_to(tavern) urgency=0.6, stance=relaxed       │
-│  Combat:   (inactive - no threats detected)                             │
-│  Merged:   Walk to tavern, look forward, relaxed                        │
-│                                                                         │
-│  FRAME 2: Bandit spotted at distance                                    │
-│  ────────────────────────────────                                       │
-│  Movement: locomotion=walk_to(tavern) urgency=0.6                       │
-│  Combat:   attention=bandit urgency=0.8, stance=alert urgency=0.7       │
-│  Merged:   Walk to tavern, LOOK AT bandit, alert stance                 │
-│            (Combat attention wins, but movement locomotion continues)   │
-│                                                                         │
-│  FRAME 3: Bandit approaches (BRAVE character)                           │
-│  ───────────────────────────────────────────                            │
-│  Movement: locomotion=walk_to(tavern) urgency=0.6                       │
-│  Combat:   locomotion=close_distance urgency=0.85, action=ready_weapon  │
-│  Merged:   Move TOWARD bandit (combat locomotion wins), draw weapon     │
-│            Tavern goal remembered for after combat                      │
-│                                                                         │
-│  FRAME 3 ALT: Bandit approaches (COWARD character)                      │
-│  ─────────────────────────────────────────────────                      │
-│  Movement: locomotion=walk_to(tavern) urgency=0.6                       │
-│  Combat:   locomotion=flee urgency=0.95, action=none                    │
-│  Merged:   FLEE (combat urgency wins), no attack action                 │
-│            Coward runs toward tavern as escape route                    │
-│                                                                         │
-│  FRAME 4: Combat engaged                                                │
-│  ───────────────────────                                                │
-│  Movement: locomotion=walk_to(tavern) urgency=0.4 (lowered in combat)   │
-│  Combat:   locomotion=circle_enemy urgency=0.8, action=attack urgency=0.9│
-│  Merged:   Circle enemy, attack when in range                           │
-│            Movement goal preserved but deprioritized                    │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+| Frame | Movement Model | Combat Model | Merged Result |
+|-------|---------------|--------------|---------------|
+| 1. Peaceful | locomotion=tavern (0.6) | (inactive) | Walk to tavern, relaxed |
+| 2. Spotted | locomotion=tavern (0.6) | attention=bandit (0.8) | Walk to tavern, **look at bandit**, alert |
+| 3a. Brave | locomotion=tavern (0.6) | locomotion=close (0.85) | **Move toward bandit**, ready weapon |
+| 3b. Coward | locomotion=tavern (0.6) | locomotion=flee (0.95) | **Flee** toward tavern |
+| 4. Engaged | locomotion=tavern (0.4) | locomotion=circle (0.8), action=attack (0.9) | Circle enemy, attack |
+
+Key insight: Personality affects **urgency values within models**, not arbitration logic. A coward's combat model outputs flee(0.95), a brave character's outputs attack(0.9).
 
 #### Emotional State as Urgency Modifier
 
@@ -2306,86 +2555,22 @@ public sealed class BehaviorEvaluationSystem : GameSystem
 
 ### 7.1 Auto-Mode Enabled by Local Runtime
 
-THE_DREAM's "co-pilot" pattern works because the character agent can make decisions fast enough to act when the player doesn't respond:
+THE_DREAM's "co-pilot" pattern works because character agents use the **same behavior model** for both QTE defaults and frame-by-frame combat:
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                      QTE TIMEOUT HANDLING                               │
-│                                                                         │
-│  Event Brain presents QTE with options A, B, C                          │
-│                                                                         │
-│  ┌───────────────────────────────────────────────────────────────────┐ │
-│  │ PARALLEL EXECUTION                                                │ │
-│  │                                                                   │ │
-│  │   Player Input Path           Character Agent Path                │ │
-│  │   ─────────────────           ────────────────────                │ │
-│  │                                                                   │ │
-│  │   [QTE Displayed]              [Query: what would you do?]        │ │
-│  │        │                              │                           │ │
-│  │        │                              ▼                           │ │
-│  │        │                       Local Runtime evaluates            │ │
-│  │        │                       combat behavior model              │ │
-│  │        │                              │                           │ │
-│  │        │                              ▼                           │ │
-│  │   [Waiting...]                 Agent: "I would do B"              │ │
-│  │        │                       (personality + state = preference) │ │
-│  │        │                              │                           │ │
-│  │    ┌───┴───┐                          │                           │ │
-│  │    │       │                          │                           │ │
-│  │ Player  Timeout                       │                           │ │
-│  │ chooses expires                       │                           │ │
-│  │   "A"      │                          │                           │ │
-│  │    │       └──────────────────────────┘                           │ │
-│  │    │                    │                                         │ │
-│  │    ▼                    ▼                                         │ │
-│  │ Execute A          Execute B (agent's choice)                     │ │
-│  └───────────────────────────────────────────────────────────────────┘ │
-│                                                                         │
-│  The agent's answer comes from LOCAL behavior model evaluation -        │
-│  it's the same model that runs every frame for non-cinematic combat.    │
-│  This is why auto-mode feels consistent with manual play.               │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+**QTE Timeout Flow**: Event Brain presents options A, B, C → Character Agent queries local behavior model → Agent responds "I would do B" → If player times out, B executes automatically.
+
+The agent's answer comes from the same model that runs every frame for non-cinematic combat. This is why auto-mode feels consistent with manual play.
 
 ### 7.2 Seamless Combat Escalation
 
-Because both basic combat and cinematic combat use ABML-authored behaviors:
+Both basic and cinematic combat use ABML-authored behaviors, enabling smooth transitions:
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    COMBAT ESCALATION FLOW                               │
-│                                                                         │
-│  BASIC COMBAT (Local Runtime)                                           │
-│  ─────────────────────────────                                          │
-│  - Local behavior model evaluates each frame                            │
-│  - Emits intents: quick_attack, dodge, block                            │
-│  - Game engine executes with animations/physics                         │
-│                                                                         │
-│                    │                                                    │
-│                    │ [Interesting situation detected]                   │
-│                    │ [Regional Watcher spawns Event Agent]              │
-│                    ▼                                                    │
-│                                                                         │
-│  CINEMATIC COMBAT (Event Brain)                                         │
-│  ──────────────────────────────                                         │
-│  - Event Brain queries character agents for options                     │
-│  - Character agents use SAME behavior models to compute preferences     │
-│  - QTE presented with agent-preferred default                           │
-│  - On resolution, emits choreography instructions                       │
-│                                                                         │
-│                    │                                                    │
-│                    │ [Exchange resolves]                                │
-│                    │ [Event Agent terminates]                           │
-│                    ▼                                                    │
-│                                                                         │
-│  BASIC COMBAT (Local Runtime)                                           │
-│  ─────────────────────────────                                          │
-│  - Combat continues with local behavior evaluation                      │
-│  - No jarring transition - same behavior vocabulary                     │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+1. **Basic Combat** (Local Runtime): Frame-by-frame behavior model evaluation → intents (attack, dodge, block)
+2. **→ Escalation**: Regional Watcher detects interesting situation → spawns Event Agent
+3. **Cinematic Combat** (Event Brain): Queries character agents (using same models) → QTE with agent-preferred default
+4. **→ Resolution**: Event Agent terminates → returns to basic combat
+
+No jarring transition because both layers use the same behavior vocabulary.
 
 ### 7.3 Event Brain Option Generation
 
@@ -2450,83 +2635,27 @@ public async Task<QueryCombatOptionsResponse> HandleQueryCombatOptions(
 
 ### 7.4 Variant Selection in Combat Context
 
-When equipment changes mid-combat, the variant seamlessly switches:
+When equipment changes mid-combat, the variant switches immediately:
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                   EQUIPMENT-DRIVEN VARIANT SWITCHING                    │
-│                                                                         │
-│  FRAME N: Sword-and-Shield Combat                                       │
-│  ─────────────────────────────────                                      │
-│  - Using "sword-and-shield" variant model                               │
-│  - Behavior: defensive, protecting allies, shield bash combos           │
-│  - Character's shield takes a heavy blow...                             │
-│                                                                         │
-│  FRAME N+1: Shield Destroyed                                            │
-│  ─────────────────────────────                                          │
-│  - VariantSelector: equipment.HasShield = false                         │
-│  - New variant: "one-handed" (has sword but no shield)                  │
-│  - GetInterpreterWithFallback finds one-handed variant                  │
-│                                                                         │
-│  FRAME N+2: Adapted Combat Style                                        │
-│  ───────────────────────────────                                        │
-│  - Using "one-handed" variant model                                     │
-│  - Behavior: more mobile, dodge instead of block, different combos      │
-│  - Character fights differently - same personality, new style           │
-│                                                                         │
-│  No jarring transition, no model reload delay, no "thinking" pause.     │
-│  The client already had both variants cached.                           │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+**Example**: Shield destroyed mid-combat
+- Frame N: Using "sword-and-shield" variant (defensive, shield bash combos)
+- Frame N+1: `VariantSelector` detects `HasShield=false` → switches to "one-handed"
+- Frame N+2: Using "one-handed" variant (dodge instead of block, different combos)
 
-The Event Brain also queries the appropriate variant when orchestrating cinematic exchanges:
-
-```csharp
-// Event Brain queries character agent for combat options
-// Agent uses the CURRENT variant based on equipment
-var currentVariant = DetermineCombatVariant(character.Equipment);
-var model = await _modelStore.GetAsync(characterId, "combat", currentVariant, ct);
-
-// If character just lost their shield, the agent responds with
-// one-handed combat options, not sword-and-shield options
-```
+No model reload delay - client had both variants cached. Event Brain also uses the current variant when querying character agents for cinematic options.
 
 ### 7.5 Learning Fighting Styles (Gameplay Integration)
 
-The variant system integrates with gameplay - characters **learn** fighting styles through training and experience:
+The variant system integrates with gameplay - characters **learn** fighting styles:
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    FIGHTING STYLE PROGRESSION                           │
-│                                                                         │
-│  Character: Elena (Player Character)                                    │
-│                                                                         │
-│  KNOWN COMBAT STYLES:                                                   │
-│  ┌─────────────────┬─────────────┬────────────────────────────────────┐│
-│  │ Style           │ Proficiency │ How Acquired                       ││
-│  ├─────────────────┼─────────────┼────────────────────────────────────┤│
-│  │ unarmed         │ 100%        │ Default (everyone knows)           ││
-│  │ one-handed      │ 75%         │ Basic training at start            ││
-│  │ sword-and-shield│ 90%         │ Trained with knight mentor         ││
-│  │ dual-wield      │ 30%         │ Started learning from rogue NPC    ││
-│  │ two-handed      │ 0%          │ Not learned yet                    ││
-│  │ archer          │ 0%          │ Not learned yet                    ││
-│  └─────────────────┴─────────────┴────────────────────────────────────┘│
-│                                                                         │
-│  BEHAVIOR WHEN EQUIPPING DUAL DAGGERS:                                  │
-│  - Has dual-wield model but only 30% proficiency                        │
-│  - Model executes, but character is clumsy                              │
-│  - Game applies proficiency penalty: slower combos, missed timing       │
-│  - OR: Low proficiency model is simpler, missing advanced techniques    │
-│                                                                         │
-│  BEHAVIOR WHEN EQUIPPING TWO-HANDED SWORD:                              │
-│  - No two-handed model learned!                                         │
-│  - Falls back to "unarmed" (swings it like a club)                      │
-│  - Very ineffective - incentive to find a trainer                       │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+| Style | Proficiency | Behavior |
+|-------|-------------|----------|
+| unarmed | 100% | Default fallback |
+| sword-and-shield | 90% | Full technique access |
+| dual-wield | 30% | Basic moves only, clumsy execution |
+| two-handed | 0% (not learned) | Falls back to unarmed (swings like club) |
+
+**Key mechanic**: Unlearned styles fall back to unarmed - incentive to find trainers.
 
 **Storage Schema for Learned Styles**:
 
@@ -2640,146 +2769,27 @@ public async Task<QueryCombatOptionsResponse> HandleQueryCombatOptions(
 
 ## 8. Implementation Phases
 
-### Phase 1: Bytecode Foundation
-**Goal**: Basic compilation and local execution working
-
-- [ ] Define bytecode format and instruction set
-- [ ] Implement bytecode serialization/deserialization
-- [ ] Build basic `BehaviorModelInterpreter`
-- [ ] Create test harness for interpreter validation
-- [ ] Simple compiler for subset of ABML (conditions, set, emit_intent)
-
-### Phase 2: Full Compilation Pipeline
-**Goal**: Complete ABML to bytecode compilation
-
-- [ ] Semantic analyzer for type checking
-- [ ] IR builder for all ABML constructs
-- [ ] Optimization passes (dead code, constant folding, etc.)
-- [ ] Debug info generation
-- [ ] Integration with existing `AbmlParser`
-
-### Phase 3: Distribution Infrastructure
-**Goal**: Models flow from server to clients
-
-- [ ] Model storage in lib-state (type/variant hierarchy)
-- [ ] `/behavior/models/sync` endpoint with variant support
-- [ ] Delta sync for bandwidth efficiency
-- [ ] Model update events via lib-messaging
-- [ ] Version tracking per character/type/variant
-
-### Phase 4: Client Integration
-**Goal**: Stride game client executes behavior models
-
-- [ ] `BehaviorModelCache` implementation with variant support
-- [ ] `BehaviorEvaluationSystem` game system (evaluates all behavior types)
-- [ ] `IVariantSelector` and equipment-based selection
-- [ ] State provider for combat context
-- [ ] Model update subscription handling
-- [ ] Fallback chain (variant → default → unarmed)
-
-### Phase 5: Intent Channel Architecture
-**Goal**: Multi-model coordination without arbitration AI
-
-- [ ] Define Intent Channels (locomotion, action, attention, stance)
-- [ ] Output schema with urgency values per channel
-- [ ] `IntentMerger` implementation (blending + highest-urgency selection)
-- [ ] `IntentSystem.ProcessMergedIntent()` for unified output
-- [ ] Personality-driven urgency calculation patterns
-- [ ] Emotional state as urgency modifier input
-
-### Phase 6: Character Agent Integration
-**Goal**: Cloud agents use same models for decisions
-
-- [ ] `/behavior/agent/query-combat-options` implementation
-- [ ] Scenario generation for option discovery
-- [ ] Preference computation from personality
-- [ ] Integration with Event Brain queries
-- [ ] Variant-aware option filtering (only offer known styles)
-
-### Phase 7: Training System Integration
-**Goal**: Characters learn fighting styles through gameplay
-
-- [ ] `character_combat_styles` storage schema
-- [ ] Training session API endpoints
-- [ ] Proficiency tracking and progression
-- [ ] Model tier unlocking (basic → intermediate → advanced)
-- [ ] Style acquisition events and notifications
-- [ ] Integration with trainer NPCs
-
-### Phase 8: Polish & Optimization
-**Goal**: Production-ready performance
-
-- [ ] Benchmark interpreter performance
-- [ ] Profile and optimize hot paths
-- [ ] Memory pooling for allocations
-- [ ] Compression for model distribution
-- [ ] Tooling for debugging compiled models
-- [ ] Hot reload of behaviors in development mode
+| Phase | Goal | Key Deliverables |
+|-------|------|------------------|
+| **1. Bytecode Foundation** | Basic compilation working | Bytecode format, `BehaviorModelInterpreter`, test harness |
+| **2. Full Compilation** | Complete ABML → bytecode | Semantic analyzer, IR builder, optimization passes |
+| **3. Distribution** | Models flow to clients | lib-state storage, `/behavior/models/sync`, delta sync |
+| **4. Client Integration** | Stride executes models | `BehaviorModelCache`, `BehaviorEvaluationSystem`, variant selection |
+| **5. Intent Channels** | Multi-model coordination | Channel definitions, `IntentMerger`, urgency-based resolution |
+| **6. Agent Integration** | Cloud agents use models | `/behavior/agent/query-combat-options`, Event Brain integration |
+| **7. Training System** | Characters learn styles | Proficiency tracking, model tier unlocking, trainer NPCs |
+| **8. Polish** | Production-ready | Benchmarks, memory pooling, hot reload, debug tooling |
 
 ---
 
-## 9. Open Questions
+## 9. Design Decisions
 
-### 9.1 Bytecode vs Native Compilation
-
-**Question**: Should we compile to bytecode (interpreted) or native code (JIT/AOT)?
-
-**Current Decision**: Bytecode first, with option for native later.
-
-**Rationale**:
-- Bytecode is simpler to implement and debug
-- Portable across platforms without recompilation
-- Performance is likely sufficient (sub-ms evaluation)
-- Can add JIT layer later if profiling shows need
-
-### 9.2 Model Granularity
-
-**Question**: How should models be organized per character?
-
-**Current Decision**: Two-level hierarchy - behavior types with variants within each type.
-
-```
-Character Models
-├── combat (type)
-│   ├── sword-and-shield (variant)
-│   ├── dual-wield (variant)
-│   └── unarmed (variant)
-├── movement (type)
-│   ├── standard (variant)
-│   └── mounted (variant)
-└── interaction (type)
-    └── default (variant)
-```
-
-**Rationale**:
-- **Behavior types** separate concerns with different update frequencies
-- **Variants** capture fundamentally different approaches within a type
-- Equipment changes switch variants, not types
-- Characters learn variants through gameplay (training system)
-- Smaller, focused models are easier to author and transfer
-- Fallback chain (variant → default → unarmed) handles missing variants gracefully
-
-### 9.3 State Schema Flexibility
-
-**Question**: Fixed schema per behavior type, or dynamic schema per model?
-
-**Current Decision**: Dynamic schema per model, with common conventions.
-
-**Rationale**:
-- Different combat styles may need different inputs
-- Schema is part of the model, client adapts
-- Conventions (stamina, health, etc.) are documented but not enforced
-
-### 9.4 Randomness Handling
-
-**Question**: How to handle non-deterministic behaviors (random choices)?
-
-**Current Decision**: Explicit RAND opcodes with client-provided seed.
-
-**Rationale**:
-- Determinism is valuable for debugging and replays
-- Client provides frame-based seed for reproducibility
-- Can make behavior "feel random" while being predictable
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| **Bytecode vs Native** | Bytecode first | Simpler, portable, sufficient performance; JIT later if needed |
+| **Model Granularity** | Type/variant hierarchy | Combat/movement/interaction types with equipment-driven variants; fallback chain handles missing |
+| **State Schema** | Dynamic per model | Different styles need different inputs; schema embedded in model |
+| **Randomness** | RAND opcode with seed | Client provides frame-based seed for deterministic replays |
 
 ---
 

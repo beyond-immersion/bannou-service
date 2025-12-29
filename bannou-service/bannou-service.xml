@@ -1674,6 +1674,16 @@
             <param name="ct">Cancellation token.</param>
             <returns>Execution result.</returns>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.IDocumentExecutor.ExecuteAsync(BeyondImmersion.BannouService.Abml.Parser.LoadedDocument,System.String,BeyondImmersion.BannouService.Abml.Expressions.IVariableScope,System.Threading.CancellationToken)">
+            <summary>
+            Executes a loaded ABML document with resolved imports.
+            </summary>
+            <param name="loadedDocument">The loaded document with imports.</param>
+            <param name="startFlow">The flow to start execution from (can be namespaced).</param>
+            <param name="initialScope">Optional initial variable scope.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Execution result.</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Execution.DocumentExecutor">
             <summary>
             Tree-walking interpreter for ABML documents.
@@ -1692,6 +1702,9 @@
             <param name="handlers">Action handler registry.</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Abml.Execution.DocumentExecutor.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.AbmlDocument,System.String,BeyondImmersion.BannouService.Abml.Expressions.IVariableScope,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.DocumentExecutor.ExecuteAsync(BeyondImmersion.BannouService.Abml.Parser.LoadedDocument,System.String,BeyondImmersion.BannouService.Abml.Expressions.IVariableScope,System.Threading.CancellationToken)">
             <inheritdoc/>
         </member>
         <member name="M:BeyondImmersion.BannouService.Abml.Execution.DocumentExecutor.CheckErrorHandledFlag(BeyondImmersion.BannouService.Abml.Expressions.IVariableScope)">
@@ -1768,6 +1781,19 @@
             The document being executed.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ExecutionContext.LoadedDocument">
+            <summary>
+            The root loaded document with resolved imports.
+            When null, only local flows are accessible.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Execution.ExecutionContext.CurrentDocument">
+            <summary>
+            The current document context for flow resolution.
+            This changes when calling flows in imported documents.
+            Defaults to LoadedDocument if not explicitly set.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Abml.Execution.ExecutionContext.RootScope">
             <summary>
             Root variable scope.
@@ -1802,6 +1828,25 @@
             <summary>
             Log messages collected during execution.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ExecutionContext.TryResolveFlow(System.String,BeyondImmersion.BannouService.Abml.Documents.Flow@)">
+            <summary>
+            Tries to resolve a flow reference, supporting namespaced imports.
+            Resolution is relative to CurrentDocument (context-relative).
+            </summary>
+            <param name="flowRef">Flow reference (e.g., "my_flow" or "common.my_flow").</param>
+            <param name="flow">The resolved flow if found.</param>
+            <returns>True if the flow was found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ExecutionContext.TryResolveFlow(System.String,BeyondImmersion.BannouService.Abml.Documents.Flow@,BeyondImmersion.BannouService.Abml.Parser.LoadedDocument@)">
+            <summary>
+            Tries to resolve a flow reference, supporting namespaced imports.
+            Resolution is relative to CurrentDocument (context-relative).
+            </summary>
+            <param name="flowRef">Flow reference (e.g., "my_flow" or "common.my_flow").</param>
+            <param name="flow">The resolved flow if found.</param>
+            <param name="resolvedDocument">The document containing the resolved flow.</param>
+            <returns>True if the flow was found.</returns>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Execution.ExecutionState">
             <summary>
@@ -2040,6 +2085,19 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.CallHandler.ExecuteAsync(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Execution.ExecutionContext,System.Threading.CancellationToken)">
             <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.CallHandler.ResolveFullyQualifiedFlowName(BeyondImmersion.BannouService.Abml.Parser.LoadedDocument,BeyondImmersion.BannouService.Abml.Parser.LoadedDocument,System.String)">
+            <summary>
+            Resolves a flow name to its fully-qualified path from the root document.
+            This allows goto targets to be resolved from the correct context,
+            then executed by the main executor from the root context.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.CallHandler.FindImportPath(BeyondImmersion.BannouService.Abml.Parser.LoadedDocument,BeyondImmersion.BannouService.Abml.Parser.LoadedDocument,System.Collections.Generic.HashSet{BeyondImmersion.BannouService.Abml.Parser.LoadedDocument})">
+            <summary>
+            Finds the import path from source to target document.
+            Returns list of aliases forming the path, or null if not reachable.
+            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Execution.Handlers.ClearHandler">
             <summary>
@@ -2644,6 +2702,110 @@
         <member name="M:BeyondImmersion.BannouService.Abml.Functions.FunctionEntry.ValidateArgCount(System.Int32)">
             <summary>Validates argument count.</summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Parser.DocumentLoader">
+            <summary>
+            Loads ABML documents with full import resolution.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.DocumentLoader.#ctor(BeyondImmersion.BannouService.Abml.Parser.IDocumentResolver,BeyondImmersion.BannouService.Abml.Parser.DocumentParser)">
+            <summary>
+            Creates a new document loader.
+            </summary>
+            <param name="resolver">Document resolver for imports.</param>
+            <param name="parser">Parser for YAML content.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.DocumentLoader.LoadAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Loads a document from YAML content with all imports resolved.
+            </summary>
+            <param name="yaml">The YAML content.</param>
+            <param name="sourcePath">Source path for relative import resolution.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The loaded document with resolved imports.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.DocumentLoader.LoadAsync(BeyondImmersion.BannouService.Abml.Documents.AbmlDocument,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Loads a pre-parsed document with all imports resolved.
+            </summary>
+            <param name="document">The parsed document.</param>
+            <param name="sourcePath">Source path for relative import resolution.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The loaded document with resolved imports.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Parser.LoadedDocument">
+            <summary>
+            A fully loaded ABML document with resolved imports.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Parser.LoadedDocument.Document">
+            <summary>
+            The main document.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Parser.LoadedDocument.SourcePath">
+            <summary>
+            Source path of this document.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Parser.LoadedDocument.Imports">
+            <summary>
+            Imported documents keyed by alias.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.LoadedDocument.#ctor(BeyondImmersion.BannouService.Abml.Documents.AbmlDocument,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,BeyondImmersion.BannouService.Abml.Parser.LoadedDocument})">
+            <summary>
+            Creates a new loaded document.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.LoadedDocument.#ctor(BeyondImmersion.BannouService.Abml.Documents.AbmlDocument,System.String)">
+            <summary>
+            Creates a loaded document with no imports.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.LoadedDocument.TryResolveFlow(System.String,BeyondImmersion.BannouService.Abml.Documents.Flow@,BeyondImmersion.BannouService.Abml.Parser.LoadedDocument@)">
+            <summary>
+            Tries to resolve a potentially namespaced flow reference.
+            </summary>
+            <param name="flowRef">Flow reference (e.g., "my_flow" or "common.my_flow").</param>
+            <param name="flow">The resolved flow.</param>
+            <param name="resolvedDocument">The document containing the flow.</param>
+            <returns>True if the flow was found.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Parser.DocumentLoadException">
+            <summary>
+            Exception thrown when a document fails to load.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Parser.DocumentLoadException.SourcePath">
+            <summary>
+            The source path that failed to load.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.DocumentLoadException.#ctor(System.String,System.String)">
+            <summary>
+            Creates a new document load exception.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Parser.CircularImportException">
+            <summary>
+            Exception thrown when a circular import is detected.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Parser.CircularImportException.CircularPath">
+            <summary>
+            The path that caused the circular reference.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Parser.CircularImportException.ImportStack">
+            <summary>
+            The import stack that led to the circular reference.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.CircularImportException.#ctor(System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Creates a new circular import exception.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Parser.DocumentParser">
             <summary>
             Parses ABML YAML documents into AST representation.
@@ -2660,6 +2822,71 @@
             </summary>
             <param name="yaml">The YAML content to parse.</param>
             <returns>Parse result with document or errors.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Parser.IDocumentResolver">
+            <summary>
+            Resolves ABML document paths to parsed documents.
+            Used for handling imports in ABML documents.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.IDocumentResolver.ResolveAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Resolves a document path relative to a base path.
+            </summary>
+            <param name="importPath">The import path from the ABML document.</param>
+            <param name="basePath">The path of the importing document (for relative resolution).</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The resolved and parsed document, or null if not found.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Parser.ResolvedDocument">
+            <summary>
+            A resolved ABML document with its source path.
+            </summary>
+            <param name="Document">The parsed ABML document.</param>
+            <param name="SourcePath">The resolved source path (for nested import resolution).</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.ResolvedDocument.#ctor(BeyondImmersion.BannouService.Abml.Documents.AbmlDocument,System.String)">
+            <summary>
+            A resolved ABML document with its source path.
+            </summary>
+            <param name="Document">The parsed ABML document.</param>
+            <param name="SourcePath">The resolved source path (for nested import resolution).</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Parser.ResolvedDocument.Document">
+            <summary>The parsed ABML document.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Parser.ResolvedDocument.SourcePath">
+            <summary>The resolved source path (for nested import resolution).</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Parser.InMemoryDocumentResolver">
+            <summary>
+            In-memory document resolver for testing.
+            Maps paths directly to documents without file system access.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.InMemoryDocumentResolver.Register(System.String,BeyondImmersion.BannouService.Abml.Documents.AbmlDocument)">
+            <summary>
+            Registers a document at a given path.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.InMemoryDocumentResolver.ResolveAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Parser.FileSystemDocumentResolver">
+            <summary>
+            File system document resolver for production use.
+            Resolves import paths to files on disk and parses them.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.FileSystemDocumentResolver.#ctor(System.String,BeyondImmersion.BannouService.Abml.Parser.DocumentParser)">
+            <summary>
+            Creates a new file system document resolver.
+            </summary>
+            <param name="basePath">Base directory for resolving relative paths.</param>
+            <param name="parser">Parser for YAML content.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.FileSystemDocumentResolver.ResolveAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc/>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Parser.ParseResult`1">
             <summary>

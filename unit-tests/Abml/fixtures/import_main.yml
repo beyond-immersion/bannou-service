@@ -1,0 +1,14 @@
+version: "2.0"
+metadata:
+  id: import_main_test
+
+imports:
+  - file: "import_common.yml"
+    as: "common"
+
+flows:
+  start:
+    actions:
+      - log: { message: "Starting main" }
+      - call: { flow: "common.greet" }
+      - log: { message: "Finished main" }
