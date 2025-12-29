@@ -289,32 +289,27 @@ public sealed class ExpressionCompiler : IExpressionVisitor<byte>
         var argCount = node.Arguments.Count;
 
         // For nested calls to work correctly, we need args in contiguous registers
-        // that don't conflict with other computations. We allocate a contiguous
-        // block BEFORE compiling args to guarantee they're adjacent.
+        // that don't conflict with other computations. We use AllocateRange to
+        // guarantee a contiguous block, avoiding issues where individual Allocate
+        // calls might return non-contiguous registers from the freeList.
         var argStartReg = (byte)0;
 
         if (argCount > 0)
         {
             // Reserve contiguous block for arguments
-            var argRegisters = new byte[argCount];
-            for (var i = 0; i < argCount; i++)
-            {
-                argRegisters[i] = _builder.Registers.Allocate();
-            }
-            argStartReg = argRegisters[0];
+            argStartReg = _builder.Registers.AllocateRange(argCount);
 
             // Compile each argument into its designated register
             for (var i = 0; i < argCount; i++)
             {
+                var targetReg = (byte)(argStartReg + i);
                 var valueReg = node.Arguments[i].Accept(this);
-                if (valueReg != argRegisters[i])
+                if (valueReg != targetReg)
                 {
-                    _builder.Emit(OpCode.Move, argRegisters[i], valueReg, 0);
+                    _builder.Emit(OpCode.Move, targetReg, valueReg, 0);
                     _builder.Registers.Free(valueReg);
                 }
             }
-
-            // Keep arg registers allocated during call, free them after
         }
 
         // Allocate destination register
@@ -328,10 +323,7 @@ public sealed class ExpressionCompiler : IExpressionVisitor<byte>
         // Free argument registers after call
         if (argCount > 0)
         {
-            for (var i = 0; i < argCount; i++)
-            {
-                _builder.Registers.Free((byte)(argStartReg + i));
-            }
+            _builder.Registers.FreeRange(argStartReg, argCount);
         }
 
         return destReg;

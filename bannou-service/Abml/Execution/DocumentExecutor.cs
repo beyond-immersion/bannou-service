@@ -148,7 +148,16 @@ public sealed class DocumentExecutor : IDocumentExecutor
                     // Transfer control to another flow
                     if (!context.Document.Flows.TryGetValue(gotoResult.FlowName, out var targetFlow))
                     {
-                        return ActionResult.Error($"Flow not found: {gotoResult.FlowName}");
+                        // Flow not found is an error - try to handle with on_error
+                        var gotoError = ActionResult.Error($"Flow not found: {gotoResult.FlowName}");
+                        var gotoErrorHandled = await TryHandleErrorAsync(
+                            flow, (ErrorResult)gotoError, action, context, ct);
+                        if (gotoErrorHandled)
+                        {
+                            // Error was handled, flow completes successfully
+                            return ActionResult.Continue;
+                        }
+                        return gotoError;  // Propagate unhandled error
                     }
 
                     // Pop current frame and push new one
@@ -181,8 +190,8 @@ public sealed class DocumentExecutor : IDocumentExecutor
                     {
                         return errorResult;  // Propagate unhandled error
                     }
-                    // Error was handled, continue with next action
-                    break;
+                    // Error was handled, flow completes successfully
+                    return ActionResult.Continue;
             }
         }
 

@@ -569,4 +569,176 @@ public class AdvancedExpressionTests
 
         Assert.Null(result);
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // NESTED FUNCTION CALL TESTS (Correction 4 verification)
+    // These tests verify the CallArgs + Call opcode pattern works correctly
+    // when function arguments are nested function calls.
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void NestedFunctions_SingleLevel()
+    {
+        var evaluator = ExpressionEvaluator.CreateDefault();
+        var scope = new VariableScope();
+
+        // min(max(5, 10), 8) = min(10, 8) = 8
+        var result = evaluator.Evaluate("min(max(5, 10), 8)", scope);
+        Assert.Equal(8.0, result);
+    }
+
+    [Fact]
+    public void NestedFunctions_BothArgsNested()
+    {
+        var evaluator = ExpressionEvaluator.CreateDefault();
+        var scope = new VariableScope();
+
+        // max(min(1, 2), min(3, 4)) = max(1, 3) = 3
+        var result = evaluator.Evaluate("max(min(1, 2), min(3, 4))", scope);
+        Assert.Equal(3.0, result);
+    }
+
+    [Fact]
+    public void NestedFunctions_ThreeLevelsDeep()
+    {
+        var evaluator = ExpressionEvaluator.CreateDefault();
+        var scope = new VariableScope();
+
+        // abs(min(max(-10, -5), floor(3.7)))
+        // = abs(min(-5, 3))
+        // = abs(-5)
+        // = 5
+        var result = evaluator.Evaluate("abs(min(max(-10, -5), floor(3.7)))", scope);
+        Assert.Equal(5.0, result);
+    }
+
+    [Fact]
+    public void NestedFunctions_WithArithmeticInArgs()
+    {
+        var evaluator = ExpressionEvaluator.CreateDefault();
+        var scope = new VariableScope();
+        scope.SetValue("x", 7);
+
+        // min(x + 3, max(x - 2, 4))
+        // = min(10, max(5, 4))
+        // = min(10, 5)
+        // = 5
+        var result = evaluator.Evaluate("min(x + 3, max(x - 2, 4))", scope);
+        Assert.Equal(5.0, result);
+    }
+
+    [Fact]
+    public void NestedFunctions_StringFunctions()
+    {
+        var evaluator = ExpressionEvaluator.CreateDefault();
+        var scope = new VariableScope();
+
+        // length(upper("hello")) = length("HELLO") = 5
+        var result = evaluator.Evaluate("length(upper('hello'))", scope);
+        Assert.Equal(5, result);
+    }
+
+    [Fact]
+    public void NestedFunctions_MixedTypes()
+    {
+        var evaluator = ExpressionEvaluator.CreateDefault();
+        var scope = new VariableScope();
+
+        // round(max(1.5, min(2.5, 3.5))) = round(max(1.5, 2.5)) = round(2.5) = 3
+        var result = evaluator.Evaluate("round(max(1.5, min(2.5, 3.5)))", scope);
+        Assert.Equal(3.0, result);  // Standard rounding: 2.5 rounds to 3
+    }
+
+    [Fact]
+    public void NestedFunctions_InTernary()
+    {
+        var evaluator = ExpressionEvaluator.CreateDefault();
+        var scope = new VariableScope();
+        scope.SetValue("val", 10);
+
+        // val > 5 ? max(val, 20) : min(val, 0)
+        // = 10 > 5 ? max(10, 20) : min(10, 0)
+        // = true ? 20 : min(10, 0)
+        // = 20
+        var result = evaluator.Evaluate("val > 5 ? max(val, 20) : min(val, 0)", scope);
+        Assert.Equal(20.0, result);
+    }
+
+    [Fact]
+    public void NestedFunctions_CustomFunctionWithNested()
+    {
+        var registry = FunctionRegistry.CreateWithBuiltins();
+        registry.Register("double", args => Convert.ToDouble(args[0]) * 2, minArgs: 1, maxArgs: 1);
+        registry.Register("square", args => Math.Pow(Convert.ToDouble(args[0]), 2), minArgs: 1, maxArgs: 1);
+
+        var evaluator = new ExpressionEvaluator(registry);
+        var scope = new VariableScope();
+
+        // double(square(3)) = double(9) = 18
+        var result = evaluator.Evaluate("double(square(3))", scope);
+        Assert.Equal(18.0, result);
+    }
+
+    [Fact]
+    public void NestedFunctions_MultipleArgsAllNested()
+    {
+        var registry = FunctionRegistry.CreateWithBuiltins();
+        registry.Register("add3", args =>
+        {
+            return Convert.ToDouble(args[0]) + Convert.ToDouble(args[1]) + Convert.ToDouble(args[2]);
+        }, minArgs: 3, maxArgs: 3);
+
+        var evaluator = new ExpressionEvaluator(registry);
+        var scope = new VariableScope();
+
+        // add3(min(5, 2), max(3, 1), abs(-4))
+        // = add3(2, 3, 4)
+        // = 9
+        var result = evaluator.Evaluate("add3(min(5, 2), max(3, 1), abs(-4))", scope);
+        Assert.Equal(9.0, result);
+    }
+
+    [Fact]
+    public void NestedFunctions_DeepNesting()
+    {
+        var evaluator = ExpressionEvaluator.CreateDefault();
+        var scope = new VariableScope();
+
+        // max(min(abs(floor(-2.7)), ceil(1.2)), round(2.4))
+        // = max(min(abs(-3), 2), 2)
+        // = max(min(3, 2), 2)
+        // = max(2, 2)
+        // = 2
+        var result = evaluator.Evaluate("max(min(abs(floor(-2.7)), ceil(1.2)), round(2.4))", scope);
+        Assert.Equal(2.0, result);
+    }
+
+    [Fact]
+    public void NestedFunctions_WithVariables()
+    {
+        var evaluator = ExpressionEvaluator.CreateDefault();
+        var scope = new VariableScope();
+        scope.SetValue("a", 5);
+        scope.SetValue("b", -3);
+        scope.SetValue("c", 10);
+
+        // min(max(a, b), c) = min(max(5, -3), 10) = min(5, 10) = 5
+        var result = evaluator.Evaluate("min(max(a, b), c)", scope);
+        Assert.Equal(5.0, result);
+    }
+
+    [Fact]
+    public void NestedFunctions_ComplexExpression()
+    {
+        var evaluator = ExpressionEvaluator.CreateDefault();
+        var scope = new VariableScope();
+        // Use doubles to get floating-point division (int/int = integer division in ABML)
+        scope.SetValue("health", 45.0);
+        scope.SetValue("maxHealth", 100.0);
+
+        // Calculate clamped health percentage
+        // min(max(health / maxHealth * 100, 0), 100)
+        var result = evaluator.Evaluate("min(max(health / maxHealth * 100, 0), 100)", scope);
+        Assert.Equal(45.0, result);
+    }
 }

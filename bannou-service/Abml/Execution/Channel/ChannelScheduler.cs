@@ -166,6 +166,21 @@ public sealed class ChannelScheduler
                 continue;
             }
 
+            // Check if waiting for sync point
+            if (channel.WaitingFor != null && channel.WaitingFor.StartsWith("__sync:"))
+            {
+                var syncPointName = channel.WaitingFor.Substring(7);  // Remove "__sync:" prefix
+                if (_syncPoints.TryGetValue(syncPointName, out var syncPoint) &&
+                    syncPoint.ChannelsArrived.Count >= syncPoint.TotalChannels)
+                {
+                    // All channels arrived, release this one
+                    channel.Status = ChannelStatus.Ready;
+                    channel.WaitingFor = null;
+                    channel.WaitStartTime = null;
+                    continue;
+                }
+            }
+
             // Check if signal arrived
             if (channel.WaitingFor != null && TryDeliverSignal(channel))
             {
@@ -267,12 +282,40 @@ public sealed class ChannelScheduler
 
         var result = await handler.ExecuteAsync(action, context, ct);
 
+        // Collect logs from action execution
+        foreach (var log in context.Logs)
+        {
+            _logs.Add(log);
+        }
+
         switch (result)
         {
             case ErrorResult errorResult:
                 channel.Status = ChannelStatus.Failed;
                 channel.ErrorMessage = errorResult.Message;
                 return StepResult.Error;
+
+            case GotoResult gotoResult:
+                // Handle goto by transferring to target flow
+                if (!document.Flows.TryGetValue(gotoResult.FlowName, out var targetFlow))
+                {
+                    channel.Status = ChannelStatus.Failed;
+                    channel.ErrorMessage = $"Flow not found: {gotoResult.FlowName}";
+                    return StepResult.Error;
+                }
+                // Pop current flow and push target
+                channel.CallStack.Pop();
+                var gotoScope = channel.Scope.CreateChild();
+                if (gotoResult.Args != null)
+                {
+                    foreach (var (key, value) in gotoResult.Args)
+                    {
+                        gotoScope.SetValue(key, value);
+                    }
+                }
+                channel.CallStack.Push(gotoResult.FlowName, gotoScope);
+                channel.ActionIndex = 0;
+                return StepResult.Continue;
 
             case ReturnResult returnResult:
                 channel.ReturnValue = returnResult.Value;
