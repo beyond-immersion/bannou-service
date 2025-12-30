@@ -10,7 +10,8 @@ public partial class BaseServiceEvent : IBannouEvent
     Guid EventId;
 
     /// <inheritdoc />
-    DateTime Timestamp;
+    DateTimeOffset Timestamp;
 
-    DateTime IBannouEvent.Timestamp => throw new NotImplementedException();
+    /// <inheritdoc />
+    string eventName;
 }

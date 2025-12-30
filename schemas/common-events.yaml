@@ -30,7 +30,7 @@ components:
           description: |
             Unique event type identifier (e.g., "connect.capability_manifest").
             Must be in the generated ClientEventWhitelist or will be rejected.
-            Convention: {service}.{event_type}
+            Convention: {service}.{event_name}
         eventId:
           type: string
           format: uuid

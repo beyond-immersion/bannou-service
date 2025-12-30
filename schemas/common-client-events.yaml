@@ -36,7 +36,7 @@ components:
           description: |
             Unique event type identifier (e.g., "connect.capability_manifest").
             Must be in the generated ClientEventWhitelist or will be rejected.
-            Convention: {service}.{event_type}
+            Convention: {service}.{event_name}
         eventId:
           type: string
           format: uuid
@@ -56,9 +56,6 @@ components:
         Contains the complete list of service GUIDs the client can access.
         Delivered on initial connection and when permissions change.
       required:
-        - eventName
-        - eventId
-        - timestamp
         - sessionId
         - availableApis
         - version
@@ -121,9 +118,6 @@ components:
         Sent to client before WebSocket connection is closed.
         If reconnectable, includes a token for session restoration.
       required:
-        - eventName
-        - eventId
-        - timestamp
         - reconnectable
         - reason
       properties:
@@ -161,9 +155,6 @@ components:
         Generic error notification sent to client.
         Used for recoverable errors that the client should be aware of.
       required:
-        - eventName
-        - eventId
-        - timestamp
         - errorCode
         - message
       properties:
@@ -197,9 +188,6 @@ components:
         NOT forwarded to clients - Connect intercepts, generates client-salted GUIDs,
         and sends CapabilityManifestEvent to the client.
       required:
-        - eventName
-        - eventId
-        - timestamp
         - sessionId
         - permissions
       properties:
@@ -232,9 +220,6 @@ components:
         Generic notification event for system-level messages.
         Used for announcements, maintenance notices, etc.
       required:
-        - eventName
-        - eventId
-        - timestamp
         - notificationType
         - message
       properties:
@@ -281,9 +266,6 @@ components:
         Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
         Connect handles this event internally and does NOT forward to the client.
       required:
-        - eventName
-        - eventId
-        - timestamp
         - sessionId
         - shortcut
       properties:
@@ -315,9 +297,6 @@ components:
         Supports both single-shortcut revocation (by routeGuid) and
         bulk revocation (all shortcuts from a sourceService).
       required:
-        - eventName
-        - eventId
-        - timestamp
         - sessionId
       properties:
         eventName:

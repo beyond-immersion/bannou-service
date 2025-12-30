@@ -23,5 +23,10 @@ public interface IBannouEvent
     /// <summary>
     /// When the event was created (UTC).
     /// </summary>
-    DateTime Timestamp { get; }
+    DateTimeOffset Timestamp { get; }
+
+    /// <summary>
+    /// The type/name of the event- usually also the topic it's published on.
+    /// </summary>
+    string EventName { get; }
 }
