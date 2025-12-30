@@ -1,6 +1,7 @@
 #nullable enable
 
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Events;
 using System.Text.Json.Serialization;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
@@ -88,9 +89,9 @@ public class TappedMessageEnvelope : GenericMessageEnvelope
     }
 
     /// <summary>
-    /// Creates a tapped envelope from an original message.
+    /// Creates a tapped envelope from an original event implementing IBannouEvent.
     /// </summary>
-    /// <param name="original">The original message being tapped</param>
+    /// <param name="original">The original event being tapped</param>
     /// <param name="tapId">The unique tap identifier</param>
     /// <param name="sourceTopic">The source topic</param>
     /// <param name="sourceExchange">The source exchange</param>
@@ -99,7 +100,7 @@ public class TappedMessageEnvelope : GenericMessageEnvelope
     /// <param name="destinationExchangeType">The destination exchange type</param>
     /// <param name="tapCreatedAt">When the tap was created</param>
     public TappedMessageEnvelope(
-        GenericMessageEnvelope original,
+        IBannouEvent original,
         Guid tapId,
         string sourceTopic,
         string sourceExchange,
@@ -108,12 +109,12 @@ public class TappedMessageEnvelope : GenericMessageEnvelope
         string destinationExchangeType,
         DateTimeOffset tapCreatedAt)
     {
-        // Copy base envelope fields
-        EventId = original.EventId;
-        Timestamp = original.Timestamp;
-        Topic = original.Topic;
-        PayloadJson = original.PayloadJson;
-        ContentType = original.ContentType;
+        // Copy base envelope fields from IBannouEvent
+        EventId = original.BannouEventId;
+        Timestamp = original.BannouTimestamp;
+        Topic = sourceTopic;
+        PayloadJson = BannouJson.Serialize(original);
+        ContentType = "application/json";
 
         // Set tap metadata
         TapId = tapId;

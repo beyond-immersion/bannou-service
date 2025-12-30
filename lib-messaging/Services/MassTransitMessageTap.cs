@@ -1,6 +1,7 @@
 #nullable enable
 
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using MassTransit;
 using MassTransit.RabbitMqTransport;
@@ -104,7 +105,8 @@ public sealed class MassTransitMessageTap : IMessageTap, IAsyncDisposable
                 }
 
                 // Handler that forwards received messages to the destination
-                endpoint.Handler<GenericMessageEnvelope>(async context =>
+                // Uses IBannouEvent interface to receive any Bannou event type
+                endpoint.Handler<IBannouEvent>(async context =>
                 {
                     await ForwardMessageAsync(
                         context,
@@ -153,7 +155,7 @@ public sealed class MassTransitMessageTap : IMessageTap, IAsyncDisposable
     }
 
     private async Task ForwardMessageAsync(
-        ConsumeContext<GenericMessageEnvelope> context,
+        ConsumeContext<IBannouEvent> context,
         Guid tapId,
         string sourceTopic,
         string sourceExchange,
@@ -202,7 +204,7 @@ public sealed class MassTransitMessageTap : IMessageTap, IAsyncDisposable
             _logger.LogDebug(
                 "Tap {TapId}: Forwarded message {EventId} from {SourceTopic} to {DestExchange}/{DestRoutingKey}",
                 tapId,
-                context.Message.EventId,
+                context.Message.BannouEventId,
                 sourceTopic,
                 destination.Exchange,
                 destination.RoutingKey);
@@ -213,7 +215,7 @@ public sealed class MassTransitMessageTap : IMessageTap, IAsyncDisposable
                 ex,
                 "Tap {TapId}: Failed to forward message {EventId} from {SourceTopic}",
                 tapId,
-                context.Message.EventId,
+                context.Message.BannouEventId,
                 sourceTopic);
             throw;
         }

@@ -1,6 +1,7 @@
 #nullable enable
 
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -63,12 +64,12 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
             destinationTopic);
 
         // Create dynamic subscription that forwards to destination
-        var subscription = await _messageBus.SubscribeDynamicAsync<GenericMessageEnvelope>(
+        var subscription = await _messageBus.SubscribeDynamicAsync<IBannouEvent>(
             sourceTopic,
-            async (envelope, ct) =>
+            async (bannouEvent, ct) =>
             {
                 await ForwardMessageAsync(
-                    envelope,
+                    bannouEvent,
                     tapId,
                     sourceTopic,
                     effectiveSourceExchange,
@@ -99,7 +100,7 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
     }
 
     private async Task ForwardMessageAsync(
-        GenericMessageEnvelope envelope,
+        IBannouEvent bannouEvent,
         Guid tapId,
         string sourceTopic,
         string sourceExchange,
@@ -112,7 +113,7 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
         {
             // Create tapped envelope with routing metadata
             var tappedEnvelope = new TappedMessageEnvelope(
-                envelope,
+                bannouEvent,
                 tapId,
                 sourceTopic,
                 sourceExchange,
@@ -127,7 +128,7 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
             _logger.LogDebug(
                 "Tap {TapId} forwarded message {EventId} from {SourceTopic} to {DestinationTopic}",
                 tapId,
-                envelope.EventId,
+                bannouEvent.BannouEventId,
                 sourceTopic,
                 destinationTopic);
         }
@@ -137,7 +138,7 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
                 ex,
                 "Tap {TapId} failed to forward message {EventId} from {SourceTopic}",
                 tapId,
-                envelope.EventId,
+                bannouEvent.BannouEventId,
                 sourceTopic);
             throw;
         }
