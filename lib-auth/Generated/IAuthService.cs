@@ -21,11 +21,6 @@ public partial interface IAuthService : IBannouService
     Task<(StatusCodes, RegisterResponse?)> RegisterAsync(RegisterRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// InitOAuth operation
-    /// </summary>
-    Task<StatusCodes> InitOAuthAsync(Provider provider, string redirectUri, string? state, CancellationToken cancellationToken = default(CancellationToken));
-
-    /// <summary>
     /// CompleteOAuth operation
     /// </summary>
     Task<(StatusCodes, AuthResponse?)> CompleteOAuthAsync(Provider provider, OAuthCallbackRequest body, CancellationToken cancellationToken = default(CancellationToken));

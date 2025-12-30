@@ -776,7 +776,7 @@ public partial class CharacterService : ICharacterService
         {
             var eventModel = new CharacterRealmJoinedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = characterId,
                 RealmId = realmId,
@@ -798,7 +798,7 @@ public partial class CharacterService : ICharacterService
         {
             var eventModel = new CharacterRealmLeftEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = characterId,
                 RealmId = realmId,

@@ -9957,6 +9957,16 @@
             OAuth provider type
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.InitOAuthResponse">
+            <summary>
+            Response containing the OAuth authorization URL for redirect
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.InitOAuthResponse.Authorization_url">
+            <summary>
+            The OAuth provider authorization URL to redirect the user to
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Auth.TerminateSessionRequest">
             <summary>
             Request to terminate a specific session

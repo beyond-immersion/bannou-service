@@ -246,24 +246,8 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         return ConvertToActionResult(statusCode, result);
     }
 
-    /// <summary>
-    /// Initialize OAuth2 flow (browser redirect)
-    /// </summary>
-    /// <remarks>
-    /// Browser-facing endpoint for initiating OAuth flows. The user's browser navigates
-    /// <br/>to this URL directly, which then redirects to the OAuth provider.
-    /// <br/>
-    /// <br/>**Note**: This endpoint uses GET with path parameters because it's a browser
-    /// <br/>redirect flow, not a WebSocket-routed API call.
-    /// </remarks>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/oauth/{provider}/init")]
-
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitOAuth([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Provider provider, [Microsoft.AspNetCore.Mvc.FromQuery] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string redirectUri, [Microsoft.AspNetCore.Mvc.FromQuery] string? state, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-
-        var statusCode = await _implementation.InitOAuthAsync(provider, redirectUri, state, cancellationToken);
-        return ConvertToActionResult(statusCode);
-    }
+    // Endpoint InitOAuth requires manual implementation in partial class.
+    // See x-manual-implementation: true in the OpenAPI schema.
 
     /// <summary>
     /// Complete OAuth2 flow (browser redirect callback)

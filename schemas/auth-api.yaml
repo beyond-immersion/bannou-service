@@ -155,6 +155,7 @@ paths:
       responses:
         '302':
           description: Redirect to OAuth provider
+      x-manual-implementation: true  # Returns 302 redirect, not JSON - requires manual controller
 
       x-request-schema-json: '{}'
       x-response-schema-json: '{}'
@@ -555,6 +556,17 @@ components:
       type: string
       enum: [google, discord, twitch]
       description: OAuth provider type
+
+    InitOAuthResponse:
+      type: object
+      description: Response containing the OAuth authorization URL for redirect
+      required:
+      - authorization_url
+      properties:
+        authorization_url:
+          type: string
+          format: uri
+          description: The OAuth provider authorization URL to redirect the user to
 
     # Request Models for POST-only pattern
     TerminateSessionRequest:

@@ -153,7 +153,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
             // Create health status from heartbeat event
             var healthStatus = new InstanceHealthStatus
             {
-                InstanceId = heartbeat.ServiceId,
+                InstanceId = Guid.Parse(heartbeat.ServiceId),
                 AppId = heartbeat.AppId,
                 Status = heartbeat.Status.ToString().ToLowerInvariant(),
                 LastSeen = DateTimeOffset.UtcNow,

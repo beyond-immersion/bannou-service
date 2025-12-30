@@ -1031,7 +1031,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         var heartbeat = new ServiceHeartbeatEvent
         {
             AppId = "bannou",
-            ServiceId = Guid.NewGuid(),
+            ServiceId = Guid.NewGuid().ToString(),
             Status = ServiceHeartbeatEventStatus.Healthy,
             Services = new List<ServiceStatus>
             {
@@ -1081,7 +1081,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         var heartbeat = new ServiceHeartbeatEvent
         {
             AppId = "bannou", // Different from "bannou-auth"
-            ServiceId = Guid.NewGuid(),
+            ServiceId = Guid.NewGuid().ToString(),
             Status = ServiceHeartbeatEventStatus.Healthy,
             Services = new List<ServiceStatus>
             {
@@ -1126,7 +1126,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         var heartbeat = new ServiceHeartbeatEvent
         {
             AppId = "bannou-auth", // Same as the mapped app-id
-            ServiceId = Guid.NewGuid(),
+            ServiceId = Guid.NewGuid().ToString(),
             Status = ServiceHeartbeatEventStatus.Healthy,
             Services = new List<ServiceStatus>
             {
@@ -1163,7 +1163,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         var heartbeat = new ServiceHeartbeatEvent
         {
             AppId = "bannou",
-            ServiceId = Guid.NewGuid(),
+            ServiceId = Guid.NewGuid().ToString(),
             Status = ServiceHeartbeatEventStatus.Healthy,
             Services = new List<ServiceStatus>
             {
@@ -1281,7 +1281,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         var heartbeat = new ServiceHeartbeatEvent
         {
             AppId = "bannou",
-            ServiceId = Guid.NewGuid(),
+            ServiceId = Guid.NewGuid().ToString(),
             Status = ServiceHeartbeatEventStatus.Healthy,
             Services = new List<ServiceStatus>
             {
@@ -1450,7 +1450,7 @@ public class OrchestratorStateManagerTests
             Mock.Of<ILogger<OrchestratorStateManager>>());
         var heartbeat = new ServiceHeartbeatEvent
         {
-            ServiceId = Guid.NewGuid(),
+            ServiceId = Guid.NewGuid().ToString(),
             AppId = "test-app",
             Status = ServiceHeartbeatEventStatus.Healthy
         };

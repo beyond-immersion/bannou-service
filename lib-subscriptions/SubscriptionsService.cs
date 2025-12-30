@@ -666,33 +666,3 @@ internal class SubscriptionDataModel
     public long CreatedAtUnix { get; set; }
     public long? UpdatedAtUnix { get; set; }
 }
-
-/// <summary>
-/// Event published when a subscription changes state.
-/// Auth service subscribes to this event to update session authorizations.
-/// </summary>
-public class SubscriptionUpdatedEvent
-{
-    public Guid EventId { get; set; }
-    public DateTimeOffset Timestamp { get; set; }
-    public Guid SubscriptionId { get; set; }
-    public Guid AccountId { get; set; }
-    public Guid ServiceId { get; set; }
-    public string StubName { get; set; } = string.Empty;
-    public string? DisplayName { get; set; }
-    public SubscriptionUpdatedEventAction Action { get; set; }
-    public bool IsActive { get; set; }
-    public DateTimeOffset? ExpirationDate { get; set; }
-}
-
-/// <summary>
-/// Actions that can trigger a subscription.updated event.
-/// </summary>
-public enum SubscriptionUpdatedEventAction
-{
-    Created,
-    Updated,
-    Cancelled,
-    Expired,
-    Renewed
-}
