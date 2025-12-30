@@ -40,33 +40,33 @@ public partial class SessionStateChangedEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SessionStateChangedEventEvent_name Event_name { get; set; } = default!;
+    public SessionStateChangedEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// ID of the game session
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("session_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Session_id { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// State before the change
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("previous_state")]
+    [System.Text.Json.Serialization.JsonPropertyName("previousState")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SessionStateChangedEventPrevious_state Previous_state { get; set; } = default!;
+    public SessionStateChangedEventPreviousState PreviousState { get; set; } = default!;
 
     /// <summary>
     /// State after the change
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("new_state")]
+    [System.Text.Json.Serialization.JsonPropertyName("newState")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SessionStateChangedEventNew_state New_state { get; set; } = default!;
+    public SessionStateChangedEventNewState NewState { get; set; } = default!;
 
     /// <summary>
     /// Reason for state change (e.g., "host_started", "timeout", "admin_action")
@@ -77,8 +77,8 @@ public partial class SessionStateChangedEvent : BaseClientEvent
     /// <summary>
     /// Account ID of user who triggered the change (if applicable)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changed_by")]
-    public System.Guid? Changed_by { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("changedBy")]
+    public System.Guid? ChangedBy { get; set; } = default!;
 
 }
 
@@ -93,17 +93,17 @@ public partial class PlayerJoinedEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PlayerJoinedEventEvent_name Event_name { get; set; } = default!;
+    public PlayerJoinedEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// ID of the game session
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("session_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Session_id { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("player")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -112,14 +112,14 @@ public partial class PlayerJoinedEvent : BaseClientEvent
     /// <summary>
     /// Total players in session after join
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("current_player_count")]
-    public int Current_player_count { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("currentPlayerCount")]
+    public int CurrentPlayerCount { get; set; } = default!;
 
     /// <summary>
     /// Maximum allowed players
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("max_players")]
-    public int Max_players { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("maxPlayers")]
+    public int MaxPlayers { get; set; } = default!;
 
 }
 
@@ -134,42 +134,42 @@ public partial class PlayerLeftEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PlayerLeftEventEvent_name Event_name { get; set; } = default!;
+    public PlayerLeftEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// ID of the game session
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("session_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Session_id { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Account ID of player who left
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("player_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("playerId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Player_id { get; set; } = default!;
+    public System.Guid PlayerId { get; set; } = default!;
 
     /// <summary>
     /// Display name for UI notification
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("display_name")]
-    public string? Display_name { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    public string? DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Total players remaining after departure
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("current_player_count")]
-    public int Current_player_count { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("currentPlayerCount")]
+    public int CurrentPlayerCount { get; set; } = default!;
 
     /// <summary>
     /// New session owner if ownership transferred
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("new_owner_id")]
-    public System.Guid? New_owner_id { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("newOwnerId")]
+    public System.Guid? NewOwnerId { get; set; } = default!;
 
 }
 
@@ -185,37 +185,37 @@ public partial class PlayerKickedEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PlayerKickedEventEvent_name Event_name { get; set; } = default!;
+    public PlayerKickedEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// ID of the game session
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("session_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Session_id { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Account ID of player who was kicked
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("kicked_player_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("kickedPlayerId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Kicked_player_id { get; set; } = default!;
+    public System.Guid KickedPlayerId { get; set; } = default!;
 
     /// <summary>
     /// Display name for UI notification
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("kicked_player_name")]
-    public string? Kicked_player_name { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("kickedPlayerName")]
+    public string? KickedPlayerName { get; set; } = default!;
 
     /// <summary>
     /// Account ID of user who performed the kick
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("kicked_by")]
+    [System.Text.Json.Serialization.JsonPropertyName("kickedBy")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Kicked_by { get; set; } = default!;
+    public System.Guid KickedBy { get; set; } = default!;
 
     /// <summary>
     /// Reason provided for the kick
@@ -237,37 +237,37 @@ public partial class ChatMessageReceivedEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ChatMessageReceivedEventEvent_name Event_name { get; set; } = default!;
+    public ChatMessageReceivedEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// ID of the game session
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("session_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Session_id { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Unique identifier for this chat message
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("messageId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Message_id { get; set; } = default!;
+    public System.Guid MessageId { get; set; } = default!;
 
     /// <summary>
     /// Account ID of message sender
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sender_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("senderId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Sender_id { get; set; } = default!;
+    public System.Guid SenderId { get; set; } = default!;
 
     /// <summary>
     /// Display name of sender
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sender_name")]
-    public string? Sender_name { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("senderName")]
+    public string? SenderName { get; set; } = default!;
 
     /// <summary>
     /// Chat message content
@@ -279,16 +279,16 @@ public partial class ChatMessageReceivedEvent : BaseClientEvent
     /// <summary>
     /// Type of chat message
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("messageType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ChatMessageReceivedEventMessage_type Message_type { get; set; } = default!;
+    public ChatMessageReceivedEventMessageType MessageType { get; set; } = default!;
 
     /// <summary>
     /// True if this is a whisper directed at the receiving client
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("is_whisper_to_me")]
-    public bool Is_whisper_to_me { get; set; } = false;
+    [System.Text.Json.Serialization.JsonPropertyName("isWhisperToMe")]
+    public bool IsWhisperToMe { get; set; } = false;
 
 }
 
@@ -304,42 +304,42 @@ public partial class GameStateUpdatedEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameStateUpdatedEventEvent_name Event_name { get; set; } = default!;
+    public GameStateUpdatedEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// ID of the game session
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("session_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Session_id { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Type of update (game-specific, e.g., "turn_changed", "score_updated")
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("update_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("updateType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Update_type { get; set; } = default!;
+    public string UpdateType { get; set; } = default!;
 
     /// <summary>
     /// Partial game state changes
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("state_delta")]
-    public object? State_delta { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("stateDelta")]
+    public object? StateDelta { get; set; } = default!;
 
     /// <summary>
     /// Account ID that triggered the state change
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("triggered_by")]
-    public System.Guid? Triggered_by { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("triggeredBy")]
+    public System.Guid? TriggeredBy { get; set; } = default!;
 
     /// <summary>
     /// Monotonically increasing sequence for ordering state updates
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sequence_number")]
-    public int Sequence_number { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("sequenceNumber")]
+    public int SequenceNumber { get; set; } = default!;
 
 }
 
@@ -355,38 +355,38 @@ public partial class GameActionResultEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameActionResultEventEvent_name Event_name { get; set; } = default!;
+    public GameActionResultEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// ID of the game session
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("session_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Session_id { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// ID of the action that produced this result
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("action_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("actionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Action_id { get; set; } = default!;
+    public System.Guid ActionId { get; set; } = default!;
 
     /// <summary>
     /// Type of action performed
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("action_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("actionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameActionResultEventAction_type Action_type { get; set; } = default!;
+    public GameActionResultEventActionType ActionType { get; set; } = default!;
 
     /// <summary>
     /// Account ID of player who performed the action
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("actor_id")]
-    public System.Guid Actor_id { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    public System.Guid ActorId { get; set; } = default!;
 
     /// <summary>
     /// Whether the action succeeded
@@ -397,14 +397,14 @@ public partial class GameActionResultEvent : BaseClientEvent
     /// <summary>
     /// Action-specific result data
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("result_data")]
-    public object? Result_data { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("resultData")]
+    public object? ResultData { get; set; } = default!;
 
     /// <summary>
     /// Visual/audio effects other players should see
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("visible_effects")]
-    public System.Collections.Generic.ICollection<VisibleEffect>? Visible_effects { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("visibleEffects")]
+    public System.Collections.Generic.ICollection<VisibleEffect>? VisibleEffects { get; set; } = default!;
 
 }
 
@@ -418,15 +418,15 @@ public partial class PlayerInfo
     /// <summary>
     /// Player's account ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("account_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Account_id { get; set; } = default!;
+    public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
     /// Player's display name
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("display_name")]
-    public string? Display_name { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    public string? DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Player's role in the session
@@ -439,8 +439,8 @@ public partial class PlayerInfo
     /// <summary>
     /// Game-specific character data
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("character_data")]
-    public object? Character_data { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("characterData")]
+    public object? CharacterData { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -463,15 +463,15 @@ public partial class VisibleEffect
     /// <summary>
     /// Type of effect (e.g., "damage_number", "particle", "sound")
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("effect_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("effectType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Effect_type { get; set; } = default!;
+    public string EffectType { get; set; } = default!;
 
     /// <summary>
     /// Entity the effect targets
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("target_id")]
-    public System.Guid? Target_id { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("targetId")]
+    public System.Guid? TargetId { get; set; } = default!;
 
     /// <summary>
     /// World position for the effect
@@ -482,8 +482,8 @@ public partial class VisibleEffect
     /// <summary>
     /// Effect-specific parameters
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("effect_data")]
-    public object? Effect_data { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("effectData")]
+    public object? EffectData { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -497,7 +497,7 @@ public partial class VisibleEffect
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SessionStateChangedEventEvent_name
+public enum SessionStateChangedEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"game_session.state_changed")]
@@ -506,7 +506,7 @@ public enum SessionStateChangedEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SessionStateChangedEventPrevious_state
+public enum SessionStateChangedEventPreviousState
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"waiting")]
@@ -524,7 +524,7 @@ public enum SessionStateChangedEventPrevious_state
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SessionStateChangedEventNew_state
+public enum SessionStateChangedEventNewState
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"waiting")]
@@ -542,7 +542,7 @@ public enum SessionStateChangedEventNew_state
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PlayerJoinedEventEvent_name
+public enum PlayerJoinedEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"game_session.player_joined")]
@@ -551,7 +551,7 @@ public enum PlayerJoinedEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PlayerLeftEventEvent_name
+public enum PlayerLeftEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"game_session.player_left")]
@@ -560,7 +560,7 @@ public enum PlayerLeftEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PlayerKickedEventEvent_name
+public enum PlayerKickedEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"game_session.player_kicked")]
@@ -569,7 +569,7 @@ public enum PlayerKickedEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ChatMessageReceivedEventEvent_name
+public enum ChatMessageReceivedEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"game_session.chat_received")]
@@ -578,7 +578,7 @@ public enum ChatMessageReceivedEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ChatMessageReceivedEventMessage_type
+public enum ChatMessageReceivedEventMessageType
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"public")]
@@ -593,7 +593,7 @@ public enum ChatMessageReceivedEventMessage_type
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GameStateUpdatedEventEvent_name
+public enum GameStateUpdatedEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"game_session.state_updated")]
@@ -602,7 +602,7 @@ public enum GameStateUpdatedEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GameActionResultEventEvent_name
+public enum GameActionResultEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"game_session.action_result")]
@@ -611,7 +611,7 @@ public enum GameActionResultEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GameActionResultEventAction_type
+public enum GameActionResultEventActionType
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"move")]

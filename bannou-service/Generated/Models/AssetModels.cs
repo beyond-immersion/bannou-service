@@ -154,9 +154,9 @@ public partial class UploadRequest
     /// <summary>
     /// MIME content type (e.g., image/png, model/gltf-binary)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("content_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("contentType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Content_type { get; set; } = default!;
+    public string ContentType { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public AssetMetadataInput Metadata { get; set; } = default!;
@@ -179,23 +179,23 @@ public partial class UploadResponse
     /// <summary>
     /// Unique upload session identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("upload_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("uploadId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Upload_id { get; set; } = default!;
+    public System.Guid UploadId { get; set; } = default!;
 
     /// <summary>
     /// Pre-signed URL for uploading the file
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("upload_url")]
+    [System.Text.Json.Serialization.JsonPropertyName("uploadUrl")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Uri Upload_url { get; set; } = default!;
+    public System.Uri UploadUrl { get; set; } = default!;
 
     /// <summary>
     /// When the upload URL expires
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("expires_at")]
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Expires_at { get; set; } = default!;
+    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("multipart")]
     public MultipartConfig Multipart { get; set; } = default!;
@@ -218,9 +218,9 @@ public partial class CompleteUploadRequest
     /// <summary>
     /// Upload session ID from requestUpload
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("upload_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("uploadId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Upload_id { get; set; } = default!;
+    public System.Guid UploadId { get; set; } = default!;
 
     /// <summary>
     /// For multipart uploads - ETags of completed parts
@@ -246,8 +246,8 @@ public partial class CompletedPart
     /// <summary>
     /// Part number (1-based)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("part_number")]
-    public int Part_number { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("partNumber")]
+    public int PartNumber { get; set; } = default!;
 
     /// <summary>
     /// ETag returned from part upload
@@ -280,17 +280,17 @@ public partial class MultipartConfig
     /// <summary>
     /// Size of each part in bytes
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("part_size")]
-    public int Part_size { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("partSize")]
+    public int PartSize { get; set; } = default!;
 
     /// <summary>
     /// Maximum number of parts
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("max_parts")]
-    public int Max_parts { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("maxParts")]
+    public int MaxParts { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("upload_urls")]
-    public System.Collections.Generic.ICollection<PartUploadInfo> Upload_urls { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("uploadUrls")]
+    public System.Collections.Generic.ICollection<PartUploadInfo> UploadUrls { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -310,27 +310,27 @@ public partial class PartUploadInfo
     /// <summary>
     /// Part number (1-based)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("part_number")]
-    public int Part_number { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("partNumber")]
+    public int PartNumber { get; set; } = default!;
 
     /// <summary>
     /// Pre-signed URL for uploading this part
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("upload_url")]
+    [System.Text.Json.Serialization.JsonPropertyName("uploadUrl")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Uri Upload_url { get; set; } = default!;
+    public System.Uri UploadUrl { get; set; } = default!;
 
     /// <summary>
     /// Minimum size for this part
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("min_size")]
-    public long Min_size { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("minSize")]
+    public long MinSize { get; set; } = default!;
 
     /// <summary>
     /// Maximum size for this part
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("max_size")]
-    public long Max_size { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("maxSize")]
+    public long MaxSize { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -350,9 +350,9 @@ public partial class PartUploadInfo
 public partial class AssetMetadataInput
 {
 
-    [System.Text.Json.Serialization.JsonPropertyName("asset_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("assetType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AssetType Asset_type { get; set; } = default!;
+    public AssetType AssetType { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
@@ -385,14 +385,14 @@ public partial class AssetMetadata
     /// <summary>
     /// Unique asset identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("asset_id")]
-    public string Asset_id { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    public string AssetId { get; set; } = default!;
 
     /// <summary>
     /// SHA256 hash of file contents
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("content_hash")]
-    public string Content_hash { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("contentHash")]
+    public string ContentHash { get; set; } = default!;
 
     /// <summary>
     /// Original filename
@@ -403,8 +403,8 @@ public partial class AssetMetadata
     /// <summary>
     /// MIME content type
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("content_type")]
-    public string Content_type { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("contentType")]
+    public string ContentType { get; set; } = default!;
 
     /// <summary>
     /// File size in bytes
@@ -412,9 +412,9 @@ public partial class AssetMetadata
     [System.Text.Json.Serialization.JsonPropertyName("size")]
     public long Size { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("asset_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("assetType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AssetType Asset_type { get; set; } = default!;
+    public AssetType AssetType { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
@@ -423,21 +423,21 @@ public partial class AssetMetadata
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
     public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("processing_status")]
+    [System.Text.Json.Serialization.JsonPropertyName("processingStatus")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ProcessingStatus Processing_status { get; set; } = default!;
+    public ProcessingStatus ProcessingStatus { get; set; } = default!;
 
     /// <summary>
     /// Whether the asset is in cold/archival storage
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("is_archived")]
-    public bool Is_archived { get; set; } = false;
+    [System.Text.Json.Serialization.JsonPropertyName("isArchived")]
+    public bool IsArchived { get; set; } = false;
 
-    [System.Text.Json.Serialization.JsonPropertyName("created_at")]
-    public System.DateTimeOffset Created_at { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("updated_at")]
-    public System.DateTimeOffset Updated_at { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -457,9 +457,9 @@ public partial class GetAssetRequest
     /// <summary>
     /// Asset identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("asset_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Asset_id { get; set; } = default!;
+    public string AssetId { get; set; } = default!;
 
     /// <summary>
     /// Version ID or 'latest'
@@ -482,32 +482,32 @@ public partial class GetAssetRequest
 public partial class AssetWithDownloadUrl
 {
 
-    [System.Text.Json.Serialization.JsonPropertyName("asset_id")]
-    public string Asset_id { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    public string AssetId { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("version_id")]
-    public string Version_id { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("versionId")]
+    public string VersionId { get; set; } = default!;
 
     /// <summary>
     /// Pre-signed download URL
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("download_url")]
-    public System.Uri Download_url { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("downloadUrl")]
+    public System.Uri DownloadUrl { get; set; } = default!;
 
     /// <summary>
     /// When the download URL expires
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("expires_at")]
-    public System.DateTimeOffset Expires_at { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("size")]
     public long Size { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("content_hash")]
-    public string Content_hash { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("contentHash")]
+    public string ContentHash { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("content_type")]
-    public string Content_type { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("contentType")]
+    public string ContentType { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public AssetMetadata Metadata { get; set; } = default!;
@@ -527,9 +527,9 @@ public partial class AssetWithDownloadUrl
 public partial class ListVersionsRequest
 {
 
-    [System.Text.Json.Serialization.JsonPropertyName("asset_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Asset_id { get; set; } = default!;
+    public string AssetId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
     public int Limit { get; set; } = 50;
@@ -552,8 +552,8 @@ public partial class ListVersionsRequest
 public partial class AssetVersionList
 {
 
-    [System.Text.Json.Serialization.JsonPropertyName("asset_id")]
-    public string Asset_id { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    public string AssetId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("versions")]
     public System.Collections.Generic.ICollection<AssetVersion> Versions { get; set; } = default!;
@@ -582,11 +582,11 @@ public partial class AssetVersionList
 public partial class AssetVersion
 {
 
-    [System.Text.Json.Serialization.JsonPropertyName("version_id")]
-    public string Version_id { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("versionId")]
+    public string VersionId { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("created_at")]
-    public System.DateTimeOffset Created_at { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("size")]
     public long Size { get; set; } = default!;
@@ -594,8 +594,8 @@ public partial class AssetVersion
     /// <summary>
     /// Whether this version is in cold storage
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("is_archived")]
-    public bool Is_archived { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("isArchived")]
+    public bool IsArchived { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -615,10 +615,10 @@ public partial class AssetSearchRequest
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
     public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("asset_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("assetType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AssetType Asset_type { get; set; } = default!;
+    public AssetType AssetType { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -628,8 +628,8 @@ public partial class AssetSearchRequest
     /// <summary>
     /// MIME content type filter
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("content_type")]
-    public string Content_type { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("contentType")]
+    public string ContentType { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
     public int Limit { get; set; } = 50;
@@ -682,9 +682,9 @@ public partial class CreateBundleRequest
     /// <summary>
     /// Unique bundle identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bundle_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Bundle_id { get; set; } = default!;
+    public string BundleId { get; set; } = default!;
 
     /// <summary>
     /// Bundle version string
@@ -695,9 +695,9 @@ public partial class CreateBundleRequest
     /// <summary>
     /// List of asset IDs to include in the bundle
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("asset_ids")]
+    [System.Text.Json.Serialization.JsonPropertyName("assetIds")]
     [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.ICollection<string> Asset_ids { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+    public System.Collections.Generic.ICollection<string> AssetIds { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     [System.Text.Json.Serialization.JsonPropertyName("compression")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
@@ -724,8 +724,8 @@ public partial class CreateBundleRequest
 public partial class CreateBundleResponse
 {
 
-    [System.Text.Json.Serialization.JsonPropertyName("bundle_id")]
-    public string Bundle_id { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    public string BundleId { get; set; } = default!;
 
     /// <summary>
     /// Bundle creation status
@@ -737,8 +737,8 @@ public partial class CreateBundleResponse
     /// <summary>
     /// Estimated bundle size in bytes
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("estimated_size")]
-    public long Estimated_size { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("estimatedSize")]
+    public long EstimatedSize { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -755,9 +755,9 @@ public partial class CreateBundleResponse
 public partial class GetBundleRequest
 {
 
-    [System.Text.Json.Serialization.JsonPropertyName("bundle_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Bundle_id { get; set; } = default!;
+    public string BundleId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("format")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
@@ -778,33 +778,33 @@ public partial class GetBundleRequest
 public partial class BundleWithDownloadUrl
 {
 
-    [System.Text.Json.Serialization.JsonPropertyName("bundle_id")]
-    public string Bundle_id { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    public string BundleId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("version")]
     public string Version { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("download_url")]
-    public System.Uri Download_url { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("downloadUrl")]
+    public System.Uri DownloadUrl { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("format")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public BundleFormat Format { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("expires_at")]
-    public System.DateTimeOffset Expires_at { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("size")]
     public long Size { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("asset_count")]
-    public int Asset_count { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("assetCount")]
+    public int AssetCount { get; set; } = default!;
 
     /// <summary>
     /// True if ZIP format was served from conversion cache
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("from_cache")]
-    public bool From_cache { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("fromCache")]
+    public bool FromCache { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -831,8 +831,8 @@ public partial class BundleUploadRequest
     [System.Text.Json.Serialization.JsonPropertyName("size")]
     public long Size { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("manifest_preview")]
-    public BundleManifestPreview Manifest_preview { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("manifestPreview")]
+    public BundleManifestPreview ManifestPreview { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -852,14 +852,14 @@ public partial class BundleUploadRequest
 public partial class BundleManifestPreview
 {
 
-    [System.Text.Json.Serialization.JsonPropertyName("bundle_id")]
-    public string Bundle_id { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    public string BundleId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("version")]
     public string Version { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("asset_count")]
-    public int Asset_count { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("assetCount")]
+    public int AssetCount { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

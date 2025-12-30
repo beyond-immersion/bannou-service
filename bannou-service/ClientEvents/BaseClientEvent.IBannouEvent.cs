@@ -13,4 +13,6 @@ public partial class BaseClientEvent : IBannouEvent
 
     /// <inheritdoc />
     DateTime Timestamp;
+
+    DateTime IBannouEvent.Timestamp => throw new NotImplementedException();
 }

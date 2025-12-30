@@ -1457,7 +1457,7 @@
             Human-readable error description
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectErrorResponse.Status_code">
+        <member name="P:BeyondImmersion.BannouService.Connect.ConnectErrorResponse.StatusCode">
             <summary>
             HTTP status code
             </summary>
@@ -1561,27 +1561,27 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.Obfuscate_not_found_response">
+        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ObfuscateNotFoundResponse">
             <summary>
             Return Unauthorized instead of NotFound for better security
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.Client_request_max_size">
+        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ClientRequestMaxSize">
             <summary>
             Maximum size for client requests in bytes
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.Client_response_max_size">
+        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ClientResponseMaxSize">
             <summary>
             Maximum size for client responses in bytes
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.Client_reconnection_time">
+        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ClientReconnectionTime">
             <summary>
             Time in seconds to allow client reconnection
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.Token_public_key">
+        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.TokenPublicKey">
             <summary>
             Base64-encoded RSA public key for JWT validation
             </summary>
@@ -1785,11 +1785,11 @@
             <summary>
             Base schema for all server-to-client push events.
             <br/>All client events MUST include these fields.
-            <br/>The event_name field is used for whitelist validation in Connect service.
+            <br/>The eventName field is used for whitelist validation in Connect service.
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Event_name">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.EventName">
             <summary>
             Unique event type identifier (e.g., "connect.capability_manifest").
             <br/>Must be in the generated ClientEventWhitelist or will be rejected.
@@ -1797,7 +1797,7 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Event_id">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.EventId">
             <summary>
             Unique identifier for this event instance
             </summary>
@@ -1805,11 +1805,6 @@
         <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Timestamp">
             <summary>
             When the event was generated (ISO 8601 format)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Correlation_id">
-            <summary>
-            Optional correlation ID for request tracing
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent">
@@ -1820,17 +1815,17 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent.Event_name">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent.Session_id">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent.SessionId">
             <summary>
             Session ID this manifest applies to
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent.Available_apis">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent.AvailableApis">
             <summary>
             List of available API endpoints with their GUIDs
             </summary>
@@ -1850,12 +1845,12 @@
             Individual API capability entry with routing information
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Service_guid">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.ServiceId">
             <summary>
             Client-salted GUID for this endpoint (unique per client)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Service_name">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.ServiceName">
             <summary>
             Service name (e.g., "accounts", "game-session")
             </summary>
@@ -1870,7 +1865,7 @@
             API endpoint path (e.g., "/accounts/get")
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Endpoint_key">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.EndpointKey">
             <summary>
             Full endpoint key for routing (e.g., "accounts:POST:/accounts/get")
             </summary>
@@ -1882,17 +1877,17 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent.Event_name">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent.Reconnection_token">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent.ReconnectionToken">
             <summary>
             Token for reconnecting to the same session (valid for 5 minutes)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent.Expires_at">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent.ExpiresAt">
             <summary>
             When the reconnection token expires
             </summary>
@@ -1919,12 +1914,12 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent.Event_name">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent.Error_code">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent.ErrorCode">
             <summary>
             Machine-readable error code (e.g., "SERVICE_UNAVAILABLE", "RATE_LIMITED")
             </summary>
@@ -1952,12 +1947,12 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.Event_name">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.EventName">
             <summary>
             Fixed event type identifier (internal, not forwarded to client)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.Session_id">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.SessionId">
             <summary>
             Session ID these capabilities apply to
             </summary>
@@ -1979,12 +1974,12 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.Event_name">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.Notification_type">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.NotificationType">
             <summary>
             Type of notification
             </summary>
@@ -1999,12 +1994,12 @@
             Optional notification title
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.Action_url">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.ActionUrl">
             <summary>
             Optional URL for more information
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.Expires_at">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.ExpiresAt">
             <summary>
             When this notification expires/becomes irrelevant
             </summary>
@@ -2017,19 +2012,19 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent.Event_name">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent.EventName">
             <summary>
             Fixed event type identifier.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent.Session_id">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent.SessionId">
             <summary>
             Target session for this shortcut.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent.Replace_existing">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent.ReplaceExisting">
             <summary>
-            If true and a shortcut with the same route_guid exists, replace it.
+            If true and a shortcut with the same routeGuid exists, replace it.
             <br/>If false and shortcut exists, the event is ignored.
             <br/>
             </summary>
@@ -2038,34 +2033,34 @@
             <summary>
             Published by services to remove shortcuts.
             <br/>Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
-            <br/>Supports both single-shortcut revocation (by route_guid) and
-            <br/>bulk revocation (all shortcuts from a source_service).
+            <br/>Supports both single-shortcut revocation (by routeGuid) and
+            <br/>bulk revocation (all shortcuts from a sourceService).
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.Event_name">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.EventName">
             <summary>
             Fixed event type identifier.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.Session_id">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.SessionId">
             <summary>
             Target session for revocation.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.Route_guid">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.RouteGuid">
             <summary>
             Specific shortcut to revoke.
             <br/>If provided, only this shortcut is removed.
-            <br/>Mutually exclusive with revoke_by_service.
+            <br/>Mutually exclusive with revokeByService.
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.Revoke_by_service">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent.RevokeByService">
             <summary>
             Revoke ALL shortcuts from this source service.
             <br/>Used when a service needs to clear all its shortcuts.
-            <br/>Mutually exclusive with route_guid.
+            <br/>Mutually exclusive with routeGuid.
             <br/>
             </summary>
         </member>
@@ -2077,25 +2072,25 @@
         <member name="T:BeyondImmersion.BannouService.ClientEvents.SessionShortcut">
             <summary>
             A pre-bound API call that clients can invoke with a single GUID.
-            <br/>The bound_payload is injected by Connect when the shortcut is invoked.
+            <br/>The boundPayload is injected by Connect when the shortcut is invoked.
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcut.Route_guid">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcut.RouteGuid">
             <summary>
             Client-salted GUID for invoking this shortcut.
             <br/>Uses UUID version 7 bits to distinguish from service GUIDs (version 5).
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcut.Target_guid">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcut.TargetGuid">
             <summary>
             The actual service capability GUID this shortcut invokes.
             <br/>Must be a valid capability in the client's current capability manifest.
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcut.Bound_payload">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcut.BoundPayload">
             <summary>
             Pre-serialized JSON payload passed unchanged to the target service.
             <br/>Connect treats this as opaque bytes - no deserialization or modification.
@@ -2120,32 +2115,32 @@
             Human-readable description of what this shortcut does.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Source_service">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.SourceService">
             <summary>
             The service that created this shortcut.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Target_service">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.TargetService">
             <summary>
             The target service for routing.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Target_method">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.TargetMethod">
             <summary>
             The target HTTP method for routing.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Target_endpoint">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.TargetEndpoint">
             <summary>
             The target endpoint for routing.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Created_at">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.CreatedAt">
             <summary>
             When this shortcut was created.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Expires_at">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.ExpiresAt">
             <summary>
             Optional TTL for this shortcut.
             <br/>If set, Connect automatically removes the shortcut after this time.
@@ -2157,7 +2152,7 @@
             Optional categorization tags for client-side organization.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.Display_name">
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionShortcutMetadata.DisplayName">
             <summary>
             Optional user-friendly name for display in client UIs.
             </summary>
@@ -2915,27 +2910,27 @@
             File size in bytes
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.UploadRequest.Content_type">
+        <member name="P:BeyondImmersion.BannouService.Asset.UploadRequest.ContentType">
             <summary>
             MIME content type (e.g., image/png, model/gltf-binary)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.UploadResponse.Upload_id">
+        <member name="P:BeyondImmersion.BannouService.Asset.UploadResponse.UploadId">
             <summary>
             Unique upload session identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.UploadResponse.Upload_url">
+        <member name="P:BeyondImmersion.BannouService.Asset.UploadResponse.UploadUrl">
             <summary>
             Pre-signed URL for uploading the file
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.UploadResponse.Expires_at">
+        <member name="P:BeyondImmersion.BannouService.Asset.UploadResponse.ExpiresAt">
             <summary>
             When the upload URL expires
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CompleteUploadRequest.Upload_id">
+        <member name="P:BeyondImmersion.BannouService.Asset.CompleteUploadRequest.UploadId">
             <summary>
             Upload session ID from requestUpload
             </summary>
@@ -2945,7 +2940,7 @@
             For multipart uploads - ETags of completed parts
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CompletedPart.Part_number">
+        <member name="P:BeyondImmersion.BannouService.Asset.CompletedPart.PartNumber">
             <summary>
             Part number (1-based)
             </summary>
@@ -2960,32 +2955,32 @@
             Whether multipart upload is required for this file size
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.MultipartConfig.Part_size">
+        <member name="P:BeyondImmersion.BannouService.Asset.MultipartConfig.PartSize">
             <summary>
             Size of each part in bytes
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.MultipartConfig.Max_parts">
+        <member name="P:BeyondImmersion.BannouService.Asset.MultipartConfig.MaxParts">
             <summary>
             Maximum number of parts
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.PartUploadInfo.Part_number">
+        <member name="P:BeyondImmersion.BannouService.Asset.PartUploadInfo.PartNumber">
             <summary>
             Part number (1-based)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.PartUploadInfo.Upload_url">
+        <member name="P:BeyondImmersion.BannouService.Asset.PartUploadInfo.UploadUrl">
             <summary>
             Pre-signed URL for uploading this part
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.PartUploadInfo.Min_size">
+        <member name="P:BeyondImmersion.BannouService.Asset.PartUploadInfo.MinSize">
             <summary>
             Minimum size for this part
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.PartUploadInfo.Max_size">
+        <member name="P:BeyondImmersion.BannouService.Asset.PartUploadInfo.MaxSize">
             <summary>
             Maximum size for this part
             </summary>
@@ -3005,12 +3000,12 @@
             Complete asset metadata including system-generated fields
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.Asset_id">
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.AssetId">
             <summary>
             Unique asset identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.Content_hash">
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.ContentHash">
             <summary>
             SHA256 hash of file contents
             </summary>
@@ -3020,7 +3015,7 @@
             Original filename
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.Content_type">
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.ContentType">
             <summary>
             MIME content type
             </summary>
@@ -3030,12 +3025,12 @@
             File size in bytes
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.Is_archived">
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetMetadata.IsArchived">
             <summary>
             Whether the asset is in cold/archival storage
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.GetAssetRequest.Asset_id">
+        <member name="P:BeyondImmersion.BannouService.Asset.GetAssetRequest.AssetId">
             <summary>
             Asset identifier
             </summary>
@@ -3045,27 +3040,27 @@
             Version ID or 'latest'
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.Download_url">
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.DownloadUrl">
             <summary>
             Pre-signed download URL
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.Expires_at">
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.ExpiresAt">
             <summary>
             When the download URL expires
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersion.Is_archived">
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetVersion.IsArchived">
             <summary>
             Whether this version is in cold storage
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchRequest.Content_type">
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetSearchRequest.ContentType">
             <summary>
             MIME content type filter
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.Bundle_id">
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.BundleId">
             <summary>
             Unique bundle identifier
             </summary>
@@ -3075,7 +3070,7 @@
             Bundle version string
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.Asset_ids">
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.AssetIds">
             <summary>
             List of asset IDs to include in the bundle
             </summary>
@@ -3090,12 +3085,12 @@
             Bundle creation status
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleResponse.Estimated_size">
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleResponse.EstimatedSize">
             <summary>
             Estimated bundle size in bytes
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.From_cache">
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleWithDownloadUrl.FromCache">
             <summary>
             True if ZIP format was served from conversion cache
             </summary>
@@ -9962,7 +9957,7 @@
             Response containing the OAuth authorization URL for redirect
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.InitOAuthResponse.Authorization_url">
+        <member name="P:BeyondImmersion.BannouService.Auth.InitOAuthResponse.AuthorizationUrl">
             <summary>
             The OAuth provider authorization URL to redirect the user to
             </summary>
@@ -12013,7 +12008,7 @@
             Configuration key prefixes present (e.g., "auth", "database")
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorRequest.Pool_type">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorRequest.PoolType">
             <summary>
             Type of processing pool (e.g., "asset-processor", "texture-processor")
             </summary>
@@ -12023,7 +12018,7 @@
             Request priority (higher = more urgent)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorRequest.Timeout_seconds">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorRequest.TimeoutSeconds">
             <summary>
             How long the lease is valid for
             </summary>
@@ -12033,37 +12028,37 @@
             Optional metadata about the processing job
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorResponse.Processor_id">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorResponse.ProcessorId">
             <summary>
             Unique identifier for this processor instance
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorResponse.App_id">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorResponse.AppId">
             <summary>
             App-id for mesh service invocation to this processor
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorResponse.Lease_id">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorResponse.LeaseId">
             <summary>
             Unique lease identifier (used for release)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorResponse.Expires_at">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorResponse.ExpiresAt">
             <summary>
             When the lease expires (must release before this)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse.Pool_type">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse.PoolType">
             <summary>
             Pool type that is busy
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse.Queue_position">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse.QueuePosition">
             <summary>
             Position in the wait queue (0 = not queued)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse.Estimated_wait_seconds">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse.EstimatedWaitSeconds">
             <summary>
             Estimated wait time until a processor is available
             </summary>
@@ -12073,7 +12068,7 @@
             Human-readable status message
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.ReleaseProcessorRequest.Lease_id">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ReleaseProcessorRequest.LeaseId">
             <summary>
             The lease ID returned from AcquireProcessor
             </summary>
@@ -12093,42 +12088,42 @@
             Whether the processor was successfully released
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.ReleaseProcessorResponse.Processor_id">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ReleaseProcessorResponse.ProcessorId">
             <summary>
             ID of the released processor
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.GetPoolStatusRequest.Pool_type">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.GetPoolStatusRequest.PoolType">
             <summary>
             Type of processing pool to query
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.GetPoolStatusRequest.Include_metrics">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.GetPoolStatusRequest.IncludeMetrics">
             <summary>
             Include recent processing metrics
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse.Pool_type">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse.PoolType">
             <summary>
             Pool type
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse.Total_instances">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse.TotalInstances">
             <summary>
             Total processor instances in the pool
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse.Available_instances">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse.AvailableInstances">
             <summary>
             Instances ready to accept work
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse.Busy_instances">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse.BusyInstances">
             <summary>
             Instances currently processing
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse.Queue_depth">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse.QueueDepth">
             <summary>
             Number of requests waiting for a processor
             </summary>
@@ -12138,47 +12133,47 @@
             Current utilization percentage (0.0 to 1.0)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse.Min_instances">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse.MinInstances">
             <summary>
             Minimum configured instances
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse.Max_instances">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse.MaxInstances">
             <summary>
             Maximum configured instances
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse.Scale_up_threshold">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolStatusResponse.ScaleUpThreshold">
             <summary>
             Utilization threshold for auto-scale-up
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolMetrics.Jobs_completed_1h">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolMetrics.JobsCompleted1h">
             <summary>
             Jobs completed in the last hour
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolMetrics.Jobs_failed_1h">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolMetrics.JobsFailed1h">
             <summary>
             Jobs failed in the last hour
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolMetrics.Avg_processing_time_ms">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolMetrics.AvgProcessingTimeMs">
             <summary>
             Average processing time in milliseconds
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolMetrics.Last_scale_event">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolMetrics.LastScaleEvent">
             <summary>
             When the pool was last scaled
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.ScalePoolRequest.Pool_type">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ScalePoolRequest.PoolType">
             <summary>
             Type of processing pool to scale
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.ScalePoolRequest.Target_instances">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ScalePoolRequest.TargetInstances">
             <summary>
             Desired number of instances
             </summary>
@@ -12188,27 +12183,27 @@
             Force scale even if it would interrupt processing
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.ScalePoolResponse.Pool_type">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ScalePoolResponse.PoolType">
             <summary>
             Pool type that was scaled
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.ScalePoolResponse.Previous_instances">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ScalePoolResponse.PreviousInstances">
             <summary>
             Instance count before scaling
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.ScalePoolResponse.Current_instances">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ScalePoolResponse.CurrentInstances">
             <summary>
             Instance count after scaling
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.ScalePoolResponse.Scaled_up">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ScalePoolResponse.ScaledUp">
             <summary>
             Number of instances added
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.ScalePoolResponse.Scaled_down">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ScalePoolResponse.ScaledDown">
             <summary>
             Number of instances removed
             </summary>
@@ -12218,27 +12213,27 @@
             Status message
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanupPoolRequest.Pool_type">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanupPoolRequest.PoolType">
             <summary>
             Type of processing pool to cleanup
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanupPoolRequest.Preserve_minimum">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanupPoolRequest.PreserveMinimum">
             <summary>
-            Keep at least min_instances running
+            Keep at least minInstances running
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanupPoolResponse.Pool_type">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanupPoolResponse.PoolType">
             <summary>
             Pool type that was cleaned up
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanupPoolResponse.Instances_removed">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanupPoolResponse.InstancesRemoved">
             <summary>
             Number of idle instances removed
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanupPoolResponse.Current_instances">
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanupPoolResponse.CurrentInstances">
             <summary>
             Instance count after cleanup
             </summary>
@@ -13261,26 +13256,26 @@
             Unique identifier for the cached behavior to invalidate
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.Abml_content">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.AbmlContent">
             <summary>
             Raw ABML YAML content to compile
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.Behavior_name">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.BehaviorName">
             <summary>
             Optional human-readable name for the behavior.
             <br/>If not provided, extracted from ABML metadata.id or generated from content hash.
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.Behavior_category">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.BehaviorCategory">
             <summary>
             Category for organizing behaviors (e.g., profession, cultural, situational).
             <br/>Used for filtering and grouping in bundles.
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.Bundle_id">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.BundleId">
             <summary>
             Optional bundle identifier for grouping related behaviors.
             <br/>When specified, the compiled behavior will be added to a bundle with this ID.
@@ -13289,22 +13284,22 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest.Behavior_sets">
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest.BehaviorSets">
             <summary>
             Array of behavior sets to compile together
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlRequest.Abml_content">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlRequest.AbmlContent">
             <summary>
             Raw ABML YAML content to validate
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlRequest.Strict_mode">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlRequest.StrictMode">
             <summary>
             Enable strict validation mode with enhanced checking
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextRequest.Context_expression">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextRequest.ContextExpression">
             <summary>
             Context variable expression to resolve
             </summary>
@@ -13314,32 +13309,32 @@
             Whether compilation was successful
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Behavior_id">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.BehaviorId">
             <summary>
             Unique identifier for the compiled behavior (content-addressable hash)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Behavior_name">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.BehaviorName">
             <summary>
             Human-readable name of the behavior
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Compilation_time_ms">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.CompilationTimeMs">
             <summary>
             Time taken to compile the behavior
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Asset_id">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.AssetId">
             <summary>
             Asset service ID where the compiled bytecode is stored
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Bundle_id">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.BundleId">
             <summary>
             Bundle ID if the behavior was added to a bundle
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Is_update">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.IsUpdate">
             <summary>
             True if this replaced an existing behavior with the same content hash
             </summary>
@@ -13349,52 +13344,52 @@
             Non-fatal warnings during compilation
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.Is_valid">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.IsValid">
             <summary>
             Whether the ABML definition is valid
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.Validation_errors">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.ValidationErrors">
             <summary>
             List of validation errors if invalid
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.Semantic_warnings">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.SemanticWarnings">
             <summary>
             Semantic warnings that don't prevent compilation
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.Schema_version">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.SchemaVersion">
             <summary>
             ABML schema version used for validation
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse.Behavior_id">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse.BehaviorId">
             <summary>
             Unique identifier for the cached behavior
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse.Cache_timestamp">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse.CacheTimestamp">
             <summary>
             When the behavior was cached
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse.Cache_hit">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse.CacheHit">
             <summary>
             Whether this was a cache hit or miss
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextResponse.Resolved_value">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextResponse.ResolvedValue">
             <summary>
             The resolved value of the context expression
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextResponse.Resolved_type">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextResponse.ResolvedType">
             <summary>
             Type of the resolved value
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextResponse.Context_variables_used">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextResponse.ContextVariablesUsed">
             <summary>
             List of context variables referenced in the expression
             </summary>
@@ -13414,7 +13409,7 @@
             Category of the behavior set
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.Abml_content">
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.AbmlContent">
             <summary>
             Raw ABML YAML content for this behavior set
             </summary>
@@ -13424,7 +13419,7 @@
             Additional metadata for the behavior set
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.Npc_id">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.NpcId">
             <summary>
             Unique identifier for the NPC
             </summary>
@@ -13454,7 +13449,7 @@
             Relationship values with other characters
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.World_state">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.WorldState">
             <summary>
             Relevant world state information
             </summary>
@@ -13469,12 +13464,12 @@
             Base64-encoded compiled bytecode for the behavior tree
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorTreeData.Bytecode_size">
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorTreeData.BytecodeSize">
             <summary>
             Size of the bytecode in bytes
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorTreeData.Download_url">
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorTreeData.DownloadUrl">
             <summary>
             URL to download the compiled behavior asset
             </summary>
@@ -13484,12 +13479,12 @@
             Schema defining required context variables for behavior execution
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.Service_dependencies">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.ServiceDependencies">
             <summary>
             List of required services for this behavior
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.Goap_goals">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.GoapGoals">
             <summary>
             GOAP goals extracted from the behavior
             </summary>
@@ -13519,17 +13514,17 @@
             World state conditions required to pursue this goal
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.Agent_id">
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.AgentId">
             <summary>
             Unique identifier for the agent requesting the plan
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.World_state">
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.WorldState">
             <summary>
             Current world state as key-value pairs
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.Behavior_id">
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.BehaviorId">
             <summary>
             ID of compiled behavior containing GOAP actions
             </summary>
@@ -13539,22 +13534,22 @@
             Whether planning was successful
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.Planning_time_ms">
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.PlanningTimeMs">
             <summary>
             Time spent planning in milliseconds
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.Nodes_expanded">
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.NodesExpanded">
             <summary>
             Number of nodes expanded during A* search
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.Failure_reason">
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.FailureReason">
             <summary>
             Reason for planning failure if unsuccessful
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResult.Goal_id">
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResult.GoalId">
             <summary>
             ID of the goal this plan achieves
             </summary>
@@ -13564,12 +13559,12 @@
             Ordered sequence of actions to execute
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResult.Total_cost">
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResult.TotalCost">
             <summary>
             Total cost of all actions in the plan
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.PlannedActionResponse.Action_id">
+        <member name="P:BeyondImmersion.BannouService.Behavior.PlannedActionResponse.ActionId">
             <summary>
             ID of the action (flow name)
             </summary>
@@ -13584,22 +13579,22 @@
             Cost of this action
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.Current_action_index">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.CurrentActionIndex">
             <summary>
             Index of the action currently being executed
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.World_state">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.WorldState">
             <summary>
             Current world state
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.Active_goals">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.ActiveGoals">
             <summary>
             All active goals for priority checking
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.Is_valid">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.IsValid">
             <summary>
             Whether the plan is still valid
             </summary>
@@ -13609,12 +13604,12 @@
             Reason for the validation result
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.Suggested_action">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.SuggestedAction">
             <summary>
             Suggested action based on validation
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.Invalidated_at_index">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.InvalidatedAtIndex">
             <summary>
             Index where plan became invalid (if applicable)
             </summary>
@@ -13624,42 +13619,42 @@
             Additional details about the validation result
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions.Max_depth">
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions.MaxDepth">
             <summary>
             Maximum plan depth (number of actions)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions.Max_nodes">
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions.MaxNodes">
             <summary>
             Maximum nodes to expand during search
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions.Timeout_ms">
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions.TimeoutMs">
             <summary>
             Planning timeout in milliseconds
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.Enable_optimizations">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.EnableOptimizations">
             <summary>
             Enable behavior tree optimizations
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.Cache_compiled_result">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.CacheCompiledResult">
             <summary>
             Cache the compiled behavior for reuse
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.Strict_validation">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.StrictValidation">
             <summary>
             Enable strict validation mode
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.Cultural_adaptations">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.CulturalAdaptations">
             <summary>
             Apply cultural adaptations during compilation
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.Goap_integration">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.GoapIntegration">
             <summary>
             Generate GOAP goals from behaviors
             </summary>
@@ -13674,17 +13669,17 @@
             Human-readable error message
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.Line_number">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.LineNumber">
             <summary>
             Line number where the error occurred (if applicable)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.Column_number">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.ColumnNumber">
             <summary>
             Column number where the error occurred (if applicable)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.Yaml_path">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.YamlPath">
             <summary>
             YAML path to the problematic element
             </summary>
@@ -13694,7 +13689,7 @@
             Error message
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Error_code">
+        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.ErrorCode">
             <summary>
             Specific error code for programmatic handling
             </summary>
@@ -13704,12 +13699,12 @@
             Detailed error information
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Validation_errors">
+        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.ValidationErrors">
             <summary>
             Validation errors encountered
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Yaml_line">
+        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.YamlLine">
             <summary>
             Line number in YAML where error occurred
             </summary>
@@ -13724,12 +13719,12 @@
             When the error occurred
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Request_id">
+        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.RequestId">
             <summary>
             Unique identifier for the failed request
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.Execution_metadata.Estimated_duration">
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExecutionMetadata.EstimatedDuration">
             <summary>
             Estimated execution time in seconds
             </summary>
@@ -15243,6 +15238,14 @@
             <br/>
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BaseServiceEvent.EventName">
+            <summary>
+            Unique event type identifier (e.g., "connect.capability_manifest").
+            <br/>Must be in the generated ClientEventWhitelist or will be rejected.
+            <br/>Convention: {service}.{event_type}
+            <br/>
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.BaseServiceEvent.EventId">
             <summary>
             Unique identifier for this event instance (UUID string)
@@ -15261,6 +15264,11 @@
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceRegistrationEvent.ServiceId">
+            <summary>
+            Unique GUID identifying this bannou instance (for log correlation/debugging)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceRegistrationEvent.ServiceName">
             <summary>
             Service ID that registered (e.g., "behavior", "accounts")
             </summary>
@@ -15444,6 +15452,11 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.ServiceId">
             <summary>
+            Unique GUID identifying this plugin instance (for log correlation/debugging)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.ServiceName">
+            <summary>
             Logical service name emitting the error (e.g., "accounts")
             </summary>
         </member>
@@ -15597,7 +15610,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionDisconnectedEvent.AccountId">
             <summary>
-            Account ID that was connected (if known)
+            Account ID that was disconnected
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionDisconnectedEvent.Reason">
@@ -18163,12 +18176,12 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetUploadCompleteEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetUploadCompleteEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetUploadCompleteEvent.Upload_id">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetUploadCompleteEvent.UploadId">
             <summary>
             Correlates with the upload request
             </summary>
@@ -18178,12 +18191,12 @@
             Whether the upload completed successfully
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetUploadCompleteEvent.Asset_id">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetUploadCompleteEvent.AssetId">
             <summary>
             Asset ID assigned on success
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetUploadCompleteEvent.Content_hash">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetUploadCompleteEvent.ContentHash">
             <summary>
             SHA256 hash of uploaded content
             </summary>
@@ -18193,7 +18206,7 @@
             File size in bytes
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetUploadCompleteEvent.Error_message">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetUploadCompleteEvent.ErrorMessage">
             <summary>
             Human-readable error description
             </summary>
@@ -18205,12 +18218,12 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingCompleteEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingCompleteEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingCompleteEvent.Asset_id">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingCompleteEvent.AssetId">
             <summary>
             ID of the asset that was processed
             </summary>
@@ -18225,7 +18238,7 @@
             Generated derivative assets (mipmaps, LODs, etc.)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingCompleteEvent.Error_message">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingCompleteEvent.ErrorMessage">
             <summary>
             Human-readable error description
             </summary>
@@ -18236,27 +18249,27 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingFailedEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingFailedEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingFailedEvent.Asset_id">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingFailedEvent.AssetId">
             <summary>
             ID of the asset that failed processing
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingFailedEvent.Error_message">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingFailedEvent.ErrorMessage">
             <summary>
             Human-readable error description
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingFailedEvent.Retry_available">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingFailedEvent.RetryAvailable">
             <summary>
             Whether the operation can be retried
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingFailedEvent.Retry_after_ms">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingFailedEvent.RetryAfterMs">
             <summary>
             Suggested retry delay in milliseconds
             </summary>
@@ -18268,12 +18281,12 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationCompleteEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationCompleteEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationCompleteEvent.Upload_id">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationCompleteEvent.UploadId">
             <summary>
             Correlates with the bundle upload request
             </summary>
@@ -18283,17 +18296,17 @@
             Whether validation passed
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationCompleteEvent.Bundle_id">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationCompleteEvent.BundleId">
             <summary>
             Assigned bundle ID on success
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationCompleteEvent.Assets_registered">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationCompleteEvent.AssetsRegistered">
             <summary>
             Number of assets extracted and registered
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationCompleteEvent.Duplicates_skipped">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationCompleteEvent.DuplicatesSkipped">
             <summary>
             Assets with matching hash already in storage
             </summary>
@@ -18304,12 +18317,12 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationFailedEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationFailedEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationFailedEvent.Upload_id">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationFailedEvent.UploadId">
             <summary>
             Correlates with the bundle upload request
             </summary>
@@ -18320,12 +18333,12 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleCreationCompleteEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleCreationCompleteEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleCreationCompleteEvent.Bundle_id">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleCreationCompleteEvent.BundleId">
             <summary>
             ID of the created bundle
             </summary>
@@ -18335,7 +18348,7 @@
             Whether creation completed successfully
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleCreationCompleteEvent.Download_url">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleCreationCompleteEvent.DownloadUrl">
             <summary>
             Pre-signed download URL (on success)
             </summary>
@@ -18345,17 +18358,17 @@
             Bundle file size in bytes
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleCreationCompleteEvent.Asset_count">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleCreationCompleteEvent.AssetCount">
             <summary>
             Number of assets in the bundle
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleCreationCompleteEvent.Error_code">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleCreationCompleteEvent.ErrorCode">
             <summary>
             Error code on failure
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleCreationCompleteEvent.Error_message">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.BundleCreationCompleteEvent.ErrorMessage">
             <summary>
             Human-readable error description
             </summary>
@@ -18367,22 +18380,22 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetReadyEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetReadyEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetReadyEvent.Asset_id">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetReadyEvent.AssetId">
             <summary>
             ID of the asset that is now ready
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetReadyEvent.Version_id">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetReadyEvent.VersionId">
             <summary>
             Version ID of this asset
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetReadyEvent.Content_hash">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetReadyEvent.ContentHash">
             <summary>
             SHA256 hash of the asset
             </summary>
@@ -18392,7 +18405,7 @@
             File size in bytes
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetReadyEvent.Content_type">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.AssetReadyEvent.ContentType">
             <summary>
             MIME content type
             </summary>
@@ -18422,12 +18435,12 @@
             Information about a generated derivative asset
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.ProcessingOutput.Output_type">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.ProcessingOutput.OutputType">
             <summary>
             Type of output (e.g., "mipmap_level_1", "lod_2")
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.ProcessingOutput.Asset_id">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.ProcessingOutput.AssetId">
             <summary>
             ID of the generated asset
             </summary>
@@ -18452,7 +18465,7 @@
             Warning message
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.ValidationWarning.Asset_path">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.ValidationWarning.AssetPath">
             <summary>
             Path within bundle where warning occurred
             </summary>
@@ -18467,7 +18480,7 @@
             Error message
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.ValidationError.Asset_path">
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.ValidationError.AssetPath">
             <summary>
             Path within bundle where error occurred
             </summary>
@@ -18484,22 +18497,22 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.Session_id">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.SessionId">
             <summary>
             ID of the game session
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.Previous_state">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.PreviousState">
             <summary>
             State before the change
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.New_state">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.NewState">
             <summary>
             State after the change
             </summary>
@@ -18509,7 +18522,7 @@
             Reason for state change (e.g., "host_started", "timeout", "admin_action")
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.Changed_by">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.ChangedBy">
             <summary>
             Account ID of user who triggered the change (if applicable)
             </summary>
@@ -18520,22 +18533,22 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.Session_id">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.SessionId">
             <summary>
             ID of the game session
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.Current_player_count">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.CurrentPlayerCount">
             <summary>
             Total players in session after join
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.Max_players">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.MaxPlayers">
             <summary>
             Maximum allowed players
             </summary>
@@ -18546,32 +18559,32 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.Session_id">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.SessionId">
             <summary>
             ID of the game session
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.Player_id">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.PlayerId">
             <summary>
             Account ID of player who left
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.Display_name">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.DisplayName">
             <summary>
             Display name for UI notification
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.Current_player_count">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.CurrentPlayerCount">
             <summary>
             Total players remaining after departure
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.New_owner_id">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.NewOwnerId">
             <summary>
             New session owner if ownership transferred
             </summary>
@@ -18583,27 +18596,27 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.Session_id">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.SessionId">
             <summary>
             ID of the game session
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.Kicked_player_id">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.KickedPlayerId">
             <summary>
             Account ID of player who was kicked
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.Kicked_player_name">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.KickedPlayerName">
             <summary>
             Display name for UI notification
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.Kicked_by">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.KickedBy">
             <summary>
             Account ID of user who performed the kick
             </summary>
@@ -18620,27 +18633,27 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Session_id">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.SessionId">
             <summary>
             ID of the game session
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Message_id">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.MessageId">
             <summary>
             Unique identifier for this chat message
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Sender_id">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.SenderId">
             <summary>
             Account ID of message sender
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Sender_name">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.SenderName">
             <summary>
             Display name of sender
             </summary>
@@ -18650,12 +18663,12 @@
             Chat message content
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Message_type">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.MessageType">
             <summary>
             Type of chat message
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Is_whisper_to_me">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.IsWhisperToMe">
             <summary>
             True if this is a whisper directed at the receiving client
             </summary>
@@ -18667,32 +18680,32 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.Session_id">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.SessionId">
             <summary>
             ID of the game session
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.Update_type">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.UpdateType">
             <summary>
             Type of update (game-specific, e.g., "turn_changed", "score_updated")
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.State_delta">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.StateDelta">
             <summary>
             Partial game state changes
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.Triggered_by">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.TriggeredBy">
             <summary>
             Account ID that triggered the state change
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.Sequence_number">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.SequenceNumber">
             <summary>
             Monotonically increasing sequence for ordering state updates
             </summary>
@@ -18704,27 +18717,27 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Session_id">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.SessionId">
             <summary>
             ID of the game session
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Action_id">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.ActionId">
             <summary>
             ID of the action that produced this result
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Action_type">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.ActionType">
             <summary>
             Type of action performed
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Actor_id">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.ActorId">
             <summary>
             Account ID of player who performed the action
             </summary>
@@ -18734,12 +18747,12 @@
             Whether the action succeeded
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Result_data">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.ResultData">
             <summary>
             Action-specific result data
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Visible_effects">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.VisibleEffects">
             <summary>
             Visual/audio effects other players should see
             </summary>
@@ -18749,12 +18762,12 @@
             Information about a player in the session
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerInfo.Account_id">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerInfo.AccountId">
             <summary>
             Player's account ID
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerInfo.Display_name">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerInfo.DisplayName">
             <summary>
             Player's display name
             </summary>
@@ -18764,7 +18777,7 @@
             Player's role in the session
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerInfo.Character_data">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerInfo.CharacterData">
             <summary>
             Game-specific character data
             </summary>
@@ -18774,12 +18787,12 @@
             A visual or audio effect that should be rendered
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect.Effect_type">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect.EffectType">
             <summary>
             Type of effect (e.g., "damage_number", "particle", "sound")
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect.Target_id">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect.TargetId">
             <summary>
             Entity the effect targets
             </summary>
@@ -18789,7 +18802,7 @@
             World position for the effect
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect.Effect_data">
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect.EffectData">
             <summary>
             Effect-specific parameters
             </summary>
@@ -18801,17 +18814,17 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.Room_id">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.RoomId">
             <summary>
             Voice room ID
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.Session_id">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.SessionId">
             <summary>
             Associated game session ID
             </summary>
@@ -18831,12 +18844,12 @@
             List of peers to connect to (P2P mode)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.Rtp_server_uri">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.RtpServerUri">
             <summary>
             RTP server URI (scaled mode only)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.Stun_servers">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent.StunServers">
             <summary>
             STUN server URIs for NAT traversal
             </summary>
@@ -18848,12 +18861,12 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerJoinedEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerJoinedEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerJoinedEvent.Room_id">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerJoinedEvent.RoomId">
             <summary>
             Voice room ID
             </summary>
@@ -18863,7 +18876,7 @@
             New peer's connection details
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerJoinedEvent.Current_participant_count">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerJoinedEvent.CurrentParticipantCount">
             <summary>
             Total participants after join
             </summary>
@@ -18874,27 +18887,27 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent.Room_id">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent.RoomId">
             <summary>
             Voice room ID
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent.Peer_session_id">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent.PeerSessionId">
             <summary>
             WebSocket session ID of the peer who left (ephemeral identifier)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent.Display_name">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent.DisplayName">
             <summary>
             Display name for UI notification
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent.Remaining_participant_count">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent.RemainingParticipantCount">
             <summary>
             Participants remaining after departure
             </summary>
@@ -18906,12 +18919,12 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerUpdatedEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerUpdatedEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerUpdatedEvent.Room_id">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerUpdatedEvent.RoomId">
             <summary>
             Voice room ID
             </summary>
@@ -18929,37 +18942,37 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.Room_id">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.RoomId">
             <summary>
             Voice room ID
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.Previous_tier">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.PreviousTier">
             <summary>
             Previous tier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.New_tier">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.NewTier">
             <summary>
             New tier after upgrade
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.Rtp_server_uri">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.RtpServerUri">
             <summary>
             RTP server URI to connect to
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.Sip_credentials">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.SipCredentials">
             <summary>
             Credentials for SIP registration with Kamailio
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.Migration_deadline_ms">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent.MigrationDeadlineMs">
             <summary>
             Milliseconds to complete migration before P2P disconnects
             </summary>
@@ -18971,12 +18984,12 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomClosedEvent.Event_name">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomClosedEvent.EventName">
             <summary>
             Fixed event type identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomClosedEvent.Room_id">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomClosedEvent.RoomId">
             <summary>
             Voice room ID that was closed
             </summary>
@@ -18991,27 +19004,27 @@
             Peer connection information for P2P voice
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerInfo.Peer_session_id">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerInfo.PeerSessionId">
             <summary>
             WebSocket session ID for this peer (ephemeral identifier)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerInfo.Display_name">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerInfo.DisplayName">
             <summary>
             Peer's display name
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerInfo.Sdp_offer">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerInfo.SdpOffer">
             <summary>
             SDP offer for WebRTC negotiation
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerInfo.Ice_candidates">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerInfo.IceCandidates">
             <summary>
             ICE candidates for NAT traversal
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerInfo.Is_muted">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerInfo.IsMuted">
             <summary>
             Whether peer is currently muted
             </summary>
@@ -19039,7 +19052,7 @@
             SIP domain/realm for authentication (e.g., "voice.bannou.local")
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.SipCredentials.Expires_at">
+        <member name="P:BeyondImmersion.Bannou.Voice.ClientEvents.SipCredentials.ExpiresAt">
             <summary>
             When these credentials expire (clients should re-authenticate before this)
             </summary>

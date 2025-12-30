@@ -40,17 +40,17 @@ public partial class AssetUploadCompleteEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AssetUploadCompleteEventEvent_name Event_name { get; set; } = default!;
+    public AssetUploadCompleteEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// Correlates with the upload request
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("upload_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("uploadId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Upload_id { get; set; } = default!;
+    public System.Guid UploadId { get; set; } = default!;
 
     /// <summary>
     /// Whether the upload completed successfully
@@ -61,14 +61,14 @@ public partial class AssetUploadCompleteEvent : BaseClientEvent
     /// <summary>
     /// Asset ID assigned on success
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("asset_id")]
-    public string? Asset_id { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    public string? AssetId { get; set; } = default!;
 
     /// <summary>
     /// SHA256 hash of uploaded content
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("content_hash")]
-    public string? Content_hash { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("contentHash")]
+    public string? ContentHash { get; set; } = default!;
 
     /// <summary>
     /// File size in bytes
@@ -76,15 +76,15 @@ public partial class AssetUploadCompleteEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("size")]
     public long? Size { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("error_code")]
+    [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public UploadErrorCode? Error_code { get; set; } = default!;
+    public UploadErrorCode? ErrorCode { get; set; } = default!;
 
     /// <summary>
     /// Human-readable error description
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("error_message")]
-    public string? Error_message { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
+    public string? ErrorMessage { get; set; } = default!;
 
 }
 
@@ -100,17 +100,17 @@ public partial class AssetProcessingCompleteEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AssetProcessingCompleteEventEvent_name Event_name { get; set; } = default!;
+    public AssetProcessingCompleteEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// ID of the asset that was processed
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("asset_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Asset_id { get; set; } = default!;
+    public string AssetId { get; set; } = default!;
 
     /// <summary>
     /// Whether processing completed successfully
@@ -118,9 +118,9 @@ public partial class AssetProcessingCompleteEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("processing_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("processingType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ProcessingType? Processing_type { get; set; } = default!;
+    public ProcessingType? ProcessingType { get; set; } = default!;
 
     /// <summary>
     /// Generated derivative assets (mipmaps, LODs, etc.)
@@ -128,15 +128,15 @@ public partial class AssetProcessingCompleteEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("outputs")]
     public System.Collections.Generic.ICollection<ProcessingOutput>? Outputs { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("error_code")]
+    [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ProcessingErrorCode? Error_code { get; set; } = default!;
+    public ProcessingErrorCode? ErrorCode { get; set; } = default!;
 
     /// <summary>
     /// Human-readable error description
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("error_message")]
-    public string? Error_message { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
+    public string? ErrorMessage { get; set; } = default!;
 
 }
 
@@ -151,39 +151,39 @@ public partial class AssetProcessingFailedEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AssetProcessingFailedEventEvent_name Event_name { get; set; } = default!;
+    public AssetProcessingFailedEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// ID of the asset that failed processing
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("asset_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Asset_id { get; set; } = default!;
+    public string AssetId { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("error_code")]
+    [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ProcessingErrorCode? Error_code { get; set; } = default!;
+    public ProcessingErrorCode? ErrorCode { get; set; } = default!;
 
     /// <summary>
     /// Human-readable error description
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("error_message")]
-    public string? Error_message { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
+    public string? ErrorMessage { get; set; } = default!;
 
     /// <summary>
     /// Whether the operation can be retried
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("retry_available")]
-    public bool Retry_available { get; set; } = true;
+    [System.Text.Json.Serialization.JsonPropertyName("retryAvailable")]
+    public bool RetryAvailable { get; set; } = true;
 
     /// <summary>
     /// Suggested retry delay in milliseconds
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("retry_after_ms")]
-    public int? Retry_after_ms { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("retryAfterMs")]
+    public int? RetryAfterMs { get; set; } = default!;
 
 }
 
@@ -199,17 +199,17 @@ public partial class BundleValidationCompleteEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BundleValidationCompleteEventEvent_name Event_name { get; set; } = default!;
+    public BundleValidationCompleteEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// Correlates with the bundle upload request
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("upload_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("uploadId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Upload_id { get; set; } = default!;
+    public System.Guid UploadId { get; set; } = default!;
 
     /// <summary>
     /// Whether validation passed
@@ -220,20 +220,20 @@ public partial class BundleValidationCompleteEvent : BaseClientEvent
     /// <summary>
     /// Assigned bundle ID on success
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bundle_id")]
-    public string? Bundle_id { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    public string? BundleId { get; set; } = default!;
 
     /// <summary>
     /// Number of assets extracted and registered
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("assets_registered")]
-    public int? Assets_registered { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("assetsRegistered")]
+    public int? AssetsRegistered { get; set; } = default!;
 
     /// <summary>
     /// Assets with matching hash already in storage
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("duplicates_skipped")]
-    public int? Duplicates_skipped { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("duplicatesSkipped")]
+    public int? DuplicatesSkipped { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("warnings")]
     public System.Collections.Generic.ICollection<ValidationWarning>? Warnings { get; set; } = default!;
@@ -251,17 +251,17 @@ public partial class BundleValidationFailedEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BundleValidationFailedEventEvent_name Event_name { get; set; } = default!;
+    public BundleValidationFailedEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// Correlates with the bundle upload request
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("upload_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("uploadId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Upload_id { get; set; } = default!;
+    public System.Guid UploadId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("errors")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -280,17 +280,17 @@ public partial class BundleCreationCompleteEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BundleCreationCompleteEventEvent_name Event_name { get; set; } = default!;
+    public BundleCreationCompleteEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// ID of the created bundle
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bundle_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Bundle_id { get; set; } = default!;
+    public string BundleId { get; set; } = default!;
 
     /// <summary>
     /// Whether creation completed successfully
@@ -301,8 +301,8 @@ public partial class BundleCreationCompleteEvent : BaseClientEvent
     /// <summary>
     /// Pre-signed download URL (on success)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("download_url")]
-    public System.Uri? Download_url { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("downloadUrl")]
+    public System.Uri? DownloadUrl { get; set; } = default!;
 
     /// <summary>
     /// Bundle file size in bytes
@@ -313,20 +313,20 @@ public partial class BundleCreationCompleteEvent : BaseClientEvent
     /// <summary>
     /// Number of assets in the bundle
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("asset_count")]
-    public int? Asset_count { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("assetCount")]
+    public int? AssetCount { get; set; } = default!;
 
     /// <summary>
     /// Error code on failure
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("error_code")]
-    public string? Error_code { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
+    public string? ErrorCode { get; set; } = default!;
 
     /// <summary>
     /// Human-readable error description
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("error_message")]
-    public string? Error_message { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
+    public string? ErrorMessage { get; set; } = default!;
 
 }
 
@@ -342,29 +342,29 @@ public partial class AssetReadyEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AssetReadyEventEvent_name Event_name { get; set; } = default!;
+    public AssetReadyEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// ID of the asset that is now ready
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("asset_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Asset_id { get; set; } = default!;
+    public string AssetId { get; set; } = default!;
 
     /// <summary>
     /// Version ID of this asset
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version_id")]
-    public string? Version_id { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("versionId")]
+    public string? VersionId { get; set; } = default!;
 
     /// <summary>
     /// SHA256 hash of the asset
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("content_hash")]
-    public string? Content_hash { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("contentHash")]
+    public string? ContentHash { get; set; } = default!;
 
     /// <summary>
     /// File size in bytes
@@ -375,8 +375,8 @@ public partial class AssetReadyEvent : BaseClientEvent
     /// <summary>
     /// MIME content type
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("content_type")]
-    public string? Content_type { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("contentType")]
+    public string? ContentType { get; set; } = default!;
 
     /// <summary>
     /// Asset metadata
@@ -471,14 +471,14 @@ public partial class ProcessingOutput
     /// <summary>
     /// Type of output (e.g., "mipmap_level_1", "lod_2")
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("output_type")]
-    public string Output_type { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("outputType")]
+    public string OutputType { get; set; } = default!;
 
     /// <summary>
     /// ID of the generated asset
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("asset_id")]
-    public string Asset_id { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    public string AssetId { get; set; } = default!;
 
     /// <summary>
     /// Size of the generated asset
@@ -519,8 +519,8 @@ public partial class ValidationWarning
     /// <summary>
     /// Path within bundle where warning occurred
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("asset_path")]
-    public string? Asset_path { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("assetPath")]
+    public string? AssetPath { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -555,8 +555,8 @@ public partial class ValidationError
     /// <summary>
     /// Path within bundle where error occurred
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("asset_path")]
-    public string? Asset_path { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("assetPath")]
+    public string? AssetPath { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -603,7 +603,7 @@ public enum ValidationErrorCode
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AssetUploadCompleteEventEvent_name
+public enum AssetUploadCompleteEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"asset.upload.complete")]
@@ -612,7 +612,7 @@ public enum AssetUploadCompleteEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AssetProcessingCompleteEventEvent_name
+public enum AssetProcessingCompleteEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"asset.processing.complete")]
@@ -621,7 +621,7 @@ public enum AssetProcessingCompleteEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AssetProcessingFailedEventEvent_name
+public enum AssetProcessingFailedEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"asset.processing.failed")]
@@ -630,7 +630,7 @@ public enum AssetProcessingFailedEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum BundleValidationCompleteEventEvent_name
+public enum BundleValidationCompleteEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"asset.bundle.validation.complete")]
@@ -639,7 +639,7 @@ public enum BundleValidationCompleteEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum BundleValidationFailedEventEvent_name
+public enum BundleValidationFailedEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"asset.bundle.validation.failed")]
@@ -648,7 +648,7 @@ public enum BundleValidationFailedEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum BundleCreationCompleteEventEvent_name
+public enum BundleCreationCompleteEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"asset.bundle.creation.complete")]
@@ -657,7 +657,7 @@ public enum BundleCreationCompleteEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AssetReadyEventEvent_name
+public enum AssetReadyEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"asset.ready")]

@@ -2597,9 +2597,9 @@ public partial class AcquireProcessorRequest
     /// <summary>
     /// Type of processing pool (e.g., "asset-processor", "texture-processor")
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("pool_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("poolType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Pool_type { get; set; } = default!;
+    public string PoolType { get; set; } = default!;
 
     /// <summary>
     /// Request priority (higher = more urgent)
@@ -2610,8 +2610,8 @@ public partial class AcquireProcessorRequest
     /// <summary>
     /// How long the lease is valid for
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timeout_seconds")]
-    public int Timeout_seconds { get; set; } = 300;
+    [System.Text.Json.Serialization.JsonPropertyName("timeoutSeconds")]
+    public int TimeoutSeconds { get; set; } = 300;
 
     /// <summary>
     /// Optional metadata about the processing job
@@ -2637,30 +2637,30 @@ public partial class AcquireProcessorResponse
     /// <summary>
     /// Unique identifier for this processor instance
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("processor_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("processorId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Processor_id { get; set; } = default!;
+    public string ProcessorId { get; set; } = default!;
 
     /// <summary>
     /// App-id for mesh service invocation to this processor
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("app_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("appId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string App_id { get; set; } = default!;
+    public string AppId { get; set; } = default!;
 
     /// <summary>
     /// Unique lease identifier (used for release)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("lease_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("leaseId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Lease_id { get; set; } = default!;
+    public System.Guid LeaseId { get; set; } = default!;
 
     /// <summary>
     /// When the lease expires (must release before this)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("expires_at")]
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Expires_at { get; set; } = default!;
+    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -2680,21 +2680,21 @@ public partial class PoolBusyResponse
     /// <summary>
     /// Pool type that is busy
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("pool_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("poolType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Pool_type { get; set; } = default!;
+    public string PoolType { get; set; } = default!;
 
     /// <summary>
     /// Position in the wait queue (0 = not queued)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("queue_position")]
-    public int Queue_position { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("queuePosition")]
+    public int QueuePosition { get; set; } = default!;
 
     /// <summary>
     /// Estimated wait time until a processor is available
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("estimated_wait_seconds")]
-    public int Estimated_wait_seconds { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("estimatedWaitSeconds")]
+    public int EstimatedWaitSeconds { get; set; } = default!;
 
     /// <summary>
     /// Human-readable status message
@@ -2720,9 +2720,9 @@ public partial class ReleaseProcessorRequest
     /// <summary>
     /// The lease ID returned from AcquireProcessor
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("lease_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("leaseId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Lease_id { get; set; } = default!;
+    public System.Guid LeaseId { get; set; } = default!;
 
     /// <summary>
     /// Whether the processing completed successfully
@@ -2760,8 +2760,8 @@ public partial class ReleaseProcessorResponse
     /// <summary>
     /// ID of the released processor
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("processor_id")]
-    public string Processor_id { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("processorId")]
+    public string ProcessorId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -2781,15 +2781,15 @@ public partial class GetPoolStatusRequest
     /// <summary>
     /// Type of processing pool to query
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("pool_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("poolType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Pool_type { get; set; } = default!;
+    public string PoolType { get; set; } = default!;
 
     /// <summary>
     /// Include recent processing metrics
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("include_metrics")]
-    public bool Include_metrics { get; set; } = true;
+    [System.Text.Json.Serialization.JsonPropertyName("includeMetrics")]
+    public bool IncludeMetrics { get; set; } = true;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -2809,33 +2809,33 @@ public partial class PoolStatusResponse
     /// <summary>
     /// Pool type
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("pool_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("poolType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Pool_type { get; set; } = default!;
+    public string PoolType { get; set; } = default!;
 
     /// <summary>
     /// Total processor instances in the pool
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("total_instances")]
-    public int Total_instances { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("totalInstances")]
+    public int TotalInstances { get; set; } = default!;
 
     /// <summary>
     /// Instances ready to accept work
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("available_instances")]
-    public int Available_instances { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("availableInstances")]
+    public int AvailableInstances { get; set; } = default!;
 
     /// <summary>
     /// Instances currently processing
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("busy_instances")]
-    public int Busy_instances { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("busyInstances")]
+    public int BusyInstances { get; set; } = default!;
 
     /// <summary>
     /// Number of requests waiting for a processor
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("queue_depth")]
-    public int Queue_depth { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("queueDepth")]
+    public int QueueDepth { get; set; } = default!;
 
     /// <summary>
     /// Current utilization percentage (0.0 to 1.0)
@@ -2846,23 +2846,23 @@ public partial class PoolStatusResponse
     /// <summary>
     /// Minimum configured instances
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("min_instances")]
-    public int Min_instances { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("minInstances")]
+    public int MinInstances { get; set; } = default!;
 
     /// <summary>
     /// Maximum configured instances
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("max_instances")]
-    public int Max_instances { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("maxInstances")]
+    public int MaxInstances { get; set; } = default!;
 
     /// <summary>
     /// Utilization threshold for auto-scale-up
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("scale_up_threshold")]
-    public float Scale_up_threshold { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("scaleUpThreshold")]
+    public float ScaleUpThreshold { get; set; } = default!;
 
-    [System.Text.Json.Serialization.JsonPropertyName("recent_metrics")]
-    public PoolMetrics Recent_metrics { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("recentMetrics")]
+    public PoolMetrics RecentMetrics { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -2882,26 +2882,26 @@ public partial class PoolMetrics
     /// <summary>
     /// Jobs completed in the last hour
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("jobs_completed_1h")]
-    public int Jobs_completed_1h { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("jobsCompleted1h")]
+    public int JobsCompleted1h { get; set; } = default!;
 
     /// <summary>
     /// Jobs failed in the last hour
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("jobs_failed_1h")]
-    public int Jobs_failed_1h { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("jobsFailed1h")]
+    public int JobsFailed1h { get; set; } = default!;
 
     /// <summary>
     /// Average processing time in milliseconds
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("avg_processing_time_ms")]
-    public int Avg_processing_time_ms { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("avgProcessingTimeMs")]
+    public int AvgProcessingTimeMs { get; set; } = default!;
 
     /// <summary>
     /// When the pool was last scaled
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("last_scale_event")]
-    public System.DateTimeOffset Last_scale_event { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("lastScaleEvent")]
+    public System.DateTimeOffset LastScaleEvent { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -2921,16 +2921,16 @@ public partial class ScalePoolRequest
     /// <summary>
     /// Type of processing pool to scale
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("pool_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("poolType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Pool_type { get; set; } = default!;
+    public string PoolType { get; set; } = default!;
 
     /// <summary>
     /// Desired number of instances
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("target_instances")]
+    [System.Text.Json.Serialization.JsonPropertyName("targetInstances")]
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
-    public int Target_instances { get; set; } = default!;
+    public int TargetInstances { get; set; } = default!;
 
     /// <summary>
     /// Force scale even if it would interrupt processing
@@ -2956,33 +2956,33 @@ public partial class ScalePoolResponse
     /// <summary>
     /// Pool type that was scaled
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("pool_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("poolType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Pool_type { get; set; } = default!;
+    public string PoolType { get; set; } = default!;
 
     /// <summary>
     /// Instance count before scaling
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("previous_instances")]
-    public int Previous_instances { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("previousInstances")]
+    public int PreviousInstances { get; set; } = default!;
 
     /// <summary>
     /// Instance count after scaling
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("current_instances")]
-    public int Current_instances { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("currentInstances")]
+    public int CurrentInstances { get; set; } = default!;
 
     /// <summary>
     /// Number of instances added
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("scaled_up")]
-    public int Scaled_up { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("scaledUp")]
+    public int ScaledUp { get; set; } = default!;
 
     /// <summary>
     /// Number of instances removed
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("scaled_down")]
-    public int Scaled_down { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("scaledDown")]
+    public int ScaledDown { get; set; } = default!;
 
     /// <summary>
     /// Status message
@@ -3008,15 +3008,15 @@ public partial class CleanupPoolRequest
     /// <summary>
     /// Type of processing pool to cleanup
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("pool_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("poolType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Pool_type { get; set; } = default!;
+    public string PoolType { get; set; } = default!;
 
     /// <summary>
-    /// Keep at least min_instances running
+    /// Keep at least minInstances running
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("preserve_minimum")]
-    public bool Preserve_minimum { get; set; } = true;
+    [System.Text.Json.Serialization.JsonPropertyName("preserveMinimum")]
+    public bool PreserveMinimum { get; set; } = true;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -3036,21 +3036,21 @@ public partial class CleanupPoolResponse
     /// <summary>
     /// Pool type that was cleaned up
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("pool_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("poolType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Pool_type { get; set; } = default!;
+    public string PoolType { get; set; } = default!;
 
     /// <summary>
     /// Number of idle instances removed
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("instances_removed")]
-    public int Instances_removed { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("instancesRemoved")]
+    public int InstancesRemoved { get; set; } = default!;
 
     /// <summary>
     /// Instance count after cleanup
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("current_instances")]
-    public int Current_instances { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("currentInstances")]
+    public int CurrentInstances { get; set; } = default!;
 
     /// <summary>
     /// Status message

@@ -416,8 +416,8 @@ public partial class ConnectErrorResponse
     /// <summary>
     /// HTTP status code
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("status_code")]
-    public ConnectErrorResponseStatus_code Status_code { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("statusCode")]
+    public ConnectErrorResponseStatusCode StatusCode { get; set; } = default!;
 
 }
 
@@ -611,32 +611,32 @@ public partial class ConnectionConfiguration
     /// <summary>
     /// Return Unauthorized instead of NotFound for better security
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("obfuscate_not_found_response")]
-    public bool Obfuscate_not_found_response { get; set; } = true;
+    [System.Text.Json.Serialization.JsonPropertyName("obfuscateNotFoundResponse")]
+    public bool ObfuscateNotFoundResponse { get; set; } = true;
 
     /// <summary>
     /// Maximum size for client requests in bytes
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("client_request_max_size")]
-    public int Client_request_max_size { get; set; } = 16384;
+    [System.Text.Json.Serialization.JsonPropertyName("clientRequestMaxSize")]
+    public int ClientRequestMaxSize { get; set; } = 16384;
 
     /// <summary>
     /// Maximum size for client responses in bytes
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("client_response_max_size")]
-    public int Client_response_max_size { get; set; } = 16384;
+    [System.Text.Json.Serialization.JsonPropertyName("clientResponseMaxSize")]
+    public int ClientResponseMaxSize { get; set; } = 16384;
 
     /// <summary>
     /// Time in seconds to allow client reconnection
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("client_reconnection_time")]
-    public int Client_reconnection_time { get; set; } = 30;
+    [System.Text.Json.Serialization.JsonPropertyName("clientReconnectionTime")]
+    public int ClientReconnectionTime { get; set; } = 30;
 
     /// <summary>
     /// Base64-encoded RSA public key for JWT validation
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("token_public_key")]
-    public string Token_public_key { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("tokenPublicKey")]
+    public string TokenPublicKey { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -1077,7 +1077,7 @@ public enum ConnectErrorResponseError
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ConnectErrorResponseStatus_code
+public enum ConnectErrorResponseStatusCode
 {
 
     _400 = 400,

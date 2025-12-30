@@ -705,7 +705,6 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
         // Assert
         Assert.NotNull(registrationEvent);
         Assert.Equal("relationship-type", registrationEvent.ServiceId);
-        Assert.NotNull(registrationEvent.EventId);
         Assert.NotNull(registrationEvent.Endpoints);
     }
 

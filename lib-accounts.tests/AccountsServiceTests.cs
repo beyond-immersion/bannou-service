@@ -122,7 +122,6 @@ public class AccountsServiceTests
         // Assert
         Assert.NotNull(registrationEvent);
         Assert.Equal("accounts", registrationEvent.ServiceId);
-        Assert.NotNull(registrationEvent.EventId);
         Assert.NotNull(registrationEvent.Endpoints);
         Assert.Equal(13, registrationEvent.Endpoints.Count);
     }

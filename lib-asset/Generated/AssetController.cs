@@ -341,7 +341,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       "required": [
         "filename",
         "size",
-        "content_type"
+        "contentType"
       ],
       "properties": {
         "filename": {
@@ -353,7 +353,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "format": "int64",
           "description": "File size in bytes"
         },
-        "content_type": {
+        "contentType": {
           "type": "string",
           "description": "MIME content type (e.g., image/png, model/gltf-binary)"
         },
@@ -366,7 +366,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       "type": "object",
       "description": "User-provided metadata for asset categorization",
       "properties": {
-        "asset_type": {
+        "assetType": {
           "$ref": "#/$defs/AssetType"
         },
         "realm": {
@@ -416,22 +416,22 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "UploadResponse": {
       "type": "object",
       "required": [
-        "upload_id",
-        "upload_url",
-        "expires_at"
+        "uploadId",
+        "uploadUrl",
+        "expiresAt"
       ],
       "properties": {
-        "upload_id": {
+        "uploadId": {
           "type": "string",
           "format": "uuid",
           "description": "Unique upload session identifier"
         },
-        "upload_url": {
+        "uploadUrl": {
           "type": "string",
           "format": "uri",
           "description": "Pre-signed URL for uploading the file"
         },
-        "expires_at": {
+        "expiresAt": {
           "type": "string",
           "format": "date-time",
           "description": "When the upload URL expires"
@@ -448,15 +448,15 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "boolean",
           "description": "Whether multipart upload is required for this file size"
         },
-        "part_size": {
+        "partSize": {
           "type": "integer",
           "description": "Size of each part in bytes"
         },
-        "max_parts": {
+        "maxParts": {
           "type": "integer",
           "description": "Maximum number of parts"
         },
-        "upload_urls": {
+        "uploadUrls": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/PartUploadInfo"
@@ -467,25 +467,25 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "PartUploadInfo": {
       "type": "object",
       "required": [
-        "part_number",
-        "upload_url"
+        "partNumber",
+        "uploadUrl"
       ],
       "properties": {
-        "part_number": {
+        "partNumber": {
           "type": "integer",
           "description": "Part number (1-based)"
         },
-        "upload_url": {
+        "uploadUrl": {
           "type": "string",
           "format": "uri",
           "description": "Pre-signed URL for uploading this part"
         },
-        "min_size": {
+        "minSize": {
           "type": "integer",
           "format": "int64",
           "description": "Minimum size for this part"
         },
-        "max_size": {
+        "maxSize": {
           "type": "integer",
           "format": "int64",
           "description": "Maximum size for this part"
@@ -560,10 +560,10 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "CompleteUploadRequest": {
       "type": "object",
       "required": [
-        "upload_id"
+        "uploadId"
       ],
       "properties": {
-        "upload_id": {
+        "uploadId": {
           "type": "string",
           "format": "uuid",
           "description": "Upload session ID from requestUpload"
@@ -580,11 +580,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "CompletedPart": {
       "type": "object",
       "required": [
-        "part_number",
+        "partNumber",
         "etag"
       ],
       "properties": {
-        "part_number": {
+        "partNumber": {
           "type": "integer",
           "description": "Part number (1-based)"
         },
@@ -607,11 +607,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       "type": "object",
       "description": "Complete asset metadata including system-generated fields",
       "properties": {
-        "asset_id": {
+        "assetId": {
           "type": "string",
           "description": "Unique asset identifier"
         },
-        "content_hash": {
+        "contentHash": {
           "type": "string",
           "description": "SHA256 hash of file contents"
         },
@@ -619,7 +619,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "string",
           "description": "Original filename"
         },
-        "content_type": {
+        "contentType": {
           "type": "string",
           "description": "MIME content type"
         },
@@ -628,7 +628,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "format": "int64",
           "description": "File size in bytes"
         },
-        "asset_type": {
+        "assetType": {
           "$ref": "#/$defs/AssetType"
         },
         "realm": {
@@ -640,19 +640,19 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "string"
           }
         },
-        "processing_status": {
+        "processingStatus": {
           "$ref": "#/$defs/ProcessingStatus"
         },
-        "is_archived": {
+        "isArchived": {
           "type": "boolean",
           "description": "Whether the asset is in cold/archival storage",
           "default": false
         },
-        "created_at": {
+        "createdAt": {
           "type": "string",
           "format": "date-time"
         },
-        "updated_at": {
+        "updatedAt": {
           "type": "string",
           "format": "date-time"
         }
@@ -759,10 +759,10 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "GetAssetRequest": {
       "type": "object",
       "required": [
-        "asset_id"
+        "assetId"
       ],
       "properties": {
-        "asset_id": {
+        "assetId": {
           "type": "string",
           "description": "Asset identifier"
         },
@@ -785,18 +785,18 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "AssetWithDownloadUrl": {
       "type": "object",
       "properties": {
-        "asset_id": {
+        "assetId": {
           "type": "string"
         },
-        "version_id": {
+        "versionId": {
           "type": "string"
         },
-        "download_url": {
+        "downloadUrl": {
           "type": "string",
           "format": "uri",
           "description": "Pre-signed download URL"
         },
-        "expires_at": {
+        "expiresAt": {
           "type": "string",
           "format": "date-time",
           "description": "When the download URL expires"
@@ -805,10 +805,10 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "integer",
           "format": "int64"
         },
-        "content_hash": {
+        "contentHash": {
           "type": "string"
         },
-        "content_type": {
+        "contentType": {
           "type": "string"
         },
         "metadata": {
@@ -820,11 +820,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       "type": "object",
       "description": "Complete asset metadata including system-generated fields",
       "properties": {
-        "asset_id": {
+        "assetId": {
           "type": "string",
           "description": "Unique asset identifier"
         },
-        "content_hash": {
+        "contentHash": {
           "type": "string",
           "description": "SHA256 hash of file contents"
         },
@@ -832,7 +832,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "string",
           "description": "Original filename"
         },
-        "content_type": {
+        "contentType": {
           "type": "string",
           "description": "MIME content type"
         },
@@ -841,7 +841,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "format": "int64",
           "description": "File size in bytes"
         },
-        "asset_type": {
+        "assetType": {
           "$ref": "#/$defs/AssetType"
         },
         "realm": {
@@ -853,19 +853,19 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "string"
           }
         },
-        "processing_status": {
+        "processingStatus": {
           "$ref": "#/$defs/ProcessingStatus"
         },
-        "is_archived": {
+        "isArchived": {
           "type": "boolean",
           "description": "Whether the asset is in cold/archival storage",
           "default": false
         },
-        "created_at": {
+        "createdAt": {
           "type": "string",
           "format": "date-time"
         },
-        "updated_at": {
+        "updatedAt": {
           "type": "string",
           "format": "date-time"
         }
@@ -972,10 +972,10 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "ListVersionsRequest": {
       "type": "object",
       "required": [
-        "asset_id"
+        "assetId"
       ],
       "properties": {
-        "asset_id": {
+        "assetId": {
           "type": "string"
         },
         "limit": {
@@ -1000,7 +1000,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "AssetVersionList": {
       "type": "object",
       "properties": {
-        "asset_id": {
+        "assetId": {
           "type": "string"
         },
         "versions": {
@@ -1023,10 +1023,10 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "AssetVersion": {
       "type": "object",
       "properties": {
-        "version_id": {
+        "versionId": {
           "type": "string"
         },
-        "created_at": {
+        "createdAt": {
           "type": "string",
           "format": "date-time"
         },
@@ -1034,7 +1034,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "integer",
           "format": "int64"
         },
-        "is_archived": {
+        "isArchived": {
           "type": "boolean",
           "description": "Whether this version is in cold storage"
         }
@@ -1108,7 +1108,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "AssetSearchRequest": {
       "type": "object",
       "required": [
-        "asset_type",
+        "assetType",
         "realm"
       ],
       "properties": {
@@ -1118,13 +1118,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "string"
           }
         },
-        "asset_type": {
+        "assetType": {
           "$ref": "#/$defs/AssetType"
         },
         "realm": {
           "$ref": "#/$defs/Realm"
         },
-        "content_type": {
+        "contentType": {
           "type": "string",
           "description": "MIME content type filter"
         },
@@ -1194,11 +1194,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       "type": "object",
       "description": "Complete asset metadata including system-generated fields",
       "properties": {
-        "asset_id": {
+        "assetId": {
           "type": "string",
           "description": "Unique asset identifier"
         },
-        "content_hash": {
+        "contentHash": {
           "type": "string",
           "description": "SHA256 hash of file contents"
         },
@@ -1206,7 +1206,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "string",
           "description": "Original filename"
         },
-        "content_type": {
+        "contentType": {
           "type": "string",
           "description": "MIME content type"
         },
@@ -1215,7 +1215,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "format": "int64",
           "description": "File size in bytes"
         },
-        "asset_type": {
+        "assetType": {
           "$ref": "#/$defs/AssetType"
         },
         "realm": {
@@ -1227,19 +1227,19 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "string"
           }
         },
-        "processing_status": {
+        "processingStatus": {
           "$ref": "#/$defs/ProcessingStatus"
         },
-        "is_archived": {
+        "isArchived": {
           "type": "boolean",
           "description": "Whether the asset is in cold/archival storage",
           "default": false
         },
-        "created_at": {
+        "createdAt": {
           "type": "string",
           "format": "date-time"
         },
-        "updated_at": {
+        "updatedAt": {
           "type": "string",
           "format": "date-time"
         }
@@ -1346,11 +1346,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "CreateBundleRequest": {
       "type": "object",
       "required": [
-        "bundle_id",
-        "asset_ids"
+        "bundleId",
+        "assetIds"
       ],
       "properties": {
-        "bundle_id": {
+        "bundleId": {
           "type": "string",
           "description": "Unique bundle identifier"
         },
@@ -1359,7 +1359,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "default": "1.0.0",
           "description": "Bundle version string"
         },
-        "asset_ids": {
+        "assetIds": {
           "type": "array",
           "items": {
             "type": "string"
@@ -1397,7 +1397,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "CreateBundleResponse": {
       "type": "object",
       "properties": {
-        "bundle_id": {
+        "bundleId": {
           "type": "string"
         },
         "status": {
@@ -1410,7 +1410,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           ],
           "description": "Bundle creation status"
         },
-        "estimated_size": {
+        "estimatedSize": {
           "type": "integer",
           "format": "int64",
           "description": "Estimated bundle size in bytes"
@@ -1485,10 +1485,10 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "GetBundleRequest": {
       "type": "object",
       "required": [
-        "bundle_id"
+        "bundleId"
       ],
       "properties": {
-        "bundle_id": {
+        "bundleId": {
           "type": "string"
         },
         "format": {
@@ -1516,20 +1516,20 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "BundleWithDownloadUrl": {
       "type": "object",
       "properties": {
-        "bundle_id": {
+        "bundleId": {
           "type": "string"
         },
         "version": {
           "type": "string"
         },
-        "download_url": {
+        "downloadUrl": {
           "type": "string",
           "format": "uri"
         },
         "format": {
           "$ref": "#/$defs/BundleFormat"
         },
-        "expires_at": {
+        "expiresAt": {
           "type": "string",
           "format": "date-time"
         },
@@ -1537,10 +1537,10 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "integer",
           "format": "int64"
         },
-        "asset_count": {
+        "assetCount": {
           "type": "integer"
         },
-        "from_cache": {
+        "fromCache": {
           "type": "boolean",
           "description": "True if ZIP format was served from conversion cache"
         }
@@ -1634,7 +1634,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "integer",
           "format": "int64"
         },
-        "manifest_preview": {
+        "manifestPreview": {
           "$ref": "#/$defs/BundleManifestPreview"
         }
       }
@@ -1643,13 +1643,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
       "type": "object",
       "description": "Preview of bundle manifest for validation",
       "properties": {
-        "bundle_id": {
+        "bundleId": {
           "type": "string"
         },
         "version": {
           "type": "string"
         },
-        "asset_count": {
+        "assetCount": {
           "type": "integer"
         }
       }
@@ -1666,22 +1666,22 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "UploadResponse": {
       "type": "object",
       "required": [
-        "upload_id",
-        "upload_url",
-        "expires_at"
+        "uploadId",
+        "uploadUrl",
+        "expiresAt"
       ],
       "properties": {
-        "upload_id": {
+        "uploadId": {
           "type": "string",
           "format": "uuid",
           "description": "Unique upload session identifier"
         },
-        "upload_url": {
+        "uploadUrl": {
           "type": "string",
           "format": "uri",
           "description": "Pre-signed URL for uploading the file"
         },
-        "expires_at": {
+        "expiresAt": {
           "type": "string",
           "format": "date-time",
           "description": "When the upload URL expires"
@@ -1698,15 +1698,15 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
           "type": "boolean",
           "description": "Whether multipart upload is required for this file size"
         },
-        "part_size": {
+        "partSize": {
           "type": "integer",
           "description": "Size of each part in bytes"
         },
-        "max_parts": {
+        "maxParts": {
           "type": "integer",
           "description": "Maximum number of parts"
         },
-        "upload_urls": {
+        "uploadUrls": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/PartUploadInfo"
@@ -1717,25 +1717,25 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "PartUploadInfo": {
       "type": "object",
       "required": [
-        "part_number",
-        "upload_url"
+        "partNumber",
+        "uploadUrl"
       ],
       "properties": {
-        "part_number": {
+        "partNumber": {
           "type": "integer",
           "description": "Part number (1-based)"
         },
-        "upload_url": {
+        "uploadUrl": {
           "type": "string",
           "format": "uri",
           "description": "Pre-signed URL for uploading this part"
         },
-        "min_size": {
+        "minSize": {
           "type": "integer",
           "format": "int64",
           "description": "Minimum size for this part"
         },
-        "max_size": {
+        "maxSize": {
           "type": "integer",
           "format": "int64",
           "description": "Maximum size for this part"

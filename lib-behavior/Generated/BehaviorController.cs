@@ -335,20 +335,20 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "CompileBehaviorRequest": {
       "type": "object",
       "required": [
-        "abml_content"
+        "abmlContent"
       ],
       "properties": {
-        "abml_content": {
+        "abmlContent": {
           "type": "string",
           "description": "Raw ABML YAML content to compile",
           "example": "version: \"1.0.0\"\nmetadata:\n  id: \"example_behavior\"\n  category: \"basic\"\nbehaviors:\n  example:\n    triggers:\n      - condition: \"true\"\n    actions:\n      - log:\n          message: \"Hello World\"\n"
         },
-        "behavior_name": {
+        "behaviorName": {
           "type": "string",
           "description": "Optional human-readable name for the behavior.\nIf not provided, extracted from ABML metadata.id or generated from content hash.\n",
           "example": "blacksmith_daily_routine"
         },
-        "behavior_category": {
+        "behaviorCategory": {
           "type": "string",
           "description": "Category for organizing behaviors (e.g., profession, cultural, situational).\ nUsed for filtering and grouping in bundles.\n",
           "enum": [
@@ -361,15 +361,15 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           ],
           "example": "professional"
         },
-        "bundle_id": {
+        "bundleId": {
           "type": "string",
           "description": "Optional bundle identifier for grouping related behaviors.\nWhen specified, the compiled behavior will be added to a bundle with this ID.\nClients can then download entire bundles for efficient bulk loading.\nIf the bundle doesn't exist, it will be created.\n",
           "example": "blacksmith-behaviors-v1"
         },
-        "character_context": {
+        "characterContext": {
           "$ref": "#/$defs/CharacterContext"
         },
-        "compilation_options": {
+        "compilationOptions": {
           "$ref": "#/$defs/CompilationOptions"
         }
       }
@@ -377,7 +377,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "CharacterContext": {
       "type": "object",
       "properties": {
-        "npc_id": {
+        "npcId": {
           "type": "string",
           "description": "Unique identifier for the NPC",
           "example": "npc_12345"
@@ -447,7 +447,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           },
           "description": "Relationship values with other characters"
         },
-        "world_state": {
+        "worldState": {
           "type": "object",
           "additionalProperties": true,
           "description": "Relevant world state information"
@@ -457,27 +457,27 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "CompilationOptions": {
       "type": "object",
       "properties": {
-        "enable_optimizations": {
+        "enableOptimizations": {
           "type": "boolean",
           "default": true,
           "description": "Enable behavior tree optimizations"
         },
-        "cache_compiled_result": {
+        "cacheCompiledResult": {
           "type": "boolean",
           "default": true,
           "description": "Cache the compiled behavior for reuse"
         },
-        "strict_validation": {
+        "strictValidation": {
           "type": "boolean",
           "default": false,
           "description": "Enable strict validation mode"
         },
-        "cultural_adaptations": {
+        "culturalAdaptations": {
           "type": "boolean",
           "default": true,
           "description": "Apply cultural adaptations during compilation"
         },
-        "goap_integration": {
+        "goapIntegration": {
           "type": "boolean",
           "default": true,
           "description": "Generate GOAP goals from behaviors"
@@ -497,39 +497,39 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       "type": "object",
       "required": [
         "success",
-        "behavior_id"
+        "behaviorId"
       ],
       "properties": {
         "success": {
           "type": "boolean",
           "description": "Whether compilation was successful"
         },
-        "behavior_id": {
+        "behaviorId": {
           "type": "string",
           "description": "Unique identifier for the compiled behavior (content-addressable hash)",
           "example": "behavior-a1b2c3d4e5f6g7h8"
         },
-        "behavior_name": {
+        "behaviorName": {
           "type": "string",
           "description": "Human-readable name of the behavior",
           "example": "blacksmith_daily_routine"
         },
-        "compiled_behavior": {
+        "compiledBehavior": {
           "$ref": "#/$defs/CompiledBehavior"
         },
-        "compilation_time_ms": {
+        "compilationTimeMs": {
           "type": "integer",
           "description": "Time taken to compile the behavior"
         },
-        "asset_id": {
+        "assetId": {
           "type": "string",
           "description": "Asset service ID where the compiled bytecode is stored"
         },
-        "bundle_id": {
+        "bundleId": {
           "type": "string",
           "description": "Bundle ID if the behavior was added to a bundle"
         },
-        "is_update": {
+        "isUpdate": {
           "type": "boolean",
           "description": "True if this replaced an existing behavior with the same content hash"
         },
@@ -545,44 +545,44 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "CompiledBehavior": {
       "type": "object",
       "required": [
-        "behavior_tree",
-        "context_schema"
+        "behaviorTree",
+        "contextSchema"
       ],
       "properties": {
-        "behavior_tree": {
+        "behaviorTree": {
           "$ref": "#/$defs/BehaviorTreeData"
         },
-        "context_schema": {
+        "contextSchema": {
           "$ref": "#/$defs/ContextSchemaData"
         },
-        "service_dependencies": {
+        "serviceDependencies": {
           "type": "array",
           "items": {
             "type": "string"
           },
           "description": "List of required services for this behavior"
         },
-        "goap_goals": {
+        "goapGoals": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/GoapGoal"
           },
           "description": "GOAP goals extracted from the behavior"
         },
-        "execution_metadata": {
+        "executionMetadata": {
           "type": "object",
           "properties": {
-            "estimated_duration": {
+            "estimatedDuration": {
               "type": "integer",
               "description": "Estimated execution time in seconds"
             },
-            "resource_requirements": {
+            "resourceRequirements": {
               "type": "object",
               "additionalProperties": {
                 "type": "number"
               }
             },
-            "interrupt_conditions": {
+            "interruptConditions": {
               "type": "array",
               "items": {
                 "type": "string"
@@ -600,11 +600,11 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "type": "string",
           "description": "Base64-encoded compiled bytecode for the behavior tree"
         },
-        "bytecode_size": {
+        "bytecodeSize": {
           "type": "integer",
           "description": "Size of the bytecode in bytes"
         },
-        "download_url": {
+        "downloadUrl": {
           "type": "string",
           "description": "URL to download the compiled behavior asset"
         }
@@ -726,20 +726,20 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "BehaviorStackRequest": {
       "type": "object",
       "required": [
-        "behavior_sets"
+        "behaviorSets"
       ],
       "properties": {
-        "behavior_sets": {
+        "behaviorSets": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/BehaviorSetDefinition"
           },
           "description": "Array of behavior sets to compile together"
         },
-        "character_context": {
+        "characterContext": {
           "$ref": "#/$defs/CharacterContext"
         },
-        "compilation_options": {
+        "compilationOptions": {
           "$ref": "#/$defs/CompilationOptions"
         }
       }
@@ -749,7 +749,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       "required": [
         "id",
         "priority",
-        "abml_content"
+        "abmlContent"
       ],
       "properties": {
         "id": {
@@ -775,7 +775,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
             "situational"
           ]
         },
-        "abml_content": {
+        "abmlContent": {
           "type": "string",
           "description": "Raw ABML YAML content for this behavior set"
         },
@@ -789,7 +789,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "CharacterContext": {
       "type": "object",
       "properties": {
-        "npc_id": {
+        "npcId": {
           "type": "string",
           "description": "Unique identifier for the NPC",
           "example": "npc_12345"
@@ -859,7 +859,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           },
           "description": "Relationship values with other characters"
         },
-        "world_state": {
+        "worldState": {
           "type": "object",
           "additionalProperties": true,
           "description": "Relevant world state information"
@@ -869,27 +869,27 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "CompilationOptions": {
       "type": "object",
       "properties": {
-        "enable_optimizations": {
+        "enableOptimizations": {
           "type": "boolean",
           "default": true,
           "description": "Enable behavior tree optimizations"
         },
-        "cache_compiled_result": {
+        "cacheCompiledResult": {
           "type": "boolean",
           "default": true,
           "description": "Cache the compiled behavior for reuse"
         },
-        "strict_validation": {
+        "strictValidation": {
           "type": "boolean",
           "default": false,
           "description": "Enable strict validation mode"
         },
-        "cultural_adaptations": {
+        "culturalAdaptations": {
           "type": "boolean",
           "default": true,
           "description": "Apply cultural adaptations during compilation"
         },
-        "goap_integration": {
+        "goapIntegration": {
           "type": "boolean",
           "default": true,
           "description": "Generate GOAP goals from behaviors"
@@ -909,39 +909,39 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       "type": "object",
       "required": [
         "success",
-        "behavior_id"
+        "behaviorId"
       ],
       "properties": {
         "success": {
           "type": "boolean",
           "description": "Whether compilation was successful"
         },
-        "behavior_id": {
+        "behaviorId": {
           "type": "string",
           "description": "Unique identifier for the compiled behavior (content-addressable hash)",
           "example": "behavior-a1b2c3d4e5f6g7h8"
         },
-        "behavior_name": {
+        "behaviorName": {
           "type": "string",
           "description": "Human-readable name of the behavior",
           "example": "blacksmith_daily_routine"
         },
-        "compiled_behavior": {
+        "compiledBehavior": {
           "$ref": "#/$defs/CompiledBehavior"
         },
-        "compilation_time_ms": {
+        "compilationTimeMs": {
           "type": "integer",
           "description": "Time taken to compile the behavior"
         },
-        "asset_id": {
+        "assetId": {
           "type": "string",
           "description": "Asset service ID where the compiled bytecode is stored"
         },
-        "bundle_id": {
+        "bundleId": {
           "type": "string",
           "description": "Bundle ID if the behavior was added to a bundle"
         },
-        "is_update": {
+        "isUpdate": {
           "type": "boolean",
           "description": "True if this replaced an existing behavior with the same content hash"
         },
@@ -957,44 +957,44 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "CompiledBehavior": {
       "type": "object",
       "required": [
-        "behavior_tree",
-        "context_schema"
+        "behaviorTree",
+        "contextSchema"
       ],
       "properties": {
-        "behavior_tree": {
+        "behaviorTree": {
           "$ref": "#/$defs/BehaviorTreeData"
         },
-        "context_schema": {
+        "contextSchema": {
           "$ref": "#/$defs/ContextSchemaData"
         },
-        "service_dependencies": {
+        "serviceDependencies": {
           "type": "array",
           "items": {
             "type": "string"
           },
           "description": "List of required services for this behavior"
         },
-        "goap_goals": {
+        "goapGoals": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/GoapGoal"
           },
           "description": "GOAP goals extracted from the behavior"
         },
-        "execution_metadata": {
+        "executionMetadata": {
           "type": "object",
           "properties": {
-            "estimated_duration": {
+            "estimatedDuration": {
               "type": "integer",
               "description": "Estimated execution time in seconds"
             },
-            "resource_requirements": {
+            "resourceRequirements": {
               "type": "object",
               "additionalProperties": {
                 "type": "number"
               }
             },
-            "interrupt_conditions": {
+            "interruptConditions": {
               "type": "array",
               "items": {
                 "type": "string"
@@ -1012,11 +1012,11 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "type": "string",
           "description": "Base64-encoded compiled bytecode for the behavior tree"
         },
-        "bytecode_size": {
+        "bytecodeSize": {
           "type": "integer",
           "description": "Size of the bytecode in bytes"
         },
-        "download_url": {
+        "downloadUrl": {
           "type": "string",
           "description": "URL to download the compiled behavior asset"
         }
@@ -1138,14 +1138,14 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "ValidateAbmlRequest": {
       "type": "object",
       "required": [
-        "abml_content"
+        "abmlContent"
       ],
       "properties": {
-        "abml_content": {
+        "abmlContent": {
           "type": "string",
           "description": "Raw ABML YAML content to validate"
         },
-        "strict_mode": {
+        "strictMode": {
           "type": "boolean",
           "default": false,
           "description": "Enable strict validation mode with enhanced checking"
@@ -1164,28 +1164,28 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "ValidateAbmlResponse": {
       "type": "object",
       "required": [
-        "is_valid"
+        "isValid"
       ],
       "properties": {
-        "is_valid": {
+        "isValid": {
           "type": "boolean",
           "description": "Whether the ABML definition is valid"
         },
-        "validation_errors": {
+        "validationErrors": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/ValidationError"
           },
           "description": "List of validation errors if invalid"
         },
-        "semantic_warnings": {
+        "semanticWarnings": {
           "type": "array",
           "items": {
             "type": "string"
           },
           "description": "Semantic warnings that don't prevent compilation"
         },
-        "schema_version": {
+        "schemaVersion": {
           "type": "string",
           "description": "ABML schema version used for validation"
         }
@@ -1213,15 +1213,15 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "type": "string",
           "description": "Human-readable error message"
         },
-        "line_number": {
+        "lineNumber": {
           "type": "integer",
           "description": "Line number where the error occurred (if applicable)"
         },
-        "column_number": {
+        "columnNumber": {
           "type": "integer",
           "description": "Column number where the error occurred (if applicable)"
         },
-        "yaml_path": {
+        "yamlPath": {
           "type": "string",
           "description": "YAML path to the problematic element",
           "example": "behaviors.morning_startup.actions[0]"
@@ -1318,23 +1318,23 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "CachedBehaviorResponse": {
       "type": "object",
       "required": [
-        "behavior_id",
-        "compiled_behavior"
+        "behaviorId",
+        "compiledBehavior"
       ],
       "properties": {
-        "behavior_id": {
+        "behaviorId": {
           "type": "string",
           "description": "Unique identifier for the cached behavior"
         },
-        "compiled_behavior": {
+        "compiledBehavior": {
           "$ref": "#/$defs/CompiledBehavior"
         },
-        "cache_timestamp": {
+        "cacheTimestamp": {
           "type": "string",
           "format": "date-time",
           "description": "When the behavior was cached"
         },
-        "cache_hit": {
+        "cacheHit": {
           "type": "boolean",
           "description": "Whether this was a cache hit or miss"
         }
@@ -1343,44 +1343,44 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "CompiledBehavior": {
       "type": "object",
       "required": [
-        "behavior_tree",
-        "context_schema"
+        "behaviorTree",
+        "contextSchema"
       ],
       "properties": {
-        "behavior_tree": {
+        "behaviorTree": {
           "$ref": "#/$defs/BehaviorTreeData"
         },
-        "context_schema": {
+        "contextSchema": {
           "$ref": "#/$defs/ContextSchemaData"
         },
-        "service_dependencies": {
+        "serviceDependencies": {
           "type": "array",
           "items": {
             "type": "string"
           },
           "description": "List of required services for this behavior"
         },
-        "goap_goals": {
+        "goapGoals": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/GoapGoal"
           },
           "description": "GOAP goals extracted from the behavior"
         },
-        "execution_metadata": {
+        "executionMetadata": {
           "type": "object",
           "properties": {
-            "estimated_duration": {
+            "estimatedDuration": {
               "type": "integer",
               "description": "Estimated execution time in seconds"
             },
-            "resource_requirements": {
+            "resourceRequirements": {
               "type": "object",
               "additionalProperties": {
                 "type": "number"
               }
             },
-            "interrupt_conditions": {
+            "interruptConditions": {
               "type": "array",
               "items": {
                 "type": "string"
@@ -1398,11 +1398,11 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "type": "string",
           "description": "Base64-encoded compiled bytecode for the behavior tree"
         },
-        "bytecode_size": {
+        "bytecodeSize": {
           "type": "integer",
           "description": "Size of the bytecode in bytes"
         },
-        "download_url": {
+        "downloadUrl": {
           "type": "string",
           "description": "URL to download the compiled behavior asset"
         }
@@ -1606,16 +1606,16 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "ResolveContextRequest": {
       "type": "object",
       "required": [
-        "context_expression",
-        "character_context"
+        "contextExpression",
+        "characterContext"
       ],
       "properties": {
-        "context_expression": {
+        "contextExpression": {
           "type": "string",
           "description": "Context variable expression to resolve",
           "example": "${npc.stats.energy > 0.5 && world.time.hour < 18}"
         },
-        "character_context": {
+        "characterContext": {
           "$ref": "#/$defs/CharacterContext"
         }
       }
@@ -1623,7 +1623,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "CharacterContext": {
       "type": "object",
       "properties": {
-        "npc_id": {
+        "npcId": {
           "type": "string",
           "description": "Unique identifier for the NPC",
           "example": "npc_12345"
@@ -1693,7 +1693,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           },
           "description": "Relationship values with other characters"
         },
-        "world_state": {
+        "worldState": {
           "type": "object",
           "additionalProperties": true,
           "description": "Relevant world state information"
@@ -1712,13 +1712,13 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "ResolveContextResponse": {
       "type": "object",
       "required": [
-        "resolved_value"
+        "resolvedValue"
       ],
       "properties": {
-        "resolved_value": {
+        "resolvedValue": {
           "description": "The resolved value of the context expression"
         },
-        "resolved_type": {
+        "resolvedType": {
           "type": "string",
           "enum": [
             "boolean",
@@ -1729,7 +1729,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           ],
           "description": "Type of the resolved value"
         },
-        "context_variables_used": {
+        "contextVariablesUsed": {
           "type": "array",
           "items": {
             "type": "string"
@@ -1807,18 +1807,18 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       "type": "object",
       "required": [
         "goal",
-        "world_state",
-        "behavior_id"
+        "worldState",
+        "behaviorId"
       ],
       "properties": {
-        "agent_id": {
+        "agentId": {
           "type": "string",
           "description": "Unique identifier for the agent requesting the plan"
         },
         "goal": {
           "$ref": "#/$defs/GoapGoal"
         },
-        "world_state": {
+        "worldState": {
           "type": "object",
           "additionalProperties": true,
           "description": "Current world state as key-value pairs",
@@ -1828,7 +1828,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
             "location": "home"
           }
         },
-        "behavior_id": {
+        "behaviorId": {
           "type": "string",
           "description": "ID of compiled behavior containing GOAP actions"
         },
@@ -1883,17 +1883,17 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "GoapPlanningOptions": {
       "type": "object",
       "properties": {
-        "max_depth": {
+        "maxDepth": {
           "type": "integer",
           "default": 10,
           "description": "Maximum plan depth (number of actions)"
         },
-        "max_nodes": {
+        "maxNodes": {
           "type": "integer",
           "default": 1000,
           "description": "Maximum nodes to expand during search"
         },
-        "timeout_ms": {
+        "timeoutMs": {
           "type": "integer",
           "default": 100,
           "description": "Planning timeout in milliseconds"
@@ -1922,15 +1922,15 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         "plan": {
           "$ref": "#/$defs/GoapPlanResult"
         },
-        "planning_time_ms": {
+        "planningTimeMs": {
           "type": "integer",
           "description": "Time spent planning in milliseconds"
         },
-        "nodes_expanded": {
+        "nodesExpanded": {
           "type": "integer",
           "description": "Number of nodes expanded during A* search"
         },
-        "failure_reason": {
+        "failureReason": {
           "type": "string",
           "description": "Reason for planning failure if unsuccessful",
           "example": "No plan found - goal unreachable"
@@ -1940,12 +1940,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "GoapPlanResult": {
       "type": "object",
       "required": [
-        "goal_id",
+        "goalId",
         "actions",
-        "total_cost"
+        "totalCost"
       ],
       "properties": {
-        "goal_id": {
+        "goalId": {
           "type": "string",
           "description": "ID of the goal this plan achieves"
         },
@@ -1956,7 +1956,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           },
           "description": "Ordered sequence of actions to execute"
         },
-        "total_cost": {
+        "totalCost": {
           "type": "number",
           "format": "float",
           "description": "Total cost of all actions in the plan"
@@ -1966,12 +1966,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "PlannedActionResponse": {
       "type": "object",
       "required": [
-        "action_id",
+        "actionId",
         "index",
         "cost"
       ],
       "properties": {
-        "action_id": {
+        "actionId": {
           "type": "string",
           "description": "ID of the action (flow name)"
         },
@@ -2055,23 +2055,23 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       "type": "object",
       "required": [
         "plan",
-        "current_action_index",
-        "world_state"
+        "currentActionIndex",
+        "worldState"
       ],
       "properties": {
         "plan": {
           "$ref": "#/$defs/GoapPlanResult"
         },
-        "current_action_index": {
+        "currentActionIndex": {
           "type": "integer",
           "description": "Index of the action currently being executed"
         },
-        "world_state": {
+        "worldState": {
           "type": "object",
           "additionalProperties": true,
           "description": "Current world state"
         },
-        "active_goals": {
+        "activeGoals": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/GoapGoal"
@@ -2083,12 +2083,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "GoapPlanResult": {
       "type": "object",
       "required": [
-        "goal_id",
+        "goalId",
         "actions",
-        "total_cost"
+        "totalCost"
       ],
       "properties": {
-        "goal_id": {
+        "goalId": {
           "type": "string",
           "description": "ID of the goal this plan achieves"
         },
@@ -2099,7 +2099,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           },
           "description": "Ordered sequence of actions to execute"
         },
-        "total_cost": {
+        "totalCost": {
           "type": "number",
           "format": "float",
           "description": "Total cost of all actions in the plan"
@@ -2109,12 +2109,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "PlannedActionResponse": {
       "type": "object",
       "required": [
-        "action_id",
+        "actionId",
         "index",
         "cost"
       ],
       "properties": {
-        "action_id": {
+        "actionId": {
           "type": "string",
           "description": "ID of the action (flow name)"
         },
@@ -2184,12 +2184,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "ValidateGoapPlanResponse": {
       "type": "object",
       "required": [
-        "is_valid",
+        "isValid",
         "reason",
-        "suggested_action"
+        "suggestedAction"
       ],
       "properties": {
-        "is_valid": {
+        "isValid": {
           "type": "boolean",
           "description": "Whether the plan is still valid"
         },
@@ -2206,7 +2206,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           ],
           "description": "Reason for the validation result"
         },
-        "suggested_action": {
+        "suggestedAction": {
           "type": "string",
           "enum": [
             "continue",
@@ -2215,7 +2215,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           ],
           "description": "Suggested action based on validation"
         },
-        "invalidated_at_index": {
+        "invalidatedAtIndex": {
           "type": "integer",
           "description": "Index where plan became invalid (if applicable)"
         },

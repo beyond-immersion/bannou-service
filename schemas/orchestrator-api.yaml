@@ -1428,23 +1428,22 @@ paths:
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AcquireProcessorRequest\"\
         ,\n  \"$defs\": {\n    \"AcquireProcessorRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n      \
-        \  \"pool_type\"\n      ],\n      \"properties\": {\n        \"pool_type\": {\n          \"type\": \"string\",\n \
-        \         \"description\": \"Type of processing pool (e.g., \\\"asset-processor\\\", \\\"texture-processor\\\")\"\n\
+        \  \"poolType\"\n      ],\n      \"properties\": {\n        \"poolType\": {\n          \"type\": \"string\",\n   \
+        \       \"description\": \"Type of processing pool (e.g., \\\"asset-processor\\\", \\\"texture-processor\\\")\"\n\
         \        },\n        \"priority\": {\n          \"type\": \"integer\",\n          \"default\": 0,\n          \"description\"\
-        : \"Request priority (higher = more urgent)\"\n        },\n        \"timeout_seconds\": {\n          \"type\": \"\
-        integer\",\n          \"default\": 300,\n          \"description\": \"How long the lease is valid for\"\n        },\n\
-        \        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"\
-        description\": \"Optional metadata about the processing job\"\n        }\n      }\n    }\n  }\n}"
+        : \"Request priority (higher = more urgent)\"\n        },\n        \"timeoutSeconds\": {\n          \"type\": \"integer\"\
+        ,\n          \"default\": 300,\n          \"description\": \"How long the lease is valid for\"\n        },\n     \
+        \   \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\"\
+        : \"Optional metadata about the processing job\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AcquireProcessorResponse\"\
         ,\n  \"$defs\": {\n    \"AcquireProcessorResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
-        \   \"processor_id\",\n        \"app_id\",\n        \"lease_id\",\n        \"expires_at\"\n      ],\n      \"properties\"\
-        : {\n        \"processor_id\": {\n          \"type\": \"string\",\n          \"description\": \"Unique identifier
-        for this processor instance\"\n        },\n        \"app_id\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"App-id for mesh service invocation to this processor\"\n        },\n        \"lease_id\": {\n          \"type\"\
+        \   \"processorId\",\n        \"appId\",\n        \"leaseId\",\n        \"expiresAt\"\n      ],\n      \"properties\"\
+        : {\n        \"processorId\": {\n          \"type\": \"string\",\n          \"description\": \"Unique identifier for
+        this processor instance\"\n        },\n        \"appId\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"App-id for mesh service invocation to this processor\"\n        },\n        \"leaseId\": {\n          \"type\"\
         : \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique lease identifier (used for release)\"\
-        \n        },\n        \"expires_at\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n \
-        \         \"description\": \"When the lease expires (must release before this)\"\n        }\n      }\n    }\n  }\n\
-        }"
+        \n        },\n        \"expiresAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n  \
+        \        \"description\": \"When the lease expires (must release before this)\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Acquire a processor from a pool\",\n  \"description\": \"Requests an available
         processor instance from the specified pool type.\\nReturns the app-id of an available processor or 429 if none available.\\
         nThe processor is marked as busy until explicitly released.\\n\",\n  \"tags\": [],\n  \"deprecated\": false,\n  \"\
@@ -1477,16 +1476,16 @@ paths:
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ReleaseProcessorRequest\"\
         ,\n  \"$defs\": {\n    \"ReleaseProcessorRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n      \
-        \  \"lease_id\"\n      ],\n      \"properties\": {\n        \"lease_id\": {\n          \"type\": \"string\",\n   \
-        \       \"format\": \"uuid\",\n          \"description\": \"The lease ID returned from AcquireProcessor\"\n      \
-        \  },\n        \"success\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\"\
+        \  \"leaseId\"\n      ],\n      \"properties\": {\n        \"leaseId\": {\n          \"type\": \"string\",\n     \
+        \     \"format\": \"uuid\",\n          \"description\": \"The lease ID returned from AcquireProcessor\"\n        },\n\
+        \        \"success\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\"\
         : \"Whether the processing completed successfully\"\n        },\n        \"metrics\": {\n          \"type\": \"object\"\
         ,\n          \"additionalProperties\": true,\n          \"description\": \"Optional processing metrics (duration,
         items processed, etc.)\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ReleaseProcessorResponse\"\
         ,\n  \"$defs\": {\n    \"ReleaseProcessorResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n     \
         \   \"released\"\n      ],\n      \"properties\": {\n        \"released\": {\n          \"type\": \"boolean\",\n \
-        \         \"description\": \"Whether the processor was successfully released\"\n        },\n        \"processor_id\"\
+        \         \"description\": \"Whether the processor was successfully released\"\n        },\n        \"processorId\"\
         : {\n          \"type\": \"string\",\n          \"description\": \"ID of the released processor\"\n        }\n   \
         \   }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Release a processor back to the pool\",\n  \"description\": \"Releases a
@@ -1521,31 +1520,31 @@ paths:
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GetPoolStatusRequest\"\
         ,\n  \"$defs\": {\n    \"GetPoolStatusRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
-        pool_type\"\n      ],\n      \"properties\": {\n        \"pool_type\": {\n          \"type\": \"string\",\n      \
-        \    \"description\": \"Type of processing pool to query\"\n        },\n        \"include_metrics\": {\n         \
-        \ \"type\": \"boolean\",\n          \"default\": true,\n          \"description\": \"Include recent processing metrics\"\
+        poolType\"\n      ],\n      \"properties\": {\n        \"poolType\": {\n          \"type\": \"string\",\n        \
+        \  \"description\": \"Type of processing pool to query\"\n        },\n        \"includeMetrics\": {\n          \"\
+        type\": \"boolean\",\n          \"default\": true,\n          \"description\": \"Include recent processing metrics\"\
         \n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/PoolStatusResponse\"\
-        ,\n  \"$defs\": {\n    \"PoolStatusResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"pool_type\"\
-        ,\n        \"total_instances\",\n        \"available_instances\",\n        \"busy_instances\",\n        \"utilization\"\
-        \n      ],\n      \"properties\": {\n        \"pool_type\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Pool type\"\n        },\n        \"total_instances\": {\n          \"type\": \"integer\",\n          \"description\"\
-        : \"Total processor instances in the pool\"\n        },\n        \"available_instances\": {\n          \"type\": \"\
-        integer\",\n          \"description\": \"Instances ready to accept work\"\n        },\n        \"busy_instances\"\
-        : {\n          \"type\": \"integer\",\n          \"description\": \"Instances currently processing\"\n        },\n\
-        \        \"queue_depth\": {\n          \"type\": \"integer\",\n          \"description\": \"Number of requests waiting
+        ,\n  \"$defs\": {\n    \"PoolStatusResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"poolType\"\
+        ,\n        \"totalInstances\",\n        \"availableInstances\",\n        \"busyInstances\",\n        \"utilization\"\
+        \n      ],\n      \"properties\": {\n        \"poolType\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Pool type\"\n        },\n        \"totalInstances\": {\n          \"type\": \"integer\",\n          \"description\"\
+        : \"Total processor instances in the pool\"\n        },\n        \"availableInstances\": {\n          \"type\": \"\
+        integer\",\n          \"description\": \"Instances ready to accept work\"\n        },\n        \"busyInstances\":
+        {\n          \"type\": \"integer\",\n          \"description\": \"Instances currently processing\"\n        },\n \
+        \       \"queueDepth\": {\n          \"type\": \"integer\",\n          \"description\": \"Number of requests waiting
         for a processor\"\n        },\n        \"utilization\": {\n          \"type\": \"number\",\n          \"format\":
-        \"float\",\n          \"description\": \"Current utilization percentage (0.0 to 1.0)\"\n        },\n        \"min_instances\"\
+        \"float\",\n          \"description\": \"Current utilization percentage (0.0 to 1.0)\"\n        },\n        \"minInstances\"\
         : {\n          \"type\": \"integer\",\n          \"description\": \"Minimum configured instances\"\n        },\n \
-        \       \"max_instances\": {\n          \"type\": \"integer\",\n          \"description\": \"Maximum configured instances\"\
-        \n        },\n        \"scale_up_threshold\": {\n          \"type\": \"number\",\n          \"format\": \"float\"\
-        ,\n          \"description\": \"Utilization threshold for auto-scale-up\"\n        },\n        \"recent_metrics\"\
-        : {\n          \"$ref\": \"#/$defs/PoolMetrics\"\n        }\n      }\n    },\n    \"PoolMetrics\": {\n      \"type\"\
-        : \"object\",\n      \"properties\": {\n        \"jobs_completed_1h\": {\n          \"type\": \"integer\",\n     \
-        \     \"description\": \"Jobs completed in the last hour\"\n        },\n        \"jobs_failed_1h\": {\n          \"\
-        type\": \"integer\",\n          \"description\": \"Jobs failed in the last hour\"\n        },\n        \"avg_processing_time_ms\"\
+        \       \"maxInstances\": {\n          \"type\": \"integer\",\n          \"description\": \"Maximum configured instances\"\
+        \n        },\n        \"scaleUpThreshold\": {\n          \"type\": \"number\",\n          \"format\": \"float\",\n\
+        \          \"description\": \"Utilization threshold for auto-scale-up\"\n        },\n        \"recentMetrics\": {\n\
+        \          \"$ref\": \"#/$defs/PoolMetrics\"\n        }\n      }\n    },\n    \"PoolMetrics\": {\n      \"type\":
+        \"object\",\n      \"properties\": {\n        \"jobsCompleted1h\": {\n          \"type\": \"integer\",\n         \
+        \ \"description\": \"Jobs completed in the last hour\"\n        },\n        \"jobsFailed1h\": {\n          \"type\"\
+        : \"integer\",\n          \"description\": \"Jobs failed in the last hour\"\n        },\n        \"avgProcessingTimeMs\"\
         : {\n          \"type\": \"integer\",\n          \"description\": \"Average processing time in milliseconds\"\n  \
-        \      },\n        \"last_scale_event\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n\
+        \      },\n        \"lastScaleEvent\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n\
         \          \"description\": \"When the pool was last scaled\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get processing pool status\",\n  \"description\": \"Returns current status
         of a processing pool including:\\n- Total instances (running and available)\\n- Current utilization\\n- Queue depth
@@ -1579,22 +1578,22 @@ paths:
           description: Invalid scale request (exceeds limits)
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ScalePoolRequest\"\
-        ,\n  \"$defs\": {\n    \"ScalePoolRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"pool_type\"\
-        ,\n        \"target_instances\"\n      ],\n      \"properties\": {\n        \"pool_type\": {\n          \"type\":
-        \"string\",\n          \"description\": \"Type of processing pool to scale\"\n        },\n        \"target_instances\"\
+        ,\n  \"$defs\": {\n    \"ScalePoolRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"poolType\"\
+        ,\n        \"targetInstances\"\n      ],\n      \"properties\": {\n        \"poolType\": {\n          \"type\": \"\
+        string\",\n          \"description\": \"Type of processing pool to scale\"\n        },\n        \"targetInstances\"\
         : {\n          \"type\": \"integer\",\n          \"minimum\": 0,\n          \"description\": \"Desired number of instances\"\
         \n        },\n        \"force\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n          \"\
         description\": \"Force scale even if it would interrupt processing\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ScalePoolResponse\"\
-        ,\n  \"$defs\": {\n    \"ScalePoolResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"pool_type\"\
-        ,\n        \"previous_instances\",\n        \"current_instances\"\n      ],\n      \"properties\": {\n        \"pool_type\"\
+        ,\n  \"$defs\": {\n    \"ScalePoolResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"poolType\"\
+        ,\n        \"previousInstances\",\n        \"currentInstances\"\n      ],\n      \"properties\": {\n        \"poolType\"\
         : {\n          \"type\": \"string\",\n          \"description\": \"Pool type that was scaled\"\n        },\n     \
-        \   \"previous_instances\": {\n          \"type\": \"integer\",\n          \"description\": \"Instance count before
-        scaling\"\n        },\n        \"current_instances\": {\n          \"type\": \"integer\",\n          \"description\"\
-        : \"Instance count after scaling\"\n        },\n        \"scaled_up\": {\n          \"type\": \"integer\",\n     \
-        \     \"description\": \"Number of instances added\"\n        },\n        \"scaled_down\": {\n          \"type\":
-        \"integer\",\n          \"description\": \"Number of instances removed\"\n        },\n        \"message\": {\n   \
-        \       \"type\": \"string\",\n          \"description\": \"Status message\"\n        }\n      }\n    }\n  }\n}"
+        \   \"previousInstances\": {\n          \"type\": \"integer\",\n          \"description\": \"Instance count before
+        scaling\"\n        },\n        \"currentInstances\": {\n          \"type\": \"integer\",\n          \"description\"\
+        : \"Instance count after scaling\"\n        },\n        \"scaledUp\": {\n          \"type\": \"integer\",\n      \
+        \    \"description\": \"Number of instances added\"\n        },\n        \"scaledDown\": {\n          \"type\": \"\
+        integer\",\n          \"description\": \"Number of instances removed\"\n        },\n        \"message\": {\n     \
+        \     \"type\": \"string\",\n          \"description\": \"Status message\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Scale a processing pool\",\n  \"description\": \"Manually adjust the size
         of a processing pool.\\nCan scale up (add instances) or scale down (remove idle instances).\\nRespects min/max constraints
         from pool configuration.\\n\",\n  \"tags\": [],\n  \"deprecated\": false,\n  \"operationId\": \"ScalePool\"\n}"
@@ -1623,17 +1622,17 @@ paths:
                 $ref: '#/components/schemas/CleanupPoolResponse'
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CleanupPoolRequest\"\
-        ,\n  \"$defs\": {\n    \"CleanupPoolRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"pool_type\"\
-        \n      ],\n      \"properties\": {\n        \"pool_type\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Type of processing pool to cleanup\"\n        },\n        \"preserve_minimum\": {\n          \"type\": \"boolean\"\
-        ,\n          \"default\": true,\n          \"description\": \"Keep at least min_instances running\"\n        }\n \
-        \     }\n    }\n  }\n}"
+        ,\n  \"$defs\": {\n    \"CleanupPoolRequest\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"poolType\"\
+        \n      ],\n      \"properties\": {\n        \"poolType\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Type of processing pool to cleanup\"\n        },\n        \"preserveMinimum\": {\n          \"type\": \"boolean\"\
+        ,\n          \"default\": true,\n          \"description\": \"Keep at least minInstances running\"\n        }\n  \
+        \    }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CleanupPoolResponse\"\
         ,\n  \"$defs\": {\n    \"CleanupPoolResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
-        pool_type\",\n        \"instances_removed\"\n      ],\n      \"properties\": {\n        \"pool_type\": {\n       \
-        \   \"type\": \"string\",\n          \"description\": \"Pool type that was cleaned up\"\n        },\n        \"instances_removed\"\
+        poolType\",\n        \"instancesRemoved\"\n      ],\n      \"properties\": {\n        \"poolType\": {\n          \"\
+        type\": \"string\",\n          \"description\": \"Pool type that was cleaned up\"\n        },\n        \"instancesRemoved\"\
         : {\n          \"type\": \"integer\",\n          \"description\": \"Number of idle instances removed\"\n        },\n\
-        \        \"current_instances\": {\n          \"type\": \"integer\",\n          \"description\": \"Instance count after
+        \        \"currentInstances\": {\n          \"type\": \"integer\",\n          \"description\": \"Instance count after
         cleanup\"\n        },\n        \"message\": {\n          \"type\": \"string\",\n          \"description\": \"Status
         message\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Cleanup idle processing pool instances\",\n  \"description\": \"Scales pool
@@ -3049,16 +3048,16 @@ components:
     AcquireProcessorRequest:
       type: object
       required:
-      - pool_type
+      - poolType
       properties:
-        pool_type:
+        poolType:
           type: string
           description: Type of processing pool (e.g., "asset-processor", "texture-processor")
         priority:
           type: integer
           default: 0
           description: Request priority (higher = more urgent)
-        timeout_seconds:
+        timeoutSeconds:
           type: integer
           default: 300
           description: How long the lease is valid for
@@ -3070,22 +3069,22 @@ components:
     AcquireProcessorResponse:
       type: object
       required:
-      - processor_id
-      - app_id
-      - lease_id
-      - expires_at
+      - processorId
+      - appId
+      - leaseId
+      - expiresAt
       properties:
-        processor_id:
+        processorId:
           type: string
           description: Unique identifier for this processor instance
-        app_id:
+        appId:
           type: string
           description: App-id for mesh service invocation to this processor
-        lease_id:
+        leaseId:
           type: string
           format: uuid
           description: Unique lease identifier (used for release)
-        expires_at:
+        expiresAt:
           type: string
           format: date-time
           description: When the lease expires (must release before this)
@@ -3093,17 +3092,17 @@ components:
     PoolBusyResponse:
       type: object
       required:
-      - pool_type
-      - queue_position
-      - estimated_wait_seconds
+      - poolType
+      - queuePosition
+      - estimatedWaitSeconds
       properties:
-        pool_type:
+        poolType:
           type: string
           description: Pool type that is busy
-        queue_position:
+        queuePosition:
           type: integer
           description: Position in the wait queue (0 = not queued)
-        estimated_wait_seconds:
+        estimatedWaitSeconds:
           type: integer
           description: Estimated wait time until a processor is available
         message:
@@ -3113,9 +3112,9 @@ components:
     ReleaseProcessorRequest:
       type: object
       required:
-      - lease_id
+      - leaseId
       properties:
-        lease_id:
+        leaseId:
           type: string
           format: uuid
           description: The lease ID returned from AcquireProcessor
@@ -3136,19 +3135,19 @@ components:
         released:
           type: boolean
           description: Whether the processor was successfully released
-        processor_id:
+        processorId:
           type: string
           description: ID of the released processor
 
     GetPoolStatusRequest:
       type: object
       required:
-      - pool_type
+      - poolType
       properties:
-        pool_type:
+        poolType:
           type: string
           description: Type of processing pool to query
-        include_metrics:
+        includeMetrics:
           type: boolean
           default: true
           description: Include recent processing metrics
@@ -3156,57 +3155,57 @@ components:
     PoolStatusResponse:
       type: object
       required:
-      - pool_type
-      - total_instances
-      - available_instances
-      - busy_instances
+      - poolType
+      - totalInstances
+      - availableInstances
+      - busyInstances
       - utilization
       properties:
-        pool_type:
+        poolType:
           type: string
           description: Pool type
-        total_instances:
+        totalInstances:
           type: integer
           description: Total processor instances in the pool
-        available_instances:
+        availableInstances:
           type: integer
           description: Instances ready to accept work
-        busy_instances:
+        busyInstances:
           type: integer
           description: Instances currently processing
-        queue_depth:
+        queueDepth:
           type: integer
           description: Number of requests waiting for a processor
         utilization:
           type: number
           format: float
           description: Current utilization percentage (0.0 to 1.0)
-        min_instances:
+        minInstances:
           type: integer
           description: Minimum configured instances
-        max_instances:
+        maxInstances:
           type: integer
           description: Maximum configured instances
-        scale_up_threshold:
+        scaleUpThreshold:
           type: number
           format: float
           description: Utilization threshold for auto-scale-up
-        recent_metrics:
+        recentMetrics:
           $ref: '#/components/schemas/PoolMetrics'
 
     PoolMetrics:
       type: object
       properties:
-        jobs_completed_1h:
+        jobsCompleted1h:
           type: integer
           description: Jobs completed in the last hour
-        jobs_failed_1h:
+        jobsFailed1h:
           type: integer
           description: Jobs failed in the last hour
-        avg_processing_time_ms:
+        avgProcessingTimeMs:
           type: integer
           description: Average processing time in milliseconds
-        last_scale_event:
+        lastScaleEvent:
           type: string
           format: date-time
           description: When the pool was last scaled
@@ -3214,13 +3213,13 @@ components:
     ScalePoolRequest:
       type: object
       required:
-      - pool_type
-      - target_instances
+      - poolType
+      - targetInstances
       properties:
-        pool_type:
+        poolType:
           type: string
           description: Type of processing pool to scale
-        target_instances:
+        targetInstances:
           type: integer
           minimum: 0
           description: Desired number of instances
@@ -3232,23 +3231,23 @@ components:
     ScalePoolResponse:
       type: object
       required:
-      - pool_type
-      - previous_instances
-      - current_instances
+      - poolType
+      - previousInstances
+      - currentInstances
       properties:
-        pool_type:
+        poolType:
           type: string
           description: Pool type that was scaled
-        previous_instances:
+        previousInstances:
           type: integer
           description: Instance count before scaling
-        current_instances:
+        currentInstances:
           type: integer
           description: Instance count after scaling
-        scaled_up:
+        scaledUp:
           type: integer
           description: Number of instances added
-        scaled_down:
+        scaledDown:
           type: integer
           description: Number of instances removed
         message:
@@ -3258,29 +3257,29 @@ components:
     CleanupPoolRequest:
       type: object
       required:
-      - pool_type
+      - poolType
       properties:
-        pool_type:
+        poolType:
           type: string
           description: Type of processing pool to cleanup
-        preserve_minimum:
+        preserveMinimum:
           type: boolean
           default: true
-          description: Keep at least min_instances running
+          description: Keep at least minInstances running
 
     CleanupPoolResponse:
       type: object
       required:
-      - pool_type
-      - instances_removed
+      - poolType
+      - instancesRemoved
       properties:
-        pool_type:
+        poolType:
           type: string
           description: Pool type that was cleaned up
-        instances_removed:
+        instancesRemoved:
           type: integer
           description: Number of idle instances removed
-        current_instances:
+        currentInstances:
           type: integer
           description: Instance count after cleanup
         message:

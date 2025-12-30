@@ -97,4 +97,8 @@ public class GenericMessageEnvelope : IBannouEvent
 
     /// <inheritdoc />
     DateTimeOffset IBannouEvent.BannouTimestamp => Timestamp;
+
+    Guid IBannouEvent.EventId => throw new NotImplementedException();
+
+    DateTime IBannouEvent.Timestamp => throw new NotImplementedException();
 }

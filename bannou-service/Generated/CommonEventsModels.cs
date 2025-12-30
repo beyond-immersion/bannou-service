@@ -37,11 +37,21 @@ public partial class BaseServiceEvent
 {
 
     /// <summary>
+    /// Unique event type identifier (e.g., "connect.capability_manifest").
+    /// <br/>Must be in the generated ClientEventWhitelist or will be rejected.
+    /// <br/>Convention: {service}.{event_type}
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string EventName { get; set; } = default!;
+
+    /// <summary>
     /// Unique identifier for this event instance (UUID string)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string EventId { get; set; } = default!;
+    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// When the event was created (ISO 8601 format, UTC)
@@ -71,11 +81,18 @@ public partial class ServiceRegistrationEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Service ID that registered (e.g., "behavior", "accounts")
+    /// Unique GUID identifying this bannou instance (for log correlation/debugging)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string ServiceId { get; set; } = default!;
+    public System.Guid ServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Service ID that registered (e.g., "behavior", "accounts")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string ServiceName { get; set; } = default!;
 
     /// <summary>
     /// Service API version for change tracking
@@ -363,11 +380,18 @@ public partial class ServiceErrorEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Logical service name emitting the error (e.g., "accounts")
+    /// Unique GUID identifying this plugin instance (for log correlation/debugging)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string ServiceId { get; set; } = default!;
+    public System.Guid ServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Logical service name emitting the error (e.g., "accounts")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string ServiceName { get; set; } = default!;
 
     /// <summary>
     /// Bannou app-id of the instance emitting the error
@@ -510,14 +534,14 @@ public partial class SessionConnectedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string SessionId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Account ID owning the session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string AccountId { get; set; } = default!;
+    public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
     /// User roles from JWT (e.g., ["user", "admin"]). Used by Permissions to compile capabilities.
@@ -560,13 +584,13 @@ public partial class SessionDisconnectedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string SessionId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
-    /// Account ID that was connected (if known)
+    /// Account ID that was disconnected
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
-    public string? AccountId { get; set; } = default!;
+    public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
     /// Disconnect reason (logout, timeout, error, server_shutdown)
@@ -608,14 +632,14 @@ public partial class SessionReconnectedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string SessionId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Account ID owning the reconnected session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string AccountId { get; set; } = default!;
+    public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
     /// User roles preserved from previous session

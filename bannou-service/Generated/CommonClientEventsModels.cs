@@ -29,7 +29,7 @@ using System = global::System;
 /// <summary>
 /// Base schema for all server-to-client push events.
 /// <br/>All client events MUST include these fields.
-/// <br/>The event_name field is used for whitelist validation in Connect service.
+/// <br/>The eventName field is used for whitelist validation in Connect service.
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -42,16 +42,16 @@ public partial class BaseClientEvent
     /// <br/>Convention: {service}.{event_type}
     /// <br/>
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Event_name { get; set; } = default!;
+    public string EventName { get; set; } = default!;
 
     /// <summary>
     /// Unique identifier for this event instance
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Event_id { get; set; } = default!;
+    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// When the event was generated (ISO 8601 format)
@@ -59,12 +59,6 @@ public partial class BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// Optional correlation ID for request tracing
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("correlation_id")]
-    public string? Correlation_id { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -90,24 +84,24 @@ public partial class CapabilityManifestEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CapabilityManifestEventEvent_name Event_name { get; set; } = default!;
+    public CapabilityManifestEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// Session ID this manifest applies to
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("session_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Session_id { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// List of available API endpoints with their GUIDs
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("available_apis")]
+    [System.Text.Json.Serialization.JsonPropertyName("availableApis")]
     [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.ICollection<ClientCapabilityEntry> Available_apis { get; set; } = new System.Collections.ObjectModel.Collection<ClientCapabilityEntry>();
+    public System.Collections.Generic.ICollection<ClientCapabilityEntry> AvailableApis { get; set; } = new System.Collections.ObjectModel.Collection<ClientCapabilityEntry>();
 
     /// <summary>
     /// Manifest version number (incremented on each change)
@@ -133,16 +127,16 @@ public partial class ClientCapabilityEntry
     /// <summary>
     /// Client-salted GUID for this endpoint (unique per client)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("service_guid")]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Service_guid { get; set; } = default!;
+    public System.Guid ServiceId { get; set; } = default!;
 
     /// <summary>
     /// Service name (e.g., "accounts", "game-session")
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("service_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Service_name { get; set; } = default!;
+    public string ServiceName { get; set; } = default!;
 
     /// <summary>
     /// HTTP method for WebSocket routing
@@ -162,9 +156,9 @@ public partial class ClientCapabilityEntry
     /// <summary>
     /// Full endpoint key for routing (e.g., "accounts:POST:/accounts/get")
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("endpoint_key")]
+    [System.Text.Json.Serialization.JsonPropertyName("endpointKey")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Endpoint_key { get; set; } = default!;
+    public string EndpointKey { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -189,22 +183,22 @@ public partial class DisconnectNotificationEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DisconnectNotificationEventEvent_name Event_name { get; set; } = default!;
+    public DisconnectNotificationEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// Token for reconnecting to the same session (valid for 5 minutes)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("reconnection_token")]
-    public string? Reconnection_token { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("reconnectionToken")]
+    public string? ReconnectionToken { get; set; } = default!;
 
     /// <summary>
     /// When the reconnection token expires
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("expires_at")]
-    public System.DateTimeOffset? Expires_at { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
 
     /// <summary>
     /// Whether this session can be reconnected
@@ -238,17 +232,17 @@ public partial class SystemErrorEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SystemErrorEventEvent_name Event_name { get; set; } = default!;
+    public SystemErrorEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// Machine-readable error code (e.g., "SERVICE_UNAVAILABLE", "RATE_LIMITED")
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("error_code")]
+    [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Error_code { get; set; } = default!;
+    public string ErrorCode { get; set; } = default!;
 
     /// <summary>
     /// Human-readable error message
@@ -284,17 +278,17 @@ public partial class SessionCapabilitiesEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier (internal, not forwarded to client)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SessionCapabilitiesEventEvent_name Event_name { get; set; } = default!;
+    public SessionCapabilitiesEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// Session ID these capabilities apply to
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("session_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Session_id { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Map of ServiceID -&gt; List of available methods (e.g., "accounts" -&gt; ["POST:/get-account"])
@@ -323,18 +317,18 @@ public partial class SystemNotificationEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SystemNotificationEventEvent_name Event_name { get; set; } = default!;
+    public SystemNotificationEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// Type of notification
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("notification_type")]
+    [System.Text.Json.Serialization.JsonPropertyName("notificationType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SystemNotificationEventNotification_type Notification_type { get; set; } = default!;
+    public SystemNotificationEventNotificationType NotificationType { get; set; } = default!;
 
     /// <summary>
     /// Human-readable notification message
@@ -352,14 +346,14 @@ public partial class SystemNotificationEvent : BaseClientEvent
     /// <summary>
     /// Optional URL for more information
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("action_url")]
-    public string? Action_url { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("actionUrl")]
+    public string? ActionUrl { get; set; } = default!;
 
     /// <summary>
     /// When this notification expires/becomes irrelevant
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("expires_at")]
-    public System.DateTimeOffset? Expires_at { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
 
 }
 
@@ -376,37 +370,37 @@ public partial class ShortcutPublishedEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ShortcutPublishedEventEvent_name Event_name { get; set; } = default!;
+    public ShortcutPublishedEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// Target session for this shortcut.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("session_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Session_id { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("shortcut")]
     [System.ComponentModel.DataAnnotations.Required]
     public SessionShortcut Shortcut { get; set; } = new SessionShortcut();
 
     /// <summary>
-    /// If true and a shortcut with the same route_guid exists, replace it.
+    /// If true and a shortcut with the same routeGuid exists, replace it.
     /// <br/>If false and shortcut exists, the event is ignored.
     /// <br/>
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("replace_existing")]
-    public bool Replace_existing { get; set; } = true;
+    [System.Text.Json.Serialization.JsonPropertyName("replaceExisting")]
+    public bool ReplaceExisting { get; set; } = true;
 
 }
 
 /// <summary>
 /// Published by services to remove shortcuts.
 /// <br/>Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
-/// <br/>Supports both single-shortcut revocation (by route_guid) and
-/// <br/>bulk revocation (all shortcuts from a source_service).
+/// <br/>Supports both single-shortcut revocation (by routeGuid) and
+/// <br/>bulk revocation (all shortcuts from a sourceService).
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -416,35 +410,35 @@ public partial class ShortcutRevokedEvent : BaseClientEvent
     /// <summary>
     /// Fixed event type identifier.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ShortcutRevokedEventEvent_name Event_name { get; set; } = default!;
+    public ShortcutRevokedEventEventName EventName { get; set; } = default!;
 
     /// <summary>
     /// Target session for revocation.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("session_id")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Session_id { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Specific shortcut to revoke.
     /// <br/>If provided, only this shortcut is removed.
-    /// <br/>Mutually exclusive with revoke_by_service.
+    /// <br/>Mutually exclusive with revokeByService.
     /// <br/>
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("route_guid")]
-    public System.Guid? Route_guid { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("routeGuid")]
+    public System.Guid? RouteGuid { get; set; } = default!;
 
     /// <summary>
     /// Revoke ALL shortcuts from this source service.
     /// <br/>Used when a service needs to clear all its shortcuts.
-    /// <br/>Mutually exclusive with route_guid.
+    /// <br/>Mutually exclusive with routeGuid.
     /// <br/>
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("revoke_by_service")]
-    public string? Revoke_by_service { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("revokeByService")]
+    public string? RevokeByService { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for revocation (for logging/debugging).
@@ -456,7 +450,7 @@ public partial class ShortcutRevokedEvent : BaseClientEvent
 
 /// <summary>
 /// A pre-bound API call that clients can invoke with a single GUID.
-/// <br/>The bound_payload is injected by Connect when the shortcut is invoked.
+/// <br/>The boundPayload is injected by Connect when the shortcut is invoked.
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -468,27 +462,27 @@ public partial class SessionShortcut
     /// <br/>Uses UUID version 7 bits to distinguish from service GUIDs (version 5).
     /// <br/>
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("route_guid")]
+    [System.Text.Json.Serialization.JsonPropertyName("routeGuid")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Route_guid { get; set; } = default!;
+    public System.Guid RouteGuid { get; set; } = default!;
 
     /// <summary>
     /// The actual service capability GUID this shortcut invokes.
     /// <br/>Must be a valid capability in the client's current capability manifest.
     /// <br/>
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("target_guid")]
+    [System.Text.Json.Serialization.JsonPropertyName("targetGuid")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Target_guid { get; set; } = default!;
+    public System.Guid TargetGuid { get; set; } = default!;
 
     /// <summary>
     /// Pre-serialized JSON payload passed unchanged to the target service.
     /// <br/>Connect treats this as opaque bytes - no deserialization or modification.
     /// <br/>
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bound_payload")]
+    [System.Text.Json.Serialization.JsonPropertyName("boundPayload")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Bound_payload { get; set; } = default!;
+    public string BoundPayload { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -533,42 +527,42 @@ public partial class SessionShortcutMetadata
     /// <summary>
     /// The service that created this shortcut.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("source_service")]
+    [System.Text.Json.Serialization.JsonPropertyName("sourceService")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Source_service { get; set; } = default!;
+    public string SourceService { get; set; } = default!;
 
     /// <summary>
     /// The target service for routing.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("target_service")]
-    public string Target_service { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("targetService")]
+    public string TargetService { get; set; } = default!;
 
     /// <summary>
     /// The target HTTP method for routing.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("target_method")]
-    public string Target_method { get; set; } = "POST";
+    [System.Text.Json.Serialization.JsonPropertyName("targetMethod")]
+    public string TargetMethod { get; set; } = "POST";
 
     /// <summary>
     /// The target endpoint for routing.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("target_endpoint")]
-    public string Target_endpoint { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("targetEndpoint")]
+    public string TargetEndpoint { get; set; } = default!;
 
     /// <summary>
     /// When this shortcut was created.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("created_at")]
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Created_at { get; set; } = default!;
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional TTL for this shortcut.
     /// <br/>If set, Connect automatically removes the shortcut after this time.
     /// <br/>
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("expires_at")]
-    public System.DateTimeOffset? Expires_at { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
 
     /// <summary>
     /// Optional categorization tags for client-side organization.
@@ -579,9 +573,9 @@ public partial class SessionShortcutMetadata
     /// <summary>
     /// Optional user-friendly name for display in client UIs.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("display_name")]
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(64)]
-    public string? Display_name { get; set; } = default!;
+    public string? DisplayName { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -595,7 +589,7 @@ public partial class SessionShortcutMetadata
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum CapabilityManifestEventEvent_name
+public enum CapabilityManifestEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"connect.capability_manifest")]
@@ -616,7 +610,7 @@ public enum ClientCapabilityEntryMethod
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum DisconnectNotificationEventEvent_name
+public enum DisconnectNotificationEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"connect.disconnect_notification")]
@@ -625,7 +619,7 @@ public enum DisconnectNotificationEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SystemErrorEventEvent_name
+public enum SystemErrorEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"system.error")]
@@ -634,7 +628,7 @@ public enum SystemErrorEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SessionCapabilitiesEventEvent_name
+public enum SessionCapabilitiesEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"permissions.session_capabilities")]
@@ -643,7 +637,7 @@ public enum SessionCapabilitiesEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SystemNotificationEventEvent_name
+public enum SystemNotificationEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"system.notification")]
@@ -652,7 +646,7 @@ public enum SystemNotificationEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SystemNotificationEventNotification_type
+public enum SystemNotificationEventNotificationType
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"info")]
@@ -670,7 +664,7 @@ public enum SystemNotificationEventNotification_type
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ShortcutPublishedEventEvent_name
+public enum ShortcutPublishedEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"session.shortcut_published")]
@@ -679,7 +673,7 @@ public enum ShortcutPublishedEventEvent_name
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ShortcutRevokedEventEvent_name
+public enum ShortcutRevokedEventEventName
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"session.shortcut_revoked")]

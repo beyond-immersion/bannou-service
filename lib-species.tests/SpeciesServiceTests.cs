@@ -861,7 +861,6 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         // Assert
         Assert.NotNull(registrationEvent);
         Assert.Equal("species", registrationEvent.ServiceId);
-        Assert.NotNull(registrationEvent.EventId);
         Assert.NotNull(registrationEvent.Endpoints);
     }
 

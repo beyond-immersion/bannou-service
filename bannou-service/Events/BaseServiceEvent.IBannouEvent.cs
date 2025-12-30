@@ -11,4 +11,6 @@ public partial class BaseServiceEvent : IBannouEvent
 
     /// <inheritdoc />
     DateTime Timestamp;
+
+    DateTime IBannouEvent.Timestamp => throw new NotImplementedException();
 }

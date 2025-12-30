@@ -4652,10 +4652,10 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     "AcquireProcessorRequest": {
       "type": "object",
       "required": [
-        "pool_type"
+        "poolType"
       ],
       "properties": {
-        "pool_type": {
+        "poolType": {
           "type": "string",
           "description": "Type of processing pool (e.g., \"asset-processor\", \"texture-processor\")"
         },
@@ -4664,7 +4664,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "default": 0,
           "description": "Request priority (higher = more urgent)"
         },
-        "timeout_seconds": {
+        "timeoutSeconds": {
           "type": "integer",
           "default": 300,
           "description": "How long the lease is valid for"
@@ -4688,26 +4688,26 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     "AcquireProcessorResponse": {
       "type": "object",
       "required": [
-        "processor_id",
-        "app_id",
-        "lease_id",
-        "expires_at"
+        "processorId",
+        "appId",
+        "leaseId",
+        "expiresAt"
       ],
       "properties": {
-        "processor_id": {
+        "processorId": {
           "type": "string",
           "description": "Unique identifier for this processor instance"
         },
-        "app_id": {
+        "appId": {
           "type": "string",
           "description": "App-id for mesh service invocation to this processor"
         },
-        "lease_id": {
+        "leaseId": {
           "type": "string",
           "format": "uuid",
           "description": "Unique lease identifier (used for release)"
         },
-        "expires_at": {
+        "expiresAt": {
           "type": "string",
           "format": "date-time",
           "description": "When the lease expires (must release before this)"
@@ -4780,10 +4780,10 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     "ReleaseProcessorRequest": {
       "type": "object",
       "required": [
-        "lease_id"
+        "leaseId"
       ],
       "properties": {
-        "lease_id": {
+        "leaseId": {
           "type": "string",
           "format": "uuid",
           "description": "The lease ID returned from AcquireProcessor"
@@ -4819,7 +4819,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "type": "boolean",
           "description": "Whether the processor was successfully released"
         },
-        "processor_id": {
+        "processorId": {
           "type": "string",
           "description": "ID of the released processor"
         }
@@ -4891,14 +4891,14 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     "GetPoolStatusRequest": {
       "type": "object",
       "required": [
-        "pool_type"
+        "poolType"
       ],
       "properties": {
-        "pool_type": {
+        "poolType": {
           "type": "string",
           "description": "Type of processing pool to query"
         },
-        "include_metrics": {
+        "includeMetrics": {
           "type": "boolean",
           "default": true,
           "description": "Include recent processing metrics"
@@ -4917,30 +4917,30 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     "PoolStatusResponse": {
       "type": "object",
       "required": [
-        "pool_type",
-        "total_instances",
-        "available_instances",
-        "busy_instances",
+        "poolType",
+        "totalInstances",
+        "availableInstances",
+        "busyInstances",
         "utilization"
       ],
       "properties": {
-        "pool_type": {
+        "poolType": {
           "type": "string",
           "description": "Pool type"
         },
-        "total_instances": {
+        "totalInstances": {
           "type": "integer",
           "description": "Total processor instances in the pool"
         },
-        "available_instances": {
+        "availableInstances": {
           "type": "integer",
           "description": "Instances ready to accept work"
         },
-        "busy_instances": {
+        "busyInstances": {
           "type": "integer",
           "description": "Instances currently processing"
         },
-        "queue_depth": {
+        "queueDepth": {
           "type": "integer",
           "description": "Number of requests waiting for a processor"
         },
@@ -4949,20 +4949,20 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
           "format": "float",
           "description": "Current utilization percentage (0.0 to 1.0)"
         },
-        "min_instances": {
+        "minInstances": {
           "type": "integer",
           "description": "Minimum configured instances"
         },
-        "max_instances": {
+        "maxInstances": {
           "type": "integer",
           "description": "Maximum configured instances"
         },
-        "scale_up_threshold": {
+        "scaleUpThreshold": {
           "type": "number",
           "format": "float",
           "description": "Utilization threshold for auto-scale-up"
         },
-        "recent_metrics": {
+        "recentMetrics": {
           "$ref": "#/$defs/PoolMetrics"
         }
       }
@@ -4970,19 +4970,19 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     "PoolMetrics": {
       "type": "object",
       "properties": {
-        "jobs_completed_1h": {
+        "jobsCompleted1h": {
           "type": "integer",
           "description": "Jobs completed in the last hour"
         },
-        "jobs_failed_1h": {
+        "jobsFailed1h": {
           "type": "integer",
           "description": "Jobs failed in the last hour"
         },
-        "avg_processing_time_ms": {
+        "avgProcessingTimeMs": {
           "type": "integer",
           "description": "Average processing time in milliseconds"
         },
-        "last_scale_event": {
+        "lastScaleEvent": {
           "type": "string",
           "format": "date-time",
           "description": "When the pool was last scaled"
@@ -5055,15 +5055,15 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     "ScalePoolRequest": {
       "type": "object",
       "required": [
-        "pool_type",
-        "target_instances"
+        "poolType",
+        "targetInstances"
       ],
       "properties": {
-        "pool_type": {
+        "poolType": {
           "type": "string",
           "description": "Type of processing pool to scale"
         },
-        "target_instances": {
+        "targetInstances": {
           "type": "integer",
           "minimum": 0,
           "description": "Desired number of instances"
@@ -5087,28 +5087,28 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     "ScalePoolResponse": {
       "type": "object",
       "required": [
-        "pool_type",
-        "previous_instances",
-        "current_instances"
+        "poolType",
+        "previousInstances",
+        "currentInstances"
       ],
       "properties": {
-        "pool_type": {
+        "poolType": {
           "type": "string",
           "description": "Pool type that was scaled"
         },
-        "previous_instances": {
+        "previousInstances": {
           "type": "integer",
           "description": "Instance count before scaling"
         },
-        "current_instances": {
+        "currentInstances": {
           "type": "integer",
           "description": "Instance count after scaling"
         },
-        "scaled_up": {
+        "scaledUp": {
           "type": "integer",
           "description": "Number of instances added"
         },
-        "scaled_down": {
+        "scaledDown": {
           "type": "integer",
           "description": "Number of instances removed"
         },
@@ -5184,17 +5184,17 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     "CleanupPoolRequest": {
       "type": "object",
       "required": [
-        "pool_type"
+        "poolType"
       ],
       "properties": {
-        "pool_type": {
+        "poolType": {
           "type": "string",
           "description": "Type of processing pool to cleanup"
         },
-        "preserve_minimum": {
+        "preserveMinimum": {
           "type": "boolean",
           "default": true,
-          "description": "Keep at least min_instances running"
+          "description": "Keep at least minInstances running"
         }
       }
     }
@@ -5210,19 +5210,19 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     "CleanupPoolResponse": {
       "type": "object",
       "required": [
-        "pool_type",
-        "instances_removed"
+        "poolType",
+        "instancesRemoved"
       ],
       "properties": {
-        "pool_type": {
+        "poolType": {
           "type": "string",
           "description": "Pool type that was cleaned up"
         },
-        "instances_removed": {
+        "instancesRemoved": {
           "type": "integer",
           "description": "Number of idle instances removed"
         },
-        "current_instances": {
+        "currentInstances": {
           "type": "integer",
           "description": "Instance count after cleanup"
         },

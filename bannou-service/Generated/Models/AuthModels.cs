@@ -57,9 +57,9 @@ public partial class InitOAuthResponse
     /// <summary>
     /// The OAuth provider authorization URL to redirect the user to
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("authorization_url")]
+    [System.Text.Json.Serialization.JsonPropertyName("authorizationUrl")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Uri Authorization_url { get; set; } = default!;
+    public System.Uri AuthorizationUrl { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

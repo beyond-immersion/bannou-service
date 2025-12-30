@@ -239,7 +239,6 @@ public class AuthServiceTests
         // Assert
         Assert.NotNull(registrationEvent);
         Assert.Equal("auth", registrationEvent.ServiceId);
-        Assert.NotNull(registrationEvent.EventId);
         Assert.NotNull(registrationEvent.Endpoints);
         Assert.Equal(12, registrationEvent.Endpoints.Count); // 12 endpoints (removed steam/init)
         Assert.NotEmpty(registrationEvent.Version);

@@ -589,7 +589,6 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         // Assert
         Assert.NotNull(registrationEvent);
         Assert.Equal("relationship", registrationEvent.ServiceId);
-        Assert.NotNull(registrationEvent.EventId);
         Assert.NotNull(registrationEvent.Endpoints);
     }
 
