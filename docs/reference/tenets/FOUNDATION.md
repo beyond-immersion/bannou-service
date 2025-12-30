@@ -50,6 +50,25 @@ Path parameters (e.g., `/accounts/{id}`) cannot map to static GUIDs for zero-cop
 
 **Related**: See Tenet 15 for browser-facing endpoint exceptions (OAuth, Website, WebSocket upgrade).
 
+### Allowed Exceptions
+
+#### 1. Binary Format Specifications (ABML Bytecode)
+
+The ABML Local Runtime uses a binary bytecode format for client-side behavior model execution. This format is specified in dedicated documentation (`docs/planning/UPCOMING_-_ABML_LOCAL_RUNTIME.md`) rather than OpenAPI because:
+- Binary formats are not HTTP APIs - OpenAPI is designed for REST/HTTP specifications
+- Bytecode is a compiler output, not a request/response contract
+- The specification document serves as the "schema" defining format, opcodes, and semantics
+
+```
+sdk-sources/Behavior/Runtime/    # ABML bytecode interpreter
+├── BehaviorModel.cs             # Binary format (not OpenAPI)
+├── BehaviorModelInterpreter.cs  # Stack-based VM (not generated)
+├── BehaviorOpcode.cs            # Opcode definitions (not generated)
+└── StateSchema.cs               # Input/output schema (not generated)
+```
+
+**Key Principle**: Binary format specifications use dedicated markdown documentation as their "schema". The format spec is the contract between compiler (server) and interpreter (client).
+
 ---
 
 ## Tenet 2: Code Generation System (FOUNDATIONAL)
@@ -133,6 +152,27 @@ using BeyondImmersion.BannouService.Events;
 var acctEvent = new AccountDeletedEvent { ... };
 var authEvent = new SessionInvalidatedEvent { ... };
 ```
+
+### Allowed Exceptions
+
+#### 1. Runtime Interpreters for Compiled Artifacts
+
+The ABML behavior model interpreter is handwritten code that **consumes** generated artifacts (compiled bytecode), not **produces** them. The compiler-to-interpreter boundary is:
+- **Compiler (lib-behavior)**: Generated from ABML YAML via `BehaviorCompiler` - follows schema-first
+- **Interpreter (sdk-sources)**: Handwritten VM that executes bytecode - NOT generated
+
+```
+lib-behavior/Compiler/       # Compilation (schema-first via YAML)
+├── BehaviorCompiler.cs      # Orchestrates compilation pipeline
+├── Actions/                 # Action-specific compilers (generated patterns)
+└── Codegen/                 # Bytecode emission
+
+sdk-sources/Behavior/Runtime/  # Execution (handwritten interpreter)
+├── BehaviorModelInterpreter.cs  # Stack-based VM (NOT generated)
+└── CinematicInterpreter.cs      # Streaming composition (NOT generated)
+```
+
+**Key Principle**: Interpreters are analogous to the JVM or .NET CLR - they execute compiled output but are not themselves generated from schemas. The bytecode format spec serves as the interface contract.
 
 ---
 
@@ -241,7 +281,26 @@ await client.Containers.StartContainerAsync(containerId, new());
 // In any other service (forbidden - use lib-mesh for service calls)
 ```
 
-**Key Principle**: These exceptions are for infrastructure lib internals or specialized services where the infrastructure IS the domain. Regular service code must always use the three infrastructure libs.
+#### 4. SDK Behavior Runtime (Client-Side Bytecode Execution)
+
+The ABML Local Runtime interpreter in `sdk-sources/Behavior/Runtime/` is client-side code designed for embedded execution in game clients. It does NOT use lib-state, lib-messaging, or lib-mesh because:
+- Runs on game clients, not Bannou servers
+- Designed for offline/embedded execution without network dependencies
+- State is provided by game engine, not Bannou state stores
+- No pub/sub needed - intents are returned synchronously
+
+```csharp
+// In sdk-sources/Behavior/Runtime/ (allowed):
+public void Evaluate(ReadOnlySpan<double> inputState, Span<double> outputState)
+{
+    // Pure computation - no infrastructure dependencies
+    // State provided by game client, outputs returned directly
+}
+```
+
+**Key Principle**: Client SDK code designed for embedded execution is exempt from infrastructure lib requirements since it runs outside the Bannou service context.
+
+**Key Principle (General)**: These exceptions are for infrastructure lib internals or specialized services where the infrastructure IS the domain. Regular service code must always use the three infrastructure libs.
 
 ---
 

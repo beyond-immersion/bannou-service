@@ -307,6 +307,8 @@ For streaming composition, we need:
 
 **Concept**: Cinematics declare **continuation points** - named locations where execution may continue with additional content or fall through to default.
 
+**Theoretical Foundation**: This pattern maps directly to **algebraic effects with handlers** from programming language theory (Plotkin & Pretnar, 2009). A continuation point is essentially a typed effect operation that yields control to a handler. The handler can provide an extension (resume with new content) or let it timeout (resume with default). The key innovation is **async delivery with deadline** - the handler doesn't block waiting for input but sets a timeout after which the default continuation is used. See THE_DREAM.md §12.2 for detailed theoretical background.
+
 ```yaml
 # Original cinematic
 version: "2.0"
@@ -647,6 +649,8 @@ THE_DREAM is achievable with:
 - Streaming interpreter that accepts extensions
 - Event Brain that produces cinematics + extensions
 - Distribution protocol that delivers them to game servers
+
+**Novelty Note**: Research confirms this combination is genuinely novel. No existing system combines graceful degradation + precise choreography + runtime extension + async delivery with timeout. The closest academic concepts are algebraic effects (theoretical) and dynamic behavior trees (synchronous). The closest industry implementations are Left 4 Dead's AI Director (macro-level) and procedural cinematics like AC Odyssey (pre-generated). See THE_DREAM.md §12 for detailed prior art analysis.
 
 The path is clear. The composition model is defined. Let's build it.
 

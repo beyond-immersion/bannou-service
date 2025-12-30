@@ -16684,6 +16684,962 @@
             </summary>
             <exception cref="T:System.InvalidOperationException">Thrown when the response is an error.</exception>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel">
+            <summary>
+            A compiled behavior model ready for execution.
+            Contains bytecode, state schema, constant pool, string table, and optional debug info.
+            </summary>
+            <remarks>
+            <para>
+            Binary format:
+            - Header (32 bytes)
+            - Extension header (24 bytes, optional)
+            - State schema (variable)
+            - Continuation points table (variable, optional)
+            - Constant pool (variable)
+            - String table (variable)
+            - Bytecode (variable)
+            - Debug info (variable, optional)
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.Header">
+            <summary>
+            Model header containing version, flags, ID, and checksum.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.ExtensionHeader">
+            <summary>
+            Extension header (only present if model is an extension).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.Schema">
+            <summary>
+            Input/output state schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.ContinuationPoints">
+            <summary>
+            Continuation points for streaming composition.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.ConstantPool">
+            <summary>
+            Constant pool containing literal values.
+            All values are stored as doubles.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.StringTable">
+            <summary>
+            String table for string literals.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.Bytecode">
+            <summary>
+            Compiled bytecode.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.DebugInfo">
+            <summary>
+            Debug info (only present if HasDebugInfo flag set).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.Id">
+            <summary>
+            Unique model identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.Version">
+            <summary>
+            Format version.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.Flags">
+            <summary>
+            Model flags.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.IsExtension">
+            <summary>
+            Whether this model is an extension that attaches to another model.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.MaxStackDepth">
+            <summary>
+            Maximum stack depth required for execution.
+            Computed from bytecode analysis during loading.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.LocalCount">
+            <summary>
+            Number of local variables used.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.#ctor(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelHeader,System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ExtensionHeader},BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.StateSchema,BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPointTable,System.Collections.Generic.IReadOnlyList{System.Double},System.Collections.Generic.IReadOnlyList{System.String},System.Byte[],BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.DebugInfo)">
+            <summary>
+            Creates a new behavior model.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.Deserialize(System.Byte[])">
+            <summary>
+            Deserializes a behavior model from binary data.
+            </summary>
+            <param name="data">Binary model data.</param>
+            <returns>Deserialized model.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.Deserialize(System.IO.BinaryReader)">
+            <summary>
+            Deserializes a behavior model from a binary reader.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.Serialize">
+            <summary>
+            Serializes the behavior model to binary data.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.Serialize(System.IO.BinaryWriter)">
+            <summary>
+            Serializes the behavior model to a binary writer.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.AnalyzeBytecode(System.Byte[])">
+            <summary>
+            Analyzes bytecode to determine stack depth and local count requirements.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.GetStackDelta(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode)">
+            <summary>
+            Gets the stack delta for an opcode (positive = push, negative = pop).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel.GetOperandSize(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode)">
+            <summary>
+            Gets the size of operands for an opcode.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.DebugInfo">
+            <summary>
+            Debug information for a behavior model.
+            Maps bytecode offsets to source locations.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.DebugInfo.SourcePath">
+            <summary>
+            Source file path or identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.DebugInfo.LineMap">
+            <summary>
+            Line number mappings: bytecode offset -> source line.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.DebugInfo.#ctor(System.String,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Int32})">
+            <summary>
+            Creates new debug info.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.DebugInfo.GetLine(System.Int32)">
+            <summary>
+            Gets the source line for a bytecode offset.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.DebugInfo.Deserialize(System.IO.BinaryReader)">
+            <summary>
+            Deserializes debug info from binary data.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.DebugInfo.Serialize(System.IO.BinaryWriter)">
+            <summary>
+            Serializes debug info to binary data.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelHeader">
+            <summary>
+            Fixed-size header for behavior model binary format (32 bytes).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelHeader.Magic">
+            <summary>
+            Magic bytes identifying the format: "ABML" (0x4C4D4241).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelHeader.CurrentVersion">
+            <summary>
+            Current format version.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelHeader.Size">
+            <summary>
+            Header size in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelHeader.Version">
+            <summary>
+            Format version number.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelHeader.Flags">
+            <summary>
+            Model flags.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelHeader.ModelId">
+            <summary>
+            Unique model identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelHeader.Checksum">
+            <summary>
+            CRC32 checksum of the model data (excluding header).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelHeader.Reserved">
+            <summary>
+            Reserved for future use.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelHeader.#ctor(System.UInt16,BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelFlags,System.Guid,System.UInt32)">
+            <summary>
+            Creates a new header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelHeader.Deserialize(System.IO.BinaryReader)">
+            <summary>
+            Deserializes a header from binary data.
+            </summary>
+            <param name="reader">Binary reader positioned at start of header.</param>
+            <returns>Deserialized header.</returns>
+            <exception cref="T:System.IO.InvalidDataException">If magic bytes don't match.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelHeader.Serialize(System.IO.BinaryWriter)">
+            <summary>
+            Serializes the header to binary data.
+            </summary>
+            <param name="writer">Binary writer.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelHeader.IsCompatible">
+            <summary>
+            Checks if this model version is compatible with the current runtime.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelHeader.HasDebugInfo">
+            <summary>
+            Checks if this model has debug info.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelHeader.HasContinuationPoints">
+            <summary>
+            Checks if this model has continuation points.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelHeader.IsExtension">
+            <summary>
+            Checks if this model is an extension.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ExtensionHeader">
+            <summary>
+            Extension header for models that attach to other models (only present if IsExtension flag set).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ExtensionHeader.Size">
+            <summary>
+            Extension header size in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ExtensionHeader.ParentModelId">
+            <summary>
+            Parent model ID that this extension attaches to.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ExtensionHeader.AttachPointHash">
+            <summary>
+            Hash of the continuation point name this extension attaches to.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ExtensionHeader.ReplacementFlowOffset">
+            <summary>
+            Offset to the replacement flow in bytecode.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ExtensionHeader.#ctor(System.Guid,System.UInt32,System.UInt32)">
+            <summary>
+            Creates a new extension header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ExtensionHeader.Deserialize(System.IO.BinaryReader)">
+            <summary>
+            Deserializes an extension header from binary data.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ExtensionHeader.Serialize(System.IO.BinaryWriter)">
+            <summary>
+            Serializes the extension header to binary data.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter">
+            <summary>
+            Lightweight interpreter for compiled ABML behavior models.
+            Designed for per-frame evaluation with zero allocations after initialization.
+            </summary>
+            <remarks>
+            <para>
+            This interpreter uses a stack-based architecture for simplicity and cache efficiency.
+            All values are stored as doubles to avoid boxing and enable SIMD-friendly operations.
+            </para>
+            <para>
+            The interpreter is NOT thread-safe. Each character should have its own interpreter instance.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter.Model">
+            <summary>
+            The model being interpreted.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter.ModelId">
+            <summary>
+            Model ID for identification.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter.InputSchema">
+            <summary>
+            Input schema for this model.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter.StringTable">
+            <summary>
+            String table for output string lookup.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter.#ctor(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel)">
+            <summary>
+            Creates an interpreter for the given behavior model.
+            </summary>
+            <param name="model">The compiled behavior model to interpret.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter.SetRandomSeed(System.Int32)">
+            <summary>
+            Sets the random seed for deterministic execution.
+            Call before Evaluate() for reproducible results.
+            </summary>
+            <param name="seed">Random seed (e.g., frame number for replays).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter.Evaluate(System.ReadOnlySpan{System.Double},System.Span{System.Double})">
+            <summary>
+            Evaluates the behavior model with the given input state.
+            Returns the output state (action intent).
+            </summary>
+            <remarks>
+            This method is allocation-free after initial setup.
+            </remarks>
+            <param name="inputState">Current game state values (must match input schema).</param>
+            <param name="outputState">Pre-allocated output buffer (must match output schema).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter.ReadUInt16">
+            <summary>
+            Reads a 16-bit unsigned integer from bytecode (little-endian).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter.CurrentStackDepth">
+            <summary>
+            Gets the current stack depth (for debugging).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter.CurrentInstructionPointer">
+            <summary>
+            Gets the current instruction pointer (for debugging).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode">
+             <summary>
+             Stack-based bytecode opcodes for behavior model execution.
+             Different from the register-based expression opcodes in bannou-service.
+             </summary>
+             <remarks>
+             Instruction encoding: [Opcode:8][Operand1:8][Operand2:8][Operand3:8]
+             Most instructions are 1-2 bytes. Jump targets use 16-bit offsets.
+            
+             SYNC WARNING: Opcode values must match server-side definitions exactly.
+             </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.PushConst">
+            <summary>Push constant from pool. [PUSH_CONST idx:8]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.PushInput">
+            <summary>Push input variable value. [PUSH_INPUT idx:8]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.PushLocal">
+            <summary>Push local variable value. [PUSH_LOCAL idx:8]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.StoreLocal">
+            <summary>Pop and store to local variable. [STORE_LOCAL idx:8]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Pop">
+            <summary>Discard top of stack. [POP]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Dup">
+            <summary>Duplicate top of stack. [DUP]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Swap">
+            <summary>Swap top two stack values. [SWAP]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.PushString">
+            <summary>Push string from string table. [PUSH_STRING idx:16]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Add">
+            <summary>Pop a, b; push a + b. [ADD]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Sub">
+            <summary>Pop a, b; push a - b. [SUB]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Mul">
+            <summary>Pop a, b; push a * b. [MUL]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Div">
+            <summary>Pop a, b; push a / b. [DIV]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Mod">
+            <summary>Pop a, b; push a % b. [MOD]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Neg">
+            <summary>Pop a; push -a. [NEG]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Eq">
+            <summary>Pop a, b; push 1.0 if a == b, else 0.0. [EQ]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Ne">
+            <summary>Pop a, b; push 1.0 if a != b, else 0.0. [NE]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Lt">
+            <summary>Pop a, b; push 1.0 if a &lt; b, else 0.0. [LT]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Le">
+            <summary>Pop a, b; push 1.0 if a &lt;= b, else 0.0. [LE]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Gt">
+            <summary>Pop a, b; push 1.0 if a &gt; b, else 0.0. [GT]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Ge">
+            <summary>Pop a, b; push 1.0 if a &gt;= b, else 0.0. [GE]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.And">
+            <summary>Pop a, b; push 1.0 if both truthy, else 0.0. [AND]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Or">
+            <summary>Pop a, b; push 1.0 if either truthy, else 0.0. [OR]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Not">
+            <summary>Pop a; push 1.0 if falsy, else 0.0. [NOT]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Jmp">
+            <summary>Unconditional jump. [JMP offset:16]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.JmpIf">
+            <summary>Jump if top of stack is truthy. [JMP_IF offset:16]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.JmpUnless">
+            <summary>Jump if top of stack is falsy. [JMP_UNLESS offset:16]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Call">
+            <summary>Call subroutine. [CALL flow_idx:16]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Ret">
+            <summary>Return from subroutine. [RET]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Halt">
+            <summary>Stop execution. [HALT]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.SwitchJmp">
+            <summary>Jump table for switch-like constructs. [SWITCH_JMP cases:8]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.SetOutput">
+            <summary>Pop value and store in output variable. [SET_OUTPUT idx:8]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.EmitIntent">
+            <summary>
+            Emit action intent with urgency. [EMIT_INTENT channel:8]
+            Expects stack: [action_string_idx, urgency]
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Rand">
+            <summary>Push random float [0, 1). [RAND]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.RandInt">
+            <summary>Push random int in range. [RAND_INT] Stack: [min, max]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Lerp">
+            <summary>Linear interpolation. [LERP] Stack: [a, b, t] -> a + (b - a) * t</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Clamp">
+            <summary>Clamp value to range. [CLAMP] Stack: [value, min, max]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Abs">
+            <summary>Absolute value. [ABS] Stack: [a] -> |a|</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Floor">
+            <summary>Floor. [FLOOR] Stack: [a] -> floor(a)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Ceil">
+            <summary>Ceiling. [CEIL] Stack: [a] -> ceil(a)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Min">
+            <summary>Minimum of two values. [MIN] Stack: [a, b]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Max">
+            <summary>Maximum of two values. [MAX] Stack: [a, b]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.ContinuationPoint">
+            <summary>
+            Pause for possible extension attachment.
+            [CONTINUATION_POINT cp_idx:16]
+            Interpreter checks for attached extension at this point.
+            If extension available: transfers control to extension flow.
+            If no extension and timeout expires: jumps to default flow.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.ExtensionAvailable">
+            <summary>
+            Check if extension is available.
+            [EXTENSION_AVAILABLE cp_idx:16]
+            Push 1.0 if extension attached, 0.0 otherwise.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.YieldToExtension">
+            <summary>
+            Transfer control to attached extension.
+            [YIELD_TO_EXTENSION cp_idx:16]
+            Used internally when extension is attached.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Breakpoint">
+            <summary>Debug breakpoint. [BREAKPOINT]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Trace">
+            <summary>Debug trace with string. [TRACE str_idx:16]</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorOpcode.Nop">
+            <summary>No-operation. [NOP]</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelFlags">
+            <summary>
+            Flags for behavior model header.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelFlags.None">
+            <summary>No special flags.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelFlags.HasDebugInfo">
+            <summary>Model includes debug info section.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelFlags.HasContinuationPoints">
+            <summary>Model has continuation points for streaming composition.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelFlags.IsExtension">
+            <summary>Model is an extension that attaches to another model.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelFlags.DeterministicRandom">
+            <summary>Model uses deterministic random (seeded RNG).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorVariableType">
+            <summary>
+            Variable types supported in state schemas.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorVariableType.Bool">
+            <summary>Boolean (stored as 0.0 or 1.0).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorVariableType.Int">
+            <summary>Integer (stored as double).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorVariableType.Float">
+            <summary>Floating point.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorVariableType.String">
+            <summary>String (stored as string table index).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorVariableType.Enum">
+            <summary>Enum value (stored as int, validated against enum def).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorVariableType.EntityId">
+            <summary>Entity reference (stored as int ID).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorVariableType.Vector3">
+            <summary>Vector3 (stored as 3 consecutive doubles).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IntentChannel">
+            <summary>
+            Intent channel identifiers for multi-model coordination.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IntentChannel.Action">
+            <summary>Primary action channel (attack, block, use, talk).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IntentChannel.Locomotion">
+            <summary>Movement/locomotion channel.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IntentChannel.Attention">
+            <summary>Attention/gaze direction channel.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IntentChannel.Stance">
+            <summary>Combat stance channel.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IntentChannel.Vocalization">
+            <summary>Vocalization channel.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter">
+            <summary>
+            Interpreter for cinematic composition using continuation points.
+            Manages streaming extensions and base model coordination.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.#ctor(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel)">
+            <summary>
+            Creates a new cinematic interpreter for a base model.
+            </summary>
+            <param name="baseModel">The base behavior model.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.HasActiveExtension">
+            <summary>
+            Whether an extension is currently active at a continuation point.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.ActiveContinuationPoint">
+            <summary>
+            The name of the currently active continuation point, if any.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.InputState">
+            <summary>
+            The input state array for external modification.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.OutputState">
+            <summary>
+            The output state array for reading results.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.RegisterExtension(System.String,BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel)">
+            <summary>
+            Registers an extension model for a continuation point.
+            </summary>
+            <param name="continuationPointName">The continuation point name.</param>
+            <param name="extensionModel">The extension model.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.RemoveExtension(System.String)">
+            <summary>
+            Removes an extension from a continuation point.
+            </summary>
+            <param name="continuationPointName">The continuation point name.</param>
+            <returns>True if the extension was removed.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.SetInput(System.String,System.Double)">
+            <summary>
+            Sets an input value by name.
+            </summary>
+            <param name="name">The input variable name.</param>
+            <param name="value">The value to set.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.GetOutput(System.String)">
+            <summary>
+            Gets an output value by name.
+            </summary>
+            <param name="name">The output variable name.</param>
+            <returns>The output value, or 0 if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.Evaluate">
+            <summary>
+            Evaluates the current state, handling continuation points.
+            </summary>
+            <returns>The evaluation result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.CompleteExtension">
+            <summary>
+            Signals that an extension has completed.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.ActivateContinuationPoint(System.String,System.Nullable{System.UInt32})">
+            <summary>
+            Activates a continuation point for streaming extension.
+            Call this when you want to pause at a continuation point and wait for an extension.
+            </summary>
+            <param name="continuationPointName">The continuation point name.</param>
+            <param name="timeoutMs">Optional timeout override in milliseconds.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.Reset">
+            <summary>
+            Resets the interpreter state.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicEvaluationResult">
+            <summary>
+            Result of a cinematic evaluation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicEvaluationResult.#ctor(System.Boolean,System.String)">
+            <summary>
+            Result of a cinematic evaluation.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPoint">
+            <summary>
+            Defines a point in execution where the interpreter pauses for possible extension attachment.
+            Used for streaming composition in cinematics (THE_DREAM pattern).
+            </summary>
+            <remarks>
+            <para>
+            Continuation points enable runtime extension of executing behaviors. A game server
+            receives a complete, executable cinematic, starts executing immediately, and can
+            optionally receive extensions that attach to named points.
+            </para>
+            <para>
+            Execution flow:
+            1. Interpreter reaches CONTINUATION_POINT opcode
+            2. Checks if extension is attached at this point
+            3. If extension available: transfers control to extension
+            4. If no extension: waits up to timeout, then executes default flow
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPoint.NameHash">
+            <summary>
+            FNV-1a hash of the continuation point name for fast lookup.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPoint.NameStringIndex">
+            <summary>
+            Index into string table for continuation point name (for debugging).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPoint.TimeoutMs">
+            <summary>
+            Maximum time to wait for extension attachment (milliseconds).
+            If 0, no wait - immediately use default if no extension.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPoint.DefaultFlowOffset">
+            <summary>
+            Bytecode offset of the default flow to execute if no extension arrives.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPoint.BytecodeOffset">
+            <summary>
+            Bytecode offset where the CONTINUATION_POINT opcode is located.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPoint.#ctor(System.UInt32,System.Int32,System.UInt32,System.UInt32,System.UInt32)">
+            <summary>
+            Creates a new continuation point.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPoint.Deserialize(System.IO.BinaryReader)">
+            <summary>
+            Deserializes a continuation point from binary data.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPoint.Serialize(System.IO.BinaryWriter)">
+            <summary>
+            Serializes the continuation point to binary data.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPoint.Timeout">
+            <summary>
+            Gets the timeout as a TimeSpan.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPoint.Create(System.String,System.Int32,System.TimeSpan,System.UInt32,System.UInt32)">
+            <summary>
+            Creates a continuation point from a name.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPointTable">
+            <summary>
+            Table of continuation points in a behavior model.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPointTable.Points">
+            <summary>
+            All continuation points in the model.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPointTable.Count">
+            <summary>
+            Number of continuation points.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPointTable.#ctor(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPoint})">
+            <summary>
+            Creates a new continuation point table.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPointTable.Item(System.Int32)">
+            <summary>
+            Gets a continuation point by index.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPointTable.TryGetByHash(System.UInt32,BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPoint@)">
+            <summary>
+            Tries to find a continuation point by name hash.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPointTable.TryGetByName(System.String,BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPoint@)">
+            <summary>
+            Tries to find a continuation point by name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPointTable.Empty">
+            <summary>
+            Empty table with no continuation points.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPointTable.Deserialize(System.IO.BinaryReader)">
+            <summary>
+            Deserializes a continuation point table from binary data.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPointTable.Serialize(System.IO.BinaryWriter)">
+            <summary>
+            Serializes the continuation point table to binary data.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.StateSchema">
+            <summary>
+            Defines the input and output variables for a behavior model.
+            Used by the interpreter to map game state to model inputs and model outputs to intents.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.StateSchema.Inputs">
+            <summary>
+            Input variable definitions (provided by game client each evaluation).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.StateSchema.Outputs">
+            <summary>
+            Output variable definitions (produced by model evaluation).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.StateSchema.InputCount">
+            <summary>
+            Number of input variables.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.StateSchema.OutputCount">
+            <summary>
+            Number of output variables.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.StateSchema.#ctor(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.VariableDefinition},System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.VariableDefinition})">
+            <summary>
+            Creates a new state schema.
+            </summary>
+            <param name="inputs">Input variable definitions.</param>
+            <param name="outputs">Output variable definitions.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.StateSchema.TryGetInputIndex(System.UInt32,System.Int32@)">
+            <summary>
+            Gets the index of an input variable by name hash.
+            </summary>
+            <param name="nameHash">FNV-1a hash of the variable name.</param>
+            <param name="index">The index if found.</param>
+            <returns>True if the variable exists.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.StateSchema.TryGetOutputIndex(System.UInt32,System.Int32@)">
+            <summary>
+            Gets the index of an output variable by name hash.
+            </summary>
+            <param name="nameHash">FNV-1a hash of the variable name.</param>
+            <param name="index">The index if found.</param>
+            <returns>True if the variable exists.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.StateSchema.GetInputDefault(System.Int32)">
+            <summary>
+            Gets the default value for an input variable.
+            </summary>
+            <param name="index">Variable index.</param>
+            <returns>Default value as double.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.StateSchema.GetInputName(System.Int32,System.String[])">
+            <summary>
+            Gets the input variable name (for debugging).
+            </summary>
+            <param name="index">Variable index.</param>
+            <param name="stringTable">String table for name lookup.</param>
+            <returns>Variable name.</returns>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.StateSchema.Empty">
+            <summary>
+            Empty schema with no inputs or outputs.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.StateSchema.Deserialize(System.IO.BinaryReader)">
+            <summary>
+            Deserializes a state schema from binary data.
+            </summary>
+            <param name="reader">Binary reader positioned at schema data.</param>
+            <returns>Deserialized schema.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.StateSchema.Serialize(System.IO.BinaryWriter)">
+            <summary>
+            Serializes the state schema to binary data.
+            </summary>
+            <param name="writer">Binary writer.</param>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.VariableDefinition">
+            <summary>
+            Definition of a single input or output variable.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.VariableDefinition.NameHash">
+            <summary>
+            FNV-1a hash of the variable name for fast lookup.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.VariableDefinition.NameStringIndex">
+            <summary>
+            Index into string table for variable name (for debugging).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.VariableDefinition.Type">
+            <summary>
+            Variable type.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.VariableDefinition.DefaultValue">
+            <summary>
+            Default value (as double for all types).
+            For strings, this is the string table index.
+            For Vector3, this is the first component (use Vector3Default for all).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.VariableDefinition.#ctor(System.UInt32,System.Int32,BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorVariableType,System.Double)">
+            <summary>
+            Creates a new variable definition.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.VariableDefinition.Deserialize(System.IO.BinaryReader)">
+            <summary>
+            Deserializes a variable definition from binary data.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.VariableDefinition.Serialize(System.IO.BinaryWriter)">
+            <summary>
+            Serializes the variable definition to binary data.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.VariableDefinition.Create(System.String,System.Int32,BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorVariableType,System.Double)">
+            <summary>
+            Creates a variable definition from a name.
+            </summary>
+            <param name="name">Variable name.</param>
+            <param name="nameStringIndex">Index in string table.</param>
+            <param name="type">Variable type.</param>
+            <param name="defaultValue">Default value.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.VariableDefinition.HashName(System.String)">
+            <summary>
+            FNV-1a hash for variable name lookup.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.SDK.MetaType">
             <summary>
             Meta endpoint types for requesting endpoint metadata instead of executing.

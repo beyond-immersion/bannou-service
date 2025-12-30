@@ -4,6 +4,227 @@
         <name>bannou-service</name>
     </assembly>
     <members>
+        <member name="T:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode">
+            <summary>
+            Opcodes for the behavior model bytecode interpreter.
+            Stack-based instruction set designed for per-frame evaluation.
+            </summary>
+            <remarks>
+            <para>
+            All values are stored as doubles to avoid boxing and enable simple stack operations.
+            Booleans are represented as 0.0 (false) and 1.0 (true).
+            </para>
+            <para>
+            IMPORTANT: This enum must stay byte-compatible with the client SDK version
+            in sdk-sources/Behavior/Runtime/BehaviorOpcode.cs
+            </para>
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.PushConst">
+            <summary>Push constant from pool. Operand: pool index (1 byte).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.PushInput">
+            <summary>Push input variable. Operand: input index (1 byte).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.PushLocal">
+            <summary>Push local variable. Operand: local index (1 byte).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.StoreLocal">
+            <summary>Store to local variable. Operand: local index (1 byte).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Pop">
+            <summary>Pop and discard top of stack.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Dup">
+            <summary>Duplicate top of stack.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Swap">
+            <summary>Swap top two stack values.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.PushString">
+            <summary>Push string index. Operand: string table index (2 bytes).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Add">
+            <summary>Add: push(pop() + pop()).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Sub">
+            <summary>Subtract: push(a - b) where b=pop(), a=pop().</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Mul">
+            <summary>Multiply: push(pop() * pop()).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Div">
+            <summary>Divide: push(a / b) where b=pop(), a=pop(). Returns 0 if b=0.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Mod">
+            <summary>Modulo: push(a % b) where b=pop(), a=pop(). Returns 0 if b=0.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Neg">
+            <summary>Negate: push(-pop()).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Eq">
+            <summary>Equal: push(a == b ? 1.0 : 0.0).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Ne">
+            <summary>Not equal: push(a != b ? 1.0 : 0.0).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Lt">
+            <summary>Less than: push(a &lt; b ? 1.0 : 0.0).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Le">
+            <summary>Less or equal: push(a &lt;= b ? 1.0 : 0.0).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Gt">
+            <summary>Greater than: push(a &gt; b ? 1.0 : 0.0).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Ge">
+            <summary>Greater or equal: push(a &gt;= b ? 1.0 : 0.0).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.And">
+            <summary>Logical AND: push((a != 0 &amp;&amp; b != 0) ? 1.0 : 0.0).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Or">
+            <summary>Logical OR: push((a != 0 || b != 0) ? 1.0 : 0.0).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Not">
+            <summary>Logical NOT: push(pop() == 0 ? 1.0 : 0.0).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Jmp">
+            <summary>Unconditional jump. Operand: target offset (2 bytes).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.JmpIf">
+            <summary>Jump if truthy. Operand: target offset (2 bytes). Pops condition.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.JmpUnless">
+            <summary>Jump if falsy. Operand: target offset (2 bytes). Pops condition.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Call">
+            <summary>Call subroutine. Operand: target offset (2 bytes).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Ret">
+            <summary>Return from subroutine.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Halt">
+            <summary>Halt execution.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.SwitchJmp">
+            <summary>Switch/jump table. Operand: case count (1 byte), followed by offsets.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.SetOutput">
+            <summary>Set output variable. Operand: output index (1 byte). Pops value.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.EmitIntent">
+            <summary>Emit intent. Operand: channel (1 byte). Pops [action_idx, urgency].</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Rand">
+            <summary>Push random value [0.0, 1.0).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.RandInt">
+            <summary>Push random integer [min, max]. Pops [min, max].</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Lerp">
+            <summary>Linear interpolation. Pops [a, b, t], pushes a + (b-a)*t.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Clamp">
+            <summary>Clamp value. Pops [value, min, max], pushes clamped result.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Abs">
+            <summary>Absolute value: push(|pop()|).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Floor">
+            <summary>Floor: push(floor(pop())).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Ceil">
+            <summary>Ceiling: push(ceil(pop())).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Min">
+            <summary>Minimum: push(min(pop(), pop())).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Max">
+            <summary>Maximum: push(max(pop(), pop())).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.ContinuationPoint">
+            <summary>
+            Continuation point for streaming composition.
+            Operand: continuation point index (2 bytes).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.ExtensionAvailable">
+            <summary>
+            Check if extension is available at continuation point.
+            Operand: continuation point index (2 bytes).
+            Pushes 1.0 if available, 0.0 otherwise.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.YieldToExtension">
+            <summary>
+            Yield control to attached extension.
+            Operand: continuation point index (2 bytes).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Breakpoint">
+            <summary>Breakpoint (debug builds only).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Trace">
+            <summary>Trace message. Operand: string table index (2 bytes).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorOpcode.Nop">
+            <summary>No operation.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorModelFlags">
+            <summary>
+            Flags for behavior model binary format.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorModelFlags.None">
+            <summary>No special flags.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorModelFlags.HasDebugInfo">
+            <summary>Model includes debug information (source line mappings).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorModelFlags.HasContinuationPoints">
+            <summary>Model includes continuation points for streaming composition.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorModelFlags.IsExtension">
+            <summary>Model is an extension that attaches to another model.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorModelFlags.DeterministicRandom">
+            <summary>Model uses deterministic random (seeded RNG).</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorModelFormat">
+            <summary>
+            Binary format constants for behavior models.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorModelFormat.Magic">
+            <summary>Magic bytes: "ABML" in little-endian.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorModelFormat.CurrentVersion">
+            <summary>Current format version.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorModelFormat.HeaderSize">
+            <summary>Header size in bytes.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.BehaviorModelFormat.ExtensionHeaderSize">
+            <summary>Extension header size in bytes.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Bytecode.IntentChannel">
+            <summary>
+            Intent channel identifiers for behavior output.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.IntentChannel.Action">
+            <summary>Primary action intent (attack, block, dodge, etc.).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.IntentChannel.Locomotion">
+            <summary>Movement/locomotion intent.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.IntentChannel.Attention">
+            <summary>Attention/focus target.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Abml.Bytecode.IntentChannel.Stance">
+            <summary>Stance/posture.</summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Compiler.Ast.ExpressionNode">
             <summary>
             Base class for all ABML expression AST nodes.
@@ -1385,6 +1606,89 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.SyncAction.Point">
             <summary>Sync point name.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.ContinuationPointAction">
+            <summary>
+            Continuation point for streaming composition.
+            Allows extensions to attach during execution.
+            </summary>
+            <remarks>
+            <para>
+            When execution reaches a continuation point:
+            1. If an extension is attached, control transfers to the extension
+            2. Otherwise, waits up to Timeout for an extension to arrive
+            3. If timeout expires, executes DefaultFlow
+            </para>
+            <para>
+            This enables THE_DREAM pattern: game server receives complete cinematic,
+            starts executing, and Event Brain can optionally extend mid-execution.
+            </para>
+            </remarks>
+            <param name="Name">Unique name for this continuation point.</param>
+            <param name="Timeout">Maximum time to wait for extension (e.g., "2s", "500ms").</param>
+            <param name="DefaultFlow">Flow to execute if no extension arrives.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.ContinuationPointAction.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Continuation point for streaming composition.
+            Allows extensions to attach during execution.
+            </summary>
+            <remarks>
+            <para>
+            When execution reaches a continuation point:
+            1. If an extension is attached, control transfers to the extension
+            2. Otherwise, waits up to Timeout for an extension to arrive
+            3. If timeout expires, executes DefaultFlow
+            </para>
+            <para>
+            This enables THE_DREAM pattern: game server receives complete cinematic,
+            starts executing, and Event Brain can optionally extend mid-execution.
+            </para>
+            </remarks>
+            <param name="Name">Unique name for this continuation point.</param>
+            <param name="Timeout">Maximum time to wait for extension (e.g., "2s", "500ms").</param>
+            <param name="DefaultFlow">Flow to execute if no extension arrives.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.ContinuationPointAction.Name">
+            <summary>Unique name for this continuation point.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.ContinuationPointAction.Timeout">
+            <summary>Maximum time to wait for extension (e.g., "2s", "500ms").</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.ContinuationPointAction.DefaultFlow">
+            <summary>Flow to execute if no extension arrives.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.Actions.EmitIntentAction">
+            <summary>
+            Emit an action intent with urgency for multi-model coordination.
+            Used by compiled behavior models for intent channel output.
+            </summary>
+            <param name="Action">Action name (e.g., "attack", "block", "dodge").</param>
+            <param name="Channel">Intent channel (action, locomotion, attention, stance).</param>
+            <param name="Urgency">Urgency expression (0.0-1.0). Higher urgency wins.</param>
+            <param name="Target">Optional target expression.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Documents.Actions.EmitIntentAction.#ctor(System.String,System.String,System.String,System.String)">
+            <summary>
+            Emit an action intent with urgency for multi-model coordination.
+            Used by compiled behavior models for intent channel output.
+            </summary>
+            <param name="Action">Action name (e.g., "attack", "block", "dodge").</param>
+            <param name="Channel">Intent channel (action, locomotion, attention, stance).</param>
+            <param name="Urgency">Urgency expression (0.0-1.0). Higher urgency wins.</param>
+            <param name="Target">Optional target expression.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.EmitIntentAction.Action">
+            <summary>Action name (e.g., "attack", "block", "dodge").</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.EmitIntentAction.Channel">
+            <summary>Intent channel (action, locomotion, attention, stance).</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.EmitIntentAction.Urgency">
+            <summary>Urgency expression (0.0-1.0). Higher urgency wins.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.Actions.EmitIntentAction.Target">
+            <summary>Optional target expression.</summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Exceptions.AbmlCompilationException">
             <summary>

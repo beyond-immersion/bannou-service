@@ -460,6 +460,8 @@ public sealed class DocumentParser
             "emit" => ParseEmitAction(actionValue, errors),
             "wait_for" => ParseWaitForAction(actionValue, errors),
             "sync" => ParseSyncAction(actionValue, errors),
+            "continuation_point" => ParseContinuationPointAction(actionValue, errors),
+            "emit_intent" => ParseEmitIntentAction(actionValue, errors),
             _ => ParseDomainAction(actionName, actionValue, errors)
         };
     }
@@ -893,6 +895,71 @@ public sealed class DocumentParser
         }
 
         return new SyncAction(point);
+    }
+
+    private ContinuationPointAction? ParseContinuationPointAction(object? value, List<ParseError> errors)
+    {
+        if (value is not Dictionary<object, object> dict)
+        {
+            errors.Add(new ParseError("'continuation_point' must be an object"));
+            return null;
+        }
+
+        if (!dict.TryGetValue("name", out var nameObj) || nameObj is not string name)
+        {
+            errors.Add(new ParseError("'continuation_point' requires 'name' field"));
+            return null;
+        }
+
+        if (!dict.TryGetValue("timeout", out var timeoutObj) || timeoutObj is not string timeout)
+        {
+            errors.Add(new ParseError("'continuation_point' requires 'timeout' field"));
+            return null;
+        }
+
+        if (!dict.TryGetValue("default_flow", out var defaultFlowObj) || defaultFlowObj is not string defaultFlow)
+        {
+            errors.Add(new ParseError("'continuation_point' requires 'default_flow' field"));
+            return null;
+        }
+
+        return new ContinuationPointAction(name, timeout, defaultFlow);
+    }
+
+    private EmitIntentAction? ParseEmitIntentAction(object? value, List<ParseError> errors)
+    {
+        if (value is not Dictionary<object, object> dict)
+        {
+            errors.Add(new ParseError("'emit_intent' must be an object"));
+            return null;
+        }
+
+        if (!dict.TryGetValue("action", out var actionObj) || actionObj is not string action)
+        {
+            errors.Add(new ParseError("'emit_intent' requires 'action' field"));
+            return null;
+        }
+
+        // Optional fields with defaults
+        var channel = "action";
+        if (dict.TryGetValue("channel", out var channelObj) && channelObj is string ch)
+        {
+            channel = ch;
+        }
+
+        var urgency = "1.0";
+        if (dict.TryGetValue("urgency", out var urgencyObj))
+        {
+            urgency = urgencyObj?.ToString() ?? "1.0";
+        }
+
+        string? target = null;
+        if (dict.TryGetValue("target", out var targetObj) && targetObj is string tgt)
+        {
+            target = tgt;
+        }
+
+        return new EmitIntentAction(action, channel, urgency, target);
     }
 
     private DomainAction ParseDomainAction(string name, object? value, List<ParseError> errors)

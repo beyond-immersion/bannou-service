@@ -192,3 +192,49 @@ public sealed record WaitForAction(string Signal) : ActionNode;
 /// </summary>
 /// <param name="Point">Sync point name.</param>
 public sealed record SyncAction(string Point) : ActionNode;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STREAMING COMPOSITION ACTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Continuation point for streaming composition.
+/// Allows extensions to attach during execution.
+/// </summary>
+/// <remarks>
+/// <para>
+/// When execution reaches a continuation point:
+/// 1. If an extension is attached, control transfers to the extension
+/// 2. Otherwise, waits up to Timeout for an extension to arrive
+/// 3. If timeout expires, executes DefaultFlow
+/// </para>
+/// <para>
+/// This enables THE_DREAM pattern: game server receives complete cinematic,
+/// starts executing, and Event Brain can optionally extend mid-execution.
+/// </para>
+/// </remarks>
+/// <param name="Name">Unique name for this continuation point.</param>
+/// <param name="Timeout">Maximum time to wait for extension (e.g., "2s", "500ms").</param>
+/// <param name="DefaultFlow">Flow to execute if no extension arrives.</param>
+public sealed record ContinuationPointAction(
+    string Name,
+    string Timeout,
+    string DefaultFlow) : ActionNode;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BEHAVIOR OUTPUT ACTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Emit an action intent with urgency for multi-model coordination.
+/// Used by compiled behavior models for intent channel output.
+/// </summary>
+/// <param name="Action">Action name (e.g., "attack", "block", "dodge").</param>
+/// <param name="Channel">Intent channel (action, locomotion, attention, stance).</param>
+/// <param name="Urgency">Urgency expression (0.0-1.0). Higher urgency wins.</param>
+/// <param name="Target">Optional target expression.</param>
+public sealed record EmitIntentAction(
+    string Action,
+    string Channel = "action",
+    string Urgency = "1.0",
+    string? Target = null) : ActionNode;
