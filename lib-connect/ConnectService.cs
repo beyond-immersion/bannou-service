@@ -54,8 +54,6 @@ public partial class ConnectService : IConnectService
     // Client event subscriber for session-specific RabbitMQ subscriptions (TENET exception)
     private ClientEventRabbitMQSubscriber? _clientEventSubscriber;
     private readonly ILoggerFactory _loggerFactory;
-    [Obsolete]
-    private readonly ClientEventQueueManager? _clientEventQueueManager;
     private readonly string? _rabbitMqConnectionString;
 
     // Session to service GUID mappings (in-memory for low-latency lookups, persisted via ISessionManager)
@@ -63,7 +61,6 @@ public partial class ConnectService : IConnectService
     private readonly string _serverSalt;
     private readonly string _instanceId;
 
-    [Obsolete]
     public ConnectService(
         IAuthClient authClient,
         IMeshInvocationClient meshClient,
@@ -74,8 +71,7 @@ public partial class ConnectService : IConnectService
         ILogger<ConnectService> logger,
         ILoggerFactory loggerFactory,
         IEventConsumer eventConsumer,
-        ISessionManager? sessionManager = null,
-        ClientEventQueueManager? clientEventQueueManager = null)
+        ISessionManager? sessionManager = null)
     {
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
         _meshClient = meshClient ?? throw new ArgumentNullException(nameof(meshClient));
@@ -85,7 +81,6 @@ public partial class ConnectService : IConnectService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
         _sessionManager = sessionManager; // Optional mesh-based session management
-        _clientEventQueueManager = clientEventQueueManager; // Optional client event queuing
 
         _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
         _connectionManager = new WebSocketConnectionManager();
@@ -456,7 +451,6 @@ public partial class ConnectService : IConnectService
     /// Handles WebSocket communication using the enhanced 31-byte binary protocol.
     /// Creates persistent connection state and processes messages with proper routing.
     /// </summary>
-    [Obsolete]
     public async Task HandleWebSocketCommunicationAsync(
         WebSocket webSocket,
         string sessionId,
@@ -585,42 +579,6 @@ public partial class ConnectService : IConnectService
                     _logger.LogWarning("Failed to subscribe to client events for session {SessionId}", sessionId);
                 }
             }
-
-            // OBSOLETE: Redis event queue - transitional code only
-            // Primary buffering is now handled by RabbitMQ queue (see ClientEventRabbitMQSubscriber).
-            // When we re-subscribe above, RabbitMQ delivers pending messages automatically.
-            // This Redis code only handles events queued BEFORE the architecture change.
-            // TODO: Remove this section once RabbitMQ buffering is confirmed stable in production.
-#pragma warning disable CS0618 // Type or member is obsolete
-            if (_clientEventQueueManager != null)
-            {
-                var queuedEvents = await _clientEventQueueManager.DequeueEventsAsync(sessionId, cancellationToken);
-                if (queuedEvents.Count > 0)
-                {
-                    _logger.LogInformation("Delivering {Count} LEGACY Redis-queued events to session {SessionId}",
-                        queuedEvents.Count, sessionId);
-
-                    foreach (var eventPayload in queuedEvents)
-                    {
-                        var eventMessage = new BinaryMessage(
-                            flags: MessageFlags.Event,
-                            channel: 0,
-                            sequenceNumber: 0,
-                            serviceGuid: Guid.Empty,
-                            messageId: GuidGenerator.GenerateMessageId(),
-                            payload: eventPayload
-                        );
-
-                        var sent = await _connectionManager.SendMessageAsync(sessionId, eventMessage, cancellationToken);
-                        if (!sent)
-                        {
-                            _logger.LogWarning("Failed to deliver legacy queued event to session {SessionId}", sessionId);
-                            break;
-                        }
-                    }
-                }
-            }
-#pragma warning restore CS0618
 
             // Capability manifest is delivered via event-driven flow:
             // 1. session.connected event published above

@@ -13251,6 +13251,29 @@
             Raw ABML YAML content to compile
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.Behavior_name">
+            <summary>
+            Optional human-readable name for the behavior.
+            <br/>If not provided, extracted from ABML metadata.id or generated from content hash.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.Behavior_category">
+            <summary>
+            Category for organizing behaviors (e.g., profession, cultural, situational).
+            <br/>Used for filtering and grouping in bundles.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.Bundle_id">
+            <summary>
+            Optional bundle identifier for grouping related behaviors.
+            <br/>When specified, the compiled behavior will be added to a bundle with this ID.
+            <br/>Clients can then download entire bundles for efficient bulk loading.
+            <br/>If the bundle doesn't exist, it will be created.
+            <br/>
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest.Behavior_sets">
             <summary>
             Array of behavior sets to compile together
@@ -13278,7 +13301,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Behavior_id">
             <summary>
-            Unique identifier for the compiled behavior
+            Unique identifier for the compiled behavior (content-addressable hash)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Behavior_name">
+            <summary>
+            Human-readable name of the behavior
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Compilation_time_ms">
@@ -13286,9 +13314,19 @@
             Time taken to compile the behavior
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Cache_key">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Asset_id">
             <summary>
-            Key for caching the compiled behavior
+            Asset service ID where the compiled bytecode is stored
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Bundle_id">
+            <summary>
+            Bundle ID if the behavior was added to a bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Is_update">
+            <summary>
+            True if this replaced an existing behavior with the same content hash
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Warnings">
@@ -16367,44 +16405,6 @@
             Optional context from the reconnection (client info, etc.)
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Events.ServiceMappingEvent">
-            <summary>
-            Legacy event for individual service-to-app-id mapping updates.
-            <br/>NOTE: The system now uses FullServiceMappingsEvent for atomic full-state updates.
-            <br/>This event is retained for backwards compatibility with older consumers.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.EventId">
-            <summary>
-            Unique identifier for this mapping event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Timestamp">
-            <summary>
-            When the mapping change occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.ServiceName">
-            <summary>
-            Name of the service (e.g., "accounts", "character-agent")
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.AppId">
-            <summary>
-            Bannou app-id where the service is running
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Action">
-            <summary>
-            Type of mapping change
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Metadata">
-            <summary>
-            Additional service metadata
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.Bannou.Client.SDK.BannouClient">
             <summary>
             High-level client for connecting to Bannou services via WebSocket.
@@ -16683,6 +16683,1050 @@
             Useful for test code or scenarios where exceptions are preferred over explicit error handling.
             </summary>
             <exception cref="T:System.InvalidOperationException">Thrown when the response is an error.</exception>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorEvaluatorBase">
+             <summary>
+             Abstract base class for behavior evaluators providing common merge logic.
+             Game extends this with entity system specifics.
+             </summary>
+             <remarks>
+             <para>
+             This base class handles:
+             - Model cache management
+             - Intent merging for all 4 model types
+             - Output buffer allocation
+             </para>
+             <para>
+             Game-specific implementation provides:
+             - Which models are active per character
+             - How to get character-specific variant preferences
+             - How to populate the shared input state
+             </para>
+             <para>
+             Example game implementation:
+             <code>
+             public class GameBehaviorEvaluator : BehaviorEvaluatorBase
+             {
+                 private readonly ICharacterManager _characters;
+            
+                 public GameBehaviorEvaluator(BehaviorModelCache cache) : base(cache)
+                 {
+                     _characters = GetCharacterManager();
+                 }
+            
+                 protected override bool IsModelActive(Guid characterId, BehaviorModelType type)
+                 {
+                     var character = _characters.Get(characterId);
+                     return character.ActiveBehaviors.Contains(type);
+                 }
+            
+                 protected override string? GetPreferredVariant(Guid characterId, BehaviorModelType type)
+                 {
+                     var character = _characters.Get(characterId);
+                     return type == BehaviorModelType.Combat
+                         ? character.EquippedWeaponType
+                         : null;
+                 }
+             }
+             </code>
+             </para>
+             </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorEvaluatorBase.ModelCache">
+            <summary>
+            The model cache for interpreter lookup.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorEvaluatorBase.Merger">
+            <summary>
+            The intent merger for combining outputs.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorEvaluatorBase._outputBuffer">
+            <summary>
+            Pre-allocated output buffer to avoid per-frame allocation.
+            Size is 15 slots: 5 channels * 2 slots + 5 extra slots for targets/positions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorEvaluatorBase.#ctor(BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorModelCache)">
+            <summary>
+            Creates a new behavior evaluator with the specified cache.
+            </summary>
+            <param name="cache">The model cache to use.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorEvaluatorBase.EvaluateCharacter(System.Guid,System.ReadOnlySpan{System.Double})">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorEvaluatorBase.InvalidateModel(System.Guid,BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorEvaluatorBase.InvalidateAllModels(System.Guid)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorEvaluatorBase.EvaluateModelType(System.Guid,BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType,System.ReadOnlySpan{System.Double})">
+            <summary>
+            Evaluates a single model type for a character.
+            </summary>
+            <param name="characterId">Unique identifier for the character.</param>
+            <param name="type">The behavior model type to evaluate.</param>
+            <param name="inputState">Current game state as input values.</param>
+            <returns>The behavior output, or null if the model is not active.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorEvaluatorBase.IsModelActive(System.Guid,BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType)">
+            <summary>
+            Determines if a behavior model type is active for a character.
+            </summary>
+            <param name="characterId">Unique identifier for the character.</param>
+            <param name="type">The behavior model type to check.</param>
+            <returns>True if the model should be evaluated, false to skip.</returns>
+            <remarks>
+            <para>
+            Override this to implement game-specific activation logic.
+            For example:
+            - Combat model only active when in combat
+            - Interaction model only active near interactable objects
+            - Idle model always active but with low urgency
+            </para>
+            <para>
+            Default implementation returns true for all model types.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorEvaluatorBase.GetPreferredVariant(System.Guid,BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType)">
+            <summary>
+            Gets the preferred variant for a character/type combination.
+            </summary>
+            <param name="characterId">Unique identifier for the character.</param>
+            <param name="type">The behavior model type.</param>
+            <returns>Variant name, or null for default.</returns>
+            <remarks>
+            <para>
+            Override this to implement game-specific variant selection.
+            For example:
+            - Combat variant based on equipped weapon type
+            - Movement variant based on mount state
+            - Interaction variant based on character class
+            </para>
+            <para>
+            Default implementation returns null (uses default variant).
+            </para>
+            </remarks>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorModelCache">
+            <summary>
+            Caches behavior model interpreters per (character, type, variant) combination.
+            Supports fallback chains for variant selection.
+            </summary>
+            <remarks>
+            <para>
+            Models are registered by type and variant name (e.g., "sword-and-shield" combat).
+            When requesting an interpreter, the cache checks the fallback chain to find
+            the best available variant.
+            </para>
+            <para>
+            Example fallback chain for combat:
+            ["sword-and-shield", "one-handed", "default"]
+            If character requests "sword-and-shield" and it's not registered, falls back
+            to "one-handed", then "default".
+            </para>
+            <para>
+            Thread-safety: The cache uses ConcurrentDictionary for thread-safe access.
+            Individual interpreter instances are NOT thread-safe - each character should
+            have its own interpreter.
+            </para>
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorModelCache.DefaultVariant">
+            <summary>
+            Default variant name used when no variant is specified.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorModelCache.RegisterModel(BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType,System.String,BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel)">
+            <summary>
+            Registers a behavior model for a specific type and variant.
+            </summary>
+            <param name="type">The behavior model type.</param>
+            <param name="variant">The variant name (e.g., "sword-and-shield").</param>
+            <param name="model">The compiled behavior model.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorModelCache.UnregisterModel(BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType,System.String)">
+            <summary>
+            Unregisters a behavior model.
+            </summary>
+            <param name="type">The behavior model type.</param>
+            <param name="variant">The variant name.</param>
+            <returns>True if the model was removed, false if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorModelCache.GetModel(BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType,System.String)">
+            <summary>
+            Gets a registered model by type and variant.
+            </summary>
+            <param name="type">The behavior model type.</param>
+            <param name="variant">The variant name.</param>
+            <returns>The model if registered, null otherwise.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorModelCache.SetFallbackChain(BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType,System.String[])">
+            <summary>
+            Sets the fallback chain for variant selection.
+            </summary>
+            <param name="type">The behavior model type.</param>
+            <param name="variants">Ordered list of variant names to try.</param>
+            <remarks>
+            <para>
+            Example: SetFallbackChain(Combat, ["sword-and-shield", "one-handed", "default"])
+            </para>
+            <para>
+            When GetInterpreter is called with variant "sword-and-shield" but it's not
+            registered, the cache will try "one-handed", then "default".
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorModelCache.GetFallbackChain(BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType)">
+            <summary>
+            Gets the fallback chain for a behavior model type.
+            </summary>
+            <param name="type">The behavior model type.</param>
+            <returns>The fallback chain, or a single-element array with "default".</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorModelCache.GetInterpreter(System.Guid,BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType,System.String)">
+            <summary>
+            Gets or creates an interpreter for a character/type/variant combination.
+            </summary>
+            <param name="characterId">Unique identifier for the character.</param>
+            <param name="type">The behavior model type.</param>
+            <param name="variant">The preferred variant (null for default).</param>
+            <returns>The interpreter, or null if no matching model is registered.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorModelCache.Invalidate(System.Guid,BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType)">
+            <summary>
+            Invalidates the cached interpreter for a specific character/type combination.
+            </summary>
+            <param name="characterId">Unique identifier for the character.</param>
+            <param name="type">The behavior model type to invalidate.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorModelCache.InvalidateAll(System.Guid)">
+            <summary>
+            Invalidates all cached interpreters for a character.
+            </summary>
+            <param name="characterId">Unique identifier for the character.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorModelCache.ClearCache">
+            <summary>
+            Clears the entire cache (e.g., on scene unload).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorModelCache.CacheCount">
+            <summary>
+            Gets the number of cached interpreters.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorModelCache.ModelCount">
+            <summary>
+            Gets the number of registered models.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorModelCache.FindBestModel(BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType,System.String)">
+            <summary>
+            Finds the best matching model using the fallback chain.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.IBehaviorEvaluator">
+             <summary>
+             Interface for evaluating behavior models per character.
+             Game implements this to integrate with its entity/component system.
+             </summary>
+             <remarks>
+             <para>
+             The SDK provides IntentMerger and BehaviorEvaluatorBase, but the game
+             is responsible for:
+             - Managing which models are active per character
+             - Providing the shared input state (game state)
+             - Applying the MergedIntent to animations/physics
+             - Calling EvaluateCharacter each frame
+             </para>
+             <para>
+             Example game integration:
+             <code>
+             public class GameBehaviorEvaluator : BehaviorEvaluatorBase
+             {
+                 protected override BehaviorOutput? EvaluateModelType(
+                     Guid characterId,
+                     BehaviorModelType type,
+                     ReadOnlySpan&lt;double&gt; inputState)
+                 {
+                     var character = GetCharacter(characterId);
+                     if (!character.HasActiveModel(type))
+                         return null;
+            
+                     var interpreter = ModelCache.GetInterpreter(characterId, type);
+                     var output = new double[15];
+                     interpreter.Evaluate(inputState, output);
+                     return BehaviorOutput.FromOutputBuffer(output, interpreter.StringTable);
+                 }
+             }
+             </code>
+             </para>
+             </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IBehaviorEvaluator.EvaluateCharacter(System.Guid,System.ReadOnlySpan{System.Double})">
+            <summary>
+            Evaluates all active behavior models for a character and returns the merged intent.
+            </summary>
+            <param name="characterId">Unique identifier for the character.</param>
+            <param name="sharedInputState">Current game state as input values.</param>
+            <returns>Merged intent from all active behavior models.</returns>
+            <remarks>
+            <para>
+            The sharedInputState contains values like:
+            - Character health, stamina, position
+            - Nearby enemy positions and states
+            - Current equipped items
+            - Environment conditions
+            </para>
+            <para>
+            All 4 model types (combat, movement, interaction, idle) are evaluated
+            if active, then merged using urgency-based resolution.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IBehaviorEvaluator.InvalidateModel(System.Guid,BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType)">
+            <summary>
+            Invalidates a cached model when it needs to be reloaded.
+            </summary>
+            <param name="characterId">Unique identifier for the character.</param>
+            <param name="type">The behavior model type to invalidate.</param>
+            <remarks>
+            <para>
+            Call this when:
+            - Character equips new weapon (combat model may change)
+            - Character's class changes (all models may change)
+            - Model is hot-reloaded during development
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IBehaviorEvaluator.InvalidateAllModels(System.Guid)">
+            <summary>
+            Invalidates all cached models for a character.
+            </summary>
+            <param name="characterId">Unique identifier for the character.</param>
+            <remarks>
+            Call this when a character is respawned or their configuration changes significantly.
+            </remarks>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.AttentionIntent">
+            <summary>
+            Attention intent with blendable gaze targets.
+            </summary>
+            <remarks>
+            <para>
+            Unlike simple exclusive channels, attention supports "blending" by providing
+            multiple targets with weights. The game's animation system can then interpolate
+            gaze direction between targets based on their weights.
+            </para>
+            <para>
+            Since entity IDs (Guids) cannot be mathematically blended, this struct provides
+            primary and secondary targets with urgency-derived weights. The game resolves
+            entity positions and performs actual gaze interpolation.
+            </para>
+            <para>
+            Example: Combat model wants to watch the threat (urgency 0.8), Movement model
+            wants to look at the path ahead (urgency 0.4). Game blends gaze 67% toward
+            threat, 33% toward path.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.AttentionIntent.PrimaryTarget">
+            <summary>
+            Primary attention target entity (highest urgency contributor).
+            Null if no attention targets.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.AttentionIntent.PrimaryUrgency">
+            <summary>
+            Urgency of the primary attention target [0.0 - 1.0].
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.AttentionIntent.SecondaryTarget">
+            <summary>
+            Secondary attention target entity (second-highest urgency contributor).
+            Null if only one model contributed attention.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.AttentionIntent.SecondaryUrgency">
+            <summary>
+            Urgency of the secondary attention target [0.0 - 1.0].
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.AttentionIntent.BlendWeight">
+            <summary>
+            Blend weight for primary target [0.0 - 1.0].
+            The game should blend gaze: BlendWeight toward primary, (1-BlendWeight) toward secondary.
+            If no secondary target, this will be 1.0.
+            </summary>
+            <remarks>
+            Calculated as: PrimaryUrgency / (PrimaryUrgency + SecondaryUrgency)
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.AttentionIntent.TotalUrgency">
+            <summary>
+            Combined urgency for animation transition speed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.AttentionIntent.None">
+            <summary>
+            Empty attention intent (not looking at anything specific).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.AttentionIntent.IsValid">
+            <summary>
+            Whether this intent has a valid attention target.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.AttentionIntent.HasSecondaryTarget">
+            <summary>
+            Whether this intent has multiple targets to blend between.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.AttentionIntent.CreateSingle(System.Guid,System.Single)">
+            <summary>
+            Creates an attention intent with a single target (no blending needed).
+            </summary>
+            <param name="target">The target entity to look at.</param>
+            <param name="urgency">Attention urgency [0-1].</param>
+            <returns>A new AttentionIntent instance.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.AttentionIntent.CreateBlended(System.Guid,System.Single,System.Guid,System.Single)">
+            <summary>
+            Creates an attention intent with two blended targets.
+            </summary>
+            <param name="primaryTarget">Primary target entity (higher urgency).</param>
+            <param name="primaryUrgency">Primary target urgency [0-1].</param>
+            <param name="secondaryTarget">Secondary target entity.</param>
+            <param name="secondaryUrgency">Secondary target urgency [0-1].</param>
+            <returns>A new AttentionIntent instance with calculated blend weight.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.AttentionIntent.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput">
+            <summary>
+            Structured output from a single behavior model evaluation.
+            Extracted from raw output buffer based on IntentSlotLayout conventions.
+            </summary>
+            <remarks>
+            <para>
+            Each behavior model (combat, movement, interaction, idle) produces one
+            BehaviorOutput. The IntentMerger combines these into a single MergedIntent.
+            </para>
+            <para>
+            Output extraction uses the standardized slot layout:
+            - Slots 0-1: Action intent + urgency
+            - Slots 2-3: Locomotion intent + urgency
+            - Slots 4-5: Attention target + urgency
+            - Slots 6-7: Stance intent + urgency
+            - Slots 8-9: Vocalization intent + urgency
+            - Slots 10-12: Locomotion target Vector3 (optional)
+            - Slot 13: Action target entity ID (optional)
+            - Slot 14: Attention target entity ID (optional)
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.ActionIntent">
+            <summary>
+            Action intent name (e.g., "attack", "block", "use", "talk").
+            Null if no action output.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.ActionUrgency">
+            <summary>
+            Action channel urgency [0.0 - 1.0].
+            Higher urgency wins in conflict resolution.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.ActionTarget">
+            <summary>
+            Target entity for the action (e.g., attack target, item to pick up).
+            Null if action doesn't require a target.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.LocomotionIntent">
+            <summary>
+            Locomotion intent name (e.g., "walk_to", "run_away", "strafe").
+            Null if no locomotion output.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.LocomotionUrgency">
+            <summary>
+            Locomotion channel urgency [0.0 - 1.0].
+            Used for blending when multiple models contribute locomotion.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.LocomotionTarget">
+            <summary>
+            Target position for locomotion in world space.
+            Null if locomotion doesn't specify a target.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.AttentionTarget">
+            <summary>
+            Target entity for attention/gaze direction.
+            Null if not looking at a specific entity.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.AttentionUrgency">
+            <summary>
+            Attention channel urgency [0.0 - 1.0].
+            Higher urgency overrides lower urgency attention targets.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.StanceIntent">
+            <summary>
+            Stance intent name (e.g., "combat_ready", "defensive", "relaxed").
+            Null if no stance change.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.StanceUrgency">
+            <summary>
+            Stance channel urgency [0.0 - 1.0].
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.VocalizationIntent">
+            <summary>
+            Vocalization intent name (e.g., "battle_cry", "greeting", "pain").
+            Null if no vocalization.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.VocalizationUrgency">
+            <summary>
+            Vocalization channel urgency [0.0 - 1.0].
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.FromOutputBuffer(System.ReadOnlySpan{System.Double},System.Collections.Generic.IReadOnlyList{System.String})">
+            <summary>
+            Extracts BehaviorOutput from raw interpreter output buffer.
+            </summary>
+            <param name="outputState">Raw output buffer from interpreter.</param>
+            <param name="stringTable">String table for intent name lookup.</param>
+            <returns>Structured behavior output.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.GetIntent(System.ReadOnlySpan{System.Double},System.Collections.Generic.IReadOnlyList{System.String},System.Int32)">
+            <summary>
+            Safely gets intent string from output slot.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.GetUrgency(System.ReadOnlySpan{System.Double},System.Int32)">
+            <summary>
+            Safely gets urgency value from output slot.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.GetGuid(System.ReadOnlySpan{System.Double},System.Int32)">
+            <summary>
+            Safely gets Guid from output slot.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.GetVector3(System.ReadOnlySpan{System.Double},System.Int32)">
+            <summary>
+            Safely gets Vector3 from consecutive output slots.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.Empty">
+            <summary>
+            Creates an empty behavior output (no intents).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.HasAnyIntent">
+            <summary>
+            Whether this output has any non-zero urgency intents.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ChannelContribution">
+            <summary>
+            A single contribution from a behavior model to a channel.
+            </summary>
+            <param name="Source">The behavior model type that contributed.</param>
+            <param name="Intent">The intent string (or target for attention).</param>
+            <param name="Urgency">The urgency value [0.0 - 1.0].</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ChannelContribution.#ctor(BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType,System.String,System.Single)">
+            <summary>
+            A single contribution from a behavior model to a channel.
+            </summary>
+            <param name="Source">The behavior model type that contributed.</param>
+            <param name="Intent">The intent string (or target for attention).</param>
+            <param name="Urgency">The urgency value [0.0 - 1.0].</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ChannelContribution.Source">
+            <summary>The behavior model type that contributed.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ChannelContribution.Intent">
+            <summary>The intent string (or target for attention).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ChannelContribution.Urgency">
+            <summary>The urgency value [0.0 - 1.0].</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ChannelResolution">
+            <summary>
+            Resolution result for a single channel.
+            </summary>
+            <param name="Channel">The intent channel.</param>
+            <param name="Winner">The winning behavior model type (null for blended channels).</param>
+            <param name="WinningUrgency">The winning/combined urgency value.</param>
+            <param name="AllContributions">All contributions to this channel.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ChannelResolution.#ctor(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IntentChannel,System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType},System.Single,BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ChannelContribution[])">
+            <summary>
+            Resolution result for a single channel.
+            </summary>
+            <param name="Channel">The intent channel.</param>
+            <param name="Winner">The winning behavior model type (null for blended channels).</param>
+            <param name="WinningUrgency">The winning/combined urgency value.</param>
+            <param name="AllContributions">All contributions to this channel.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ChannelResolution.Channel">
+            <summary>The intent channel.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ChannelResolution.Winner">
+            <summary>The winning behavior model type (null for blended channels).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ChannelResolution.WinningUrgency">
+            <summary>The winning/combined urgency value.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ChannelResolution.AllContributions">
+            <summary>All contributions to this channel.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace">
+            <summary>
+            Debug trace showing which model contributed to each channel.
+            Only available in DEBUG builds to avoid allocation in release.
+            </summary>
+            <remarks>
+            <para>
+            This trace helps understand why a particular action was chosen.
+            For example, if Combat model's "attack" was chosen over Interaction
+            model's "talk", the trace shows both contributions and their urgencies.
+            </para>
+            <para>
+            Usage in game debugger:
+            <code>
+            var merged = evaluator.EvaluateCharacter(characterId, inputs);
+            if (merged.Trace != null)
+            {
+                foreach (var resolution in merged.Trace.Channels)
+                {
+                    Debug.Log($"{resolution.Channel}: Winner={resolution.Winner}");
+                    foreach (var contrib in resolution.AllContributions)
+                    {
+                        Debug.Log($"  {contrib.Source}: {contrib.Intent} ({contrib.Urgency:F2})");
+                    }
+                }
+            }
+            </code>
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.Timestamp">
+            <summary>
+            Timestamp when this trace was created.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.Channels">
+            <summary>
+            All channel resolutions in this trace.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.AddResolution(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IntentChannel,System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType},System.Single,BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ChannelContribution[])">
+            <summary>
+            Adds a channel resolution to the trace.
+            </summary>
+            <param name="channel">The intent channel.</param>
+            <param name="winner">The winning model type (null for blended).</param>
+            <param name="winningUrgency">The winning/combined urgency.</param>
+            <param name="contributions">All contributions to this channel.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.GetResolution(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IntentChannel)">
+            <summary>
+            Gets the resolution for a specific channel.
+            </summary>
+            <param name="channel">The intent channel to look up.</param>
+            <returns>The resolution for that channel, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.HasContributionFrom(BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType)">
+            <summary>
+            Gets whether a specific model contributed to any channel.
+            </summary>
+            <param name="modelType">The behavior model type to check.</param>
+            <returns>True if the model contributed to at least one channel.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.GetChannelsWonBy(BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType)">
+            <summary>
+            Gets all channels where the specified model won.
+            </summary>
+            <param name="modelType">The behavior model type to check.</param>
+            <returns>Channels won by this model.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.ToString">
+            <summary>
+            Formats the trace as a human-readable string.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType">
+            <summary>
+            The fixed set of behavior model types for multi-model coordination.
+            Each character can have up to 4 simultaneously-active behavior models.
+            </summary>
+            <remarks>
+            <para>
+            These are intentionally fixed (not configurable) for simplicity.
+            The IntentMerger knows how to blend outputs from these 4 model types.
+            </para>
+            <para>
+            Mapping to IntentChannels:
+            - Any model can emit to any channel
+            - Combat typically emits to Action, Stance
+            - Movement emits to Locomotion
+            - Interaction emits to Action, Attention
+            - Idle emits to all channels with low urgency
+            </para>
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType.Combat">
+            <summary>Attack, defend, combo management.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType.Movement">
+            <summary>Navigation, pathfinding, steering.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType.Interaction">
+            <summary>Item use, dialogue, environment interaction.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType.Idle">
+            <summary>Ambient behavior, waiting, breathing.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentSlotLayout">
+            <summary>
+            Output slot layout convention for EmitIntent opcode.
+            Each intent channel uses 2 consecutive output slots: [action_index, urgency].
+            </summary>
+            <remarks>
+            <para>
+            Output buffer layout (10 slots minimum):
+            <code>
+            [0] Action intent (string table index)
+            [1] Action urgency (0.0 - 1.0)
+            [2] Locomotion intent (string table index)
+            [3] Locomotion urgency (0.0 - 1.0)
+            [4] Attention target (entity ID or 0)
+            [5] Attention urgency (0.0 - 1.0)
+            [6] Stance intent (string table index)
+            [7] Stance urgency (0.0 - 1.0)
+            [8] Vocalization intent (string table index)
+            [9] Vocalization urgency (0.0 - 1.0)
+            </code>
+            </para>
+            <para>
+            Extended slots (10+) can be used for:
+            - Locomotion target position (Vector3: slots 10-12)
+            - Action target entity (slot 13)
+            - Additional channel-specific data
+            </para>
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentSlotLayout.SlotsPerChannel">
+            <summary>
+            Number of output slots per intent channel (intent + urgency).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentSlotLayout.ChannelCount">
+            <summary>
+            Total number of channels (Action, Locomotion, Attention, Stance, Vocalization).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentSlotLayout.MinimumOutputSlots">
+            <summary>
+            Minimum required output buffer size for all intent channels.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentSlotLayout.LocomotionTargetXSlot">
+            <summary>
+            Slot index for locomotion target X coordinate.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentSlotLayout.LocomotionTargetYSlot">
+            <summary>
+            Slot index for locomotion target Y coordinate.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentSlotLayout.LocomotionTargetZSlot">
+            <summary>
+            Slot index for locomotion target Z coordinate.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentSlotLayout.ActionTargetSlot">
+            <summary>
+            Slot index for action target entity ID.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentSlotLayout.AttentionTargetSlot">
+            <summary>
+            Slot index for attention target entity ID.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentSlotLayout.IntentSlot(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IntentChannel)">
+            <summary>
+            Gets the output slot index for a channel's intent value.
+            </summary>
+            <param name="channel">The intent channel.</param>
+            <returns>The slot index for the intent string table index.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentSlotLayout.UrgencySlot(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IntentChannel)">
+            <summary>
+            Gets the output slot index for a channel's urgency value.
+            </summary>
+            <param name="channel">The intent channel.</param>
+            <returns>The slot index for the urgency value.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentMerger">
+            <summary>
+            Merges behavior outputs from multiple models using urgency-based resolution.
+            </summary>
+            <remarks>
+            <para>
+            Each character can have up to 4 simultaneously-active behavior models.
+            The IntentMerger resolves which model's output wins for each channel.
+            </para>
+            <para>
+            Resolution strategies:
+            - Exclusive channels (Action, Stance, Vocalization): Highest urgency wins
+            - Blendable channels (Locomotion): Weighted blend by urgency
+            - Attention: Blendable (outputs primary/secondary targets with weights for gaze interpolation)
+            </para>
+            <para>
+            Zero-urgency outputs are ignored (model didn't emit for that channel).
+            </para>
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentMerger.UrgencyThreshold">
+            <summary>
+            Minimum urgency threshold. Outputs below this are treated as zero.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentMerger.Merge(System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput},System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput},System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput},System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput})">
+            <summary>
+            Merge outputs from all active behavior models into a single MergedIntent.
+            </summary>
+            <param name="combat">Output from combat behavior model (may be null).</param>
+            <param name="movement">Output from movement behavior model (may be null).</param>
+            <param name="interaction">Output from interaction behavior model (may be null).</param>
+            <param name="idle">Output from idle behavior model (may be null).</param>
+            <returns>Merged intent for game engine consumption.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentMerger.SelectExclusiveAction(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType}[])">
+            <summary>
+            Selects the action with highest urgency.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentMerger.BlendLocomotion(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType}[])">
+            <summary>
+            Blends locomotion from all contributors weighted by urgency.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentMerger.BlendAttention(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType}[])">
+            <summary>
+            Blends attention from all contributors, outputting primary and secondary targets with weights.
+            </summary>
+            <remarks>
+            Entity IDs (Guids) cannot be mathematically blended, so we output the top two
+            contributors with their urgency-derived weights. The game resolves entity positions
+            and performs actual gaze interpolation.
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentMerger.SelectExclusiveStance(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType}[])">
+            <summary>
+            Selects the stance with highest urgency.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentMerger.SelectExclusiveVocalization(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType}[])">
+            <summary>
+            Selects the vocalization with highest urgency.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentMerger.CollectContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType}[],System.Func{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput,System.ValueTuple{System.String,System.Single}})">
+            <summary>
+            Collects contributions for debugging from all outputs.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentMerger.CollectLocomotionContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType}[])">
+            <summary>
+            Collects locomotion contributions for debugging.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentMerger.CollectAttentionContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType}[])">
+            <summary>
+            Collects attention contributions for debugging.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.LocomotionIntent">
+            <summary>
+            Locomotion intent with blendable target position.
+            </summary>
+            <remarks>
+            <para>
+            Unlike other intent channels which are exclusive (highest urgency wins),
+            locomotion can blend multiple contributors weighted by urgency.
+            </para>
+            <para>
+            Example: Combat model wants to strafe left (urgency 0.8), Movement model
+            wants to walk forward (urgency 0.4). Result: diagonal movement weighted
+            toward strafing.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.LocomotionIntent.Intent">
+            <summary>
+            Movement intent name (e.g., "walk_to", "run_away", "strafe", "dodge").
+            Null if no locomotion intent.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.LocomotionIntent.Target">
+            <summary>
+            Blended target position in world space.
+            Null if the intent doesn't specify a target (e.g., "stop", "idle").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.LocomotionIntent.Speed">
+            <summary>
+            Normalized movement speed multiplier [0.0 - 1.0].
+            0.0 = stationary, 1.0 = maximum speed for this intent.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.LocomotionIntent.Urgency">
+            <summary>
+            Combined urgency of all contributing locomotion intents.
+            Used by animation system to determine transition speed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.LocomotionIntent.None">
+            <summary>
+            Empty locomotion intent (no movement).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.LocomotionIntent.IsValid">
+            <summary>
+            Whether this intent represents valid locomotion data.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.LocomotionIntent.Create(System.String,System.Numerics.Vector3,System.Single,System.Single)">
+            <summary>
+            Creates a locomotion intent with target position.
+            </summary>
+            <param name="intent">Movement intent name.</param>
+            <param name="target">Target world position.</param>
+            <param name="speed">Normalized speed [0-1].</param>
+            <param name="urgency">Intent urgency [0-1].</param>
+            <returns>A new LocomotionIntent instance.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.LocomotionIntent.CreateWithoutTarget(System.String,System.Single)">
+            <summary>
+            Creates a locomotion intent without target (for intents like "stop", "idle").
+            </summary>
+            <param name="intent">Movement intent name.</param>
+            <param name="urgency">Intent urgency [0-1].</param>
+            <returns>A new LocomotionIntent instance.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.LocomotionIntent.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent">
+            <summary>
+            The merged result of all behavior model outputs.
+            This is what the game engine acts on each frame.
+            </summary>
+            <remarks>
+            <para>
+            MergedIntent represents the final decision after the IntentMerger resolves
+            conflicts between multiple simultaneously-active behavior models.
+            </para>
+            <para>
+            Resolution rules:
+            - Action: Exclusive (highest urgency wins)
+            - Locomotion: Blendable (targets weighted by urgency)
+            - Attention: Blendable (multiple targets with weights for gaze interpolation)
+            - Stance: Exclusive (highest urgency wins)
+            - Vocalization: Exclusive (highest urgency wins)
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.Action">
+            <summary>
+            Winning action intent from highest-urgency contributor.
+            Null if no model emitted an action.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.ActionTarget">
+            <summary>
+            Target entity for the winning action.
+            Null if the action doesn't require a target.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.ActionUrgency">
+            <summary>
+            Urgency of the winning action [0.0 - 1.0].
+            Useful for animation blending speed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.Locomotion">
+            <summary>
+            Blended locomotion intent from all contributors.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.Attention">
+            <summary>
+            Blended attention intent from all contributors.
+            Contains primary and secondary targets with weights for gaze interpolation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.Stance">
+            <summary>
+            Winning stance intent from highest-urgency contributor.
+            Null if no model emitted a stance.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.StanceUrgency">
+            <summary>
+            Urgency of the winning stance [0.0 - 1.0].
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.Vocalization">
+            <summary>
+            Winning vocalization intent from highest-urgency contributor.
+            Null if no model emitted a vocalization.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.VocalizationUrgency">
+            <summary>
+            Urgency of the winning vocalization [0.0 - 1.0].
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.Trace">
+            <summary>
+            Debug trace showing which model contributed to each channel.
+            Only available in DEBUG builds.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.Empty">
+            <summary>
+            Empty merged intent (no actions, no movement).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.HasAnyIntent">
+            <summary>
+            Whether this intent has any actionable content.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.ToString">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel">
             <summary>

@@ -94,8 +94,7 @@ public sealed class GlobalCompiler : ActionCompilerBase<GlobalAction>
 
         // In behavior models, "global" means output variable
         // Register as output if not already
-        byte outputIdx;
-        if (!context.TryGetOutput(action.Variable, out outputIdx))
+        if (!context.TryGetOutput(action.Variable, out var outputIdx))
         {
             outputIdx = context.RegisterOutput(action.Variable);
         }
@@ -160,8 +159,7 @@ public sealed class DecrementCompiler : ActionCompilerBase<DecrementAction>
         var emitter = context.Emitter;
 
         // Load current value
-        byte localIdx;
-        if (context.TryGetLocal(action.Variable, out localIdx))
+        if (context.TryGetLocal(action.Variable, out var localIdx))
         {
             emitter.EmitPushLocal(localIdx);
         }

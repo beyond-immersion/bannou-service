@@ -5937,44 +5937,6 @@
             Optional context from the reconnection (client info, etc.)
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Events.ServiceMappingEvent">
-            <summary>
-            Legacy event for individual service-to-app-id mapping updates.
-            <br/>NOTE: The system now uses FullServiceMappingsEvent for atomic full-state updates.
-            <br/>This event is retained for backwards compatibility with older consumers.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.EventId">
-            <summary>
-            Unique identifier for this mapping event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Timestamp">
-            <summary>
-            When the mapping change occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.ServiceName">
-            <summary>
-            Name of the service (e.g., "accounts", "character-agent")
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.AppId">
-            <summary>
-            Bannou app-id where the service is running
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Action">
-            <summary>
-            Type of mapping change
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Metadata">
-            <summary>
-            Additional service metadata
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Events.AccountCreatedEvent">
             <summary>
             Published to account.created when a account is created
@@ -6410,6 +6372,61 @@
         <member name="T:BeyondImmersion.BannouService.Events.SessionUpdatedEventReason">
             <summary>
             Reason for session update
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.BehaviorCreatedEvent">
+            <summary>
+            Published to behavior.created when a behavior is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorCreatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.BehaviorUpdatedEvent">
+            <summary>
+            Published to behavior.updated when a behavior is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorUpdatedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.BehaviorDeletedEvent">
+            <summary>
+            Published to behavior.deleted when a behavior is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorDeletedEvent.Timestamp">
+            <summary>
+            When this event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.CharacterCreatedEvent">
@@ -9586,6 +9603,29 @@
             Raw ABML YAML content to compile
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.Behavior_name">
+            <summary>
+            Optional human-readable name for the behavior.
+            <br/>If not provided, extracted from ABML metadata.id or generated from content hash.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.Behavior_category">
+            <summary>
+            Category for organizing behaviors (e.g., profession, cultural, situational).
+            <br/>Used for filtering and grouping in bundles.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.Bundle_id">
+            <summary>
+            Optional bundle identifier for grouping related behaviors.
+            <br/>When specified, the compiled behavior will be added to a bundle with this ID.
+            <br/>Clients can then download entire bundles for efficient bulk loading.
+            <br/>If the bundle doesn't exist, it will be created.
+            <br/>
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest.Behavior_sets">
             <summary>
             Array of behavior sets to compile together
@@ -9613,7 +9653,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Behavior_id">
             <summary>
-            Unique identifier for the compiled behavior
+            Unique identifier for the compiled behavior (content-addressable hash)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Behavior_name">
+            <summary>
+            Human-readable name of the behavior
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Compilation_time_ms">
@@ -9621,9 +9666,19 @@
             Time taken to compile the behavior
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Cache_key">
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Asset_id">
             <summary>
-            Key for caching the compiled behavior
+            Asset service ID where the compiled bytecode is stored
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Bundle_id">
+            <summary>
+            Bundle ID if the behavior was added to a bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Is_update">
+            <summary>
+            True if this replaced an existing behavior with the same content hash
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Warnings">

@@ -342,6 +342,29 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "description": "Raw ABML YAML content to compile",
           "example": "version: \"1.0.0\"\nmetadata:\n  id: \"example_behavior\"\n  category: \"basic\"\nbehaviors:\n  example:\n    triggers:\n      - condition: \"true\"\n    actions:\n      - log:\n          message: \"Hello World\"\n"
         },
+        "behavior_name": {
+          "type": "string",
+          "description": "Optional human-readable name for the behavior.\nIf not provided, extracted from ABML metadata.id or generated from content hash.\n",
+          "example": "blacksmith_daily_routine"
+        },
+        "behavior_category": {
+          "type": "string",
+          "description": "Category for organizing behaviors (e.g., profession, cultural, situational).\ nUsed for filtering and grouping in bundles.\n",
+          "enum": [
+            "base",
+            "cultural",
+            "professional",
+            "personal",
+            "situational",
+            "ambient"
+          ],
+          "example": "professional"
+        },
+        "bundle_id": {
+          "type": "string",
+          "description": "Optional bundle identifier for grouping related behaviors.\nWhen specified, the compiled behavior will be added to a bundle with this ID.\nClients can then download entire bundles for efficient bulk loading.\nIf the bundle doesn't exist, it will be created.\n",
+          "example": "blacksmith-behaviors-v1"
+        },
         "character_context": {
           "$ref": "#/$defs/CharacterContext"
         },
@@ -482,8 +505,13 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "behavior_id": {
           "type": "string",
-          "description": "Unique identifier for the compiled behavior",
-          "example": "behavior_abc123"
+          "description": "Unique identifier for the compiled behavior (content-addressable hash)",
+          "example": "behavior-a1b2c3d4e5f6g7h8"
+        },
+        "behavior_name": {
+          "type": "string",
+          "description": "Human-readable name of the behavior",
+          "example": "blacksmith_daily_routine"
         },
         "compiled_behavior": {
           "$ref": "#/$defs/CompiledBehavior"
@@ -492,9 +520,17 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "type": "integer",
           "description": "Time taken to compile the behavior"
         },
-        "cache_key": {
+        "asset_id": {
           "type": "string",
-          "description": "Key for caching the compiled behavior"
+          "description": "Asset service ID where the compiled bytecode is stored"
+        },
+        "bundle_id": {
+          "type": "string",
+          "description": "Bundle ID if the behavior was added to a bundle"
+        },
+        "is_update": {
+          "type": "boolean",
+          "description": "True if this replaced an existing behavior with the same content hash"
         },
         "warnings": {
           "type": "array",
@@ -860,8 +896,13 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "behavior_id": {
           "type": "string",
-          "description": "Unique identifier for the compiled behavior",
-          "example": "behavior_abc123"
+          "description": "Unique identifier for the compiled behavior (content-addressable hash)",
+          "example": "behavior-a1b2c3d4e5f6g7h8"
+        },
+        "behavior_name": {
+          "type": "string",
+          "description": "Human-readable name of the behavior",
+          "example": "blacksmith_daily_routine"
         },
         "compiled_behavior": {
           "$ref": "#/$defs/CompiledBehavior"
@@ -870,9 +911,17 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "type": "integer",
           "description": "Time taken to compile the behavior"
         },
-        "cache_key": {
+        "asset_id": {
           "type": "string",
-          "description": "Key for caching the compiled behavior"
+          "description": "Asset service ID where the compiled bytecode is stored"
+        },
+        "bundle_id": {
+          "type": "string",
+          "description": "Bundle ID if the behavior was added to a bundle"
+        },
+        "is_update": {
+          "type": "boolean",
+          "description": "True if this replaced an existing behavior with the same content hash"
         },
         "warnings": {
           "type": "array",

@@ -106,14 +106,24 @@ paths:
         ,\n          \"description\": \"Raw ABML YAML content to compile\",\n          \"example\": \"version: \\\"1.0.0\\\
         \"\\nmetadata:\\n  id: \\\"example_behavior\\\"\\n  category: \\\"basic\\\"\\nbehaviors:\\n  example:\\n    triggers:\\\
         n      - condition: \\\"true\\\"\\n    actions:\\n      - log:\\n          message: \\\"Hello World\\\"\\n\"\n   \
-        \     },\n        \"character_context\": {\n          \"$ref\": \"#/$defs/CharacterContext\"\n        },\n       \
-        \ \"compilation_options\": {\n          \"$ref\": \"#/$defs/CompilationOptions\"\n        }\n      }\n    },\n   \
-        \ \"CharacterContext\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"npc_id\": {\n         \
-        \ \"type\": \"string\",\n          \"description\": \"Unique identifier for the NPC\",\n          \"example\": \"\
-        npc_12345\"\n        },\n        \"culture\": {\n          \"type\": \"string\",\n          \"description\": \"Cultural
-        background identifier\",\n          \"example\": \"european_medieval\"\n        },\n        \"profession\": {\n  \
-        \        \"type\": \"string\",\n          \"description\": \"Character profession identifier\",\n          \"example\"\
-        : \"blacksmith\"\n        },\n        \"stats\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        \     },\n        \"behavior_name\": {\n          \"type\": \"string\",\n          \"description\": \"Optional human-readable
+        name for the behavior.\\nIf not provided, extracted from ABML metadata.id or generated from content hash.\\n\",\n\
+        \          \"example\": \"blacksmith_daily_routine\"\n        },\n        \"behavior_category\": {\n          \"type\"\
+        : \"string\",\n          \"description\": \"Category for organizing behaviors (e.g., profession, cultural, situational).\\
+        nUsed for filtering and grouping in bundles.\\n\",\n          \"enum\": [\n            \"base\",\n            \"cultural\"\
+        ,\n            \"professional\",\n            \"personal\",\n            \"situational\",\n            \"ambient\"\
+        \n          ],\n          \"example\": \"professional\"\n        },\n        \"bundle_id\": {\n          \"type\"\
+        : \"string\",\n          \"description\": \"Optional bundle identifier for grouping related behaviors.\\nWhen specified,
+        the compiled behavior will be added to a bundle with this ID.\\nClients can then download entire bundles for efficient
+        bulk loading.\\nIf the bundle doesn't exist, it will be created.\\n\",\n          \"example\": \"blacksmith-behaviors-v1\"\
+        \n        },\n        \"character_context\": {\n          \"$ref\": \"#/$defs/CharacterContext\"\n        },\n   \
+        \     \"compilation_options\": {\n          \"$ref\": \"#/$defs/CompilationOptions\"\n        }\n      }\n    },\n\
+        \    \"CharacterContext\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"npc_id\": {\n      \
+        \    \"type\": \"string\",\n          \"description\": \"Unique identifier for the NPC\",\n          \"example\":
+        \"npc_12345\"\n        },\n        \"culture\": {\n          \"type\": \"string\",\n          \"description\": \"\
+        Cultural background identifier\",\n          \"example\": \"european_medieval\"\n        },\n        \"profession\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Character profession identifier\",\n          \"\
+        example\": \"blacksmith\"\n        },\n        \"stats\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
         : {\n            \"type\": \"number\"\n          },\n          \"description\": \"Character statistics and attributes\"\
         ,\n          \"example\": {\n            \"energy\": 0.8,\n            \"health\": 1.0,\n            \"hunger\": 0.3\n\
         \          }\n        },\n        \"skills\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
@@ -142,24 +152,29 @@ paths:
         ,\n  \"$defs\": {\n    \"CompileBehaviorResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n      \
         \  \"success\",\n        \"behavior_id\"\n      ],\n      \"properties\": {\n        \"success\": {\n          \"\
         type\": \"boolean\",\n          \"description\": \"Whether compilation was successful\"\n        },\n        \"behavior_id\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Unique identifier for the compiled behavior\",\n\
-        \          \"example\": \"behavior_abc123\"\n        },\n        \"compiled_behavior\": {\n          \"$ref\": \"\
-        #/$defs/CompiledBehavior\"\n        },\n        \"compilation_time_ms\": {\n          \"type\": \"integer\",\n   \
-        \       \"description\": \"Time taken to compile the behavior\"\n        },\n        \"cache_key\": {\n          \"\
-        type\": \"string\",\n          \"description\": \"Key for caching the compiled behavior\"\n        },\n        \"\
-        warnings\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n        \
-        \  },\n          \"description\": \"Non-fatal warnings during compilation\"\n        }\n      }\n    },\n    \"CompiledBehavior\"\
-        : {\n      \"type\": \"object\",\n      \"required\": [\n        \"behavior_tree\",\n        \"context_schema\"\n\
-        \      ],\n      \"properties\": {\n        \"behavior_tree\": {\n          \"type\": \"object\",\n          \"description\"\
-        : \"Compiled executable behavior tree structure\"\n        },\n        \"context_schema\": {\n          \"type\":
-        \"object\",\n          \"description\": \"Schema defining required context variables\"\n        },\n        \"service_dependencies\"\
-        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n    \
-        \      \"description\": \"List of required services for this behavior\"\n        },\n        \"goap_goals\": {\n \
-        \         \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/GoapGoal\"\n          },\n\
-        \          \"description\": \"GOAP goals extracted from the behavior\"\n        },\n        \"execution_metadata\"\
-        : {\n          \"type\": \"object\",\n          \"properties\": {\n            \"estimated_duration\": {\n       \
-        \       \"type\": \"integer\",\n              \"description\": \"Estimated execution time in seconds\"\n         \
-        \   },\n            \"resource_requirements\": {\n              \"type\": \"object\",\n              \"additionalProperties\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Unique identifier for the compiled behavior (content-addressable
+        hash)\",\n          \"example\": \"behavior-a1b2c3d4e5f6g7h8\"\n        },\n        \"behavior_name\": {\n       \
+        \   \"type\": \"string\",\n          \"description\": \"Human-readable name of the behavior\",\n          \"example\"\
+        : \"blacksmith_daily_routine\"\n        },\n        \"compiled_behavior\": {\n          \"$ref\": \"#/$defs/CompiledBehavior\"\
+        \n        },\n        \"compilation_time_ms\": {\n          \"type\": \"integer\",\n          \"description\": \"\
+        Time taken to compile the behavior\"\n        },\n        \"asset_id\": {\n          \"type\": \"string\",\n     \
+        \     \"description\": \"Asset service ID where the compiled bytecode is stored\"\n        },\n        \"bundle_id\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Bundle ID if the behavior was added to a bundle\"\
+        \n        },\n        \"is_update\": {\n          \"type\": \"boolean\",\n          \"description\": \"True if this
+        replaced an existing behavior with the same content hash\"\n        },\n        \"warnings\": {\n          \"type\"\
+        : \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"\
+        Non-fatal warnings during compilation\"\n        }\n      }\n    },\n    \"CompiledBehavior\": {\n      \"type\":
+        \"object\",\n      \"required\": [\n        \"behavior_tree\",\n        \"context_schema\"\n      ],\n      \"properties\"\
+        : {\n        \"behavior_tree\": {\n          \"type\": \"object\",\n          \"description\": \"Compiled executable
+        behavior tree structure\"\n        },\n        \"context_schema\": {\n          \"type\": \"object\",\n          \"\
+        description\": \"Schema defining required context variables\"\n        },\n        \"service_dependencies\": {\n \
+        \         \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n         \
+        \ \"description\": \"List of required services for this behavior\"\n        },\n        \"goap_goals\": {\n      \
+        \    \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/GoapGoal\"\n          },\n    \
+        \      \"description\": \"GOAP goals extracted from the behavior\"\n        },\n        \"execution_metadata\": {\n\
+        \          \"type\": \"object\",\n          \"properties\": {\n            \"estimated_duration\": {\n           \
+        \   \"type\": \"integer\",\n              \"description\": \"Estimated execution time in seconds\"\n            },\n\
+        \            \"resource_requirements\": {\n              \"type\": \"object\",\n              \"additionalProperties\"\
         : {\n                \"type\": \"number\"\n              }\n            },\n            \"interrupt_conditions\":
         {\n              \"type\": \"array\",\n              \"items\": {\n                \"type\": \"string\"\n        \
         \      }\n            }\n          }\n        }\n      }\n    },\n    \"GoapGoal\": {\n      \"type\": \"object\"\
@@ -262,24 +277,29 @@ paths:
         ,\n  \"$defs\": {\n    \"CompileBehaviorResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n      \
         \  \"success\",\n        \"behavior_id\"\n      ],\n      \"properties\": {\n        \"success\": {\n          \"\
         type\": \"boolean\",\n          \"description\": \"Whether compilation was successful\"\n        },\n        \"behavior_id\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Unique identifier for the compiled behavior\",\n\
-        \          \"example\": \"behavior_abc123\"\n        },\n        \"compiled_behavior\": {\n          \"$ref\": \"\
-        #/$defs/CompiledBehavior\"\n        },\n        \"compilation_time_ms\": {\n          \"type\": \"integer\",\n   \
-        \       \"description\": \"Time taken to compile the behavior\"\n        },\n        \"cache_key\": {\n          \"\
-        type\": \"string\",\n          \"description\": \"Key for caching the compiled behavior\"\n        },\n        \"\
-        warnings\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n        \
-        \  },\n          \"description\": \"Non-fatal warnings during compilation\"\n        }\n      }\n    },\n    \"CompiledBehavior\"\
-        : {\n      \"type\": \"object\",\n      \"required\": [\n        \"behavior_tree\",\n        \"context_schema\"\n\
-        \      ],\n      \"properties\": {\n        \"behavior_tree\": {\n          \"type\": \"object\",\n          \"description\"\
-        : \"Compiled executable behavior tree structure\"\n        },\n        \"context_schema\": {\n          \"type\":
-        \"object\",\n          \"description\": \"Schema defining required context variables\"\n        },\n        \"service_dependencies\"\
-        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n    \
-        \      \"description\": \"List of required services for this behavior\"\n        },\n        \"goap_goals\": {\n \
-        \         \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/GoapGoal\"\n          },\n\
-        \          \"description\": \"GOAP goals extracted from the behavior\"\n        },\n        \"execution_metadata\"\
-        : {\n          \"type\": \"object\",\n          \"properties\": {\n            \"estimated_duration\": {\n       \
-        \       \"type\": \"integer\",\n              \"description\": \"Estimated execution time in seconds\"\n         \
-        \   },\n            \"resource_requirements\": {\n              \"type\": \"object\",\n              \"additionalProperties\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Unique identifier for the compiled behavior (content-addressable
+        hash)\",\n          \"example\": \"behavior-a1b2c3d4e5f6g7h8\"\n        },\n        \"behavior_name\": {\n       \
+        \   \"type\": \"string\",\n          \"description\": \"Human-readable name of the behavior\",\n          \"example\"\
+        : \"blacksmith_daily_routine\"\n        },\n        \"compiled_behavior\": {\n          \"$ref\": \"#/$defs/CompiledBehavior\"\
+        \n        },\n        \"compilation_time_ms\": {\n          \"type\": \"integer\",\n          \"description\": \"\
+        Time taken to compile the behavior\"\n        },\n        \"asset_id\": {\n          \"type\": \"string\",\n     \
+        \     \"description\": \"Asset service ID where the compiled bytecode is stored\"\n        },\n        \"bundle_id\"\
+        : {\n          \"type\": \"string\",\n          \"description\": \"Bundle ID if the behavior was added to a bundle\"\
+        \n        },\n        \"is_update\": {\n          \"type\": \"boolean\",\n          \"description\": \"True if this
+        replaced an existing behavior with the same content hash\"\n        },\n        \"warnings\": {\n          \"type\"\
+        : \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"\
+        Non-fatal warnings during compilation\"\n        }\n      }\n    },\n    \"CompiledBehavior\": {\n      \"type\":
+        \"object\",\n      \"required\": [\n        \"behavior_tree\",\n        \"context_schema\"\n      ],\n      \"properties\"\
+        : {\n        \"behavior_tree\": {\n          \"type\": \"object\",\n          \"description\": \"Compiled executable
+        behavior tree structure\"\n        },\n        \"context_schema\": {\n          \"type\": \"object\",\n          \"\
+        description\": \"Schema defining required context variables\"\n        },\n        \"service_dependencies\": {\n \
+        \         \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n         \
+        \ \"description\": \"List of required services for this behavior\"\n        },\n        \"goap_goals\": {\n      \
+        \    \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/GoapGoal\"\n          },\n    \
+        \      \"description\": \"GOAP goals extracted from the behavior\"\n        },\n        \"execution_metadata\": {\n\
+        \          \"type\": \"object\",\n          \"properties\": {\n            \"estimated_duration\": {\n           \
+        \   \"type\": \"integer\",\n              \"description\": \"Estimated execution time in seconds\"\n            },\n\
+        \            \"resource_requirements\": {\n              \"type\": \"object\",\n              \"additionalProperties\"\
         : {\n                \"type\": \"number\"\n              }\n            },\n            \"interrupt_conditions\":
         {\n              \"type\": \"array\",\n              \"items\": {\n                \"type\": \"string\"\n        \
         \      }\n            }\n          }\n        }\n      }\n    },\n    \"GoapGoal\": {\n      \"type\": \"object\"\
@@ -737,6 +757,27 @@ components:
                 actions:
                   - log:
                       message: "Hello World"
+        behavior_name:
+          type: string
+          description: |
+            Optional human-readable name for the behavior.
+            If not provided, extracted from ABML metadata.id or generated from content hash.
+          example: "blacksmith_daily_routine"
+        behavior_category:
+          type: string
+          description: |
+            Category for organizing behaviors (e.g., profession, cultural, situational).
+            Used for filtering and grouping in bundles.
+          enum: [base, cultural, professional, personal, situational, ambient]
+          example: "professional"
+        bundle_id:
+          type: string
+          description: |
+            Optional bundle identifier for grouping related behaviors.
+            When specified, the compiled behavior will be added to a bundle with this ID.
+            Clients can then download entire bundles for efficient bulk loading.
+            If the bundle doesn't exist, it will be created.
+          example: "blacksmith-behaviors-v1"
         character_context:
           $ref: '#/components/schemas/CharacterContext'
         compilation_options:
@@ -795,16 +836,26 @@ components:
           description: Whether compilation was successful
         behavior_id:
           type: string
-          description: Unique identifier for the compiled behavior
-          example: "behavior_abc123"
+          description: Unique identifier for the compiled behavior (content-addressable hash)
+          example: "behavior-a1b2c3d4e5f6g7h8"
+        behavior_name:
+          type: string
+          description: Human-readable name of the behavior
+          example: "blacksmith_daily_routine"
         compiled_behavior:
           $ref: '#/components/schemas/CompiledBehavior'
         compilation_time_ms:
           type: integer
           description: Time taken to compile the behavior
-        cache_key:
+        asset_id:
           type: string
-          description: Key for caching the compiled behavior
+          description: Asset service ID where the compiled bytecode is stored
+        bundle_id:
+          type: string
+          description: Bundle ID if the behavior was added to a bundle
+        is_update:
+          type: boolean
+          description: True if this replaced an existing behavior with the same content hash
         warnings:
           type: array
           items:

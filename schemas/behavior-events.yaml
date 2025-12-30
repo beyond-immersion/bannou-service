@@ -1,0 +1,34 @@
+openapi: 3.0.3
+info:
+  title: Behavior Service Events
+  description: |
+    Event models for Behavior service RabbitMQ pub/sub via MassTransit.
+    Lifecycle events are auto-generated from x-lifecycle definition.
+
+    These events enable other services to be notified when:
+    - New behaviors are compiled and stored (BehaviorCreatedEvent)
+    - Existing behaviors are recompiled/updated (BehaviorUpdatedEvent)
+    - Behaviors are deleted/invalidated (BehaviorDeletedEvent)
+  version: 1.0.0
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/behavior-lifecycle-events.yaml
+x-lifecycle:
+  Behavior:
+    model:
+      behaviorId: { type: string, primary: true, required: true }
+      name: { type: string, required: true }
+      category: { type: string }
+      bundleId: { type: string }
+      assetId: { type: string }
+      bytecodeSize: { type: integer, format: int32 }
+      schemaVersion: { type: string }
+      createdAt: { type: string, format: date-time, required: true }
+      updatedAt: { type: string, format: date-time }
+    sensitive: []  # No sensitive fields
+
+paths: {}  # Events don't have HTTP paths
+
+# NOTE: No components/schemas section - lifecycle events are auto-generated.
+# BehaviorCreatedEvent, BehaviorUpdatedEvent, BehaviorDeletedEvent
+# are generated to schemas/Generated/behavior-lifecycle-events.yaml

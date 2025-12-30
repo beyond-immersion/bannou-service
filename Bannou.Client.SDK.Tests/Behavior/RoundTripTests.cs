@@ -30,7 +30,7 @@ metadata:
 flows:
   main:
     actions:
-      - global: { variable: result, value: '42' }
+    - global: { variable: result, value: '42' }
 ";
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
@@ -48,7 +48,7 @@ metadata:
 flows:
   main:
     actions:
-      - global: { variable: result, value: '10 + 32' }
+    - global: { variable: result, value: '10 + 32' }
 ";
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
@@ -66,7 +66,7 @@ metadata:
 flows:
   main:
     actions:
-      - global: { variable: result, value: '(10 + 5) * 2 - 8 / 2' }
+    - global: { variable: result, value: '(10 + 5) * 2 - 8 / 2' }
 ";
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
@@ -93,7 +93,7 @@ context:
 flows:
   main:
     actions:
-      - global: { variable: result, value: 'health * 2' }
+    - global: { variable: result, value: 'health * 2' }
 ";
 
         var output = CompileAndExecute(yaml, inputs: new[] { 50.0 }, outputCount: 1);
@@ -116,7 +116,7 @@ context:
 flows:
   main:
     actions:
-      - global: { variable: result, value: 'a + b * c' }
+    - global: { variable: result, value: 'a + b * c' }
 ";
 
         var output = CompileAndExecute(yaml, inputs: new[] { 10.0, 5.0, 3.0 }, outputCount: 1);
@@ -142,7 +142,7 @@ context:
 flows:
   main:
     actions:
-      - global: { variable: result, value: 'x < 50 ? 1 : 0' }
+    - global: { variable: result, value: 'x < 50 ? 1 : 0' }
 ";
 
         var outputTrue = CompileAndExecute(yaml, inputs: new[] { 30.0 }, outputCount: 1);
@@ -165,7 +165,7 @@ context:
 flows:
   main:
     actions:
-      - global: { variable: result, value: 'value > 0 ? 100 : -100' }
+    - global: { variable: result, value: 'value > 0 ? 100 : -100' }
 ";
 
         var positive = CompileAndExecute(yaml, inputs: new[] { 5.0 }, outputCount: 1);
@@ -189,8 +189,8 @@ metadata:
 flows:
   main:
     actions:
-      - local: { variable: temp, value: '21' }
-      - global: { variable: result, value: 'temp * 2' }
+    - local: { variable: temp, value: '21' }
+    - global: { variable: result, value: 'temp * 2' }
 ";
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
@@ -208,10 +208,10 @@ metadata:
 flows:
   main:
     actions:
-      - local: { variable: a, value: '10' }
-      - local: { variable: b, value: '20' }
-      - local: { variable: c, value: '12' }
-      - global: { variable: result, value: 'a + b + c' }
+    - local: { variable: a, value: '10' }
+    - local: { variable: b, value: '20' }
+    - local: { variable: c, value: '12' }
+    - global: { variable: result, value: 'a + b + c' }
 ";
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
@@ -233,7 +233,7 @@ metadata:
 flows:
   main:
     actions:
-      - global: { variable: result, value: 'abs(-42)' }
+    - global: { variable: result, value: 'abs(-42)' }
 ";
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
@@ -254,7 +254,7 @@ context:
 flows:
   main:
     actions:
-      - global: { variable: result, value: 'clamp(value, 0, 100)' }
+    - global: { variable: result, value: 'clamp(value, 0, 100)' }
 ";
 
         var low = CompileAndExecute(yaml, inputs: new[] { -50.0 }, outputCount: 1);
@@ -277,8 +277,8 @@ metadata:
 flows:
   main:
     actions:
-      - global: { variable: minResult, value: 'min(30, 50)' }
-      - global: { variable: maxResult, value: 'max(30, 50)' }
+    - global: { variable: minResult, value: 'min(30, 50)' }
+    - global: { variable: maxResult, value: 'max(30, 50)' }
 ";
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 2);
@@ -297,7 +297,7 @@ metadata:
 flows:
   main:
     actions:
-      - global: { variable: result, value: 'lerp(0, 100, 0.5)' }
+    - global: { variable: result, value: 'lerp(0, 100, 0.5)' }
 ";
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
@@ -315,7 +315,7 @@ metadata:
 flows:
   main:
     actions:
-      - global: { variable: result, value: 'floor(42.9)' }
+    - global: { variable: result, value: 'floor(42.9)' }
 ";
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
@@ -333,7 +333,7 @@ metadata:
 flows:
   main:
     actions:
-      - global: { variable: result, value: 'ceil(42.1)' }
+    - global: { variable: result, value: 'ceil(42.1)' }
 ";
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
@@ -359,7 +359,7 @@ context:
 flows:
   main:
     actions:
-      - global: { variable: result, value: 'a > 0 && b > 0 ? 1 : 0' }
+    - global: { variable: result, value: 'a > 0 && b > 0 ? 1 : 0' }
 ";
 
         var bothTrue = CompileAndExecute(yaml, inputs: new[] { 5.0, 10.0 }, outputCount: 1);
@@ -386,7 +386,7 @@ context:
 flows:
   main:
     actions:
-      - global: { variable: result, value: 'a > 0 || b > 0 ? 1 : 0' }
+    - global: { variable: result, value: 'a > 0 || b > 0 ? 1 : 0' }
 ";
 
         var bothFalse = CompileAndExecute(yaml, inputs: new[] { -5.0, -10.0 }, outputCount: 1);
@@ -414,11 +414,11 @@ metadata:
 flows:
   main:
     actions:
-      - local: { variable: counter, value: '10' }
-      - increment: { variable: counter }
-      - increment: { variable: counter }
-      - increment: { variable: counter }
-      - global: { variable: result, value: 'counter' }
+    - local: { variable: counter, value: '10' }
+    - increment: { variable: counter }
+    - increment: { variable: counter }
+    - increment: { variable: counter }
+    - global: { variable: result, value: 'counter' }
 ";
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
@@ -437,10 +437,10 @@ metadata:
 flows:
   main:
     actions:
-      - local: { variable: counter, value: '10' }
-      - decrement: { variable: counter }
-      - decrement: { variable: counter }
-      - global: { variable: result, value: 'counter' }
+    - local: { variable: counter, value: '10' }
+    - decrement: { variable: counter }
+    - decrement: { variable: counter }
+    - global: { variable: result, value: 'counter' }
 ";
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);

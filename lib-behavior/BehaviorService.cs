@@ -1,13 +1,19 @@
+using BeyondImmersion.Bannou.Behavior.Compiler;
 using BeyondImmersion.Bannou.Behavior.Goap;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using InternalCompilationOptions = BeyondImmersion.Bannou.Behavior.Compiler.CompilationOptions;
 using InternalGoapGoal = BeyondImmersion.Bannou.Behavior.Goap.GoapGoal;
 
 namespace BeyondImmersion.BannouService.Behavior;
@@ -19,10 +25,24 @@ namespace BeyondImmersion.BannouService.Behavior;
 [BannouService("behavior", typeof(IBehaviorService), lifetime: ServiceLifetime.Scoped)]
 public partial class BehaviorService : IBehaviorService
 {
+    /// <summary>
+    /// Content type for compiled behavior model assets.
+    /// </summary>
+    public const string BehaviorModelContentType = "application/x-behavior-model";
+
+    /// <summary>
+    /// ABML schema version for compiled behaviors.
+    /// </summary>
+    public const string AbmlSchemaVersion = "1.0";
+
     private readonly ILogger<BehaviorService> _logger;
     private readonly BehaviorServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
     private readonly IGoapPlanner _goapPlanner;
+    private readonly BehaviorCompiler _compiler;
+    private readonly IAssetClient _assetClient;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly BehaviorBundleManager _bundleManager;
 
     /// <summary>
     /// Creates a new instance of the BehaviorService.
@@ -32,17 +52,29 @@ public partial class BehaviorService : IBehaviorService
     /// <param name="messageBus">Message bus for event publishing.</param>
     /// <param name="eventConsumer">Event consumer for registering handlers.</param>
     /// <param name="goapPlanner">GOAP planner for generating action plans.</param>
+    /// <param name="compiler">ABML behavior compiler.</param>
+    /// <param name="assetClient">Asset service client for storing compiled models.</param>
+    /// <param name="httpClientFactory">HTTP client factory for asset uploads.</param>
+    /// <param name="bundleManager">Bundle manager for efficient behavior grouping.</param>
     public BehaviorService(
         ILogger<BehaviorService> logger,
         BehaviorServiceConfiguration configuration,
         IMessageBus messageBus,
         IEventConsumer eventConsumer,
-        IGoapPlanner goapPlanner)
+        IGoapPlanner goapPlanner,
+        BehaviorCompiler compiler,
+        IAssetClient assetClient,
+        IHttpClientFactory httpClientFactory,
+        BehaviorBundleManager bundleManager)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _goapPlanner = goapPlanner ?? throw new ArgumentNullException(nameof(goapPlanner));
+        _compiler = compiler ?? throw new ArgumentNullException(nameof(compiler));
+        _assetClient = assetClient ?? throw new ArgumentNullException(nameof(assetClient));
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _bundleManager = bundleManager ?? throw new ArgumentNullException(nameof(bundleManager));
 
         // Register event handlers via partial class (BehaviorServiceEvents.cs)
         ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
@@ -50,14 +82,125 @@ public partial class BehaviorService : IBehaviorService
     }
 
     /// <summary>
-    /// Compiles ABML behavior definition. Not yet implemented - planned for future release.
+    /// Compiles ABML behavior definition to executable bytecode and stores as an asset.
+    /// Publishes BehaviorCreatedEvent or BehaviorUpdatedEvent based on whether this is a new or existing behavior.
     /// </summary>
+    /// <param name="body">The compile request containing ABML YAML content.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Compilation result with behavior ID for cache retrieval.</returns>
     public async Task<(StatusCodes, CompileBehaviorResponse?)> CompileAbmlBehaviorAsync(CompileBehaviorRequest body, CancellationToken cancellationToken = default)
     {
+        var stopwatch = Stopwatch.StartNew();
+
         try
         {
-            _logger.LogWarning("Method CompileAbmlBehaviorAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
+            if (string.IsNullOrWhiteSpace(body.Abml_content))
+            {
+                return (StatusCodes.BadRequest, new CompileBehaviorResponse
+                {
+                    Success = false,
+                    Behavior_id = string.Empty,
+                    Warnings = new List<string> { "ABML content is required" }
+                });
+            }
+
+            _logger.LogDebug("Compiling ABML behavior ({ContentLength} bytes)", body.Abml_content.Length);
+
+            // Map API compilation options to internal options
+            var options = MapCompilationOptions(body.Compilation_options);
+
+            // Compile the ABML YAML to bytecode
+            var result = _compiler.CompileYaml(body.Abml_content, options);
+
+            if (!result.Success || result.Bytecode == null)
+            {
+                _logger.LogWarning("ABML compilation failed with {ErrorCount} errors", result.Errors.Count);
+                return (StatusCodes.BadRequest, new CompileBehaviorResponse
+                {
+                    Success = false,
+                    Behavior_id = string.Empty,
+                    Compilation_time_ms = (int)stopwatch.ElapsedMilliseconds,
+                    Warnings = result.Errors.Select(e => e.Message).ToList()
+                });
+            }
+
+            // Generate a deterministic behavior ID from content hash
+            var bytecode = result.Bytecode;
+            var behaviorId = GenerateBehaviorId(bytecode);
+
+            // Determine behavior name (from request, or generate from ID)
+            var behaviorName = !string.IsNullOrWhiteSpace(body.Behavior_name)
+                ? body.Behavior_name
+                : behaviorId;
+
+            // Map category to string
+            var category = body.Behavior_category != default
+                ? body.Behavior_category.ToString().ToLowerInvariant()
+                : null;
+
+            // Store the compiled model as an asset if caching is enabled
+            string? assetId = null;
+            bool isUpdate = false;
+            if (body.Compilation_options?.Cache_compiled_result != false)
+            {
+                assetId = await StoreCompiledModelAsync(behaviorId, bytecode, cancellationToken);
+
+                if (assetId != null)
+                {
+                    // Record in bundle manager and determine if this is new or update
+                    var metadata = new BehaviorMetadata
+                    {
+                        Name = behaviorName,
+                        Category = category,
+                        BundleId = body.Bundle_id,
+                        BytecodeSize = bytecode.Length,
+                        SchemaVersion = AbmlSchemaVersion
+                    };
+
+                    isUpdate = !await _bundleManager.RecordBehaviorAsync(
+                        behaviorId,
+                        assetId,
+                        body.Bundle_id,
+                        metadata,
+                        cancellationToken);
+
+                    // Publish lifecycle event
+                    await PublishBehaviorEventAsync(
+                        behaviorId,
+                        behaviorName,
+                        category,
+                        body.Bundle_id,
+                        assetId,
+                        bytecode.Length,
+                        isUpdate,
+                        cancellationToken);
+                }
+            }
+
+            stopwatch.Stop();
+            _logger.LogInformation(
+                "ABML compilation successful: {BehaviorId} ({BytecodeSize} bytes, {ElapsedMs}ms, isUpdate={IsUpdate})",
+                behaviorId,
+                bytecode.Length,
+                stopwatch.ElapsedMilliseconds,
+                isUpdate);
+
+            return (StatusCodes.OK, new CompileBehaviorResponse
+            {
+                Success = true,
+                Behavior_id = behaviorId,
+                Behavior_name = behaviorName,
+                Compiled_behavior = new CompiledBehavior
+                {
+                    Behavior_tree = new { bytecode_size = bytecode.Length },
+                    Context_schema = new { }
+                },
+                Compilation_time_ms = (int)stopwatch.ElapsedMilliseconds,
+                Asset_id = assetId,
+                Bundle_id = body.Bundle_id,
+                Is_update = isUpdate,
+                Warnings = new List<string>()
+            });
         }
         catch (Exception ex)
         {
@@ -70,6 +213,152 @@ public partial class BehaviorService : IBehaviorService
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Publishes a behavior lifecycle event (created or updated).
+    /// </summary>
+    private async Task PublishBehaviorEventAsync(
+        string behaviorId,
+        string name,
+        string? category,
+        string? bundleId,
+        string assetId,
+        int bytecodeSize,
+        bool isUpdate,
+        CancellationToken cancellationToken)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        if (isUpdate)
+        {
+            var updateEvent = new Events.BehaviorUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                BehaviorId = behaviorId,
+                Name = name,
+                Category = category ?? string.Empty,
+                BundleId = bundleId ?? string.Empty,
+                AssetId = assetId,
+                BytecodeSize = bytecodeSize,
+                SchemaVersion = AbmlSchemaVersion,
+                CreatedAt = now, // Will be overwritten with actual value if available
+                UpdatedAt = now,
+                ChangedFields = new List<string> { "bytecode" }
+            };
+            await _messageBus.PublishAsync("behavior.updated", updateEvent);
+            _logger.LogDebug("Published behavior.updated event for {BehaviorId}", behaviorId);
+        }
+        else
+        {
+            var createEvent = new Events.BehaviorCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                BehaviorId = behaviorId,
+                Name = name,
+                Category = category ?? string.Empty,
+                BundleId = bundleId ?? string.Empty,
+                AssetId = assetId,
+                BytecodeSize = bytecodeSize,
+                SchemaVersion = AbmlSchemaVersion,
+                CreatedAt = now,
+                UpdatedAt = now
+            };
+            await _messageBus.PublishAsync("behavior.created", createEvent);
+            _logger.LogDebug("Published behavior.created event for {BehaviorId}", behaviorId);
+        }
+    }
+
+    /// <summary>
+    /// Maps API compilation options to internal compiler options.
+    /// </summary>
+    private static InternalCompilationOptions MapCompilationOptions(CompilationOptions? apiOptions)
+    {
+        if (apiOptions == null)
+        {
+            return InternalCompilationOptions.Default;
+        }
+
+        return new InternalCompilationOptions
+        {
+            EnableOptimizations = apiOptions.Enable_optimizations,
+            IncludeDebugInfo = !apiOptions.Enable_optimizations, // Debug info when not optimizing
+            SkipSemanticAnalysis = !apiOptions.Strict_validation
+        };
+    }
+
+    /// <summary>
+    /// Generates a deterministic behavior ID from the compiled bytecode.
+    /// </summary>
+    private static string GenerateBehaviorId(byte[] bytecode)
+    {
+        var hash = SHA256.HashData(bytecode);
+        return $"behavior-{Convert.ToHexString(hash)[..16].ToLowerInvariant()}";
+    }
+
+    /// <summary>
+    /// Stores the compiled behavior model as an asset in lib-asset.
+    /// </summary>
+    /// <returns>The cache key for retrieving the model, or null if storage failed.</returns>
+    private async Task<string?> StoreCompiledModelAsync(
+        string behaviorId,
+        byte[] bytecode,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Request an upload URL from the asset service
+            var uploadRequest = new UploadRequest
+            {
+                Filename = $"{behaviorId}.bbm",
+                Size = bytecode.Length,
+                Content_type = BehaviorModelContentType,
+                Metadata = new AssetMetadataInput
+                {
+                    Tags = new List<string> { "behavior", "abml", "compiled" },
+                    Realm = Asset.Realm.Shared
+                }
+            };
+
+            var uploadResponse = await _assetClient.RequestUploadAsync(uploadRequest, cancellationToken);
+
+            // Upload the bytecode to the presigned URL
+            using var httpClient = _httpClientFactory.CreateClient();
+            using var content = new ByteArrayContent(bytecode);
+            content.Headers.ContentType = new MediaTypeHeaderValue(BehaviorModelContentType);
+
+            var putResponse = await httpClient.PutAsync(uploadResponse.Upload_url, content, cancellationToken);
+            if (!putResponse.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "Failed to upload compiled behavior {BehaviorId}: {StatusCode}",
+                    behaviorId,
+                    putResponse.StatusCode);
+                return null;
+            }
+
+            // Complete the upload
+            var completeRequest = new CompleteUploadRequest
+            {
+                Upload_id = uploadResponse.Upload_id
+            };
+
+            var assetMetadata = await _assetClient.CompleteUploadAsync(completeRequest, cancellationToken);
+
+            _logger.LogDebug(
+                "Stored compiled behavior {BehaviorId} as asset {AssetId}",
+                behaviorId,
+                assetMetadata.Asset_id);
+
+            return assetMetadata.Asset_id;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to store compiled behavior {BehaviorId} as asset", behaviorId);
+            return null;
         }
     }
 
@@ -98,14 +387,60 @@ public partial class BehaviorService : IBehaviorService
     }
 
     /// <summary>
-    /// Validates ABML YAML syntax and schema. Not yet implemented - planned for future release.
+    /// Validates ABML YAML syntax and semantics without full compilation.
     /// </summary>
+    /// <param name="body">The validation request containing ABML YAML content.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Validation result with errors and warnings.</returns>
     public async Task<(StatusCodes, ValidateAbmlResponse?)> ValidateAbmlAsync(ValidateAbmlRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogWarning("Method ValidateAbmlAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
+            if (string.IsNullOrWhiteSpace(body.Abml_content))
+            {
+                return (StatusCodes.BadRequest, new ValidateAbmlResponse
+                {
+                    Is_valid = false,
+                    Validation_errors = new List<ValidationError>
+                    {
+                        new ValidationError
+                        {
+                            Type = ValidationErrorType.Schema,
+                            Message = "ABML content is required"
+                        }
+                    },
+                    Schema_version = "1.0"
+                });
+            }
+
+            _logger.LogDebug("Validating ABML ({ContentLength} bytes)", body.Abml_content.Length);
+
+            // Configure options for validation only (skip bytecode generation)
+            var options = new InternalCompilationOptions
+            {
+                SkipSemanticAnalysis = !body.Strict_mode
+            };
+
+            // Use the compiler's validation path
+            var result = _compiler.CompileYaml(body.Abml_content, options);
+
+            // Convert compilation errors to validation errors
+            var validationErrors = result.Errors
+                .Select(e => new ValidationError
+                {
+                    Type = ValidationErrorType.Semantic,
+                    Message = e.Message,
+                    Line_number = e.Line ?? 0
+                })
+                .ToList();
+
+            return (StatusCodes.OK, new ValidateAbmlResponse
+            {
+                Is_valid = result.Success,
+                Validation_errors = validationErrors,
+                Semantic_warnings = new List<string>(),
+                Schema_version = "1.0"
+            });
         }
         catch (Exception ex)
         {
@@ -122,18 +457,70 @@ public partial class BehaviorService : IBehaviorService
     }
 
     /// <summary>
-    /// Retrieves a cached compiled behavior. Not yet implemented - planned for future release.
+    /// Retrieves a cached compiled behavior from the asset store.
     /// </summary>
+    /// <param name="body">Request containing the behavior ID (asset ID from compilation).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The cached behavior with download URL for the compiled bytecode.</returns>
     public async Task<(StatusCodes, CachedBehaviorResponse?)> GetCachedBehaviorAsync(GetCachedBehaviorRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogWarning("Method GetCachedBehaviorAsync called but not implemented for: {BehaviorId}", body.BehaviorId);
-            return (StatusCodes.NotImplemented, null);
+            if (string.IsNullOrWhiteSpace(body.BehaviorId))
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+
+            _logger.LogDebug("Retrieving cached behavior: {BehaviorId}", body.BehaviorId);
+
+            // Retrieve the asset from lib-asset
+            var assetRequest = new GetAssetRequest
+            {
+                Asset_id = body.BehaviorId,
+                Version = "latest"
+            };
+
+            AssetWithDownloadUrl asset;
+            try
+            {
+                asset = await _assetClient.GetAssetAsync(assetRequest, cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogDebug("Behavior {BehaviorId} not found in cache", body.BehaviorId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Download the bytecode to include in response
+            byte[]? bytecode = null;
+            try
+            {
+                using var httpClient = _httpClientFactory.CreateClient();
+                bytecode = await httpClient.GetByteArrayAsync(asset.Download_url, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to download behavior bytecode for {BehaviorId}", body.BehaviorId);
+                // Continue without bytecode - caller can use download_url directly
+            }
+
+            return (StatusCodes.OK, new CachedBehaviorResponse
+            {
+                Behavior_id = body.BehaviorId,
+                Compiled_behavior = new CompiledBehavior
+                {
+                    Behavior_tree = bytecode != null
+                        ? new { bytecode = Convert.ToBase64String(bytecode), bytecode_size = bytecode.Length }
+                        : new { download_url = asset.Download_url.ToString() },
+                    Context_schema = new { }
+                },
+                Cache_timestamp = DateTimeOffset.UtcNow, // Asset service doesn't provide timestamp
+                Cache_hit = true
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving cached behavior");
+            _logger.LogError(ex, "Error retrieving cached behavior: {BehaviorId}", body.BehaviorId);
             await _messageBus.TryPublishErrorAsync(
                 serviceId: "behavior",
                 operation: "GetCachedBehavior",
@@ -171,14 +558,68 @@ public partial class BehaviorService : IBehaviorService
     }
 
     /// <summary>
-    /// Invalidates a cached compiled behavior. Not yet implemented - planned for future release.
+    /// Invalidates a cached compiled behavior.
     /// </summary>
+    /// <remarks>
+    /// Currently not fully implemented - the asset service does not support asset deletion.
+    /// This endpoint will verify the asset exists but cannot remove it from storage.
+    /// Future implementation will support soft-delete or versioning to mark assets as invalid.
+    /// </remarks>
+    /// <param name="body">Request containing the behavior ID to invalidate.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>OK if behavior was found (marking for invalidation), NotFound if not in cache.</returns>
     public async Task<(StatusCodes, object?)> InvalidateCachedBehaviorAsync(InvalidateCacheRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogWarning("Method InvalidateCachedBehaviorAsync called but not implemented for: {BehaviorId}", body.BehaviorId);
-            return (StatusCodes.NotImplemented, null);
+            if (string.IsNullOrWhiteSpace(body.BehaviorId))
+            {
+                return (StatusCodes.BadRequest, new { error = "BehaviorId is required" });
+            }
+
+            _logger.LogDebug("Invalidating cached behavior: {BehaviorId}", body.BehaviorId);
+
+            // Try to get metadata from bundle manager first
+            var metadata = await _bundleManager.GetMetadataAsync(body.BehaviorId, cancellationToken);
+            if (metadata == null)
+            {
+                // Fall back to checking asset service directly
+                var assetRequest = new GetAssetRequest
+                {
+                    Asset_id = body.BehaviorId,
+                    Version = "latest"
+                };
+
+                try
+                {
+                    await _assetClient.GetAssetAsync(assetRequest, cancellationToken);
+                }
+                catch (ApiException ex) when (ex.StatusCode == 404)
+                {
+                    _logger.LogDebug("Behavior {BehaviorId} not found in cache", body.BehaviorId);
+                    return (StatusCodes.NotFound, new { error = "Behavior not found in cache" });
+                }
+            }
+
+            // Remove from bundle manager (this also removes bundle membership)
+            var removedMetadata = await _bundleManager.RemoveBehaviorAsync(body.BehaviorId, cancellationToken);
+
+            // Publish deleted event
+            if (removedMetadata != null || metadata != null)
+            {
+                var effectiveMetadata = removedMetadata ?? metadata;
+                if (effectiveMetadata != null)
+                {
+                    await PublishBehaviorDeletedEventAsync(effectiveMetadata, cancellationToken);
+                }
+            }
+
+            // Note: Asset service doesn't currently support deletion
+            _logger.LogInformation(
+                "Behavior {BehaviorId} invalidated (deleted event published)",
+                body.BehaviorId);
+
+            return (StatusCodes.OK, new { message = "Behavior invalidated", behavior_id = body.BehaviorId });
         }
         catch (Exception ex)
         {
@@ -193,6 +634,35 @@ public partial class BehaviorService : IBehaviorService
                 cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
+    }
+
+    /// <summary>
+    /// Publishes a behavior deleted event.
+    /// </summary>
+    private async Task PublishBehaviorDeletedEventAsync(
+        BehaviorMetadata metadata,
+        CancellationToken cancellationToken)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        var deleteEvent = new Events.BehaviorDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            BehaviorId = metadata.BehaviorId,
+            Name = metadata.Name,
+            Category = metadata.Category ?? string.Empty,
+            BundleId = metadata.BundleId ?? string.Empty,
+            AssetId = metadata.AssetId,
+            BytecodeSize = metadata.BytecodeSize,
+            SchemaVersion = metadata.SchemaVersion,
+            CreatedAt = metadata.CreatedAt,
+            UpdatedAt = metadata.UpdatedAt,
+            DeletedReason = "Invalidated via API"
+        };
+
+        await _messageBus.PublishAsync("behavior.deleted", deleteEvent);
+        _logger.LogDebug("Published behavior.deleted event for {BehaviorId}", metadata.BehaviorId);
     }
 
     /// <summary>

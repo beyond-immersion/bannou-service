@@ -238,6 +238,10 @@ The "hide" opportunity is a **defensive opportunity** offered to a losing combat
 
 ## 3. ABML Behavior Models
 
+> **STATUS**: UPDATE AFTER RUNTIME/CLIENT IMPLEMENTATION MORE COMPLETE
+>
+> This section contains placeholder schemas and example ABML. The specific input/output variables, flow structure, and player integration details will be refined once the local runtime interpreter and client-side behavior execution are further along.
+
 ### 3.1 Behavior Type Structure
 
 Each monster has a **combat behavior type** with a single **variant** (for this demo):

@@ -434,9 +434,9 @@ imports:
 flows:
   start:
     actions:
-      - log: { message: ""Starting in main"" }
-      - call: { flow: ""a.entry"" }
-      - log: { message: ""Back in main (only if call returns)"" }
+    - log: { message: ""Starting in main"" }
+    - call: { flow: ""a.entry"" }
+    - log: { message: ""Back in main (only if call returns)"" }
 ";
         var aYaml = @"
 version: ""2.0""
@@ -450,9 +450,9 @@ imports:
 flows:
   entry:
     actions:
-      - log: { message: ""In A.entry"" }
-      - goto: { flow: ""b.target"" }
-      - log: { message: ""After goto (should NOT appear)"" }
+    - log: { message: ""In A.entry"" }
+    - goto: { flow: ""b.target"" }
+    - log: { message: ""After goto (should NOT appear)"" }
 ";
         var bYaml = @"
 version: ""2.0""
@@ -462,7 +462,7 @@ metadata:
 flows:
   target:
     actions:
-      - log: { message: ""In B.target (reached via context-relative goto)"" }
+    - log: { message: ""In B.target (reached via context-relative goto)"" }
 ";
 
         var mainDoc = _parser.Parse(mainYaml).Value!;
@@ -505,9 +505,9 @@ imports:
 flows:
   start:
     actions:
-      - log: { message: ""Starting in main"" }
-      - call: { flow: ""a.entry"" }
-      - log: { message: ""Back in main"" }
+    - log: { message: ""Starting in main"" }
+    - call: { flow: ""a.entry"" }
+    - log: { message: ""Back in main"" }
 ";
         var aYaml = @"
 version: ""2.0""
@@ -521,9 +521,9 @@ imports:
 flows:
   entry:
     actions:
-      - log: { message: ""In A.entry"" }
-      - call: { flow: ""b.helper"" }
-      - log: { message: ""Back in A.entry"" }
+    - log: { message: ""In A.entry"" }
+    - call: { flow: ""b.helper"" }
+    - log: { message: ""Back in A.entry"" }
 ";
         var bYaml = @"
 version: ""2.0""
@@ -533,7 +533,7 @@ metadata:
 flows:
   helper:
     actions:
-      - log: { message: ""In B.helper (reached via context-relative call)"" }
+    - log: { message: ""In B.helper (reached via context-relative call)"" }
 ";
 
         var mainDoc = _parser.Parse(mainYaml).Value!;
@@ -728,12 +728,12 @@ imports:
 flows:
   start:
     actions:
-      - set:
-          variable: my_var
-          value: ""original""
-      - log: { message: ""Before call: ${my_var}"" }
-      - call: { flow: ""lib.modify"" }
-      - log: { message: ""After call: ${my_var}"" }
+    - set:
+        variable: my_var
+        value: ""original""
+    - log: { message: ""Before call: ${my_var}"" }
+    - call: { flow: ""lib.modify"" }
+    - log: { message: ""After call: ${my_var}"" }
 ";
         var libYaml = @"
 version: ""2.0""
@@ -743,10 +743,10 @@ metadata:
 flows:
   modify:
     actions:
-      - set:
-          variable: my_var
-          value: ""modified_by_lib""
-      - log: { message: ""In lib: ${my_var}"" }
+    - set:
+        variable: my_var
+        value: ""modified_by_lib""
+    - log: { message: ""In lib: ${my_var}"" }
 ";
 
         var mainResult = _parser.Parse(mainYaml);
@@ -791,9 +791,9 @@ imports:
 flows:
   start:
     actions:
-      - log: { message: ""Before call, lib_only_var = ${lib_only_var}"" }
-      - call: { flow: ""lib.create_var"" }
-      - log: { message: ""After call, lib_only_var = ${lib_only_var}"" }
+    - log: { message: ""Before call, lib_only_var = ${lib_only_var}"" }
+    - call: { flow: ""lib.create_var"" }
+    - log: { message: ""After call, lib_only_var = ${lib_only_var}"" }
 ";
         var libYaml = @"
 version: ""2.0""
@@ -803,10 +803,10 @@ metadata:
 flows:
   create_var:
     actions:
-      - set:
-          variable: lib_only_var
-          value: ""created_in_lib""
-      - log: { message: ""In lib: ${lib_only_var}"" }
+    - set:
+        variable: lib_only_var
+        value: ""created_in_lib""
+    - log: { message: ""In lib: ${lib_only_var}"" }
 ";
 
         var mainResult = _parser.Parse(mainYaml);
@@ -850,10 +850,10 @@ imports:
 flows:
   start:
     actions:
-      - set:
-          variable: greeting
-          value: ""Hello from main""
-      - call: { flow: ""lib.print_greeting"" }
+    - set:
+        variable: greeting
+        value: ""Hello from main""
+    - call: { flow: ""lib.print_greeting"" }
 ";
         var libYaml = @"
 version: ""2.0""
@@ -863,7 +863,7 @@ metadata:
 flows:
   print_greeting:
     actions:
-      - log: { message: ""Lib sees: ${greeting}"" }
+    - log: { message: ""Lib sees: ${greeting}"" }
 ";
 
         var mainDoc = _parser.Parse(mainYaml).Value!;
@@ -900,8 +900,8 @@ imports:
 flows:
   start:
     actions:
-      - call: { flow: ""lib.compute"" }
-      - log: { message: ""Result was: ${_result}"" }
+    - call: { flow: ""lib.compute"" }
+    - log: { message: ""Result was: ${_result}"" }
 ";
         var libYaml = @"
 version: ""2.0""
@@ -911,8 +911,8 @@ metadata:
 flows:
   compute:
     actions:
-      - log: { message: ""Computing..."" }
-      - return: { value: 42 }
+    - log: { message: ""Computing..."" }
+    - return: { value: 42 }
 ";
 
         var mainDoc = _parser.Parse(mainYaml).Value!;
@@ -954,7 +954,7 @@ imports:
 flows:
   start:
     actions:
-      - log: { message: ""Trying to access lib context var: ${lib_config}"" }
+    - log: { message: ""Trying to access lib context var: ${lib_config}"" }
 ";
         var libYaml = @"
 version: ""2.0""
@@ -964,13 +964,13 @@ metadata:
 context:
   variables:
     lib_config:
-      type: string
-      default: ""lib_default_value""
+    type: string
+    default: ""lib_default_value""
 
 flows:
   show_config:
     actions:
-      - log: { message: ""Lib config: ${lib_config}"" }
+    - log: { message: ""Lib config: ${lib_config}"" }
 ";
 
         var mainDoc = _parser.Parse(mainYaml).Value!;
@@ -1008,8 +1008,8 @@ imports:
 flows:
   start:
     actions:
-      - log: { message: ""Calling lib"" }
-      - call: { flow: ""lib.show_config"" }
+    - log: { message: ""Calling lib"" }
+    - call: { flow: ""lib.show_config"" }
 ";
         var libYaml = @"
 version: ""2.0""
@@ -1019,13 +1019,13 @@ metadata:
 context:
   variables:
     lib_setting:
-      type: string
-      default: ""my_lib_setting_value""
+    type: string
+    default: ""my_lib_setting_value""
 
 flows:
   show_config:
     actions:
-      - log: { message: ""Lib setting: ${lib_setting}"" }
+    - log: { message: ""Lib setting: ${lib_setting}"" }
 ";
 
         var mainDoc = _parser.Parse(mainYaml).Value!;
@@ -1071,7 +1071,7 @@ imports:
 flows:
   start:
     actions:
-      - log: { message: ""Hello"" }
+    - log: { message: ""Hello"" }
 ";
         var realYaml = @"
 version: ""2.0""
@@ -1081,7 +1081,7 @@ metadata:
 flows:
   greet:
     actions:
-      - log: { message: ""From real import"" }
+    - log: { message: ""From real import"" }
 ";
 
         var mainDoc = _parser.Parse(mainYaml).Value!;
@@ -1120,7 +1120,7 @@ imports:
 flows:
   start:
     actions:
-      - log: { message: ""Hello"" }
+    - log: { message: ""Hello"" }
 ";
         var validYaml = @"
 version: ""2.0""
@@ -1130,7 +1130,7 @@ metadata:
 flows:
   greet:
     actions:
-      - log: { message: ""Valid"" }
+    - log: { message: ""Valid"" }
 ";
 
         var mainDoc = _parser.Parse(mainYaml).Value!;

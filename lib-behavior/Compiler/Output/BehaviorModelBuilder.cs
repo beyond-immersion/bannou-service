@@ -3,9 +3,9 @@
 // Assembles final binary output from compiled components.
 // =============================================================================
 
-using System.Text;
 using BeyondImmersion.Bannou.Behavior.Compiler.Codegen;
 using BeyondImmersion.BannouService.Abml.Bytecode;
+using System.Text;
 
 namespace BeyondImmersion.Bannou.Behavior.Compiler.Output;
 

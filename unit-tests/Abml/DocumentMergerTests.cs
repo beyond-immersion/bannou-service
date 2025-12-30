@@ -37,10 +37,10 @@ metadata:
 flows:
   start:
     actions:
-      - log: { message: ""Hello"" }
+    - log: { message: ""Hello"" }
   helper:
     actions:
-      - log: { message: ""Helper"" }
+    - log: { message: ""Helper"" }
 ";
         var doc = _parser.Parse(yaml).Value!;
         var loaded = new LoadedDocument(doc);
@@ -71,8 +71,8 @@ imports:
 flows:
   start:
     actions:
-      - log: { message: ""Main start"" }
-      - call: { flow: ""lib.greet"" }
+    - log: { message: ""Main start"" }
+    - call: { flow: ""lib.greet"" }
 ";
         var libYaml = @"
 version: ""2.0""
@@ -82,10 +82,10 @@ metadata:
 flows:
   greet:
     actions:
-      - log: { message: ""Hello from lib"" }
+    - log: { message: ""Hello from lib"" }
   farewell:
     actions:
-      - log: { message: ""Goodbye from lib"" }
+    - log: { message: ""Goodbye from lib"" }
 ";
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
@@ -129,7 +129,7 @@ imports:
 flows:
   start:
     actions:
-      - log: { message: ""In A"" }
+    - log: { message: ""In A"" }
 ";
         var bYaml = @"
 version: ""2.0""
@@ -143,7 +143,7 @@ imports:
 flows:
   helper:
     actions:
-      - log: { message: ""In B"" }
+    - log: { message: ""In B"" }
 ";
         var cYaml = @"
 version: ""2.0""
@@ -153,7 +153,7 @@ metadata:
 flows:
   deep:
     actions:
-      - log: { message: ""In C"" }
+    - log: { message: ""In C"" }
 ";
         var aDoc = _parser.Parse(aYaml).Value!;
         var bDoc = _parser.Parse(bYaml).Value!;
@@ -192,10 +192,10 @@ metadata:
 flows:
   start:
     actions:
-      - call: { flow: ""helper"" }
+    - call: { flow: ""helper"" }
   helper:
     actions:
-      - log: { message: ""Helper"" }
+    - log: { message: ""Helper"" }
 ";
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var loaded = new LoadedDocument(mainDoc);
@@ -226,7 +226,7 @@ imports:
 flows:
   start:
     actions:
-      - call: { flow: ""b.entry"" }
+    - call: { flow: ""b.entry"" }
 ";
         var bYaml = @"
 version: ""2.0""
@@ -240,8 +240,8 @@ imports:
 flows:
   entry:
     actions:
-      - log: { message: ""In B"" }
-      - call: { flow: ""c.work"" }
+    - log: { message: ""In B"" }
+    - call: { flow: ""c.work"" }
 ";
         var cYaml = @"
 version: ""2.0""
@@ -251,7 +251,7 @@ metadata:
 flows:
   work:
     actions:
-      - log: { message: ""In C"" }
+    - log: { message: ""In C"" }
 ";
         var aDoc = _parser.Parse(aYaml).Value!;
         var bDoc = _parser.Parse(bYaml).Value!;
@@ -290,7 +290,7 @@ imports:
 flows:
   start:
     actions:
-      - goto: { flow: ""lib.target"" }
+    - goto: { flow: ""lib.target"" }
 ";
         var libYaml = @"
 version: ""2.0""
@@ -300,7 +300,7 @@ metadata:
 flows:
   target:
     actions:
-      - log: { message: ""Arrived"" }
+    - log: { message: ""Arrived"" }
 ";
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
@@ -337,9 +337,9 @@ imports:
 flows:
   start:
     actions:
-      - goto:
-          flow: ""lib.target""
-          args:
+    - goto:
+        flow: ""lib.target""
+        args:
             x: ""${value}""
             y: ""42""
 ";
@@ -351,7 +351,7 @@ metadata:
 flows:
   target:
     actions:
-      - log: { message: ""Got x=${x}, y=${y}"" }
+    - log: { message: ""Got x=${x}, y=${y}"" }
 ";
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
@@ -396,12 +396,12 @@ imports:
 flows:
   start:
     actions:
-      - cond:
-          - when: ""${flag}""
+    - cond:
+        - when: ""${flag}""
             then:
-              - call: { flow: ""lib.yes"" }
-          - else:
-              - call: { flow: ""lib.no"" }
+            - call: { flow: ""lib.yes"" }
+        - else:
+            - call: { flow: ""lib.no"" }
 ";
         var libYaml = @"
 version: ""2.0""
@@ -411,10 +411,10 @@ metadata:
 flows:
   yes:
     actions:
-      - log: { message: ""Yes"" }
+    - log: { message: ""Yes"" }
   no:
     actions:
-      - log: { message: ""No"" }
+    - log: { message: ""No"" }
 ";
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
@@ -458,10 +458,10 @@ imports:
 flows:
   start:
     actions:
-      - for_each:
-          variable: item
-          collection: ""${items}""
-          do:
+    - for_each:
+        variable: item
+        collection: ""${items}""
+        do:
             - call: { flow: ""lib.process"" }
 ";
         var libYaml = @"
@@ -472,7 +472,7 @@ metadata:
 flows:
   process:
     actions:
-      - log: { message: ""Processing"" }
+    - log: { message: ""Processing"" }
 ";
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
@@ -512,9 +512,9 @@ imports:
 flows:
   start:
     actions:
-      - repeat:
-          times: 3
-          do:
+    - repeat:
+        times: 3
+        do:
             - call: { flow: ""lib.tick"" }
 ";
         var libYaml = @"
@@ -525,7 +525,7 @@ metadata:
 flows:
   tick:
     actions:
-      - log: { message: ""Tick"" }
+    - log: { message: ""Tick"" }
 ";
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
@@ -565,8 +565,8 @@ metadata:
 context:
   variables:
     main_var:
-      type: string
-      default: ""main_value""
+    type: string
+    default: ""main_value""
 
 imports:
   - file: ""lib.yml""
@@ -575,7 +575,7 @@ imports:
 flows:
   start:
     actions:
-      - log: { message: ""Hello"" }
+    - log: { message: ""Hello"" }
 ";
         var libYaml = @"
 version: ""2.0""
@@ -585,13 +585,13 @@ metadata:
 context:
   variables:
     lib_var:
-      type: int
-      default: 42
+    type: int
+    default: 42
 
 flows:
   work:
     actions:
-      - log: { message: ""Working"" }
+    - log: { message: ""Working"" }
 ";
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
@@ -634,9 +634,9 @@ imports:
 flows:
   start:
     actions:
-      - log: { message: ""Start"" }
-      - call: { flow: ""lib.greet"" }
-      - log: { message: ""End"" }
+    - log: { message: ""Start"" }
+    - call: { flow: ""lib.greet"" }
+    - log: { message: ""End"" }
 ";
         var libYaml = @"
 version: ""2.0""
@@ -646,7 +646,7 @@ metadata:
 flows:
   greet:
     actions:
-      - log: { message: ""Hello from lib"" }
+    - log: { message: ""Hello from lib"" }
 ";
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
@@ -690,9 +690,9 @@ imports:
 flows:
   start:
     actions:
-      - log: { message: ""A start"" }
-      - call: { flow: ""b.entry"" }
-      - log: { message: ""A end"" }
+    - log: { message: ""A start"" }
+    - call: { flow: ""b.entry"" }
+    - log: { message: ""A end"" }
 ";
         var bYaml = @"
 version: ""2.0""
@@ -706,9 +706,9 @@ imports:
 flows:
   entry:
     actions:
-      - log: { message: ""B entry"" }
-      - call: { flow: ""c.work"" }
-      - log: { message: ""B exit"" }
+    - log: { message: ""B entry"" }
+    - call: { flow: ""c.work"" }
+    - log: { message: ""B exit"" }
 ";
         var cYaml = @"
 version: ""2.0""
@@ -718,7 +718,7 @@ metadata:
 flows:
   work:
     actions:
-      - log: { message: ""C work"" }
+    - log: { message: ""C work"" }
 ";
         var aDoc = _parser.Parse(aYaml).Value!;
         var bDoc = _parser.Parse(bYaml).Value!;
@@ -768,7 +768,7 @@ imports:
 flows:
   start:
     actions:
-      - log: { message: ""Main"" }
+    - log: { message: ""Main"" }
 ";
         var libYaml = @"
 version: ""2.0""
@@ -778,7 +778,7 @@ metadata:
 flows:
   standalone:
     actions:
-      - log: { message: ""Lib standalone"" }
+    - log: { message: ""Lib standalone"" }
 ";
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
@@ -822,12 +822,12 @@ goals:
   survive:
     priority: 100
     conditions:
-      health: ""> 0""
+    health: ""> 0""
 
 flows:
   start:
     actions:
-      - log: { message: ""Hello"" }
+    - log: { message: ""Hello"" }
 ";
         var aiYaml = @"
 version: ""2.0""
@@ -838,16 +838,16 @@ goals:
   eat:
     priority: 50
     conditions:
-      hunger: ""<= 0.3""
+    hunger: ""<= 0.3""
   rest:
     priority: 30
     conditions:
-      energy: "">= 0.8""
+    energy: "">= 0.8""
 
 flows:
   idle:
     actions:
-      - log: { message: ""Idling"" }
+    - log: { message: ""Idling"" }
 ";
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var aiDoc = _parser.Parse(aiYaml).Value!;
@@ -892,9 +892,9 @@ imports:
 flows:
   start:
     actions:
-      - log: { message: ""Working"" }
+    - log: { message: ""Working"" }
     on_error:
-      - call: { flow: ""lib.handle_error"" }
+    - call: { flow: ""lib.handle_error"" }
 ";
         var libYaml = @"
 version: ""2.0""
@@ -904,7 +904,7 @@ metadata:
 flows:
   handle_error:
     actions:
-      - log: { message: ""Handling error"" }
+    - log: { message: ""Handling error"" }
 ";
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
@@ -945,7 +945,7 @@ metadata:
 flows:
   start:
     actions:
-      - log: { message: ""Hello"" }
+    - log: { message: ""Hello"" }
 ";
         var doc = _parser.Parse(yaml).Value!;
         var loaded = new LoadedDocument(doc);

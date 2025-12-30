@@ -166,19 +166,19 @@ This is fundamentally different from:
 | Variable Scopes | `bannou-service/Abml/Runtime/` | ✅ Complete | Tested |
 | Error Handling | `bannou-service/Abml/Execution/` | ✅ Complete | `_error_handled` |
 | Built-in Actions | Various | ✅ Core set | `cond`, `set`, `goto`, etc. |
+| **Bytecode Compiler** | `lib-behavior/Compiler/` | ✅ Complete | 226 tests |
+| **Bytecode Interpreter** | `sdk-sources/Behavior/Runtime/` | ✅ Complete | 61 tests |
+| **Intent System** | `sdk-sources/Behavior/Intent/` | ✅ Complete | 79 tests |
 
-**Total**: 414 tests passing
+**Total**: 500+ tests passing (414 ABML + 226 compiler + 140 SDK)
 
-### 3.2 What's Designed but Not Built
+### 3.2 Remaining Design-to-Implementation Gaps
 
 | Component | Document | Status |
 |-----------|----------|--------|
-| Bytecode Format | LOCAL_RUNTIME §3.2 | Designed |
-| Bytecode Compiler | LOCAL_RUNTIME §5.3 | Designed |
-| Bytecode Interpreter | LOCAL_RUNTIME §4.2 | Designed |
-| Behavior Distribution | LOCAL_RUNTIME §5.4 | Designed |
-| Intent Merger | LOCAL_RUNTIME §6.4 | Designed |
+| Behavior Distribution | LOCAL_RUNTIME §5.4 | Designed (not built) |
 | Multi-Channel Cutscenes | BEHAVIOR_PLUGIN §1.4 | Partially designed |
+| Streaming Composition | LOCAL_RUNTIME §3.6 | Designed (critical gap) |
 
 ### 3.3 What's Not Yet Designed
 

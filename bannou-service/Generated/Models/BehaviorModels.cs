@@ -90,6 +90,33 @@ public partial class CompileBehaviorRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string Abml_content { get; set; } = default!;
 
+    /// <summary>
+    /// Optional human-readable name for the behavior.
+    /// <br/>If not provided, extracted from ABML metadata.id or generated from content hash.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("behavior_name")]
+    public string Behavior_name { get; set; } = default!;
+
+    /// <summary>
+    /// Category for organizing behaviors (e.g., profession, cultural, situational).
+    /// <br/>Used for filtering and grouping in bundles.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("behavior_category")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CompileBehaviorRequestBehavior_category Behavior_category { get; set; } = default!;
+
+    /// <summary>
+    /// Optional bundle identifier for grouping related behaviors.
+    /// <br/>When specified, the compiled behavior will be added to a bundle with this ID.
+    /// <br/>Clients can then download entire bundles for efficient bulk loading.
+    /// <br/>If the bundle doesn't exist, it will be created.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundle_id")]
+    public string Bundle_id { get; set; } = default!;
+
     [System.Text.Json.Serialization.JsonPropertyName("character_context")]
     public CharacterContext Character_context { get; set; } = default!;
 
@@ -200,11 +227,17 @@ public partial class CompileBehaviorResponse
     public bool Success { get; set; } = default!;
 
     /// <summary>
-    /// Unique identifier for the compiled behavior
+    /// Unique identifier for the compiled behavior (content-addressable hash)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behavior_id")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string Behavior_id { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable name of the behavior
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("behavior_name")]
+    public string Behavior_name { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("compiled_behavior")]
     public CompiledBehavior Compiled_behavior { get; set; } = default!;
@@ -216,10 +249,22 @@ public partial class CompileBehaviorResponse
     public int Compilation_time_ms { get; set; } = default!;
 
     /// <summary>
-    /// Key for caching the compiled behavior
+    /// Asset service ID where the compiled bytecode is stored
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("cache_key")]
-    public string Cache_key { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("asset_id")]
+    public string Asset_id { get; set; } = default!;
+
+    /// <summary>
+    /// Bundle ID if the behavior was added to a bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundle_id")]
+    public string Bundle_id { get; set; } = default!;
+
+    /// <summary>
+    /// True if this replaced an existing behavior with the same content hash
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("is_update")]
+    public bool Is_update { get; set; } = default!;
 
     /// <summary>
     /// Non-fatal warnings during compilation
@@ -978,6 +1023,30 @@ public partial class AbmlErrorResponse
         get => _additionalProperties;
         set { _additionalProperties = value; }
     }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum CompileBehaviorRequestBehavior_category
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"base")]
+    Base = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"cultural")]
+    Cultural = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"professional")]
+    Professional = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"personal")]
+    Personal = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"situational")]
+    Situational = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ambient")]
+    Ambient = 5,
 
 }
 

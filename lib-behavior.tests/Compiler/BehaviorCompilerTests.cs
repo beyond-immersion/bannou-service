@@ -41,7 +41,7 @@ metadata:
 flows:
   main:
     actions:
-      - log: { message: ""Hello"" }
+    - log: { message: ""Hello"" }
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -68,7 +68,7 @@ metadata:
 flows:
   main:
     actions:
-      - set: { variable: result, value: ""10"" }
+    - set: { variable: result, value: ""10"" }
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -100,12 +100,12 @@ context:
 flows:
   main:
     actions:
-      - cond:
-          - when: ""${x > 5}""
-            then:
-              - log: { message: ""Greater"" }
-          - otherwise:
-              - log: { message: ""Less"" }
+    - cond:
+        - when: ""${x > 5}""
+        then:
+            - log: { message: ""Greater"" }
+        - otherwise:
+            - log: { message: ""Less"" }
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -132,10 +132,10 @@ metadata:
 flows:
   main:
     actions:
-      - goto: { flow: other }
+    - goto: { flow: other }
   other:
     actions:
-      - log: { message: ""Done"" }
+    - log: { message: ""Done"" }
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -171,7 +171,7 @@ context:
 flows:
   main:
     actions:
-      - set: { variable: result, value: ""${a + b * 2}"" }
+    - set: { variable: result, value: ""${a + b * 2}"" }
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -203,10 +203,10 @@ context:
 flows:
   main:
     actions:
-      - cond:
-          - when: ""${health < 25}""
-            then:
-              - log: { message: ""Low health"" }
+    - cond:
+        - when: ""${health < 25}""
+        then:
+            - log: { message: ""Low health"" }
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -238,10 +238,10 @@ context:
 flows:
   main:
     actions:
-      - cond:
-          - when: ""${a && b}""
-            then:
-              - log: { message: ""Both true"" }
+    - cond:
+        - when: ""${a && b}""
+          then:
+            - log: { message: ""Both true"" }
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -273,9 +273,9 @@ metadata:
 flows:
   main:
     actions:
-      - repeat:
-          times: 3
-          do:
+    - repeat:
+        times: 3
+        do:
             - log: { message: ""iteration"" }
 ";
 
@@ -304,9 +304,9 @@ metadata:
 flows:
   main:
     actions:
-      - repeat:
-          times: 10
-          do:
+    - repeat:
+        times: 10
+        do:
             - log: { message: ""iteration"" }
 ";
 
@@ -335,7 +335,7 @@ metadata:
 flows:
   main:
     actions:
-      - return: null
+    - return: null
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -366,8 +366,8 @@ metadata:
 flows:
   main:
     actions:
-      - local: { variable: temp, value: ""42"" }
-      - set: { variable: result, value: ""${temp + 1}"" }
+    - local: { variable: temp, value: ""42"" }
+    - set: { variable: result, value: ""${temp + 1}"" }
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -395,8 +395,8 @@ metadata:
 flows:
   main:
     actions:
-      - local: { variable: counter, value: ""0"" }
-      - increment: { variable: counter, by: 1 }
+    - local: { variable: counter, value: ""0"" }
+    - increment: { variable: counter, by: 1 }
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -424,8 +424,8 @@ metadata:
 flows:
   main:
     actions:
-      - local: { variable: counter, value: ""10"" }
-      - decrement: { variable: counter, by: 1 }
+    - local: { variable: counter, value: ""10"" }
+    - decrement: { variable: counter, by: 1 }
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -457,13 +457,13 @@ metadata:
 flows:
   main:
     actions:
-      - continuation_point:
-          name: ""before_action""
-          timeout: ""2s""
-          default_flow: fallback
+    - continuation_point:
+        name: ""before_action""
+        timeout: ""2s""
+        default_flow: fallback
   fallback:
     actions:
-      - log: { message: ""Fallback path"" }
+    - log: { message: ""Fallback path"" }
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -494,10 +494,10 @@ metadata:
 flows:
   main:
     actions:
-      - emit_intent:
-          action: ""attack""
-          channel: ""action""
-          urgency: ""0.8""
+    - emit_intent:
+        action: ""attack""
+        channel: ""action""
+        urgency: ""0.8""
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -528,7 +528,7 @@ metadata:
 flows:
   main:
     actions:
-      - goto: { flow: nonexistent }
+    - goto: { flow: nonexistent }
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -548,7 +548,7 @@ metadata:
 flows:
   main:
     actions:
-      - cond: []
+    - cond: []
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -571,7 +571,7 @@ metadata:
 flows:
   main:
     actions:
-      - set: { variable: r, value: ""${rand()}"" }
+    - set: { variable: r, value: ""${rand()}"" }
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -602,7 +602,7 @@ context:
 flows:
   main:
     actions:
-      - set: { variable: clamped, value: ""${clamp(value, 0, 10)}"" }
+    - set: { variable: clamped, value: ""${clamp(value, 0, 10)}"" }
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -634,8 +634,8 @@ context:
 flows:
   main:
     actions:
-      - set: { variable: minimum, value: ""${min(a, b)}"" }
-      - set: { variable: maximum, value: ""${max(a, b)}"" }
+    - set: { variable: minimum, value: ""${min(a, b)}"" }
+    - set: { variable: maximum, value: ""${max(a, b)}"" }
 ";
 
         var result = _compiler.CompileYaml(yaml);
@@ -667,7 +667,7 @@ metadata:
 flows:
   main:
     actions:
-      - log: { message: ""Hello"" }
+    - log: { message: ""Hello"" }
 ";
         var modelId = Guid.NewGuid();
         var options = new CompilationOptions { ModelId = modelId };
@@ -696,7 +696,7 @@ metadata:
 flows:
   main:
     actions:
-      - goto: { flow: undefined_flow }
+    - goto: { flow: undefined_flow }
 ";
         var options = new CompilationOptions { SkipSemanticAnalysis = true };
 

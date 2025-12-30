@@ -30,4 +30,11 @@
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Copy YAML test fixtures to output directory -->
+    <None Include="Compiler\fixtures\**\*.yml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -1,0 +1,100 @@
+openapi: 3.0.3
+info:
+  title: Behavior Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for behavior service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: behavior-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    BehaviorCreatedEvent:
+      type: object
+      description: Published to behavior.created when a behavior is created
+      required:
+      - eventId
+      - timestamp
+      - behaviorId
+      - name
+      - createdAt
+      properties:
+        eventId: &id001
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp: &id002
+          type: string
+          format: date-time
+          description: When this event occurred
+        behaviorId: &id003
+          type: string
+        name: &id004
+          type: string
+        category: &id005
+          type: string
+        bundleId: &id006
+          type: string
+        assetId: &id007
+          type: string
+        bytecodeSize: &id008
+          type: integer
+          format: int32
+        schemaVersion: &id009
+          type: string
+        createdAt: &id010
+          type: string
+          format: date-time
+        updatedAt: &id011
+          type: string
+          format: date-time
+    BehaviorUpdatedEvent:
+      type: object
+      description: Published to behavior.updated when a behavior is updated
+      required:
+      - eventId
+      - timestamp
+      - behaviorId
+      - name
+      - createdAt
+      - changedFields
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        behaviorId: *id003
+        name: *id004
+        category: *id005
+        bundleId: *id006
+        assetId: *id007
+        bytecodeSize: *id008
+        schemaVersion: *id009
+        createdAt: *id010
+        updatedAt: *id011
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    BehaviorDeletedEvent:
+      type: object
+      description: Published to behavior.deleted when a behavior is deleted
+      required:
+      - eventId
+      - timestamp
+      - behaviorId
+      - name
+      - createdAt
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        behaviorId: *id003
+        name: *id004
+        category: *id005
+        bundleId: *id006
+        assetId: *id007
+        bytecodeSize: *id008
+        schemaVersion: *id009
+        createdAt: *id010
+        updatedAt: *id011
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

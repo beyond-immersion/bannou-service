@@ -57,7 +57,6 @@ public class ConnectServiceTests
     #region Basic Constructor Tests
 
     [Fact]
-    [Obsolete]
     public void Constructor_WithValidParameters_ShouldNotThrow()
     {
         // Arrange & Act & Assert
@@ -415,7 +414,6 @@ public class ConnectServiceTests
     // PushCapabilityUpdateAsync(sessionId) for each affected session.
 
     [Fact]
-    [Obsolete]
     public async Task ProcessAuthEventAsync_WithLoginEvent_ShouldRefreshCapabilities()
     {
         // Arrange
@@ -441,7 +439,6 @@ public class ConnectServiceTests
     }
 
     [Fact]
-    [Obsolete]
     public async Task ProcessServiceRegistrationAsync_WithValidEvent_ShouldPublishRecompileEvent()
     {
         // Arrange
@@ -472,7 +469,6 @@ public class ConnectServiceTests
     }
 
     [Fact]
-    [Obsolete]
     public async Task ProcessClientMessageEventAsync_WithConnectedClient_ShouldDeliverMessage()
     {
         // Arrange
@@ -501,7 +497,6 @@ public class ConnectServiceTests
     }
 
     [Fact]
-    [Obsolete]
     public async Task ProcessClientRPCEventAsync_WithConnectedClient_ShouldSendRPCMessage()
     {
         // Arrange
@@ -530,7 +525,6 @@ public class ConnectServiceTests
     }
 
     [Fact]
-    [Obsolete]
     public void HasConnection_WithExistingConnection_ShouldReturnTrue()
     {
         // Arrange
@@ -545,7 +539,6 @@ public class ConnectServiceTests
     }
 
     [Fact]
-    [Obsolete]
     public void HasConnection_WithNonExistentConnection_ShouldReturnFalse()
     {
         // Arrange
@@ -560,7 +553,6 @@ public class ConnectServiceTests
     }
 
     [Fact]
-    [Obsolete]
     public async Task SendMessageAsync_WithValidConnection_ShouldReturnTrue()
     {
         // Arrange
@@ -579,7 +571,6 @@ public class ConnectServiceTests
 
     #region Helper Methods
 
-    [Obsolete]
     private ConnectService CreateConnectService()
     {
         return new ConnectService(
@@ -595,7 +586,6 @@ public class ConnectServiceTests
         );
     }
 
-    [Obsolete]
     private ConnectService CreateConnectServiceWithConnectionManager(bool hasConnection = true)
     {
         // Create a mock connection manager that simulates having connections

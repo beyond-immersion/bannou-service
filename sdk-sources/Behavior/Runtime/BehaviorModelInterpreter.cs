@@ -3,6 +3,8 @@
 // Stack-based bytecode virtual machine for behavior model execution.
 // =============================================================================
 
+using BeyondImmersion.Bannou.Client.SDK.Behavior.Intent;
+
 namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime;
 
 /// <summary>
@@ -349,21 +351,21 @@ public sealed class BehaviorModelInterpreter
 
                 case BehaviorOpcode.EmitIntent:
                     {
-                        // EmitIntent is a convenience opcode that sets standard output slots
-                        // Stack order: [action_idx, urgency]
-                        var channel = _bytecode[_instructionPointer++];
+                        // EmitIntent sets standardized output slots per IntentSlotLayout.
+                        // Stack order: [action_string_idx, urgency]
+                        var channel = (IntentChannel)_bytecode[_instructionPointer++];
                         var urgency = _stack[--_stackPointer];
                         var actionIdx = _stack[--_stackPointer];
 
-                        // Map to output slots based on channel
-                        // Channel 0 (Action): outputs 0 (action) and 1 (action_urgency)
-                        // Channel 1 (Locomotion): outputs 2 (locomotion) and 3 (locomotion_urgency)
-                        // etc.
-                        var baseOutput = channel * 2;
-                        if (baseOutput + 1 < outputState.Length)
+                        // Write to output slots using IntentSlotLayout conventions:
+                        // - IntentSlot: string table index for the intent name
+                        // - UrgencySlot: urgency value [0.0 - 1.0]
+                        var intentSlot = IntentSlotLayout.IntentSlot(channel);
+                        var urgencySlot = IntentSlotLayout.UrgencySlot(channel);
+                        if (urgencySlot < outputState.Length)
                         {
-                            outputState[baseOutput] = actionIdx;
-                            outputState[baseOutput + 1] = urgency;
+                            outputState[intentSlot] = actionIdx;
+                            outputState[urgencySlot] = urgency;
                         }
                     }
                     break;
