@@ -51,7 +51,7 @@ public interface IBannouService
     {
         return new ServiceStatus
         {
-            ServiceId = InstanceId.ToString(),
+            ServiceId = InstanceId,
             ServiceName = GetName() ?? GetType().Name,
             Status = ServiceStatusStatus.Healthy,
             Version = ServiceVersion

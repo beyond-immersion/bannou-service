@@ -3,122 +3,15 @@
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
-using MassTransit;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Messaging.Tests;
 
-/// <summary>
-/// Unit tests for MassTransitMessageTap - tests constructor validation and argument validation.
-/// Integration testing against real RabbitMQ is done in http-tester.
-/// </summary>
-public class MassTransitMessageTapTests
-{
-    private readonly Mock<IBusControl> _mockBusControl;
-    private readonly Mock<ILogger<MassTransitMessageTap>> _mockLogger;
-    private readonly MessagingServiceConfiguration _configuration;
-
-    public MassTransitMessageTapTests()
-    {
-        _mockBusControl = new Mock<IBusControl>();
-        _mockLogger = new Mock<ILogger<MassTransitMessageTap>>();
-        _configuration = new MessagingServiceConfiguration
-        {
-            DefaultExchange = "bannou",
-            DefaultPrefetchCount = 10
-        };
-    }
-
-    #region Constructor Tests
-
-    [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        // Arrange & Act
-        var tap = new MassTransitMessageTap(
-            _mockBusControl.Object,
-            _mockLogger.Object,
-            _configuration);
-
-        // Assert
-        Assert.NotNull(tap);
-    }
-
-    [Fact]
-    public void Constructor_WithNullBusControl_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new MassTransitMessageTap(
-            null!,
-            _mockLogger.Object,
-            _configuration));
-        Assert.Equal("busControl", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new MassTransitMessageTap(
-            _mockBusControl.Object,
-            null!,
-            _configuration));
-        Assert.Equal("logger", ex.ParamName);
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => new MassTransitMessageTap(
-            _mockBusControl.Object,
-            _mockLogger.Object,
-            null!));
-        Assert.Equal("configuration", ex.ParamName);
-    }
-
-    #endregion
-
-    #region CreateTapAsync Argument Validation Tests
-
-    [Fact]
-    public async Task CreateTapAsync_WithNullSourceTopic_ShouldThrowArgumentNullException()
-    {
-        // Arrange
-        var tap = new MassTransitMessageTap(
-            _mockBusControl.Object,
-            _mockLogger.Object,
-            _configuration);
-
-        var destination = new TapDestination
-        {
-            Exchange = "test-exchange",
-            RoutingKey = "test-key"
-        };
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            tap.CreateTapAsync(null!, destination));
-    }
-
-    [Fact]
-    public async Task CreateTapAsync_WithNullDestination_ShouldThrowArgumentNullException()
-    {
-        // Arrange
-        var tap = new MassTransitMessageTap(
-            _mockBusControl.Object,
-            _mockLogger.Object,
-            _configuration);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            tap.CreateTapAsync("test.topic", null!));
-    }
-
-    #endregion
-}
+// Note: RabbitMQMessageTap unit tests are not included here because RabbitMQMessageTap
+// requires real RabbitMQ connections (via RabbitMQConnectionManager) which cannot be
+// easily mocked. Integration testing for RabbitMQMessageTap is done in http-tester.
 
 /// <summary>
 /// Unit tests for InMemoryMessageTap - tests in-memory tap functionality without infrastructure.

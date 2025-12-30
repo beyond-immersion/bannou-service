@@ -8,7 +8,6 @@ using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Testing;
-using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -16,8 +15,7 @@ using Microsoft.Extensions.Logging;
 namespace BeyondImmersion.BannouService.HttpTester;
 
 /// <summary>
-/// Message type for MassTransit connectivity check.
-/// MassTransit requires named types, not anonymous types.
+/// Message type for RabbitMQ connectivity check.
 /// </summary>
 public record ConnectivityCheckMessage(string Test, DateTime Timestamp);
 
@@ -149,41 +147,37 @@ public class Program
             // Register AppConfiguration required by ServiceAppMappingResolver
             serviceCollection.AddSingleton<BeyondImmersion.BannouService.Configuration.AppConfiguration>();
 
-            // Configure MassTransit with RabbitMQ for pub/sub communication
+            // Configure direct RabbitMQ for pub/sub communication (no MassTransit)
             var rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "rabbitmq";
-            var rabbitPort = ushort.Parse(Environment.GetEnvironmentVariable("RABBITMQ_PORT") ?? "5672");
+            var rabbitPort = int.Parse(Environment.GetEnvironmentVariable("RABBITMQ_PORT") ?? "5672");
             var rabbitUser = Environment.GetEnvironmentVariable("RABBITMQ_USERNAME") ?? "guest";
             var rabbitPass = Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD") ?? "guest";
 
-            Console.WriteLine($"🔗 Configuring MassTransit to use RabbitMQ at {rabbitHost}:{rabbitPort}");
+            Console.WriteLine($"🔗 Configuring direct RabbitMQ at {rabbitHost}:{rabbitPort}");
 
-            serviceCollection.AddMassTransit(x =>
+            // Register MessagingServiceConfiguration with RabbitMQ settings
+            var messagingConfig = new MessagingServiceConfiguration
             {
-                x.SetKebabCaseEndpointNameFormatter();
+                RabbitMQHost = rabbitHost,
+                RabbitMQPort = rabbitPort,
+                RabbitMQUsername = rabbitUser,
+                RabbitMQPassword = rabbitPass,
+                RabbitMQVirtualHost = "/",
+                DefaultExchange = "bannou"
+            };
+            serviceCollection.AddSingleton(messagingConfig);
 
-                x.UsingRabbitMq((context, cfg) =>
-                {
-                    cfg.Host(rabbitHost, rabbitPort, "/", h =>
-                    {
-                        h.Username(rabbitUser);
-                        h.Password(rabbitPass);
-                    });
-
-                    cfg.ConfigureEndpoints(context);
-                });
-            });
-
-            // Register MessagingServiceConfiguration required by MassTransitMessageBus
-            serviceCollection.AddSingleton(new MessagingServiceConfiguration());
+            // Register shared connection manager
+            serviceCollection.AddSingleton<RabbitMQConnectionManager>();
 
             // Register IMessageBus for event publishing
-            serviceCollection.AddSingleton<IMessageBus, MassTransitMessageBus>();
+            serviceCollection.AddSingleton<IMessageBus, RabbitMQMessageBus>();
 
             // Register IMessageSubscriber for event subscriptions
-            serviceCollection.AddSingleton<IMessageSubscriber, MassTransitMessageSubscriber>();
+            serviceCollection.AddSingleton<IMessageSubscriber, RabbitMQMessageSubscriber>();
 
             // Register IMessageTap for event forwarding/tapping
-            serviceCollection.AddSingleton<IMessageTap, MassTransitMessageTap>();
+            serviceCollection.AddSingleton<IMessageTap, RabbitMQMessageTap>();
 
             // =====================================================================
             // MESH INFRASTRUCTURE - Real Redis-based service discovery
@@ -272,7 +266,7 @@ public class Program
             }
 
             Console.WriteLine("✅ Service provider setup completed successfully");
-            Console.WriteLine("✅ MassTransit connectivity verified");
+            Console.WriteLine("✅ RabbitMQ connectivity verified");
 
             // Wait for services to register their permissions (signals service readiness)
             // This is more reliable than fixed delays since services only register after startup complete
@@ -369,7 +363,7 @@ public class Program
     }
 
     /// <summary>
-    /// Waits for MassTransit to be connected to RabbitMQ.
+    /// Waits for RabbitMQ to be connected.
     /// This ensures event-driven tests will work properly.
     /// </summary>
     /// <param name="messageBus">The message bus to use for connectivity checks.</param>
@@ -380,7 +374,7 @@ public class Program
         var checkInterval = TimeSpan.FromSeconds(2);
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-        Console.WriteLine($"Waiting for MassTransit/RabbitMQ to be ready (timeout: {timeout.TotalSeconds}s)...");
+        Console.WriteLine($"Waiting for RabbitMQ to be ready (timeout: {timeout.TotalSeconds}s)...");
 
         while (stopwatch.Elapsed < timeout)
         {
@@ -388,7 +382,7 @@ public class Program
             {
                 // Try to publish a test message to verify RabbitMQ connectivity
                 await messageBus.PublishAsync("test-connectivity", new ConnectivityCheckMessage("connectivity-check", DateTime.UtcNow));
-                Console.WriteLine($"✅ MassTransit is ready and connected to RabbitMQ");
+                Console.WriteLine($"✅ RabbitMQ is ready and connected");
                 return true;
             }
             catch (Exception ex)

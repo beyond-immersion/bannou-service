@@ -2,7 +2,6 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
-using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -51,51 +50,19 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
             return;
         }
 
-        // Configure MassTransit with RabbitMQ
-        var connectionTimeoutSeconds = config?.ConnectionTimeoutSeconds ?? 60;
-        var requestTimeoutSeconds = config?.RequestTimeoutSeconds ?? 30;
+        // Configure direct RabbitMQ (no MassTransit)
+        Logger?.LogInformation("Configuring direct RabbitMQ messaging (no MassTransit)");
 
-        Logger?.LogInformation(
-            "Configuring MassTransit with connection timeout {ConnectionTimeout}s, request timeout {RequestTimeout}s",
-            connectionTimeoutSeconds, requestTimeoutSeconds);
+        // Register shared connection manager
+        services.AddSingleton<RabbitMQConnectionManager>();
 
-        services.AddMassTransit(x =>
-        {
-            x.SetKebabCaseEndpointNameFormatter();
-
-            x.UsingRabbitMq((context, cfg) =>
-            {
-                var host = config?.RabbitMQHost ?? "rabbitmq";
-                var port = config?.RabbitMQPort ?? 5672;
-                var username = config?.RabbitMQUsername ?? "guest";
-                var password = config?.RabbitMQPassword ?? "guest";
-                var vhost = config?.RabbitMQVirtualHost ?? "/";
-
-                cfg.Host(host, (ushort)port, vhost, h =>
-                {
-                    h.Username(username);
-                    h.Password(password);
-                    h.RequestedConnectionTimeout(TimeSpan.FromSeconds(connectionTimeoutSeconds));
-                });
-
-                // Configure MassTransit to use BannouJson serializer options for consistency
-                cfg.ConfigureJsonSerializerOptions(opts => BannouJson.ApplyBannouSettings(opts));
-
-                // Set send/publish timeout
-                cfg.SendTopology.ConfigureErrorSettings = settings =>
-                    settings.SetQueueArgument("x-message-ttl", requestTimeoutSeconds * 1000);
-
-                cfg.ConfigureEndpoints(context);
-            });
-        });
-
-        // Register messaging interfaces
-        services.AddSingleton<IMessageBus, MassTransitMessageBus>();
-        services.AddSingleton<IMessageSubscriber, MassTransitMessageSubscriber>();
+        // Register messaging interfaces with direct RabbitMQ implementations
+        services.AddSingleton<IMessageBus, RabbitMQMessageBus>();
+        services.AddSingleton<IMessageSubscriber, RabbitMQMessageSubscriber>();
 
         // Register message tap for forwarding events between exchanges
-        services.AddSingleton<IMessageTap, MassTransitMessageTap>();
-        Logger?.LogDebug("Registered MassTransitMessageTap for event tapping");
+        services.AddSingleton<IMessageTap, RabbitMQMessageTap>();
+        Logger?.LogDebug("Registered RabbitMQMessageTap for event tapping");
 
         // Register NativeEventConsumerBackend as IHostedService
         // This bridges RabbitMQ subscriptions to existing IEventConsumer fan-out

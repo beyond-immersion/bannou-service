@@ -361,7 +361,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
                     // Add a degraded status for the service
                     serviceStatuses.Add(new ServiceStatus
                     {
-                        ServiceId = service.InstanceId.ToString(),
+                        ServiceId = service.InstanceId,
                         ServiceName = plugin.PluginName,
                         Status = ServiceStatusStatus.Degraded,
                         Version = service.ServiceVersion
@@ -380,7 +380,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         {
             EventId = Guid.NewGuid().ToString(),
             Timestamp = DateTimeOffset.UtcNow,
-            ServiceId = InstanceId.ToString(),
+            ServiceId = InstanceId,
             AppId = AppId,
             Status = overallStatus,
             Services = serviceStatuses,

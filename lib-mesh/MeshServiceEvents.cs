@@ -41,9 +41,7 @@ public partial class MeshService
         try
         {
             // Check if this instance is already registered
-            // evt.ServiceId is a string UUID that we parse to Guid for endpoint lookup
-            var serviceIdGuid = Guid.TryParse(evt.ServiceId, out var parsedServiceId) ? parsedServiceId : Guid.Empty;
-            var existingEndpoint = await _redisManager.GetEndpointByInstanceIdAsync(serviceIdGuid);
+            var existingEndpoint = await _redisManager.GetEndpointByInstanceIdAsync(evt.ServiceId);
 
             if (existingEndpoint != null)
             {
@@ -65,7 +63,7 @@ public partial class MeshService
             {
                 // Auto-register new endpoint from heartbeat
                 // This enables automatic discovery without explicit registration
-                var instanceId = serviceIdGuid != Guid.Empty ? serviceIdGuid : Guid.NewGuid();
+                var instanceId = evt.ServiceId != Guid.Empty ? evt.ServiceId : Guid.NewGuid();
                 var endpoint = new MeshEndpoint
                 {
                     InstanceId = instanceId,

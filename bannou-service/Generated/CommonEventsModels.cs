@@ -218,7 +218,7 @@ public partial class ServiceHeartbeatEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string ServiceId { get; set; } = default!;
+    public System.Guid ServiceId { get; set; } = default!;
 
     /// <summary>
     /// Bannou app-id for this instance (e.g., "bannou", "jobberwocky")
@@ -271,7 +271,7 @@ public partial class ServiceStatus
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string ServiceId { get; set; } = default!;
+    public System.Guid ServiceId { get; set; } = default!;
 
     /// <summary>
     /// Service name (e.g., "auth", "accounts", "behavior")

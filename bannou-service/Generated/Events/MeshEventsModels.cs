@@ -40,7 +40,7 @@ public partial class MeshEndpointRegisteredEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string InstanceId { get; set; } = default!;
+    public System.Guid InstanceId { get; set; } = default!;
 
     /// <summary>
     /// App-id of the registered endpoint
@@ -84,7 +84,7 @@ public partial class MeshEndpointDeregisteredEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string InstanceId { get; set; } = default!;
+    public System.Guid InstanceId { get; set; } = default!;
 
     /// <summary>
     /// App-id that was deregistered

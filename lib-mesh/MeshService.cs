@@ -597,7 +597,7 @@ public partial class MeshService : IMeshService
             {
                 EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
-                InstanceId = endpoint.InstanceId.ToString(),
+                InstanceId = endpoint.InstanceId,
                 AppId = endpoint.AppId,
                 Host = endpoint.Host,
                 Port = endpoint.Port,
@@ -629,7 +629,7 @@ public partial class MeshService : IMeshService
             {
                 EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
-                InstanceId = instanceId.ToString(),
+                InstanceId = instanceId,
                 AppId = appId,
                 Reason = reason
             };

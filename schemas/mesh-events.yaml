@@ -57,6 +57,7 @@ components:
       properties:
         instanceId:
           type: string
+          format: uuid
           description: Instance ID of the registered endpoint
         appId:
           type: string
@@ -87,6 +88,7 @@ components:
       properties:
         instanceId:
           type: string
+          format: uuid
           description: Instance ID that was deregistered
         appId:
           type: string
