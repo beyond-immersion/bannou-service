@@ -200,7 +200,7 @@ public partial class BehaviorService : IBehaviorService
                     Context_schema = new ContextSchemaData()
                 },
                 Compilation_time_ms = (int)stopwatch.ElapsedMilliseconds,
-                Asset_id = assetId,
+                Asset_id = assetId ?? string.Empty,
                 Bundle_id = body.Bundle_id,
                 Is_update = isUpdate,
                 Warnings = new List<string>()
@@ -601,7 +601,7 @@ public partial class BehaviorService : IBehaviorService
                 }
                 : new BehaviorTreeData
                 {
-                    Download_url = asset.Download_url?.ToString(),
+                    Download_url = asset.Download_url?.ToString() ?? string.Empty,
                     Bytecode_size = 0 // Unknown size when using download URL
                 };
 

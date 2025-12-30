@@ -9,10 +9,9 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-
+using ApiGoapGoal = BeyondImmersion.BannouService.Behavior.GoapGoal;
 // Aliases to distinguish between API and internal GOAP types
 using InternalGoapGoal = BeyondImmersion.Bannou.Behavior.Goap.GoapGoal;
-using ApiGoapGoal = BeyondImmersion.BannouService.Behavior.GoapGoal;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests;
 

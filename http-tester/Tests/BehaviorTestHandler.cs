@@ -47,43 +47,43 @@ public class BehaviorTestHandler : BaseHttpTestHandler
         version: "1.0"
         name: goap-test-behavior
         context:
-          variables:
+        variables:
             energy: 50
             has_food: false
         goals:
-          find_food:
+        find_food:
             priority: 80
             conditions:
-              has_food: "==true"
-          rest:
+            has_food: "==true"
+        rest:
             priority: 60
             conditions:
-              energy: ">=80"
+            energy: ">=80"
         flows:
-          gather_food:
+        gather_food:
             goap:
-              preconditions:
+            preconditions:
                 energy: ">=20"
-              effects:
+            effects:
                 has_food: "true"
                 energy: "-=10"
-              cost: 2.0
+            cost: 2.0
             steps:
-              - emit:
-                  channel: action
-                  intent: gather
-                  urgency: 0.8
-          rest_action:
+            - emit:
+                channel: action
+                intent: gather
+                urgency: 0.8
+        rest_action:
             goap:
-              preconditions: {}
-              effects:
+            preconditions: {}
+            effects:
                 energy: "+=30"
-              cost: 1.0
+            cost: 1.0
             steps:
-              - emit:
-                  channel: action
-                  intent: rest
-                  urgency: 0.3
+            - emit:
+                channel: action
+                intent: rest
+                urgency: 0.3
         """;
 
     public override ServiceTest[] GetServiceTests() =>
@@ -409,7 +409,7 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 }
             };
 
-            var planResponse = await behaviorClient.GenerateGoapPlanAsync(BannouJson.Serialize(planRequest));
+            var planResponse = await behaviorClient.GenerateGoapPlanAsync(planRequest);
 
             if (!planResponse.Success)
             {
@@ -452,7 +452,7 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             try
             {
-                var response = await behaviorClient.GenerateGoapPlanAsync(BannouJson.Serialize(request));
+                var response = await behaviorClient.GenerateGoapPlanAsync(request);
 
                 // If we get a response, it should indicate failure with "not found"
                 if (!response.Success && response.Failure_reason != null &&
@@ -505,7 +505,7 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 Current_action_index = 0
             };
 
-            var response = await behaviorClient.ValidateGoapPlanAsync(BannouJson.Serialize(validateRequest));
+            var response = await behaviorClient.ValidateGoapPlanAsync(validateRequest);
 
             // Validation should return a result (we don't have the actual actions so it may fail validation)
             if (response == null)
@@ -513,7 +513,7 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             return TestResult.Successful(
                 $"GOAP plan validation: valid={response.Is_valid}, " +
-                $"should_replan={response.Should_replan}, " +
-                $"reason={response.Replan_reason}");
+                $"suggested_action={response.Suggested_action}, " +
+                $"reason={response.Reason}");
         }, "GOAP plan validation");
 }

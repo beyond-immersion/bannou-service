@@ -1,8 +1,8 @@
 # Behavior Plugin V2 - GOAP Planning & ABML Runtime
 
-> **Status**: PARTIALLY IMPLEMENTED (ABML Runtime complete, GOAP in progress)
+> **Status**: PHASES 1-3 COMPLETE (ABML Runtime, GOAP Integration, Multi-Channel)
 > **Created**: 2024-12-28
-> **Updated**: 2025-12-29 (Document composition and imports complete)
+> **Updated**: 2025-12-30 (GOAP Integration complete)
 > **Related Documents**:
 > - **[ABML Guide](../guides/ABML.md)** - **ABML Language Specification & Runtime** (authoritative)
 > - [ABML_LOCAL_RUNTIME.md](./UPCOMING_-_ABML_LOCAL_RUNTIME.md) - Local client execution & bytecode compilation
@@ -11,8 +11,9 @@
 
 **Implementation Status**:
 - **Phase 1 (ABML Runtime)**: COMPLETE - 414 tests passing. See [ABML Guide](../guides/ABML.md).
-- **Phase 2 (GOAP)**: IN PROGRESS - See [GOAP_FIRST_STEPS.md](./GOAP_FIRST_STEPS.md).
-- **Phase 3-5**: PLANNED
+- **Phase 2 (GOAP)**: COMPLETE - See [GOAP_FIRST_STEPS.md](./GOAP_FIRST_STEPS.md). Full A* planner, metadata caching, API endpoints.
+- **Phase 3 (Multi-Channel)**: COMPLETE - Sync points, barriers, deadlock detection.
+- **Phase 4-5**: PLANNED (Cognition Pipeline, Actor Integration)
 
 **Bannou-Specific Constraints**: See [ABML Guide Appendix A](../guides/ABML.md#appendix-a-bannou-implementation-requirements) for mandatory infrastructure patterns.
 
@@ -1842,30 +1843,38 @@ components:
 
 **Tests**: 414 unit tests covering parser, expression evaluator, executor, channels, and error handling.
 
-### Phase 2: GOAP Integration
+### Phase 2: GOAP Integration - COMPLETE ✅
 
 **Goal**: Extract GOAP annotations and plan action sequences.
 
-- [ ] GOAP Metadata Extractor
-  - [ ] Parse goap: blocks from ABML
-  - [ ] Build action graph
+**Status**: COMPLETE - All components implemented and tested.
 
-- [ ] World State Model
-  - [ ] Key-value state representation
-  - [ ] Precondition evaluation
-  - [ ] Effect application
+- [x] GOAP Metadata Extractor
+  - [x] Parse goap: blocks from ABML (GoapMetadataConverter)
+  - [x] Build action graph
+  - [x] GOAP metadata caching at compile time (BehaviorBundleManager)
 
-- [ ] A* Planner
-  - [ ] Priority queue implementation
-  - [ ] Heuristic function
-  - [ ] Plan optimization
+- [x] World State Model
+  - [x] Key-value state representation (WorldState.cs - immutable)
+  - [x] Precondition evaluation (GoapPreconditions, GoapCondition)
+  - [x] Effect application (GoapActionEffects with deltas/absolutes)
 
-- [ ] Plan Validation
-  - [ ] Precondition checking
-  - [ ] Goal reachability
-  - [ ] Deadlock detection
+- [x] A* Planner
+  - [x] Priority queue implementation (PriorityQueue<PlanNode, float>)
+  - [x] Heuristic function (DistanceToGoal)
+  - [x] Plan optimization (cost-based ordering)
 
-**Tests**: Planning scenarios with various goal/action combinations.
+- [x] Plan Validation
+  - [x] Precondition checking (ValidateGoapPlanAsync)
+  - [x] Goal reachability
+  - [x] Replan reasons (action_failed, precondition_invalidated, better_goal_available)
+
+- [x] BehaviorService Integration
+  - [x] /goap/plan endpoint (GenerateGoapPlanAsync)
+  - [x] /goap/validate-plan endpoint (ValidateGoapPlanAsync)
+  - [x] HTTP integration tests
+
+**Tests**: 672 lines of GOAP tests in lib-behavior.tests/Goap/ plus HTTP integration tests.
 
 ### Phase 3: Multi-Channel Execution - COMPLETE
 

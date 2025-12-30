@@ -322,7 +322,7 @@ public class BehaviorBundleManager
     /// <param name="behaviorId">The behavior's unique identifier.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The GOAP metadata, or null if not found.</returns>
-    public async Task<CachedGoapMetadata?> GetGoapMetadataAsync(
+    public virtual async Task<CachedGoapMetadata?> GetGoapMetadataAsync(
         string behaviorId,
         CancellationToken cancellationToken = default)
     {
