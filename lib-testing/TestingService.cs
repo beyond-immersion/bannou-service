@@ -265,10 +265,10 @@ public partial class TestingService : ITestingService
 
             var testEvent = new SystemNotificationEvent
             {
-                Event_name = SystemNotificationEventEvent_name.System_notification,
-                Event_id = Guid.NewGuid(),
+                EventName = SystemNotificationEventEventName.System_notification,
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                Notification_type = SystemNotificationEventNotification_type.Info,
+                NotificationType = SystemNotificationEventNotificationType.Info,
                 Title = "Test Notification",
                 Message = message ?? "This is a test notification from the Testing service"
             };
@@ -282,7 +282,7 @@ public partial class TestingService : ITestingService
                 {
                     Success = true,
                     Message = "Test event published successfully",
-                    EventId = testEvent.Event_id,
+                    EventId = testEvent.EventId,
                     SessionId = sessionId,
                     Timestamp = DateTime.UtcNow
                 });

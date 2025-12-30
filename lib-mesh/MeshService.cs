@@ -595,7 +595,8 @@ public partial class MeshService : IMeshService
         {
             var evt = new MeshEndpointRegisteredEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventName = "mesh.endpoint_registered",
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 InstanceId = endpoint.InstanceId,
                 AppId = endpoint.AppId,
@@ -627,7 +628,8 @@ public partial class MeshService : IMeshService
         {
             var evt = new MeshEndpointDeregisteredEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventName = "mesh.endpoint_deregistered",
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 InstanceId = instanceId,
                 AppId = appId,

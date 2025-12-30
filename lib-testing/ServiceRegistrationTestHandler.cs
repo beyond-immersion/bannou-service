@@ -158,9 +158,11 @@ public class ServiceRegistrationTestHandler : IServiceTestHandler
             // Create a test ServiceRegistrationEvent
             var testEvent = new ServiceRegistrationEvent
             {
-                EventId = Guid.NewGuid().ToString(),
-                Timestamp = DateTime.UtcNow,
-                ServiceId = "test-service",
+                EventName = ServiceRegistrationEventEventName.Service_registration,
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ServiceId = Guid.NewGuid(),
+                ServiceName = "test-service",
                 Version = "1.0.0",
                 AppId = "bannou",
                 Endpoints = new List<ServiceEndpoint>

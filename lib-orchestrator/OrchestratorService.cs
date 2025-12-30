@@ -876,7 +876,7 @@ public partial class OrchestratorService : IOrchestratorService
             // Publish deployment completed/failed event
             await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Action = success ? DeploymentEventAction.Completed : DeploymentEventAction.Failed,
                 DeploymentId = deploymentId,
@@ -896,7 +896,7 @@ public partial class OrchestratorService : IOrchestratorService
             // Publish deployment failed event on exception
             await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Action = DeploymentEventAction.Failed,
                 DeploymentId = deploymentId,
@@ -1051,7 +1051,7 @@ public partial class OrchestratorService : IOrchestratorService
             // Publish teardown started event (topology-changed action indicates infrastructure modification)
             await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Action = DeploymentEventAction.TopologyChanged,
                 DeploymentId = teardownId
@@ -1158,7 +1158,7 @@ public partial class OrchestratorService : IOrchestratorService
             // Publish teardown failed event on exception
             await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Action = DeploymentEventAction.Failed,
                 DeploymentId = teardownId,
@@ -2108,7 +2108,7 @@ public partial class OrchestratorService : IOrchestratorService
         object? details = null)
     {
         await _messageBus.TryPublishErrorAsync(
-            serviceId: "orchestrator",
+            serviceName: "orchestrator",
             operation: operation,
             errorType: errorType,
             message: message,
@@ -2258,21 +2258,21 @@ public partial class OrchestratorService : IOrchestratorService
         {
             ArgumentNullException.ThrowIfNull(body);
 
-            if (string.IsNullOrEmpty(body.Pool_type))
+            if (string.IsNullOrEmpty(body.PoolType))
             {
                 _logger.LogWarning("AcquireProcessor: Missing pool_type");
                 return (StatusCodes.BadRequest, null);
             }
 
-            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.Pool_type);
-            var leasesKey = string.Format(POOL_LEASES_KEY, body.Pool_type);
+            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
+            var leasesKey = string.Format(POOL_LEASES_KEY, body.PoolType);
 
             // Try to get an available processor from the pool
             var availableProcessors = await _stateManager.GetListAsync<ProcessorInstance>(availableKey);
 
             if (availableProcessors == null || availableProcessors.Count == 0)
             {
-                _logger.LogInformation("AcquireProcessor: No available processors in pool {PoolType}", body.Pool_type);
+                _logger.LogInformation("AcquireProcessor: No available processors in pool {PoolType}", body.PoolType);
 
                 // Return 429 Too Many Requests to indicate pool is busy
                 return (StatusCodes.TooManyRequests, null);
@@ -2285,7 +2285,7 @@ public partial class OrchestratorService : IOrchestratorService
 
             // Create a lease for this processor
             var leaseId = Guid.NewGuid();
-            var timeoutSeconds = body.Timeout_seconds > 0 ? body.Timeout_seconds : 300;
+            var timeoutSeconds = body.TimeoutSeconds > 0 ? body.TimeoutSeconds : 300;
             var expiresAt = DateTimeOffset.UtcNow.AddSeconds(timeoutSeconds);
 
             var lease = new ProcessorLease
@@ -2293,7 +2293,7 @@ public partial class OrchestratorService : IOrchestratorService
                 LeaseId = leaseId,
                 ProcessorId = processor.ProcessorId,
                 AppId = processor.AppId,
-                PoolType = body.Pool_type,
+                PoolType = body.PoolType,
                 AcquiredAt = DateTimeOffset.UtcNow,
                 ExpiresAt = expiresAt,
                 Priority = body.Priority,
@@ -2307,19 +2307,19 @@ public partial class OrchestratorService : IOrchestratorService
 
             _logger.LogInformation(
                 "AcquireProcessor: Acquired processor {ProcessorId} from pool {PoolType} with lease {LeaseId}, expires at {ExpiresAt}",
-                processor.ProcessorId, body.Pool_type, leaseId, expiresAt);
+                processor.ProcessorId, body.PoolType, leaseId, expiresAt);
 
             return (StatusCodes.OK, new AcquireProcessorResponse
             {
-                Processor_id = processor.ProcessorId,
-                App_id = processor.AppId,
-                Lease_id = leaseId,
-                Expires_at = expiresAt
+                ProcessorId = processor.ProcessorId,
+                AppId = processor.AppId,
+                LeaseId = leaseId,
+                ExpiresAt = expiresAt
             });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "AcquireProcessor: Error acquiring processor from pool {PoolType}", body?.Pool_type);
+            _logger.LogError(ex, "AcquireProcessor: Error acquiring processor from pool {PoolType}", body?.PoolType);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -2338,7 +2338,7 @@ public partial class OrchestratorService : IOrchestratorService
         {
             ArgumentNullException.ThrowIfNull(body);
 
-            if (body.Lease_id == Guid.Empty)
+            if (body.LeaseId == Guid.Empty)
             {
                 _logger.LogWarning("ReleaseProcessor: Missing or invalid lease_id");
                 return (StatusCodes.BadRequest, null);
@@ -2356,7 +2356,7 @@ public partial class OrchestratorService : IOrchestratorService
                 var leasesKey = string.Format(POOL_LEASES_KEY, pt);
                 var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey);
 
-                if (leases != null && leases.TryGetValue(body.Lease_id.ToString(), out var foundLease))
+                if (leases != null && leases.TryGetValue(body.LeaseId.ToString(), out var foundLease))
                 {
                     lease = foundLease;
                     poolType = pt;
@@ -2366,14 +2366,14 @@ public partial class OrchestratorService : IOrchestratorService
 
             if (lease == null || poolType == null)
             {
-                _logger.LogWarning("ReleaseProcessor: Lease {LeaseId} not found", body.Lease_id);
+                _logger.LogWarning("ReleaseProcessor: Lease {LeaseId} not found", body.LeaseId);
                 return (StatusCodes.NotFound, null);
             }
 
             // Remove the lease
             var leasesKeyToUpdate = string.Format(POOL_LEASES_KEY, poolType);
             var currentLeases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKeyToUpdate) ?? new Dictionary<string, ProcessorLease>();
-            currentLeases.Remove(body.Lease_id.ToString());
+            currentLeases.Remove(body.LeaseId.ToString());
             await _stateManager.SetHashAsync(leasesKeyToUpdate, currentLeases);
 
             // Return processor to available pool
@@ -2401,12 +2401,12 @@ public partial class OrchestratorService : IOrchestratorService
             return (StatusCodes.OK, new ReleaseProcessorResponse
             {
                 Released = true,
-                Processor_id = lease.ProcessorId
+                ProcessorId = lease.ProcessorId
             });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "ReleaseProcessor: Error releasing processor with lease {LeaseId}", body?.Lease_id);
+            _logger.LogError(ex, "ReleaseProcessor: Error releasing processor with lease {LeaseId}", body?.LeaseId);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -2425,17 +2425,17 @@ public partial class OrchestratorService : IOrchestratorService
         {
             ArgumentNullException.ThrowIfNull(body);
 
-            if (string.IsNullOrEmpty(body.Pool_type))
+            if (string.IsNullOrEmpty(body.PoolType))
             {
                 _logger.LogWarning("GetPoolStatus: Missing pool_type");
                 return (StatusCodes.BadRequest, null);
             }
 
-            var instancesKey = string.Format(POOL_INSTANCES_KEY, body.Pool_type);
-            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.Pool_type);
-            var leasesKey = string.Format(POOL_LEASES_KEY, body.Pool_type);
-            var configKey = string.Format(POOL_CONFIG_KEY, body.Pool_type);
-            var metricsKey = string.Format(POOL_METRICS_KEY, body.Pool_type);
+            var instancesKey = string.Format(POOL_INSTANCES_KEY, body.PoolType);
+            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
+            var leasesKey = string.Format(POOL_LEASES_KEY, body.PoolType);
+            var configKey = string.Format(POOL_CONFIG_KEY, body.PoolType);
+            var metricsKey = string.Format(POOL_METRICS_KEY, body.PoolType);
 
             var allInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
             var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
@@ -2444,27 +2444,27 @@ public partial class OrchestratorService : IOrchestratorService
 
             var response = new PoolStatusResponse
             {
-                Pool_type = body.Pool_type,
-                Total_instances = allInstances.Count,
-                Available_instances = availableInstances.Count,
-                Busy_instances = leases.Count,
-                Queue_depth = 0, // We don't have a queue yet
-                Min_instances = config?.MinInstances ?? 1,
-                Max_instances = config?.MaxInstances ?? 5
+                PoolType = body.PoolType,
+                TotalInstances = allInstances.Count,
+                AvailableInstances = availableInstances.Count,
+                BusyInstances = leases.Count,
+                QueueDepth = 0, // We don't have a queue yet
+                MinInstances = config?.MinInstances ?? 1,
+                MaxInstances = config?.MaxInstances ?? 5
             };
 
             // Include metrics if requested
-            if (body.Include_metrics)
+            if (body.IncludeMetrics)
             {
                 var metrics = await _stateManager.GetValueAsync<PoolMetricsData>(metricsKey);
                 if (metrics != null)
                 {
-                    response.Recent_metrics = new PoolMetrics
+                    response.RecentMetrics = new PoolMetrics
                     {
-                        Jobs_completed_1h = metrics.JobsCompleted1h,
-                        Jobs_failed_1h = metrics.JobsFailed1h,
-                        Avg_processing_time_ms = metrics.AvgProcessingTimeMs,
-                        Last_scale_event = metrics.LastScaleEvent
+                        JobsCompleted1h = metrics.JobsCompleted1h,
+                        JobsFailed1h = metrics.JobsFailed1h,
+                        AvgProcessingTimeMs = metrics.AvgProcessingTimeMs,
+                        LastScaleEvent = metrics.LastScaleEvent
                     };
                 }
             }
@@ -2473,7 +2473,7 @@ public partial class OrchestratorService : IOrchestratorService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "GetPoolStatus: Error getting status for pool {PoolType}", body?.Pool_type);
+            _logger.LogError(ex, "GetPoolStatus: Error getting status for pool {PoolType}", body?.PoolType);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -2492,22 +2492,22 @@ public partial class OrchestratorService : IOrchestratorService
         {
             ArgumentNullException.ThrowIfNull(body);
 
-            if (string.IsNullOrEmpty(body.Pool_type))
+            if (string.IsNullOrEmpty(body.PoolType))
             {
                 _logger.LogWarning("ScalePool: Missing pool_type");
                 return (StatusCodes.BadRequest, null);
             }
 
-            if (body.Target_instances < 0)
+            if (body.TargetInstances < 0)
             {
-                _logger.LogWarning("ScalePool: Invalid target_instances {Target}", body.Target_instances);
+                _logger.LogWarning("ScalePool: Invalid target_instances {Target}", body.TargetInstances);
                 return (StatusCodes.BadRequest, null);
             }
 
-            var instancesKey = string.Format(POOL_INSTANCES_KEY, body.Pool_type);
-            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.Pool_type);
-            var leasesKey = string.Format(POOL_LEASES_KEY, body.Pool_type);
-            var metricsKey = string.Format(POOL_METRICS_KEY, body.Pool_type);
+            var instancesKey = string.Format(POOL_INSTANCES_KEY, body.PoolType);
+            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
+            var leasesKey = string.Format(POOL_LEASES_KEY, body.PoolType);
+            var metricsKey = string.Format(POOL_METRICS_KEY, body.PoolType);
 
             var currentInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
             var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
@@ -2517,21 +2517,21 @@ public partial class OrchestratorService : IOrchestratorService
             var scaledUp = 0;
             var scaledDown = 0;
 
-            if (body.Target_instances > previousCount)
+            if (body.TargetInstances > previousCount)
             {
                 // Scale up - add new instances
-                scaledUp = body.Target_instances - previousCount;
+                scaledUp = body.TargetInstances - previousCount;
 
                 for (int i = 0; i < scaledUp; i++)
                 {
-                    var processorId = $"{body.Pool_type}-{Guid.NewGuid():N}";
-                    var appId = $"bannou-processor-{body.Pool_type}-{currentInstances.Count + 1}";
+                    var processorId = $"{body.PoolType}-{Guid.NewGuid():N}";
+                    var appId = $"bannou-processor-{body.PoolType}-{currentInstances.Count + 1}";
 
                     var newInstance = new ProcessorInstance
                     {
                         ProcessorId = processorId,
                         AppId = appId,
-                        PoolType = body.Pool_type,
+                        PoolType = body.PoolType,
                         Status = "available",
                         CreatedAt = DateTimeOffset.UtcNow,
                         LastUpdated = DateTimeOffset.UtcNow
@@ -2541,12 +2541,12 @@ public partial class OrchestratorService : IOrchestratorService
                     availableInstances.Add(newInstance);
                 }
 
-                _logger.LogInformation("ScalePool: Scaled up pool {PoolType} by {Count} instances", body.Pool_type, scaledUp);
+                _logger.LogInformation("ScalePool: Scaled up pool {PoolType} by {Count} instances", body.PoolType, scaledUp);
             }
-            else if (body.Target_instances < previousCount)
+            else if (body.TargetInstances < previousCount)
             {
                 // Scale down - remove instances (prefer idle ones)
-                var toRemove = previousCount - body.Target_instances;
+                var toRemove = previousCount - body.TargetInstances;
 
                 // Can only remove available instances (unless force)
                 var maxRemovable = body.Force ? previousCount : availableInstances.Count;
@@ -2584,7 +2584,7 @@ public partial class OrchestratorService : IOrchestratorService
                     }
                 }
 
-                _logger.LogInformation("ScalePool: Scaled down pool {PoolType} by {Count} instances", body.Pool_type, scaledDown);
+                _logger.LogInformation("ScalePool: Scaled down pool {PoolType} by {Count} instances", body.PoolType, scaledDown);
             }
 
             // Save updated state
@@ -2599,16 +2599,16 @@ public partial class OrchestratorService : IOrchestratorService
 
             return (StatusCodes.OK, new ScalePoolResponse
             {
-                Pool_type = body.Pool_type,
-                Previous_instances = previousCount,
-                Current_instances = currentInstances.Count,
-                Scaled_up = scaledUp,
-                Scaled_down = scaledDown
+                PoolType = body.PoolType,
+                PreviousInstances = previousCount,
+                CurrentInstances = currentInstances.Count,
+                ScaledUp = scaledUp,
+                ScaledDown = scaledDown
             });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "ScalePool: Error scaling pool {PoolType}", body?.Pool_type);
+            _logger.LogError(ex, "ScalePool: Error scaling pool {PoolType}", body?.PoolType);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -2627,31 +2627,31 @@ public partial class OrchestratorService : IOrchestratorService
         {
             ArgumentNullException.ThrowIfNull(body);
 
-            if (string.IsNullOrEmpty(body.Pool_type))
+            if (string.IsNullOrEmpty(body.PoolType))
             {
                 _logger.LogWarning("CleanupPool: Missing pool_type");
                 return (StatusCodes.BadRequest, null);
             }
 
-            var instancesKey = string.Format(POOL_INSTANCES_KEY, body.Pool_type);
-            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.Pool_type);
-            var configKey = string.Format(POOL_CONFIG_KEY, body.Pool_type);
+            var instancesKey = string.Format(POOL_INSTANCES_KEY, body.PoolType);
+            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
+            var configKey = string.Format(POOL_CONFIG_KEY, body.PoolType);
 
             var currentInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
             var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
             var config = await _stateManager.GetValueAsync<PoolConfiguration>(configKey);
 
             var minInstances = config?.MinInstances ?? 1;
-            var targetCount = body.Preserve_minimum ? minInstances : 0;
+            var targetCount = body.PreserveMinimum ? minInstances : 0;
 
             var toRemove = availableInstances.Count - targetCount;
             if (toRemove <= 0)
             {
                 return (StatusCodes.OK, new CleanupPoolResponse
                 {
-                    Pool_type = body.Pool_type,
-                    Instances_removed = 0,
-                    Current_instances = currentInstances.Count,
+                    PoolType = body.PoolType,
+                    InstancesRemoved = 0,
+                    CurrentInstances = currentInstances.Count,
                     Message = "No idle instances to remove"
                 });
             }
@@ -2670,19 +2670,19 @@ public partial class OrchestratorService : IOrchestratorService
 
             _logger.LogInformation(
                 "CleanupPool: Removed {Count} idle instances from pool {PoolType}, {Remaining} instances remaining",
-                removedIds.Count, body.Pool_type, currentInstances.Count);
+                removedIds.Count, body.PoolType, currentInstances.Count);
 
             return (StatusCodes.OK, new CleanupPoolResponse
             {
-                Pool_type = body.Pool_type,
-                Instances_removed = removedIds.Count,
-                Current_instances = currentInstances.Count,
+                PoolType = body.PoolType,
+                InstancesRemoved = removedIds.Count,
+                CurrentInstances = currentInstances.Count,
                 Message = $"Cleaned up {removedIds.Count} idle processor(s)"
             });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "CleanupPool: Error cleaning up pool {PoolType}", body?.Pool_type);
+            _logger.LogError(ex, "CleanupPool: Error cleaning up pool {PoolType}", body?.PoolType);
             return (StatusCodes.InternalServerError, null);
         }
     }

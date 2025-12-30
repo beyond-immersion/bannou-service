@@ -548,7 +548,7 @@ public partial class SubscriptionsService : ISubscriptionsService
     {
         var eventData = new SubscriptionUpdatedEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             SubscriptionId = Guid.Parse(model.SubscriptionId),
             AccountId = Guid.Parse(model.AccountId),
@@ -636,7 +636,7 @@ public partial class SubscriptionsService : ISubscriptionsService
         object? details = null)
     {
         await _messageBus.TryPublishErrorAsync(
-            serviceId: "subscriptions",
+            serviceName: "subscriptions",
             operation: operation,
             errorType: errorType,
             message: message,

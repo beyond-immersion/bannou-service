@@ -893,16 +893,16 @@ public partial class GameSessionService : IGameSessionService
             // Build typed client event
             var chatEvent = new ChatMessageReceivedEvent
             {
-                Event_id = Guid.NewGuid(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                Event_name = ChatMessageReceivedEventEvent_name.Game_session_chat_received,
-                Session_id = body.SessionId,
-                Message_id = Guid.NewGuid(),
-                Sender_id = senderId,
-                Sender_name = senderPlayer?.DisplayName,
+                EventName = ChatMessageReceivedEventEventName.Game_session_chat_received,
+                SessionId = body.SessionId,
+                MessageId = Guid.NewGuid(),
+                SenderId = senderId,
+                SenderName = senderPlayer?.DisplayName,
                 Message = body.Message,
-                Message_type = MapChatMessageType(body.MessageType),
-                Is_whisper_to_me = false // Will be set per-recipient for whispers
+                MessageType = MapChatMessageType(body.MessageType),
+                IsWhisperToMe = false // Will be set per-recipient for whispers
             };
 
             // Get WebSocket session IDs for all players in the game session
@@ -947,19 +947,19 @@ public partial class GameSessionService : IGameSessionService
                         targetSessionsCopy = targetSessions.ToList();
                     }
 
-                    // Send to target with is_whisper_to_me = true
+                    // Send to target with IsWhisperToMe = true
                     var targetEvent = new ChatMessageReceivedEvent
                     {
-                        Event_id = chatEvent.Event_id,
+                        EventId = chatEvent.EventId,
                         Timestamp = chatEvent.Timestamp,
-                        Event_name = chatEvent.Event_name,
-                        Session_id = chatEvent.Session_id,
-                        Message_id = chatEvent.Message_id,
-                        Sender_id = chatEvent.Sender_id,
-                        Sender_name = chatEvent.Sender_name,
+                        EventName = chatEvent.EventName,
+                        SessionId = chatEvent.SessionId,
+                        MessageId = chatEvent.MessageId,
+                        SenderId = chatEvent.SenderId,
+                        SenderName = chatEvent.SenderName,
                         Message = chatEvent.Message,
-                        Message_type = chatEvent.Message_type,
-                        Is_whisper_to_me = true
+                        MessageType = chatEvent.MessageType,
+                        IsWhisperToMe = true
                     };
                     await _clientEventPublisher.PublishToSessionsAsync(targetSessionsCopy, targetEvent, cancellationToken);
                 }
@@ -1242,27 +1242,27 @@ public partial class GameSessionService : IGameSessionService
 
             var shortcutEvent = new ShortcutPublishedEvent
             {
-                Event_id = Guid.NewGuid(),
-                Event_name = ShortcutPublishedEventEvent_name.Session_shortcut_published,
+                EventId = Guid.NewGuid(),
+                EventName = ShortcutPublishedEventEventName.Session_shortcut_published,
                 Timestamp = DateTimeOffset.UtcNow,
-                Session_id = sessionId,
+                SessionId = sessionId,
                 Shortcut = new SessionShortcut
                 {
-                    Route_guid = routeGuid,
-                    Target_guid = targetGuid,
-                    Bound_payload = BannouJson.Serialize(boundPayload),
+                    RouteGuid = routeGuid,
+                    TargetGuid = targetGuid,
+                    BoundPayload = BannouJson.Serialize(boundPayload),
                     Metadata = new SessionShortcutMetadata
                     {
                         Name = shortcutName,
                         Description = $"Join the {stubName} game lobby",
-                        Source_service = "game-session",
-                        Target_service = "game-session",
-                        Target_method = "POST",
-                        Target_endpoint = "/sessions/join",
-                        Created_at = DateTimeOffset.UtcNow
+                        SourceService = "game-session",
+                        TargetService = "game-session",
+                        TargetMethod = "POST",
+                        TargetEndpoint = "/sessions/join",
+                        CreatedAt = DateTimeOffset.UtcNow
                     }
                 },
-                Replace_existing = true
+                ReplaceExisting = true
             };
 
             // Publish to session-specific client event channel using direct exchange
@@ -1301,11 +1301,11 @@ public partial class GameSessionService : IGameSessionService
         {
             var revokeEvent = new ShortcutRevokedEvent
             {
-                Event_id = Guid.NewGuid(),
-                Event_name = ShortcutRevokedEventEvent_name.Session_shortcut_revoked,
+                EventId = Guid.NewGuid(),
+                EventName = ShortcutRevokedEventEventName.Session_shortcut_revoked,
                 Timestamp = DateTimeOffset.UtcNow,
-                Session_id = sessionId,
-                Revoke_by_service = "game-session",
+                SessionId = Guid.Parse(sessionId),
+                RevokeByService = "game-session",
                 Reason = $"Subscription to {stubName} ended"
             };
 
@@ -1430,7 +1430,7 @@ public partial class GameSessionService : IGameSessionService
     {
         return new GameSessionResponse
         {
-            SessionId = model.SessionId,
+            SessionId = Guid.Parse(model.SessionId),
             GameType = model.GameType,
             SessionName = model.SessionName ?? string.Empty,
             Status = model.Status,
@@ -1454,14 +1454,14 @@ public partial class GameSessionService : IGameSessionService
         };
     }
 
-    private static ChatMessageReceivedEventMessage_type MapChatMessageType(ChatMessageRequestMessageType messageType)
+    private static ChatMessageReceivedEventMessageType MapChatMessageType(ChatMessageRequestMessageType messageType)
     {
         return messageType switch
         {
-            ChatMessageRequestMessageType.Public => ChatMessageReceivedEventMessage_type.Public,
-            ChatMessageRequestMessageType.Whisper => ChatMessageReceivedEventMessage_type.Whisper,
-            ChatMessageRequestMessageType.System => ChatMessageReceivedEventMessage_type.System,
-            _ => ChatMessageReceivedEventMessage_type.Public
+            ChatMessageRequestMessageType.Public => ChatMessageReceivedEventMessageType.Public,
+            ChatMessageRequestMessageType.Whisper => ChatMessageReceivedEventMessageType.Whisper,
+            ChatMessageRequestMessageType.System => ChatMessageReceivedEventMessageType.System,
+            _ => ChatMessageReceivedEventMessageType.Public
         };
     }
 

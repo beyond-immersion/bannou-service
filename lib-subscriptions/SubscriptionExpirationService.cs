@@ -164,7 +164,8 @@ public class SubscriptionExpirationService : BackgroundService
                     // Publish expiration event
                     var expirationEvent = new SubscriptionUpdatedEvent
                     {
-                        EventId = Guid.NewGuid().ToString(),
+                        EventName = SubscriptionUpdatedEventEventName.Subscription_updated,
+                        EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
                         SubscriptionId = subscription.SubscriptionId,
                         AccountId = subscription.AccountId,

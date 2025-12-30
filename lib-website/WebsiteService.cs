@@ -51,7 +51,7 @@ public partial class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error getting status");
             await _messageBus.TryPublishErrorAsync(
-                serviceId: "website",
+                serviceName: "website",
                 operation: "GetStatus",
                 errorType: ex.GetType().Name,
                 message: ex.Message,
@@ -75,7 +75,7 @@ public partial class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error getting page content");
             await _messageBus.TryPublishErrorAsync(
-                serviceId: "website",
+                serviceName: "website",
                 operation: "GetPageContent",
                 errorType: ex.GetType().Name,
                 message: ex.Message,
@@ -100,7 +100,7 @@ public partial class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error getting news");
             await _messageBus.TryPublishErrorAsync(
-                serviceId: "website",
+                serviceName: "website",
                 operation: "GetNews",
                 errorType: ex.GetType().Name,
                 message: ex.Message,
@@ -125,7 +125,7 @@ public partial class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error getting server status");
             await _messageBus.TryPublishErrorAsync(
-                serviceId: "website",
+                serviceName: "website",
                 operation: "GetServerStatus",
                 errorType: ex.GetType().Name,
                 message: ex.Message,
@@ -149,7 +149,7 @@ public partial class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error getting downloads");
             await _messageBus.TryPublishErrorAsync(
-                serviceId: "website",
+                serviceName: "website",
                 operation: "GetDownloads",
                 errorType: ex.GetType().Name,
                 message: ex.Message,
@@ -174,7 +174,7 @@ public partial class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error submitting contact");
             await _messageBus.TryPublishErrorAsync(
-                serviceId: "website",
+                serviceName: "website",
                 operation: "SubmitContact",
                 errorType: ex.GetType().Name,
                 message: ex.Message,
@@ -198,7 +198,7 @@ public partial class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error getting account profile");
             await _messageBus.TryPublishErrorAsync(
-                serviceId: "website",
+                serviceName: "website",
                 operation: "GetAccountProfile",
                 errorType: ex.GetType().Name,
                 message: ex.Message,
@@ -222,7 +222,7 @@ public partial class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error getting account characters");
             await _messageBus.TryPublishErrorAsync(
-                serviceId: "website",
+                serviceName: "website",
                 operation: "GetAccountCharacters",
                 errorType: ex.GetType().Name,
                 message: ex.Message,
@@ -246,7 +246,7 @@ public partial class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error creating page");
             await _messageBus.TryPublishErrorAsync(
-                serviceId: "website",
+                serviceName: "website",
                 operation: "CreatePage",
                 errorType: ex.GetType().Name,
                 message: ex.Message,
@@ -270,7 +270,7 @@ public partial class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error updating page");
             await _messageBus.TryPublishErrorAsync(
-                serviceId: "website",
+                serviceName: "website",
                 operation: "UpdatePage",
                 errorType: ex.GetType().Name,
                 message: ex.Message,
@@ -295,7 +295,7 @@ public partial class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error getting site settings");
             await _messageBus.TryPublishErrorAsync(
-                serviceId: "website",
+                serviceName: "website",
                 operation: "GetSiteSettings",
                 errorType: ex.GetType().Name,
                 message: ex.Message,
@@ -319,7 +319,7 @@ public partial class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error updating site settings");
             await _messageBus.TryPublishErrorAsync(
-                serviceId: "website",
+                serviceName: "website",
                 operation: "UpdateSiteSettings",
                 errorType: ex.GetType().Name,
                 message: ex.Message,
@@ -343,7 +343,7 @@ public partial class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error getting theme");
             await _messageBus.TryPublishErrorAsync(
-                serviceId: "website",
+                serviceName: "website",
                 operation: "GetTheme",
                 errorType: ex.GetType().Name,
                 message: ex.Message,
@@ -367,7 +367,7 @@ public partial class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error updating theme");
             await _messageBus.TryPublishErrorAsync(
-                serviceId: "website",
+                serviceName: "website",
                 operation: "UpdateTheme",
                 errorType: ex.GetType().Name,
                 message: ex.Message,
@@ -391,7 +391,7 @@ public partial class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error getting subscription");
             await _messageBus.TryPublishErrorAsync(
-                serviceId: "website",
+                serviceName: "website",
                 operation: "GetSubscription",
                 errorType: ex.GetType().Name,
                 message: ex.Message,
@@ -415,7 +415,7 @@ public partial class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error deleting page");
             await _messageBus.TryPublishErrorAsync(
-                serviceId: "website",
+                serviceName: "website",
                 operation: "DeletePage",
                 errorType: ex.GetType().Name,
                 message: ex.Message,
@@ -440,7 +440,7 @@ public partial class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error listing pages");
             await _messageBus.TryPublishErrorAsync(
-                serviceId: "website",
+                serviceName: "website",
                 operation: "ListPages",
                 errorType: ex.GetType().Name,
                 message: ex.Message,

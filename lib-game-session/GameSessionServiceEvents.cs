@@ -40,7 +40,7 @@ public partial class GameSessionService
     /// <param name="evt">The event data.</param>
     public async Task HandleSessionConnectedAsync(SessionConnectedEvent evt)
     {
-        await HandleSessionConnectedInternalAsync(evt.SessionId, evt.AccountId);
+        await HandleSessionConnectedInternalAsync(evt.SessionId.ToString(), evt.AccountId.ToString());
     }
 
     /// <summary>
@@ -50,7 +50,7 @@ public partial class GameSessionService
     /// <param name="evt">The event data.</param>
     public async Task HandleSessionDisconnectedAsync(SessionDisconnectedEvent evt)
     {
-        await HandleSessionDisconnectedInternalAsync(evt.SessionId);
+        await HandleSessionDisconnectedInternalAsync(evt.SessionId.ToString());
     }
 
     /// <summary>
@@ -61,7 +61,7 @@ public partial class GameSessionService
     public async Task HandleSessionReconnectedAsync(SessionReconnectedEvent evt)
     {
         // Reconnection is treated the same as a new connection for shortcut publishing
-        await HandleSessionConnectedInternalAsync(evt.SessionId, evt.AccountId);
+        await HandleSessionConnectedInternalAsync(evt.SessionId.ToString(), evt.AccountId.ToString());
     }
 
     /// <summary>

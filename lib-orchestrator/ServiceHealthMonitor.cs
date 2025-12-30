@@ -299,7 +299,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
 
             var fullMappingsEvent = new FullServiceMappingsEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Mappings = mappings,
                 DefaultAppId = "bannou",

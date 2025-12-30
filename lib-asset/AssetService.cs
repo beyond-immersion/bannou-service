@@ -89,7 +89,7 @@ public partial class AssetService : IAssetService
     public async Task<(StatusCodes, UploadResponse?)> RequestUploadAsync(UploadRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("RequestUpload: filename={Filename}, size={Size}, contentType={ContentType}",
-            body.Filename, body.Size, body.Content_type);
+            body.Filename, body.Size, body.ContentType);
 
         try
         {
@@ -107,7 +107,7 @@ public partial class AssetService : IAssetService
                 return (StatusCodes.BadRequest, null);
             }
 
-            if (string.IsNullOrWhiteSpace(body.Content_type))
+            if (string.IsNullOrWhiteSpace(body.ContentType))
             {
                 _logger.LogWarning("RequestUpload: Empty content type");
                 return (StatusCodes.BadRequest, null);
@@ -134,30 +134,30 @@ public partial class AssetService : IAssetService
                 var multipartResult = await _storageProvider.InitiateMultipartUploadAsync(
                     _configuration.StorageBucket,
                     storageKey,
-                    body.Content_type,
+                    body.ContentType,
                     partCount,
                     expiration).ConfigureAwait(false);
 
                 // Build response with multipart config
                 var uploadUrls = multipartResult.Parts.Select(p => new PartUploadInfo
                 {
-                    Part_number = p.PartNumber,
-                    Upload_url = new Uri(p.UploadUrl),
-                    Min_size = p.MinSize,
-                    Max_size = p.MaxSize
+                    PartNumber = p.PartNumber,
+                    UploadUrl = new Uri(p.UploadUrl),
+                    MinSize = p.MinSize,
+                    MaxSize = p.MaxSize
                 }).ToList();
 
                 response = new UploadResponse
                 {
-                    Upload_id = uploadId,
-                    Upload_url = new Uri(multipartResult.Parts.First().UploadUrl), // First part URL as primary
-                    Expires_at = multipartResult.ExpiresAt,
+                    UploadId = uploadId,
+                    UploadUrl = new Uri(multipartResult.Parts.First().UploadUrl), // First part URL as primary
+                    ExpiresAt = multipartResult.ExpiresAt,
                     Multipart = new MultipartConfig
                     {
                         Required = true,
-                        Part_size = (int)partSizeBytes,
-                        Max_parts = partCount,
-                        Upload_urls = uploadUrls
+                        PartSize = (int)partSizeBytes,
+                        MaxParts = partCount,
+                        UploadUrls = uploadUrls
                     }
                 };
 
@@ -167,7 +167,7 @@ public partial class AssetService : IAssetService
                     UploadId = uploadId,
                     Filename = body.Filename,
                     Size = body.Size,
-                    ContentType = body.Content_type,
+                    ContentType = body.ContentType,
                     Metadata = body.Metadata,
                     StorageKey = storageKey,
                     IsMultipart = true,
@@ -185,7 +185,7 @@ public partial class AssetService : IAssetService
                 var uploadResult = await _storageProvider.GenerateUploadUrlAsync(
                     _configuration.StorageBucket,
                     storageKey,
-                    body.Content_type,
+                    body.ContentType,
                     body.Size,
                     expiration,
                     body.Metadata?.Tags != null ? new Dictionary<string, string> { { "tags", string.Join(",", body.Metadata.Tags) } } : null)
@@ -193,15 +193,15 @@ public partial class AssetService : IAssetService
 
                 response = new UploadResponse
                 {
-                    Upload_id = uploadId,
-                    Upload_url = new Uri(uploadResult.UploadUrl),
-                    Expires_at = uploadResult.ExpiresAt,
+                    UploadId = uploadId,
+                    UploadUrl = new Uri(uploadResult.UploadUrl),
+                    ExpiresAt = uploadResult.ExpiresAt,
                     Multipart = new MultipartConfig
                     {
                         Required = false,
-                        Part_size = 0,
-                        Max_parts = 0,
-                        Upload_urls = Array.Empty<PartUploadInfo>()
+                        PartSize = 0,
+                        MaxParts = 0,
+                        UploadUrls = Array.Empty<PartUploadInfo>()
                     }
                 };
 
@@ -211,7 +211,7 @@ public partial class AssetService : IAssetService
                     UploadId = uploadId,
                     Filename = body.Filename,
                     Size = body.Size,
-                    ContentType = body.Content_type,
+                    ContentType = body.ContentType,
                     Metadata = body.Metadata,
                     StorageKey = storageKey,
                     IsMultipart = false,
@@ -575,10 +575,10 @@ public partial class AssetService : IAssetService
                 $"@realm:{{{body.Realm}}}"
             };
 
-            if (!string.IsNullOrEmpty(body.Content_type))
+            if (!string.IsNullOrEmpty(body.ContentType))
             {
                 // Escape special characters in content type
-                var escapedContentType = body.Content_type.Replace("/", "\\/");
+                var escapedContentType = body.ContentType.Replace("/", "\\/");
                 queryParts.Add($"@content_type:{{{escapedContentType}}}");
             }
 
@@ -675,8 +675,8 @@ public partial class AssetService : IAssetService
                     var matchesRealm = internalRecord.Realm == body.Realm;
                     var matchesTags = body.Tags == null || body.Tags.Count == 0 ||
                         (internalRecord.Tags != null && body.Tags.All(t => internalRecord.Tags.Contains(t)));
-                    var matchesContentType = string.IsNullOrEmpty(body.Content_type) ||
-                        internalRecord.ContentType == body.Content_type;
+                    var matchesContentType = string.IsNullOrEmpty(body.ContentType) ||
+                        internalRecord.ContentType == body.ContentType;
 
                     if (matchesRealm && matchesTags && matchesContentType)
                     {

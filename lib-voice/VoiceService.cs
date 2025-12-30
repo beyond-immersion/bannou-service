@@ -329,7 +329,7 @@ public partial class VoiceService : IVoiceService
                 {
                     await _permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
                     {
-                        SessionId = body.SessionId,
+                        SessionId = Guid.Parse(body.SessionId),
                         ServiceId = "voice",
                         NewState = "ringing"
                     }, cancellationToken);
@@ -565,16 +565,16 @@ public partial class VoiceService : IVoiceService
             // The Peer describes who sent the update (the answering peer)
             var peerUpdatedEvent = new VoicePeerUpdatedEvent
             {
-                Event_name = VoicePeerUpdatedEventEvent_name.Voice_peer_updated,
-                Event_id = Guid.NewGuid(),
+                EventName = VoicePeerUpdatedEventEventName.Voice_peer_updated,
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                Room_id = body.RoomId,
+                RoomId = body.RoomId,
                 Peer = new VoicePeerInfo
                 {
-                    Peer_session_id = body.SenderSessionId,
-                    Display_name = senderDisplayName,
-                    Sdp_offer = body.SdpAnswer, // Using Sdp_offer to carry the SDP answer
-                    Ice_candidates = body.IceCandidates?.ToList() ?? new List<string>()
+                    PeerSessionId = body.SenderSessionId,
+                    DisplayName = senderDisplayName,
+                    SdpOffer = body.SdpAnswer, // Using SdpOffer to carry the SDP answer
+                    IceCandidates = body.IceCandidates?.ToList() ?? new List<string>()
                 }
             };
 
@@ -645,7 +645,7 @@ public partial class VoiceService : IVoiceService
                 {
                     await _permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
                     {
-                        SessionId = sessionId,
+                        SessionId = Guid.Parse(sessionId),
                         ServiceId = "voice",
                         NewState = "ringing"
                     }, cancellationToken);
@@ -665,19 +665,19 @@ public partial class VoiceService : IVoiceService
 
         var peerJoinedEvent = new VoicePeerJoinedEvent
         {
-            Event_name = VoicePeerJoinedEventEvent_name.Voice_peer_joined,
-            Event_id = Guid.NewGuid(),
+            EventName = VoicePeerJoinedEventEventName.Voice_peer_joined,
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Room_id = roomId,
+            RoomId = roomId,
             Peer = new VoicePeerInfo
             {
-                Peer_session_id = newPeerSessionId,
-                Display_name = displayName,
-                Sdp_offer = sipEndpoint.SdpOffer,
-                Ice_candidates = sipEndpoint.IceCandidates?.ToList(),
-                Is_muted = false
+                PeerSessionId = newPeerSessionId,
+                DisplayName = displayName,
+                SdpOffer = sipEndpoint.SdpOffer,
+                IceCandidates = sipEndpoint.IceCandidates?.ToList(),
+                IsMuted = false
             },
-            Current_participant_count = currentCount
+            CurrentParticipantCount = currentCount
         };
 
         var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIds, peerJoinedEvent, cancellationToken);
@@ -713,13 +713,13 @@ public partial class VoiceService : IVoiceService
 
         var peerLeftEvent = new VoicePeerLeftEvent
         {
-            Event_name = VoicePeerLeftEventEvent_name.Voice_peer_left,
-            Event_id = Guid.NewGuid(),
+            EventName = VoicePeerLeftEventEventName.Voice_peer_left,
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Room_id = roomId,
-            Peer_session_id = leftPeerSessionId,
-            Display_name = displayName,
-            Remaining_participant_count = remainingCount
+            RoomId = roomId,
+            PeerSessionId = leftPeerSessionId,
+            DisplayName = displayName,
+            RemainingParticipantCount = remainingCount
         };
 
         var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIds, peerLeftEvent, cancellationToken);
@@ -755,17 +755,17 @@ public partial class VoiceService : IVoiceService
 
         var peerUpdatedEvent = new VoicePeerUpdatedEvent
         {
-            Event_name = VoicePeerUpdatedEventEvent_name.Voice_peer_updated,
-            Event_id = Guid.NewGuid(),
+            EventName = VoicePeerUpdatedEventEventName.Voice_peer_updated,
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Room_id = roomId,
+            RoomId = roomId,
             Peer = new VoicePeerInfo
             {
-                Peer_session_id = updatedPeerSessionId,
-                Display_name = displayName,
-                Sdp_offer = sipEndpoint.SdpOffer,
-                Ice_candidates = sipEndpoint.IceCandidates?.ToList(),
-                Is_muted = false
+                PeerSessionId = updatedPeerSessionId,
+                DisplayName = displayName,
+                SdpOffer = sipEndpoint.SdpOffer,
+                IceCandidates = sipEndpoint.IceCandidates?.ToList(),
+                IsMuted = false
             }
         };
 
@@ -807,10 +807,10 @@ public partial class VoiceService : IVoiceService
 
         var roomClosedEvent = new VoiceRoomClosedEvent
         {
-            Event_name = VoiceRoomClosedEventEvent_name.Voice_room_closed,
-            Event_id = Guid.NewGuid(),
+            EventName = VoiceRoomClosedEventEventName.Voice_room_closed,
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Room_id = roomId,
+            RoomId = roomId,
             Reason = reasonEnum
         };
 
@@ -858,20 +858,20 @@ public partial class VoiceService : IVoiceService
                 Username = internalCredentials.Username,
                 Password = internalCredentials.Password,
                 Domain = internalCredentials.Registrar,
-                Expires_at = null // Credentials valid for session duration
+                ExpiresAt = null // Credentials valid for session duration
             };
 
             var tierUpgradeEvent = new VoiceTierUpgradeEvent
             {
-                Event_name = VoiceTierUpgradeEventEvent_name.Voice_tier_upgrade,
-                Event_id = Guid.NewGuid(),
+                EventName = VoiceTierUpgradeEventEventName.Voice_tier_upgrade,
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                Room_id = roomId,
-                Previous_tier = VoiceTierUpgradeEventPrevious_tier.P2p,
-                New_tier = VoiceTierUpgradeEventNew_tier.Scaled,
-                Rtp_server_uri = rtpServerUri,
-                Sip_credentials = clientCredentials,
-                Migration_deadline_ms = _configuration.TierUpgradeMigrationDeadlineMs
+                RoomId = roomId,
+                PreviousTier = VoiceTierUpgradeEventPreviousTier.P2p,
+                NewTier = VoiceTierUpgradeEventNewTier.Scaled,
+                RtpServerUri = rtpServerUri,
+                SipCredentials = clientCredentials,
+                MigrationDeadlineMs = _configuration.TierUpgradeMigrationDeadlineMs
             };
 
             var success = await _clientEventPublisher.PublishToSessionAsync(sessionId, tierUpgradeEvent, cancellationToken);

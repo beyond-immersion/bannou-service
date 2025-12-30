@@ -402,7 +402,7 @@ public partial class ServicedataService : IServicedataService
         object? details = null)
     {
         await _messageBus.TryPublishErrorAsync(
-            serviceId: "servicedata",
+            serviceName: "servicedata",
             operation: operation,
             errorType: errorType,
             message: message,
