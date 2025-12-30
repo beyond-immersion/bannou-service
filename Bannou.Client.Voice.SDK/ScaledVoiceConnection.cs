@@ -1,6 +1,6 @@
-using BeyondImmersion.Bannou.Voice.Services;
+using BeyondImmersion.Bannou.Client.Voice.Services;
 
-namespace BeyondImmersion.Bannou.Voice;
+namespace BeyondImmersion.Bannou.Client.Voice;
 
 /// <summary>
 /// Implementation of scaled voice connection using SIP/RTP (Kamailio + RTPEngine).

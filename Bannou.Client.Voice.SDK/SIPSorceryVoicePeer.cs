@@ -2,7 +2,7 @@ using SIPSorcery.Net;
 using SIPSorcery.Media;
 using SIPSorceryMedia.Abstractions;
 
-namespace BeyondImmersion.Bannou.Voice;
+namespace BeyondImmersion.Bannou.Client.Voice;
 
 /// <summary>
 /// WebRTC peer connection implementation using SIPSorcery.

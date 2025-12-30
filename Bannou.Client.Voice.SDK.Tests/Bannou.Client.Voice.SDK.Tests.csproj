@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>BeyondImmersion.Bannou.Voice.Tests</RootNamespace>
+    <RootNamespace>BeyondImmersion.Bannou.Client.Voice.Tests</RootNamespace>
 
     <IsPackable>false</IsPackable>
     <Configurations>Debug;Release;Development</Configurations>
@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Bannou.Voice.SDK\Bannou.Voice.SDK.csproj" />
+    <ProjectReference Include="..\Bannou.Client.Voice.SDK\Bannou.Client.Voice.SDK.csproj" />
   </ItemGroup>
 
 </Project>

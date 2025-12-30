@@ -5,10 +5,10 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>BeyondImmersion.Bannou.Voice</RootNamespace>
+    <RootNamespace>BeyondImmersion.Bannou.Client.Voice</RootNamespace>
 
     <!-- NuGet Package Metadata -->
-    <PackageId>BeyondImmersion.Bannou.Voice</PackageId>
+    <PackageId>BeyondImmersion.Bannou.Client.Voice</PackageId>
     <Authors>BeyondImmersion</Authors>
     <Description>Voice/Audio helper for Bannou Client SDK. Provides P2P WebRTC voice chat using SIPSorcery. For game clients using Stride, Unity, or other C#/.NET game engines.</Description>
     <PackageTags>bannou;voice;webrtc;p2p;audio;sipsorcery;stride;game-client</PackageTags>

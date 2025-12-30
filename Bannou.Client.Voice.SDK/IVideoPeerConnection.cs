@@ -1,4 +1,4 @@
-namespace BeyondImmersion.Bannou.Voice;
+namespace BeyondImmersion.Bannou.Client.Voice;
 
 /// <summary>
 /// Interface for single-peer WebRTC video connection.

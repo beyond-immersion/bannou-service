@@ -1,4 +1,4 @@
-namespace BeyondImmersion.Bannou.Voice;
+namespace BeyondImmersion.Bannou.Client.Voice;
 
 /// <summary>
 /// Interface for WebRTC peer connection management for P2P voice chat.

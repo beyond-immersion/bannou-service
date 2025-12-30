@@ -1,13 +1,13 @@
 using System.Collections.Concurrent;
 using BeyondImmersion.Bannou.Client.SDK;
 using BeyondImmersion.BannouService.Configuration;
-using BeyondImmersion.Bannou.Voice.Services;
+using BeyondImmersion.Bannou.Client.Voice.Services;
 
 // Voice event models from generated code - these are included in the main SDK
 // via the lib-*/Generated/*ClientEventsModels.cs pattern
 using BeyondImmersion.Bannou.Voice.ClientEvents;
 
-namespace BeyondImmersion.Bannou.Voice;
+namespace BeyondImmersion.Bannou.Client.Voice;
 
 /// <summary>
 /// High-level manager for voice chat in a Bannou voice room, supporting both P2P and scaled modes.

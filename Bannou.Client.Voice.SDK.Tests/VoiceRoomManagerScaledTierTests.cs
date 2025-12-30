@@ -1,10 +1,10 @@
 using BeyondImmersion.Bannou.Client.SDK;
-using BeyondImmersion.Bannou.Voice;
+using BeyondImmersion.Bannou.Client.Voice;
 using BeyondImmersion.Bannou.Voice.ClientEvents;
 using Moq;
 using Xunit;
 
-namespace BeyondImmersion.Bannou.Voice.Tests;
+namespace BeyondImmersion.Bannou.Client.Voice.Tests;
 
 public class VoiceRoomManagerScaledTierTests
 {

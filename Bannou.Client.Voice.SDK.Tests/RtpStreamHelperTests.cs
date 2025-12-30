@@ -1,7 +1,7 @@
-using BeyondImmersion.Bannou.Voice.Services;
+using BeyondImmersion.Bannou.Client.Voice.Services;
 using Xunit;
 
-namespace BeyondImmersion.Bannou.Voice.Tests;
+namespace BeyondImmersion.Bannou.Client.Voice.Tests;
 
 public class RtpStreamHelperTests
 {

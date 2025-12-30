@@ -4,7 +4,7 @@ using SIPSorcery.Net;
 using SIPSorcery.Media;
 using SIPSorceryMedia.Abstractions;
 
-namespace BeyondImmersion.Bannou.Voice.Services;
+namespace BeyondImmersion.Bannou.Client.Voice.Services;
 
 /// <summary>
 /// Helper class for managing RTP audio streaming to/from an RTP server (like RTPEngine).

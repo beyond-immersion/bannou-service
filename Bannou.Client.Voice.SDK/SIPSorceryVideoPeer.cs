@@ -1,4 +1,4 @@
-namespace BeyondImmersion.Bannou.Voice;
+namespace BeyondImmersion.Bannou.Client.Voice;
 
 /// <summary>
 /// WebRTC video peer connection stub using SIPSorcery.
@@ -59,7 +59,7 @@ public sealed class SIPSorceryVideoPeer : SIPSorceryVoicePeer, IVideoPeerConnect
     public void SendVideoFrame(ReadOnlySpan<byte> rgbaPixels, int width, int height, long timestampMs)
     {
         throw new NotImplementedException(
-            "Video support is not yet implemented in Bannou.Voice.SDK. " +
+            "Video support is not yet implemented in Bannou.Client.Voice.SDK. " +
             "For 1:1 video calls, you can implement video encoding/decoding using " +
             "SIPSorceryMedia.FFmpeg or a platform-specific video encoder. " +
             "See the SIPSorcery documentation for video track examples.");

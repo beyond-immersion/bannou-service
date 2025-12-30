@@ -1,7 +1,7 @@
-using BeyondImmersion.Bannou.Voice;
+using BeyondImmersion.Bannou.Client.Voice;
 using Xunit;
 
-namespace BeyondImmersion.Bannou.Voice.Tests;
+namespace BeyondImmersion.Bannou.Client.Voice.Tests;
 
 public class ScaledVoiceConnectionTests
 {

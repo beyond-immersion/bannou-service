@@ -1,4 +1,4 @@
-# BeyondImmersion.Bannou.Voice SDK
+# BeyondImmersion.Bannou.Client.Voice SDK
 
 P2P voice chat SDK for Bannou-powered games with automatic tier transition to SIP/RTP for large rooms.
 
@@ -15,7 +15,7 @@ This SDK provides:
 ## Installation
 
 ```bash
-dotnet add package BeyondImmersion.Bannou.Voice
+dotnet add package BeyondImmersion.Bannou.Client.Voice
 ```
 
 This package depends on:
@@ -27,7 +27,7 @@ This package depends on:
 
 ```csharp
 using BeyondImmersion.Bannou.Client.SDK;
-using BeyondImmersion.Bannou.Voice;
+using BeyondImmersion.Bannou.Client.Voice;
 
 public class VoiceController : SyncScript
 {
@@ -181,7 +181,7 @@ _voiceManager.OnScaledConnectionStateChanged += state =>
 If you need more control than VoiceRoomManager provides:
 
 ```csharp
-using BeyondImmersion.Bannou.Voice;
+using BeyondImmersion.Bannou.Client.Voice;
 
 // When VoiceTierUpgradeEvent is received:
 var connection = new ScaledVoiceConnection(roomId);
@@ -212,7 +212,7 @@ await connection.DisconnectAsync();
 If you're using a platform with native WebRTC (Unity WebRTC package, etc.), implement `IVoicePeerConnection`:
 
 ```csharp
-using BeyondImmersion.Bannou.Voice;
+using BeyondImmersion.Bannou.Client.Voice;
 
 public class UnityWebRTCPeer : IVoicePeerConnection
 {

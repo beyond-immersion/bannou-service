@@ -3,7 +3,7 @@ using BeyondImmersion.Bannou.Voice.ClientEvents;
 using SIPSorcery.SIP;
 using SIPSorcery.SIP.App;
 
-namespace BeyondImmersion.Bannou.Voice.Services;
+namespace BeyondImmersion.Bannou.Client.Voice.Services;
 
 /// <summary>
 /// Helper class for managing SIP registration with Kamailio in scaled voice tier.
