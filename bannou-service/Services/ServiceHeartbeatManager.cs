@@ -378,7 +378,8 @@ public class ServiceHeartbeatManager : IAsyncDisposable
 
         return new ServiceHeartbeatEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventName = ServiceHeartbeatEventEventName.Service_heartbeat,
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             ServiceId = InstanceId,
             AppId = AppId,

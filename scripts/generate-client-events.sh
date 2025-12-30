@@ -39,7 +39,7 @@ if [ -f "$COMMON_CLIENT_EVENTS_SCHEMA" ]; then
         "/generateClientClasses:false" \
         "/generateClientInterfaces:false" \
         "/generateDtoTypes:true" \
-        "/excludedTypeNames:ApiException,ApiException\<TResult\>" \
+        "/excludedTypeNames:ApiException,ApiException\<TResult\>,BaseClientEvent" \
         "/jsonLibrary:SystemTextJson" \
         "/generateNullableReferenceTypes:true" \
         "/newLineBehavior:LF" \

@@ -48,12 +48,17 @@ components:
         Published by any service during startup to register its API endpoints
         and permission requirements with the Permissions service.
       required:
+        - eventName
         - serviceId
         - serviceName
         - version
         - appId
         - endpoints
       properties:
+        eventName:
+          type: string
+          enum: ["service.registration"]
+          description: Fixed event type identifier
         serviceId:
           type: string
           format: uuid
@@ -140,11 +145,16 @@ components:
         Contains aggregated information for ALL services hosted by this app instance.
         Used for load balancing and service discovery by the orchestrator.
       required:
+        - eventName
         - serviceId
         - appId
         - status
         - services
       properties:
+        eventName:
+          type: string
+          enum: ["service.heartbeat"]
+          description: Fixed event type identifier
         serviceId:
           type: string
           format: uuid
@@ -232,6 +242,7 @@ components:
         Structured error event for unexpected service failures (akin to Sentry).
         Use ONLY for internal faults, not for user/input errors.
       required:
+        - eventName
         - serviceId
         - serviceName
         - appId
@@ -239,6 +250,10 @@ components:
         - errorType
         - message
       properties:
+        eventName:
+          type: string
+          enum: ["service.error"]
+          description: Fixed event type identifier
         serviceId:
           type: string
           format: uuid
@@ -303,9 +318,14 @@ components:
         Consumed by all bannou instances to atomically update their routing tables.
         Published every 30 seconds AND immediately when routing changes.
       required:
+        - eventName
         - mappings
         - version
       properties:
+        eventName:
+          type: string
+          enum: ["orchestrator.full_service_mappings"]
+          description: Fixed event type identifier
         mappings:
           type: object
           additionalProperties:
@@ -338,9 +358,14 @@ components:
         The roles and authorizations enable event-driven capability compilation without
         synchronous API calls from Connect to Permissions.
       required:
+        - eventName
         - sessionId
         - accountId
       properties:
+        eventName:
+          type: string
+          enum: ["session.connected"]
+          description: Fixed event type identifier
         sessionId:
           type: string
           format: uuid
@@ -381,8 +406,13 @@ components:
         Used by Permissions service to remove session from activeConnections.
         Also enables cleanup of session-specific resources across services.
       required:
+        - eventName
         - sessionId
       properties:
+        eventName:
+          type: string
+          enum: ["session.disconnected"]
+          description: Fixed event type identifier
         sessionId:
           type: string
           format: uuid
@@ -418,9 +448,14 @@ components:
         whether the session should receive shortcuts again (e.g., check subscription status,
         game state, etc.) and publish new ShortcutPublishedEvents as appropriate.
       required:
+        - eventName
         - sessionId
         - accountId
       properties:
+        eventName:
+          type: string
+          enum: ["session.reconnected"]
+          description: Fixed event type identifier
         sessionId:
           type: string
           format: uuid

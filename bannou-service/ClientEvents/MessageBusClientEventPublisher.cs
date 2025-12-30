@@ -217,7 +217,7 @@ public class MessageBusClientEventPublisher : IClientEventPublisher
         // If no property declared on derived type, fall back to base class property
         if (eventNameProp == null)
         {
-            return eventData.Event_name;
+            return eventData.EventName;
         }
 
         // Property is shadowed on derived type - get its value
@@ -225,7 +225,7 @@ public class MessageBusClientEventPublisher : IClientEventPublisher
         if (value == null)
         {
             // Fall back to base property
-            return eventData.Event_name;
+            return eventData.EventName;
         }
 
         // If it's an enum, extract the string value from EnumMember attribute

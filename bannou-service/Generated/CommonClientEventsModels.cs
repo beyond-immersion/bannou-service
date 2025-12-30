@@ -27,17 +27,6 @@ namespace BeyondImmersion.BannouService.ClientEvents;
 using System = global::System;
 
 /// <summary>
-/// Base schema for all server-to-client push events.
-/// <br/>All client events MUST include these fields.
-/// <br/>The eventName field is used for whitelist validation in Connect service.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BaseClientEvent
-{
-}
-
-/// <summary>
 /// Sent to client when their available API capabilities change.
 /// <br/>Contains the complete list of service GUIDs the client can access.
 /// <br/>Delivered on initial connection and when permissions change.
@@ -51,7 +40,6 @@ public partial class CapabilityManifestEvent : BaseClientEvent
     /// Fixed event type identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CapabilityManifestEventEventName EventName { get; set; } = default!;
 
@@ -60,7 +48,7 @@ public partial class CapabilityManifestEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string SessionId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// List of available API endpoints with their GUIDs
@@ -129,9 +117,9 @@ public partial class ClientCapabilityEntry
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
@@ -150,7 +138,6 @@ public partial class DisconnectNotificationEvent : BaseClientEvent
     /// Fixed event type identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DisconnectNotificationEventEventName EventName { get; set; } = default!;
 
@@ -199,7 +186,6 @@ public partial class SystemErrorEvent : BaseClientEvent
     /// Fixed event type identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SystemErrorEventEventName EventName { get; set; } = default!;
 
@@ -245,7 +231,6 @@ public partial class SessionCapabilitiesEvent : BaseClientEvent
     /// Fixed event type identifier (internal, not forwarded to client)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SessionCapabilitiesEventEventName EventName { get; set; } = default!;
 
@@ -254,7 +239,7 @@ public partial class SessionCapabilitiesEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string SessionId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Map of ServiceID -&gt; List of available methods (e.g., "accounts" -&gt; ["POST:/get-account"])
@@ -284,7 +269,6 @@ public partial class SystemNotificationEvent : BaseClientEvent
     /// Fixed event type identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SystemNotificationEventEventName EventName { get; set; } = default!;
 
@@ -337,7 +321,6 @@ public partial class ShortcutPublishedEvent : BaseClientEvent
     /// Fixed event type identifier.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ShortcutPublishedEventEventName EventName { get; set; } = default!;
 
@@ -346,7 +329,7 @@ public partial class ShortcutPublishedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string SessionId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("shortcut")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -377,7 +360,6 @@ public partial class ShortcutRevokedEvent : BaseClientEvent
     /// Fixed event type identifier.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ShortcutRevokedEventEventName EventName { get; set; } = default!;
 
@@ -386,7 +368,7 @@ public partial class ShortcutRevokedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string SessionId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Specific shortcut to revoke.
@@ -457,9 +439,9 @@ public partial class SessionShortcut
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
@@ -546,9 +528,9 @@ public partial class SessionShortcutMetadata
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
