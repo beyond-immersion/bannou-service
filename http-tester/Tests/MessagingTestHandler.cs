@@ -290,15 +290,13 @@ public class MessagingTestHandler : BaseHttpTestHandler
                 sourceExchange);  // Explicit source exchange
 
             // Publish message to the character's event exchange (fanout)
-            // Messages must be wrapped in GenericMessageEnvelope for tap interception
-            var testPayload = new TapTestMessage("Tap forward test", "forward-test", DateTimeOffset.UtcNow);
-            var envelope = new GenericMessageEnvelope(sourceTopic, testPayload);
+            var testEvent = new TapTestMessage("Tap forward test", "forward-test", DateTimeOffset.UtcNow);
             var publishOptions = new PublishOptions
             {
                 Exchange = sourceExchange,
                 ExchangeType = PublishOptionsExchangeType.Fanout
             };
-            await messageBus.PublishAsync(sourceTopic, envelope, publishOptions);
+            await messageBus.PublishAsync(sourceTopic, testEvent, publishOptions);
 
             // Wait for message to be forwarded (with timeout)
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
@@ -362,13 +360,13 @@ public class MessagingTestHandler : BaseHttpTestHandler
             await using var tap1 = await messageTap.CreateTapAsync("events", destination, sourceExchange1);
             await using var tap2 = await messageTap.CreateTapAsync("events", destination, sourceExchange2);
 
-            // Publish to both character exchanges (wrapped in GenericMessageEnvelope for tap interception)
+            // Publish to both character exchanges
             var publishOptions1 = new PublishOptions { Exchange = sourceExchange1, ExchangeType = PublishOptionsExchangeType.Fanout };
             var publishOptions2 = new PublishOptions { Exchange = sourceExchange2, ExchangeType = PublishOptionsExchangeType.Fanout };
-            var envelope1 = new GenericMessageEnvelope("events", new TapTestMessage("Multi-tap test", "charA", DateTimeOffset.UtcNow));
-            var envelope2 = new GenericMessageEnvelope("events", new TapTestMessage("Multi-tap test", "charB", DateTimeOffset.UtcNow));
-            await messageBus.PublishAsync("events", envelope1, publishOptions1);
-            await messageBus.PublishAsync("events", envelope2, publishOptions2);
+            var event1 = new TapTestMessage("Multi-tap test", "charA", DateTimeOffset.UtcNow);
+            var event2 = new TapTestMessage("Multi-tap test", "charB", DateTimeOffset.UtcNow);
+            await messageBus.PublishAsync("events", event1, publishOptions1);
+            await messageBus.PublishAsync("events", event2, publishOptions2);
 
             // Wait for both messages
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
@@ -428,10 +426,10 @@ public class MessagingTestHandler : BaseHttpTestHandler
             var tapHandle = await messageTap.CreateTapAsync("events", destination, sourceExchange);
             var tapId = tapHandle.TapId;
 
-            // Publish first message - should be forwarded (wrapped in GenericMessageEnvelope)
+            // Publish first message - should be forwarded
             var publishOptions = new PublishOptions { Exchange = sourceExchange, ExchangeType = PublishOptionsExchangeType.Fanout };
-            var envelope1 = new GenericMessageEnvelope("events", new TapTestMessage("Dispose test", "before_dispose", DateTimeOffset.UtcNow));
-            await messageBus.PublishAsync("events", envelope1, publishOptions);
+            var event1 = new TapTestMessage("Dispose test", "before_dispose", DateTimeOffset.UtcNow);
+            await messageBus.PublishAsync("events", event1, publishOptions);
 
             using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             try
@@ -457,8 +455,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
             await Task.Delay(500);
 
             // Publish second message - should NOT be forwarded
-            var envelope2 = new GenericMessageEnvelope("events", new TapTestMessage("Dispose test", "after_dispose", DateTimeOffset.UtcNow));
-            await messageBus.PublishAsync("events", envelope2, publishOptions);
+            var event2 = new TapTestMessage("Dispose test", "after_dispose", DateTimeOffset.UtcNow);
+            await messageBus.PublishAsync("events", event2, publishOptions);
 
             // Wait to see if message arrives (it shouldn't)
             await Task.Delay(2000);
@@ -509,10 +507,10 @@ public class MessagingTestHandler : BaseHttpTestHandler
 
             await using var tapHandle = await messageTap.CreateTapAsync(sourceTopic, destination, sourceExchange);
 
-            // Publish message to source exchange (wrapped in GenericMessageEnvelope)
+            // Publish message to source exchange
             var publishOptions = new PublishOptions { Exchange = sourceExchange, ExchangeType = PublishOptionsExchangeType.Fanout };
-            var envelope = new GenericMessageEnvelope(sourceTopic, new TapTestMessage("Metadata test", "metadata-test", DateTimeOffset.UtcNow));
-            await messageBus.PublishAsync(sourceTopic, envelope, publishOptions);
+            var testEvent = new TapTestMessage("Metadata test", "metadata-test", DateTimeOffset.UtcNow);
+            await messageBus.PublishAsync(sourceTopic, testEvent, publishOptions);
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             try
