@@ -340,6 +340,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "sessionId": {
           "type": "string",
+          "format": "uuid",
           "description": "Session ID for lookup in Redis"
         },
         "serviceIds": {
@@ -368,7 +369,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       ],
       "properties": {
         "sessionId": {
-          "type": "string"
+          "type": "string",
+          "format": "uuid"
         },
         "permissions": {
           "type": "object",
@@ -461,7 +463,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       ],
       "properties": {
         "sessionId": {
-          "type": "string"
+          "type": "string",
+          "format": "uuid"
         },
         "serviceId": {
           "type": "string",
@@ -494,7 +497,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
           "description": "Whether access is permitted"
         },
         "sessionId": {
-          "type": "string"
+          "type": "string",
+          "format": "uuid"
         },
         "reason": {
           "type": "string",
@@ -732,7 +736,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       ],
       "properties": {
         "sessionId": {
-          "type": "string"
+          "type": "string",
+          "format": "uuid"
         },
         "serviceId": {
           "type": "string",
@@ -772,7 +777,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       ],
       "properties": {
         "sessionId": {
-          "type": "string"
+          "type": "string",
+          "format": "uuid"
         },
         "success": {
           "type": "boolean",
@@ -875,7 +881,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       ],
       "properties": {
         "sessionId": {
-          "type": "string"
+          "type": "string",
+          "format": "uuid"
         },
         "newRole": {
           "type": "string",
@@ -906,7 +913,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       ],
       "properties": {
         "sessionId": {
-          "type": "string"
+          "type": "string",
+          "format": "uuid"
         },
         "success": {
           "type": "boolean",
@@ -1010,6 +1018,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       "properties": {
         "sessionId": {
           "type": "string",
+          "format": "uuid",
           "description": "Session ID to clear state from"
         },
         "serviceId": {
@@ -1021,7 +1030,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
           "items": {
             "type": "string"
           },
-          "description": "Optional list of state values to match. If provided, only clears if\ ncurrent state matches one of these values. If empty or not provided,\nclears the state unconditionally.\n",
+          "description": "Optional list of state values to match. If provided, only clears if\ncurrent state matches one of these values. If empty or not provided,\nclears the state unconditionally.\n",
           "nullable": true
         }
       }
@@ -1044,7 +1053,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       ],
       "properties": {
         "sessionId": {
-          "type": "string"
+          "type": "string",
+          "format": "uuid"
         },
         "success": {
           "type": "boolean",
@@ -1146,7 +1156,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       ],
       "properties": {
         "sessionId": {
-          "type": "string"
+          "type": "string",
+          "format": "uuid"
         }
       }
     }
@@ -1169,7 +1180,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
       ],
       "properties": {
         "sessionId": {
-          "type": "string"
+          "type": "string",
+          "format": "uuid"
         },
         "role": {
           "type": "string",

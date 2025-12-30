@@ -361,7 +361,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       ],
       "properties": {
         "sessionId": {
-          "type": "string"
+          "type": "string",
+          "format": "uuid"
         },
         "gameType": {
           "type": "string",
@@ -571,7 +572,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       ],
       "properties": {
         "sessionId": {
-          "type": "string"
+          "type": "string",
+          "format": "uuid"
         },
         "gameType": {
           "type": "string",
@@ -757,7 +759,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
       ],
       "properties": {
         "sessionId": {
-          "type": "string"
+          "type": "string",
+          "format": "uuid"
         },
         "gameType": {
           "type": "string",
@@ -983,7 +986,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
           "type": "boolean"
         },
         "sessionId": {
-          "type": "string"
+          "type": "string",
+          "format": "uuid"
         },
         "playerRole": {
           "type": "string",
@@ -1013,7 +1017,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     },
     "VoiceConnectionInfo": {
       "type": "object",
-      "description": "Minimal voice metadata returned when joining a session.\ n\n**Event-Only Pattern**: Peer connection details are NOT included here.\nClients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).\nThis avoids race conditions between response processing and event handling.\n",
+      "description": "Minimal voice metadata returned when joining a session.\n\n**Event-Only Pattern**: Peer connection details are NOT included here.\nClients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).\nThis avoids race conditions between response processing and event handling.\n",
       "required": [
         "voiceEnabled"
       ],

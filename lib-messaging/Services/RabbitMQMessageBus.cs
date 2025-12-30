@@ -218,7 +218,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
 
     /// <inheritdoc/>
     public async Task<bool> TryPublishErrorAsync(
-        string serviceId,
+        string serviceName,
         string operation,
         string errorType,
         string message,
@@ -234,9 +234,11 @@ public sealed class RabbitMQMessageBus : IMessageBus
         {
             var errorEvent = new ServiceErrorEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventName = ServiceErrorEventEventName.Service_error,
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                ServiceId = serviceId,
+                ServiceId = Guid.Parse(Program.ServiceGUID),
+                ServiceName = serviceName,
                 AppId = Environment.GetEnvironmentVariable(AppConstants.ENV_BANNOU_APP_ID) ?? AppConstants.DEFAULT_APP_NAME,
                 Operation = operation,
                 ErrorType = errorType,
@@ -255,7 +257,7 @@ public sealed class RabbitMQMessageBus : IMessageBus
         catch (Exception ex)
         {
             // Avoid cascading failures when pub/sub infrastructure is the culprit.
-            _logger.LogWarning(ex, "Failed to publish ServiceErrorEvent for {ServiceId}/{Operation}", serviceId, operation);
+            _logger.LogWarning(ex, "Failed to publish ServiceErrorEvent for {ServiceName}/{Operation}", serviceName, operation);
             return false;
         }
     }

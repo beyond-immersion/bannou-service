@@ -128,7 +128,7 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
             _logger.LogDebug(
                 "Tap {TapId} forwarded message {EventId} from {SourceTopic} to {DestinationTopic}",
                 tapId,
-                bannouEvent.BannouEventId,
+                bannouEvent.EventId,
                 sourceTopic,
                 destinationTopic);
         }
@@ -138,7 +138,7 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
                 ex,
                 "Tap {TapId} failed to forward message {EventId} from {SourceTopic}",
                 tapId,
-                bannouEvent.BannouEventId,
+                bannouEvent.EventId,
                 sourceTopic);
             throw;
         }

@@ -49,6 +49,8 @@ components:
         and permission requirements with the Permissions service.
       required:
         - eventName
+        - eventId
+        - timestamp
         - serviceId
         - serviceName
         - version
@@ -146,6 +148,8 @@ components:
         Used for load balancing and service discovery by the orchestrator.
       required:
         - eventName
+        - eventId
+        - timestamp
         - serviceId
         - appId
         - status
@@ -243,6 +247,8 @@ components:
         Use ONLY for internal faults, not for user/input errors.
       required:
         - eventName
+        - eventId
+        - timestamp
         - serviceId
         - serviceName
         - appId
@@ -319,6 +325,8 @@ components:
         Published every 30 seconds AND immediately when routing changes.
       required:
         - eventName
+        - eventId
+        - timestamp
         - mappings
         - version
       properties:
@@ -359,6 +367,8 @@ components:
         synchronous API calls from Connect to Permissions.
       required:
         - eventName
+        - eventId
+        - timestamp
         - sessionId
         - accountId
       properties:
@@ -407,6 +417,8 @@ components:
         Also enables cleanup of session-specific resources across services.
       required:
         - eventName
+        - eventId
+        - timestamp
         - sessionId
       properties:
         eventName:
@@ -449,6 +461,8 @@ components:
         game state, etc.) and publish new ShortcutPublishedEvents as appropriate.
       required:
         - eventName
+        - eventId
+        - timestamp
         - sessionId
         - accountId
       properties:

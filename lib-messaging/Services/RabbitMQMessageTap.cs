@@ -205,10 +205,11 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
         DateTimeOffset tapCreatedAt,
         CancellationToken cancellationToken)
     {
-        string? eventId = null;
+        Guid eventId = Guid.Empty;
+        string? eventName = null;
         DateTimeOffset timestamp = DateTimeOffset.UtcNow;
 
-        // Parse the raw JSON to extract eventId and timestamp
+        // Parse the raw JSON to extract eventId, eventName, and timestamp
         string rawJsonPayload = Encoding.UTF8.GetString(body.Span);
 
         try
@@ -217,13 +218,25 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
             var root = doc.RootElement;
 
             // Extract eventId from the message
-            if (root.TryGetProperty("eventId", out var eventIdProp))
+            if (root.TryGetProperty("eventId", out var eventIdProp) &&
+                eventIdProp.TryGetGuid(out var parsedId))
             {
-                eventId = eventIdProp.GetString();
+                eventId = parsedId;
             }
-            else if (root.TryGetProperty("event_id", out var eventIdProp2))
+            else if (root.TryGetProperty("event_id", out var eventIdProp2) &&
+                eventIdProp2.TryGetGuid(out var parsedId2))
             {
-                eventId = eventIdProp2.GetString();
+                eventId = parsedId2;
+            }
+
+            // Extract eventName from the message
+            if (root.TryGetProperty("eventName", out var eventNameProp))
+            {
+                eventName = eventNameProp.GetString();
+            }
+            else if (root.TryGetProperty("event_name", out var eventNameProp2))
+            {
+                eventName = eventNameProp2.GetString();
             }
 
             // Extract timestamp from the message
@@ -241,12 +254,24 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
                 tapId);
         }
 
-        eventId ??= basicProperties.MessageId ?? Guid.NewGuid().ToString();
+        if (eventId == Guid.Empty)
+        {
+            // Try to parse MessageId as Guid, otherwise generate new
+            if (basicProperties.MessageId != null && Guid.TryParse(basicProperties.MessageId, out var msgId))
+            {
+                eventId = msgId;
+            }
+            else
+            {
+                eventId = Guid.NewGuid();
+            }
+        }
 
         // Create tapped envelope with the raw JSON as payload
         var tappedEnvelope = new TappedMessageEnvelope
         {
             EventId = eventId,
+            EventName = eventName ?? $"tap.{sourceTopic}",
             Timestamp = timestamp,
             Topic = sourceTopic,
             PayloadJson = rawJsonPayload,

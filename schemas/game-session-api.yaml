@@ -53,26 +53,26 @@ paths:
         \      \"items\": {\n            \"$ref\": \"#/$defs/GameSessionResponse\"\n          }\n        },\n        \"totalCount\"\
         : {\n          \"type\": \"integer\"\n        }\n      }\n    },\n    \"GameSessionResponse\": {\n      \"type\":
         \"object\",\n      \"required\": [\n        \"sessionId\",\n        \"gameType\",\n        \"status\",\n        \"\
-        createdAt\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\"\n       \
-        \ },\n        \"gameType\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"arcadia\",\n\
-        \            \"generic\"\n          ]\n        },\n        \"sessionName\": {\n          \"type\": \"string\"\n  \
-        \      },\n        \"status\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"waiting\"\
-        ,\n            \"active\",\n            \"full\",\n            \"finished\"\n          ]\n        },\n        \"maxPlayers\"\
-        : {\n          \"type\": \"integer\"\n        },\n        \"currentPlayers\": {\n          \"type\": \"integer\"\n\
-        \        },\n        \"isPrivate\": {\n          \"type\": \"boolean\"\n        },\n        \"owner\": {\n       \
-        \   \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"players\": {\n          \"type\"\
-        : \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/GamePlayer\"\n          }\n        },\n    \
-        \    \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"\
-        gameSettings\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true\n        }\n      }\n\
-        \    },\n    \"GamePlayer\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"accountId\",\n     \
-        \   \"joinedAt\",\n        \"role\"\n      ],\n      \"properties\": {\n        \"accountId\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"uuid\"\n        },\n        \"displayName\": {\n          \"type\": \"string\"\
-        \n        },\n        \"role\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"player\"\
-        ,\n            \"spectator\",\n            \"moderator\"\n          ]\n        },\n        \"joinedAt\": {\n     \
-        \     \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"characterData\": {\n     \
-        \     \"type\": \"object\",\n          \"additionalProperties\": true\n        },\n        \"voiceSessionId\": {\n\
-        \          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Voice participant session
-        ID (if player has joined voice)\"\n        }\n      }\n    }\n  }\n}"
+        createdAt\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n      \
+        \    \"format\": \"uuid\"\n        },\n        \"gameType\": {\n          \"type\": \"string\",\n          \"enum\"\
+        : [\n            \"arcadia\",\n            \"generic\"\n          ]\n        },\n        \"sessionName\": {\n    \
+        \      \"type\": \"string\"\n        },\n        \"status\": {\n          \"type\": \"string\",\n          \"enum\"\
+        : [\n            \"waiting\",\n            \"active\",\n            \"full\",\n            \"finished\"\n        \
+        \  ]\n        },\n        \"maxPlayers\": {\n          \"type\": \"integer\"\n        },\n        \"currentPlayers\"\
+        : {\n          \"type\": \"integer\"\n        },\n        \"isPrivate\": {\n          \"type\": \"boolean\"\n    \
+        \    },\n        \"owner\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n     \
+        \   \"players\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/GamePlayer\"\
+        \n          }\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\
+        \n        },\n        \"gameSettings\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true\n\
+        \        }\n      }\n    },\n    \"GamePlayer\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
+        accountId\",\n        \"joinedAt\",\n        \"role\"\n      ],\n      \"properties\": {\n        \"accountId\": {\n\
+        \          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"displayName\": {\n       \
+        \   \"type\": \"string\"\n        },\n        \"role\": {\n          \"type\": \"string\",\n          \"enum\": [\n\
+        \            \"player\",\n            \"spectator\",\n            \"moderator\"\n          ]\n        },\n       \
+        \ \"joinedAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"characterData\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true\n        },\n        \"voiceSessionId\"\
+        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Voice participant
+        session ID (if player has joined voice)\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"List available game sessions\",\n  \"description\": \"List available game
         sessions. This endpoint is not directly accessible via WebSocket API.\\nAccess is granted through session shortcuts
         or internal service calls.\\n\",\n  \"tags\": [\n    \"Game Sessions\"\n  ],\n  \"deprecated\": false,\n  \"operationId\"\
@@ -116,26 +116,26 @@ paths:
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GameSessionResponse\"\
         ,\n  \"$defs\": {\n    \"GameSessionResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         sessionId\",\n        \"gameType\",\n        \"status\",\n        \"createdAt\"\n      ],\n      \"properties\": {\n\
-        \        \"sessionId\": {\n          \"type\": \"string\"\n        },\n        \"gameType\": {\n          \"type\"\
-        : \"string\",\n          \"enum\": [\n            \"arcadia\",\n            \"generic\"\n          ]\n        },\n\
-        \        \"sessionName\": {\n          \"type\": \"string\"\n        },\n        \"status\": {\n          \"type\"\
-        : \"string\",\n          \"enum\": [\n            \"waiting\",\n            \"active\",\n            \"full\",\n \
-        \           \"finished\"\n          ]\n        },\n        \"maxPlayers\": {\n          \"type\": \"integer\"\n  \
-        \      },\n        \"currentPlayers\": {\n          \"type\": \"integer\"\n        },\n        \"isPrivate\": {\n\
-        \          \"type\": \"boolean\"\n        },\n        \"owner\": {\n          \"type\": \"string\",\n          \"\
-        format\": \"uuid\"\n        },\n        \"players\": {\n          \"type\": \"array\",\n          \"items\": {\n \
-        \           \"$ref\": \"#/$defs/GamePlayer\"\n          }\n        },\n        \"createdAt\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"date-time\"\n        },\n        \"gameSettings\": {\n          \"type\": \"\
-        object\",\n          \"additionalProperties\": true\n        }\n      }\n    },\n    \"GamePlayer\": {\n      \"type\"\
-        : \"object\",\n      \"required\": [\n        \"accountId\",\n        \"joinedAt\",\n        \"role\"\n      ],\n\
-        \      \"properties\": {\n        \"accountId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\
-        \n        },\n        \"displayName\": {\n          \"type\": \"string\"\n        },\n        \"role\": {\n      \
-        \    \"type\": \"string\",\n          \"enum\": [\n            \"player\",\n            \"spectator\",\n         \
-        \   \"moderator\"\n          ]\n        },\n        \"joinedAt\": {\n          \"type\": \"string\",\n          \"\
-        format\": \"date-time\"\n        },\n        \"characterData\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true\n        },\n        \"voiceSessionId\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n\
-        \          \"description\": \"Voice participant session ID (if player has joined voice)\"\n        }\n      }\n  \
-        \  }\n  }\n}"
+        \        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"\
+        gameType\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"arcadia\",\n            \"generic\"\
+        \n          ]\n        },\n        \"sessionName\": {\n          \"type\": \"string\"\n        },\n        \"status\"\
+        : {\n          \"type\": \"string\",\n          \"enum\": [\n            \"waiting\",\n            \"active\",\n \
+        \           \"full\",\n            \"finished\"\n          ]\n        },\n        \"maxPlayers\": {\n          \"\
+        type\": \"integer\"\n        },\n        \"currentPlayers\": {\n          \"type\": \"integer\"\n        },\n    \
+        \    \"isPrivate\": {\n          \"type\": \"boolean\"\n        },\n        \"owner\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\"\n        },\n        \"players\": {\n          \"type\": \"array\",\n          \"\
+        items\": {\n            \"$ref\": \"#/$defs/GamePlayer\"\n          }\n        },\n        \"createdAt\": {\n    \
+        \      \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"gameSettings\": {\n     \
+        \     \"type\": \"object\",\n          \"additionalProperties\": true\n        }\n      }\n    },\n    \"GamePlayer\"\
+        : {\n      \"type\": \"object\",\n      \"required\": [\n        \"accountId\",\n        \"joinedAt\",\n        \"\
+        role\"\n      ],\n      \"properties\": {\n        \"accountId\": {\n          \"type\": \"string\",\n          \"\
+        format\": \"uuid\"\n        },\n        \"displayName\": {\n          \"type\": \"string\"\n        },\n        \"\
+        role\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"player\",\n            \"spectator\"\
+        ,\n            \"moderator\"\n          ]\n        },\n        \"joinedAt\": {\n          \"type\": \"string\",\n\
+        \          \"format\": \"date-time\"\n        },\n        \"characterData\": {\n          \"type\": \"object\",\n\
+        \          \"additionalProperties\": true\n        },\n        \"voiceSessionId\": {\n          \"type\": \"string\"\
+        ,\n          \"nullable\": true,\n          \"description\": \"Voice participant session ID (if player has joined
+        voice)\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Create new game session\",\n  \"description\": \"Create a new game session.
         This endpoint is not directly accessible via WebSocket API.\\nAccess is granted through session shortcuts or internal
         service calls.\\n\",\n  \"tags\": [\n    \"Game Sessions\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"\
@@ -175,26 +175,26 @@ paths:
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GameSessionResponse\"\
         ,\n  \"$defs\": {\n    \"GameSessionResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         sessionId\",\n        \"gameType\",\n        \"status\",\n        \"createdAt\"\n      ],\n      \"properties\": {\n\
-        \        \"sessionId\": {\n          \"type\": \"string\"\n        },\n        \"gameType\": {\n          \"type\"\
-        : \"string\",\n          \"enum\": [\n            \"arcadia\",\n            \"generic\"\n          ]\n        },\n\
-        \        \"sessionName\": {\n          \"type\": \"string\"\n        },\n        \"status\": {\n          \"type\"\
-        : \"string\",\n          \"enum\": [\n            \"waiting\",\n            \"active\",\n            \"full\",\n \
-        \           \"finished\"\n          ]\n        },\n        \"maxPlayers\": {\n          \"type\": \"integer\"\n  \
-        \      },\n        \"currentPlayers\": {\n          \"type\": \"integer\"\n        },\n        \"isPrivate\": {\n\
-        \          \"type\": \"boolean\"\n        },\n        \"owner\": {\n          \"type\": \"string\",\n          \"\
-        format\": \"uuid\"\n        },\n        \"players\": {\n          \"type\": \"array\",\n          \"items\": {\n \
-        \           \"$ref\": \"#/$defs/GamePlayer\"\n          }\n        },\n        \"createdAt\": {\n          \"type\"\
-        : \"string\",\n          \"format\": \"date-time\"\n        },\n        \"gameSettings\": {\n          \"type\": \"\
-        object\",\n          \"additionalProperties\": true\n        }\n      }\n    },\n    \"GamePlayer\": {\n      \"type\"\
-        : \"object\",\n      \"required\": [\n        \"accountId\",\n        \"joinedAt\",\n        \"role\"\n      ],\n\
-        \      \"properties\": {\n        \"accountId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\
-        \n        },\n        \"displayName\": {\n          \"type\": \"string\"\n        },\n        \"role\": {\n      \
-        \    \"type\": \"string\",\n          \"enum\": [\n            \"player\",\n            \"spectator\",\n         \
-        \   \"moderator\"\n          ]\n        },\n        \"joinedAt\": {\n          \"type\": \"string\",\n          \"\
-        format\": \"date-time\"\n        },\n        \"characterData\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true\n        },\n        \"voiceSessionId\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n\
-        \          \"description\": \"Voice participant session ID (if player has joined voice)\"\n        }\n      }\n  \
-        \  }\n  }\n}"
+        \        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\"\n        },\n        \"\
+        gameType\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"arcadia\",\n            \"generic\"\
+        \n          ]\n        },\n        \"sessionName\": {\n          \"type\": \"string\"\n        },\n        \"status\"\
+        : {\n          \"type\": \"string\",\n          \"enum\": [\n            \"waiting\",\n            \"active\",\n \
+        \           \"full\",\n            \"finished\"\n          ]\n        },\n        \"maxPlayers\": {\n          \"\
+        type\": \"integer\"\n        },\n        \"currentPlayers\": {\n          \"type\": \"integer\"\n        },\n    \
+        \    \"isPrivate\": {\n          \"type\": \"boolean\"\n        },\n        \"owner\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"uuid\"\n        },\n        \"players\": {\n          \"type\": \"array\",\n          \"\
+        items\": {\n            \"$ref\": \"#/$defs/GamePlayer\"\n          }\n        },\n        \"createdAt\": {\n    \
+        \      \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"gameSettings\": {\n     \
+        \     \"type\": \"object\",\n          \"additionalProperties\": true\n        }\n      }\n    },\n    \"GamePlayer\"\
+        : {\n      \"type\": \"object\",\n      \"required\": [\n        \"accountId\",\n        \"joinedAt\",\n        \"\
+        role\"\n      ],\n      \"properties\": {\n        \"accountId\": {\n          \"type\": \"string\",\n          \"\
+        format\": \"uuid\"\n        },\n        \"displayName\": {\n          \"type\": \"string\"\n        },\n        \"\
+        role\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"player\",\n            \"spectator\"\
+        ,\n            \"moderator\"\n          ]\n        },\n        \"joinedAt\": {\n          \"type\": \"string\",\n\
+        \          \"format\": \"date-time\"\n        },\n        \"characterData\": {\n          \"type\": \"object\",\n\
+        \          \"additionalProperties\": true\n        },\n        \"voiceSessionId\": {\n          \"type\": \"string\"\
+        ,\n          \"nullable\": true,\n          \"description\": \"Voice participant session ID (if player has joined
+        voice)\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get game session details\",\n  \"description\": \"Get details of the current
         game session the user has joined.\",\n  \"tags\": [\n    \"Game Sessions\"\n  ],\n  \"deprecated\": false,\n  \"operationId\"\
         : \"getGameSession\"\n}"
@@ -249,28 +249,29 @@ paths:
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/JoinGameSessionResponse\"\
         ,\n  \"$defs\": {\n    \"JoinGameSessionResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n      \
         \  \"success\",\n        \"sessionId\",\n        \"playerRole\"\n      ],\n      \"properties\": {\n        \"success\"\
-        : {\n          \"type\": \"boolean\"\n        },\n        \"sessionId\": {\n          \"type\": \"string\"\n     \
-        \   },\n        \"playerRole\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"player\"\
-        ,\n            \"spectator\",\n            \"moderator\"\n          ]\n        },\n        \"gameData\": {\n     \
-        \     \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Initial game
-        state data\"\n        },\n        \"newPermissions\": {\n          \"type\": \"array\",\n          \"items\": {\n\
-        \            \"type\": \"string\"\n          },\n          \"description\": \"Additional permissions granted by joining\"\
-        \n        },\n        \"voice\": {\n          \"$ref\": \"#/$defs/VoiceConnectionInfo\",\n          \"description\"\
-        : \"Voice connection info (if voice is enabled for this session)\"\n        }\n      }\n    },\n    \"VoiceConnectionInfo\"\
-        : {\n      \"type\": \"object\",\n      \"description\": \"Minimal voice metadata returned when joining a session.\\
-        n\\n**Event-Only Pattern**: Peer connection details are NOT included here.\\nClients receive VoicePeerJoinedEvent
-        when other peers join (with their SDP offers).\\nThis avoids race conditions between response processing and event
-        handling.\\n\",\n      \"required\": [\n        \"voiceEnabled\"\n      ],\n      \"properties\": {\n        \"voiceEnabled\"\
-        : {\n          \"type\": \"boolean\",\n          \"description\": \"Whether voice is enabled for this game session\"\
-        \n        },\n        \"roomId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"\
-        nullable\": true,\n          \"description\": \"Voice room ID (null until room is created when 2+ participants join
-        with voice)\"\n        },\n        \"tier\": {\n          \"type\": \"string\",\n          \"enum\": [\n         \
-        \   \"p2p\",\n            \"scaled\"\n          ],\n          \"nullable\": true,\n          \"description\": \"Expected
-        voice tier (may change based on participant count)\"\n        },\n        \"codec\": {\n          \"type\": \"string\"\
-        ,\n          \"enum\": [\n            \"opus\",\n            \"g711\",\n            \"g722\"\n          ],\n     \
-        \     \"description\": \"Audio codec to use\"\n        },\n        \"stunServers\": {\n          \"type\": \"array\"\
-        ,\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"STUN server
-        URIs for NAT traversal (clients should configure these early)\"\n        }\n      }\n    }\n  }\n}"
+        : {\n          \"type\": \"boolean\"\n        },\n        \"sessionId\": {\n          \"type\": \"string\",\n    \
+        \      \"format\": \"uuid\"\n        },\n        \"playerRole\": {\n          \"type\": \"string\",\n          \"\
+        enum\": [\n            \"player\",\n            \"spectator\",\n            \"moderator\"\n          ]\n        },\n\
+        \        \"gameData\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"\
+        description\": \"Initial game state data\"\n        },\n        \"newPermissions\": {\n          \"type\": \"array\"\
+        ,\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"Additional
+        permissions granted by joining\"\n        },\n        \"voice\": {\n          \"$ref\": \"#/$defs/VoiceConnectionInfo\"\
+        ,\n          \"description\": \"Voice connection info (if voice is enabled for this session)\"\n        }\n      }\n\
+        \    },\n    \"VoiceConnectionInfo\": {\n      \"type\": \"object\",\n      \"description\": \"Minimal voice metadata
+        returned when joining a session.\\n\\n**Event-Only Pattern**: Peer connection details are NOT included here.\\nClients
+        receive VoicePeerJoinedEvent when other peers join (with their SDP offers).\\nThis avoids race conditions between
+        response processing and event handling.\\n\",\n      \"required\": [\n        \"voiceEnabled\"\n      ],\n      \"\
+        properties\": {\n        \"voiceEnabled\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether
+        voice is enabled for this game session\"\n        },\n        \"roomId\": {\n          \"type\": \"string\",\n   \
+        \       \"format\": \"uuid\",\n          \"nullable\": true,\n          \"description\": \"Voice room ID (null until
+        room is created when 2+ participants join with voice)\"\n        },\n        \"tier\": {\n          \"type\": \"string\"\
+        ,\n          \"enum\": [\n            \"p2p\",\n            \"scaled\"\n          ],\n          \"nullable\": true,\n\
+        \          \"description\": \"Expected voice tier (may change based on participant count)\"\n        },\n        \"\
+        codec\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"opus\",\n            \"g711\",\n\
+        \            \"g722\"\n          ],\n          \"description\": \"Audio codec to use\"\n        },\n        \"stunServers\"\
+        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n    \
+        \      \"description\": \"STUN server URIs for NAT traversal (clients should configure these early)\"\n        }\n\
+        \      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Join a game session\",\n  \"description\": \"Join an existing game session.
         This endpoint is not directly accessible via WebSocket API.\\nAccess is granted through session shortcuts published
         by the game-session service when\\na subscribed user connects. The shortcut contains a pre-bound JoinGameSessionRequest\\

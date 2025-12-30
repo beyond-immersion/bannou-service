@@ -368,13 +368,14 @@ paths:
         ,\n  \"$defs\": {\n    \"ValidateTokenResponse\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"\
         valid\",\n        \"accountId\",\n        \"sessionId\"\n      ],\n      \"properties\": {\n        \"valid\": {\n\
         \          \"type\": \"boolean\"\n        },\n        \"accountId\": {\n          \"type\": \"string\",\n        \
-        \  \"format\": \"uuid\"\n        },\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Session identifier for WebSocket connections and service routing\"\n        },\n        \"roles\": {\n       \
-        \   \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n    \
-        \    \"authorizations\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\
-        \n          },\n          \"description\": \"Authorization strings from active subscriptions.\\nFormat: \\\"{stubName}:{state}\\\
-        \" (e.g., \\\"arcadia:authorized\\\")\\n\"\n        },\n        \"remainingTime\": {\n          \"type\": \"integer\"\
-        ,\n          \"description\": \"Seconds until expiration\"\n        }\n      }\n    }\n  }\n}"
+        \  \"format\": \"uuid\"\n        },\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\"\
+        : \"uuid\",\n          \"description\": \"Session identifier for WebSocket connections and service routing\"\n   \
+        \     },\n        \"roles\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\
+        \n          }\n        },\n        \"authorizations\": {\n          \"type\": \"array\",\n          \"items\": {\n\
+        \            \"type\": \"string\"\n          },\n          \"description\": \"Authorization strings from active subscriptions.\\
+        nFormat: \\\"{stubName}:{state}\\\" (e.g., \\\"arcadia:authorized\\\")\\n\"\n        },\n        \"remainingTime\"\
+        : {\n          \"type\": \"integer\",\n          \"description\": \"Seconds until expiration\"\n        }\n      }\n\
+        \    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Validate access token\",\n  \"description\": \"\",\n  \"tags\": [\n    \"\
         Tokens\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"validateToken\"\n}"
   /auth/logout:
@@ -441,17 +442,17 @@ paths:
         \n      ],\n      \"properties\": {\n        \"sessions\": {\n          \"type\": \"array\",\n          \"items\"\
         : {\n            \"$ref\": \"#/$defs/SessionInfo\"\n          }\n        }\n      }\n    },\n    \"SessionInfo\":
         {\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\",\n        \"createdAt\",\n        \"\
-        lastActive\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\"\n      \
-        \  },\n        \"deviceInfo\": {\n          \"$ref\": \"#/$defs/DeviceInfo\"\n        },\n        \"createdAt\": {\n\
-        \          \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"lastActive\": {\n   \
-        \       \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n        \"ipAddress\": {\n       \
-        \   \"type\": \"string\"\n        },\n        \"location\": {\n          \"type\": \"string\",\n          \"nullable\"\
-        : true\n        }\n      }\n    },\n    \"DeviceInfo\": {\n      \"type\": \"object\",\n      \"properties\": {\n\
-        \        \"deviceType\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"desktop\",\n   \
-        \         \"mobile\",\n            \"tablet\",\n            \"console\"\n          ]\n        },\n        \"platform\"\
-        : {\n          \"type\": \"string\"\n        },\n        \"browser\": {\n          \"type\": \"string\",\n       \
-        \   \"nullable\": true\n        },\n        \"appVersion\": {\n          \"type\": \"string\",\n          \"nullable\"\
-        : true\n        }\n      }\n    }\n  }\n}"
+        lastActive\"\n      ],\n      \"properties\": {\n        \"sessionId\": {\n          \"type\": \"string\",\n     \
+        \     \"format\": \"uuid\"\n        },\n        \"deviceInfo\": {\n          \"$ref\": \"#/$defs/DeviceInfo\"\n  \
+        \      },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n      \
+        \  },\n        \"lastActive\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\"\n        },\n\
+        \        \"ipAddress\": {\n          \"type\": \"string\"\n        },\n        \"location\": {\n          \"type\"\
+        : \"string\",\n          \"nullable\": true\n        }\n      }\n    },\n    \"DeviceInfo\": {\n      \"type\": \"\
+        object\",\n      \"properties\": {\n        \"deviceType\": {\n          \"type\": \"string\",\n          \"enum\"\
+        : [\n            \"desktop\",\n            \"mobile\",\n            \"tablet\",\n            \"console\"\n       \
+        \   ]\n        },\n        \"platform\": {\n          \"type\": \"string\"\n        },\n        \"browser\": {\n \
+        \         \"type\": \"string\",\n          \"nullable\": true\n        },\n        \"appVersion\": {\n          \"\
+        type\": \"string\",\n          \"nullable\": true\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get active sessions for account\",\n  \"description\": \"\",\n  \"tags\"\
         : [\n    \"Sessions\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getSessions\"\n}"
   /auth/sessions/terminate:

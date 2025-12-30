@@ -1233,6 +1233,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "sessionId": {
           "type": "string",
+          "format": "uuid",
           "description": "Session identifier for WebSocket connections and service routing"
         },
         "roles": {
@@ -1246,7 +1247,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
           "items": {
             "type": "string"
           },
-          "description": "Authorization strings from active subscriptions.\nFormat: \"{stubName}:{state}\" (e.g., \"arcadia:authorized\")\n"
+          "description": "Authorization strings from active subscriptions.\ nFormat: \"{stubName}:{state}\" (e.g., \"arcadia:authorized\")\n"
         },
         "remainingTime": {
           "type": "integer",
@@ -1425,7 +1426,8 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
       ],
       "properties": {
         "sessionId": {
-          "type": "string"
+          "type": "string",
+          "format": "uuid"
         },
         "deviceInfo": {
           "$ref": "#/$defs/DeviceInfo"

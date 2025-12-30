@@ -27,6 +27,7 @@ components:
           description: When this event occurred
         sessionId: &id003
           type: string
+          format: uuid
         gameType: &id004
           type: string
         sessionName: &id005

@@ -68,7 +68,7 @@ public interface IMessageBus
     /// Similar to Sentry/error tracking services.
     /// </para>
     /// </remarks>
-    /// <param name="serviceId">Service identifier (e.g., "accounts", "auth")</param>
+    /// <param name="serviceName">Service name (e.g., "accounts", "auth")</param>
     /// <param name="operation">Operation that failed (e.g., "GetAccount", "ValidateToken")</param>
     /// <param name="errorType">Exception type name</param>
     /// <param name="message">Error message</param>
@@ -81,7 +81,7 @@ public interface IMessageBus
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>True if the error event was published successfully, false otherwise</returns>
     Task<bool> TryPublishErrorAsync(
-        string serviceId,
+        string serviceName,
         string operation,
         string errorType,
         string message,

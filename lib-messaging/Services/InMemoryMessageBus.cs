@@ -69,7 +69,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
 
     /// <inheritdoc/>
     public Task<bool> TryPublishErrorAsync(
-        string serviceId,
+        string serviceName,
         string operation,
         string errorType,
         string message,
@@ -82,8 +82,8 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         CancellationToken cancellationToken = default)
     {
         _logger.LogWarning(
-            "[InMemory] Error event from {ServiceId}/{Operation}: {ErrorType} - {Message}",
-            serviceId, operation, errorType, message);
+            "[InMemory] Error event from {ServiceName}/{Operation}: {ErrorType} - {Message}",
+            serviceName, operation, errorType, message);
 
         return Task.FromResult(true);
     }

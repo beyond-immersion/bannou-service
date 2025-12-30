@@ -32,13 +32,16 @@ public static class LocationPermissionRegistration
     /// <summary>
     /// Generates the ServiceRegistrationEvent containing all endpoint permissions.
     /// </summary>
-    public static ServiceRegistrationEvent CreateRegistrationEvent()
+    /// <param name="instanceId">The unique instance GUID for this bannou instance</param>
+    public static ServiceRegistrationEvent CreateRegistrationEvent(Guid instanceId)
     {
         return new ServiceRegistrationEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventName = ServiceRegistrationEventEventName.Service_registration,
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ServiceId = ServiceId,
+            ServiceId = instanceId,
+            ServiceName = ServiceId,
             Version = ServiceVersion,
             AppId = AppConstants.DEFAULT_APP_NAME,
             Endpoints = GetEndpoints()
@@ -364,14 +367,14 @@ public static class LocationPermissionRegistration
     {
         try
         {
-            var registrationEvent = CreateRegistrationEvent();
+            var registrationEvent = CreateRegistrationEvent(Guid.Parse(Program.ServiceGUID));
 
             await messageBus.PublishAsync(
                 "permissions.service-registered",
                 registrationEvent);
 
             logger?.LogInformation(
-                "Published service registration event for {ServiceId} v{Version} with {EndpointCount} endpoints",
+                "Published service registration event for {ServiceName} v{Version} with {EndpointCount} endpoints",
                 ServiceId, ServiceVersion, registrationEvent.Endpoints.Count);
         }
         catch (Exception ex)

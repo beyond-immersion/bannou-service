@@ -110,8 +110,9 @@ public class TappedMessageEnvelope : GenericMessageEnvelope
         DateTimeOffset tapCreatedAt)
     {
         // Copy base envelope fields from IBannouEvent
-        EventId = original.BannouEventId;
-        Timestamp = original.BannouTimestamp;
+        EventId = original.EventId;
+        Timestamp = original.Timestamp;
+        EventName = original.EventName;
         Topic = sourceTopic;
         PayloadJson = BannouJson.Serialize(original);
         ContentType = "application/json";
@@ -153,8 +154,9 @@ public class TappedMessageEnvelope : GenericMessageEnvelope
     {
         return new TappedMessageEnvelope
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
+            EventName = $"tap.{sourceTopic}",
             Topic = sourceTopic,
             PayloadJson = BannouJson.Serialize(eventData),
             ContentType = "application/json",

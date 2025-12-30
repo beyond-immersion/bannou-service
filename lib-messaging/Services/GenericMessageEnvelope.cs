@@ -22,13 +22,19 @@ public class GenericMessageEnvelope : IBannouEvent
     /// Unique identifier for this message.
     /// </summary>
     [JsonPropertyName("eventId")]
-    public string EventId { get; set; } = Guid.NewGuid().ToString();
+    public Guid EventId { get; set; } = Guid.NewGuid();
 
     /// <summary>
     /// When the message was created.
     /// </summary>
     [JsonPropertyName("timestamp")]
     public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.UtcNow;
+
+    /// <summary>
+    /// The event type identifier. Uses the topic as the event name.
+    /// </summary>
+    [JsonPropertyName("eventName")]
+    public string EventName { get; set; } = "messaging.generic";
 
     /// <summary>
     /// The topic/routing key this message was published to.
@@ -64,6 +70,7 @@ public class GenericMessageEnvelope : IBannouEvent
     public GenericMessageEnvelope(string topic, object? payload)
     {
         Topic = topic;
+        EventName = $"messaging.{topic}";
         PayloadJson = payload != null ? BannouJson.Serialize(payload) : "{}";
     }
 
@@ -92,13 +99,4 @@ public class GenericMessageEnvelope : IBannouEvent
         return BannouJson.Deserialize<object>(PayloadJson);
     }
 
-    /// <inheritdoc />
-    string IBannouEvent.BannouEventId => EventId;
-
-    /// <inheritdoc />
-    DateTimeOffset IBannouEvent.BannouTimestamp => Timestamp;
-
-    Guid IBannouEvent.EventId => throw new NotImplementedException();
-
-    DateTime IBannouEvent.Timestamp => throw new NotImplementedException();
 }

@@ -38,7 +38,7 @@ public partial class GameSessionPlayerJoinedEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string EventId { get; set; } = default!;
+    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// When the player joined
@@ -52,14 +52,14 @@ public partial class GameSessionPlayerJoinedEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string SessionId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// ID of the account that joined
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string AccountId { get; set; } = default!;
+    public System.Guid AccountId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -84,7 +84,7 @@ public partial class GameSessionPlayerLeftEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string EventId { get; set; } = default!;
+    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// When the player left
@@ -98,14 +98,14 @@ public partial class GameSessionPlayerLeftEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string SessionId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// ID of the account that left
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string AccountId { get; set; } = default!;
+    public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
     /// Whether the player was kicked (vs left voluntarily)

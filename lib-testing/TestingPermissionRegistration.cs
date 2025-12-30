@@ -31,13 +31,16 @@ public static class TestingPermissionRegistration
     /// <summary>
     /// Generates the ServiceRegistrationEvent containing all endpoint permissions.
     /// </summary>
-    public static ServiceRegistrationEvent CreateRegistrationEvent()
+    /// <param name="instanceId">The unique instance GUID for this bannou instance</param>
+    public static ServiceRegistrationEvent CreateRegistrationEvent(Guid instanceId)
     {
         return new ServiceRegistrationEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventName = ServiceRegistrationEventEventName.Service_registration,
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            ServiceId = ServiceId,
+            ServiceId = instanceId,
+            ServiceName = ServiceId,
             Version = ServiceVersion,
             // BANNOU_APP_ID is a legitimate Tenet 21 exception - mesh bootstrap variable
             AppId = Environment.GetEnvironmentVariable("BANNOU_APP_ID") ?? AppConstants.DEFAULT_APP_NAME,
@@ -200,7 +203,7 @@ public static class TestingPermissionRegistration
     {
         try
         {
-            var registrationEvent = CreateRegistrationEvent();
+            var registrationEvent = CreateRegistrationEvent(Guid.Parse(Program.ServiceGUID));
 
             await messageBus.PublishAsync(
                 "permissions.service-registered",
