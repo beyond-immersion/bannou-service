@@ -3,21 +3,18 @@ info:
   title: Messaging Service Events
   description: |
     Event models for Messaging service pub/sub.
-    Contains internal tracking events for message debugging and monitoring.
+
+    NOTE: This service provides the messaging infrastructure itself and does not
+    publish or subscribe to events through standard channels.
+
+    Debug/monitoring events (MessagePublished, SubscriptionCreated/Removed) were
+    planned but never implemented. See docs/CLEANED_EVENTS.md for documentation
+    of these planned events.
   version: 1.0.0
-  x-event-subscriptions: []
   # No subscriptions - this service provides the messaging infrastructure itself
-  x-event-publications:
-    # Internal tracking events for debugging/monitoring
-    - topic: messaging.published
-      event: MessagePublishedEvent
-      description: Internal event for message tracking/debugging (optional, enable via config)
-    - topic: messaging.subscription.created
-      event: SubscriptionCreatedEvent
-      description: Published when a dynamic subscription is created
-    - topic: messaging.subscription.removed
-      event: SubscriptionRemovedEvent
-      description: Published when a subscription is removed
+  x-event-subscriptions: []
+  # No events currently implemented - debug events removed as they were aspirational
+  x-event-publications: []
 
 paths: {}  # Events don't have HTTP paths
 
@@ -37,66 +34,3 @@ components:
           type: string
           format: date-time
           description: When the event was created (UTC)
-
-    MessagePublishedEvent:
-      allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
-      type: object
-      description: Internal event for message tracking/debugging
-      required:
-        - topic
-        - messageId
-      properties:
-        topic:
-          type: string
-          description: Topic the message was published to
-        messageId:
-          type: string
-          format: uuid
-          description: ID of the published message
-        sourceService:
-          type: string
-          description: Service that published the message
-        payloadSizeBytes:
-          type: integer
-          description: Size of the message payload in bytes
-
-    SubscriptionCreatedEvent:
-      allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
-      type: object
-      description: Published when a dynamic subscription is created
-      required:
-        - subscriptionId
-        - topic
-      properties:
-        subscriptionId:
-          type: string
-          format: uuid
-          description: ID of the created subscription
-        topic:
-          type: string
-          description: Topic being subscribed to
-        subscriberAppId:
-          type: string
-          description: App ID of the subscribing service
-
-    SubscriptionRemovedEvent:
-      allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
-      type: object
-      description: Published when a subscription is removed
-      required:
-        - subscriptionId
-      properties:
-        subscriptionId:
-          type: string
-          format: uuid
-          description: ID of the removed subscription
-        reason:
-          $ref: '#/components/schemas/SubscriptionRemovedReason'
-
-    SubscriptionRemovedReason:
-      type: string
-      enum: [explicit, timeout, error]
-      description: Reason the subscription was removed

@@ -5,6 +5,18 @@ info:
     Event models for Relationship service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
   version: 1.0.0
+  x-event-subscriptions: []  # Relationship service doesn't subscribe to external events
+  x-event-publications:
+    # Relationship lifecycle events (auto-generated from x-lifecycle)
+    - topic: relationship.created
+      event: RelationshipCreatedEvent
+      description: Published when a new relationship is created
+    - topic: relationship.updated
+      event: RelationshipUpdatedEvent
+      description: Published when a relationship is updated
+    - topic: relationship.deleted
+      event: RelationshipDeletedEvent
+      description: Published when a relationship is soft-deleted
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/relationship-lifecycle-events.yaml

@@ -5,6 +5,18 @@ info:
     Event models for Species service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
   version: 1.0.0
+  x-event-subscriptions: []  # Species service doesn't subscribe to external events
+  x-event-publications:
+    # Species lifecycle events (auto-generated from x-lifecycle)
+    - topic: species.created
+      event: SpeciesCreatedEvent
+      description: Published when a new species is created
+    - topic: species.updated
+      event: SpeciesUpdatedEvent
+      description: Published when a species is updated
+    - topic: species.deleted
+      event: SpeciesDeletedEvent
+      description: Published when a species is soft-deleted
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/species-lifecycle-events.yaml

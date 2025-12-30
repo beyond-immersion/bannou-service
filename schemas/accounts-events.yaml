@@ -5,6 +5,18 @@ info:
     Event models for Accounts service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
   version: 1.0.0
+  x-event-subscriptions: []  # Accounts service doesn't subscribe to external events
+  x-event-publications:
+    # Account lifecycle events (auto-generated from x-lifecycle)
+    - topic: account.created
+      event: AccountCreatedEvent
+      description: Published when a new account is created
+    - topic: account.updated
+      event: AccountUpdatedEvent
+      description: Published when an account is updated
+    - topic: account.deleted
+      event: AccountDeletedEvent
+      description: Published when an account is soft-deleted
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/accounts-lifecycle-events.yaml

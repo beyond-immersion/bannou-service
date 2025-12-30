@@ -1,5 +1,8 @@
+using BeyondImmersion.Bannou.Behavior.Cognition;
 using BeyondImmersion.Bannou.Behavior.Compiler;
 using BeyondImmersion.Bannou.Behavior.Goap;
+using BeyondImmersion.Bannou.Behavior.Handlers;
+using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Plugins;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,7 +22,7 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
 
     /// <summary>
     /// Configures additional services for the Behavior plugin.
-    /// Registers the GOAP planner and ABML compiler as singletons (thread-safe, stateless).
+    /// Registers the GOAP planner, ABML compiler, cognition pipeline, and handlers.
     /// </summary>
     /// <param name="services">The service collection.</param>
     public override void ConfigureServices(IServiceCollection services)
@@ -38,5 +41,17 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
 
         // Register bundle manager for efficient behavior grouping and storage
         services.AddScoped<BehaviorBundleManager>();
+
+        // Register memory store for cognition pipeline (actor-local MVP)
+        services.AddSingleton<IMemoryStore, ActorLocalMemoryStore>();
+
+        // Register cognition pipeline handlers
+        // These handle domain actions for the 5-stage cognition pipeline
+        services.AddSingleton<IActionHandler, FilterAttentionHandler>();
+        services.AddSingleton<IActionHandler, QueryMemoryHandler>();
+        services.AddSingleton<IActionHandler, AssessSignificanceHandler>();
+        services.AddSingleton<IActionHandler, StoreMemoryHandler>();
+        services.AddSingleton<IActionHandler, EvaluateGoalImpactHandler>();
+        services.AddSingleton<IActionHandler, TriggerGoapReplanHandler>();
     }
 }

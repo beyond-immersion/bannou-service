@@ -1,6 +1,6 @@
 # Generated Events Reference
 
-> **Auto-generated**: 2025-12-30 09:55:59
+> **Auto-generated**: 2025-12-30 11:58:51
 > **Source**: `schemas/*-events.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -72,12 +72,9 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `DocumentViewedEvent` | Custom | `document-viewed` | Published when a document is viewed |
 | `DocumentationArchiveCreatedEvent` | Lifecycle (Created) | `documentation-archive.created` | Published when a documentation archive is created |
 | `DocumentationBindingCreatedEvent` | Lifecycle (Created) | `documentation-binding.created` | Published when a repository binding is created |
 | `DocumentationBindingRemovedEvent` | Custom | `documentation-binding-removed` | Published when a repository binding is removed |
-| `DocumentationImportCompletedEvent` | Custom | `documentation-import-completed` | Published when an import operation completes |
-| `DocumentationImportStartedEvent` | Custom | `documentation-import-started` | Published when an import operation starts |
 | `DocumentationQueriedEvent` | Custom | `documentation-queried` | Published when documentation is queried with natur... |
 | `DocumentationSearchedEvent` | Custom | `documentation-searched` | Published when documentation is searched with keyw... |
 | `DocumentationSyncCompletedEvent` | Custom | `documentation-sync-completed` | Published when a repository sync completes |
@@ -109,17 +106,12 @@ This document lists all events defined in Bannou's event schemas.
 | `BaseServiceEvent` | Custom | `base-service` |  |
 | `MeshEndpointDeregisteredEvent` | Registration | `mesh-endpoint-deregistered` | Published when an endpoint is removed from the ser... |
 | `MeshEndpointRegisteredEvent` | Registration | `mesh-endpoint.registered` | Published when a new endpoint is registered in the... |
-| `MeshEndpointStatusChangedEvent` | Custom | `mesh-endpoint-status-changed` | Published when an endpoint's health status changes... |
-| `MeshRoutingTableUpdatedEvent` | Lifecycle (Updated) | `mesh-routing-table.updated` | Published when the routing table changes. |
 
 ### Messaging
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `BaseServiceEvent` | Custom | `base-service` |  |
-| `MessagePublishedEvent` | Custom | `message-published` | Internal event for message tracking/debugging |
-| `SubscriptionCreatedEvent` | Lifecycle (Created) | `subscription.created` | Published when a dynamic subscription is created |
-| `SubscriptionRemovedEvent` | Custom | `subscription-removed` | Published when a subscription is removed |
 
 ### Orchestrator
 
@@ -132,9 +124,7 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `AuthSessionEvent` | Custom | `auth-session` | Authentication-related session events (login, logo... |
 | `BaseServiceEvent` | Custom | `base-service` |  |
-| `RedisOperationEvent` | Custom | `redis-operation` | Internal event for Redis operation tracking and mo... |
 | `SessionStateChangeEvent` | Custom | `session-state-change` | Published by services when a session's state chang... |
 
 ### State
@@ -142,9 +132,6 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `BaseServiceEvent` | Custom | `base-service` |  |
-| `StateChangedEvent` | Custom | `state-changed` | Published when state changes (optional, for debugg... |
-| `StoreHealthEvent` | Custom | `store-health` | Published for store health monitoring |
-| `StoreMigrationEvent` | Custom | `store-migration` | Published during store migration operations (e.g.,... |
 
 ### Subscriptions
 
@@ -158,12 +145,6 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `BaseServiceEvent` | Custom | `base-service` |  |
-| `VoiceParticipantJoinedEvent` | Custom | `voice-participant-joined` | Published when a participant joins a voice room. |
-| `VoiceParticipantLeftEvent` | Custom | `voice-participant-left` | Published when a participant leaves a voice room. |
-| `VoiceRoomCreatedEvent` | Lifecycle (Created) | `voice-room.created` | Published when a new voice room is created. |
-| `VoiceRoomDeletedEvent` | Lifecycle (Deleted) | `voice-room.deleted` | Published when a voice room is deleted. |
-| `VoiceTierUpgradeCompletedEvent` | Custom | `voice-tier-upgrade-completed` | Published when a voice room tier upgrade is comple... |
-| `VoiceTierUpgradeRequestedEvent` | Custom | `voice-tier-upgrade-requested` | Published when a voice room needs to upgrade from ... |
 
 ### Voice (client)
 

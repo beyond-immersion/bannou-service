@@ -10,6 +10,18 @@ info:
     - Existing behaviors are recompiled/updated (BehaviorUpdatedEvent)
     - Behaviors are deleted/invalidated (BehaviorDeletedEvent)
   version: 1.0.0
+  x-event-subscriptions: []  # Behavior service doesn't subscribe to external events
+  x-event-publications:
+    # Behavior lifecycle events (auto-generated from x-lifecycle)
+    - topic: behavior.created
+      event: BehaviorCreatedEvent
+      description: Published when a new behavior is compiled and stored
+    - topic: behavior.updated
+      event: BehaviorUpdatedEvent
+      description: Published when a behavior is recompiled/updated
+    - topic: behavior.deleted
+      event: BehaviorDeletedEvent
+      description: Published when a behavior is deleted/invalidated
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/behavior-lifecycle-events.yaml

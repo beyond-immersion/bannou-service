@@ -5,6 +5,18 @@ info:
     Event models for Realm service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
   version: 1.0.0
+  x-event-subscriptions: []  # Realm service doesn't subscribe to external events
+  x-event-publications:
+    # Realm lifecycle events (auto-generated from x-lifecycle)
+    - topic: realm.created
+      event: RealmCreatedEvent
+      description: Published when a new realm is created
+    - topic: realm.updated
+      event: RealmUpdatedEvent
+      description: Published when a realm is updated
+    - topic: realm.deleted
+      event: RealmDeletedEvent
+      description: Published when a realm is soft-deleted
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/realm-lifecycle-events.yaml

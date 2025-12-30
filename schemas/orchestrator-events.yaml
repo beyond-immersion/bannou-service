@@ -3,13 +3,22 @@ info:
   title: Orchestrator Service Events
   description: |
     Event models for Orchestrator service RabbitMQ pub/sub.
-    Used for internal health checks and orchestration events.
+    Used for service discovery, health checks, and orchestration events.
   version: 1.0.0
   x-event-subscriptions:
     # Service heartbeats from all bannou instances - used for deployment validation
     - topic: bannou-service-heartbeats
       event: ServiceHeartbeatEvent
       handler: HandleServiceHeartbeat
+  x-event-publications:
+    # Health check ping event
+    - topic: orchestrator.health-ping
+      event: OrchestratorHealthPingEvent
+      description: Published to verify pub/sub path is active
+    # Service mappings broadcast
+    - topic: bannou-full-service-mappings
+      event: FullServiceMappingsEvent
+      description: Published to broadcast full service-to-appId mappings to mesh
 
 paths: {}
 

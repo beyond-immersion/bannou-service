@@ -2,9 +2,10 @@ openapi: 3.0.3
 info:
   title: Connect Service Events
   description: |
-    Event subscriptions for Connect service.
+    Event subscriptions and publications for Connect service.
     Connect receives session invalidation events to disconnect WebSocket clients.
     Connect also receives service error events to forward to admin WebSocket clients.
+    Connect publishes session lifecycle events when clients connect/disconnect/reconnect.
   version: 1.1.0
   x-event-subscriptions:
     # Session lifecycle events from Auth service
@@ -15,8 +16,19 @@ info:
     - topic: service.error
       event: ServiceErrorEvent
       handler: HandleServiceError
+  x-event-publications:
+    # Session lifecycle events published when WebSocket clients connect/disconnect
+    - topic: session.connected
+      event: SessionConnectedEvent
+      description: Published when a WebSocket client successfully connects
+    - topic: session.disconnected
+      event: SessionDisconnectedEvent
+      description: Published when a WebSocket client disconnects
+    - topic: session.reconnected
+      event: SessionReconnectedEvent
+      description: Published when a WebSocket client reconnects within grace period
 
 paths: {}  # Events don't have HTTP paths
 
 components:
-  schemas: {}  # Events are defined in auth-events.yaml and common-events.yaml
+  schemas: {}  # Events are defined in common-events.yaml

@@ -5,6 +5,18 @@ info:
     Event models for Location service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
   version: 1.0.0
+  x-event-subscriptions: []  # Location service doesn't subscribe to external events
+  x-event-publications:
+    # Location lifecycle events (auto-generated from x-lifecycle)
+    - topic: location.created
+      event: LocationCreatedEvent
+      description: Published when a new location is created
+    - topic: location.updated
+      event: LocationUpdatedEvent
+      description: Published when a location is updated
+    - topic: location.deleted
+      event: LocationDeletedEvent
+      description: Published when a location is soft-deleted
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/location-lifecycle-events.yaml

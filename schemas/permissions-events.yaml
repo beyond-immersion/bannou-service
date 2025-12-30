@@ -1,7 +1,9 @@
 openapi: 3.0.3
 info:
   title: Permissions Service Events
-  description: Event models for permissions service RabbitMQ pub/sub via MassTransit
+  description: |
+    Event models for permissions service RabbitMQ pub/sub via MassTransit.
+    Handles session state management and capability compilation.
   version: 1.0.0
   x-event-subscriptions:
     # Service registration - services publish their API permissions on startup
@@ -49,7 +51,6 @@ components:
           format: date-time
           description: When the event was created (UTC)
 
-    # Permissions-specific events (published by Permissions service)
     # NOTE: Events Permissions subscribes to (ServiceRegistrationEvent, SessionConnectedEvent, etc.)
     # are defined in their canonical locations and accessed via BeyondImmersion.BannouService.Events namespace
 
@@ -148,128 +149,3 @@ components:
           type: object
           additionalProperties: true
           description: Additional context about the state change
-
-    AuthSessionEvent:
-      allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
-      type: object
-      description: |
-        Authentication-related session events (login, logout, role changes).
-        Extends SessionStateChangeEvent with auth-specific information.
-      required:
-        - sessionId
-        - eventType
-      properties:
-        sessionId:
-          type: string
-          description: Session ID affected by the auth event
-        eventType:
-          type: string
-          enum:
-            - session_created
-            - session_destroyed
-            - role_changed
-            - token_refreshed
-          description: Type of authentication event
-        userId:
-          type: string
-          description: User ID associated with the session
-          nullable: true
-        roles:
-          type: array
-          items:
-            type: string
-          description: Current roles for the session
-        previousRoles:
-          type: array
-          items:
-            type: string
-          description: Previous roles (for role_changed events)
-          nullable: true
-        metadata:
-          type: object
-          additionalProperties: true
-          description: Additional auth event metadata
-
-    PermissionRecompileRequest:
-      allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
-      type: object
-      description: |
-        Request to trigger bulk permission recompilation.
-        Used when service registrations change or global permission rules update.
-      required:
-        - reason
-      properties:
-        reason:
-          type: string
-          enum:
-            - service_registered
-            - service_unregistered
-            - permission_rules_changed
-            - role_definitions_updated
-            - manual_trigger
-          description: Reason for triggering permission recompilation
-        serviceIds:
-          type: array
-          items:
-            type: string
-          description: |
-            Specific services that changed (optional).
-            If not provided, recompiles all sessions.
-        sessionIds:
-          type: array
-          items:
-            type: string
-          description: |
-            Specific sessions to recompile (optional).
-            If not provided, recompiles all active sessions.
-        metadata:
-          type: object
-          additionalProperties: true
-          description: Additional context for the recompilation
-
-    # Redis Operation Events (Internal to Permissions Service)
-    RedisOperationEvent:
-      allOf:
-        - $ref: '#/components/schemas/BaseServiceEvent'
-      type: object
-      description: |
-        Internal event for Redis operation tracking and monitoring.
-        Used for debugging and performance monitoring.
-      required:
-        - operation
-        - success
-      properties:
-        operation:
-          type: string
-          enum:
-            - session_state_updated
-            - permissions_compiled
-            - active_session_added
-            - active_session_removed
-            - permission_matrix_updated
-            - bulk_recompilation
-          description: Type of Redis operation performed
-        sessionId:
-          type: string
-          description: Session ID affected (if applicable)
-          nullable: true
-        serviceId:
-          type: string
-          description: Service ID affected (if applicable)
-          nullable: true
-        success:
-          type: boolean
-          description: Whether the operation succeeded
-        executionTime:
-          type: integer
-          description: Operation execution time in milliseconds
-        error:
-          type: string
-          description: Error message if operation failed
-          nullable: true
-        metadata:
-          type: object
-          additionalProperties: true
-          description: Additional operation context

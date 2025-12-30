@@ -1,8 +1,16 @@
 openapi: 3.0.3
 info:
   title: Subscriptions Service Events
-  description: Event models for subscriptions service RabbitMQ pub/sub via MassTransit
+  description: |
+    Event models for subscriptions service RabbitMQ pub/sub via MassTransit.
+    Publishes subscription state change events consumed by Auth and GameSession services.
   version: 1.0.0
+  x-event-subscriptions: []  # Subscriptions service doesn't subscribe to external events
+  x-event-publications:
+    # Subscription state change events
+    - topic: subscription.updated
+      event: SubscriptionUpdatedEvent
+      description: Published when a subscription changes state (created, updated, cancelled, expired, renewed)
 
 paths: {}  # Events don't have HTTP paths
 

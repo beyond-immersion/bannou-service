@@ -25,16 +25,6 @@ info:
     - topic: documentation.searched
       event: DocumentationSearchedEvent
       description: Published when documentation is searched
-    - topic: documentation.viewed
-      event: DocumentViewedEvent
-      description: Published when a document is viewed
-    # Import events
-    - topic: documentation.import.started
-      event: DocumentationImportStartedEvent
-      description: Published when an import operation starts
-    - topic: documentation.import.completed
-      event: DocumentationImportCompletedEvent
-      description: Published when an import operation completes
     # Repository binding events
     - topic: documentation.binding.created
       event: DocumentationBindingCreatedEvent
@@ -159,85 +149,6 @@ components:
           format: uuid
           nullable: true
         resultCount:
-          type: integer
-
-    DocumentViewedEvent:
-      type: object
-      description: Published when a document is viewed
-      required:
-        - eventId
-        - timestamp
-        - namespace
-        - documentId
-      properties:
-        eventId:
-          type: string
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-        namespace:
-          type: string
-        documentId:
-          type: string
-          format: uuid
-        sessionId:
-          type: string
-          format: uuid
-          nullable: true
-        source:
-          type: string
-          enum:
-            - query
-            - search
-            - direct
-            - related
-            - browser
-
-    # Import events
-    DocumentationImportStartedEvent:
-      type: object
-      description: Published when an import operation starts
-      required:
-        - eventId
-        - timestamp
-        - namespace
-        - documentCount
-      properties:
-        eventId:
-          type: string
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-        namespace:
-          type: string
-        documentCount:
-          type: integer
-
-    DocumentationImportCompletedEvent:
-      type: object
-      description: Published when an import operation completes
-      required:
-        - eventId
-        - timestamp
-        - namespace
-        - succeededCount
-        - failedCount
-      properties:
-        eventId:
-          type: string
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-        namespace:
-          type: string
-        succeededCount:
-          type: integer
-        failedCount:
-          type: integer
-        durationMs:
           type: integer
 
     # Repository binding events
