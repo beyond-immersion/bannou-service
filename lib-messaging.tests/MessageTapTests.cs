@@ -664,7 +664,7 @@ public class TappedMessageEnvelopeTests
             tapCreatedAt);
 
         // Assert
-        Assert.NotEqual(Guid.Empty, envelope.EventId);
+        Assert.False(string.IsNullOrEmpty(envelope.EventId));
         Assert.Equal("source.topic", envelope.Topic);
         Assert.NotNull(envelope.PayloadJson);
         Assert.Equal(tapId, envelope.TapId);

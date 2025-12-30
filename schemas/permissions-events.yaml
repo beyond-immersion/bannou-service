@@ -34,6 +34,21 @@ paths: {}  # Events don't have HTTP paths
 
 components:
   schemas:
+    # Base event schema for $ref resolution
+    BaseServiceEvent:
+      type: object
+      required:
+        - eventId
+        - timestamp
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event was created (UTC)
+
     # Permissions-specific events (published by Permissions service)
     # NOTE: Events Permissions subscribes to (ServiceRegistrationEvent, SessionConnectedEvent, etc.)
     # are defined in their canonical locations and accessed via BeyondImmersion.BannouService.Events namespace
@@ -105,25 +120,17 @@ components:
           description: Reason for the capability update
 
     SessionStateChangeEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Published by services when a session's state changes within that service.
         Triggers permission recompilation in the Permissions service.
       required:
-        - eventId
-        - timestamp
         - sessionId
         - serviceId
         - newState
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this state change event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the state change occurred
         sessionId:
           type: string
           description: Session ID that had state change
@@ -143,24 +150,16 @@ components:
           description: Additional context about the state change
 
     AuthSessionEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Authentication-related session events (login, logout, role changes).
         Extends SessionStateChangeEvent with auth-specific information.
       required:
-        - eventId
-        - timestamp
         - sessionId
         - eventType
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this auth event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the auth event occurred
         sessionId:
           type: string
           description: Session ID affected by the auth event
@@ -193,23 +192,15 @@ components:
           description: Additional auth event metadata
 
     PermissionRecompileRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Request to trigger bulk permission recompilation.
         Used when service registrations change or global permission rules update.
       required:
-        - eventId
-        - timestamp
         - reason
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this recompilation request
-        timestamp:
-          type: string
-          format: date-time
-          description: When the recompilation was requested
         reason:
           type: string
           enum:
@@ -240,24 +231,16 @@ components:
 
     # Redis Operation Events (Internal to Permissions Service)
     RedisOperationEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Internal event for Redis operation tracking and monitoring.
         Used for debugging and performance monitoring.
       required:
-        - eventId
-        - timestamp
         - operation
         - success
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this operation
-        timestamp:
-          type: string
-          format: date-time
-          description: When the Redis operation occurred
         operation:
           type: string
           enum:

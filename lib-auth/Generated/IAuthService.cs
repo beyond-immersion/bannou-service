@@ -23,7 +23,7 @@ public partial interface IAuthService : IBannouService
     /// <summary>
     /// InitOAuth operation
     /// </summary>
-    Task<(StatusCodes, object?)> InitOAuthAsync(Provider provider, string redirectUri, string? state, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> InitOAuthAsync(Provider provider, string redirectUri, string? state, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// CompleteOAuth operation
@@ -48,7 +48,7 @@ public partial interface IAuthService : IBannouService
     /// <summary>
     /// Logout operation
     /// </summary>
-    Task<(StatusCodes, object?)> LogoutAsync(string jwt, LogoutRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> LogoutAsync(string jwt, LogoutRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// GetSessions operation
@@ -58,16 +58,16 @@ public partial interface IAuthService : IBannouService
     /// <summary>
     /// TerminateSession operation
     /// </summary>
-    Task<(StatusCodes, object?)> TerminateSessionAsync(string jwt, TerminateSessionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> TerminateSessionAsync(string jwt, TerminateSessionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// RequestPasswordReset operation
     /// </summary>
-    Task<(StatusCodes, object?)> RequestPasswordResetAsync(PasswordResetRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> RequestPasswordResetAsync(PasswordResetRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// ConfirmPasswordReset operation
     /// </summary>
-    Task<(StatusCodes, object?)> ConfirmPasswordResetAsync(PasswordResetConfirmRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> ConfirmPasswordResetAsync(PasswordResetConfirmRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
 }

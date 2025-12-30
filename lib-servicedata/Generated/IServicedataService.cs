@@ -33,6 +33,6 @@ public partial interface IServicedataService : IBannouService
     /// <summary>
     /// DeleteService operation
     /// </summary>
-    Task<(StatusCodes, object?)> DeleteServiceAsync(DeleteServiceRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> DeleteServiceAsync(DeleteServiceRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
 }

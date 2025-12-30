@@ -164,7 +164,7 @@ public class AccountsEventPublisherTests
 
         // Assert
         Assert.NotNull(capturedEvent);
-        Assert.NotEqual(Guid.Empty, capturedEvent.EventId);
+        Assert.False(string.IsNullOrEmpty(capturedEvent.EventId));
     }
 
     #endregion

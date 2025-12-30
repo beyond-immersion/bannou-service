@@ -312,7 +312,7 @@ public class AccountsServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (status, _) = await service.UpdatePasswordHashAsync(new UpdatePasswordRequest
+        var status = await service.UpdatePasswordHashAsync(new UpdatePasswordRequest
         {
             AccountId = accountId,
             PasswordHash = "new-hash"
@@ -359,7 +359,7 @@ public class AccountsServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (status, _) = await service.UpdateVerificationStatusAsync(new UpdateVerificationRequest
+        var status = await service.UpdateVerificationStatusAsync(new UpdateVerificationRequest
         {
             AccountId = accountId,
             EmailVerified = true

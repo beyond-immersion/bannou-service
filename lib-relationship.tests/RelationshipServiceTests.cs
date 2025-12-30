@@ -412,7 +412,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         };
 
         // Act
-        var (status, response) = await service.EndRelationshipAsync(request);
+        var status = await service.EndRelationshipAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -432,7 +432,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var request = new EndRelationshipRequest { RelationshipId = relationshipId };
 
         // Act
-        var (status, response) = await service.EndRelationshipAsync(request);
+        var status = await service.EndRelationshipAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -459,7 +459,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         var request = new EndRelationshipRequest { RelationshipId = relationshipId };
 
         // Act
-        var (status, _) = await service.EndRelationshipAsync(request);
+        var status = await service.EndRelationshipAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -486,7 +486,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         };
 
         // Act
-        var (status, _) = await service.EndRelationshipAsync(request);
+        var status = await service.EndRelationshipAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

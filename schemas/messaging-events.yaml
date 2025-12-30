@@ -23,23 +23,30 @@ paths: {}  # Events don't have HTTP paths
 
 components:
   schemas:
-    MessagePublishedEvent:
+    # Base event schema for $ref resolution
+    BaseServiceEvent:
       type: object
-      description: Internal event for message tracking/debugging
       required:
         - eventId
         - timestamp
-        - topic
-        - messageId
       properties:
         eventId:
           type: string
-          format: uuid
-          description: Unique identifier for this tracking event
+          description: Unique identifier for this event instance
         timestamp:
           type: string
           format: date-time
-          description: When the message was published
+          description: When the event was created (UTC)
+
+    MessagePublishedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Internal event for message tracking/debugging
+      required:
+        - topic
+        - messageId
+      properties:
         topic:
           type: string
           description: Topic the message was published to
@@ -55,22 +62,14 @@ components:
           description: Size of the message payload in bytes
 
     SubscriptionCreatedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: Published when a dynamic subscription is created
       required:
-        - eventId
-        - timestamp
         - subscriptionId
         - topic
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the subscription was created
         subscriptionId:
           type: string
           format: uuid
@@ -83,21 +82,13 @@ components:
           description: App ID of the subscribing service
 
     SubscriptionRemovedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: Published when a subscription is removed
       required:
-        - eventId
-        - timestamp
         - subscriptionId
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the subscription was removed
         subscriptionId:
           type: string
           format: uuid

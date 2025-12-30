@@ -283,7 +283,7 @@ public partial class CharacterService : ICharacterService
         }
     }
 
-    public async Task<(StatusCodes, object?)> DeleteCharacterAsync(
+    public async Task<StatusCodes> DeleteCharacterAsync(
         DeleteCharacterRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -297,7 +297,7 @@ public partial class CharacterService : ICharacterService
             if (character == null)
             {
                 _logger.LogWarning("Character not found for deletion: {CharacterId}", body.CharacterId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             var realmId = character.RealmId;
@@ -321,7 +321,7 @@ public partial class CharacterService : ICharacterService
             // Publish character deleted event
             await PublishCharacterDeletedEventAsync(character);
 
-            return (StatusCodes.NoContent, null);
+            return StatusCodes.NoContent;
         }
         catch (Exception ex)
         {
@@ -335,7 +335,7 @@ public partial class CharacterService : ICharacterService
                 endpoint: "post:/character/delete",
                 details: null,
                 stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -707,7 +707,7 @@ public partial class CharacterService : ICharacterService
         {
             var eventModel = new CharacterCreatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = Guid.Parse(character.CharacterId),
                 Name = character.Name,
@@ -733,7 +733,7 @@ public partial class CharacterService : ICharacterService
         {
             var eventModel = new CharacterUpdatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = characterId,
                 ChangedFields = changedFields.ToList()
@@ -754,7 +754,7 @@ public partial class CharacterService : ICharacterService
         {
             var eventModel = new CharacterDeletedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = Guid.Parse(character.CharacterId),
                 RealmId = Guid.Parse(character.RealmId),

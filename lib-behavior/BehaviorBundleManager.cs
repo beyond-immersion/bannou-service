@@ -123,11 +123,11 @@ public class BehaviorBundleManager
 
         // Get or create bundle membership
         var membership = await membershipStore.GetAsync(membershipKey, cancellationToken) ?? new BundleMembership
-            {
-                BundleId = bundleId,
-                BehaviorAssetIds = new Dictionary<string, string>(),
-                CreatedAt = DateTimeOffset.UtcNow
-            };
+        {
+            BundleId = bundleId,
+            BehaviorAssetIds = new Dictionary<string, string>(),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
 
         // Add behavior to bundle
         membership.BehaviorAssetIds[behaviorId] = assetId;

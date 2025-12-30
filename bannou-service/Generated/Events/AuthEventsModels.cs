@@ -30,22 +30,8 @@ using System = global::System;
 /// Event published when sessions are invalidated (logout, account deletion, etc.)
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionInvalidatedEvent
+public partial class SessionInvalidatedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// ID of the account whose sessions were invalidated
@@ -70,15 +56,6 @@ public partial class SessionInvalidatedEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("disconnectClients")]
     public bool DisconnectClients { get; set; } = true;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -112,22 +89,8 @@ public enum SessionInvalidatedEventReason
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionUpdatedEvent
+public partial class SessionUpdatedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// ID of the account whose session changed
@@ -161,15 +124,6 @@ public partial class SessionUpdatedEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SessionUpdatedEventReason Reason { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 

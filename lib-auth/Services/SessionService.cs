@@ -337,7 +337,7 @@ public class SessionService : ISessionService
         {
             var eventModel = new SessionInvalidatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
                 SessionIds = sessionIds,
@@ -362,7 +362,7 @@ public class SessionService : ISessionService
         {
             var eventModel = new SessionUpdatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
                 SessionId = sessionId,

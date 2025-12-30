@@ -103,10 +103,18 @@ public {% if hasControllerOnlyMethods %}abstract{% else %}partial{% endif %} cla
 
 {%     for operation in Operations -%}
 {%         comment -%}
+        Check for x-manual-implementation extension.
+        If yes, skip generating this method entirely - it will be provided by partial class.
         Check if operation has x-controller-only extension.
         If yes, make it abstract (implemented in partial controller class).
         If no, provide concrete implementation that delegates to service.
 {%-     endcomment -%}
+{%         assign isManualImplementation = operation.ExtensionData["x-manual-implementation"] -%}
+{%         if isManualImplementation -%}
+    // Endpoint {{ operation.ActualOperationName }} requires manual implementation in partial class.
+    // See x-manual-implementation: true in the OpenAPI schema.
+
+{%         else -%}
 {%         assign isControllerOnly = operation.ExtensionData["x-controller-only"] -%}
 {%         if operation.HasSummary -%}
     /// <summary>
@@ -181,10 +189,25 @@ public {% if hasControllerOnlyMethods %}abstract{% else %}partial{% endif %} cla
 
         return response;
 {%-             else %}
+{%-               comment -%}
+        Check if operation has no response body (e.g., 204 No Content).
+        In this case, the service returns Task<StatusCodes> instead of Task<(StatusCodes, T?)>
+        NSwag sets UnwrappedResultType to "void" or "FileResponse" for operations without JSON response body.
+{%-               endcomment -%}
+{%-               assign hasResponseBody = true -%}
+{%-               if operation.UnwrappedResultType == "void" or operation.UnwrappedResultType == "FileResponse" -%}
+{%-                 assign hasResponseBody = false -%}
+{%-               endif -%}
+{%-               if hasResponseBody %}
         var (statusCode, result) = await _implementation.{{ operation.ActualOperationName }}Async({% for parameter in operation.Parameters %}{{ parameter.VariableName }}{% if parameter.HasDefault %} ?? {{parameter.Default}}{% endif %}{% if parameter.IsLast == false or UseCancellationToken %}, {% endif %}{% endfor %}{% if UseCancellationToken %}cancellationToken{% endif %});
         return ConvertToActionResult(statusCode, result);
+{%-               else %}
+        var statusCode = await _implementation.{{ operation.ActualOperationName }}Async({% for parameter in operation.Parameters %}{{ parameter.VariableName }}{% if parameter.HasDefault %} ?? {{parameter.Default}}{% endif %}{% if parameter.IsLast == false or UseCancellationToken %}, {% endif %}{% endfor %}{% if UseCancellationToken %}cancellationToken{% endif %});
+        return ConvertToActionResult(statusCode);
+{%-               endif -%}
 {%             endif -%}
     }
+{%-         endif %}
 {%-         endif %}
 
 {%     endfor -%}

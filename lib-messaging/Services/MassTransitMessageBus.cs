@@ -226,7 +226,7 @@ public sealed class MassTransitMessageBus : IMessageBus
         {
             var errorEvent = new ServiceErrorEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 ServiceId = serviceId,
                 AppId = Environment.GetEnvironmentVariable(AppConstants.ENV_BANNOU_APP_ID) ?? AppConstants.DEFAULT_APP_NAME,

@@ -3934,6 +3934,47 @@
             <param name="serviceImplementation">The service implementation type this configuration is for (required).</param>
             <param name="envPrefix">The prefix for environment variables used by this configuration.</param>
         </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent">
+            <summary>
+            Partial class extension to implement IBannouEvent interface.
+            Bridges the generated BaseClientEvent properties to the interface contract.
+            </summary>
+            <summary>
+            Base schema for all server-to-client push events.
+            <br/>All client events MUST include these fields.
+            <br/>The event_name field is used for whitelist validation in Connect service.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.BeyondImmersion#BannouService#Events#IBannouEvent#BannouEventId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.BeyondImmersion#BannouService#Events#IBannouEvent#BannouTimestamp">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Event_name">
+            <summary>
+            Unique event type identifier (e.g., "connect.capability_manifest").
+            <br/>Must be in the generated ClientEventWhitelist or will be rejected.
+            <br/>Convention: {service}.{event_type}
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Event_id">
+            <summary>
+            Unique identifier for this event instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Timestamp">
+            <summary>
+            When the event was generated (ISO 8601 format)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Correlation_id">
+            <summary>
+            Optional correlation ID for request tracing
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.ClientEventNormalizer">
              <summary>
              Normalizes client event names from their potentially mangled form (from JSON serialization)
@@ -4134,37 +4175,6 @@
         <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientEventWhitelist.Count">
             <summary>
             Get the count of registered client event types.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent">
-            <summary>
-            Base schema for all server-to-client push events.
-            <br/>All client events MUST include these fields.
-            <br/>The event_name field is used for whitelist validation in Connect service.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Event_name">
-            <summary>
-            Unique event type identifier (e.g., "connect.capability_manifest").
-            <br/>Must be in the generated ClientEventWhitelist or will be rejected.
-            <br/>Convention: {service}.{event_type}
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Event_id">
-            <summary>
-            Unique identifier for this event instance
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Timestamp">
-            <summary>
-            When the event was generated (ISO 8601 format)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Correlation_id">
-            <summary>
-            Optional correlation ID for request tracing
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent">
@@ -5231,6 +5241,34 @@
             Used when a required dependency or subsystem is not available.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.BaseServiceEvent">
+            <summary>
+            Partial class extension to implement IBannouEvent interface.
+            Bridges the generated BaseServiceEvent properties to the interface contract.
+            </summary>
+            <summary>
+            Base schema for all service-to-service events.
+            <br/>All service events MUST include these fields and inherit from this schema.
+            <br/>Implements IBannouEvent interface for uniform event handling in taps.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BaseServiceEvent.BeyondImmersion#BannouService#Events#IBannouEvent#BannouEventId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BaseServiceEvent.BeyondImmersion#BannouService#Events#IBannouEvent#BannouTimestamp">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BaseServiceEvent.EventId">
+            <summary>
+            Unique identifier for this event instance (UUID string)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BaseServiceEvent.Timestamp">
+            <summary>
+            When the event was created (ISO 8601 format, UTC)
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.EventConsumer">
             <summary>
             Implementation of <see cref="T:BeyondImmersion.BannouService.Events.IEventConsumer"/> that provides application-level event fan-out.
@@ -5317,7 +5355,7 @@
             <summary>
             Creates a new event ID for an event.
             </summary>
-            <returns>New GUID for event identification.</returns>
+            <returns>New UUID string for event identification.</returns>
         </member>
         <member name="M:BeyondImmersion.BannouService.Events.EventPublisherBase.CurrentTimestamp">
             <summary>
@@ -5391,18 +5429,32 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.IBannouEvent">
             <summary>
-            Base interface for all Bannou events.
-            Provides common properties that all events should have.
+            Base interface for all Bannou events (both service-to-service and client events).
+            All events in the system implement this interface, enabling uniform handling
+            in message taps and event processing pipelines.
+            </summary>
+            <remarks>
+            <para>
+            This interface defines the minimal contract for all events:
+            - BannouEventId: Unique identifier for deduplication and tracing
+            - BannouTimestamp: When the event was created
+            </para>
+            <para>
+            Property names are prefixed with "Bannou" to avoid conflicts with generated
+            properties that have different types (e.g., Event_id as Guid vs string).
+            Implementing classes use explicit interface implementation to bridge the gap.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.IBannouEvent.BannouEventId">
+            <summary>
+            Unique identifier for this event instance (as string).
+            Used for deduplication, tracing, and correlation.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.IBannouEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.IBannouEvent.BannouTimestamp">
             <summary>
-            Unique identifier for this event instance.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.IBannouEvent.Timestamp">
-            <summary>
-            Timestamp when the event occurred.
+            When the event was created (UTC).
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.IEventConsumer">
@@ -5467,16 +5519,6 @@
             Published by any service during startup to register its API endpoints
             <br/>and permission requirements with the Permissions service.
             <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceRegistrationEvent.EventId">
-            <summary>
-            Unique identifier for this registration event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceRegistrationEvent.Timestamp">
-            <summary>
-            When the service registration occurred
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceRegistrationEvent.ServiceId">
@@ -5567,16 +5609,6 @@
             <br/>Contains aggregated information for ALL services hosted by this app instance.
             <br/>Used for load balancing and service discovery by the orchestrator.
             <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceHeartbeatEvent.EventId">
-            <summary>
-            Unique identifier for this heartbeat event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceHeartbeatEvent.Timestamp">
-            <summary>
-            When the heartbeat was sent
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceHeartbeatEvent.ServiceId">
@@ -5671,16 +5703,6 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.EventId">
-            <summary>
-            Unique identifier for this error event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Timestamp">
-            <summary>
-            When the error occurred
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.ServiceId">
             <summary>
             Logical service name emitting the error (e.g., "accounts")
@@ -5755,16 +5777,6 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent.EventId">
-            <summary>
-            Unique identifier for this mappings event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent.Timestamp">
-            <summary>
-            When this mappings snapshot was generated
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent.Mappings">
             <summary>
             Complete dictionary of serviceName -&gt; appId mappings
@@ -5799,16 +5811,6 @@
             <br/>The roles and authorizations enable event-driven capability compilation without
             <br/>synchronous API calls from Connect to Permissions.
             <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SessionConnectedEvent.EventId">
-            <summary>
-            Unique identifier for this connection event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SessionConnectedEvent.Timestamp">
-            <summary>
-            When the WebSocket connection was established
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionConnectedEvent.SessionId">
@@ -5849,16 +5851,6 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SessionDisconnectedEvent.EventId">
-            <summary>
-            Unique identifier for this disconnection event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SessionDisconnectedEvent.Timestamp">
-            <summary>
-            When the WebSocket connection was closed
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionDisconnectedEvent.SessionId">
             <summary>
             Session ID that disconnected
@@ -5895,16 +5887,6 @@
             <br/>whether the session should receive shortcuts again (e.g., check subscription status,
             <br/>game state, etc.) and publish new ShortcutPublishedEvents as appropriate.
             <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SessionReconnectedEvent.EventId">
-            <summary>
-            Unique identifier for this reconnection event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SessionReconnectedEvent.Timestamp">
-            <summary>
-            When the WebSocket reconnection completed
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionReconnectedEvent.SessionId">
@@ -5944,7 +5926,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountCreatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountCreatedEvent.Timestamp">
@@ -5959,7 +5941,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.Timestamp">
@@ -5979,7 +5961,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.Timestamp">
@@ -5995,16 +5977,6 @@
         <member name="T:BeyondImmersion.BannouService.Events.AssetUploadRequestedEvent">
             <summary>
             Event published when a new upload is initiated via requestUpload API
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AssetUploadRequestedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AssetUploadRequestedEvent.Timestamp">
-            <summary>
-            When the event occurred
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AssetUploadRequestedEvent.UploadId">
@@ -6045,16 +6017,6 @@
         <member name="T:BeyondImmersion.BannouService.Events.AssetUploadCompletedEvent">
             <summary>
             Event published when an upload is completed and file is stored
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AssetUploadCompletedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AssetUploadCompletedEvent.Timestamp">
-            <summary>
-            When the event occurred
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AssetUploadCompletedEvent.AssetId">
@@ -6107,16 +6069,6 @@
             Event published when an asset is queued for processing
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AssetProcessingQueuedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AssetProcessingQueuedEvent.Timestamp">
-            <summary>
-            When the event occurred
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Events.AssetProcessingQueuedEvent.AssetId">
             <summary>
             Asset identifier
@@ -6142,16 +6094,6 @@
             Event published when asset processing completes
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AssetProcessingCompletedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AssetProcessingCompletedEvent.Timestamp">
-            <summary>
-            When the event occurred
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Events.AssetProcessingCompletedEvent.AssetId">
             <summary>
             Asset identifier
@@ -6175,16 +6117,6 @@
         <member name="T:BeyondImmersion.BannouService.Events.AssetReadyEvent">
             <summary>
             Event published when an asset is fully processed and available
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AssetReadyEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AssetReadyEvent.Timestamp">
-            <summary>
-            When the event occurred
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AssetReadyEvent.AssetId">
@@ -6225,16 +6157,6 @@
         <member name="T:BeyondImmersion.BannouService.Events.BundleCreatedEvent">
             <summary>
             Event published when a bundle is successfully created
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.BundleCreatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.BundleCreatedEvent.Timestamp">
-            <summary>
-            When the event occurred
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BundleCreatedEvent.BundleId">
@@ -6302,16 +6224,6 @@
             Event published when sessions are invalidated (logout, account deletion, etc.)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SessionInvalidatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SessionInvalidatedEvent.Timestamp">
-            <summary>
-            When the event occurred
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionInvalidatedEvent.AccountId">
             <summary>
             ID of the account whose sessions were invalidated
@@ -6337,16 +6249,6 @@
             Published when a session's roles or authorizations change.
             <br/>Permissions service subscribes to update capability compilation.
             <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SessionUpdatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SessionUpdatedEvent.Timestamp">
-            <summary>
-            When the event occurred
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionUpdatedEvent.AccountId">
@@ -6381,7 +6283,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BehaviorCreatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BehaviorCreatedEvent.Timestamp">
@@ -6396,7 +6298,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BehaviorUpdatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BehaviorUpdatedEvent.Timestamp">
@@ -6416,7 +6318,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BehaviorDeletedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BehaviorDeletedEvent.Timestamp">
@@ -6436,7 +6338,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CharacterCreatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CharacterCreatedEvent.Timestamp">
@@ -6451,7 +6353,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CharacterUpdatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CharacterUpdatedEvent.Timestamp">
@@ -6471,7 +6373,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CharacterDeletedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CharacterDeletedEvent.Timestamp">
@@ -6489,9 +6391,19 @@
             Published when documentation is queried with natural language
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentationQueriedEvent.EventId">
+            <summary>
+            Unique identifier for this event instance
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.DocumentationSearchedEvent">
             <summary>
             Published when documentation is searched with keywords
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentationSearchedEvent.EventId">
+            <summary>
+            Unique identifier for this event instance
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.DocumentViewedEvent">
@@ -6499,9 +6411,19 @@
             Published when a document is viewed
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentViewedEvent.EventId">
+            <summary>
+            Unique identifier for this event instance
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.DocumentationImportStartedEvent">
             <summary>
             Published when an import operation starts
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentationImportStartedEvent.EventId">
+            <summary>
+            Unique identifier for this event instance
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.DocumentationImportCompletedEvent">
@@ -6509,9 +6431,19 @@
             Published when an import operation completes
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentationImportCompletedEvent.EventId">
+            <summary>
+            Unique identifier for this event instance
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.DocumentationBindingCreatedEvent">
             <summary>
             Published when a repository binding is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentationBindingCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event instance
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.DocumentationBindingRemovedEvent">
@@ -6519,9 +6451,19 @@
             Published when a repository binding is removed
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentationBindingRemovedEvent.EventId">
+            <summary>
+            Unique identifier for this event instance
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.DocumentationSyncStartedEvent">
             <summary>
             Published when a repository sync starts
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentationSyncStartedEvent.EventId">
+            <summary>
+            Unique identifier for this event instance
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.DocumentationSyncCompletedEvent">
@@ -6529,9 +6471,19 @@
             Published when a repository sync completes
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentationSyncCompletedEvent.EventId">
+            <summary>
+            Unique identifier for this event instance
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.DocumentationArchiveCreatedEvent">
             <summary>
             Published when a documentation archive is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentationArchiveCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event instance
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.DocumentCreatedEvent">
@@ -6541,7 +6493,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.DocumentCreatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.DocumentCreatedEvent.Timestamp">
@@ -6556,7 +6508,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.DocumentUpdatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.DocumentUpdatedEvent.Timestamp">
@@ -6576,7 +6528,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.DocumentDeletedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.DocumentDeletedEvent.Timestamp">
@@ -6656,7 +6608,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.Timestamp">
@@ -6671,7 +6623,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.Timestamp">
@@ -6691,7 +6643,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.Timestamp">
@@ -6711,7 +6663,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationCreatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationCreatedEvent.Timestamp">
@@ -6726,7 +6678,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationUpdatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationUpdatedEvent.Timestamp">
@@ -6746,7 +6698,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationDeletedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationDeletedEvent.Timestamp">
@@ -6764,16 +6716,6 @@
             Published when a new endpoint is registered in the service mesh.
             <br/>Consumers can use this to update local routing caches.
             <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.MeshEndpointRegisteredEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.MeshEndpointRegisteredEvent.Timestamp">
-            <summary>
-            When the endpoint was registered
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.MeshEndpointRegisteredEvent.InstanceId">
@@ -6808,16 +6750,6 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.MeshEndpointDeregisteredEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.MeshEndpointDeregisteredEvent.Timestamp">
-            <summary>
-            When the endpoint was deregistered
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Events.MeshEndpointDeregisteredEvent.InstanceId">
             <summary>
             Instance ID that was deregistered
@@ -6838,16 +6770,6 @@
             Published when an endpoint's health status changes.
             <br/>Used for real-time health monitoring.
             <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.MeshEndpointStatusChangedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.MeshEndpointStatusChangedEvent.Timestamp">
-            <summary>
-            When the status changed
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.MeshEndpointStatusChangedEvent.InstanceId">
@@ -6871,16 +6793,6 @@
             <br/>Contains the full routing table for atomic updates.
             <br/>Similar pattern to FullServiceMappingsEvent.
             <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.MeshRoutingTableUpdatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.MeshRoutingTableUpdatedEvent.Timestamp">
-            <summary>
-            When the routing table was updated
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.MeshRoutingTableUpdatedEvent.Version">
@@ -6908,16 +6820,6 @@
             Internal event for message tracking/debugging
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.MessagePublishedEvent.EventId">
-            <summary>
-            Unique identifier for this tracking event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.MessagePublishedEvent.Timestamp">
-            <summary>
-            When the message was published
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Events.MessagePublishedEvent.Topic">
             <summary>
             Topic the message was published to
@@ -6943,16 +6845,6 @@
             Published when a dynamic subscription is created
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionCreatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionCreatedEvent.Timestamp">
-            <summary>
-            When the subscription was created
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Events.SubscriptionCreatedEvent.SubscriptionId">
             <summary>
             ID of the created subscription
@@ -6973,16 +6865,6 @@
             Published when a subscription is removed
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionRemovedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionRemovedEvent.Timestamp">
-            <summary>
-            When the subscription was removed
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Events.SubscriptionRemovedEvent.SubscriptionId">
             <summary>
             ID of the removed subscription
@@ -6998,16 +6880,6 @@
             Simple health ping event published to verify pub/sub path is active.
             <br/>Used by infrastructure health checks.
             <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.OrchestratorHealthPingEvent.EventId">
-            <summary>
-            Unique identifier for this health ping
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.OrchestratorHealthPingEvent.Timestamp">
-            <summary>
-            When the health ping was sent
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.OrchestratorHealthPingEvent.Status">
@@ -7081,16 +6953,6 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SessionStateChangeEvent.EventId">
-            <summary>
-            Unique identifier for this state change event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SessionStateChangeEvent.Timestamp">
-            <summary>
-            When the state change occurred
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Events.SessionStateChangeEvent.SessionId">
             <summary>
             Session ID that had state change
@@ -7121,16 +6983,6 @@
             Authentication-related session events (login, logout, role changes).
             <br/>Extends SessionStateChangeEvent with auth-specific information.
             <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AuthSessionEvent.EventId">
-            <summary>
-            Unique identifier for this auth event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AuthSessionEvent.Timestamp">
-            <summary>
-            When the auth event occurred
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AuthSessionEvent.SessionId">
@@ -7170,16 +7022,6 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.PermissionRecompileRequest.EventId">
-            <summary>
-            Unique identifier for this recompilation request
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.PermissionRecompileRequest.Timestamp">
-            <summary>
-            When the recompilation was requested
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Events.PermissionRecompileRequest.Reason">
             <summary>
             Reason for triggering permission recompilation
@@ -7209,16 +7051,6 @@
             Internal event for Redis operation tracking and monitoring.
             <br/>Used for debugging and performance monitoring.
             <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RedisOperationEvent.EventId">
-            <summary>
-            Unique identifier for this operation
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RedisOperationEvent.Timestamp">
-            <summary>
-            When the Redis operation occurred
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RedisOperationEvent.Operation">
@@ -7263,7 +7095,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RealmCreatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RealmCreatedEvent.Timestamp">
@@ -7278,7 +7110,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RealmUpdatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RealmUpdatedEvent.Timestamp">
@@ -7298,7 +7130,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RealmDeletedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RealmDeletedEvent.Timestamp">
@@ -7318,7 +7150,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipCreatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipCreatedEvent.Timestamp">
@@ -7333,7 +7165,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent.Timestamp">
@@ -7353,7 +7185,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent.Timestamp">
@@ -7373,7 +7205,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeCreatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeCreatedEvent.Timestamp">
@@ -7388,7 +7220,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeUpdatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeUpdatedEvent.Timestamp">
@@ -7408,7 +7240,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeDeletedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeDeletedEvent.Timestamp">
@@ -7428,7 +7260,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SpeciesCreatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SpeciesCreatedEvent.Timestamp">
@@ -7443,7 +7275,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SpeciesUpdatedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SpeciesUpdatedEvent.Timestamp">
@@ -7463,7 +7295,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SpeciesDeletedEvent.EventId">
             <summary>
-            Unique identifier for this event
+            Unique identifier for this event (UUID string)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SpeciesDeletedEvent.Timestamp">
@@ -7481,16 +7313,6 @@
             Published when state changes (optional, for debugging/auditing).
             <br/>Only published if PublishStateChanges=true in configuration.
             <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.StateChangedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.StateChangedEvent.Timestamp">
-            <summary>
-            When the state change occurred
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.StateChangedEvent.StoreName">
@@ -7531,16 +7353,6 @@
         <member name="T:BeyondImmersion.BannouService.Events.StoreMigrationEvent">
             <summary>
             Published during store migration operations (e.g., Redis to MySQL)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.StoreMigrationEvent.EventId">
-            <summary>
-            Unique identifier for this migration event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.StoreMigrationEvent.Timestamp">
-            <summary>
-            When this status update occurred
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.StoreMigrationEvent.StoreName">
@@ -7588,16 +7400,6 @@
             Published for store health monitoring
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.StoreHealthEvent.EventId">
-            <summary>
-            Unique identifier for this health event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.StoreHealthEvent.Timestamp">
-            <summary>
-            When the health check occurred
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Events.StoreHealthEvent.StoreName">
             <summary>
             Name of the store
@@ -7628,16 +7430,6 @@
             Published when a subscription changes state (created, updated, cancelled, expired).
             <br/>Auth service subscribes to this event to update session authorizations.
             <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.Timestamp">
-            <summary>
-            When the event occurred
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SubscriptionUpdatedEvent.SubscriptionId">
@@ -7697,16 +7489,6 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomCreatedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomCreatedEvent.Timestamp">
-            <summary>
-            When the room was created
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomCreatedEvent.RoomId">
             <summary>
             Created voice room ID
@@ -7739,16 +7521,6 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomDeletedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomDeletedEvent.Timestamp">
-            <summary>
-            When the room was deleted
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Events.VoiceRoomDeletedEvent.RoomId">
             <summary>
             Deleted voice room ID
@@ -7774,16 +7546,6 @@
             Published when a voice room needs to upgrade from P2P to scaled tier.
             <br/>Consumed by Orchestrator to provision RTP server resources.
             <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeRequestedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeRequestedEvent.Timestamp">
-            <summary>
-            When the upgrade was requested
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeRequestedEvent.RoomId">
@@ -7812,16 +7574,6 @@
             <br/>Voice service publishes this after receiving RTP server assignment
             <br/>from Orchestrator.
             <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeCompletedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeCompletedEvent.Timestamp">
-            <summary>
-            When the upgrade completed
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.VoiceTierUpgradeCompletedEvent.RoomId">
@@ -7856,16 +7608,6 @@
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantJoinedEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantJoinedEvent.Timestamp">
-            <summary>
-            When the participant joined
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantJoinedEvent.RoomId">
             <summary>
             Voice room ID
@@ -7891,16 +7633,6 @@
             Published when a participant leaves a voice room.
             <br/>Used for metrics and capacity tracking.
             <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantLeftEvent.EventId">
-            <summary>
-            Unique identifier for this event
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantLeftEvent.Timestamp">
-            <summary>
-            When the participant left
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.VoiceParticipantLeftEvent.RoomId">
@@ -9796,14 +9528,29 @@
             Relevant world state information
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.Behavior_tree">
+        <member name="T:BeyondImmersion.BannouService.Behavior.BehaviorTreeData">
             <summary>
-            Compiled executable behavior tree structure
+            Compiled behavior tree data with bytecode or download reference
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.Context_schema">
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorTreeData.Bytecode">
             <summary>
-            Schema defining required context variables
+            Base64-encoded compiled bytecode for the behavior tree
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorTreeData.Bytecode_size">
+            <summary>
+            Size of the bytecode in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorTreeData.Download_url">
+            <summary>
+            URL to download the compiled behavior asset
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ContextSchemaData">
+            <summary>
+            Schema defining required context variables for behavior execution
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.Service_dependencies">
@@ -10316,6 +10063,11 @@
             Event published when a character joins a realm
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterRealmJoinedEvent.EventId">
+            <summary>
+            Unique identifier for this event instance
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Character.CharacterRealmJoinedEvent.CharacterId">
             <summary>
             ID of the character
@@ -10334,6 +10086,11 @@
         <member name="T:BeyondImmersion.BannouService.Character.CharacterRealmLeftEvent">
             <summary>
             Event published when a character leaves a realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterRealmLeftEvent.EventId">
+            <summary>
+            Unique identifier for this event instance
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Character.CharacterRealmLeftEvent.CharacterId">
@@ -15588,6 +15345,11 @@
             <br/>based on the changedKeys prefixes and request restart if needed.
             <br/>Topic: bannou-configuration-events
             <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ConfigurationChangedEvent.EventId">
+            <summary>
+            Unique identifier for this event instance
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ConfigurationChangedEvent.ConfigVersion">

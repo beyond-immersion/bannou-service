@@ -30,22 +30,8 @@ using System = global::System;
 /// Event published when a new upload is initiated via requestUpload API
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AssetUploadRequestedEvent
+public partial class AssetUploadRequestedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Upload session identifier
@@ -101,37 +87,14 @@ public partial class AssetUploadRequestedEvent
     [System.Text.Json.Serialization.JsonPropertyName("isMultipart")]
     public bool IsMultipart { get; set; } = false;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Event published when an upload is completed and file is stored
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AssetUploadCompletedEvent
+public partial class AssetUploadCompletedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Assigned asset identifier
@@ -193,37 +156,14 @@ public partial class AssetUploadCompletedEvent
     [System.Text.Json.Serialization.JsonPropertyName("contentType")]
     public string ContentType { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Event published when an asset is queued for processing
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AssetProcessingQueuedEvent
+public partial class AssetProcessingQueuedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Asset identifier
@@ -255,37 +195,14 @@ public partial class AssetProcessingQueuedEvent
     [System.Text.Json.Serialization.JsonPropertyName("estimatedDurationMs")]
     public int? EstimatedDurationMs { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Event published when asset processing completes
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AssetProcessingCompletedEvent
+public partial class AssetProcessingCompletedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Asset identifier
@@ -320,37 +237,14 @@ public partial class AssetProcessingCompletedEvent
     [System.Text.Json.Serialization.JsonPropertyName("durationMs")]
     public int? DurationMs { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Event published when an asset is fully processed and available
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AssetReadyEvent
+public partial class AssetReadyEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Asset identifier
@@ -406,37 +300,14 @@ public partial class AssetReadyEvent
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public RealmEnum? Realm { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Event published when a bundle is successfully created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BundleCreatedEvent
+public partial class BundleCreatedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Bundle identifier
@@ -487,15 +358,6 @@ public partial class BundleCreatedEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdBy")]
     public System.Guid? CreatedBy { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 

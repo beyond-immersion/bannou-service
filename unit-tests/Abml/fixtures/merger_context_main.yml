@@ -1,0 +1,18 @@
+version: "2.0"
+metadata:
+  id: main
+
+context:
+  variables:
+    main_var:
+      type: string
+      default: "main_value"
+
+imports:
+  - file: "lib.yml"
+    as: "lib"
+
+flows:
+  start:
+    actions:
+      - log: { message: "Hello" }

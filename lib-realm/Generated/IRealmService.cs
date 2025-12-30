@@ -38,7 +38,7 @@ public partial interface IRealmService : IBannouService
     /// <summary>
     /// DeleteRealm operation
     /// </summary>
-    Task<(StatusCodes, object?)> DeleteRealmAsync(DeleteRealmRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> DeleteRealmAsync(DeleteRealmRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// DeprecateRealm operation

@@ -32,22 +32,8 @@ using System = global::System;
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SubscriptionUpdatedEvent
+public partial class SubscriptionUpdatedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// ID of the subscription that changed
@@ -114,15 +100,6 @@ public partial class SubscriptionUpdatedEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newValues")]
     public object NewValues { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 

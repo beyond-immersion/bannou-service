@@ -11,11 +11,6 @@ namespace BeyondImmersion.BannouService.Documentation;
 public partial interface IDocumentationService : IBannouService
 {
     /// <summary>
-    /// ViewDocumentBySlug operation
-    /// </summary>
-    Task<(StatusCodes, object?)> ViewDocumentBySlugAsync(string slug, string? ns = "bannou", CancellationToken cancellationToken = default(CancellationToken));
-
-    /// <summary>
     /// QueryDocumentation operation
     /// </summary>
     Task<(StatusCodes, QueryDocumentationResponse?)> QueryDocumentationAsync(QueryDocumentationRequest body, CancellationToken cancellationToken = default(CancellationToken));

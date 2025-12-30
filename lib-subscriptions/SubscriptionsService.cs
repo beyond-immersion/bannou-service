@@ -548,7 +548,7 @@ public partial class SubscriptionsService : ISubscriptionsService
     {
         var eventData = new SubscriptionUpdatedEvent
         {
-            EventId = Guid.NewGuid(),
+            EventId = Guid.NewGuid().ToString(),
             Timestamp = DateTimeOffset.UtcNow,
             SubscriptionId = Guid.Parse(model.SubscriptionId),
             AccountId = Guid.Parse(model.AccountId),

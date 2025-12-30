@@ -465,7 +465,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             .ReturnsAsync((List<string>?)null);
 
         // Act
-        var (status, response) = await service.DeleteRelationshipTypeAsync(
+        var status = await service.DeleteRelationshipTypeAsync(
             new DeleteRelationshipTypeRequest { RelationshipTypeId = typeId });
 
         // Assert
@@ -484,7 +484,7 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
             .ReturnsAsync((RelationshipTypeModel?)null);
 
         // Act
-        var (status, response) = await service.DeleteRelationshipTypeAsync(
+        var status = await service.DeleteRelationshipTypeAsync(
             new DeleteRelationshipTypeRequest { RelationshipTypeId = typeId });
 
         // Assert

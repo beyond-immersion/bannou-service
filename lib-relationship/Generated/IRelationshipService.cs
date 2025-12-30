@@ -43,6 +43,6 @@ public partial interface IRelationshipService : IBannouService
     /// <summary>
     /// EndRelationship operation
     /// </summary>
-    Task<(StatusCodes, object?)> EndRelationshipAsync(EndRelationshipRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> EndRelationshipAsync(EndRelationshipRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
 }

@@ -255,8 +255,8 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeregisterEndpoint([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeregisterEndpointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.DeregisterEndpointAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.DeregisterEndpointAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -328,6 +328,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         var (statusCode, result) = await _implementation.GetHealthAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
+
 
 
     #region Meta Endpoints for GetEndpoints

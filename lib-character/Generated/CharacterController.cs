@@ -185,8 +185,8 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteCharacter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.DeleteCharacterAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.DeleteCharacterAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -214,6 +214,7 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
         var (statusCode, result) = await _implementation.GetCharactersByRealmAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
+
 
 
     #region Meta Endpoints for CreateCharacter

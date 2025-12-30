@@ -33,7 +33,7 @@ public partial interface IAccountsService : IBannouService
     /// <summary>
     /// DeleteAccount operation
     /// </summary>
-    Task<(StatusCodes, object?)> DeleteAccountAsync(DeleteAccountRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> DeleteAccountAsync(DeleteAccountRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// GetAccountByEmail operation
@@ -53,7 +53,7 @@ public partial interface IAccountsService : IBannouService
     /// <summary>
     /// RemoveAuthMethod operation
     /// </summary>
-    Task<(StatusCodes, object?)> RemoveAuthMethodAsync(RemoveAuthMethodRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> RemoveAuthMethodAsync(RemoveAuthMethodRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// GetAccountByProvider operation
@@ -68,11 +68,11 @@ public partial interface IAccountsService : IBannouService
     /// <summary>
     /// UpdatePasswordHash operation
     /// </summary>
-    Task<(StatusCodes, object?)> UpdatePasswordHashAsync(UpdatePasswordRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> UpdatePasswordHashAsync(UpdatePasswordRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// UpdateVerificationStatus operation
     /// </summary>
-    Task<(StatusCodes, object?)> UpdateVerificationStatusAsync(UpdateVerificationRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> UpdateVerificationStatusAsync(UpdateVerificationRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
 }

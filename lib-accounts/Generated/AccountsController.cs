@@ -261,8 +261,8 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteAccount([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.DeleteAccountAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.DeleteAccountAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -313,8 +313,8 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveAuthMethod([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RemoveAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.RemoveAuthMethodAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.RemoveAuthMethodAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -352,8 +352,8 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdatePasswordHash([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.UpdatePasswordHashAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.UpdatePasswordHashAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -365,9 +365,10 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateVerificationStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateVerificationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.UpdateVerificationStatusAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.UpdateVerificationStatusAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
+
 
 
     #region Meta Endpoints for ListAccounts

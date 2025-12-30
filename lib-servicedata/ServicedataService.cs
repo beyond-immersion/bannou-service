@@ -276,7 +276,7 @@ public partial class ServicedataService : IServicedataService
     /// <summary>
     /// Delete a game service entry.
     /// </summary>
-    public async Task<(StatusCodes, object?)> DeleteServiceAsync(DeleteServiceRequest body, CancellationToken cancellationToken)
+    public async Task<StatusCodes> DeleteServiceAsync(DeleteServiceRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Deleting service {ServiceId}", body.ServiceId);
 
@@ -285,7 +285,7 @@ public partial class ServicedataService : IServicedataService
             if (body.ServiceId == Guid.Empty)
             {
                 _logger.LogWarning("Service ID is required");
-                return (StatusCodes.BadRequest, null!);
+                return StatusCodes.BadRequest;
             }
 
             var modelStore = _stateStoreFactory.GetStore<ServiceDataModel>(StateStoreName);
@@ -297,7 +297,7 @@ public partial class ServicedataService : IServicedataService
             if (serviceModel == null)
             {
                 _logger.LogWarning("Service {ServiceId} not found", body.ServiceId);
-                return (StatusCodes.NotFound, null!);
+                return StatusCodes.NotFound;
             }
 
             // Delete service data
@@ -313,12 +313,12 @@ public partial class ServicedataService : IServicedataService
             await RemoveFromServiceListAsync(body.ServiceId.ToString(), cancellationToken);
 
             _logger.LogInformation("Deleted service {ServiceId}", body.ServiceId);
-            return (StatusCodes.NoContent, null!);
+            return StatusCodes.NoContent;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting service {ServiceId}", body.ServiceId);
-            return (StatusCodes.InternalServerError, null!);
+            return StatusCodes.InternalServerError;
         }
     }
 

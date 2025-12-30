@@ -60,8 +60,8 @@ public abstract class EventPublisherBase
     /// <summary>
     /// Creates a new event ID for an event.
     /// </summary>
-    /// <returns>New GUID for event identification.</returns>
-    protected static Guid NewEventId() => Guid.NewGuid();
+    /// <returns>New UUID string for event identification.</returns>
+    protected static string NewEventId() => Guid.NewGuid().ToString();
 
     /// <summary>
     /// Gets the current UTC timestamp for an event.

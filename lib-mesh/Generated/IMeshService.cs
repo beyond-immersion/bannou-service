@@ -28,7 +28,7 @@ public partial interface IMeshService : IBannouService
     /// <summary>
     /// DeregisterEndpoint operation
     /// </summary>
-    Task<(StatusCodes, object?)> DeregisterEndpointAsync(DeregisterEndpointRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> DeregisterEndpointAsync(DeregisterEndpointRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// Heartbeat operation

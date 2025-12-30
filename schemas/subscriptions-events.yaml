@@ -8,14 +8,29 @@ paths: {}  # Events don't have HTTP paths
 
 components:
   schemas:
+    # Base event schema for $ref resolution
+    BaseServiceEvent:
+      type: object
+      required:
+        - eventId
+        - timestamp
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event was created (UTC)
+
     SubscriptionUpdatedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Published when a subscription changes state (created, updated, cancelled, expired).
         Auth service subscribes to this event to update session authorizations.
       required:
-        - eventId
-        - timestamp
         - subscriptionId
         - accountId
         - serviceId
@@ -23,14 +38,6 @@ components:
         - action
         - isActive
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
         subscriptionId:
           type: string
           format: uuid

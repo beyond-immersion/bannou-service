@@ -1,6 +1,6 @@
 # Generated Events Reference
 
-> **Auto-generated**: 2025-12-30 04:12:42
+> **Auto-generated**: 2025-12-30 08:48:09
 > **Source**: `schemas/*-events.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 
@@ -12,10 +12,10 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `BaseServiceEvent` | Custom | `base-service` | Base schema for all service-to-service events. |
 | `FullServiceMappingsEvent` | Custom | `full-service-mappings` | Published periodically by Orchestrator as the auth... |
 | `ServiceErrorEvent` | Error | `service.error` | Structured error event for unexpected service fail... |
 | `ServiceHeartbeatEvent` | Health | `service.heartbeat` | Published periodically by each bannou instance to ... |
-| `ServiceMappingEvent` | Custom | `service-mapping` | Legacy event for individual service-to-app-id mapp... |
 | `ServiceRegistrationEvent` | Custom | `service-registration` | Published by any service during startup to registe... |
 | `SessionConnectedEvent` | Session | `session.connected` | Published by Connect service when a WebSocket conn... |
 | `SessionDisconnectedEvent` | Session | `session.disconnected` | Published by Connect service when a WebSocket conn... |
@@ -30,6 +30,7 @@ This document lists all events defined in Bannou's event schemas.
 | `AssetReadyEvent` | Custom | `asset-ready` | Event published when an asset is fully processed a... |
 | `AssetUploadCompletedEvent` | Custom | `asset-upload-completed` | Event published when an upload is completed and fi... |
 | `AssetUploadRequestedEvent` | Custom | `asset-upload-requested` | Event published when a new upload is initiated via... |
+| `BaseServiceEvent` | Custom | `base-service` |  |
 | `BundleCreatedEvent` | Lifecycle (Created) | `bundle.created` | Event published when a bundle is successfully crea... |
 
 ### Asset (client)
@@ -48,6 +49,7 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `BaseServiceEvent` | Custom | `base-service` |  |
 | `SessionInvalidatedEvent` | Custom | `session.invalidated` | Event published when sessions are invalidated (log... |
 | `SessionInvalidatedEventReason` | Custom | `session.invalidated-event-reason` | Reason for session invalidation |
 | `SessionUpdatedEvent` | Lifecycle (Updated) | `session.updated` | Published when a session's roles or authorizations... |
@@ -104,6 +106,7 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `BaseServiceEvent` | Custom | `base-service` |  |
 | `MeshEndpointDeregisteredEvent` | Registration | `mesh-endpoint-deregistered` | Published when an endpoint is removed from the ser... |
 | `MeshEndpointRegisteredEvent` | Registration | `mesh-endpoint.registered` | Published when a new endpoint is registered in the... |
 | `MeshEndpointStatusChangedEvent` | Custom | `mesh-endpoint-status-changed` | Published when an endpoint's health status changes... |
@@ -113,6 +116,7 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `BaseServiceEvent` | Custom | `base-service` |  |
 | `MessagePublishedEvent` | Custom | `message-published` | Internal event for message tracking/debugging |
 | `SubscriptionCreatedEvent` | Lifecycle (Created) | `subscription.created` | Published when a dynamic subscription is created |
 | `SubscriptionRemovedEvent` | Custom | `subscription-removed` | Published when a subscription is removed |
@@ -121,6 +125,7 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `BaseServiceEvent` | Custom | `base-service` |  |
 | `OrchestratorHealthPingEvent` | Custom | `orchestrator-health-ping` | Simple health ping event published to verify pub/s... |
 
 ### Permissions
@@ -128,7 +133,7 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `AuthSessionEvent` | Custom | `auth-session` | Authentication-related session events (login, logo... |
-| `PermissionRecompileRequest` | Custom | `permission-recompile-request` | Request to trigger bulk permission recompilation. |
+| `BaseServiceEvent` | Custom | `base-service` |  |
 | `RedisOperationEvent` | Custom | `redis-operation` | Internal event for Redis operation tracking and mo... |
 | `SessionStateChangeEvent` | Custom | `session-state-change` | Published by services when a session's state chang... |
 
@@ -136,6 +141,7 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `BaseServiceEvent` | Custom | `base-service` |  |
 | `StateChangedEvent` | Custom | `state-changed` | Published when state changes (optional, for debugg... |
 | `StoreHealthEvent` | Custom | `store-health` | Published for store health monitoring |
 | `StoreMigrationEvent` | Custom | `store-migration` | Published during store migration operations (e.g.,... |
@@ -144,12 +150,14 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `BaseServiceEvent` | Custom | `base-service` |  |
 | `SubscriptionUpdatedEvent` | Lifecycle (Updated) | `subscription.updated` | Published when a subscription changes state (creat... |
 
 ### Voice
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `BaseServiceEvent` | Custom | `base-service` |  |
 | `VoiceParticipantJoinedEvent` | Custom | `voice-participant-joined` | Published when a participant joins a voice room. |
 | `VoiceParticipantLeftEvent` | Custom | `voice-participant-left` | Published when a participant leaves a voice room. |
 | `VoiceRoomCreatedEvent` | Lifecycle (Created) | `voice-room.created` | Published when a new voice room is created. |

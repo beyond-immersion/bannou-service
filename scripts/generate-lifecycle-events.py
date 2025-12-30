@@ -110,11 +110,12 @@ def generate_events(entity: str, config: dict) -> Dict[str, Any]:
     topic_base = to_kebab_case(entity)
 
     # Build base event properties (all events have these)
+    # NOTE: eventId is plain string (not uuid format) to match BaseServiceEvent
+    # and ensure consistency with IBannouEvent interface across all events
     base_props = {
         'eventId': {
             'type': 'string',
-            'format': 'uuid',
-            'description': 'Unique identifier for this event'
+            'description': 'Unique identifier for this event (UUID string)'
         },
         'timestamp': {
             'type': 'string',

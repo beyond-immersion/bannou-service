@@ -324,6 +324,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     }
 
 
+
     #region Meta Endpoints for GetCapabilities
 
     private static readonly string _GetCapabilities_RequestSchema = """

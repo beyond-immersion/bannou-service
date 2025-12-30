@@ -32,29 +32,15 @@ using System = global::System;
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MeshEndpointRegisteredEvent
+public partial class MeshEndpointRegisteredEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the endpoint was registered
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Instance ID of the registered endpoint
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid InstanceId { get; set; } = default!;
+    public string InstanceId { get; set; } = default!;
 
     /// <summary>
     /// App-id of the registered endpoint
@@ -82,15 +68,6 @@ public partial class MeshEndpointRegisteredEvent
     [System.Text.Json.Serialization.JsonPropertyName("services")]
     public System.Collections.Generic.ICollection<string> Services { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -99,29 +76,15 @@ public partial class MeshEndpointRegisteredEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MeshEndpointDeregisteredEvent
+public partial class MeshEndpointDeregisteredEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the endpoint was deregistered
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Instance ID that was deregistered
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid InstanceId { get; set; } = default!;
+    public string InstanceId { get; set; } = default!;
 
     /// <summary>
     /// App-id that was deregistered
@@ -138,15 +101,6 @@ public partial class MeshEndpointDeregisteredEvent
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public MeshEndpointDeregisteredEventReason Reason { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -155,29 +109,15 @@ public partial class MeshEndpointDeregisteredEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MeshEndpointStatusChangedEvent
+public partial class MeshEndpointStatusChangedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the status changed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Instance ID with status change
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid InstanceId { get; set; } = default!;
+    public string InstanceId { get; set; } = default!;
 
     /// <summary>
     /// App-id with status change
@@ -202,15 +142,6 @@ public partial class MeshEndpointStatusChangedEvent
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     public string Reason { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -220,22 +151,8 @@ public partial class MeshEndpointStatusChangedEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MeshRoutingTableUpdatedEvent
+public partial class MeshRoutingTableUpdatedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the routing table was updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Monotonically increasing version for ordering
@@ -255,15 +172,6 @@ public partial class MeshRoutingTableUpdatedEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removedInstanceIds")]
     public System.Collections.Generic.ICollection<System.Guid> RemovedInstanceIds { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 

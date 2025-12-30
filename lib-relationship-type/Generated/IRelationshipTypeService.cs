@@ -53,7 +53,7 @@ public partial interface IRelationshipTypeService : IBannouService
     /// <summary>
     /// DeleteRelationshipType operation
     /// </summary>
-    Task<(StatusCodes, object?)> DeleteRelationshipTypeAsync(DeleteRelationshipTypeRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> DeleteRelationshipTypeAsync(DeleteRelationshipTypeRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// DeprecateRelationshipType operation

@@ -372,9 +372,12 @@ public partial class CharacterListResponse
 public partial class CharacterRealmJoinedEvent
 {
 
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -418,9 +421,12 @@ public partial class CharacterRealmJoinedEvent
 public partial class CharacterRealmLeftEvent
 {
 
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

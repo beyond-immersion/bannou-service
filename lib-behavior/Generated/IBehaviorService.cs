@@ -33,7 +33,7 @@ public partial interface IBehaviorService : IBannouService
     /// <summary>
     /// InvalidateCachedBehavior operation
     /// </summary>
-    Task<(StatusCodes, object?)> InvalidateCachedBehaviorAsync(InvalidateCacheRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> InvalidateCachedBehaviorAsync(InvalidateCacheRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// ResolveContextVariables operation

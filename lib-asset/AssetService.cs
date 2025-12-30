@@ -373,7 +373,7 @@ public partial class AssetService : IAssetService
                 "asset.upload.completed",
                 new BeyondImmersion.BannouService.Events.AssetUploadCompletedEvent
                 {
-                    EventId = Guid.NewGuid(),
+                    EventId = Guid.NewGuid().ToString(),
                     Timestamp = now,
                     AssetId = assetId,
                     UploadId = body.Upload_id,
@@ -869,7 +869,7 @@ public partial class AssetService : IAssetService
                 "asset.bundle.created",
                 new BeyondImmersion.BannouService.Events.BundleCreatedEvent
                 {
-                    EventId = Guid.NewGuid(),
+                    EventId = Guid.NewGuid().ToString(),
                     Timestamp = DateTimeOffset.UtcNow,
                     BundleId = body.Bundle_id,
                     Version = body.Version ?? "1.0.0",

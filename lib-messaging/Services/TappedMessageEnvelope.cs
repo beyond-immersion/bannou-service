@@ -152,7 +152,7 @@ public class TappedMessageEnvelope : GenericMessageEnvelope
     {
         return new TappedMessageEnvelope
         {
-            EventId = Guid.NewGuid(),
+            EventId = Guid.NewGuid().ToString(),
             Timestamp = DateTimeOffset.UtcNow,
             Topic = sourceTopic,
             PayloadJson = BannouJson.Serialize(eventData),

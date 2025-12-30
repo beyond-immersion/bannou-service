@@ -261,8 +261,8 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitOAuth([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Provider provider, [Microsoft.AspNetCore.Mvc.FromQuery] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string redirectUri, [Microsoft.AspNetCore.Mvc.FromQuery] string? state, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.InitOAuthAsync(provider, redirectUri, state, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.InitOAuthAsync(provider, redirectUri, state, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -353,8 +353,8 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
-        var (statusCode, result) = await _implementation.LogoutAsync(jwt, body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.LogoutAsync(jwt, body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -389,8 +389,8 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
-        var (statusCode, result) = await _implementation.TerminateSessionAsync(jwt, body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.TerminateSessionAsync(jwt, body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -402,8 +402,8 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RequestPasswordReset([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PasswordResetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.RequestPasswordResetAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.RequestPasswordResetAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -415,9 +415,10 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConfirmPasswordReset([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PasswordResetConfirmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.ConfirmPasswordResetAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.ConfirmPasswordResetAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
+
 
 
     #region Meta Endpoints for Login

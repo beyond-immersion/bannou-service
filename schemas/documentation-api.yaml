@@ -51,6 +51,7 @@ paths:
         '404':
           description: Document not found
       # NOTE: No x-permissions = browser-facing endpoint (Tenet 15)
+      x-manual-implementation: true  # Returns HTML, not JSON - excluded from interface generation
 
   # ===== Query Endpoints (WebSocket accessible) =====
       x-request-schema-json: '{}'

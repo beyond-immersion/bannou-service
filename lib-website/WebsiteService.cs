@@ -356,12 +356,12 @@ public partial class WebsiteService : IWebsiteService
     /// <summary>
     /// Updates theme configuration. Not yet implemented - planned for future release.
     /// </summary>
-    public async Task<(StatusCodes, object?)> UpdateThemeAsync(ThemeConfig body, CancellationToken cancellationToken = default)
+    public async Task<StatusCodes> UpdateThemeAsync(ThemeConfig body, CancellationToken cancellationToken = default)
     {
         try
         {
             _logger.LogWarning("Method UpdateThemeAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
+            return StatusCodes.NotImplemented;
         }
         catch (Exception ex)
         {
@@ -373,7 +373,7 @@ public partial class WebsiteService : IWebsiteService
                 message: ex.Message,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -404,12 +404,12 @@ public partial class WebsiteService : IWebsiteService
     /// <summary>
     /// Deletes a page. Not yet implemented - planned for future release.
     /// </summary>
-    public async Task<(StatusCodes, object?)> DeletePageAsync(string slug, CancellationToken cancellationToken = default)
+    public async Task<StatusCodes> DeletePageAsync(string slug, CancellationToken cancellationToken = default)
     {
         try
         {
             _logger.LogWarning("Method DeletePageAsync called but not implemented for slug: {Slug}", slug);
-            return (StatusCodes.NotImplemented, null);
+            return StatusCodes.NotImplemented;
         }
         catch (Exception ex)
         {
@@ -422,7 +422,7 @@ public partial class WebsiteService : IWebsiteService
                 details: new { Slug = slug },
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 

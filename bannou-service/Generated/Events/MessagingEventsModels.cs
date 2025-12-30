@@ -30,22 +30,8 @@ using System = global::System;
 /// Internal event for message tracking/debugging
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MessagePublishedEvent
+public partial class MessagePublishedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this tracking event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the message was published
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Topic the message was published to
@@ -73,37 +59,14 @@ public partial class MessagePublishedEvent
     [System.Text.Json.Serialization.JsonPropertyName("payloadSizeBytes")]
     public int PayloadSizeBytes { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Published when a dynamic subscription is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SubscriptionCreatedEvent
+public partial class SubscriptionCreatedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the subscription was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// ID of the created subscription
@@ -125,37 +88,14 @@ public partial class SubscriptionCreatedEvent
     [System.Text.Json.Serialization.JsonPropertyName("subscriberAppId")]
     public string SubscriberAppId { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Published when a subscription is removed
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SubscriptionRemovedEvent
+public partial class SubscriptionRemovedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the subscription was removed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// ID of the removed subscription
@@ -167,15 +107,6 @@ public partial class SubscriptionRemovedEvent
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SubscriptionRemovedReason Reason { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 

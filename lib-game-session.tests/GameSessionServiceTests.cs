@@ -630,11 +630,10 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             });
 
         // Act
-        var (status, response) = await service.LeaveGameSessionAsync(request);
+        var status = await service.LeaveGameSessionAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        // Note: LeaveGameSession returns 200 with no body per schema
 
         // Verify game-session:in_game state was cleared via Permissions client
         mockPermissionsClient.Verify(p => p.ClearSessionStateAsync(
@@ -656,7 +655,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync((GameSessionModel?)null);
 
         // Act
-        var (status, response) = await service.LeaveGameSessionAsync(request);
+        var status = await service.LeaveGameSessionAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);

@@ -540,7 +540,7 @@ public partial class ConnectService : IConnectService
                     // Fixes race condition where services publish to non-existent exchange (crashes RabbitMQ channel)
                     var sessionConnectedEvent = new SessionConnectedEvent
                     {
-                        EventId = Guid.NewGuid(),
+                        EventId = Guid.NewGuid().ToString(),
                         Timestamp = DateTimeOffset.UtcNow,
                         SessionId = sessionId,
                         AccountId = accountId?.ToString() ?? string.Empty,
@@ -558,7 +558,7 @@ public partial class ConnectService : IConnectService
                     {
                         var sessionReconnectedEvent = new SessionReconnectedEvent
                         {
-                            EventId = Guid.NewGuid(),
+                            EventId = Guid.NewGuid().ToString(),
                             Timestamp = DateTimeOffset.UtcNow,
                             SessionId = sessionId,
                             AccountId = accountId?.ToString() ?? string.Empty,
@@ -647,7 +647,7 @@ public partial class ConnectService : IConnectService
             {
                 var sessionDisconnectedEvent = new SessionDisconnectedEvent
                 {
-                    EventId = Guid.NewGuid(),
+                    EventId = Guid.NewGuid().ToString(),
                     Timestamp = DateTimeOffset.UtcNow,
                     SessionId = sessionId,
                     AccountId = accountId?.ToString(),

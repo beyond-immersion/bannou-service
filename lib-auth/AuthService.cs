@@ -486,7 +486,7 @@ public partial class AuthService : IAuthService
 
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, object?)> InitOAuthAsync(
+    public async Task<(StatusCodes, InitOAuthResponse?)> InitOAuthAsync(
         Provider provider,
         string redirectUri,
         string? state,
@@ -541,7 +541,7 @@ public partial class AuthService : IAuthService
             }
 
             _logger.LogDebug("Generated OAuth URL for {Provider}: {Url}", provider, authUrl);
-            return (StatusCodes.OK, new { AuthorizationUrl = authUrl });
+            return (StatusCodes.OK, new InitOAuthResponse { Authorization_url = new Uri(authUrl) });
         }
         catch (Exception ex)
         {
@@ -552,39 +552,7 @@ public partial class AuthService : IAuthService
     }
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, object?)> InitSteamAuthAsync(
-        string returnUrl,
-        CancellationToken cancellationToken = default)
-    {
-        await Task.CompletedTask; // Satisfy async requirement for sync method
-        try
-        {
-            _logger.LogInformation("Steam authentication info requested");
-
-            // Steam uses Session Tickets, not OAuth/OpenID flow
-            // The game client calls ISteamUser::GetAuthTicketForWebApi("bannou")
-            // Then sends the ticket to POST /auth/steam/verify
-            var response = new
-            {
-                Message = "Steam uses Session Tickets, not browser-based OAuth",
-                Endpoint = "/auth/steam/verify",
-                Method = "POST",
-                ClientSide = "Call ISteamUser::GetAuthTicketForWebApi(\"bannou\") in your game client",
-                Documentation = "https://partner.steamgames.com/doc/features/auth#web_api"
-            };
-
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error providing Steam authentication info");
-            await PublishErrorEventAsync("InitSteamAuth", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    /// <inheritdoc/>
-    public async Task<(StatusCodes, object?)> LogoutAsync(
+    public async Task<StatusCodes> LogoutAsync(
         string jwt,
         LogoutRequest? body,
         CancellationToken cancellationToken = default)
@@ -596,7 +564,7 @@ public partial class AuthService : IAuthService
             if (string.IsNullOrWhiteSpace(jwt))
             {
                 _logger.LogWarning("JWT token is null or empty for logout");
-                return (StatusCodes.Unauthorized, null);
+                return StatusCodes.Unauthorized;
             }
 
             // Validate JWT and extract session key
@@ -604,7 +572,7 @@ public partial class AuthService : IAuthService
             if (validateStatus != StatusCodes.OK || validateResponse == null || !validateResponse.Valid)
             {
                 _logger.LogWarning("Invalid JWT token provided for logout");
-                return (StatusCodes.Unauthorized, null);
+                return StatusCodes.Unauthorized;
             }
 
             // Extract session_key from JWT claims to identify which session to logout
@@ -612,7 +580,7 @@ public partial class AuthService : IAuthService
             if (sessionKey == null)
             {
                 _logger.LogWarning("Could not extract session_key from JWT for logout");
-                return (StatusCodes.Unauthorized, null);
+                return StatusCodes.Unauthorized;
             }
 
             var invalidatedSessions = new List<string>();
@@ -676,18 +644,18 @@ public partial class AuthService : IAuthService
                     SessionInvalidatedEventReason.Logout);
             }
 
-            return (StatusCodes.OK, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during logout");
             await PublishErrorEventAsync("Logout", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, object?)> TerminateSessionAsync(
+    public async Task<StatusCodes> TerminateSessionAsync(
         string jwt,
         TerminateSessionRequest body,
         CancellationToken cancellationToken = default)
@@ -704,7 +672,7 @@ public partial class AuthService : IAuthService
             if (sessionKey == null)
             {
                 _logger.LogWarning("Session {SessionId} not found for termination", sessionId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Get session data to find account ID for index cleanup
@@ -724,18 +692,18 @@ public partial class AuthService : IAuthService
             await RemoveSessionIdReverseIndexAsync(sessionId.ToString(), cancellationToken);
 
             _logger.LogInformation("Session {SessionId} terminated successfully", sessionId);
-            return (StatusCodes.NoContent, null);
+            return StatusCodes.NoContent;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error terminating session: {SessionId}", body.SessionId);
             await PublishErrorEventAsync("TerminateSession", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, object?)> RequestPasswordResetAsync(
+    public async Task<StatusCodes> RequestPasswordResetAsync(
         PasswordResetRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -745,7 +713,7 @@ public partial class AuthService : IAuthService
 
             if (string.IsNullOrWhiteSpace(body.Email))
             {
-                return (StatusCodes.BadRequest, null);
+                return StatusCodes.BadRequest;
             }
 
             // Verify account exists (but always return success to prevent email enumeration)
@@ -793,13 +761,13 @@ public partial class AuthService : IAuthService
             }
 
             // Always return success to prevent email enumeration attacks
-            return (StatusCodes.OK, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error requesting password reset for email: {Email}", body.Email);
             await PublishErrorEventAsync("RequestPasswordReset", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -844,7 +812,7 @@ public partial class AuthService : IAuthService
     }
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, object?)> ConfirmPasswordResetAsync(
+    public async Task<StatusCodes> ConfirmPasswordResetAsync(
         PasswordResetConfirmRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -856,7 +824,7 @@ public partial class AuthService : IAuthService
             if (string.IsNullOrWhiteSpace(body.Token) || string.IsNullOrWhiteSpace(body.NewPassword))
             {
                 _logger.LogWarning("Invalid password reset confirmation request - missing token or password");
-                return (StatusCodes.BadRequest, null);
+                return StatusCodes.BadRequest;
             }
 
             // Look up the reset token in Redis
@@ -866,7 +834,7 @@ public partial class AuthService : IAuthService
             if (resetData == null)
             {
                 _logger.LogWarning("Invalid or expired password reset token");
-                return (StatusCodes.BadRequest, null);
+                return StatusCodes.BadRequest;
             }
 
             // Check if token has expired
@@ -875,7 +843,7 @@ public partial class AuthService : IAuthService
                 _logger.LogWarning("Password reset token has expired");
                 // Clean up expired token
                 await resetStore.DeleteAsync($"password-reset:{body.Token}", cancellationToken);
-                return (StatusCodes.BadRequest, null);
+                return StatusCodes.BadRequest;
             }
 
             // Hash the new password
@@ -892,13 +860,13 @@ public partial class AuthService : IAuthService
             await resetStore.DeleteAsync($"password-reset:{body.Token}", cancellationToken);
 
             _logger.LogInformation("Password reset successful for account {AccountId}", resetData.AccountId);
-            return (StatusCodes.OK, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error confirming password reset");
             await PublishErrorEventAsync("ConfirmPasswordReset", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -2344,7 +2312,7 @@ public partial class AuthService : IAuthService
         {
             var eventModel = new SessionInvalidatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
                 SessionIds = sessionIds,
@@ -2512,7 +2480,7 @@ public partial class AuthService : IAuthService
         {
             var eventModel = new SessionUpdatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
                 SessionId = sessionId,

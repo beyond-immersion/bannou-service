@@ -249,8 +249,8 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveVoiceRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LeaveVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.LeaveVoiceRoomAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.LeaveVoiceRoomAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -266,8 +266,8 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteVoiceRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.DeleteVoiceRoomAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.DeleteVoiceRoomAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -283,8 +283,8 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> PeerHeartbeat([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PeerHeartbeatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.PeerHeartbeatAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.PeerHeartbeatAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -305,9 +305,10 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AnswerPeer([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AnswerPeerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.AnswerPeerAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.AnswerPeerAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
+
 
 
     #region Meta Endpoints for CreateVoiceRoom

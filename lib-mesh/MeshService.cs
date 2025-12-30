@@ -227,7 +227,7 @@ public partial class MeshService : IMeshService
     /// Deregister an endpoint from the mesh.
     /// Called on graceful shutdown.
     /// </summary>
-    public async Task<(StatusCodes, object?)> DeregisterEndpointAsync(
+    public async Task<StatusCodes> DeregisterEndpointAsync(
         DeregisterEndpointRequest body,
         CancellationToken cancellationToken)
     {
@@ -240,7 +240,7 @@ public partial class MeshService : IMeshService
             if (endpoint == null)
             {
                 _logger.LogWarning("Endpoint {InstanceId} not found for deregistration", body.InstanceId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             var success = await _redisManager.DeregisterEndpointAsync(body.InstanceId, endpoint.AppId);
@@ -248,7 +248,7 @@ public partial class MeshService : IMeshService
             if (!success)
             {
                 _logger.LogWarning("Failed to deregister endpoint {InstanceId}", body.InstanceId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Publish deregistration event
@@ -258,7 +258,7 @@ public partial class MeshService : IMeshService
                 MeshEndpointDeregisteredEventReason.Graceful,
                 cancellationToken);
 
-            return (StatusCodes.NoContent, null);
+            return StatusCodes.NoContent;
         }
         catch (Exception ex)
         {
@@ -270,7 +270,7 @@ public partial class MeshService : IMeshService
                 ex.Message,
                 dependency: "redis",
                 stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -595,9 +595,9 @@ public partial class MeshService : IMeshService
         {
             var evt = new MeshEndpointRegisteredEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
-                InstanceId = endpoint.InstanceId,
+                InstanceId = endpoint.InstanceId.ToString(),
                 AppId = endpoint.AppId,
                 Host = endpoint.Host,
                 Port = endpoint.Port,
@@ -627,9 +627,9 @@ public partial class MeshService : IMeshService
         {
             var evt = new MeshEndpointDeregisteredEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
-                InstanceId = instanceId,
+                InstanceId = instanceId.ToString(),
                 AppId = appId,
                 Reason = reason
             };

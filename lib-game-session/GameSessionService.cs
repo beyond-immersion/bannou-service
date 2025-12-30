@@ -265,7 +265,7 @@ public partial class GameSessionService : IGameSessionService
                 SESSION_CREATED_TOPIC,
                 new GameSessionCreatedEvent
                 {
-                    EventId = Guid.NewGuid(),
+                    EventId = Guid.NewGuid().ToString(),
                     Timestamp = DateTimeOffset.UtcNow,
                     SessionId = session.SessionId,
                     GameType = session.GameType.ToString(),
@@ -427,7 +427,7 @@ public partial class GameSessionService : IGameSessionService
                 PLAYER_JOINED_TOPIC,
                 new GameSessionPlayerJoinedEvent
                 {
-                    EventId = Guid.NewGuid(),
+                    EventId = Guid.NewGuid().ToString(),
                     Timestamp = DateTimeOffset.UtcNow,
                     SessionId = sessionId,
                     AccountId = accountId.ToString()
@@ -631,7 +631,7 @@ public partial class GameSessionService : IGameSessionService
     /// <summary>
     /// Leaves a game session.
     /// </summary>
-    public async Task<(StatusCodes, object?)> LeaveGameSessionAsync(
+    public async Task<StatusCodes> LeaveGameSessionAsync(
         LeaveGameSessionRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -646,7 +646,7 @@ public partial class GameSessionService : IGameSessionService
             if (model == null)
             {
                 _logger.LogWarning("Game session {SessionId} not found for leave", sessionId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // AccountId comes from the request body (populated by shortcut system)
@@ -657,7 +657,7 @@ public partial class GameSessionService : IGameSessionService
             if (leavingPlayer == null)
             {
                 _logger.LogWarning("Player {AccountId} not found in session {SessionId}", accountId, sessionId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             model.Players.Remove(leavingPlayer);
@@ -731,7 +731,7 @@ public partial class GameSessionService : IGameSessionService
                 PLAYER_LEFT_TOPIC,
                 new GameSessionPlayerLeftEvent
                 {
-                    EventId = Guid.NewGuid(),
+                    EventId = Guid.NewGuid().ToString(),
                     Timestamp = DateTimeOffset.UtcNow,
                     SessionId = sessionId,
                     AccountId = leavingPlayer.AccountId.ToString(),
@@ -760,7 +760,7 @@ public partial class GameSessionService : IGameSessionService
 
             _logger.LogInformation("Player left game session {SessionId}", sessionId);
 
-            return (StatusCodes.OK, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -774,14 +774,14 @@ public partial class GameSessionService : IGameSessionService
                 endpoint: "post:/game-session/leave",
                 details: new { SessionId = body.SessionId },
                 stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
     /// <summary>
     /// Kicks a player from a game session.
     /// </summary>
-    public async Task<(StatusCodes, object?)> KickPlayerAsync(
+    public async Task<StatusCodes> KickPlayerAsync(
         KickPlayerRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -799,7 +799,7 @@ public partial class GameSessionService : IGameSessionService
             if (model == null)
             {
                 _logger.LogWarning("Game session {SessionId} not found for kick", sessionId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Find and remove the player
@@ -808,7 +808,7 @@ public partial class GameSessionService : IGameSessionService
             {
                 _logger.LogWarning("Player {TargetAccountId} not found in session {SessionId}",
                     targetAccountId, sessionId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             model.Players.Remove(playerToKick);
@@ -828,7 +828,7 @@ public partial class GameSessionService : IGameSessionService
                 PLAYER_LEFT_TOPIC,
                 new GameSessionPlayerLeftEvent
                 {
-                    EventId = Guid.NewGuid(),
+                    EventId = Guid.NewGuid().ToString(),
                     Timestamp = DateTimeOffset.UtcNow,
                     SessionId = sessionId,
                     AccountId = targetAccountId.ToString(),
@@ -837,7 +837,7 @@ public partial class GameSessionService : IGameSessionService
                 });
 
             _logger.LogInformation("Player {TargetAccountId} kicked from session {SessionId}", targetAccountId, sessionId);
-            return (StatusCodes.OK, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -851,14 +851,14 @@ public partial class GameSessionService : IGameSessionService
                 endpoint: "post:/game-session/kick",
                 details: new { SessionId = body.SessionId, TargetAccountId = body.TargetAccountId },
                 stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
     /// <summary>
     /// Sends a chat message in a game session.
     /// </summary>
-    public async Task<(StatusCodes, object?)> SendChatMessageAsync(
+    public async Task<StatusCodes> SendChatMessageAsync(
         ChatMessageRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -875,14 +875,14 @@ public partial class GameSessionService : IGameSessionService
             if (model == null)
             {
                 _logger.LogWarning("Game session {SessionId} not found for chat", sessionId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Check if client event publisher is available
             if (_clientEventPublisher == null)
             {
                 _logger.LogWarning("IClientEventPublisher not available - cannot send chat message to session {SessionId}", sessionId);
-                return (StatusCodes.InternalServerError, null);
+                return StatusCodes.InternalServerError;
             }
 
             // Get sender info from request context
@@ -921,7 +921,7 @@ public partial class GameSessionService : IGameSessionService
             if (targetSessionIds.Count == 0)
             {
                 _logger.LogWarning("No connected WebSocket sessions found for game session {SessionId}", sessionId);
-                return (StatusCodes.OK, null); // Not an error - players may have disconnected
+                return StatusCodes.OK; // Not an error - players may have disconnected
             }
 
             // Handle whisper messages - only send to sender and target
@@ -978,7 +978,7 @@ public partial class GameSessionService : IGameSessionService
                     sentCount, targetSessionIds.Count, sessionId);
             }
 
-            return (StatusCodes.OK, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -992,7 +992,7 @@ public partial class GameSessionService : IGameSessionService
                 endpoint: "post:/game-session/chat",
                 details: new { SessionId = body.SessionId },
                 stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 

@@ -15,30 +15,37 @@ paths: {}
 
 components:
   schemas:
+    # Base event schema for $ref resolution
+    BaseServiceEvent:
+      type: object
+      required:
+        - eventId
+        - timestamp
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event was created (UTC)
+
     # ============================================
     # Voice Room Lifecycle Events
     # ============================================
 
     VoiceRoomCreatedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Published when a new voice room is created.
         Consumed by Orchestrator for resource tracking.
       required:
-        - eventId
-        - timestamp
         - roomId
         - sessionId
         - tier
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the room was created
         roomId:
           type: string
           format: uuid
@@ -60,24 +67,16 @@ components:
           description: Audio codec
 
     VoiceRoomDeletedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Published when a voice room is deleted.
         Consumed by Orchestrator to release resources.
       required:
-        - eventId
-        - timestamp
         - roomId
         - sessionId
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the room was deleted
         roomId:
           type: string
           format: uuid
@@ -99,26 +98,18 @@ components:
     # ============================================
 
     VoiceTierUpgradeRequestedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Published when a voice room needs to upgrade from P2P to scaled tier.
         Consumed by Orchestrator to provision RTP server resources.
       required:
-        - eventId
-        - timestamp
         - roomId
         - sessionId
         - currentParticipants
         - requestedTier
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the upgrade was requested
         roomId:
           type: string
           format: uuid
@@ -136,26 +127,18 @@ components:
           description: Tier to upgrade to
 
     VoiceTierUpgradeCompletedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Published when a voice room tier upgrade is complete.
         Voice service publishes this after receiving RTP server assignment
         from Orchestrator.
       required:
-        - eventId
-        - timestamp
         - roomId
         - sessionId
         - newTier
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the upgrade completed
         roomId:
           type: string
           format: uuid
@@ -181,24 +164,16 @@ components:
     # ============================================
 
     VoiceParticipantJoinedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Published when a participant joins a voice room.
         Used for metrics and capacity tracking.
       required:
-        - eventId
-        - timestamp
         - roomId
         - accountId
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the participant joined
         roomId:
           type: string
           format: uuid
@@ -216,24 +191,16 @@ components:
           description: Current tier
 
     VoiceParticipantLeftEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Published when a participant leaves a voice room.
         Used for metrics and capacity tracking.
       required:
-        - eventId
-        - timestamp
         - roomId
         - accountId
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the participant left
         roomId:
           type: string
           format: uuid

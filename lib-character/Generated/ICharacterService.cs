@@ -28,7 +28,7 @@ public partial interface ICharacterService : IBannouService
     /// <summary>
     /// DeleteCharacter operation
     /// </summary>
-    Task<(StatusCodes, object?)> DeleteCharacterAsync(DeleteCharacterRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> DeleteCharacterAsync(DeleteCharacterRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// ListCharacters operation

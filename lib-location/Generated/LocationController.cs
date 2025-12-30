@@ -516,8 +516,8 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteLocation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.DeleteLocationAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.DeleteLocationAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -592,6 +592,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         var (statusCode, result) = await _implementation.SeedLocationsAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
+
 
 
     #region Meta Endpoints for GetLocation

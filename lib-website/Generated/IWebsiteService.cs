@@ -68,7 +68,7 @@ public partial interface IWebsiteService : IBannouService
     /// <summary>
     /// DeletePage operation
     /// </summary>
-    Task<(StatusCodes, object?)> DeletePageAsync(string slug, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> DeletePageAsync(string slug, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// GetSiteSettings operation
@@ -88,7 +88,7 @@ public partial interface IWebsiteService : IBannouService
     /// <summary>
     /// UpdateTheme operation
     /// </summary>
-    Task<(StatusCodes, object?)> UpdateThemeAsync(ThemeConfig body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> UpdateThemeAsync(ThemeConfig body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// GetSubscription operation

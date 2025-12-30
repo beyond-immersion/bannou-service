@@ -80,6 +80,8 @@
       <Compile Include="../bannou-service/Generated/Models/GameSessionModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/VoiceModels.cs" />
       <Compile Include="../bannou-service/Generated/Models/SpeciesModels.cs" />
+      <Compile Include="../bannou-service/Generated/Events/BehaviorEventsModels.cs" />
+      <Compile Include="../bannou-service/Generated/Events/BehaviorLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/DocumentationLifecycleEvents.cs" />
       <Compile Include="../bannou-service/Generated/Events/SpeciesEventsModels.cs" />
       <Compile Include="../bannou-service/Generated/Events/RelationshipLifecycleEvents.cs" />

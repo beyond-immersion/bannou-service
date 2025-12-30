@@ -351,8 +351,8 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteSpecies([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.DeleteSpeciesAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.DeleteSpeciesAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -468,6 +468,7 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
         var (statusCode, result) = await _implementation.SeedSpeciesAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
+
 
 
     #region Meta Endpoints for GetSpecies

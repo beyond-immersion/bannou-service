@@ -250,6 +250,7 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
     public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPost([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection2 connection, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade2 upgrade, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, [Microsoft.AspNetCore.Mvc.FromBody] ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 
+
     #region Meta Endpoints for ProxyInternalRequest
 
     private static readonly string _ProxyInternalRequest_RequestSchema = """

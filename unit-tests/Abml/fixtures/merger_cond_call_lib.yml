@@ -1,0 +1,11 @@
+version: "2.0"
+metadata:
+  id: lib
+
+flows:
+  yes:
+    actions:
+      - log: { message: "Yes" }
+  no:
+    actions:
+      - log: { message: "No" }

@@ -412,7 +412,7 @@ public class MeshServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.DeregisterEndpointAsync(request, CancellationToken.None);
+        var statusCode = await service.DeregisterEndpointAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NoContent, statusCode);
@@ -435,7 +435,7 @@ public class MeshServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.DeregisterEndpointAsync(request, CancellationToken.None);
+        var statusCode = await service.DeregisterEndpointAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);

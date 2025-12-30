@@ -117,22 +117,8 @@ public partial class PermissionCapabilityUpdate
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionStateChangeEvent
+public partial class SessionStateChangeEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this state change event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the state change occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Session ID that had state change
@@ -167,15 +153,6 @@ public partial class SessionStateChangeEvent
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -184,22 +161,8 @@ public partial class SessionStateChangeEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AuthSessionEvent
+public partial class AuthSessionEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this auth event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the auth event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Session ID affected by the auth event
@@ -240,15 +203,6 @@ public partial class AuthSessionEvent
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -257,22 +211,8 @@ public partial class AuthSessionEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PermissionRecompileRequest
+public partial class PermissionRecompileRequest : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this recompilation request
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the recompilation was requested
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Reason for triggering permission recompilation
@@ -304,15 +244,6 @@ public partial class PermissionRecompileRequest
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -321,22 +252,8 @@ public partial class PermissionRecompileRequest
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RedisOperationEvent
+public partial class RedisOperationEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this operation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the Redis operation occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Type of Redis operation performed
@@ -381,15 +298,6 @@ public partial class RedisOperationEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 

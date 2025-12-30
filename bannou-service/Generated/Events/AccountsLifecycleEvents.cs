@@ -34,11 +34,11 @@ public partial class AccountCreatedEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Unique identifier for this event (UUID string)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     /// <summary>
     /// When this event occurred
@@ -93,11 +93,11 @@ public partial class AccountUpdatedEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Unique identifier for this event (UUID string)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     /// <summary>
     /// When this event occurred
@@ -159,11 +159,11 @@ public partial class AccountDeletedEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Unique identifier for this event (UUID string)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     /// <summary>
     /// When this event occurred

@@ -14,26 +14,37 @@ paths: {}
 
 components:
   schemas:
+    BaseServiceEvent:
+      type: object
+      description: |
+        Base schema for all service-to-service events.
+        All service events MUST include these fields and inherit from this schema.
+        Implements IBannouEvent interface for uniform event handling in taps.
+      required:
+        - eventId
+        - timestamp
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this event instance (UUID string)
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event was created (ISO 8601 format, UTC)
+
     ServiceRegistrationEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Published by any service during startup to register its API endpoints
         and permission requirements with the Permissions service.
       required:
-        - eventId
-        - timestamp
         - serviceId
         - version
         - appId
         - endpoints
       properties:
-        eventId:
-          type: string
-          description: Unique identifier for this registration event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the service registration occurred
         serviceId:
           type: string
           description: Service ID that registered (e.g., "behavior", "accounts")
@@ -108,29 +119,21 @@ components:
           description: Optional human-readable permission description
 
     ServiceHeartbeatEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Published periodically by each bannou instance to indicate health and capacity.
         Contains aggregated information for ALL services hosted by this app instance.
         Used for load balancing and service discovery by the orchestrator.
       required:
-        - eventId
-        - timestamp
         - serviceId
         - appId
         - status
         - services
       properties:
-        eventId:
-          type: string
-          description: Unique identifier for this heartbeat event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the heartbeat was sent
         serviceId:
           type: string
-          format: uuid
           description: Unique GUID identifying this bannou instance (for log correlation/debugging)
         appId:
           type: string
@@ -170,7 +173,6 @@ components:
       properties:
         serviceId:
           type: string
-          format: uuid
           description: Unique GUID identifying this plugin instance (for log correlation/debugging)
         serviceName:
           type: string
@@ -208,27 +210,19 @@ components:
           description: Memory usage ratio (0.0 - 1.0)
 
     ServiceErrorEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Structured error event for unexpected service failures (akin to Sentry).
         Use ONLY for internal faults, not for user/input errors.
       required:
-        - eventId
-        - timestamp
         - serviceId
         - appId
         - operation
         - errorType
         - message
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this error event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the error occurred
         serviceId:
           type: string
           description: Logical service name emitting the error (e.g., "accounts")
@@ -280,6 +274,8 @@ components:
           description: Memory usage percentage (0.0 - 1.0)
 
     FullServiceMappingsEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Published periodically by Orchestrator as the authoritative source of truth
@@ -287,18 +283,9 @@ components:
         Consumed by all bannou instances to atomically update their routing tables.
         Published every 30 seconds AND immediately when routing changes.
       required:
-        - eventId
-        - timestamp
         - mappings
         - version
       properties:
-        eventId:
-          type: string
-          description: Unique identifier for this mappings event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this mappings snapshot was generated
         mappings:
           type: object
           additionalProperties:
@@ -320,6 +307,8 @@ components:
           description: Total number of services in the mappings dictionary
 
     SessionConnectedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Published by Connect service when a WebSocket connection is fully established.
@@ -329,19 +318,9 @@ components:
         The roles and authorizations enable event-driven capability compilation without
         synchronous API calls from Connect to Permissions.
       required:
-        - eventId
-        - timestamp
         - sessionId
         - accountId
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this connection event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the WebSocket connection was established
         sessionId:
           type: string
           description: Session ID that just connected via WebSocket
@@ -372,24 +351,16 @@ components:
           description: Optional client metadata (version, platform, etc.)
 
     SessionDisconnectedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Published by Connect service when a WebSocket connection is closed.
         Used by Permissions service to remove session from activeConnections.
         Also enables cleanup of session-specific resources across services.
       required:
-        - eventId
-        - timestamp
         - sessionId
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this disconnection event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the WebSocket connection was closed
         sessionId:
           type: string
           description: Session ID that disconnected
@@ -411,6 +382,8 @@ components:
           description: How long the session was connected (for metrics)
 
     SessionReconnectedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Published by Connect service when a WebSocket session is restored after reconnection.
@@ -422,19 +395,9 @@ components:
         whether the session should receive shortcuts again (e.g., check subscription status,
         game state, etc.) and publish new ShortcutPublishedEvents as appropriate.
       required:
-        - eventId
-        - timestamp
         - sessionId
         - accountId
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this reconnection event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the WebSocket reconnection completed
         sessionId:
           type: string
           description: Session ID that reconnected

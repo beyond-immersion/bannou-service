@@ -392,7 +392,7 @@ public partial class VoiceService : IVoiceService
     /// <summary>
     /// Leaves a voice room.
     /// </summary>
-    public async Task<(StatusCodes, object?)> LeaveVoiceRoomAsync(LeaveVoiceRoomRequest body, CancellationToken cancellationToken)
+    public async Task<StatusCodes> LeaveVoiceRoomAsync(LeaveVoiceRoomRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Session {SessionId} leaving voice room {RoomId}", body.SessionId, body.RoomId);
 
@@ -404,7 +404,7 @@ public partial class VoiceService : IVoiceService
             if (removed == null)
             {
                 _logger.LogDebug("Session {SessionId} not found in room {RoomId}", body.SessionId, body.RoomId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Get remaining count
@@ -415,7 +415,7 @@ public partial class VoiceService : IVoiceService
 
             _logger.LogInformation("Session {SessionId} left voice room {RoomId}", body.SessionId, body.RoomId);
 
-            return (StatusCodes.OK, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -429,7 +429,7 @@ public partial class VoiceService : IVoiceService
                 endpoint: "post:/voice/room/leave",
                 details: null,
                 stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -437,7 +437,7 @@ public partial class VoiceService : IVoiceService
     /// Deletes a voice room and notifies all participants.
     /// For scaled tier rooms, also releases RTP server resources.
     /// </summary>
-    public async Task<(StatusCodes, object?)> DeleteVoiceRoomAsync(DeleteVoiceRoomRequest body, CancellationToken cancellationToken)
+    public async Task<StatusCodes> DeleteVoiceRoomAsync(DeleteVoiceRoomRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Deleting voice room {RoomId}", body.RoomId);
 
@@ -450,7 +450,7 @@ public partial class VoiceService : IVoiceService
             if (roomData == null)
             {
                 _logger.LogDebug("Voice room {RoomId} not found", body.RoomId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Get all participants before clearing
@@ -479,7 +479,7 @@ public partial class VoiceService : IVoiceService
 
             _logger.LogInformation("Deleted voice room {RoomId}, notified {ParticipantCount} participants", body.RoomId, participants.Count);
 
-            return (StatusCodes.OK, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -493,14 +493,14 @@ public partial class VoiceService : IVoiceService
                 endpoint: "post:/voice/room/delete",
                 details: null,
                 stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
     /// <summary>
     /// Updates a participant's heartbeat to keep their registration active.
     /// </summary>
-    public async Task<(StatusCodes, object?)> PeerHeartbeatAsync(PeerHeartbeatRequest body, CancellationToken cancellationToken)
+    public async Task<StatusCodes> PeerHeartbeatAsync(PeerHeartbeatRequest body, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Heartbeat from {SessionId} in room {RoomId}", body.SessionId, body.RoomId);
 
@@ -511,10 +511,10 @@ public partial class VoiceService : IVoiceService
             if (!updated)
             {
                 _logger.LogDebug("Session {SessionId} not found in room {RoomId}", body.SessionId, body.RoomId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
-            return (StatusCodes.OK, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -528,7 +528,7 @@ public partial class VoiceService : IVoiceService
                 endpoint: "post:/voice/peer/heartbeat",
                 details: null,
                 stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -536,7 +536,7 @@ public partial class VoiceService : IVoiceService
     /// Processes an SDP answer from a client to complete a WebRTC handshake.
     /// Called by clients after receiving VoicePeerJoinedEvent with an SDP offer.
     /// </summary>
-    public async Task<(StatusCodes, object?)> AnswerPeerAsync(AnswerPeerRequest body, CancellationToken cancellationToken)
+    public async Task<StatusCodes> AnswerPeerAsync(AnswerPeerRequest body, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Processing SDP answer for target {TargetSessionId} in room {RoomId}", body.TargetSessionId, body.RoomId);
 
@@ -548,13 +548,13 @@ public partial class VoiceService : IVoiceService
             if (targetParticipant == null)
             {
                 _logger.LogDebug("Target session {TargetSessionId} not found in room {RoomId}", body.TargetSessionId, body.RoomId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             if (_clientEventPublisher == null)
             {
                 _logger.LogWarning("Client event publisher not available, cannot send answer to target");
-                return (StatusCodes.ServiceUnavailable, null);
+                return StatusCodes.ServiceUnavailable;
             }
 
             // Get the sender's display name for the event
@@ -586,7 +586,7 @@ public partial class VoiceService : IVoiceService
 
             _logger.LogInformation("Sent SDP answer to target {TargetSessionId} in room {RoomId}", body.TargetSessionId, body.RoomId);
 
-            return (StatusCodes.OK, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -600,7 +600,7 @@ public partial class VoiceService : IVoiceService
                 endpoint: "post:/voice/peer/answer",
                 details: null,
                 stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 

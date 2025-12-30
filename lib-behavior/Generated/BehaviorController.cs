@@ -268,8 +268,8 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InvalidateCachedBehavior([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] InvalidateCacheRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.InvalidateCachedBehaviorAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.InvalidateCachedBehaviorAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -322,6 +322,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
         var (statusCode, result) = await _implementation.ValidateGoapPlanAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
+
 
 
     #region Meta Endpoints for CompileAbmlBehavior
@@ -549,12 +550,10 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       ],
       "properties": {
         "behavior_tree": {
-          "type": "object",
-          "description": "Compiled executable behavior tree structure"
+          "$ref": "#/$defs/BehaviorTreeData"
         },
         "context_schema": {
-          "type": "object",
-          "description": "Schema defining required context variables"
+          "$ref": "#/$defs/ContextSchemaData"
         },
         "service_dependencies": {
           "type": "array",
@@ -592,6 +591,29 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           }
         }
       }
+    },
+    "BehaviorTreeData": {
+      "type": "object",
+      "description": "Compiled behavior tree data with bytecode or download reference",
+      "properties": {
+        "bytecode": {
+          "type": "string",
+          "description": "Base64-encoded compiled bytecode for the behavior tree"
+        },
+        "bytecode_size": {
+          "type": "integer",
+          "description": "Size of the bytecode in bytes"
+        },
+        "download_url": {
+          "type": "string",
+          "description": "URL to download the compiled behavior asset"
+        }
+      }
+    },
+    "ContextSchemaData": {
+      "type": "object",
+      "description": "Schema defining required context variables for behavior execution",
+      "additionalProperties": true
     },
     "GoapGoal": {
       "type": "object",
@@ -940,12 +962,10 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       ],
       "properties": {
         "behavior_tree": {
-          "type": "object",
-          "description": "Compiled executable behavior tree structure"
+          "$ref": "#/$defs/BehaviorTreeData"
         },
         "context_schema": {
-          "type": "object",
-          "description": "Schema defining required context variables"
+          "$ref": "#/$defs/ContextSchemaData"
         },
         "service_dependencies": {
           "type": "array",
@@ -983,6 +1003,29 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           }
         }
       }
+    },
+    "BehaviorTreeData": {
+      "type": "object",
+      "description": "Compiled behavior tree data with bytecode or download reference",
+      "properties": {
+        "bytecode": {
+          "type": "string",
+          "description": "Base64-encoded compiled bytecode for the behavior tree"
+        },
+        "bytecode_size": {
+          "type": "integer",
+          "description": "Size of the bytecode in bytes"
+        },
+        "download_url": {
+          "type": "string",
+          "description": "URL to download the compiled behavior asset"
+        }
+      }
+    },
+    "ContextSchemaData": {
+      "type": "object",
+      "description": "Schema defining required context variables for behavior execution",
+      "additionalProperties": true
     },
     "GoapGoal": {
       "type": "object",
@@ -1305,12 +1348,10 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
       ],
       "properties": {
         "behavior_tree": {
-          "type": "object",
-          "description": "Compiled executable behavior tree structure"
+          "$ref": "#/$defs/BehaviorTreeData"
         },
         "context_schema": {
-          "type": "object",
-          "description": "Schema defining required context variables"
+          "$ref": "#/$defs/ContextSchemaData"
         },
         "service_dependencies": {
           "type": "array",
@@ -1348,6 +1389,29 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           }
         }
       }
+    },
+    "BehaviorTreeData": {
+      "type": "object",
+      "description": "Compiled behavior tree data with bytecode or download reference",
+      "properties": {
+        "bytecode": {
+          "type": "string",
+          "description": "Base64-encoded compiled bytecode for the behavior tree"
+        },
+        "bytecode_size": {
+          "type": "integer",
+          "description": "Size of the bytecode in bytes"
+        },
+        "download_url": {
+          "type": "string",
+          "description": "URL to download the compiled behavior asset"
+        }
+      }
+    },
+    "ContextSchemaData": {
+      "type": "object",
+      "description": "Schema defining required context variables for behavior execution",
+      "additionalProperties": true
     },
     "GoapGoal": {
       "type": "object",

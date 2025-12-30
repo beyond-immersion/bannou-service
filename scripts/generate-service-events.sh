@@ -66,7 +66,7 @@ for EVENTS_SCHEMA in ../schemas/*-events.yaml; do
         "/generateClientClasses:false" \
         "/generateClientInterfaces:false" \
         "/generateDtoTypes:true" \
-        "/excludedTypeNames:ApiException,ApiException\<TResult\>" \
+        "/excludedTypeNames:ApiException,ApiException\<TResult\>,BaseServiceEvent" \
         "/jsonLibrary:SystemTextJson" \
         "/generateNullableReferenceTypes:true" \
         "/newLineBehavior:LF" \

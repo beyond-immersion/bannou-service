@@ -513,11 +513,10 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        var (status, response) = await service.LogoutAsync("", null);
+        var status = await service.LogoutAsync("", null);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
-        Assert.Null(response);
     }
 
     [Fact]
@@ -769,20 +768,6 @@ public class AuthServiceTests
     }
 
     [Fact]
-    public async Task InitSteamAuthAsync_ShouldReturnAuthorizationUrl()
-    {
-        // Arrange
-        var service = CreateAuthService();
-
-        // Act
-        var (status, response) = await service.InitSteamAuthAsync("https://example.com/steam-callback");
-
-        // Assert
-        Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(response);
-    }
-
-    [Fact]
     public async Task RequestPasswordResetAsync_WithValidEmail_ShouldReturnOK()
     {
         // Arrange
@@ -794,11 +779,10 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.RequestPasswordResetAsync(request);
+        var status = await service.RequestPasswordResetAsync(request);
 
         // Assert - per schema, this endpoint returns no body (prevents email enumeration)
         Assert.Equal(StatusCodes.OK, status);
-        Assert.Null(response);  // Correct: no response body per schema (security design)
     }
 
     [Fact]
@@ -829,11 +813,10 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.ConfirmPasswordResetAsync(request);
+        var status = await service.ConfirmPasswordResetAsync(request);
 
         // Assert - per schema, this endpoint returns no body
         Assert.Equal(StatusCodes.OK, status);
-        Assert.Null(response);  // Correct: no response body per schema
     }
 
     [Fact]
@@ -849,7 +832,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.ConfirmPasswordResetAsync(request);
+        var status = await service.ConfirmPasswordResetAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -878,7 +861,7 @@ public class AuthServiceTests
 
         var accountDeletedEvent = new AccountDeletedEvent
         {
-            EventId = Guid.NewGuid(),
+            EventId = Guid.NewGuid().ToString(),
             Timestamp = DateTimeOffset.UtcNow,
             AccountId = accountId,
             DeletedReason = "user_requested"
@@ -916,7 +899,7 @@ public class AuthServiceTests
 
         var accountDeletedEvent = new AccountDeletedEvent
         {
-            EventId = Guid.NewGuid(),
+            EventId = Guid.NewGuid().ToString(),
             Timestamp = DateTimeOffset.UtcNow,
             AccountId = accountId,
             DeletedReason = "user_requested"
@@ -965,7 +948,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.RequestPasswordResetAsync(request);
+        var status = await service.RequestPasswordResetAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -983,7 +966,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.RequestPasswordResetAsync(request);
+        var status = await service.RequestPasswordResetAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1001,7 +984,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.RequestPasswordResetAsync(request);
+        var status = await service.RequestPasswordResetAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1024,7 +1007,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.RequestPasswordResetAsync(request);
+        var status = await service.RequestPasswordResetAsync(request);
 
         // Assert - should return OK to prevent email enumeration attacks
         Assert.Equal(StatusCodes.OK, status);
@@ -1043,7 +1026,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.ConfirmPasswordResetAsync(request);
+        var status = await service.ConfirmPasswordResetAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1062,7 +1045,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.ConfirmPasswordResetAsync(request);
+        var status = await service.ConfirmPasswordResetAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);

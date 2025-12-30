@@ -24,8 +24,7 @@ components:
       properties:
         eventId: &id001
           type: string
-          format: uuid
-          description: Unique identifier for this event
+          description: Unique identifier for this event (UUID string)
         timestamp: &id002
           type: string
           format: date-time

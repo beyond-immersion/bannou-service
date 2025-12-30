@@ -748,7 +748,7 @@ public class VoiceServiceTests
             .ReturnsAsync(1);
 
         // Act
-        var (status, result) = await service.LeaveVoiceRoomAsync(request, CancellationToken.None);
+        var status = await service.LeaveVoiceRoomAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -772,7 +772,7 @@ public class VoiceServiceTests
             .ReturnsAsync((ParticipantRegistration?)null);
 
         // Act
-        var (status, result) = await service.LeaveVoiceRoomAsync(request, CancellationToken.None);
+        var status = await service.LeaveVoiceRoomAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -820,7 +820,7 @@ public class VoiceServiceTests
             .ReturnsAsync(2);
 
         // Act
-        var (status, result) = await service.DeleteVoiceRoomAsync(request, CancellationToken.None);
+        var status = await service.DeleteVoiceRoomAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -855,7 +855,7 @@ public class VoiceServiceTests
             .ReturnsAsync((VoiceRoomData?)null);
 
         // Act
-        var (status, result) = await service.DeleteVoiceRoomAsync(request, CancellationToken.None);
+        var status = await service.DeleteVoiceRoomAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -877,7 +877,7 @@ public class VoiceServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var (status, result) = await service.PeerHeartbeatAsync(request, CancellationToken.None);
+        var status = await service.PeerHeartbeatAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -895,7 +895,7 @@ public class VoiceServiceTests
             .ReturnsAsync(false);
 
         // Act
-        var (status, result) = await service.PeerHeartbeatAsync(request, CancellationToken.None);
+        var status = await service.PeerHeartbeatAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -946,7 +946,7 @@ public class VoiceServiceTests
             .ReturnsAsync(1);
 
         // Act
-        var (status, result) = await service.AnswerPeerAsync(request, CancellationToken.None);
+        var status = await service.AnswerPeerAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -980,7 +980,7 @@ public class VoiceServiceTests
             .ReturnsAsync((ParticipantRegistration?)null);
 
         // Act
-        var (status, result) = await service.AnswerPeerAsync(request, CancellationToken.None);
+        var status = await service.AnswerPeerAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);

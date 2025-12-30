@@ -537,7 +537,7 @@ public partial class RelationshipService : IRelationshipService
     /// <param name="body">Request containing relationship ID and optional end timestamp.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Status code indicating success.</returns>
-    public async Task<(StatusCodes, object?)> EndRelationshipAsync(
+    public async Task<StatusCodes> EndRelationshipAsync(
         EndRelationshipRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -552,14 +552,14 @@ public partial class RelationshipService : IRelationshipService
             if (model == null)
             {
                 _logger.LogWarning("Relationship not found: {RelationshipId}", body.RelationshipId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Check if already ended
             if (model.EndedAt.HasValue)
             {
                 _logger.LogWarning("Relationship already ended: {RelationshipId}", body.RelationshipId);
-                return (StatusCodes.Conflict, null);
+                return StatusCodes.Conflict;
             }
 
             // Set ended timestamp (use current time if not specified or default)
@@ -581,13 +581,13 @@ public partial class RelationshipService : IRelationshipService
             await PublishRelationshipDeletedEventAsync(model, "Relationship ended", cancellationToken);
 
             _logger.LogInformation("Ended relationship: {RelationshipId}", body.RelationshipId);
-            return (StatusCodes.OK, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error ending relationship: {RelationshipId}", body.RelationshipId);
             await EmitErrorAsync("EndRelationship", "post:/relationship/end", ex);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -749,7 +749,7 @@ public partial class RelationshipService : IRelationshipService
         {
             var eventModel = new RelationshipCreatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RelationshipId = Guid.Parse(model.RelationshipId),
                 Entity1Id = Guid.Parse(model.Entity1Id),
@@ -784,7 +784,7 @@ public partial class RelationshipService : IRelationshipService
         {
             var eventModel = new RelationshipUpdatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RelationshipId = Guid.Parse(model.RelationshipId),
                 Entity1Id = Guid.Parse(model.Entity1Id),
@@ -819,7 +819,7 @@ public partial class RelationshipService : IRelationshipService
         {
             var eventModel = new RelationshipDeletedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RelationshipId = Guid.Parse(model.RelationshipId),
                 Entity1Id = Guid.Parse(model.Entity1Id),

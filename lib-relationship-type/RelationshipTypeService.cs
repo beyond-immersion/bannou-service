@@ -588,7 +588,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         }
     }
 
-    public async Task<(StatusCodes, object?)> DeleteRelationshipTypeAsync(
+    public async Task<StatusCodes> DeleteRelationshipTypeAsync(
         DeleteRelationshipTypeRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -602,7 +602,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             if (existing == null)
             {
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Check if type has children
@@ -610,7 +610,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
             if (childIds.Count > 0)
             {
                 _logger.LogWarning("Cannot delete type with children: {TypeId}", body.RelationshipTypeId);
-                return (StatusCodes.Conflict, null);
+                return StatusCodes.Conflict;
             }
 
             // Delete the type
@@ -632,13 +632,13 @@ public partial class RelationshipTypeService : IRelationshipTypeService
 
             await PublishRelationshipTypeDeletedEventAsync(existing, cancellationToken);
 
-            return (StatusCodes.NoContent, null);
+            return StatusCodes.NoContent;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting relationship type: {TypeId}", body.RelationshipTypeId);
             await EmitErrorAsync("DeleteRelationshipType", "post:/relationship-type/delete", ex);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -1136,7 +1136,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         {
             var eventModel = new RelationshipTypeCreatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
                 Code = model.Code,
@@ -1164,7 +1164,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         {
             var eventModel = new RelationshipTypeUpdatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
                 Code = model.Code,
@@ -1202,7 +1202,7 @@ public partial class RelationshipTypeService : IRelationshipTypeService
         {
             var eventModel = new RelationshipTypeDeletedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
                 Code = model.Code

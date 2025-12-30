@@ -414,25 +414,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         };
     }
 
-    /// <summary>
-    /// View documentation page in browser
-    /// </summary>
-    /// <remarks>
-    /// Browser-facing endpoint for viewing documentation.
-    /// <br/>Routed via NGINX, not exposed to WebSocket clients.
-    /// <br/>Returns HTML-rendered documentation page.
-    /// </remarks>
-    /// <param name="slug">Document slug within namespace</param>
-    /// <param name="ns">Documentation namespace (defaults to bannou)</param>
-    /// <returns>HTML documentation page (returns ContentResult)</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("documentation/view/{slug}")]
-
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ViewDocumentBySlug([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string slug, [Microsoft.AspNetCore.Mvc.FromQuery] string? ns, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-
-        var (statusCode, result) = await _implementation.ViewDocumentBySlugAsync(slug, ns ?? "bannou", cancellationToken);
-        return ConvertToActionResult(statusCode, result);
-    }
+    // Endpoint ViewDocumentBySlug requires manual implementation in partial class.
+    // See x-manual-implementation: true in the OpenAPI schema.
 
     /// <summary>
     /// Natural language documentation search
@@ -846,6 +829,7 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         var (statusCode, result) = await _implementation.DeleteDocumentationArchiveAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
+
 
 
     #region Meta Endpoints for ViewDocumentBySlug

@@ -893,7 +893,7 @@ public partial class LocationService : ILocationService
     }
 
     /// <inheritdoc />
-    public async Task<(StatusCodes, object?)> DeleteLocationAsync(DeleteLocationRequest body, CancellationToken cancellationToken = default)
+    public async Task<StatusCodes> DeleteLocationAsync(DeleteLocationRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -904,7 +904,7 @@ public partial class LocationService : ILocationService
 
             if (model == null)
             {
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Check for children
@@ -914,7 +914,7 @@ public partial class LocationService : ILocationService
             if (childIds.Count > 0)
             {
                 _logger.LogWarning("Cannot delete location {LocationId} - has {ChildCount} children", body.LocationId, childIds.Count);
-                return (StatusCodes.Conflict, null);
+                return StatusCodes.Conflict;
             }
 
             // Delete the location
@@ -941,7 +941,7 @@ public partial class LocationService : ILocationService
             await PublishLocationDeletedEventAsync(model, cancellationToken);
 
             _logger.LogInformation("Deleted location {LocationId}", body.LocationId);
-            return (StatusCodes.NoContent, null);
+            return StatusCodes.NoContent;
         }
         catch (Exception ex)
         {
@@ -950,7 +950,7 @@ public partial class LocationService : ILocationService
                 "location", "DeleteLocation", "unexpected_exception", ex.Message,
                 dependency: "state", endpoint: "post:/location/delete",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -1359,7 +1359,7 @@ public partial class LocationService : ILocationService
     {
         var eventData = new LocationCreatedEvent
         {
-            EventId = Guid.NewGuid(),
+            EventId = Guid.NewGuid().ToString(),
             Timestamp = DateTimeOffset.UtcNow,
             LocationId = Guid.Parse(model.LocationId),
             RealmId = Guid.Parse(model.RealmId),
@@ -1384,7 +1384,7 @@ public partial class LocationService : ILocationService
     {
         var eventData = new LocationUpdatedEvent
         {
-            EventId = Guid.NewGuid(),
+            EventId = Guid.NewGuid().ToString(),
             Timestamp = DateTimeOffset.UtcNow,
             LocationId = Guid.Parse(model.LocationId),
             RealmId = Guid.Parse(model.RealmId),
@@ -1410,7 +1410,7 @@ public partial class LocationService : ILocationService
     {
         var eventData = new LocationDeletedEvent
         {
-            EventId = Guid.NewGuid(),
+            EventId = Guid.NewGuid().ToString(),
             Timestamp = DateTimeOffset.UtcNow,
             LocationId = Guid.Parse(model.LocationId),
             RealmId = Guid.Parse(model.RealmId),

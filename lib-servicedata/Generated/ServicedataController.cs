@@ -219,9 +219,10 @@ public partial class ServicedataController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteService([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.DeleteServiceAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.DeleteServiceAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
+
 
 
     #region Meta Endpoints for ListServices

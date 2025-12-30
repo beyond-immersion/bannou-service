@@ -287,9 +287,10 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> EndRelationship([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] EndRelationshipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.EndRelationshipAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.EndRelationshipAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
+
 
 
     #region Meta Endpoints for CreateRelationship

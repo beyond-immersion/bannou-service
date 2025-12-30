@@ -518,7 +518,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             .ReturnsAsync("etag-2");
 
         // Act
-        var (status, response) = await service.DeleteSpeciesAsync(
+        var status = await service.DeleteSpeciesAsync(
             new DeleteSpeciesRequest { SpeciesId = speciesId });
 
         // Assert
@@ -539,7 +539,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             .ReturnsAsync((SpeciesModel?)null);
 
         // Act
-        var (status, response) = await service.DeleteSpeciesAsync(
+        var status = await service.DeleteSpeciesAsync(
             new DeleteSpeciesRequest { SpeciesId = speciesId });
 
         // Assert

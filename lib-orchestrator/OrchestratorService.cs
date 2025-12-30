@@ -188,7 +188,7 @@ public partial class OrchestratorService : IOrchestratorService
             {
                 await _messageBus.PublishAsync("orchestrator-health", new OrchestratorHealthPingEvent
                 {
-                    EventId = Guid.NewGuid(),
+                    EventId = Guid.NewGuid().ToString(),
                     Timestamp = DateTimeOffset.UtcNow,
                     Status = OrchestratorHealthPingEventStatus.Ok
                 });

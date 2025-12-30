@@ -73,7 +73,7 @@ public partial interface ILocationService : IBannouService
     /// <summary>
     /// DeleteLocation operation
     /// </summary>
-    Task<(StatusCodes, object?)> DeleteLocationAsync(DeleteLocationRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> DeleteLocationAsync(DeleteLocationRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// DeprecateLocation operation

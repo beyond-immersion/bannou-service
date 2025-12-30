@@ -43,7 +43,7 @@ public partial interface ISpeciesService : IBannouService
     /// <summary>
     /// DeleteSpecies operation
     /// </summary>
-    Task<(StatusCodes, object?)> DeleteSpeciesAsync(DeleteSpeciesRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> DeleteSpeciesAsync(DeleteSpeciesRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// DeprecateSpecies operation

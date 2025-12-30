@@ -1,0 +1,14 @@
+version: "2.0"
+metadata:
+  id: lib
+
+context:
+  variables:
+    lib_var:
+      type: int
+      default: 42
+
+flows:
+  work:
+    actions:
+      - log: { message: "Working" }

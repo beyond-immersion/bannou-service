@@ -523,7 +523,7 @@ public partial class SpeciesService : ISpeciesService
         }
     }
 
-    public async Task<(StatusCodes, object?)> DeleteSpeciesAsync(
+    public async Task<StatusCodes> DeleteSpeciesAsync(
         DeleteSpeciesRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -537,7 +537,7 @@ public partial class SpeciesService : ISpeciesService
             if (model == null)
             {
                 _logger.LogWarning("Species not found for deletion: {SpeciesId}", body.SpeciesId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Check if species is in use by characters
@@ -551,7 +551,7 @@ public partial class SpeciesService : ISpeciesService
                 {
                     _logger.LogWarning("Cannot delete species {Code}: {Count} characters use this species",
                         model.Code, charactersResponse.TotalCount);
-                    return (StatusCodes.Conflict, null);
+                    return StatusCodes.Conflict;
                 }
             }
             catch (Exception ex)
@@ -585,7 +585,7 @@ public partial class SpeciesService : ISpeciesService
             await PublishSpeciesDeletedEventAsync(model, null, cancellationToken);
 
             _logger.LogInformation("Deleted species: {SpeciesId} ({Code})", body.SpeciesId, model.Code);
-            return (StatusCodes.NoContent, null);
+            return StatusCodes.NoContent;
         }
         catch (Exception ex)
         {
@@ -594,7 +594,7 @@ public partial class SpeciesService : ISpeciesService
                 "species", "DeleteSpecies", "unexpected_exception", ex.Message,
                 dependency: "state", endpoint: "post:/species/delete",
                 details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -1149,7 +1149,7 @@ public partial class SpeciesService : ISpeciesService
         {
             var eventModel = new SpeciesCreatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SpeciesId = Guid.Parse(model.SpeciesId),
                 Code = model.Code,
@@ -1177,7 +1177,7 @@ public partial class SpeciesService : ISpeciesService
         {
             var eventModel = new SpeciesUpdatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SpeciesId = Guid.Parse(model.SpeciesId),
                 Code = model.Code,
@@ -1216,7 +1216,7 @@ public partial class SpeciesService : ISpeciesService
         {
             var eventModel = new SpeciesDeletedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SpeciesId = Guid.Parse(model.SpeciesId),
                 Code = model.Code,

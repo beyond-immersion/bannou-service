@@ -192,8 +192,8 @@ public partial class BehaviorService : IBehaviorService
                 Behavior_name = behaviorName,
                 Compiled_behavior = new CompiledBehavior
                 {
-                    Behavior_tree = new { bytecode_size = bytecode.Length },
-                    Context_schema = new { }
+                    Behavior_tree = new BehaviorTreeData { Bytecode_size = bytecode.Length },
+                    Context_schema = new ContextSchemaData()
                 },
                 Compilation_time_ms = (int)stopwatch.ElapsedMilliseconds,
                 Asset_id = assetId,
@@ -235,7 +235,7 @@ public partial class BehaviorService : IBehaviorService
         {
             var updateEvent = new Events.BehaviorUpdatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = now,
                 BehaviorId = behaviorId,
                 Name = name,
@@ -255,7 +255,7 @@ public partial class BehaviorService : IBehaviorService
         {
             var createEvent = new Events.BehaviorCreatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = now,
                 BehaviorId = behaviorId,
                 Name = name,
@@ -504,15 +504,25 @@ public partial class BehaviorService : IBehaviorService
                 // Continue without bytecode - caller can use download_url directly
             }
 
+            var behaviorTreeData = bytecode != null
+                ? new BehaviorTreeData
+                {
+                    Bytecode = Convert.ToBase64String(bytecode),
+                    Bytecode_size = bytecode.Length
+                }
+                : new BehaviorTreeData
+                {
+                    Download_url = asset.Download_url?.ToString(),
+                    Bytecode_size = 0 // Unknown size when using download URL
+                };
+
             return (StatusCodes.OK, new CachedBehaviorResponse
             {
                 Behavior_id = body.BehaviorId,
                 Compiled_behavior = new CompiledBehavior
                 {
-                    Behavior_tree = bytecode != null
-                        ? new { bytecode = Convert.ToBase64String(bytecode), bytecode_size = bytecode.Length }
-                        : new { download_url = asset.Download_url.ToString() },
-                    Context_schema = new { }
+                    Behavior_tree = behaviorTreeData,
+                    Context_schema = new ContextSchemaData()
                 },
                 Cache_timestamp = DateTimeOffset.UtcNow, // Asset service doesn't provide timestamp
                 Cache_hit = true
@@ -568,13 +578,14 @@ public partial class BehaviorService : IBehaviorService
     /// <param name="body">Request containing the behavior ID to invalidate.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>OK if behavior was found (marking for invalidation), NotFound if not in cache.</returns>
-    public async Task<(StatusCodes, object?)> InvalidateCachedBehaviorAsync(InvalidateCacheRequest body, CancellationToken cancellationToken = default)
+    public async Task<StatusCodes> InvalidateCachedBehaviorAsync(InvalidateCacheRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(body.BehaviorId))
             {
-                return (StatusCodes.BadRequest, new { error = "BehaviorId is required" });
+                _logger.LogWarning("InvalidateCachedBehavior called with missing BehaviorId");
+                return StatusCodes.BadRequest;
             }
 
             _logger.LogDebug("Invalidating cached behavior: {BehaviorId}", body.BehaviorId);
@@ -597,7 +608,7 @@ public partial class BehaviorService : IBehaviorService
                 catch (ApiException ex) when (ex.StatusCode == 404)
                 {
                     _logger.LogDebug("Behavior {BehaviorId} not found in cache", body.BehaviorId);
-                    return (StatusCodes.NotFound, new { error = "Behavior not found in cache" });
+                    return StatusCodes.NotFound;
                 }
             }
 
@@ -619,7 +630,7 @@ public partial class BehaviorService : IBehaviorService
                 "Behavior {BehaviorId} invalidated (deleted event published)",
                 body.BehaviorId);
 
-            return (StatusCodes.OK, new { message = "Behavior invalidated", behavior_id = body.BehaviorId });
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -632,7 +643,7 @@ public partial class BehaviorService : IBehaviorService
                 details: new { BehaviorId = body.BehaviorId },
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -647,7 +658,7 @@ public partial class BehaviorService : IBehaviorService
 
         var deleteEvent = new Events.BehaviorDeletedEvent
         {
-            EventId = Guid.NewGuid(),
+            EventId = Guid.NewGuid().ToString(),
             Timestamp = now,
             BehaviorId = metadata.BehaviorId,
             Name = metadata.Name,

@@ -492,7 +492,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync((RealmModel?)null);
 
         // Act
-        var (status, response) = await service.DeleteRealmAsync(request);
+        var status = await service.DeleteRealmAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -512,7 +512,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(existingModel);
 
         // Act
-        var (status, response) = await service.DeleteRealmAsync(request);
+        var status = await service.DeleteRealmAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -540,7 +540,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(new List<string> { realmId.ToString() });
 
         // Act
-        var (status, response) = await service.DeleteRealmAsync(request);
+        var status = await service.DeleteRealmAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.NoContent, status);

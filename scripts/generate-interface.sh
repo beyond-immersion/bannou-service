@@ -164,8 +164,11 @@ try:
                 continue
 
             # Determine return type from responses
-            return_type = 'object'
+            return_type = None  # None means no response body (void-like)
+            has_content_response = False
+
             if 'responses' in method_data:
+                # First check for success responses with content (200, 201, 202)
                 success_responses = ['200', '201', '202']
                 for status_code in success_responses:
                     if status_code in method_data['responses']:
@@ -176,6 +179,7 @@ try:
                                 # Extract model name from reference
                                 ref_parts = content_schema['\$ref'].split('/')
                                 return_type = ref_parts[-1] if ref_parts else 'object'
+                                has_content_response = True
                             elif 'type' in content_schema:
                                 return_type = convert_openapi_type_to_csharp(
                                     content_schema['type'],
@@ -183,7 +187,14 @@ try:
                                     content_schema.get('nullable', False),
                                     content_schema.get('items')
                                 )
+                                has_content_response = True
+                            break
+                        # 200 without content is treated as no-content response
                         break
+
+                # Check for 204 No Content - this is explicitly a void response
+                if '204' in method_data['responses'] and not has_content_response:
+                    return_type = None  # Explicitly no response body
 
             # Build parameter list
             param_parts = []
@@ -244,10 +255,18 @@ try:
             # Generate method signature
             params_str = ', '.join(param_parts)
 
+            # Generate appropriate return type based on whether there's a response body
+            if return_type is None:
+                # No response body - return just StatusCodes
+                return_signature = 'Task<StatusCodes>'
+            else:
+                # Has response body - return tuple
+                return_signature = f'Task<(StatusCodes, {return_type}?)>'
+
             print(f'''        /// <summary>
         /// {method_name} operation
         /// </summary>
-        Task<(StatusCodes, {return_type}?)> {method_name}Async({params_str});
+        {return_signature} {method_name}Async({params_str});
 ''')
 
 except Exception as e:

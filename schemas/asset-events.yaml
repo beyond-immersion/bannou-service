@@ -38,30 +38,37 @@ paths: {}  # Events don't have HTTP paths
 
 components:
   schemas:
+    # Base event schema for $ref resolution
+    BaseServiceEvent:
+      type: object
+      required:
+        - eventId
+        - timestamp
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event was created (UTC)
+
     # ==========================================================================
     # Upload Events
     # ==========================================================================
 
     AssetUploadRequestedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a new upload is initiated via requestUpload API
       required:
-        - eventId
-        - timestamp
         - uploadId
         - sessionId
         - filename
         - size
         - contentType
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
         uploadId:
           type: string
           format: uuid
@@ -94,11 +101,11 @@ components:
           description: Whether this is a multipart upload
 
     AssetUploadCompletedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when an upload is completed and file is stored
       required:
-        - eventId
-        - timestamp
         - assetId
         - uploadId
         - sessionId
@@ -107,14 +114,6 @@ components:
         - size
         - contentHash
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
         assetId:
           type: string
           description: Assigned asset identifier
@@ -152,22 +151,14 @@ components:
     # ==========================================================================
 
     AssetProcessingQueuedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when an asset is queued for processing
       required:
-        - eventId
-        - timestamp
         - assetId
         - processingType
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
         assetId:
           type: string
           description: Asset identifier
@@ -187,23 +178,15 @@ components:
           description: Estimated processing duration
 
     AssetProcessingCompletedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when asset processing completes
       required:
-        - eventId
-        - timestamp
         - assetId
         - processingType
         - success
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
         assetId:
           type: string
           description: Asset identifier
@@ -231,24 +214,16 @@ components:
     # ==========================================================================
 
     AssetReadyEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when an asset is fully processed and available
       required:
-        - eventId
-        - timestamp
         - assetId
         - bucket
         - key
         - contentHash
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
         assetId:
           type: string
           description: Asset identifier
@@ -282,25 +257,17 @@ components:
     # ==========================================================================
 
     BundleCreatedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: Event published when a bundle is successfully created
       required:
-        - eventId
-        - timestamp
         - bundleId
         - version
         - bucket
         - key
         - assetCount
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
         bundleId:
           type: string
           description: Bundle identifier

@@ -34,11 +34,11 @@ public partial class SpeciesCreatedEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Unique identifier for this event (UUID string)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     /// <summary>
     /// When this event occurred
@@ -119,11 +119,11 @@ public partial class SpeciesUpdatedEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Unique identifier for this event (UUID string)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     /// <summary>
     /// When this event occurred
@@ -211,11 +211,11 @@ public partial class SpeciesDeletedEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Unique identifier for this event (UUID string)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     /// <summary>
     /// When this event occurred

@@ -33,9 +33,12 @@ using System = global::System;
 public partial class DocumentationQueriedEvent
 {
 
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -79,9 +82,12 @@ public partial class DocumentationQueriedEvent
 public partial class DocumentationSearchedEvent
 {
 
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -119,9 +125,12 @@ public partial class DocumentationSearchedEvent
 public partial class DocumentViewedEvent
 {
 
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -160,9 +169,12 @@ public partial class DocumentViewedEvent
 public partial class DocumentationImportStartedEvent
 {
 
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -193,9 +205,12 @@ public partial class DocumentationImportStartedEvent
 public partial class DocumentationImportCompletedEvent
 {
 
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -232,9 +247,12 @@ public partial class DocumentationImportCompletedEvent
 public partial class DocumentationBindingCreatedEvent
 {
 
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -273,9 +291,12 @@ public partial class DocumentationBindingCreatedEvent
 public partial class DocumentationBindingRemovedEvent
 {
 
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -310,9 +331,12 @@ public partial class DocumentationBindingRemovedEvent
 public partial class DocumentationSyncStartedEvent
 {
 
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -353,9 +377,12 @@ public partial class DocumentationSyncStartedEvent
 public partial class DocumentationSyncCompletedEvent
 {
 
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -414,9 +441,12 @@ public partial class DocumentationSyncCompletedEvent
 public partial class DocumentationArchiveCreatedEvent
 {
 
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

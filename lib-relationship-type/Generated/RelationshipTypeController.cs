@@ -389,8 +389,8 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteRelationshipType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.DeleteRelationshipTypeAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.DeleteRelationshipTypeAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -474,6 +474,7 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         var (statusCode, result) = await _implementation.SeedRelationshipTypesAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
+
 
 
     #region Meta Endpoints for GetRelationshipType

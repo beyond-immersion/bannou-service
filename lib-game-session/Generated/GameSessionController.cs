@@ -250,8 +250,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveGameSession([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LeaveGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.LeaveGameSessionAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.LeaveGameSessionAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -263,8 +263,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> KickPlayer([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] KickPlayerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.KickPlayerAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.KickPlayerAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -276,8 +276,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SendChatMessage([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ChatMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.SendChatMessageAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.SendChatMessageAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -292,6 +292,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
         var (statusCode, result) = await _implementation.PerformGameActionAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
+
 
 
     #region Meta Endpoints for ListGameSessions

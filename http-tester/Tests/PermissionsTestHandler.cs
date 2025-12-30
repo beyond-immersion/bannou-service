@@ -1661,7 +1661,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             // Step 4: Publish session state change event via IMessageBus using strongly-typed model
             var stateChangeEvent = new SessionStateChangeEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = testSessionId,
                 ServiceId = testServiceId,
@@ -1765,7 +1765,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             // Step 2: Publish session.connected event via IMessageBus using strongly-typed model
             var sessionConnectedEvent = new SessionConnectedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = testSessionId,
                 AccountId = testAccountId,
@@ -1852,7 +1852,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             // Step 2: Publish session.connected with admin role using strongly-typed model
             var sessionConnectedEvent = new SessionConnectedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = testSessionId,
                 AccountId = testAccountId,
@@ -1925,7 +1925,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             // Step 1: First connect the session using strongly-typed model
             var connectEvent = new SessionConnectedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = testSessionId,
                 AccountId = testAccountId,
@@ -1951,7 +1951,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             // Step 2: Disconnect the session using strongly-typed model
             var disconnectEvent = new SessionDisconnectedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = testSessionId,
                 AccountId = testAccountId,
@@ -2020,7 +2020,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             // Step 2: Connect the session using strongly-typed model
             var connectEvent = new SessionConnectedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = testSessionId,
                 AccountId = testAccountId,
@@ -2044,7 +2044,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             // Step 3: Disconnect with reconnectable=true using strongly-typed model
             var disconnectEvent = new SessionDisconnectedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = testSessionId,
                 AccountId = testAccountId,

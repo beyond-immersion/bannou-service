@@ -28,21 +28,21 @@ public partial interface IVoiceService : IBannouService
     /// <summary>
     /// LeaveVoiceRoom operation
     /// </summary>
-    Task<(StatusCodes, object?)> LeaveVoiceRoomAsync(LeaveVoiceRoomRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> LeaveVoiceRoomAsync(LeaveVoiceRoomRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// DeleteVoiceRoom operation
     /// </summary>
-    Task<(StatusCodes, object?)> DeleteVoiceRoomAsync(DeleteVoiceRoomRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> DeleteVoiceRoomAsync(DeleteVoiceRoomRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// PeerHeartbeat operation
     /// </summary>
-    Task<(StatusCodes, object?)> PeerHeartbeatAsync(PeerHeartbeatRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> PeerHeartbeatAsync(PeerHeartbeatRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// AnswerPeer operation
     /// </summary>
-    Task<(StatusCodes, object?)> AnswerPeerAsync(AnswerPeerRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> AnswerPeerAsync(AnswerPeerRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
 }

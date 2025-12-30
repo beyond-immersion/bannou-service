@@ -18,26 +18,33 @@ paths: {} # Events don't have HTTP paths
 
 components:
   schemas:
+    # Base event schema for $ref resolution
+    BaseServiceEvent:
+      type: object
+      required:
+        - eventId
+        - timestamp
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event was created (UTC)
+
     StateChangedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Published when state changes (optional, for debugging/auditing).
         Only published if PublishStateChanges=true in configuration.
       required:
-        - eventId
-        - timestamp
         - storeName
         - key
         - operation
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the state change occurred
         storeName:
           type: string
           description: Name of the state store
@@ -70,22 +77,14 @@ components:
           description: Whether the operation succeeded
 
     StoreMigrationEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: Published during store migration operations (e.g., Redis to MySQL)
       required:
-        - eventId
-        - timestamp
         - storeName
         - status
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this migration event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this status update occurred
         storeName:
           type: string
           description: Name of the store being migrated
@@ -125,22 +124,14 @@ components:
           description: Estimated seconds remaining
 
     StoreHealthEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: Published for store health monitoring
       required:
-        - eventId
-        - timestamp
         - storeName
         - healthy
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this health event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the health check occurred
         storeName:
           type: string
           description: Name of the store

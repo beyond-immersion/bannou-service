@@ -1,6 +1,6 @@
 # Generated Configuration Reference
 
-> **Auto-generated**: 2025-12-30 04:12:42
+> **Auto-generated**: 2025-12-30 08:48:09
 > **Source**: `schemas/*-configuration.yaml`
 > **Do not edit manually** - regenerate with `make generate-docs`
 

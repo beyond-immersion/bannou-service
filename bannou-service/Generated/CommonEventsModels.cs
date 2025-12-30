@@ -27,27 +27,48 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published by any service during startup to register its API endpoints
-/// <br/>and permission requirements with the Permissions service.
+/// Base schema for all service-to-service events.
+/// <br/>All service events MUST include these fields and inherit from this schema.
+/// <br/>Implements IBannouEvent interface for uniform event handling in taps.
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ServiceRegistrationEvent
+public partial class BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this registration event
+    /// Unique identifier for this event instance (UUID string)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string EventId { get; set; } = default!;
 
     /// <summary>
-    /// When the service registration occurred
+    /// When the event was created (ISO 8601 format, UTC)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Published by any service during startup to register its API endpoints
+/// <br/>and permission requirements with the Permissions service.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ServiceRegistrationEvent : BaseServiceEvent
+{
 
     /// <summary>
     /// Service ID that registered (e.g., "behavior", "accounts")
@@ -82,15 +103,6 @@ public partial class ServiceRegistrationEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 
@@ -198,29 +210,15 @@ public partial class PermissionRequirement
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ServiceHeartbeatEvent
+public partial class ServiceHeartbeatEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this heartbeat event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the heartbeat was sent
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Unique GUID identifying this bannou instance (for log correlation/debugging)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid ServiceId { get; set; } = default!;
+    public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// Bannou app-id for this instance (e.g., "bannou", "jobberwocky")
@@ -259,15 +257,6 @@ public partial class ServiceHeartbeatEvent
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -282,7 +271,7 @@ public partial class ServiceStatus
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid ServiceId { get; set; } = default!;
+    public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// Service name (e.g., "auth", "accounts", "behavior")
@@ -370,22 +359,8 @@ public partial class InstanceCapacity
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ServiceErrorEvent
+public partial class ServiceErrorEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this error event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the error occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Logical service name emitting the error (e.g., "accounts")
@@ -471,15 +446,6 @@ public partial class ServiceErrorEvent
     [System.Text.Json.Serialization.JsonPropertyName("memoryUsage")]
     public float MemoryUsage { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -490,22 +456,8 @@ public partial class ServiceErrorEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class FullServiceMappingsEvent
+public partial class FullServiceMappingsEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this mappings event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this mappings snapshot was generated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Complete dictionary of serviceName -&gt; appId mappings
@@ -538,15 +490,6 @@ public partial class FullServiceMappingsEvent
     [System.Text.Json.Serialization.JsonPropertyName("totalServices")]
     public int TotalServices { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -559,22 +502,8 @@ public partial class FullServiceMappingsEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionConnectedEvent
+public partial class SessionConnectedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this connection event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the WebSocket connection was established
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Session ID that just connected via WebSocket
@@ -614,15 +543,6 @@ public partial class SessionConnectedEvent
     [System.Text.Json.Serialization.JsonPropertyName("clientInfo")]
     public object? ClientInfo { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -632,22 +552,8 @@ public partial class SessionConnectedEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionDisconnectedEvent
+public partial class SessionDisconnectedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this disconnection event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the WebSocket connection was closed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Session ID that disconnected
@@ -680,15 +586,6 @@ public partial class SessionDisconnectedEvent
     [System.Text.Json.Serialization.JsonPropertyName("durationSeconds")]
     public int? DurationSeconds { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
@@ -703,22 +600,8 @@ public partial class SessionDisconnectedEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionReconnectedEvent
+public partial class SessionReconnectedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this reconnection event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the WebSocket reconnection completed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Session ID that reconnected
@@ -757,15 +640,6 @@ public partial class SessionReconnectedEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reconnectionContext")]
     public object? ReconnectionContext { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
 
 }
 

@@ -504,23 +504,71 @@ public partial class CharacterContext
 
 }
 
+/// <summary>
+/// Compiled behavior tree data with bytecode or download reference
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BehaviorTreeData
+{
+
+    /// <summary>
+    /// Base64-encoded compiled bytecode for the behavior tree
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bytecode")]
+    public string Bytecode { get; set; } = default!;
+
+    /// <summary>
+    /// Size of the bytecode in bytes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bytecode_size")]
+    public int Bytecode_size { get; set; } = default!;
+
+    /// <summary>
+    /// URL to download the compiled behavior asset
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("download_url")]
+    public string Download_url { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Schema defining required context variables for behavior execution
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ContextSchemaData
+{
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CompiledBehavior
 {
 
-    /// <summary>
-    /// Compiled executable behavior tree structure
-    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behavior_tree")]
     [System.ComponentModel.DataAnnotations.Required]
-    public object Behavior_tree { get; set; } = new object();
+    public BehaviorTreeData Behavior_tree { get; set; } = new BehaviorTreeData();
 
-    /// <summary>
-    /// Schema defining required context variables
-    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("context_schema")]
     [System.ComponentModel.DataAnnotations.Required]
-    public object Context_schema { get; set; } = new object();
+    public ContextSchemaData Context_schema { get; set; } = new ContextSchemaData();
 
     /// <summary>
     /// List of required services for this behavior

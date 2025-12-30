@@ -15,27 +15,34 @@ paths: {}
 
 components:
   schemas:
+    # Base event schema for $ref resolution
+    BaseServiceEvent:
+      type: object
+      required:
+        - eventId
+        - timestamp
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event was created (UTC)
+
     # =========================================================================
     # Health Check Events
     # =========================================================================
     OrchestratorHealthPingEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
       type: object
       description: |
         Simple health ping event published to verify pub/sub path is active.
         Used by infrastructure health checks.
       required:
-        - eventId
-        - timestamp
         - status
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this health ping
-        timestamp:
-          type: string
-          format: date-time
-          description: When the health ping was sent
         status:
           type: string
           enum: [ok, degraded, checking]

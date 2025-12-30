@@ -1,6 +1,7 @@
 #nullable enable
 
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Events;
 using System.Text.Json.Serialization;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
@@ -13,14 +14,15 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// <remarks>
 /// This class implements the common Bannou event pattern with eventId and timestamp,
 /// plus a serialized payload field for the actual message content.
+/// Implements <see cref="IBannouEvent"/> to enable unified event handling across the system.
 /// </remarks>
-public class GenericMessageEnvelope
+public class GenericMessageEnvelope : IBannouEvent
 {
     /// <summary>
     /// Unique identifier for this message.
     /// </summary>
     [JsonPropertyName("eventId")]
-    public Guid EventId { get; set; } = Guid.NewGuid();
+    public string EventId { get; set; } = Guid.NewGuid().ToString();
 
     /// <summary>
     /// When the message was created.
@@ -89,4 +91,10 @@ public class GenericMessageEnvelope
 
         return BannouJson.Deserialize<object>(PayloadJson);
     }
+
+    /// <inheritdoc />
+    string IBannouEvent.BannouEventId => EventId;
+
+    /// <inheritdoc />
+    DateTimeOffset IBannouEvent.BannouTimestamp => Timestamp;
 }

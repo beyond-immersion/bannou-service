@@ -38,7 +38,7 @@ public partial class GameSessionPlayerJoinedEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     /// <summary>
     /// When the player joined
@@ -84,7 +84,7 @@ public partial class GameSessionPlayerLeftEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid EventId { get; set; } = default!;
+    public string EventId { get; set; } = default!;
 
     /// <summary>
     /// When the player left

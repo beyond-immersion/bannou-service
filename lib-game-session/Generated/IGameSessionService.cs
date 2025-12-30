@@ -33,17 +33,17 @@ public partial interface IGameSessionService : IBannouService
     /// <summary>
     /// LeaveGameSession operation
     /// </summary>
-    Task<(StatusCodes, object?)> LeaveGameSessionAsync(LeaveGameSessionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> LeaveGameSessionAsync(LeaveGameSessionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// KickPlayer operation
     /// </summary>
-    Task<(StatusCodes, object?)> KickPlayerAsync(KickPlayerRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> KickPlayerAsync(KickPlayerRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// SendChatMessage operation
     /// </summary>
-    Task<(StatusCodes, object?)> SendChatMessageAsync(ChatMessageRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<StatusCodes> SendChatMessageAsync(ChatMessageRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// PerformGameAction operation

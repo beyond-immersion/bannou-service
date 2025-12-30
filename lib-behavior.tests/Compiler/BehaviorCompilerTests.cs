@@ -88,25 +88,7 @@ flows:
     [Fact]
     public void CompileYaml_WithConditional_GeneratesJumps()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-context:
-  variables:
-    x: { type: float, default: 10 }
-
-flows:
-  main:
-    actions:
-    - cond:
-        - when: ""${x > 5}""
-        then:
-            - log: { message: ""Greater"" }
-        - otherwise:
-            - log: { message: ""Less"" }
-";
+        var yaml = TestFixtures.Load("compiler_conditional");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -191,23 +173,7 @@ flows:
     [Fact]
     public void CompileYaml_ComparisonExpression_GeneratesCorrectOpcodes()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-context:
-  variables:
-    health: { type: float, default: 50 }
-
-flows:
-  main:
-    actions:
-    - cond:
-        - when: ""${health < 25}""
-        then:
-            - log: { message: ""Low health"" }
-";
+        var yaml = TestFixtures.Load("compiler_comparison");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -225,24 +191,7 @@ flows:
     [Fact]
     public void CompileYaml_LogicalAnd_GeneratesShortCircuit()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-context:
-  variables:
-    a: { type: bool, default: true }
-    b: { type: bool, default: true }
-
-flows:
-  main:
-    actions:
-    - cond:
-        - when: ""${a && b}""
-          then:
-            - log: { message: ""Both true"" }
-";
+        var yaml = TestFixtures.Load("compiler_logical_and");
 
         var result = _compiler.CompileYaml(yaml);
 

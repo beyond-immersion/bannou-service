@@ -406,7 +406,7 @@ public partial class RealmService : IRealmService
     /// <summary>
     /// Hard delete a realm. Only deprecated realms with zero references can be deleted.
     /// </summary>
-    public async Task<(StatusCodes, object?)> DeleteRealmAsync(
+    public async Task<StatusCodes> DeleteRealmAsync(
         DeleteRealmRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -420,14 +420,14 @@ public partial class RealmService : IRealmService
             if (model == null)
             {
                 _logger.LogWarning("Realm not found for deletion: {RealmId}", body.RealmId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Realm should be deprecated before deletion
             if (!model.IsDeprecated)
             {
                 _logger.LogWarning("Cannot delete realm {Code}: realm must be deprecated first", model.Code);
-                return (StatusCodes.Conflict, null);
+                return StatusCodes.Conflict;
             }
 
             // Delete the model
@@ -448,7 +448,7 @@ public partial class RealmService : IRealmService
             await PublishRealmDeletedEventAsync(model, null, cancellationToken);
 
             _logger.LogInformation("Deleted realm: {RealmId} ({Code})", body.RealmId, model.Code);
-            return (StatusCodes.NoContent, null);
+            return StatusCodes.NoContent;
         }
         catch (Exception ex)
         {
@@ -457,7 +457,7 @@ public partial class RealmService : IRealmService
                 "realm", "DeleteRealm", "unexpected_exception", ex.Message,
                 dependency: "state", endpoint: "post:/realm/delete",
                 details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -735,7 +735,7 @@ public partial class RealmService : IRealmService
         {
             var eventModel = new RealmCreatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RealmId = Guid.Parse(model.RealmId),
                 Code = model.Code,
@@ -762,7 +762,7 @@ public partial class RealmService : IRealmService
         {
             var eventModel = new RealmUpdatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RealmId = Guid.Parse(model.RealmId),
                 Code = model.Code,
@@ -797,7 +797,7 @@ public partial class RealmService : IRealmService
         {
             var eventModel = new RealmDeletedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RealmId = Guid.Parse(model.RealmId),
                 Code = model.Code,

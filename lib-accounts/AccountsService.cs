@@ -866,7 +866,7 @@ public partial class AccountsService : IAccountsService
     }
 
     // Add missing methods from interface
-    public async Task<(StatusCodes, object?)> DeleteAccountAsync(
+    public async Task<StatusCodes> DeleteAccountAsync(
         DeleteAccountRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -882,7 +882,7 @@ public partial class AccountsService : IAccountsService
             if (account == null)
             {
                 _logger.LogWarning("Account not found for deletion: {AccountId}", accountId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Soft delete by setting DeletedAt timestamp
@@ -903,7 +903,7 @@ public partial class AccountsService : IAccountsService
             // Publish account deleted event
             await PublishAccountDeletedEventAsync(account, "User requested deletion");
 
-            return (StatusCodes.NoContent, null);
+            return StatusCodes.NoContent;
         }
         catch (Exception ex)
         {
@@ -914,11 +914,11 @@ public partial class AccountsService : IAccountsService
                 ex.Message,
                 dependency: "state",
                 details: new { body.AccountId });
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
-    public async Task<(StatusCodes, object?)> RemoveAuthMethodAsync(
+    public async Task<StatusCodes> RemoveAuthMethodAsync(
         RemoveAuthMethodRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -934,7 +934,7 @@ public partial class AccountsService : IAccountsService
 
             if (account == null || account.DeletedAt.HasValue)
             {
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Get existing auth methods
@@ -946,7 +946,7 @@ public partial class AccountsService : IAccountsService
             var methodToRemove = authMethods.FirstOrDefault(m => m.MethodId == methodId);
             if (methodToRemove == null)
             {
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Remove the auth method
@@ -965,7 +965,7 @@ public partial class AccountsService : IAccountsService
 
             await PublishAccountUpdatedEventAsync(account, new[] { "authMethods" });
 
-            return (StatusCodes.NoContent, null);
+            return StatusCodes.NoContent;
         }
         catch (Exception ex)
         {
@@ -976,11 +976,11 @@ public partial class AccountsService : IAccountsService
                 ex.Message,
                 dependency: "state",
                 details: new { body.AccountId, body.MethodId });
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
-    public async Task<(StatusCodes, object?)> UpdatePasswordHashAsync(
+    public async Task<StatusCodes> UpdatePasswordHashAsync(
         UpdatePasswordRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -996,7 +996,7 @@ public partial class AccountsService : IAccountsService
             if (account == null)
             {
                 _logger.LogWarning("Account not found for password update: {AccountId}", accountId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Update password hash (should already be hashed by Auth service)
@@ -1009,7 +1009,7 @@ public partial class AccountsService : IAccountsService
             _logger.LogInformation("Password hash updated for account: {AccountId}", accountId);
             await PublishAccountUpdatedEventAsync(account, new[] { "passwordHash" });
 
-            return (StatusCodes.OK, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -1020,11 +1020,11 @@ public partial class AccountsService : IAccountsService
                 ex.Message,
                 dependency: "state",
                 details: new { body.AccountId });
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
-    public async Task<(StatusCodes, object?)> UpdateVerificationStatusAsync(
+    public async Task<StatusCodes> UpdateVerificationStatusAsync(
         UpdateVerificationRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -1041,7 +1041,7 @@ public partial class AccountsService : IAccountsService
             if (account == null)
             {
                 _logger.LogWarning("Account not found for verification update: {AccountId}", accountId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Update verification status
@@ -1055,7 +1055,7 @@ public partial class AccountsService : IAccountsService
                 accountId, body.EmailVerified);
 
             await PublishAccountUpdatedEventAsync(account, new[] { "isVerified" });
-            return (StatusCodes.OK, null);
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -1066,7 +1066,7 @@ public partial class AccountsService : IAccountsService
                 ex.Message,
                 dependency: "state",
                 details: new { body.AccountId });
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -1079,7 +1079,7 @@ public partial class AccountsService : IAccountsService
         {
             var eventModel = new AccountCreatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = Guid.Parse(account.AccountId),
                 Email = account.Email,
@@ -1110,7 +1110,7 @@ public partial class AccountsService : IAccountsService
         {
             var eventModel = new AccountUpdatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = Guid.Parse(account.AccountId),
                 Email = account.Email,
@@ -1143,7 +1143,7 @@ public partial class AccountsService : IAccountsService
         {
             var eventModel = new AccountDeletedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = Guid.Parse(account.AccountId),
                 Email = account.Email,

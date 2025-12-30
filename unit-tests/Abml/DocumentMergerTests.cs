@@ -384,38 +384,8 @@ flows:
     public async Task Merge_CallInsideCond_RewritesCorrectly()
     {
         // Arrange
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: main
-
-imports:
-  - file: ""lib.yml""
-    as: ""lib""
-
-flows:
-  start:
-    actions:
-    - cond:
-        - when: ""${flag}""
-            then:
-            - call: { flow: ""lib.yes"" }
-        - else:
-            - call: { flow: ""lib.no"" }
-";
-        var libYaml = @"
-version: ""2.0""
-metadata:
-  id: lib
-
-flows:
-  yes:
-    actions:
-    - log: { message: ""Yes"" }
-  no:
-    actions:
-    - log: { message: ""No"" }
-";
+        var mainYaml = TestFixtures.Load("merger_cond_call_main");
+        var libYaml = TestFixtures.Load("merger_cond_call_lib");
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
 
@@ -557,42 +527,8 @@ flows:
     public async Task Merge_ContextVariables_MergesWithPrefix()
     {
         // Arrange
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: main
-
-context:
-  variables:
-    main_var:
-    type: string
-    default: ""main_value""
-
-imports:
-  - file: ""lib.yml""
-    as: ""lib""
-
-flows:
-  start:
-    actions:
-    - log: { message: ""Hello"" }
-";
-        var libYaml = @"
-version: ""2.0""
-metadata:
-  id: lib
-
-context:
-  variables:
-    lib_var:
-    type: int
-    default: 42
-
-flows:
-  work:
-    actions:
-    - log: { message: ""Working"" }
-";
+        var mainYaml = TestFixtures.Load("merger_context_main");
+        var libYaml = TestFixtures.Load("merger_context_lib");
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
 

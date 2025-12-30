@@ -1743,7 +1743,7 @@ public partial class DocumentationService : IDocumentationService
         {
             var eventModel = new DocumentCreatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 DocumentId = doc.DocumentId,
                 Namespace = doc.Namespace,
@@ -1774,7 +1774,7 @@ public partial class DocumentationService : IDocumentationService
         {
             var eventModel = new DocumentUpdatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 DocumentId = doc.DocumentId,
                 Namespace = doc.Namespace,
@@ -1806,7 +1806,7 @@ public partial class DocumentationService : IDocumentationService
         {
             var eventModel = new DocumentDeletedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 DocumentId = doc.DocumentId,
                 Namespace = doc.Namespace,
@@ -1844,7 +1844,7 @@ public partial class DocumentationService : IDocumentationService
         {
             var eventModel = new DocumentationQueriedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Namespace = namespaceId,
                 Query = query,
@@ -1877,7 +1877,7 @@ public partial class DocumentationService : IDocumentationService
         {
             var eventModel = new DocumentationSearchedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Namespace = namespaceId,
                 SearchTerm = searchTerm,
@@ -2990,7 +2990,7 @@ public partial class DocumentationService : IDocumentationService
         {
             var eventModel = new DocumentationBindingCreatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Namespace = binding.Namespace,
                 BindingId = binding.BindingId,
@@ -3014,7 +3014,7 @@ public partial class DocumentationService : IDocumentationService
         {
             var eventModel = new DocumentationBindingRemovedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Namespace = binding.Namespace,
                 BindingId = binding.BindingId,
@@ -3043,7 +3043,7 @@ public partial class DocumentationService : IDocumentationService
             };
             var eventModel = new DocumentationSyncStartedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Namespace = binding.Namespace,
                 BindingId = binding.BindingId,
@@ -3074,7 +3074,7 @@ public partial class DocumentationService : IDocumentationService
             };
             var eventModel = new DocumentationSyncCompletedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Namespace = binding.Namespace,
                 BindingId = binding.BindingId,
@@ -3336,7 +3336,7 @@ public partial class DocumentationService : IDocumentationService
         {
             var eventModel = new DocumentationArchiveCreatedEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Namespace = archive.Namespace,
                 ArchiveId = archive.ArchiveId,

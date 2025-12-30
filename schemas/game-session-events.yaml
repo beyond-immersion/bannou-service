@@ -79,7 +79,6 @@ components:
       properties:
         eventId:
           type: string
-          format: uuid
           description: Unique identifier for this event
         timestamp:
           type: string
@@ -103,7 +102,6 @@ components:
       properties:
         eventId:
           type: string
-          format: uuid
           description: Unique identifier for this event
         timestamp:
           type: string

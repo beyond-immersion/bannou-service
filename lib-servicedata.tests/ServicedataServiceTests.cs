@@ -763,7 +763,7 @@ public class ServicedataServiceTests
             .ReturnsAsync(new List<string> { serviceId.ToString() });
 
         // Act
-        var (statusCode, response) = await service.DeleteServiceAsync(request, CancellationToken.None);
+        var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NoContent, statusCode);
@@ -800,7 +800,7 @@ public class ServicedataServiceTests
             .ReturnsAsync(new List<string> { serviceId.ToString() });
 
         // Act
-        var (statusCode, response) = await service.DeleteServiceAsync(request, CancellationToken.None);
+        var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NoContent, statusCode);
@@ -849,7 +849,7 @@ public class ServicedataServiceTests
                 (key, data, options, ct) => savedList = data);
 
         // Act
-        var (statusCode, response) = await service.DeleteServiceAsync(request, CancellationToken.None);
+        var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NoContent, statusCode);
@@ -872,7 +872,7 @@ public class ServicedataServiceTests
             .ReturnsAsync((ServiceDataModel?)null);
 
         // Act
-        var (statusCode, response) = await service.DeleteServiceAsync(request, CancellationToken.None);
+        var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -886,7 +886,7 @@ public class ServicedataServiceTests
         var request = new DeleteServiceRequest { ServiceId = Guid.Empty };
 
         // Act
-        var (statusCode, response) = await service.DeleteServiceAsync(request, CancellationToken.None);
+        var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
