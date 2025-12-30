@@ -18,6 +18,7 @@ public class BehaviorBundleManager
     private const string STATE_STORE = "behavior-statestore";
     private const string BUNDLE_MEMBERSHIP_PREFIX = "bundle-membership:";
     private const string BEHAVIOR_METADATA_PREFIX = "behavior-metadata:";
+    private const string GOAP_METADATA_PREFIX = "goap-metadata:";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BehaviorBundleManager"/> class.
@@ -283,6 +284,83 @@ public class BehaviorBundleManager
         _logger.LogInformation("Removed behavior {BehaviorId}", behaviorId);
         return metadata;
     }
+
+    #region GOAP Metadata Caching
+
+    /// <summary>
+    /// Saves GOAP metadata for a compiled behavior.
+    /// </summary>
+    /// <param name="behaviorId">The behavior's unique identifier.</param>
+    /// <param name="metadata">The GOAP metadata to save.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public async Task SaveGoapMetadataAsync(
+        string behaviorId,
+        CachedGoapMetadata metadata,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(behaviorId, nameof(behaviorId));
+        ArgumentNullException.ThrowIfNull(metadata, nameof(metadata));
+
+        var store = _stateStoreFactory.GetStore<CachedGoapMetadata>(STATE_STORE);
+        var key = $"{GOAP_METADATA_PREFIX}{behaviorId}";
+
+        metadata.BehaviorId = behaviorId;
+        metadata.CreatedAt = DateTimeOffset.UtcNow;
+
+        await store.SaveAsync(key, metadata, cancellationToken: cancellationToken);
+
+        _logger.LogDebug(
+            "Saved GOAP metadata for behavior {BehaviorId}: {GoalCount} goals, {ActionCount} actions",
+            behaviorId,
+            metadata.Goals.Count,
+            metadata.Actions.Count);
+    }
+
+    /// <summary>
+    /// Gets GOAP metadata for a behavior.
+    /// </summary>
+    /// <param name="behaviorId">The behavior's unique identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The GOAP metadata, or null if not found.</returns>
+    public async Task<CachedGoapMetadata?> GetGoapMetadataAsync(
+        string behaviorId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(behaviorId, nameof(behaviorId));
+
+        var store = _stateStoreFactory.GetStore<CachedGoapMetadata>(STATE_STORE);
+        var key = $"{GOAP_METADATA_PREFIX}{behaviorId}";
+
+        return await store.GetAsync(key, cancellationToken);
+    }
+
+    /// <summary>
+    /// Removes GOAP metadata for a behavior.
+    /// </summary>
+    /// <param name="behaviorId">The behavior's unique identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if metadata was deleted, false if not found.</returns>
+    public async Task<bool> RemoveGoapMetadataAsync(
+        string behaviorId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(behaviorId, nameof(behaviorId));
+
+        var store = _stateStoreFactory.GetStore<CachedGoapMetadata>(STATE_STORE);
+        var key = $"{GOAP_METADATA_PREFIX}{behaviorId}";
+
+        var existing = await store.GetAsync(key, cancellationToken);
+        if (existing == null)
+        {
+            return false;
+        }
+
+        await store.DeleteAsync(key, cancellationToken);
+        _logger.LogDebug("Removed GOAP metadata for behavior {BehaviorId}", behaviorId);
+        return true;
+    }
+
+    #endregion
 }
 
 /// <summary>
@@ -379,4 +457,89 @@ public class BundleMembership
     /// </summary>
     [JsonPropertyName("updatedAt")]
     public DateTimeOffset UpdatedAt { get; set; }
+}
+
+/// <summary>
+/// Cached GOAP metadata for a compiled behavior.
+/// Stores goals and actions as serializable string dictionaries.
+/// </summary>
+public class CachedGoapMetadata
+{
+    /// <summary>
+    /// The behavior ID this metadata belongs to.
+    /// </summary>
+    [JsonPropertyName("behaviorId")]
+    public string BehaviorId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// GOAP goals defined in the behavior's goals: section.
+    /// </summary>
+    [JsonPropertyName("goals")]
+    public List<CachedGoapGoal> Goals { get; set; } = new();
+
+    /// <summary>
+    /// GOAP actions extracted from flows with goap: blocks.
+    /// </summary>
+    [JsonPropertyName("actions")]
+    public List<CachedGoapAction> Actions { get; set; } = new();
+
+    /// <summary>
+    /// When this metadata was cached.
+    /// </summary>
+    [JsonPropertyName("createdAt")]
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+/// <summary>
+/// Cached GOAP goal from a behavior's goals: section.
+/// </summary>
+public class CachedGoapGoal
+{
+    /// <summary>
+    /// Goal name (key in the goals: section).
+    /// </summary>
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Goal priority (higher = more important).
+    /// </summary>
+    [JsonPropertyName("priority")]
+    public int Priority { get; set; }
+
+    /// <summary>
+    /// Goal conditions as string key-value pairs (e.g., "hunger" -> "<= 0.3").
+    /// </summary>
+    [JsonPropertyName("conditions")]
+    public Dictionary<string, string> Conditions { get; set; } = new();
+}
+
+/// <summary>
+/// Cached GOAP action from a flow's goap: block.
+/// </summary>
+public class CachedGoapAction
+{
+    /// <summary>
+    /// Flow name (becomes the action ID).
+    /// </summary>
+    [JsonPropertyName("flowName")]
+    public string FlowName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Action preconditions as string key-value pairs (e.g., "gold" -> ">= 5").
+    /// </summary>
+    [JsonPropertyName("preconditions")]
+    public Dictionary<string, string> Preconditions { get; set; } = new();
+
+    /// <summary>
+    /// Action effects as string key-value pairs (e.g., "hunger" -> "-0.8").
+    /// </summary>
+    [JsonPropertyName("effects")]
+    public Dictionary<string, string> Effects { get; set; } = new();
+
+    /// <summary>
+    /// Cost of performing this action.
+    /// </summary>
+    [JsonPropertyName("cost")]
+    public float Cost { get; set; } = 1.0f;
 }

@@ -633,8 +633,10 @@ public class TappedMessageEnvelopeTests
         // Assert
         Assert.Equal(original.EventId, tapped.EventId);
         Assert.Equal(original.Timestamp, tapped.Timestamp);
-        Assert.Equal(original.Topic, tapped.Topic);
-        Assert.Equal(original.PayloadJson, tapped.PayloadJson);
+        // Topic comes from sourceTopic parameter since IBannouEvent doesn't have Topic
+        Assert.Equal("source.topic", tapped.Topic);
+        // PayloadJson contains the serialized original event (not copied from original.PayloadJson)
+        Assert.Contains(original.EventId, tapped.PayloadJson);
         Assert.Equal(tapId, tapped.TapId);
         Assert.Equal("source.topic", tapped.SourceTopic);
         Assert.Equal("source-exchange", tapped.SourceExchange);

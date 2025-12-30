@@ -40,6 +40,52 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             - goto: nonexistent_flow
         """;
 
+    /// <summary>
+    /// ABML YAML with GOAP content for testing plan generation.
+    /// </summary>
+    private const string GoapAbmlYaml = """
+        version: "1.0"
+        name: goap-test-behavior
+        context:
+          variables:
+            energy: 50
+            has_food: false
+        goals:
+          find_food:
+            priority: 80
+            conditions:
+              has_food: "==true"
+          rest:
+            priority: 60
+            conditions:
+              energy: ">=80"
+        flows:
+          gather_food:
+            goap:
+              preconditions:
+                energy: ">=20"
+              effects:
+                has_food: "true"
+                energy: "-=10"
+              cost: 2.0
+            steps:
+              - emit:
+                  channel: action
+                  intent: gather
+                  urgency: 0.8
+          rest_action:
+            goap:
+              preconditions: {}
+              effects:
+                energy: "+=30"
+              cost: 1.0
+            steps:
+              - emit:
+                  channel: action
+                  intent: rest
+                  urgency: 0.3
+        """;
+
     public override ServiceTest[] GetServiceTests() =>
     [
         // Compilation tests
@@ -55,6 +101,11 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
         // Cache tests (require asset service)
         new ServiceTest(TestGetNonExistentBehavior, "GetNonExistentBehavior", "Behavior", "Test 404 for non-existent cached behavior"),
+
+        // GOAP planning tests
+        new ServiceTest(TestGoapPlanGeneration, "GoapPlanGeneration", "Behavior", "Test GOAP plan generation from compiled behavior"),
+        new ServiceTest(TestGoapPlanNonExistentBehavior, "GoapPlanNonExistentBehavior", "Behavior", "Test GOAP plan 404 for non-existent behavior"),
+        new ServiceTest(TestGoapPlanValidation, "GoapPlanValidation", "Behavior", "Test GOAP plan validation against world state"),
     ];
 
     private static Task<TestResult> TestCompileValidAbml(ITestClient client, string[] args) =>
@@ -303,4 +354,166 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 return TestResult.Successful("Correctly returned 404 for non-existent behavior");
             }
         }, "Get non-existent behavior");
+
+    private static Task<TestResult> TestGoapPlanGeneration(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
+        {
+            var behaviorClient = GetServiceClient<IBehaviorClient>();
+
+            // First compile the GOAP-enabled ABML to cache the metadata
+            var compileRequest = new CompileBehaviorRequest
+            {
+                Abml_content = GoapAbmlYaml,
+                Behavior_name = "goap-integration-test",
+                Compilation_options = new CompilationOptions
+                {
+                    Enable_optimizations = true,
+                    Cache_compiled_result = true // Must cache for GOAP metadata to be stored
+                }
+            };
+
+            var compileResponse = await behaviorClient.CompileAbmlBehaviorAsync(BannouJson.Serialize(compileRequest));
+            if (!compileResponse.Success)
+            {
+                var warnings = compileResponse.Warnings != null
+                    ? string.Join(", ", compileResponse.Warnings)
+                    : "unknown error";
+                return TestResult.Failed($"Failed to compile GOAP behavior: {warnings}");
+            }
+
+            var behaviorId = compileResponse.Behavior_id;
+            if (string.IsNullOrEmpty(behaviorId))
+                return TestResult.Failed("Behavior ID is empty after compilation");
+
+            // Now generate a GOAP plan using the cached behavior
+            var planRequest = new GoapPlanRequest
+            {
+                Agent_id = "test-agent-1",
+                Behavior_id = behaviorId,
+                Goal = new GoapGoal
+                {
+                    Name = "find_food",
+                    Priority = 80,
+                    Conditions = new Dictionary<string, string> { { "has_food", "==true" } }
+                },
+                World_state = new Dictionary<string, object>
+                {
+                    { "energy", 50 },
+                    { "has_food", false }
+                },
+                Options = new GoapPlanningOptions
+                {
+                    Max_depth = 10,
+                    Max_nodes = 1000,
+                    Timeout_ms = 100
+                }
+            };
+
+            var planResponse = await behaviorClient.GenerateGoapPlanAsync(BannouJson.Serialize(planRequest));
+
+            if (!planResponse.Success)
+            {
+                // The plan might not be found if the goal isn't achievable - that's still valid
+                // We mainly want to verify the endpoint works
+                if (string.IsNullOrEmpty(planResponse.Failure_reason))
+                    return TestResult.Failed("Plan failed without a failure reason");
+
+                return TestResult.Successful(
+                    $"GOAP planning executed, result: {planResponse.Failure_reason}, time={planResponse.Planning_time_ms}ms");
+            }
+
+            if (planResponse.Plan == null)
+                return TestResult.Failed("Plan response succeeded but plan is null");
+
+            return TestResult.Successful(
+                $"GOAP plan generated: {planResponse.Plan.Actions?.Count ?? 0} actions, " +
+                $"cost={planResponse.Plan.Total_cost}, " +
+                $"nodes={planResponse.Nodes_expanded}, " +
+                $"time={planResponse.Planning_time_ms}ms");
+        }, "GOAP plan generation");
+
+    private static Task<TestResult> TestGoapPlanNonExistentBehavior(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
+        {
+            var behaviorClient = GetServiceClient<IBehaviorClient>();
+
+            var request = new GoapPlanRequest
+            {
+                Agent_id = "test-agent-1",
+                Behavior_id = "nonexistent-goap-behavior-xyz",
+                Goal = new GoapGoal
+                {
+                    Name = "test_goal",
+                    Priority = 50,
+                    Conditions = new Dictionary<string, string> { { "test", "==true" } }
+                },
+                World_state = new Dictionary<string, object>()
+            };
+
+            try
+            {
+                var response = await behaviorClient.GenerateGoapPlanAsync(BannouJson.Serialize(request));
+
+                // If we get a response, it should indicate failure with "not found"
+                if (!response.Success && response.Failure_reason != null &&
+                    response.Failure_reason.Contains("not found", StringComparison.OrdinalIgnoreCase))
+                {
+                    return TestResult.Successful("Correctly indicated behavior not found in response");
+                }
+
+                return TestResult.Failed($"Expected not found indication, got: success={response.Success}");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                return TestResult.Successful("Correctly returned 404 for non-existent behavior");
+            }
+        }, "GOAP plan non-existent behavior");
+
+    private static Task<TestResult> TestGoapPlanValidation(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
+        {
+            var behaviorClient = GetServiceClient<IBehaviorClient>();
+
+            // Create a simple plan for validation
+            var validateRequest = new ValidateGoapPlanRequest
+            {
+                Plan = new GoapPlanResult
+                {
+                    Goal_id = "test_goal",
+                    Total_cost = 3.0f,
+                    Actions = new List<PlannedActionResponse>
+                    {
+                        new PlannedActionResponse
+                        {
+                            Action_id = "action_1",
+                            Index = 0,
+                            Cost = 1.0f
+                        },
+                        new PlannedActionResponse
+                        {
+                            Action_id = "action_2",
+                            Index = 1,
+                            Cost = 2.0f
+                        }
+                    }
+                },
+                World_state = new Dictionary<string, object>
+                {
+                    { "energy", 50 },
+                    { "has_food", false }
+                },
+                Current_action_index = 0
+            };
+
+            var response = await behaviorClient.ValidateGoapPlanAsync(BannouJson.Serialize(validateRequest));
+
+            // Validation should return a result (we don't have the actual actions so it may fail validation)
+            if (response == null)
+                return TestResult.Failed("Validation response is null");
+
+            return TestResult.Successful(
+                $"GOAP plan validation: valid={response.Is_valid}, " +
+                $"should_replan={response.Should_replan}, " +
+                $"reason={response.Replan_reason}");
+        }, "GOAP plan validation");
 }

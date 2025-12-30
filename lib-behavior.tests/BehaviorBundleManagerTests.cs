@@ -19,6 +19,7 @@ public class BehaviorBundleManagerTests
     private readonly Mock<ILogger<BehaviorBundleManager>> _mockLogger;
     private readonly Mock<IStateStore<BehaviorMetadata>> _mockMetadataStore;
     private readonly Mock<IStateStore<BundleMembership>> _mockMembershipStore;
+    private readonly Mock<IStateStore<CachedGoapMetadata>> _mockGoapMetadataStore;
 
     public BehaviorBundleManagerTests()
     {
@@ -27,6 +28,7 @@ public class BehaviorBundleManagerTests
         _mockLogger = new Mock<ILogger<BehaviorBundleManager>>();
         _mockMetadataStore = new Mock<IStateStore<BehaviorMetadata>>();
         _mockMembershipStore = new Mock<IStateStore<BundleMembership>>();
+        _mockGoapMetadataStore = new Mock<IStateStore<CachedGoapMetadata>>();
 
         // Setup state store factory to return appropriate stores
         _mockStateStoreFactory
@@ -36,6 +38,10 @@ public class BehaviorBundleManagerTests
         _mockStateStoreFactory
             .Setup(f => f.GetStore<BundleMembership>(It.IsAny<string>()))
             .Returns(_mockMembershipStore.Object);
+
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<CachedGoapMetadata>(It.IsAny<string>()))
+            .Returns(_mockGoapMetadataStore.Object);
     }
 
     private BehaviorBundleManager CreateManager() =>
@@ -427,6 +433,302 @@ public class BehaviorBundleManagerTests
         Assert.NotNull(result);
         Assert.Equal(bundleId, result.BundleId);
         Assert.Equal(2, result.BehaviorAssetIds.Count);
+    }
+
+    #endregion
+
+    #region GOAP Metadata Caching Tests
+
+    [Fact]
+    public async Task SaveGoapMetadataAsync_ValidMetadata_SavesCorrectly()
+    {
+        // Arrange
+        var manager = CreateManager();
+        var behaviorId = "behavior-with-goap";
+        var metadata = new CachedGoapMetadata
+        {
+            BehaviorId = behaviorId,
+            Goals = new List<CachedGoapGoal>
+            {
+                new CachedGoapGoal
+                {
+                    Name = "find_food",
+                    Priority = 80,
+                    Conditions = new Dictionary<string, string> { { "has_food", "==true" } }
+                }
+            },
+            Actions = new List<CachedGoapAction>
+            {
+                new CachedGoapAction
+                {
+                    FlowName = "gather_food",
+                    Preconditions = new Dictionary<string, string> { { "energy", ">=20" } },
+                    Effects = new Dictionary<string, string> { { "has_food", "true" } },
+                    Cost = 2.0f
+                }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        // Act
+        await manager.SaveGoapMetadataAsync(behaviorId, metadata);
+
+        // Assert
+        _mockGoapMetadataStore.Verify(s => s.SaveAsync(
+            It.Is<string>(k => k.Contains(behaviorId)),
+            It.Is<CachedGoapMetadata>(m =>
+                m.BehaviorId == behaviorId &&
+                m.Goals.Count == 1 &&
+                m.Actions.Count == 1),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SaveGoapMetadataAsync_SetsBehaviorIdOnMetadata()
+    {
+        // Arrange
+        var manager = CreateManager();
+        var behaviorId = "behavior-abc123";
+        var metadata = new CachedGoapMetadata
+        {
+            BehaviorId = string.Empty, // Will be set by SaveGoapMetadataAsync
+            Goals = new List<CachedGoapGoal>(),
+            Actions = new List<CachedGoapAction>()
+        };
+
+        CachedGoapMetadata? savedMetadata = null;
+        _mockGoapMetadataStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CachedGoapMetadata>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CachedGoapMetadata, StateOptions?, CancellationToken>((k, m, o, c) => savedMetadata = m)
+            .ReturnsAsync(behaviorId);
+
+        // Act
+        await manager.SaveGoapMetadataAsync(behaviorId, metadata);
+
+        // Assert
+        Assert.NotNull(savedMetadata);
+        Assert.Equal(behaviorId, savedMetadata.BehaviorId);
+    }
+
+    [Fact]
+    public async Task GetGoapMetadataAsync_ExistingMetadata_ReturnsMetadata()
+    {
+        // Arrange
+        var manager = CreateManager();
+        var behaviorId = "behavior-with-goap";
+        var expectedMetadata = new CachedGoapMetadata
+        {
+            BehaviorId = behaviorId,
+            Goals = new List<CachedGoapGoal>
+            {
+                new CachedGoapGoal { Name = "survive", Priority = 100 }
+            },
+            Actions = new List<CachedGoapAction>
+            {
+                new CachedGoapAction { FlowName = "flee", Cost = 1.0f }
+            }
+        };
+
+        _mockGoapMetadataStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedMetadata);
+
+        // Act
+        var result = await manager.GetGoapMetadataAsync(behaviorId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(behaviorId, result.BehaviorId);
+        Assert.Single(result.Goals);
+        Assert.Single(result.Actions);
+        Assert.Equal("survive", result.Goals[0].Name);
+        Assert.Equal("flee", result.Actions[0].FlowName);
+    }
+
+    [Fact]
+    public async Task GetGoapMetadataAsync_NonExistentBehavior_ReturnsNull()
+    {
+        // Arrange
+        var manager = CreateManager();
+        var behaviorId = "nonexistent-behavior";
+
+        _mockGoapMetadataStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CachedGoapMetadata?)null);
+
+        // Act
+        var result = await manager.GetGoapMetadataAsync(behaviorId);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task RemoveGoapMetadataAsync_ExistingMetadata_DeletesAndReturnsTrue()
+    {
+        // Arrange
+        var manager = CreateManager();
+        var behaviorId = "behavior-with-goap";
+        var existingMetadata = new CachedGoapMetadata { BehaviorId = behaviorId };
+
+        _mockGoapMetadataStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingMetadata);
+
+        _mockGoapMetadataStore
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await manager.RemoveGoapMetadataAsync(behaviorId);
+
+        // Assert
+        Assert.True(result);
+        _mockGoapMetadataStore.Verify(s => s.DeleteAsync(
+            It.Is<string>(k => k.Contains(behaviorId)),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RemoveGoapMetadataAsync_NonExistentMetadata_ReturnsFalse()
+    {
+        // Arrange
+        var manager = CreateManager();
+        var behaviorId = "nonexistent-behavior";
+
+        _mockGoapMetadataStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CachedGoapMetadata?)null);
+
+        // Act
+        var result = await manager.RemoveGoapMetadataAsync(behaviorId);
+
+        // Assert
+        Assert.False(result);
+        _mockGoapMetadataStore.Verify(s => s.DeleteAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SaveGoapMetadataAsync_NullBehaviorId_Throws()
+    {
+        // Arrange
+        var manager = CreateManager();
+        var metadata = new CachedGoapMetadata();
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            manager.SaveGoapMetadataAsync(null!, metadata));
+    }
+
+    [Fact]
+    public async Task SaveGoapMetadataAsync_NullMetadata_Throws()
+    {
+        // Arrange
+        var manager = CreateManager();
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            manager.SaveGoapMetadataAsync("behavior-123", null!));
+    }
+
+    [Fact]
+    public async Task GetGoapMetadataAsync_NullBehaviorId_Throws()
+    {
+        // Arrange
+        var manager = CreateManager();
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            manager.GetGoapMetadataAsync(null!));
+    }
+
+    [Fact]
+    public async Task RemoveGoapMetadataAsync_NullBehaviorId_Throws()
+    {
+        // Arrange
+        var manager = CreateManager();
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            manager.RemoveGoapMetadataAsync(null!));
+    }
+
+    [Fact]
+    public async Task SaveGoapMetadataAsync_ComplexMetadata_PreservesAllFields()
+    {
+        // Arrange
+        var manager = CreateManager();
+        var behaviorId = "complex-behavior";
+        var now = DateTimeOffset.UtcNow;
+        var metadata = new CachedGoapMetadata
+        {
+            BehaviorId = behaviorId,
+            Goals = new List<CachedGoapGoal>
+            {
+                new CachedGoapGoal
+                {
+                    Name = "goal1",
+                    Priority = 100,
+                    Conditions = new Dictionary<string, string>
+                    {
+                        { "health", ">=80" },
+                        { "is_safe", "==true" }
+                    }
+                },
+                new CachedGoapGoal
+                {
+                    Name = "goal2",
+                    Priority = 50,
+                    Conditions = new Dictionary<string, string> { { "has_weapon", "==true" } }
+                }
+            },
+            Actions = new List<CachedGoapAction>
+            {
+                new CachedGoapAction
+                {
+                    FlowName = "attack",
+                    Preconditions = new Dictionary<string, string>
+                    {
+                        { "has_weapon", "==true" },
+                        { "enemy_visible", "==true" }
+                    },
+                    Effects = new Dictionary<string, string>
+                    {
+                        { "enemy_health", "-=20" }
+                    },
+                    Cost = 3.5f
+                },
+                new CachedGoapAction
+                {
+                    FlowName = "heal",
+                    Preconditions = new Dictionary<string, string> { { "has_potion", "==true" } },
+                    Effects = new Dictionary<string, string> { { "health", "+=30" } },
+                    Cost = 1.0f
+                }
+            },
+            CreatedAt = now
+        };
+
+        CachedGoapMetadata? savedMetadata = null;
+        _mockGoapMetadataStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CachedGoapMetadata>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CachedGoapMetadata, StateOptions?, CancellationToken>((k, m, o, c) => savedMetadata = m)
+            .ReturnsAsync(behaviorId);
+
+        // Act
+        await manager.SaveGoapMetadataAsync(behaviorId, metadata);
+
+        // Assert
+        Assert.NotNull(savedMetadata);
+        Assert.Equal(2, savedMetadata.Goals.Count);
+        Assert.Equal(2, savedMetadata.Actions.Count);
+        Assert.Equal(100, savedMetadata.Goals[0].Priority);
+        Assert.Equal(2, savedMetadata.Goals[0].Conditions.Count);
+        Assert.Equal(3.5f, savedMetadata.Actions[0].Cost);
+        Assert.Equal(2, savedMetadata.Actions[0].Preconditions.Count);
     }
 
     #endregion

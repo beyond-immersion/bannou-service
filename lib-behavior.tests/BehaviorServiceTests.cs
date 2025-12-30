@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Behavior.Compiler;
 using BeyondImmersion.Bannou.Behavior.Goap;
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Events;
@@ -8,6 +9,10 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+
+// Aliases to distinguish between API and internal GOAP types
+using InternalGoapGoal = BeyondImmersion.Bannou.Behavior.Goap.GoapGoal;
+using ApiGoapGoal = BeyondImmersion.BannouService.Behavior.GoapGoal;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests;
 
@@ -77,5 +82,322 @@ public class BehaviorServiceTests
             null!));
     }
 
-    // Note: Additional tests for GOAP methods will be added in Phase 2.6.
+    #region GenerateGoapPlanAsync Tests
+
+    [Fact]
+    public async Task GenerateGoapPlanAsync_MissingBehaviorId_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new GoapPlanRequest
+        {
+            Agent_id = "agent-1",
+            Behavior_id = string.Empty,
+            Goal = new ApiGoapGoal
+            {
+                Name = "test_goal",
+                Priority = 50,
+                Conditions = new Dictionary<string, string> { { "key", "==value" } }
+            },
+            World_state = new Dictionary<string, object>()
+        };
+
+        // Act
+        var (status, response) = await service.GenerateGoapPlanAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("behavior_id", response.Failure_reason);
+    }
+
+    [Fact]
+    public async Task GenerateGoapPlanAsync_BehaviorNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        _mockBundleManager
+            .Setup(m => m.GetGoapMetadataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CachedGoapMetadata?)null);
+
+        var service = CreateService();
+        var request = new GoapPlanRequest
+        {
+            Agent_id = "agent-1",
+            Behavior_id = "nonexistent-behavior",
+            Goal = new ApiGoapGoal
+            {
+                Name = "test_goal",
+                Priority = 50,
+                Conditions = new Dictionary<string, string> { { "key", "==value" } }
+            },
+            World_state = new Dictionary<string, object>()
+        };
+
+        // Act
+        var (status, response) = await service.GenerateGoapPlanAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("not found", response.Failure_reason);
+    }
+
+    [Fact]
+    public async Task GenerateGoapPlanAsync_NoActions_ReturnsFailure()
+    {
+        // Arrange
+        var cachedMetadata = new CachedGoapMetadata
+        {
+            BehaviorId = "behavior-123",
+            Goals = new List<CachedGoapGoal>(),
+            Actions = new List<CachedGoapAction>() // No actions
+        };
+
+        _mockBundleManager
+            .Setup(m => m.GetGoapMetadataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cachedMetadata);
+
+        var service = CreateService();
+        var request = new GoapPlanRequest
+        {
+            Agent_id = "agent-1",
+            Behavior_id = "behavior-123",
+            Goal = new ApiGoapGoal
+            {
+                Name = "test_goal",
+                Priority = 50,
+                Conditions = new Dictionary<string, string> { { "key", "==value" } }
+            },
+            World_state = new Dictionary<string, object>()
+        };
+
+        // Act
+        var (status, response) = await service.GenerateGoapPlanAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("No GOAP actions", response.Failure_reason);
+    }
+
+    [Fact]
+    public async Task GenerateGoapPlanAsync_PlanningFails_ReturnsFailure()
+    {
+        // Arrange
+        var cachedMetadata = new CachedGoapMetadata
+        {
+            BehaviorId = "behavior-123",
+            Goals = new List<CachedGoapGoal>(),
+            Actions = new List<CachedGoapAction>
+            {
+                new CachedGoapAction
+                {
+                    FlowName = "action1",
+                    Preconditions = new Dictionary<string, string> { { "impossible", "==true" } },
+                    Effects = new Dictionary<string, string> { { "goal_met", "true" } },
+                    Cost = 1.0f
+                }
+            }
+        };
+
+        _mockBundleManager
+            .Setup(m => m.GetGoapMetadataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cachedMetadata);
+
+        // Planner returns null (no plan found)
+        _mockGoapPlanner
+            .Setup(p => p.PlanAsync(
+                It.IsAny<WorldState>(),
+                It.IsAny<InternalGoapGoal>(),
+                It.IsAny<IReadOnlyList<GoapAction>>(),
+                It.IsAny<PlanningOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GoapPlan?)null);
+
+        var service = CreateService();
+        var request = new GoapPlanRequest
+        {
+            Agent_id = "agent-1",
+            Behavior_id = "behavior-123",
+            Goal = new ApiGoapGoal
+            {
+                Name = "test_goal",
+                Priority = 50,
+                Conditions = new Dictionary<string, string> { { "goal_met", "==true" } }
+            },
+            World_state = new Dictionary<string, object> { { "some_state", "value" } }
+        };
+
+        // Act
+        var (status, response) = await service.GenerateGoapPlanAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("No valid plan found", response.Failure_reason);
+    }
+
+    [Fact]
+    public async Task GenerateGoapPlanAsync_SuccessfulPlan_ReturnsOkWithPlan()
+    {
+        // Arrange
+        var cachedMetadata = new CachedGoapMetadata
+        {
+            BehaviorId = "behavior-123",
+            Goals = new List<CachedGoapGoal>(),
+            Actions = new List<CachedGoapAction>
+            {
+                new CachedGoapAction
+                {
+                    FlowName = "action1",
+                    Preconditions = new Dictionary<string, string>(),
+                    Effects = new Dictionary<string, string> { { "goal_met", "true" } },
+                    Cost = 2.0f
+                }
+            }
+        };
+
+        _mockBundleManager
+            .Setup(m => m.GetGoapMetadataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cachedMetadata);
+
+        // Create a mock plan result
+        var mockGoal = new InternalGoapGoal("test_goal", "test_goal", 50);
+        var mockAction = new GoapAction("action1", "action1", new GoapPreconditions(), new GoapActionEffects(), 2.0f);
+        var mockPlan = new GoapPlan(
+            goal: mockGoal,
+            actions: new List<PlannedAction> { new PlannedAction(mockAction, 0) },
+            totalCost: 2.0f,
+            nodesExpanded: 5,
+            planningTimeMs: 10,
+            initialState: new WorldState(),
+            expectedFinalState: new WorldState());
+
+        _mockGoapPlanner
+            .Setup(p => p.PlanAsync(
+                It.IsAny<WorldState>(),
+                It.IsAny<InternalGoapGoal>(),
+                It.IsAny<IReadOnlyList<GoapAction>>(),
+                It.IsAny<PlanningOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockPlan);
+
+        var service = CreateService();
+        var request = new GoapPlanRequest
+        {
+            Agent_id = "agent-1",
+            Behavior_id = "behavior-123",
+            Goal = new ApiGoapGoal
+            {
+                Name = "test_goal",
+                Priority = 50,
+                Conditions = new Dictionary<string, string> { { "goal_met", "==true" } }
+            },
+            World_state = new Dictionary<string, object>()
+        };
+
+        // Act
+        var (status, response) = await service.GenerateGoapPlanAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.NotNull(response.Plan);
+        Assert.Single(response.Plan.Actions);
+        Assert.Equal("action1", response.Plan.Actions.First().Action_id);
+        Assert.Equal(2.0f, response.Plan.Total_cost);
+        Assert.Equal(10, response.Planning_time_ms);
+        Assert.Equal(5, response.Nodes_expanded);
+    }
+
+    [Fact]
+    public async Task GenerateGoapPlanAsync_WithCustomOptions_PassesOptionsToPlannerCorrectly()
+    {
+        // Arrange
+        var cachedMetadata = new CachedGoapMetadata
+        {
+            BehaviorId = "behavior-123",
+            Goals = new List<CachedGoapGoal>(),
+            Actions = new List<CachedGoapAction>
+            {
+                new CachedGoapAction
+                {
+                    FlowName = "action1",
+                    Preconditions = new Dictionary<string, string>(),
+                    Effects = new Dictionary<string, string> { { "goal_met", "true" } },
+                    Cost = 1.0f
+                }
+            }
+        };
+
+        _mockBundleManager
+            .Setup(m => m.GetGoapMetadataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cachedMetadata);
+
+        PlanningOptions? capturedOptions = null;
+        _mockGoapPlanner
+            .Setup(p => p.PlanAsync(
+                It.IsAny<WorldState>(),
+                It.IsAny<InternalGoapGoal>(),
+                It.IsAny<IReadOnlyList<GoapAction>>(),
+                It.IsAny<PlanningOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<WorldState, InternalGoapGoal, IReadOnlyList<GoapAction>, PlanningOptions?, CancellationToken>(
+                (ws, g, a, o, ct) => capturedOptions = o)
+            .ReturnsAsync((GoapPlan?)null);
+
+        var service = CreateService();
+        var request = new GoapPlanRequest
+        {
+            Agent_id = "agent-1",
+            Behavior_id = "behavior-123",
+            Goal = new ApiGoapGoal
+            {
+                Name = "test_goal",
+                Priority = 50,
+                Conditions = new Dictionary<string, string> { { "goal_met", "==true" } }
+            },
+            World_state = new Dictionary<string, object>(),
+            Options = new GoapPlanningOptions
+            {
+                Max_depth = 15,
+                Max_nodes = 500,
+                Timeout_ms = 200
+            }
+        };
+
+        // Act
+        await service.GenerateGoapPlanAsync(request);
+
+        // Assert
+        Assert.NotNull(capturedOptions);
+        Assert.Equal(15, capturedOptions.MaxDepth);
+        Assert.Equal(500, capturedOptions.MaxNodesExpanded);
+        Assert.Equal(200, capturedOptions.TimeoutMs);
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private BehaviorService CreateService()
+    {
+        return new BehaviorService(
+            _mockLogger.Object,
+            _mockConfiguration.Object,
+            _mockMessageBus.Object,
+            _mockEventConsumer.Object,
+            _mockGoapPlanner.Object,
+            _compiler,
+            _mockAssetClient.Object,
+            _mockHttpClientFactory.Object,
+            _mockBundleManager.Object);
+    }
+
+    #endregion
 }

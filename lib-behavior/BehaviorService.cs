@@ -1,6 +1,7 @@
 using BeyondImmersion.Bannou.Behavior.Compiler;
 using BeyondImmersion.Bannou.Behavior.Goap;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Abml.Parser;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
@@ -164,6 +165,9 @@ public partial class BehaviorService : IBehaviorService
                         metadata,
                         cancellationToken);
 
+                    // Extract and cache GOAP metadata if present
+                    await ExtractAndCacheGoapMetadataAsync(behaviorId, body.Abml_content, cancellationToken);
+
                     // Publish lifecycle event
                     await PublishBehaviorEventAsync(
                         behaviorId,
@@ -288,6 +292,91 @@ public partial class BehaviorService : IBehaviorService
             IncludeDebugInfo = !apiOptions.Enable_optimizations, // Debug info when not optimizing
             SkipSemanticAnalysis = !apiOptions.Strict_validation
         };
+    }
+
+    /// <summary>
+    /// Extracts GOAP metadata from ABML content and caches it for later planning.
+    /// Does nothing if the ABML has no GOAP content (no goals or goap: blocks).
+    /// </summary>
+    /// <param name="behaviorId">The behavior's unique identifier.</param>
+    /// <param name="abmlContent">Raw ABML YAML content.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    private async Task ExtractAndCacheGoapMetadataAsync(
+        string behaviorId,
+        string abmlContent,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Parse ABML to get the document with GOAP metadata
+            var parser = new DocumentParser();
+            var parseResult = parser.Parse(abmlContent);
+
+            if (!parseResult.IsSuccess || parseResult.Value == null)
+            {
+                _logger.LogDebug(
+                    "Could not parse ABML for GOAP extraction for behavior {BehaviorId}",
+                    behaviorId);
+                return;
+            }
+
+            var document = parseResult.Value;
+
+            // Check if document has any GOAP content
+            if (!GoapMetadataConverter.HasGoapContent(document))
+            {
+                _logger.LogDebug(
+                    "No GOAP content in behavior {BehaviorId}, skipping GOAP metadata caching",
+                    behaviorId);
+                return;
+            }
+
+            // Build cached metadata
+            var cachedMetadata = new CachedGoapMetadata();
+
+            // Extract goals
+            foreach (var (goalName, goalDef) in document.Goals)
+            {
+                cachedMetadata.Goals.Add(new CachedGoapGoal
+                {
+                    Name = goalName,
+                    Priority = goalDef.Priority,
+                    Conditions = new Dictionary<string, string>(goalDef.Conditions)
+                });
+            }
+
+            // Extract GOAP-enabled actions from flows
+            foreach (var (flowName, flow) in document.Flows)
+            {
+                if (flow.Goap != null)
+                {
+                    cachedMetadata.Actions.Add(new CachedGoapAction
+                    {
+                        FlowName = flowName,
+                        Preconditions = new Dictionary<string, string>(flow.Goap.Preconditions),
+                        Effects = new Dictionary<string, string>(flow.Goap.Effects),
+                        Cost = flow.Goap.Cost
+                    });
+                }
+            }
+
+            // Save to cache
+            await _bundleManager.SaveGoapMetadataAsync(behaviorId, cachedMetadata, cancellationToken);
+
+            _logger.LogInformation(
+                "Cached GOAP metadata for behavior {BehaviorId}: {GoalCount} goals, {ActionCount} actions",
+                behaviorId,
+                cachedMetadata.Goals.Count,
+                cachedMetadata.Actions.Count);
+        }
+        catch (Exception ex)
+        {
+            // Log but don't fail compilation - GOAP caching is optional
+            _logger.LogWarning(
+                ex,
+                "Failed to extract GOAP metadata for behavior {BehaviorId}, GOAP planning will not be available",
+                behaviorId);
+        }
     }
 
     /// <summary>
@@ -615,6 +704,9 @@ public partial class BehaviorService : IBehaviorService
             // Remove from bundle manager (this also removes bundle membership)
             var removedMetadata = await _bundleManager.RemoveBehaviorAsync(body.BehaviorId, cancellationToken);
 
+            // Also remove cached GOAP metadata if present
+            await _bundleManager.RemoveGoapMetadataAsync(body.BehaviorId, cancellationToken);
+
             // Publish deleted event
             if (removedMetadata != null || metadata != null)
             {
@@ -691,14 +783,7 @@ public partial class BehaviorService : IBehaviorService
                 body.Agent_id,
                 body.Goal.Name);
 
-            // Convert API world state to internal WorldState
-            var worldState = ConvertToWorldState(body.World_state);
-
-            // Convert API goal to internal GoapGoal
-            var goal = ConvertToGoapGoal(body.Goal);
-
-            // For now, we don't have a behavior cache so we return an error for behavior_id
-            // In the future, this will look up cached GOAP actions from compiled behaviors
+            // Validate behavior_id is required
             if (string.IsNullOrEmpty(body.Behavior_id))
             {
                 return (StatusCodes.BadRequest, new GoapPlanResponse
@@ -708,16 +793,111 @@ public partial class BehaviorService : IBehaviorService
                 });
             }
 
-            // TODO: Look up cached behavior and extract GOAP actions
-            // For now, return NotImplemented as behavior caching is not yet ready
-            _logger.LogWarning(
-                "GOAP planning for behavior {BehaviorId} not yet implemented - behavior caching required",
-                body.Behavior_id);
-
-            return (StatusCodes.NotImplemented, new GoapPlanResponse
+            // Retrieve cached GOAP metadata from compiled behavior
+            var cachedMetadata = await _bundleManager.GetGoapMetadataAsync(body.Behavior_id, cancellationToken);
+            if (cachedMetadata == null)
             {
-                Success = false,
-                Failure_reason = "Behavior caching not yet implemented - GOAP actions cannot be retrieved"
+                _logger.LogDebug(
+                    "No GOAP metadata found for behavior {BehaviorId}",
+                    body.Behavior_id);
+                return (StatusCodes.NotFound, new GoapPlanResponse
+                {
+                    Success = false,
+                    Failure_reason = $"Behavior '{body.Behavior_id}' not found or has no GOAP content"
+                });
+            }
+
+            // Convert API world state to internal WorldState
+            var worldState = ConvertToWorldState(body.World_state);
+
+            // Convert API goal to internal GoapGoal
+            var goal = ConvertToGoapGoal(body.Goal);
+
+            // Convert cached actions to internal GoapAction objects
+            var availableActions = new List<GoapAction>();
+            foreach (var cachedAction in cachedMetadata.Actions)
+            {
+                var action = GoapAction.FromMetadata(
+                    cachedAction.FlowName,
+                    cachedAction.Preconditions,
+                    cachedAction.Effects,
+                    cachedAction.Cost);
+                availableActions.Add(action);
+            }
+
+            if (availableActions.Count == 0)
+            {
+                return (StatusCodes.OK, new GoapPlanResponse
+                {
+                    Success = false,
+                    Failure_reason = "No GOAP actions available in the compiled behavior",
+                    Planning_time_ms = 0,
+                    Nodes_expanded = 0
+                });
+            }
+
+            // Convert planning options (use defaults if not provided)
+            var planningOptions = body.Options != null
+                ? new PlanningOptions
+                {
+                    MaxDepth = body.Options.Max_depth,
+                    MaxNodesExpanded = body.Options.Max_nodes,
+                    TimeoutMs = body.Options.Timeout_ms
+                }
+                : PlanningOptions.Default;
+
+            _logger.LogDebug(
+                "Planning with {ActionCount} actions, options: {Options}",
+                availableActions.Count,
+                planningOptions);
+
+            // Run the A* planner
+            var plan = await _goapPlanner.PlanAsync(
+                worldState,
+                goal,
+                availableActions,
+                planningOptions,
+                cancellationToken);
+
+            // Convert result to API response
+            if (plan == null)
+            {
+                return (StatusCodes.OK, new GoapPlanResponse
+                {
+                    Success = false,
+                    Failure_reason = "No valid plan found - goal may be unreachable from current state",
+                    Planning_time_ms = 0,
+                    Nodes_expanded = 0
+                });
+            }
+
+            // Build successful response
+            var planResult = new GoapPlanResult
+            {
+                Goal_id = goal.Id,
+                Total_cost = plan.TotalCost,
+                Actions = plan.Actions.Select(a => new PlannedActionResponse
+                {
+                    Action_id = a.Action.Id,
+                    Index = a.Index,
+                    Cost = a.Action.Cost
+                }).ToList()
+            };
+
+            _logger.LogInformation(
+                "Generated GOAP plan for agent {AgentId}: {ActionCount} actions, cost {TotalCost}, {NodesExpanded} nodes in {PlanningTimeMs}ms",
+                body.Agent_id,
+                plan.ActionCount,
+                plan.TotalCost,
+                plan.NodesExpanded,
+                plan.PlanningTimeMs);
+
+            return (StatusCodes.OK, new GoapPlanResponse
+            {
+                Success = true,
+                Plan = planResult,
+                Planning_time_ms = (int)plan.PlanningTimeMs,
+                Nodes_expanded = plan.NodesExpanded
             });
         }
         catch (Exception ex)
