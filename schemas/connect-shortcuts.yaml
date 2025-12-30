@@ -26,12 +26,12 @@ components:
         A pre-bound API call that clients can invoke with a single GUID.
         The bound_payload is injected by Connect when the shortcut is invoked.
       required:
-        - route_guid
-        - target_guid
-        - bound_payload
+        - routeGuid
+        - targetGuid
+        - boundPayload
         - metadata
       properties:
-        route_guid:
+        routeGuid:
           type: string
           format: uuid
           description: |
@@ -40,7 +40,7 @@ components:
             Unique per session - same shortcut name produces different GUIDs for different sessions.
             Uses UUID version 7 bits to distinguish from service GUIDs (version 5).
 
-        target_guid:
+        targetGuid:
           type: string
           format: uuid
           description: |
@@ -48,7 +48,7 @@ components:
             Must be a valid capability in the client's current capability manifest.
             Connect uses this GUID when forwarding to the target service.
 
-        bound_payload:
+        boundPayload:
           type: string
           description: |
             Pre-serialized JSON payload passed unchanged to the target service.
@@ -65,8 +65,8 @@ components:
         Metadata about a session shortcut for display, debugging, and lifecycle management.
       required:
         - name
-        - source_service
-        - created_at
+        - sourceService
+        - createdAt
       properties:
         name:
           type: string
@@ -86,18 +86,18 @@ components:
             Human-readable description of what this shortcut does.
             Displayed in client UIs and debugging tools.
 
-        source_service:
+        sourceService:
           type: string
           description: |
             The service that created this shortcut.
             Used for bulk revocation and audit logging.
 
-        created_at:
+        createdAt:
           type: string
           format: date-time
           description: When this shortcut was created.
 
-        expires_at:
+        expiresAt:
           type: string
           format: date-time
           nullable: true
@@ -116,7 +116,7 @@ components:
             Optional categorization tags for client-side organization.
             Examples: ["character", "combat"], ["inventory", "equipment"]
 
-        display_name:
+        displayName:
           type: string
           maxLength: 64
           nullable: true
@@ -131,34 +131,34 @@ components:
         Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
         Connect handles this event internally and does NOT forward to the client.
       required:
-        - event_id
-        - event_name
-        - session_id
+        - eventId
+        - eventName
+        - sessionId
         - shortcut
       properties:
-        event_id:
+        eventId:
           type: string
           format: uuid
           description: Unique identifier for this event.
 
-        event_name:
+        eventName:
           type: string
           enum:
             - session.shortcut_published
           description: Fixed event type identifier.
 
-        session_id:
+        sessionId:
           type: string
           description: Target session for this shortcut.
 
         shortcut:
           $ref: '#/components/schemas/SessionShortcut'
 
-        replace_existing:
+        replaceExisting:
           type: boolean
           default: true
           description: |
-            If true and a shortcut with the same route_guid exists, replace it.
+            If true and a shortcut with the same routeGuid exists, replace it.
             If false and shortcut exists, the event is ignored.
 
     ShortcutRevokedEvent:
@@ -166,44 +166,44 @@ components:
       description: |
         Published by services to remove shortcuts.
         Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
-        Supports both single-shortcut revocation (by route_guid) and
-        bulk revocation (all shortcuts from a source_service).
+        Supports both single-shortcut revocation (by routeGuid) and
+        bulk revocation (all shortcuts from a sourceService).
       required:
-        - event_id
-        - event_name
-        - session_id
+        - eventId
+        - eventName
+        - sessionId
       properties:
-        event_id:
+        eventId:
           type: string
           format: uuid
           description: Unique identifier for this event.
 
-        event_name:
+        eventName:
           type: string
           enum:
             - session.shortcut_revoked
           description: Fixed event type identifier.
 
-        session_id:
+        sessionId:
           type: string
           description: Target session for revocation.
 
-        route_guid:
+        routeGuid:
           type: string
           format: uuid
           nullable: true
           description: |
             Specific shortcut to revoke.
             If provided, only this shortcut is removed.
-            Mutually exclusive with revoke_by_service.
+            Mutually exclusive with revokeByService.
 
-        revoke_by_service:
+        revokeByService:
           type: string
           nullable: true
           description: |
             Revoke ALL shortcuts from this source service.
             Used when a service needs to clear all its shortcuts (e.g., on logout from that service).
-            Mutually exclusive with route_guid.
+            Mutually exclusive with routeGuid.
 
         reason:
           type: string
@@ -217,8 +217,8 @@ components:
         Contains only the information clients need to invoke and display the shortcut.
       required:
         - guid
-        - target_service
-        - target_endpoint
+        - targetService
+        - targetEndpoint
         - metadata
       properties:
         guid:
@@ -226,11 +226,11 @@ components:
           format: uuid
           description: GUID to use in WebSocket message header when invoking this shortcut.
 
-        target_service:
+        targetService:
           type: string
           description: The service this shortcut invokes (for client display).
 
-        target_endpoint:
+        targetEndpoint:
           type: string
           description: The endpoint this shortcut invokes (for client display).
 

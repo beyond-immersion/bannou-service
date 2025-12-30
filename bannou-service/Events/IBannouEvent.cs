@@ -8,13 +8,8 @@ namespace BeyondImmersion.BannouService.Events;
 /// <remarks>
 /// <para>
 /// This interface defines the minimal contract for all events:
-/// - BannouEventId: Unique identifier for deduplication and tracing
-/// - BannouTimestamp: When the event was created
-/// </para>
-/// <para>
-/// Property names are prefixed with "Bannou" to avoid conflicts with generated
-/// properties that have different types (e.g., Event_id as Guid vs string).
-/// Implementing classes use explicit interface implementation to bridge the gap.
+/// - EventId: Unique identifier for deduplication and tracing
+/// - Timestamp: When the event was created
 /// </para>
 /// </remarks>
 public interface IBannouEvent
@@ -23,10 +18,10 @@ public interface IBannouEvent
     /// Unique identifier for this event instance (as string).
     /// Used for deduplication, tracing, and correlation.
     /// </summary>
-    string BannouEventId { get; }
+    Guid EventId { get; }
 
     /// <summary>
     /// When the event was created (UTC).
     /// </summary>
-    DateTimeOffset BannouTimestamp { get; }
+    DateTime Timestamp { get; }
 }

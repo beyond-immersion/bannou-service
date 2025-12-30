@@ -21,11 +21,19 @@ components:
         All service events MUST include these fields and inherit from this schema.
         Implements IBannouEvent interface for uniform event handling in taps.
       required:
+        - eventName
         - eventId
         - timestamp
       properties:
+        eventName:
+          type: string
+          description: |
+            Unique event type identifier (e.g., "connect.capability_manifest").
+            Must be in the generated ClientEventWhitelist or will be rejected.
+            Convention: {service}.{event_type}
         eventId:
           type: string
+          format: uuid
           description: Unique identifier for this event instance (UUID string)
         timestamp:
           type: string
@@ -41,11 +49,16 @@ components:
         and permission requirements with the Permissions service.
       required:
         - serviceId
+        - serviceName
         - version
         - appId
         - endpoints
       properties:
         serviceId:
+          type: string
+          format: uuid
+          description: Unique GUID identifying this bannou instance (for log correlation/debugging)
+        serviceName:
           type: string
           description: Service ID that registered (e.g., "behavior", "accounts")
         version:
@@ -220,12 +233,17 @@ components:
         Use ONLY for internal faults, not for user/input errors.
       required:
         - serviceId
+        - serviceName
         - appId
         - operation
         - errorType
         - message
       properties:
         serviceId:
+          type: string
+          format: uuid
+          description: Unique GUID identifying this plugin instance (for log correlation/debugging)
+        serviceName:
           type: string
           description: Logical service name emitting the error (e.g., "accounts")
         appId:
@@ -325,9 +343,11 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: Session ID that just connected via WebSocket
         accountId:
           type: string
+          format: uuid
           description: Account ID owning the session
         roles:
           type: array
@@ -365,11 +385,12 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: Session ID that disconnected
         accountId:
           type: string
-          nullable: true
-          description: Account ID that was connected (if known)
+          format: uuid
+          description: Account ID that was disconnected
         reason:
           type: string
           nullable: true
@@ -402,9 +423,11 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: Session ID that reconnected
         accountId:
           type: string
+          format: uuid
           description: Account ID owning the reconnected session
         roles:
           type: array

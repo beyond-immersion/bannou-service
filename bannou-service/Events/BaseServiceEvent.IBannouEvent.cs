@@ -7,8 +7,8 @@ namespace BeyondImmersion.BannouService.Events;
 public partial class BaseServiceEvent : IBannouEvent
 {
     /// <inheritdoc />
-    string IBannouEvent.BannouEventId => EventId;
+    Guid EventId;
 
     /// <inheritdoc />
-    DateTimeOffset IBannouEvent.BannouTimestamp => Timestamp;
+    DateTime Timestamp;
 }

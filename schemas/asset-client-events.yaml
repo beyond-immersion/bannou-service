@@ -34,28 +34,28 @@ components:
         Sent when an asset upload has completed (success or failure).
         Correlates with the upload_id from requestUpload response.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - upload_id
+        - uploadId
         - success
       properties:
-        event_name:
+        eventName:
           type: string
           enum: ["asset.upload.complete"]
           description: Fixed event type identifier
-        upload_id:
+        uploadId:
           type: string
           format: uuid
           description: Correlates with the upload request
         success:
           type: boolean
           description: Whether the upload completed successfully
-        asset_id:
+        assetId:
           type: string
           nullable: true
           description: Asset ID assigned on success
-        content_hash:
+        contentHash:
           type: string
           nullable: true
           description: SHA256 hash of uploaded content
@@ -64,9 +64,9 @@ components:
           format: int64
           nullable: true
           description: File size in bytes
-        error_code:
+        errorCode:
           $ref: '#/components/schemas/UploadErrorCode'
-        error_message:
+        errorMessage:
           type: string
           nullable: true
           description: Human-readable error description
@@ -84,23 +84,23 @@ components:
         Sent when asset processing (e.g., texture mipmaps, model LODs) completes.
         May include information about generated derivative assets.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - asset_id
+        - assetId
         - success
       properties:
-        event_name:
+        eventName:
           type: string
           enum: ["asset.processing.complete"]
           description: Fixed event type identifier
-        asset_id:
+        assetId:
           type: string
           description: ID of the asset that was processed
         success:
           type: boolean
           description: Whether processing completed successfully
-        processing_type:
+        processingType:
           $ref: '#/components/schemas/ProcessingType'
         outputs:
           type: array
@@ -108,9 +108,9 @@ components:
           description: Generated derivative assets (mipmaps, LODs, etc.)
           items:
             $ref: '#/components/schemas/ProcessingOutput'
-        error_code:
+        errorCode:
           $ref: '#/components/schemas/ProcessingErrorCode'
-        error_message:
+        errorMessage:
           type: string
           nullable: true
           description: Human-readable error description
@@ -123,30 +123,30 @@ components:
       description: |
         Sent when asset processing fails. Includes retry information.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - asset_id
-        - error_code
+        - assetId
+        - errorCode
       properties:
-        event_name:
+        eventName:
           type: string
           enum: ["asset.processing.failed"]
           description: Fixed event type identifier
-        asset_id:
+        assetId:
           type: string
           description: ID of the asset that failed processing
-        error_code:
+        errorCode:
           $ref: '#/components/schemas/ProcessingErrorCode'
-        error_message:
+        errorMessage:
           type: string
           nullable: true
           description: Human-readable error description
-        retry_available:
+        retryAvailable:
           type: boolean
           default: true
           description: Whether the operation can be retried
-        retry_after_ms:
+        retryAfterMs:
           type: integer
           nullable: true
           description: Suggested retry delay in milliseconds
@@ -164,32 +164,32 @@ components:
         Sent when a bundle upload has been validated and processed.
         Includes information about registered assets and any skipped duplicates.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - upload_id
+        - uploadId
         - success
       properties:
-        event_name:
+        eventName:
           type: string
           enum: ["asset.bundle.validation.complete"]
           description: Fixed event type identifier
-        upload_id:
+        uploadId:
           type: string
           format: uuid
           description: Correlates with the bundle upload request
         success:
           type: boolean
           description: Whether validation passed
-        bundle_id:
+        bundleId:
           type: string
           nullable: true
           description: Assigned bundle ID on success
-        assets_registered:
+        assetsRegistered:
           type: integer
           nullable: true
           description: Number of assets extracted and registered
-        duplicates_skipped:
+        duplicatesSkipped:
           type: integer
           nullable: true
           description: Assets with matching hash already in storage
@@ -207,17 +207,17 @@ components:
       description: |
         Sent when bundle validation fails. Includes detailed error information.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - upload_id
+        - uploadId
         - errors
       properties:
-        event_name:
+        eventName:
           type: string
           enum: ["asset.bundle.validation.failed"]
           description: Fixed event type identifier
-        upload_id:
+        uploadId:
           type: string
           format: uuid
           description: Correlates with the bundle upload request
@@ -234,23 +234,23 @@ components:
       description: |
         Sent when bundle creation from asset_ids completes.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - bundle_id
+        - bundleId
         - success
       properties:
-        event_name:
+        eventName:
           type: string
           enum: ["asset.bundle.creation.complete"]
           description: Fixed event type identifier
-        bundle_id:
+        bundleId:
           type: string
           description: ID of the created bundle
         success:
           type: boolean
           description: Whether creation completed successfully
-        download_url:
+        downloadUrl:
           type: string
           format: uri
           nullable: true
@@ -260,15 +260,15 @@ components:
           format: int64
           nullable: true
           description: Bundle file size in bytes
-        asset_count:
+        assetCount:
           type: integer
           nullable: true
           description: Number of assets in the bundle
-        error_code:
+        errorCode:
           type: string
           nullable: true
           description: Error code on failure
-        error_message:
+        errorMessage:
           type: string
           nullable: true
           description: Human-readable error description
@@ -286,23 +286,23 @@ components:
         Final notification that an asset is ready for use.
         Sent after upload and any required processing completes.
       required:
-        - event_name
-        - event_id
+        - eventName
+        - eventId
         - timestamp
-        - asset_id
+        - assetId
       properties:
-        event_name:
+        eventName:
           type: string
           enum: ["asset.ready"]
           description: Fixed event type identifier
-        asset_id:
+        assetId:
           type: string
           description: ID of the asset that is now ready
-        version_id:
+        versionId:
           type: string
           nullable: true
           description: Version ID of this asset
-        content_hash:
+        contentHash:
           type: string
           nullable: true
           description: SHA256 hash of the asset
@@ -311,7 +311,7 @@ components:
           format: int64
           nullable: true
           description: File size in bytes
-        content_type:
+        contentType:
           type: string
           nullable: true
           description: MIME content type
@@ -363,10 +363,10 @@ components:
       type: object
       description: Information about a generated derivative asset
       properties:
-        output_type:
+        outputType:
           type: string
           description: Type of output (e.g., "mipmap_level_1", "lod_2")
-        asset_id:
+        assetId:
           type: string
           description: ID of the generated asset
         size:
@@ -384,7 +384,7 @@ components:
         message:
           type: string
           description: Warning message
-        asset_path:
+        assetPath:
           type: string
           nullable: true
           description: Path within bundle where warning occurred
@@ -401,7 +401,7 @@ components:
         message:
           type: string
           description: Error message
-        asset_path:
+        assetPath:
           type: string
           nullable: true
           description: Path within bundle where error occurred

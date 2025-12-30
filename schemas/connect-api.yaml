@@ -282,13 +282,13 @@ paths:
                   value:
                     error: "BadRequest"
                     message: "Authorization header is required for WebSocket connections"
-                    status_code: 400
+                    statusCode: 400
                 not-websocket:
                   summary: Not a WebSocket request
                   value:
                     error: "BadRequest"
                     message: "Request must be a WebSocket upgrade request"
-                    status_code: 400
+                    statusCode: 400
         '403':
           description: Forbidden - invalid JWT token or reconnection token
           content:
@@ -301,13 +301,13 @@ paths:
                   value:
                     error: "Forbidden"
                     message: "Invalid or expired authentication token"
-                    status_code: 403
+                    statusCode: 403
                 reconnect-failed:
                   summary: Reconnection token not found or expired
                   value:
                     error: "Forbidden"
                     message: "Reconnection token is invalid or expired"
-                    status_code: 403
+                    statusCode: 403
         '500':
           description: Internal server error during connection setup
           content:
@@ -320,7 +320,7 @@ paths:
                   value:
                     error: "InternalServerError"
                     message: "An error occurred establishing the WebSocket connection"
-                    status_code: 500
+                    statusCode: 500
       x-request-schema-json: '{}'
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n  \"summary\": \"Establish WebSocket connection\",\n  \"description\": \"Initiates a WebSocket
@@ -630,7 +630,7 @@ components:
       required:
       - error
       - message
-      - status_code
+      - statusCode
       properties:
         error:
           type: string
@@ -642,7 +642,7 @@ components:
         message:
           type: string
           description: Human-readable error description
-        status_code:
+        statusCode:
           type: integer
           description: HTTP status code
           enum: [400, 403, 500]
@@ -813,26 +813,26 @@ components:
         Configuration options for the connect service.
         These are server-side settings and not directly exposed via API.
       properties:
-        obfuscate_not_found_response:
+        obfuscateNotFoundResponse:
           type: boolean
           description: Return Unauthorized instead of NotFound for better security
           default: true
-        client_request_max_size:
+        clientRequestMaxSize:
           type: integer
           format: uint32
           description: Maximum size for client requests in bytes
           default: 16384
-        client_response_max_size:
+        clientResponseMaxSize:
           type: integer
           format: uint32
           description: Maximum size for client responses in bytes
           default: 16384
-        client_reconnection_time:
+        clientReconnectionTime:
           type: integer
           format: uint32
           description: Time in seconds to allow client reconnection
           default: 30
-        token_public_key:
+        tokenPublicKey:
           type: string
           description: Base64-encoded RSA public key for JWT validation
 

@@ -561,9 +561,9 @@ components:
       type: object
       description: Response containing the OAuth authorization URL for redirect
       required:
-      - authorization_url
+      - authorizationUrl
       properties:
-        authorization_url:
+        authorizationUrl:
           type: string
           format: uri
           description: The OAuth provider authorization URL to redirect the user to

@@ -756,9 +756,9 @@ components:
     CompileBehaviorRequest:
       type: object
       required:
-      - abml_content
+      - abmlContent
       properties:
-        abml_content:
+        abmlContent:
           type: string
           description: Raw ABML YAML content to compile
           example: |
@@ -773,20 +773,20 @@ components:
                 actions:
                   - log:
                       message: "Hello World"
-        behavior_name:
+        behaviorName:
           type: string
           description: |
             Optional human-readable name for the behavior.
             If not provided, extracted from ABML metadata.id or generated from content hash.
           example: "blacksmith_daily_routine"
-        behavior_category:
+        behaviorCategory:
           type: string
           description: |
             Category for organizing behaviors (e.g., profession, cultural, situational).
             Used for filtering and grouping in bundles.
           enum: [base, cultural, professional, personal, situational, ambient]
           example: "professional"
-        bundle_id:
+        bundleId:
           type: string
           description: |
             Optional bundle identifier for grouping related behaviors.
@@ -794,9 +794,9 @@ components:
             Clients can then download entire bundles for efficient bulk loading.
             If the bundle doesn't exist, it will be created.
           example: "blacksmith-behaviors-v1"
-        character_context:
+        characterContext:
           $ref: '#/components/schemas/CharacterContext'
-        compilation_options:
+        compilationOptions:
           $ref: '#/components/schemas/CompilationOptions'
 
     BehaviorStackRequest:
