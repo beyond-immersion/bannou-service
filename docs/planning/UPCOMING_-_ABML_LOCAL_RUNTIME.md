@@ -1396,6 +1396,31 @@ components:
 
 ### 5.3 Compilation Pipeline
 
+#### Document Merging (Pre-Compilation)
+
+Before bytecode compilation, documents with imports must be flattened into a single merged document. This is handled by `DocumentMerger`:
+
+```
+YAML files → DocumentLoader → LoadedDocument tree → DocumentMerger → Flat AbmlDocument
+                                                                            ↓
+                                                                    BehaviorCompiler
+```
+
+**Key characteristics of merged documents:**
+- All imported flows are renamed with namespace prefixes (e.g., `lib.greet`, `utils.helpers.log`)
+- Flow references in `call`/`goto` actions are rewritten to fully-qualified names
+- Context variables from imports are prefixed to avoid collisions
+- GOAP goals from imports are prefixed similarly
+- The merged document is self-contained with no import references
+
+**Why merge before compilation:**
+- Bytecode has no concept of imports - it's a flat instruction stream
+- Whether source was 1 file or 50 files with imports, bytecode is identical
+- Simpler bytecode format with no cross-model references
+- Single source of truth for the document structure
+
+The `BehaviorCompiler` receives an already-merged `AbmlDocument` and produces bytecode:
+
 ```csharp
 /// <summary>
 /// Compiles ABML documents to behavior models.
