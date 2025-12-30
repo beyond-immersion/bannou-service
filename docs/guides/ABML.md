@@ -12,18 +12,22 @@ ABML is a YAML-based domain-specific language for authoring event-driven, statef
 
 1. [Overview](#1-overview)
 2. [Document Structure](#2-document-structure)
-3. [Type System](#3-type-system)
-4. [Expression Language](#4-expression-language)
-5. [Control Flow](#5-control-flow)
-6. [Channels and Parallelism](#6-channels-and-parallelism)
-7. [Actions](#7-actions)
-8. [Flows](#8-flows)
-9. [GOAP Integration](#9-goap-integration)
-10. [Events](#10-events)
-11. [Context and Variables](#11-context-and-variables)
-12. [Error Handling](#12-error-handling)
-13. [Runtime Architecture](#13-runtime-architecture)
-14. [Examples](#14-examples)
+3. [Document Composition](#3-document-composition)
+4. [Type System](#4-type-system)
+5. [Expression Language](#5-expression-language)
+6. [Control Flow](#6-control-flow)
+7. [Channels and Parallelism](#7-channels-and-parallelism)
+8. [Actions](#8-actions)
+9. [Flows](#9-flows)
+10. [GOAP Integration](#10-goap-integration)
+11. [Events](#11-events)
+12. [Context and Variables](#12-context-and-variables)
+13. [Error Handling](#13-error-handling)
+14. [Runtime Architecture](#14-runtime-architecture)
+15. [Examples](#15-examples)
+- [Appendix A: Bannou Implementation Requirements](#appendix-a-bannou-implementation-requirements)
+- [Appendix B: Grammar Summary](#appendix-b-grammar-summary)
+- [Appendix C: Potential Improvements](#appendix-c-potential-improvements)
 
 ---
 
@@ -112,9 +116,135 @@ The `type` field is a hint to runtimes and tooling. The actual structure (flows 
 
 ---
 
-## 3. Type System
+## 3. Document Composition
 
-### 3.1 Primitive Types
+ABML documents can import and reference other documents, enabling modular behavior libraries and code reuse.
+
+### 3.1 Document Imports
+
+```yaml
+imports:
+  # Schema imports - type validation only
+  - schema: "economy-api.yaml"
+    types: [ShopStatus, OrderDetails]
+
+  # Document imports - reusable flows
+  - file: "common/utilities.yml"
+    as: utils
+
+  - file: "./sibling.yml"
+    as: sibling
+
+  - file: "../shared/helpers.yml"
+    as: helpers
+```
+
+**Import Types**:
+
+| Type | Purpose | Syntax |
+|------|---------|--------|
+| Schema | Type validation from OpenAPI | `schema: "file.yaml"` with `types: [...]` |
+| Document | Reusable flows from another ABML file | `file: "path.yml"` with `as: alias` |
+
+### 3.2 Namespaced Flow References
+
+Imported flows are accessed via their alias:
+
+```yaml
+imports:
+  - file: "common/combat.yml"
+    as: combat
+
+flows:
+  engage_enemy:
+    actions:
+      # Call an imported flow
+      - call: { flow: combat.attack_sequence }
+
+      # Goto an imported flow
+      - goto: { flow: combat.retreat }
+```
+
+### 3.3 Relative Path Resolution
+
+Import paths support relative resolution:
+
+| Path | Resolution |
+|------|------------|
+| `utilities.yml` | Same directory as importing document |
+| `./sibling.yml` | Explicit same directory |
+| `../shared/file.yml` | Parent directory, then into `shared/` |
+| `subdir/nested.yml` | Subdirectory relative to importing document |
+
+### 3.4 Context-Relative Flow Resolution
+
+When executing a flow from an imported document, flow references resolve relative to **that document's imports**, not the root document:
+
+```yaml
+# main.yml
+imports:
+  - file: "libs/ai.yml"
+    as: ai
+
+flows:
+  start:
+    - call: { flow: ai.process }  # Calls ai.yml's process flow
+```
+
+```yaml
+# libs/ai.yml
+imports:
+  - file: "./helpers.yml"       # Relative to libs/
+    as: helpers
+
+flows:
+  process:
+    actions:
+      - call: { flow: helpers.validate }  # Resolves to libs/helpers.yml
+```
+
+This enables truly modular libraries - imported documents don't need to know about the root document's structure.
+
+### 3.5 Circular Import Detection
+
+The document loader detects and rejects circular imports:
+
+```yaml
+# a.yml imports b.yml
+# b.yml imports a.yml
+# → CircularImportException at load time
+```
+
+### 3.6 Schema-Only Imports
+
+Imports with only `schema:` (no `file:`) are used for type validation and are skipped during document loading:
+
+```yaml
+imports:
+  # This import is for type validation only - no document loaded
+  - schema: "character-api.yaml"
+    types: [EmoteType, AnimationState]
+```
+
+### 3.7 Variable Scope Across Imports
+
+When calling imported flows, variables follow standard scoping rules:
+
+- **Existing variables propagate**: If the caller has a variable `x`, and the called flow modifies `x`, the change is visible to the caller
+- **New variables stay local**: If the called flow creates a new variable `y`, it's not visible after the call returns
+
+```yaml
+# Caller sets 'mode' before calling
+- set: { variable: mode, value: "aggressive" }
+- call: { flow: ai.combat }
+# If ai.combat modifies 'mode', the change persists here
+```
+
+---
+
+## 4. Type System
+
+### 4.1 Primitive Types
 
 | Type | Description | Literal Examples |
 |------|-------------|------------------|
@@ -125,7 +255,7 @@ The `type` field is a hint to runtimes and tooling. The actual structure (flows 
 | `null` | Null value | `null` |
 | `duration` | Time duration | `1s`, `500ms`, `2.5m` |
 
-### 3.2 Collection Types
+### 4.2 Collection Types
 
 ```yaml
 # List type
@@ -137,7 +267,7 @@ inventory:
   type: map<string, int>
 ```
 
-### 3.3 Schema Imports
+### 4.3 Schema Imports
 
 Types can be imported from OpenAPI schemas:
 
@@ -151,7 +281,7 @@ imports:
 
 Imported types are validated against the schema at compile time.
 
-### 3.4 Inline Type Definitions
+### 4.4 Inline Type Definitions
 
 ```yaml
 context:
@@ -167,7 +297,7 @@ context:
         paused: bool
 ```
 
-### 3.5 Dynamic Types
+### 4.5 Dynamic Types
 
 When flexibility is needed:
 
@@ -181,7 +311,7 @@ context:
       type: ExtensionData          # Alias for map<string, any>
 ```
 
-### 3.6 Null Safety
+### 4.6 Null Safety
 
 ABML supports null propagation operators:
 
@@ -203,9 +333,9 @@ greeting: "${npc?.relationship[player.id]?.title ?? 'stranger'}"
 
 ---
 
-## 4. Expression Language
+## 5. Expression Language
 
-### 4.1 Expression Syntax
+### 5.1 Expression Syntax
 
 Expressions are enclosed in `${}` and support:
 
@@ -249,7 +379,7 @@ Expressions are enclosed in `${}` and support:
 "${obj?.property}"
 ```
 
-### 4.2 Built-in Functions
+### 5.2 Built-in Functions
 
 ```yaml
 # Collection functions
@@ -288,7 +418,7 @@ Expressions are enclosed in `${}` and support:
 "${is_empty(collection)}"
 ```
 
-### 4.3 Template Syntax (Text Interpolation)
+### 5.3 Template Syntax (Text Interpolation)
 
 For text output (dialogue, messages), use Liquid-style `{{}}` syntax:
 
@@ -306,7 +436,7 @@ narrate:
 
 Template filters: `capitalize`, `upcase`, `downcase`, `truncate`, `strip`, `default`, `date`
 
-### 4.4 Expression vs Template
+### 5.4 Expression vs Template
 
 | Context | Syntax | Use |
 |---------|--------|-----|
@@ -324,9 +454,9 @@ Template filters: `capitalize`, `upcase`, `downcase`, `truncate`, `strip`, `defa
 
 ---
 
-## 5. Control Flow
+## 6. Control Flow
 
-### 5.1 Sequences
+### 6.1 Sequences
 
 Actions execute in order by default:
 
@@ -337,7 +467,7 @@ actions:
   - action_three: { ... }
 ```
 
-### 5.2 Conditionals
+### 6.2 Conditionals
 
 ```yaml
 - cond:
@@ -353,7 +483,7 @@ actions:
 
 Multiple `when` clauses are evaluated in order; first match executes.
 
-### 5.3 Loops
+### 6.3 Loops
 
 ```yaml
 # Iterate over collection
@@ -370,7 +500,7 @@ Multiple `when` clauses are evaluated in order; first match executes.
       - attempt_action: { ... }
 ```
 
-### 5.4 Flow Control
+### 6.4 Flow Control
 
 ```yaml
 # Jump to another flow
@@ -396,9 +526,9 @@ Multiple `when` clauses are evaluated in order; first match executes.
 
 ---
 
-## 6. Channels and Parallelism
+## 7. Channels and Parallelism
 
-### 6.1 Channel Definition
+### 7.1 Channel Definition
 
 Channels are named sequences that execute in parallel:
 
@@ -420,7 +550,7 @@ channels:
     - crossfade: { to: dramatic_theme }
 ```
 
-### 6.2 Sync Points
+### 7.2 Sync Points
 
 **Emit**: Declare a named sync point
 
@@ -455,7 +585,7 @@ channels:
     on_timeout: handle_timeout_channel
 ```
 
-### 6.3 Cooperative Scheduling
+### 7.3 Cooperative Scheduling
 
 Channels execute cooperatively on a single thread with deterministic interleaving:
 
@@ -467,7 +597,7 @@ Tick 4:  camera[3] -> effects[3]                  (actors still waiting)
 Tick 5:  camera[EMIT] -> actors[2] -> effects[4]  (actors wake)
 ```
 
-### 6.4 Deadlock Detection
+### 7.4 Deadlock Detection
 
 The scheduler detects when all active channels are waiting for signals that will never arrive:
 
@@ -480,14 +610,14 @@ channels:
     - wait_for: @a.signal  # B waits for A
 ```
 
-### 6.5 Channel Scope Isolation
+### 7.5 Channel Scope Isolation
 
 Each channel has its own scope (child of document scope). Channels can:
 - Read from document scope
 - Write locally without affecting other channels
 - Communicate via sync points, not shared variables
 
-### 6.6 Branching Between Channels
+### 7.6 Branching Between Channels
 
 ```yaml
 channels:
@@ -514,9 +644,9 @@ channels:
 
 ---
 
-## 7. Actions
+## 8. Actions
 
-### 7.1 Action Syntax
+### 8.1 Action Syntax
 
 ```yaml
 # Simple action
@@ -539,7 +669,7 @@ channels:
     await: completion
 ```
 
-### 7.2 Control Actions (Built-in)
+### 8.2 Control Actions (Built-in)
 
 | Action | Purpose |
 |--------|---------|
@@ -556,7 +686,7 @@ channels:
 | `parallel` | Inline parallel block |
 | `log` | Debug logging |
 
-### 7.3 Variable Actions
+### 8.3 Variable Actions
 
 ```yaml
 # Set variable
@@ -572,7 +702,7 @@ channels:
 - clear: { variable: temp_data }
 ```
 
-### 7.4 Domain Actions (Handler-Provided)
+### 8.4 Domain Actions (Handler-Provided)
 
 These are interpreted by the runtime handler:
 
@@ -633,7 +763,7 @@ These are interpreted by the runtime handler:
       - handle_purchase_error
 ```
 
-### 7.5 Handler Contract
+### 8.5 Handler Contract
 
 Actions follow this contract with handlers:
 
@@ -646,9 +776,9 @@ The handler decides HOW to execute (events, RPC, direct calls). ABML only expres
 
 ---
 
-## 8. Flows
+## 9. Flows
 
-### 8.1 Flow Definition
+### 9.1 Flow Definition
 
 Flows are named, triggerable action sequences:
 
@@ -675,7 +805,7 @@ flows:
               - goto: { flow: "merchant_work" }
 ```
 
-### 8.2 Flow-Level Error Handling
+### 9.2 Flow-Level Error Handling
 
 ```yaml
 flows:
@@ -689,7 +819,7 @@ flows:
       - next_action: { ... }  # Continues if _error_handled is true
 ```
 
-### 8.3 Triggers
+### 9.3 Triggers
 
 ```yaml
 triggers:
@@ -711,14 +841,14 @@ triggers:
 
 ---
 
-## 9. GOAP Integration
+## 10. GOAP Integration
 
 GOAP (Goal-Oriented Action Planning) metadata are **optional annotations** on ABML flows. This allows:
 - Same ABML documents to work without GOAP (cutscenes, dialogues)
 - GOAP-aware systems to extract planning metadata
 - Single source of truth for behaviors and their GOAP properties
 
-### 9.1 Goal Definitions
+### 10.1 Goal Definitions
 
 ```yaml
 goals:
@@ -733,7 +863,7 @@ goals:
       gold: ">= ${npc.daily_target}"
 ```
 
-### 9.2 GOAP Annotations on Flows
+### 10.2 GOAP Annotations on Flows
 
 ```yaml
 flows:
@@ -754,7 +884,7 @@ flows:
       - consume: { item: meal }
 ```
 
-### 9.3 GOAP Condition Syntax
+### 10.3 GOAP Condition Syntax
 
 ```
 condition := operator value
@@ -768,7 +898,7 @@ Examples:
 "!= 'idle'" -> Not equals "idle"
 ```
 
-### 9.4 Effect Syntax
+### 10.4 Effect Syntax
 
 ```
 effect := value | delta
@@ -781,7 +911,7 @@ Examples:
 "tavern"    -> Set to "tavern" (string)
 ```
 
-### 9.5 GOAP is External
+### 10.5 GOAP is External
 
 ABML only stores GOAP metadata. Actual planning (A* search, plan generation) happens in an external service:
 
@@ -791,9 +921,9 @@ ABML only stores GOAP metadata. Actual planning (A* search, plan generation) hap
 
 ---
 
-## 10. Events
+## 11. Events
 
-### 10.1 Event Subscriptions
+### 11.1 Event Subscriptions
 
 ```yaml
 events:
@@ -808,7 +938,7 @@ events:
     condition: "${event.target == npc.id}"
 ```
 
-### 10.2 Event Publishing
+### 11.2 Event Publishing
 
 ```yaml
 # Reference a typed event (preferred)
@@ -828,9 +958,9 @@ events:
 
 ---
 
-## 11. Context and Variables
+## 12. Context and Variables
 
-### 11.1 Context Definition
+### 12.1 Context Definition
 
 ```yaml
 context:
@@ -861,7 +991,7 @@ context:
       required: false
 ```
 
-### 11.2 Variable Scopes
+### 12.2 Variable Scopes
 
 | Scope | Lifetime | Access |
 |-------|----------|--------|
@@ -870,7 +1000,7 @@ context:
 | `entity` | Entity lifetime | `${entity.property}` |
 | `world` | Persistent world state | `${world.property}` |
 
-### 11.3 Scope Behavior
+### 12.3 Scope Behavior
 
 | Operation | Behavior |
 |-----------|----------|
@@ -879,7 +1009,7 @@ context:
 | `SetGlobalValue` | Always write to root scope |
 | `GetValue` | Search up chain, return first match or null |
 
-### 11.4 Loop Variable Isolation
+### 12.4 Loop Variable Isolation
 
 Loop variables use local scope to prevent clobbering:
 
@@ -896,9 +1026,9 @@ Loop variables use local scope to prevent clobbering:
 
 ---
 
-## 12. Error Handling
+## 13. Error Handling
 
-### 12.1 Three-Level Error Chain
+### 13.1 Three-Level Error Chain
 
 Errors are handled through a hierarchical chain:
 
@@ -906,7 +1036,7 @@ Errors are handled through a hierarchical chain:
 Action-level on_error -> Flow-level on_error -> Document-level on_error
 ```
 
-### 12.2 Error Handler Syntax
+### 13.2 Error Handler Syntax
 
 ```yaml
 version: "2.0"
@@ -936,7 +1066,7 @@ flows:
       - log: { message: "Fatal: ${_error.message}", level: error }
 ```
 
-### 12.3 The `_error_handled` Pattern
+### 13.3 The `_error_handled` Pattern
 
 By default, error handling **stops** flow execution. To continue (try/catch semantics), explicitly set `_error_handled = true`:
 
@@ -966,7 +1096,7 @@ flows:
       - set: { variable: _error_handled, value: "${true}" }  # Continue!
 ```
 
-### 12.4 Error Context Variable
+### 13.4 Error Context Variable
 
 When an error occurs, `_error` is set with error details:
 
@@ -978,9 +1108,9 @@ on_error:
 
 ---
 
-## 13. Runtime Architecture
+## 14. Runtime Architecture
 
-### 13.1 Execution Model
+### 14.1 Execution Model
 
 ABML uses a hybrid execution model:
 
@@ -992,7 +1122,7 @@ This optimizes for:
 - Hot reload capability (re-parse YAML, rebuild AST)
 - Debuggability (step through nodes)
 
-### 13.2 Register-Based VM
+### 14.2 Register-Based VM
 
 The expression VM uses a register-based architecture for efficient null-safety handling:
 
@@ -1017,7 +1147,7 @@ Bytecode:
 - Value reuse without DUP/SWAP gymnastics
 - Debuggable state (named registers vs anonymous stack)
 
-### 13.3 Instruction Set Summary
+### 14.3 Instruction Set Summary
 
 | Category | OpCodes |
 |----------|---------|
@@ -1032,7 +1162,7 @@ Bytecode:
 | String | `In`, `Concat` |
 | Result | `Return` |
 
-### 13.4 Compiled Expression Structure
+### 14.4 Compiled Expression Structure
 
 ```csharp
 public sealed class CompiledExpression
@@ -1044,7 +1174,7 @@ public sealed class CompiledExpression
 }
 ```
 
-### 13.5 File Structure
+### 14.5 File Structure
 
 ```
 bannou-service/Abml/
@@ -1060,8 +1190,10 @@ bannou-service/Abml/
 │
 ├── Parser/
 │   ├── ExpressionParser.cs
+│   ├── ExpressionLexer.cs
 │   ├── DocumentParser.cs
-│   └── ExpressionLexer.cs
+│   ├── DocumentLoader.cs         # Import resolution and composition
+│   └── IDocumentResolver.cs      # Resolution interface + FileSystemDocumentResolver
 │
 ├── Documents/
 │   ├── AbmlDocument.cs
@@ -1095,9 +1227,9 @@ bannou-service/Abml/
 
 ---
 
-## 14. Examples
+## 15. Examples
 
-### 14.1 NPC Behavior
+### 15.1 NPC Behavior
 
 ```yaml
 version: "2.0"
@@ -1167,7 +1299,7 @@ flows:
               - idle: { animation: tend_forge, duration: 30s }
 ```
 
-### 14.2 Dialogue
+### 15.2 Dialogue
 
 ```yaml
 version: "2.0"
@@ -1243,7 +1375,7 @@ flows:
               - goto: { flow: start_haggle }
 ```
 
-### 14.3 Cutscene with QTE
+### 15.3 Cutscene with QTE
 
 ```yaml
 version: "2.0"
@@ -1344,7 +1476,7 @@ channels:
           hero_hp: "${hero.current_hp}"
 ```
 
-### 14.4 Complete Behavior with All Features
+### 15.4 Complete Behavior with All Features
 
 ```yaml
 version: "2.0"
@@ -1524,6 +1656,60 @@ EFFECT        := VALUE | DELTA     # e.g., "0.5", "-0.3", "+10"
 OPERATOR      := ">" | ">=" | "<" | "<=" | "==" | "!="
 DELTA         := ("+" | "-") NUMBER
 ```
+
+---
+
+## Appendix C: Potential Improvements
+
+This section documents known limitations and potential enhancements that could be implemented if needed.
+
+### C.1 Context Variable Initialization for Imported Documents
+
+**Current Behavior**: Context variables (defined in the `context:` section) are only initialized from the root document. When calling flows from imported documents, those documents' context variables are not automatically initialized.
+
+**Why This Is**: The current design prioritizes explicit parameter passing over implicit initialization. When you call an imported flow, it receives the caller's scope - any variables you set before the call are visible to the called flow. This is simple and predictable.
+
+**What Would Be Needed to Change This**:
+
+In `CallHandler.ExecuteAsync`, after switching `CurrentDocument`, initialize the imported document's context variables:
+
+```csharp
+// After: context.CurrentDocument = resolvedDocument;
+
+if (resolvedDocument.Document.Context?.Variables != null)
+{
+    foreach (var (name, definition) in resolvedDocument.Document.Context.Variables)
+    {
+        // Only initialize if NOT already in parent scope (preserve passed parameters)
+        if (!callScope.TryGetValue(name, out _) && definition.Default != null)
+        {
+            callScope.SetValue(name, definition.Default);
+        }
+    }
+}
+```
+
+This is approximately 10-15 lines of code with no architectural changes required.
+
+**Design Decisions Required**:
+
+| Question | Recommended Answer |
+|----------|-------------------|
+| Name collision (caller passed same variable name)? | Preserve caller's value |
+| When to initialize? | Every call (predictable, isolated) |
+| `source:` expressions? | Skip for now or evaluate lazily |
+
+**Why It Hasn't Been Done**:
+
+1. **Semantic ambiguity**: It's not immediately obvious what should happen with name collisions
+2. **Explicit alternative exists**: You can set variables before calling:
+   ```yaml
+   - set: { variable: config_mode, value: "advanced" }
+   - call: { flow: utils.setup }
+   ```
+3. **Use case unclear**: Most imported documents are utility libraries with pure functions that don't need their own default state
+
+**Implementation Status**: This can be added at any time if a legitimate use case emerges. The infrastructure supports it; it's simply a matter of policy.
 
 ---
 

@@ -2,7 +2,7 @@
 
 > **Status**: PARTIALLY IMPLEMENTED (ABML Runtime complete, GOAP in progress)
 > **Created**: 2024-12-28
-> **Updated**: 2025-12-29
+> **Updated**: 2025-12-29 (Document composition and imports complete)
 > **Related Documents**:
 > - **[ABML Guide](../guides/ABML.md)** - **ABML Language Specification & Runtime** (authoritative)
 > - [ABML_LOCAL_RUNTIME.md](./UPCOMING_-_ABML_LOCAL_RUNTIME.md) - Local client execution & bytecode compilation
@@ -1871,7 +1871,7 @@ components:
 
 **Goal**: Support parallel execution with sync points.
 
-**Status**: COMPLETE - Included in Phase 1 implementation. See [ABML Guide Section 6](../guides/ABML.md#6-channels-and-parallelism).
+**Status**: COMPLETE - Included in Phase 1 implementation. See [ABML Guide Section 7](../guides/ABML.md#7-channels-and-parallelism) and [Section 3: Document Composition](../guides/ABML.md#3-document-composition).
 
 - [x] Channel Executor
   - [x] Cooperative round-robin scheduling
@@ -1892,8 +1892,13 @@ components:
   - [x] Context passing (ExecutionContext.TryResolveFlow, namespaced flow references)
   - [x] Context-relative resolution (imported documents resolve flows relative to their own imports)
   - [x] FileSystemDocumentResolver for production use with path traversal protection
+  - [x] Relative path resolution (`./sibling.yml`, `../parent/file.yml`)
+  - [x] Goto to imported flow (direct and from nested calls)
+  - [x] Variable scope isolation across imports
+  - [x] Schema-only imports (skipped during document loading)
+  - [x] Circular import detection
 
-**Tests**: 15+ multi-channel tests covering sync points, barriers, and deadlock detection; 21 document loader tests covering import resolution, circular detection, namespaced flow execution, context-relative resolution, goto across imports, and file system loading.
+**Tests**: 15+ multi-channel tests covering sync points, barriers, and deadlock detection; 31 document loader tests covering import resolution, circular detection, namespaced flow execution, context-relative resolution, goto across imports, relative paths, variable scope isolation, and file system loading.
 
 ### Phase 4: Cognition Pipeline
 

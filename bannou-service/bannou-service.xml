@@ -387,6 +387,65 @@
         <member name="M:BeyondImmersion.BannouService.Abml.Compiler.ConstantPool.Clear">
             <summary>Clears the pool.</summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Compiler.DocumentMerger">
+            <summary>
+            Merges a LoadedDocument tree into a single flat AbmlDocument.
+            All imported flows are renamed with their namespace prefix.
+            This enables bytecode compilation to produce a single self-contained model.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.DocumentMerger.Merge(BeyondImmersion.BannouService.Abml.Parser.LoadedDocument)">
+            <summary>
+            Merges a LoadedDocument tree into a single flat AbmlDocument.
+            </summary>
+            <param name="loaded">The loaded document with resolved imports.</param>
+            <returns>A merged document with all flows flattened and renamed.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.DocumentMerger.MergeImports(BeyondImmersion.BannouService.Abml.Parser.LoadedDocument,System.String,System.Collections.Generic.Dictionary{System.String,BeyondImmersion.BannouService.Abml.Documents.Flow},System.Collections.Generic.Dictionary{System.String,BeyondImmersion.BannouService.Abml.Documents.GoapGoalDefinition})">
+            <summary>
+            Recursively merges imports into the flat flow dictionary.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.DocumentMerger.RewriteFlow(BeyondImmersion.BannouService.Abml.Documents.Flow,BeyondImmersion.BannouService.Abml.Parser.LoadedDocument,System.String)">
+            <summary>
+            Rewrites a flow to use fully-qualified flow references.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.DocumentMerger.RewriteActions(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode},BeyondImmersion.BannouService.Abml.Parser.LoadedDocument,System.String)">
+            <summary>
+            Rewrites a list of actions to use fully-qualified flow references.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.DocumentMerger.RewriteAction(BeyondImmersion.BannouService.Abml.Documents.Actions.ActionNode,BeyondImmersion.BannouService.Abml.Parser.LoadedDocument,System.String)">
+            <summary>
+            Rewrites a single action to use fully-qualified flow references.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.DocumentMerger.ResolveFlowReference(System.String,BeyondImmersion.BannouService.Abml.Parser.LoadedDocument,System.String)">
+            <summary>
+            Resolves a flow reference to its fully-qualified name in the merged document.
+            </summary>
+            <param name="flowRef">The flow reference (e.g., "my_flow" or "lib.helper").</param>
+            <param name="context">The document context for resolution.</param>
+            <param name="currentPrefix">The current namespace prefix.</param>
+            <returns>The fully-qualified flow name.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.DocumentMerger.FindImportPath(BeyondImmersion.BannouService.Abml.Parser.LoadedDocument,BeyondImmersion.BannouService.Abml.Parser.LoadedDocument,System.Collections.Generic.HashSet{BeyondImmersion.BannouService.Abml.Parser.LoadedDocument})">
+            <summary>
+            Finds the import path from source to target document.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.DocumentMerger.MergeContexts(BeyondImmersion.BannouService.Abml.Parser.LoadedDocument)">
+            <summary>
+            Merges context definitions from all documents.
+            Variables are prefixed with their namespace to avoid collisions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.DocumentMerger.MergeImportedContexts(BeyondImmersion.BannouService.Abml.Parser.LoadedDocument,System.String,System.Collections.Generic.Dictionary{System.String,BeyondImmersion.BannouService.Abml.Documents.VariableDefinition},System.Collections.Generic.Dictionary{System.String,System.Object},System.Collections.Generic.List{BeyondImmersion.BannouService.Abml.Documents.ServiceDependency})">
+            <summary>
+            Recursively merges imported document contexts.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Compiler.ExpressionCompiler">
             <summary>
             Compiles ABML expression AST into bytecode.
