@@ -510,6 +510,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
         gameType:
           type: string
           enum: [arcadia, generic]
@@ -586,6 +587,7 @@ components:
           type: boolean
         sessionId:
           type: string
+          format: uuid
         playerRole:
           type: string
           enum: [player, spectator, moderator]

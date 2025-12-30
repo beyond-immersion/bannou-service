@@ -745,6 +745,7 @@ components:
           format: uuid
         sessionId:
           type: string
+          format: uuid
           description: Session identifier for WebSocket connections and service routing
         roles:
           type: array
@@ -788,6 +789,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
         deviceInfo:
           $ref: '#/components/schemas/DeviceInfo'
         createdAt:

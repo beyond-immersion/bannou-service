@@ -69,6 +69,7 @@ components:
           description: Fixed event type identifier
         sessionId:
           type: string
+          format: uuid
           description: Session ID this manifest applies to
         availableApis:
           type: array
@@ -208,6 +209,7 @@ components:
           description: Fixed event type identifier (internal, not forwarded to client)
         sessionId:
           type: string
+          format: uuid
           description: Session ID these capabilities apply to
         permissions:
           type: object
@@ -291,6 +293,7 @@ components:
           description: Fixed event type identifier.
         sessionId:
           type: string
+          format: uuid
           description: Target session for this shortcut.
         shortcut:
           $ref: '#/components/schemas/SessionShortcut'
@@ -323,6 +326,7 @@ components:
           description: Fixed event type identifier.
         sessionId:
           type: string
+          format: uuid
           description: Target session for revocation.
         routeGuid:
           type: string

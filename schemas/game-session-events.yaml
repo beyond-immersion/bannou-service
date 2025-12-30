@@ -48,7 +48,7 @@ info:
 x-lifecycle:
   GameSession:
     model:
-      sessionId: { type: string, primary: true, required: true }
+      sessionId: { type: string, format: uuid, primary: true, required: true }
       gameType: { type: string, required: true }
       sessionName: { type: string }
       status: { type: string, required: true }
@@ -79,6 +79,7 @@ components:
       properties:
         eventId:
           type: string
+          format: uuid
           description: Unique identifier for this event
         timestamp:
           type: string
@@ -86,9 +87,11 @@ components:
           description: When the player joined
         sessionId:
           type: string
+          format: uuid
           description: ID of the game session
         accountId:
           type: string
+          format: uuid
           description: ID of the account that joined
 
     GameSessionPlayerLeftEvent:
@@ -102,6 +105,7 @@ components:
       properties:
         eventId:
           type: string
+          format: uuid
           description: Unique identifier for this event
         timestamp:
           type: string
@@ -109,9 +113,11 @@ components:
           description: When the player left
         sessionId:
           type: string
+          format: uuid
           description: ID of the game session
         accountId:
           type: string
+          format: uuid
           description: ID of the account that left
         kicked:
           type: boolean
