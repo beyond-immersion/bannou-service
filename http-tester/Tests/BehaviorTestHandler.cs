@@ -115,11 +115,11 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             var request = new CompileBehaviorRequest
             {
-                Abml_content = ValidAbmlYaml,
-                Compilation_options = new CompilationOptions
+                AbmlContent = ValidAbmlYaml,
+                CompilationOptions = new CompilationOptions
                 {
-                    Enable_optimizations = true,
-                    Cache_compiled_result = false // Don't cache for test
+                    EnableOptimizations = true,
+                    CacheCompiledResult = false // Don't cache for test
                 }
             };
 
@@ -133,14 +133,14 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 return TestResult.Failed($"Compilation failed: {warnings}");
             }
 
-            if (string.IsNullOrEmpty(response.Behavior_id))
+            if (string.IsNullOrEmpty(response.BehaviorId))
                 return TestResult.Failed("Behavior ID is empty");
 
-            if (response.Compilation_time_ms < 0)
+            if (response.CompilationTimeMs < 0)
                 return TestResult.Failed("Invalid compilation time");
 
             return TestResult.Successful(
-                $"Compiled successfully: ID={response.Behavior_id}, Time={response.Compilation_time_ms}ms");
+                $"Compiled successfully: ID={response.BehaviorId}, Time={response.CompilationTimeMs}ms");
         }, "Compile valid ABML");
 
     private static Task<TestResult> TestCompileInvalidAbml(ITestClient client, string[] args) =>
@@ -150,11 +150,11 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             var request = new CompileBehaviorRequest
             {
-                Abml_content = InvalidAbmlYaml,
-                Compilation_options = new CompilationOptions
+                AbmlContent = InvalidAbmlYaml,
+                CompilationOptions = new CompilationOptions
                 {
-                    Enable_optimizations = false,
-                    Cache_compiled_result = false
+                    EnableOptimizations = false,
+                    CacheCompiledResult = false
                 }
             };
 
@@ -186,10 +186,10 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             var request = new CompileBehaviorRequest
             {
-                Abml_content = "",
-                Compilation_options = new CompilationOptions
+                AbmlContent = "",
+                CompilationOptions = new CompilationOptions
                 {
-                    Cache_compiled_result = false
+                    CacheCompiledResult = false
                 }
             };
 
@@ -215,21 +215,21 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             var request = new ValidateAbmlRequest
             {
-                Abml_content = ValidAbmlYaml,
-                Strict_mode = true
+                AbmlContent = ValidAbmlYaml,
+                StrictMode = true
             };
 
             var response = await behaviorClient.ValidateAbmlAsync(BannouJson.Serialize(request));
 
-            if (!response.Is_valid)
+            if (!response.IsValid)
             {
-                var errors = response.Validation_errors != null
-                    ? string.Join(", ", response.Validation_errors.Select(e => e.Message))
+                var errors = response.ValidationErrors != null
+                    ? string.Join(", ", response.ValidationErrors.Select(e => e.Message))
                     : "no errors provided";
                 return TestResult.Failed($"Validation failed unexpectedly: {errors}");
             }
 
-            return TestResult.Successful($"Validation passed, schema version: {response.Schema_version}");
+            return TestResult.Successful($"Validation passed, schema version: {response.SchemaVersion}");
         }, "Validate valid ABML");
 
     private static Task<TestResult> TestValidateInvalidAbml(ITestClient client, string[] args) =>
@@ -239,21 +239,21 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             var request = new ValidateAbmlRequest
             {
-                Abml_content = InvalidAbmlYaml,
-                Strict_mode = true
+                AbmlContent = InvalidAbmlYaml,
+                StrictMode = true
             };
 
             var response = await behaviorClient.ValidateAbmlAsync(BannouJson.Serialize(request));
 
-            if (response.Is_valid)
+            if (response.IsValid)
                 return TestResult.Failed("Expected validation to fail for invalid ABML");
 
-            if (response.Validation_errors == null || !response.Validation_errors.Any())
+            if (response.ValidationErrors == null || !response.ValidationErrors.Any())
                 return TestResult.Failed("Expected validation errors to be returned");
 
-            var errorMessages = response.Validation_errors.Select(e => e.Message);
+            var errorMessages = response.ValidationErrors.Select(e => e.Message);
             return TestResult.Successful(
-                $"Correctly detected {response.Validation_errors.Count} error(s): {string.Join(", ", errorMessages)}");
+                $"Correctly detected {response.ValidationErrors.Count} error(s): {string.Join(", ", errorMessages)}");
         }, "Validate invalid ABML");
 
     private static Task<TestResult> TestCompileWithBundleId(ITestClient client, string[] args) =>
@@ -263,13 +263,13 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             var request = new CompileBehaviorRequest
             {
-                Abml_content = ValidAbmlYaml,
-                Behavior_name = "test-bundle-behavior",
-                Bundle_id = "test-bundle-group",
-                Compilation_options = new CompilationOptions
+                AbmlContent = ValidAbmlYaml,
+                BehaviorName = "test-bundle-behavior",
+                BundleId = "test-bundle-group",
+                CompilationOptions = new CompilationOptions
                 {
-                    Enable_optimizations = true,
-                    Cache_compiled_result = true // Cache to test asset storage
+                    EnableOptimizations = true,
+                    CacheCompiledResult = true // Cache to test asset storage
                 }
             };
 
@@ -283,21 +283,21 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 return TestResult.Failed($"Compilation failed: {warnings}");
             }
 
-            if (string.IsNullOrEmpty(response.Behavior_id))
+            if (string.IsNullOrEmpty(response.BehaviorId))
                 return TestResult.Failed("Behavior ID is empty");
 
-            if (response.Behavior_name != "test-bundle-behavior")
-                return TestResult.Failed($"Expected behavior_name 'test-bundle-behavior', got '{response.Behavior_name}'");
+            if (response.BehaviorName != "test-bundle-behavior")
+                return TestResult.Failed($"Expected behavior_name 'test-bundle-behavior', got '{response.BehaviorName}'");
 
-            if (response.Bundle_id != "test-bundle-group")
-                return TestResult.Failed($"Expected bundle_id 'test-bundle-group', got '{response.Bundle_id}'");
+            if (response.BundleId != "test-bundle-group")
+                return TestResult.Failed($"Expected bundle_id 'test-bundle-group', got '{response.BundleId}'");
 
             // Asset ID should be set when caching is enabled
-            if (string.IsNullOrEmpty(response.Asset_id))
+            if (string.IsNullOrEmpty(response.AssetId))
                 return TestResult.Failed("Asset ID should be set when caching is enabled");
 
             return TestResult.Successful(
-                $"Compiled with bundle: ID={response.Behavior_id}, Bundle={response.Bundle_id}, Asset={response.Asset_id}");
+                $"Compiled with bundle: ID={response.BehaviorId}, Bundle={response.BundleId}, Asset={response.AssetId}");
         }, "Compile with bundle ID");
 
     private static Task<TestResult> TestCompileWithNameAndCategory(ITestClient client, string[] args) =>
@@ -307,13 +307,13 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             var request = new CompileBehaviorRequest
             {
-                Abml_content = ValidAbmlYaml,
-                Behavior_name = "blacksmith-daily-routine",
-                Behavior_category = CompileBehaviorRequestBehavior_category.Professional,
-                Compilation_options = new CompilationOptions
+                AbmlContent = ValidAbmlYaml,
+                BehaviorName = "blacksmith-daily-routine",
+                BehaviorCategory = CompileBehaviorRequestBehaviorCategory.Professional,
+                CompilationOptions = new CompilationOptions
                 {
-                    Enable_optimizations = true,
-                    Cache_compiled_result = false
+                    EnableOptimizations = true,
+                    CacheCompiledResult = false
                 }
             };
 
@@ -327,11 +327,11 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 return TestResult.Failed($"Compilation failed: {warnings}");
             }
 
-            if (response.Behavior_name != "blacksmith-daily-routine")
-                return TestResult.Failed($"Expected behavior_name 'blacksmith-daily-routine', got '{response.Behavior_name}'");
+            if (response.BehaviorName != "blacksmith-daily-routine")
+                return TestResult.Failed($"Expected behavior_name 'blacksmith-daily-routine', got '{response.BehaviorName}'");
 
             return TestResult.Successful(
-                $"Compiled with name/category: Name={response.Behavior_name}, ID={response.Behavior_id}");
+                $"Compiled with name/category: Name={response.BehaviorName}, ID={response.BehaviorId}");
         }, "Compile with name and category");
 
     private static Task<TestResult> TestGetNonExistentBehavior(ITestClient client, string[] args) =>
@@ -363,12 +363,12 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             // First compile the GOAP-enabled ABML to cache the metadata
             var compileRequest = new CompileBehaviorRequest
             {
-                Abml_content = GoapAbmlYaml,
-                Behavior_name = "goap-integration-test",
-                Compilation_options = new CompilationOptions
+                AbmlContent = GoapAbmlYaml,
+                BehaviorName = "goap-integration-test",
+                CompilationOptions = new CompilationOptions
                 {
-                    Enable_optimizations = true,
-                    Cache_compiled_result = true // Must cache for GOAP metadata to be stored
+                    EnableOptimizations = true,
+                    CacheCompiledResult = true // Must cache for GOAP metadata to be stored
                 }
             };
 
@@ -381,31 +381,31 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 return TestResult.Failed($"Failed to compile GOAP behavior: {warnings}");
             }
 
-            var behaviorId = compileResponse.Behavior_id;
+            var behaviorId = compileResponse.BehaviorId;
             if (string.IsNullOrEmpty(behaviorId))
                 return TestResult.Failed("Behavior ID is empty after compilation");
 
             // Now generate a GOAP plan using the cached behavior
             var planRequest = new GoapPlanRequest
             {
-                Agent_id = "test-agent-1",
-                Behavior_id = behaviorId,
+                AgentId = "test-agent-1",
+                BehaviorId = behaviorId,
                 Goal = new GoapGoal
                 {
                     Name = "find_food",
                     Priority = 80,
                     Conditions = new Dictionary<string, string> { { "has_food", "==true" } }
                 },
-                World_state = new Dictionary<string, object>
+                WorldState = new Dictionary<string, object>
                 {
                     { "energy", 50 },
                     { "has_food", false }
                 },
                 Options = new GoapPlanningOptions
                 {
-                    Max_depth = 10,
-                    Max_nodes = 1000,
-                    Timeout_ms = 100
+                    MaxDepth = 10,
+                    MaxNodes = 1000,
+                    TimeoutMs = 100
                 }
             };
 
@@ -415,11 +415,11 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             {
                 // The plan might not be found if the goal isn't achievable - that's still valid
                 // We mainly want to verify the endpoint works
-                if (string.IsNullOrEmpty(planResponse.Failure_reason))
+                if (string.IsNullOrEmpty(planResponse.FailureReason))
                     return TestResult.Failed("Plan failed without a failure reason");
 
                 return TestResult.Successful(
-                    $"GOAP planning executed, result: {planResponse.Failure_reason}, time={planResponse.Planning_time_ms}ms");
+                    $"GOAP planning executed, result: {planResponse.FailureReason}, time={planResponse.PlanningTimeMs}ms");
             }
 
             if (planResponse.Plan == null)
@@ -427,9 +427,9 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             return TestResult.Successful(
                 $"GOAP plan generated: {planResponse.Plan.Actions?.Count ?? 0} actions, " +
-                $"cost={planResponse.Plan.Total_cost}, " +
-                $"nodes={planResponse.Nodes_expanded}, " +
-                $"time={planResponse.Planning_time_ms}ms");
+                $"cost={planResponse.Plan.TotalCost}, " +
+                $"nodes={planResponse.NodesExpanded}, " +
+                $"time={planResponse.PlanningTimeMs}ms");
         }, "GOAP plan generation");
 
     private static Task<TestResult> TestGoapPlanNonExistentBehavior(ITestClient client, string[] args) =>
@@ -439,15 +439,15 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             var request = new GoapPlanRequest
             {
-                Agent_id = "test-agent-1",
-                Behavior_id = "nonexistent-goap-behavior-xyz",
+                AgentId = "test-agent-1",
+                BehaviorId = "nonexistent-goap-behavior-xyz",
                 Goal = new GoapGoal
                 {
                     Name = "test_goal",
                     Priority = 50,
                     Conditions = new Dictionary<string, string> { { "test", "==true" } }
                 },
-                World_state = new Dictionary<string, object>()
+                WorldState = new Dictionary<string, object>()
             };
 
             try
@@ -455,8 +455,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 var response = await behaviorClient.GenerateGoapPlanAsync(request);
 
                 // If we get a response, it should indicate failure with "not found"
-                if (!response.Success && response.Failure_reason != null &&
-                    response.Failure_reason.Contains("not found", StringComparison.OrdinalIgnoreCase))
+                if (!response.Success && response.FailureReason != null &&
+                    response.FailureReason.Contains("not found", StringComparison.OrdinalIgnoreCase))
                 {
                     return TestResult.Successful("Correctly indicated behavior not found in response");
                 }
@@ -479,30 +479,30 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             {
                 Plan = new GoapPlanResult
                 {
-                    Goal_id = "test_goal",
-                    Total_cost = 3.0f,
+                    GoalId = "test_goal",
+                    TotalCost = 3.0f,
                     Actions = new List<PlannedActionResponse>
                     {
                         new PlannedActionResponse
                         {
-                            Action_id = "action_1",
+                            ActionId = "action_1",
                             Index = 0,
                             Cost = 1.0f
                         },
                         new PlannedActionResponse
                         {
-                            Action_id = "action_2",
+                            ActionId = "action_2",
                             Index = 1,
                             Cost = 2.0f
                         }
                     }
                 },
-                World_state = new Dictionary<string, object>
+                WorldState = new Dictionary<string, object>
                 {
                     { "energy", 50 },
                     { "has_food", false }
                 },
-                Current_action_index = 0
+                CurrentActionIndex = 0
             };
 
             var response = await behaviorClient.ValidateGoapPlanAsync(validateRequest);
@@ -512,8 +512,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 return TestResult.Failed("Validation response is null");
 
             return TestResult.Successful(
-                $"GOAP plan validation: valid={response.Is_valid}, " +
-                $"suggested_action={response.Suggested_action}, " +
+                $"GOAP plan validation: valid={response.IsValid}, " +
+                $"suggested_action={response.SuggestedAction}, " +
                 $"reason={response.Reason}");
         }, "GOAP plan validation");
 }

@@ -57,31 +57,31 @@ public class AssetTestHandler : BaseHttpTestHandler
         {
             Filename = $"test-{testName}-{DateTime.Now.Ticks}.json",
             Size = testBytes.Length,
-            Content_type = "application/json",
+            ContentType = "application/json",
             Metadata = new AssetMetadataInput
             {
-                Asset_type = assetType,
+                AssetType = assetType,
                 Realm = realm,
                 Tags = new List<string> { "test", testName, "http-integration" }
             }
         };
 
         var uploadResponse = await client.RequestUploadAsync(uploadRequest);
-        if (uploadResponse.Upload_url == null)
+        if (uploadResponse.UploadUrl == null)
             return null;
 
         // Step 2: Upload to MinIO using pre-signed URL
         using var content = new ByteArrayContent(testBytes);
         content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-        var minioResponse = await _uploadClient.PutAsync(uploadResponse.Upload_url, content);
+        var minioResponse = await _uploadClient.PutAsync(uploadResponse.UploadUrl, content);
         if (!minioResponse.IsSuccessStatusCode)
             return null;
 
         // Step 3: Complete upload
         var completeRequest = new CompleteUploadRequest
         {
-            Upload_id = uploadResponse.Upload_id
+            UploadId = uploadResponse.UploadId
         };
 
         return await client.CompleteUploadAsync(completeRequest);
@@ -96,10 +96,10 @@ public class AssetTestHandler : BaseHttpTestHandler
             {
                 Filename = $"test-request-{DateTime.Now.Ticks}.json",
                 Size = 1024,
-                Content_type = "application/json",
+                ContentType = "application/json",
                 Metadata = new AssetMetadataInput
                 {
-                    Asset_type = AssetType.Behavior,
+                    AssetType = AssetType.Behavior,
                     Realm = Asset.Realm.Arcadia,
                     Tags = new List<string> { "test", "request-upload" }
                 }
@@ -107,16 +107,16 @@ public class AssetTestHandler : BaseHttpTestHandler
 
             var response = await assetClient.RequestUploadAsync(request);
 
-            if (response.Upload_id == Guid.Empty)
+            if (response.UploadId == Guid.Empty)
                 return TestResult.Failed("Upload ID is empty");
 
-            if (response.Upload_url == null)
+            if (response.UploadUrl == null)
                 return TestResult.Failed("Upload URL is null");
 
-            if (response.Expires_at <= DateTimeOffset.UtcNow)
+            if (response.ExpiresAt <= DateTimeOffset.UtcNow)
                 return TestResult.Failed("Expiration time is in the past");
 
-            return TestResult.Successful($"Upload URL generated: ID={response.Upload_id}, Expires={response.Expires_at}");
+            return TestResult.Successful($"Upload URL generated: ID={response.UploadId}, Expires={response.ExpiresAt}");
         }, "Request upload");
 
     private static Task<TestResult> TestCompleteUploadFlow(ITestClient client, string[] args) =>
@@ -129,13 +129,13 @@ public class AssetTestHandler : BaseHttpTestHandler
             if (metadata == null)
                 return TestResult.Failed("Upload flow returned null metadata");
 
-            if (string.IsNullOrEmpty(metadata.Asset_id))
+            if (string.IsNullOrEmpty(metadata.AssetId))
                 return TestResult.Failed("Asset ID is empty after upload completion");
 
-            if (metadata.Processing_status != ProcessingStatus.Complete)
-                return TestResult.Failed($"Expected processing status 'Complete', got '{metadata.Processing_status}'");
+            if (metadata.ProcessingStatus != ProcessingStatus.Complete)
+                return TestResult.Failed($"Expected processing status 'Complete', got '{metadata.ProcessingStatus}'");
 
-            return TestResult.Successful($"Upload completed: AssetID={metadata.Asset_id}, ContentHash={metadata.Content_hash}");
+            return TestResult.Successful($"Upload completed: AssetID={metadata.AssetId}, ContentHash={metadata.ContentHash}");
         }, "Complete upload flow");
 
     private static Task<TestResult> TestGetAsset(ITestClient client, string[] args) =>
@@ -151,22 +151,22 @@ public class AssetTestHandler : BaseHttpTestHandler
             // Now retrieve it with download URL
             var getRequest = new GetAssetRequest
             {
-                Asset_id = uploadedMetadata.Asset_id,
+                AssetId = uploadedMetadata.AssetId,
                 Version = "latest"
             };
 
             var response = await assetClient.GetAssetAsync(getRequest);
 
-            if (response.Asset_id != uploadedMetadata.Asset_id)
-                return TestResult.Failed($"Asset ID mismatch: expected '{uploadedMetadata.Asset_id}', got '{response.Asset_id}'");
+            if (response.AssetId != uploadedMetadata.AssetId)
+                return TestResult.Failed($"Asset ID mismatch: expected '{uploadedMetadata.AssetId}', got '{response.AssetId}'");
 
-            if (response.Download_url == null)
+            if (response.DownloadUrl == null)
                 return TestResult.Failed("Download URL is null");
 
-            if (response.Expires_at <= DateTimeOffset.UtcNow)
+            if (response.ExpiresAt <= DateTimeOffset.UtcNow)
                 return TestResult.Failed("Download URL expiration is in the past");
 
-            return TestResult.Successful($"Asset retrieved: ID={response.Asset_id}, VersionID={response.Version_id}, Size={response.Size}");
+            return TestResult.Successful($"Asset retrieved: ID={response.AssetId}, VersionID={response.VersionId}, Size={response.Size}");
         }, "Get asset");
 
     private static Task<TestResult> TestListAssetVersions(ITestClient client, string[] args) =>
@@ -182,14 +182,14 @@ public class AssetTestHandler : BaseHttpTestHandler
             // List versions
             var listRequest = new ListVersionsRequest
             {
-                Asset_id = uploadedMetadata.Asset_id,
+                AssetId = uploadedMetadata.AssetId,
                 Limit = 10,
                 Offset = 0
             };
 
             var response = await assetClient.ListAssetVersionsAsync(listRequest);
 
-            if (response.Asset_id != uploadedMetadata.Asset_id)
+            if (response.AssetId != uploadedMetadata.AssetId)
                 return TestResult.Failed($"Asset ID mismatch in version list");
 
             if (response.Versions == null || response.Versions.Count == 0)
@@ -198,7 +198,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             if (response.Total < 1)
                 return TestResult.Failed("Total version count should be at least 1");
 
-            return TestResult.Successful($"Listed {response.Versions.Count} version(s) for asset {response.Asset_id} (Total: {response.Total})");
+            return TestResult.Successful($"Listed {response.Versions.Count} version(s) for asset {response.AssetId} (Total: {response.Total})");
         }, "List asset versions");
 
     private static Task<TestResult> TestSearchAssets(ITestClient client, string[] args) =>
@@ -216,7 +216,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             var searchRequest = new AssetSearchRequest
             {
                 Tags = new List<string> { "search-test" },
-                Asset_type = AssetType.Behavior,
+                AssetType = AssetType.Behavior,
                 Realm = Asset.Realm.Arcadia,
                 Limit = 50,
                 Offset = 0
@@ -228,9 +228,9 @@ public class AssetTestHandler : BaseHttpTestHandler
                 return TestResult.Failed("Search returned null assets array");
 
             // Check if our uploaded asset is in results
-            var found = response.Assets.Any(a => a.Asset_id == uploadedMetadata.Asset_id);
+            var found = response.Assets.Any(a => a.AssetId == uploadedMetadata.AssetId);
             if (!found)
-                return TestResult.Failed($"Uploaded asset {uploadedMetadata.Asset_id} not found in search results");
+                return TestResult.Failed($"Uploaded asset {uploadedMetadata.AssetId} not found in search results");
 
             return TestResult.Successful($"Search found {response.Assets.Count} asset(s) (Total: {response.Total}), including uploaded asset");
         }, "Search assets");
@@ -250,23 +250,23 @@ public class AssetTestHandler : BaseHttpTestHandler
             // Create bundle from the assets
             var createRequest = new CreateBundleRequest
             {
-                Bundle_id = $"test-bundle-{DateTime.Now.Ticks}",
+                BundleId = $"test-bundle-{DateTime.Now.Ticks}",
                 Version = "1.0.0",
-                Asset_ids = new List<string> { asset1.Asset_id, asset2.Asset_id },
+                AssetIds = new List<string> { asset1.AssetId, asset2.AssetId },
                 Compression = CompressionType.Lz4,
                 Metadata = new { description = "Test bundle", created_by = "http-integration-tests" }
             };
 
             var response = await assetClient.CreateBundleAsync(createRequest);
 
-            if (string.IsNullOrEmpty(response.Bundle_id))
+            if (string.IsNullOrEmpty(response.BundleId))
                 return TestResult.Failed("Bundle ID is empty");
 
             // Small bundles should complete immediately (not queued for processing)
             if (response.Status != CreateBundleResponseStatus.Ready && response.Status != CreateBundleResponseStatus.Queued)
                 return TestResult.Failed($"Unexpected bundle status: {response.Status}");
 
-            return TestResult.Successful($"Bundle created: ID={response.Bundle_id}, Status={response.Status}, EstimatedSize={response.Estimated_size}");
+            return TestResult.Successful($"Bundle created: ID={response.BundleId}, Status={response.Status}, EstimatedSize={response.EstimatedSize}");
         }, "Create bundle");
 
     private static Task<TestResult> TestGetBundle(ITestClient client, string[] args) =>
@@ -284,9 +284,9 @@ public class AssetTestHandler : BaseHttpTestHandler
             var bundleId = $"get-bundle-test-{DateTime.Now.Ticks}";
             var createRequest = new CreateBundleRequest
             {
-                Bundle_id = bundleId,
+                BundleId = bundleId,
                 Version = "1.0.0",
-                Asset_ids = new List<string> { asset1.Asset_id, asset2.Asset_id },
+                AssetIds = new List<string> { asset1.AssetId, asset2.AssetId },
                 Compression = CompressionType.None
             };
 
@@ -297,22 +297,22 @@ public class AssetTestHandler : BaseHttpTestHandler
             // Now retrieve the bundle
             var getRequest = new GetBundleRequest
             {
-                Bundle_id = bundleId,
+                BundleId = bundleId,
                 Format = BundleFormat.Bannou
             };
 
             var response = await assetClient.GetBundleAsync(getRequest);
 
-            if (response.Bundle_id != bundleId)
-                return TestResult.Failed($"Bundle ID mismatch: expected '{bundleId}', got '{response.Bundle_id}'");
+            if (response.BundleId != bundleId)
+                return TestResult.Failed($"Bundle ID mismatch: expected '{bundleId}', got '{response.BundleId}'");
 
-            if (response.Download_url == null)
+            if (response.DownloadUrl == null)
                 return TestResult.Failed("Download URL is null");
 
-            if (response.Asset_count != 2)
-                return TestResult.Failed($"Expected 2 assets in bundle, got {response.Asset_count}");
+            if (response.AssetCount != 2)
+                return TestResult.Failed($"Expected 2 assets in bundle, got {response.AssetCount}");
 
-            return TestResult.Successful($"Bundle retrieved: ID={response.Bundle_id}, Version={response.Version}, Assets={response.Asset_count}, Size={response.Size}");
+            return TestResult.Successful($"Bundle retrieved: ID={response.BundleId}, Version={response.Version}, Assets={response.AssetCount}, Size={response.Size}");
         }, "Get bundle");
 
     private static Task<TestResult> TestRequestBundleUpload(ITestClient client, string[] args) =>
@@ -324,26 +324,26 @@ public class AssetTestHandler : BaseHttpTestHandler
             {
                 Filename = $"test-bundle-upload-{DateTime.Now.Ticks}.bannou",
                 Size = 10240,
-                Manifest_preview = new BundleManifestPreview
+                ManifestPreview = new BundleManifestPreview
                 {
-                    Bundle_id = $"uploaded-bundle-{DateTime.Now.Ticks}",
+                    BundleId = $"uploaded-bundle-{DateTime.Now.Ticks}",
                     Version = "1.0.0",
-                    Asset_count = 5
+                    AssetCount = 5
                 }
             };
 
             var response = await assetClient.RequestBundleUploadAsync(request);
 
-            if (response.Upload_id == Guid.Empty)
+            if (response.UploadId == Guid.Empty)
                 return TestResult.Failed("Upload ID is empty");
 
-            if (response.Upload_url == null)
+            if (response.UploadUrl == null)
                 return TestResult.Failed("Upload URL is null");
 
-            if (response.Expires_at <= DateTimeOffset.UtcNow)
+            if (response.ExpiresAt <= DateTimeOffset.UtcNow)
                 return TestResult.Failed("Expiration time is in the past");
 
-            return TestResult.Successful($"Bundle upload URL generated: ID={response.Upload_id}, Expires={response.Expires_at}");
+            return TestResult.Successful($"Bundle upload URL generated: ID={response.UploadId}, Expires={response.ExpiresAt}");
         }, "Request bundle upload");
 
     private static Task<TestResult> TestGetNonExistentAsset(ITestClient client, string[] args) =>
@@ -353,7 +353,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 var assetClient = GetServiceClient<IAssetClient>();
                 await assetClient.GetAssetAsync(new GetAssetRequest
                 {
-                    Asset_id = $"nonexistent-asset-{Guid.NewGuid()}"
+                    AssetId = $"nonexistent-asset-{Guid.NewGuid()}"
                 });
             },
             404,
@@ -366,7 +366,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 var assetClient = GetServiceClient<IAssetClient>();
                 await assetClient.GetBundleAsync(new GetBundleRequest
                 {
-                    Bundle_id = $"nonexistent-bundle-{Guid.NewGuid()}",
+                    BundleId = $"nonexistent-bundle-{Guid.NewGuid()}",
                     Format = BundleFormat.Bannou
                 });
             },
@@ -386,14 +386,14 @@ public class AssetTestHandler : BaseHttpTestHandler
 
             if (asset1 == null || asset2 == null || asset3 == null)
                 return TestResult.Failed("Failed to upload one or more test assets");
-            Console.WriteLine($"  Uploaded: {asset1.Asset_id}, {asset2.Asset_id}, {asset3.Asset_id}");
+            Console.WriteLine($"  Uploaded: {asset1.AssetId}, {asset2.AssetId}, {asset3.AssetId}");
 
             // Step 2: Retrieve each asset with download URL
             Console.WriteLine("  Step 2: Retrieving assets with download URLs...");
-            var assetWithUrl = await assetClient.GetAssetAsync(new GetAssetRequest { Asset_id = asset1.Asset_id });
-            if (assetWithUrl.Download_url == null)
+            var assetWithUrl = await assetClient.GetAssetAsync(new GetAssetRequest { AssetId = asset1.AssetId });
+            if (assetWithUrl.DownloadUrl == null)
                 return TestResult.Failed("Download URL not generated");
-            Console.WriteLine($"  Download URL expires: {assetWithUrl.Expires_at}");
+            Console.WriteLine($"  Download URL expires: {assetWithUrl.ExpiresAt}");
 
             // Step 3: Search for assets by realm
             Console.WriteLine("  Step 3: Searching assets by realm...");
@@ -401,17 +401,17 @@ public class AssetTestHandler : BaseHttpTestHandler
             var searchResult = await assetClient.SearchAssetsAsync(new AssetSearchRequest
             {
                 Tags = new List<string> { "lifecycle-1" },
-                Asset_type = AssetType.Behavior,
+                AssetType = AssetType.Behavior,
                 Realm = Asset.Realm.Arcadia,
                 Limit = 10
             });
-            if (!searchResult.Assets.Any(a => a.Asset_id == asset1.Asset_id))
+            if (!searchResult.Assets.Any(a => a.AssetId == asset1.AssetId))
                 return TestResult.Failed("Asset not found in search results");
             Console.WriteLine($"  Found {searchResult.Total} matching asset(s)");
 
             // Step 4: List versions
             Console.WriteLine("  Step 4: Listing asset versions...");
-            var versions = await assetClient.ListAssetVersionsAsync(new ListVersionsRequest { Asset_id = asset1.Asset_id });
+            var versions = await assetClient.ListAssetVersionsAsync(new ListVersionsRequest { AssetId = asset1.AssetId });
             if (versions.Versions.Count < 1)
                 return TestResult.Failed("No versions found for asset");
             Console.WriteLine($"  Found {versions.Total} version(s)");
@@ -421,9 +421,9 @@ public class AssetTestHandler : BaseHttpTestHandler
             var bundleId = $"lifecycle-bundle-{DateTime.Now.Ticks}";
             var bundle = await assetClient.CreateBundleAsync(new CreateBundleRequest
             {
-                Bundle_id = bundleId,
+                BundleId = bundleId,
                 Version = "1.0.0",
-                Asset_ids = new List<string> { asset1.Asset_id, asset2.Asset_id, asset3.Asset_id },
+                AssetIds = new List<string> { asset1.AssetId, asset2.AssetId, asset3.AssetId },
                 Compression = CompressionType.Lz4
             });
             Console.WriteLine($"  Bundle status: {bundle.Status}");
@@ -432,12 +432,12 @@ public class AssetTestHandler : BaseHttpTestHandler
             Console.WriteLine("  Step 6: Retrieving bundle...");
             var bundleWithUrl = await assetClient.GetBundleAsync(new GetBundleRequest
             {
-                Bundle_id = bundleId,
+                BundleId = bundleId,
                 Format = BundleFormat.Bannou
             });
-            if (bundleWithUrl.Asset_count != 3)
-                return TestResult.Failed($"Bundle should contain 3 assets, got {bundleWithUrl.Asset_count}");
-            Console.WriteLine($"  Bundle size: {bundleWithUrl.Size} bytes, Assets: {bundleWithUrl.Asset_count}");
+            if (bundleWithUrl.AssetCount != 3)
+                return TestResult.Failed($"Bundle should contain 3 assets, got {bundleWithUrl.AssetCount}");
+            Console.WriteLine($"  Bundle size: {bundleWithUrl.Size} bytes, Assets: {bundleWithUrl.AssetCount}");
 
             return TestResult.Successful($"Complete lifecycle test passed: 3 assets uploaded, bundled, and retrieved");
         }, "Complete asset lifecycle");

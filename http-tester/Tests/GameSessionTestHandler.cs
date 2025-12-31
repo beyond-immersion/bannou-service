@@ -51,7 +51,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
 
             var response = await gameSessionClient.CreateGameSessionAsync(createRequest);
 
-            if (string.IsNullOrEmpty(response.SessionId))
+            if (response.SessionId == Guid.Empty)
                 return TestResult.Failed("Session creation returned empty session ID");
 
             if (response.SessionName != createRequest.SessionName)
@@ -75,10 +75,10 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             };
 
             var createResponse = await gameSessionClient.CreateGameSessionAsync(createRequest);
-            if (string.IsNullOrEmpty(createResponse.SessionId))
+            if (createResponse.SessionId == Guid.Empty)
                 return TestResult.Failed("Failed to create test session for retrieval test");
 
-            var sessionIdGuid = Guid.Parse(createResponse.SessionId);
+            var sessionIdGuid = createResponse.SessionId;
 
             // Now test retrieving the session
             var getRequest = new GetGameSessionRequest { SessionId = sessionIdGuid };
@@ -141,10 +141,10 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             };
 
             var createResponse = await gameSessionClient.CreateGameSessionAsync(createRequest);
-            if (string.IsNullOrEmpty(createResponse.SessionId))
+            if (createResponse.SessionId == Guid.Empty)
                 return TestResult.Failed("Failed to create test session for join test");
 
-            var sessionIdGuid = Guid.Parse(createResponse.SessionId);
+            var sessionIdGuid = createResponse.SessionId;
 
             // Now test joining the session (player identity comes from JWT context)
             var joinRequest = new JoinGameSessionRequest
@@ -175,7 +175,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             };
 
             var createResponse = await gameSessionClient.CreateGameSessionAsync(createRequest);
-            var sessionIdGuid = Guid.Parse(createResponse.SessionId);
+            var sessionIdGuid = createResponse.SessionId;
 
             // Join the session first
             var joinRequest = new JoinGameSessionRequest { SessionId = sessionIdGuid };
@@ -203,7 +203,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             };
 
             var createResponse = await gameSessionClient.CreateGameSessionAsync(createRequest);
-            var sessionIdGuid = Guid.Parse(createResponse.SessionId);
+            var sessionIdGuid = createResponse.SessionId;
 
             // Join the session first - this adds a player that we can kick
             var joinRequest = new JoinGameSessionRequest { SessionId = sessionIdGuid };
@@ -246,7 +246,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             };
 
             var createResponse = await gameSessionClient.CreateGameSessionAsync(createRequest);
-            var sessionIdGuid = Guid.Parse(createResponse.SessionId);
+            var sessionIdGuid = createResponse.SessionId;
 
             // Send a chat message (sender identity comes from JWT context)
             var chatRequest = new ChatMessageRequest
@@ -276,7 +276,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             };
 
             var createResponse = await gameSessionClient.CreateGameSessionAsync(createRequest);
-            var sessionIdGuid = Guid.Parse(createResponse.SessionId);
+            var sessionIdGuid = createResponse.SessionId;
 
             // Join as a player first (to get enhanced permissions)
             var joinRequest = new JoinGameSessionRequest { SessionId = sessionIdGuid };
@@ -326,7 +326,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
             };
 
             var createResponse = await gameSessionClient.CreateGameSessionAsync(createRequest);
-            var sessionIdGuid = Guid.Parse(createResponse.SessionId);
+            var sessionIdGuid = createResponse.SessionId;
             Console.WriteLine($"  Step 1: Created session {createResponse.SessionId}");
 
             // Step 2: Join as player

@@ -66,6 +66,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: Session ID that had capability changes
         version:
           type: integer
@@ -134,6 +135,7 @@ components:
       properties:
         sessionId:
           type: string
+          format: uuid
           description: Session ID that had state change
         serviceId:
           type: string

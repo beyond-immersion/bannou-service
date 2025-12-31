@@ -100,6 +100,7 @@ components:
           description: ID of the account whose session changed
         sessionId:
           type: string
+          format: uuid
           description: ID of the session that changed
         roles:
           type: array

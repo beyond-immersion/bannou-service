@@ -253,7 +253,7 @@ public class AuthTestHandler : BaseHttpTestHandler
                 return TestResult.Failed("Token validation returned Valid=false for legitimate token");
 
             // Step 4: Verify session ID was returned
-            if (string.IsNullOrEmpty(validationResponse.SessionId))
+            if (validationResponse.SessionId == Guid.Empty)
                 return TestResult.Failed("Token validation succeeded but no SessionId returned");
 
             return TestResult.Successful($"Complete auth flow tested successfully for user {testUsername}");

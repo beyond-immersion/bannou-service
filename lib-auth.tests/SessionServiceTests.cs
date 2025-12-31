@@ -593,7 +593,8 @@ public class SessionServiceTests
     {
         // Arrange
         var accountId = Guid.NewGuid();
-        var sessionId = "test-session-id";
+        var sessionIdGuid = Guid.NewGuid();
+        var sessionId = sessionIdGuid.ToString();
         var roles = new List<string> { "user", "admin" };
         var authorizations = new List<string> { "auth1" };
         var reason = SessionUpdatedEventReason.Role_changed;
@@ -613,7 +614,7 @@ public class SessionServiceTests
             "session.updated",
             It.Is<SessionUpdatedEvent>(e =>
                 e.AccountId == accountId &&
-                e.SessionId == sessionId &&
+                e.SessionId == sessionIdGuid &&
                 e.Roles.SequenceEqual(roles) &&
                 e.Authorizations.SequenceEqual(authorizations) &&
                 e.Reason == reason),

@@ -75,7 +75,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
-            var testServiceId = $"test-service-direct-{Guid.NewGuid():N}";
+            var testServiceId = Guid.NewGuid().ToString();
 
             var permissionMatrix = new ServicePermissionMatrix
             {
@@ -159,7 +159,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
-            var testServiceId = $"multi-state-svc-{Guid.NewGuid():N}";
+            var testServiceId = Guid.NewGuid().ToString();
 
             var permissionMatrix = new ServicePermissionMatrix
             {
@@ -198,7 +198,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
-            var testServiceId = $"multi-role-svc-{Guid.NewGuid():N}";
+            var testServiceId = Guid.NewGuid().ToString();
 
             var permissionMatrix = new ServicePermissionMatrix
             {
@@ -231,8 +231,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
-            var testServiceId = $"cap-test-svc-{Guid.NewGuid():N}";
-            var testSessionId = $"cap-test-session-{Guid.NewGuid():N}";
+            var testServiceId = Guid.NewGuid().ToString();
+            var testSessionId = Guid.NewGuid();
 
             // Step 1: Register service with permissions
             var permissionMatrix = new ServicePermissionMatrix
@@ -289,7 +289,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
-            var nonExistentSessionId = $"nonexistent-{Guid.NewGuid():N}";
+            var nonExistentSessionId = Guid.NewGuid();
 
             try
             {
@@ -320,7 +320,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"filter-test-{Guid.NewGuid():N}";
-            var testSessionId = $"{testPrefix}-session";
+            var testSessionId = Guid.NewGuid();
             var service1Id = $"{testPrefix}-svc1";
             var service2Id = $"{testPrefix}-svc2";
 
@@ -395,8 +395,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"validate-allowed-{Guid.NewGuid():N}";
-            var testServiceId = $"{testPrefix}-svc";
-            var testSessionId = $"{testPrefix}-session";
+            var testServiceId = Guid.NewGuid().ToString();
+            var testSessionId = Guid.NewGuid();
             var testMethod = "GET:/allowed/endpoint";
 
             // Register service with the method
@@ -449,8 +449,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"validate-denied-{Guid.NewGuid():N}";
-            var testServiceId = $"{testPrefix}-svc";
-            var testSessionId = $"{testPrefix}-session";
+            var testServiceId = Guid.NewGuid().ToString();
+            var testSessionId = Guid.NewGuid();
             var allowedMethod = "GET:/allowed/endpoint";
             var deniedMethod = "DELETE:/admin/dangerous";
 
@@ -503,7 +503,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
-            var testSessionId = $"unknown-svc-test-{Guid.NewGuid():N}";
+            var testSessionId = Guid.NewGuid();
             var unknownServiceId = $"nonexistent-service-{Guid.NewGuid():N}";
 
             // Create a minimal session
@@ -535,8 +535,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
-            var testSessionId = $"state-update-{Guid.NewGuid():N}";
-            var testServiceId = $"state-svc-{Guid.NewGuid():N}";
+            var testSessionId = Guid.NewGuid();
+            var testServiceId = Guid.NewGuid().ToString();
 
             var stateUpdate = new SessionStateUpdate
             {
@@ -563,8 +563,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"transition-{Guid.NewGuid():N}";
-            var testServiceId = $"{testPrefix}-svc";
-            var testSessionId = $"{testPrefix}-session";
+            var testServiceId = Guid.NewGuid().ToString();
+            var testSessionId = Guid.NewGuid();
 
             // Register service with different permissions per state
             await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
@@ -648,7 +648,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
-            var testSessionId = $"role-update-{Guid.NewGuid():N}";
+            var testSessionId = Guid.NewGuid();
 
             var roleUpdate = new SessionRoleUpdate
             {
@@ -674,7 +674,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"role-all-{Guid.NewGuid():N}";
-            var testSessionId = $"{testPrefix}-session";
+            var testSessionId = Guid.NewGuid();
             var service1Id = $"{testPrefix}-svc1";
             var service2Id = $"{testPrefix}-svc2";
 
@@ -779,8 +779,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"clear-state-{Guid.NewGuid():N}";
-            var testSessionId = $"{testPrefix}-session";
-            var testServiceId = $"{testPrefix}-svc";
+            var testSessionId = Guid.NewGuid();
+            var testServiceId = Guid.NewGuid().ToString();
 
             // Register service with state-dependent permissions
             await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
@@ -859,8 +859,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"clear-match-{Guid.NewGuid():N}";
-            var testSessionId = $"{testPrefix}-session";
-            var testServiceId = $"{testPrefix}-svc";
+            var testSessionId = Guid.NewGuid();
+            var testServiceId = Guid.NewGuid().ToString();
 
             // Create session with state
             await permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
@@ -915,8 +915,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"clear-nomatch-{Guid.NewGuid():N}";
-            var testSessionId = $"{testPrefix}-session";
-            var testServiceId = $"{testPrefix}-svc";
+            var testSessionId = Guid.NewGuid();
+            var testServiceId = Guid.NewGuid().ToString();
 
             // Create session with state
             await permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
@@ -976,8 +976,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"clear-nostate-{Guid.NewGuid():N}";
-            var testSessionId = $"{testPrefix}-session";
-            var testServiceId = $"{testPrefix}-svc";
+            var testSessionId = Guid.NewGuid();
+            var testServiceId = Guid.NewGuid().ToString();
 
             // Create session with just a role (no state for this service)
             await permissionsClient.UpdateSessionRoleAsync(new SessionRoleUpdate
@@ -1014,8 +1014,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"session-info-{Guid.NewGuid():N}";
-            var testSessionId = $"{testPrefix}-session";
-            var testServiceId = $"{testPrefix}-svc";
+            var testSessionId = Guid.NewGuid();
+            var testServiceId = Guid.NewGuid().ToString();
 
             // Register service
             await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
@@ -1075,7 +1075,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         ExecuteTestAsync(async () =>
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
-            var nonExistentSessionId = $"nonexistent-session-{Guid.NewGuid():N}";
+            var nonExistentSessionId = Guid.NewGuid();
 
             try
             {
@@ -1106,8 +1106,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"admin-cap-{Guid.NewGuid():N}";
-            var testSessionId = $"{testPrefix}-session";
-            var testServiceId = $"{testPrefix}-svc";
+            var testSessionId = Guid.NewGuid();
+            var testServiceId = Guid.NewGuid().ToString();
 
             // Register service with admin-only method
             await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
@@ -1163,8 +1163,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"user-cap-{Guid.NewGuid():N}";
-            var testSessionId = $"{testPrefix}-session";
-            var testServiceId = $"{testPrefix}-svc";
+            var testSessionId = Guid.NewGuid();
+            var testServiceId = Guid.NewGuid().ToString();
 
             // Register service with admin-only method
             await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
@@ -1227,8 +1227,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"escalation-{Guid.NewGuid():N}";
-            var testSessionId = $"{testPrefix}-session";
-            var testServiceId = $"{testPrefix}-svc";
+            var testSessionId = Guid.NewGuid();
+            var testServiceId = Guid.NewGuid().ToString();
 
             // Register service with different permissions per role
             await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
@@ -1311,8 +1311,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"state-esc-{Guid.NewGuid():N}";
-            var testSessionId = $"{testPrefix}-session";
-            var testServiceId = $"{testPrefix}-svc";
+            var testSessionId = Guid.NewGuid();
+            var testServiceId = Guid.NewGuid().ToString();
 
             // Register service with permissions at BOTH "default" and "game-session:in_game" states
             await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
@@ -1397,8 +1397,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
         {
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"state-diff-{Guid.NewGuid():N}";
-            var testSessionId = $"{testPrefix}-session";
-            var testServiceId = $"{testPrefix}-svc";
+            var testSessionId = Guid.NewGuid();
+            var testServiceId = Guid.NewGuid().ToString();
 
             // Register service with ONLY game-session:in_game state permissions (no default)
             await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
@@ -1480,15 +1480,16 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             }
 
             var permissionsClient = GetServiceClient<IPermissionsClient>();
-            var testServiceId = $"test-service-event-{Guid.NewGuid():N}";
-            var testSessionId = $"test-session-{Guid.NewGuid():N}";
+            var testServiceIdGuid = Guid.NewGuid();
+            var testServiceId = testServiceIdGuid.ToString();
+            var testSessionId = Guid.NewGuid();
 
             // Step 1: Create a service registration event using strongly-typed model
             var serviceRegistrationEvent = new ServiceRegistrationEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                ServiceId = testServiceId,
+                ServiceId = testServiceIdGuid,
                 Version = "1.0.0",
                 AppId = "bannou",
                 Endpoints = new Collection<ServiceEndpoint>
@@ -1604,8 +1605,8 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             }
 
             var permissionsClient = GetServiceClient<IPermissionsClient>();
-            var testServiceId = $"test-service-state-{Guid.NewGuid():N}";
-            var testSessionId = $"test-session-state-{Guid.NewGuid():N}";
+            var testServiceId = Guid.NewGuid().ToString();
+            var testSessionId = Guid.NewGuid();
 
             // Step 1: Register service permissions with different states
             var permissionMatrix = new ServicePermissionMatrix
@@ -1661,7 +1662,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             // Step 4: Publish session state change event via IMessageBus using strongly-typed model
             var stateChangeEvent = new SessionStateChangeEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = testSessionId,
                 ServiceId = testServiceId,
@@ -1744,9 +1745,9 @@ public class PermissionsTestHandler : BaseHttpTestHandler
 
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"session-connected-{Guid.NewGuid():N}";
-            var testSessionId = $"{testPrefix}-session";
+            var testSessionId = Guid.NewGuid();
             var testAccountId = $"{testPrefix}-account";
-            var testServiceId = $"{testPrefix}-svc";
+            var testServiceId = Guid.NewGuid().ToString();
 
             // Step 1: Register a service with permissions so there are capabilities to compile
             await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
@@ -1765,7 +1766,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             // Step 2: Publish session.connected event via IMessageBus using strongly-typed model
             var sessionConnectedEvent = new SessionConnectedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = testSessionId,
                 AccountId = testAccountId,
@@ -1830,9 +1831,9 @@ public class PermissionsTestHandler : BaseHttpTestHandler
 
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"session-roles-{Guid.NewGuid():N}";
-            var testSessionId = $"{testPrefix}-session";
+            var testSessionId = Guid.NewGuid();
             var testAccountId = $"{testPrefix}-account";
-            var testServiceId = $"{testPrefix}-svc";
+            var testServiceId = Guid.NewGuid().ToString();
 
             // Step 1: Register service with admin-only permissions
             await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
@@ -1852,7 +1853,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             // Step 2: Publish session.connected with admin role using strongly-typed model
             var sessionConnectedEvent = new SessionConnectedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = testSessionId,
                 AccountId = testAccountId,
@@ -1919,13 +1920,13 @@ public class PermissionsTestHandler : BaseHttpTestHandler
 
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"session-disconnect-{Guid.NewGuid():N}";
-            var testSessionId = $"{testPrefix}-session";
+            var testSessionId = Guid.NewGuid();
             var testAccountId = $"{testPrefix}-account";
 
             // Step 1: First connect the session using strongly-typed model
             var connectEvent = new SessionConnectedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = testSessionId,
                 AccountId = testAccountId,
@@ -1951,7 +1952,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             // Step 2: Disconnect the session using strongly-typed model
             var disconnectEvent = new SessionDisconnectedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = testSessionId,
                 AccountId = testAccountId,
@@ -1999,9 +2000,9 @@ public class PermissionsTestHandler : BaseHttpTestHandler
 
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"session-reconn-{Guid.NewGuid():N}";
-            var testSessionId = $"{testPrefix}-session";
+            var testSessionId = Guid.NewGuid();
             var testAccountId = $"{testPrefix}-account";
-            var testServiceId = $"{testPrefix}-svc";
+            var testServiceId = Guid.NewGuid().ToString();
 
             // Step 1: Register service with permissions
             await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
@@ -2020,7 +2021,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             // Step 2: Connect the session using strongly-typed model
             var connectEvent = new SessionConnectedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = testSessionId,
                 AccountId = testAccountId,
@@ -2044,7 +2045,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             // Step 3: Disconnect with reconnectable=true using strongly-typed model
             var disconnectEvent = new SessionDisconnectedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = testSessionId,
                 AccountId = testAccountId,

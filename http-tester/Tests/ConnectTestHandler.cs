@@ -488,7 +488,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 return TestResult.Failed($"Token validation failed for WebSocket upgrade simulation. Valid={validation.Valid}, SessionId={validation.SessionId}, RemainingTime={validation.RemainingTime}");
 
             // Verify we have the data Connect needs
-            if (string.IsNullOrEmpty(validation.SessionId))
+            if (validation.SessionId == Guid.Empty)
                 return TestResult.Failed("SessionId is empty - Connect needs this for session tracking");
 
             if (validation.RemainingTime <= 0)
@@ -530,7 +530,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
             if (validation.AccountId == Guid.Empty)
                 issues.Add("AccountId is empty GUID");
 
-            if (string.IsNullOrEmpty(validation.SessionId))
+            if (validation.SessionId == Guid.Empty)
                 issues.Add("SessionId is empty");
 
             if (validation.RemainingTime <= 0)

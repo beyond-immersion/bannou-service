@@ -329,6 +329,13 @@ cat >> "$CLIENT_SDK_PROJECT" << 'EOF'
     <Compile Include="../bannou-service/Configuration/BannouJson.cs" Condition="Exists('../bannou-service/Configuration/BannouJson.cs')" />
   </ItemGroup>
 
+  <!-- Base Event Classes (required by generated event models) -->
+  <ItemGroup>
+    <Compile Include="../bannou-service/Events/IBannouEvent.cs" Condition="Exists('../bannou-service/Events/IBannouEvent.cs')" />
+    <Compile Include="../bannou-service/Events/BaseServiceEvent.cs" Condition="Exists('../bannou-service/Events/BaseServiceEvent.cs')" />
+    <Compile Include="../bannou-service/ClientEvents/BaseClientEvent.cs" Condition="Exists('../bannou-service/ClientEvents/BaseClientEvent.cs')" />
+  </ItemGroup>
+
   <!-- WebSocket Binary Protocol -->
   <ItemGroup>
     <Compile Include="../lib-connect/Protocol/BinaryMessage.cs" Condition="Exists('../lib-connect/Protocol/BinaryMessage.cs')" />

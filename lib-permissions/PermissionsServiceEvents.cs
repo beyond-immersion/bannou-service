@@ -176,7 +176,7 @@ public partial class PermissionsService
             _logger.LogInformation("Received session state change event for {SessionId}: {ServiceId} → {NewState}",
                 evt.SessionId, evt.ServiceId, evt.NewState);
 
-            if (string.IsNullOrEmpty(evt.SessionId) || string.IsNullOrEmpty(evt.ServiceId) || string.IsNullOrEmpty(evt.NewState))
+            if (evt.SessionId == Guid.Empty || string.IsNullOrEmpty(evt.ServiceId) || string.IsNullOrEmpty(evt.NewState))
             {
                 _logger.LogWarning("Invalid session state change event - missing required fields");
                 return;
@@ -184,7 +184,7 @@ public partial class PermissionsService
 
             var stateUpdate = new SessionStateUpdate
             {
-                SessionId = Guid.Parse(evt.SessionId),
+                SessionId = evt.SessionId,
                 ServiceId = evt.ServiceId,
                 NewState = evt.NewState,
                 PreviousState = evt.PreviousState
@@ -225,7 +225,7 @@ public partial class PermissionsService
             // Update session role
             var roleUpdate = new SessionRoleUpdate
             {
-                SessionId = Guid.Parse(evt.SessionId),
+                SessionId = evt.SessionId,
                 NewRole = role
             };
 
@@ -253,7 +253,7 @@ public partial class PermissionsService
 
                     var stateUpdate = new SessionStateUpdate
                     {
-                        SessionId = Guid.Parse(evt.SessionId),
+                        SessionId = evt.SessionId,
                         ServiceId = serviceId,
                         NewState = state
                     };

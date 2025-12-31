@@ -2483,7 +2483,7 @@ public partial class AuthService : IAuthService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
-                SessionId = sessionId,
+                SessionId = Guid.Parse(sessionId),
                 Roles = roles,
                 Authorizations = authorizations,
                 Reason = reason
