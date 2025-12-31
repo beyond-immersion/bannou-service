@@ -234,7 +234,6 @@ public sealed class RabbitMQMessageBus : IMessageBus
         {
             var errorEvent = new ServiceErrorEvent
             {
-                EventName = ServiceErrorEventEventName.Service_error,
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 ServiceId = Guid.Parse(Program.ServiceGUID),

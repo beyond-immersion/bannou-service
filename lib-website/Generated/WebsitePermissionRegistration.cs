@@ -37,7 +37,6 @@ public static class WebsitePermissionRegistration
     {
         return new ServiceRegistrationEvent
         {
-            EventName = ServiceRegistrationEventEventName.Service_registration,
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             ServiceId = instanceId,

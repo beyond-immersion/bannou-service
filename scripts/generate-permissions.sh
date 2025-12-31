@@ -174,7 +174,6 @@ public static class ${SERVICE_PASCAL}PermissionRegistration
     {
         return new ServiceRegistrationEvent
         {
-            EventName = ServiceRegistrationEventEventName.Service_registration,
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             ServiceId = instanceId,
