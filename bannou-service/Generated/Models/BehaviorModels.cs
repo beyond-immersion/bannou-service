@@ -1198,23 +1198,23 @@ public enum ValidateGoapPlanResponseReason
     [System.Runtime.Serialization.EnumMember(Value = @"none")]
     None = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"precondition_invalidated")]
-    Precondition_invalidated = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"preconditionInvalidated")]
+    PreconditionInvalidated = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"action_failed")]
-    Action_failed = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"actionFailed")]
+    ActionFailed = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"better_goal_available")]
-    Better_goal_available = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"betterGoalAvailable")]
+    BetterGoalAvailable = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"plan_completed")]
-    Plan_completed = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"planCompleted")]
+    PlanCompleted = 4,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"goal_already_satisfied")]
-    Goal_already_satisfied = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"goalAlreadySatisfied")]
+    GoalAlreadySatisfied = 5,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"suboptimal_plan")]
-    Suboptimal_plan = 6,
+    [System.Runtime.Serialization.EnumMember(Value = @"suboptimalPlan")]
+    SuboptimalPlan = 6,
 
 }
 

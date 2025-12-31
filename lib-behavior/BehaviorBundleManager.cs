@@ -187,11 +187,11 @@ public class BehaviorBundleManager
 
             _logger.LogInformation(
                 "Created asset bundle {AssetBundleId} for behavior bundle {BundleId} with {Count} behaviors",
-                response.Bundle_id,
+                response.BundleId,
                 bundleId,
                 assetIds.Count);
 
-            return response.Bundle_id;
+            return response.BundleId;
         }
         catch (ApiException ex)
         {

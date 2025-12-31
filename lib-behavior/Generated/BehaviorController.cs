@@ -2197,12 +2197,12 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
           "type": "string",
           "enum": [
             "none",
-            "precondition_invalidated",
-            "action_failed",
-            "better_goal_available",
-            "plan_completed",
-            "goal_already_satisfied",
-            "suboptimal_plan"
+            "preconditionInvalidated",
+            "actionFailed",
+            "betterGoalAvailable",
+            "planCompleted",
+            "goalAlreadySatisfied",
+            "suboptimalPlan"
           ],
           "description": "Reason for the validation result"
         },

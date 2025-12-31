@@ -661,7 +661,7 @@ public class SessionServiceTests
 
         // Assert
         Assert.Single(result);
-        Assert.Equal(sessionData.SessionId, result[0].SessionId);
+        Assert.Equal(Guid.Parse(sessionData.SessionId), result[0].SessionId);
     }
 
     [Fact]

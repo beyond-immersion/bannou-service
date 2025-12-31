@@ -10,14 +10,14 @@ namespace BeyondImmersion.BannouService.Connect;
 /// </summary>
 public partial interface IConnectService : IBannouService
 {
-        /// <summary>
-        /// ProxyInternalRequest operation
-        /// </summary>
-        Task<(StatusCodes, InternalProxyResponse?)> ProxyInternalRequestAsync(InternalProxyRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    /// <summary>
+    /// ProxyInternalRequest operation
+    /// </summary>
+    Task<(StatusCodes, InternalProxyResponse?)> ProxyInternalRequestAsync(InternalProxyRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
-        /// <summary>
-        /// GetClientCapabilities operation
-        /// </summary>
-        Task<(StatusCodes, ClientCapabilitiesResponse?)> GetClientCapabilitiesAsync(GetClientCapabilitiesRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    /// <summary>
+    /// GetClientCapabilities operation
+    /// </summary>
+    Task<(StatusCodes, ClientCapabilitiesResponse?)> GetClientCapabilitiesAsync(GetClientCapabilitiesRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
 }

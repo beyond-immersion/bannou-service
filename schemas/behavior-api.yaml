@@ -716,14 +716,14 @@ paths:
         \   \"isValid\",\n        \"reason\",\n        \"suggestedAction\"\n      ],\n      \"properties\": {\n        \"\
         isValid\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether the plan is still valid\"\n \
         \       },\n        \"reason\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"none\",\n\
-        \            \"precondition_invalidated\",\n            \"action_failed\",\n            \"better_goal_available\"\
-        ,\n            \"plan_completed\",\n            \"goal_already_satisfied\",\n            \"suboptimal_plan\"\n   \
-        \       ],\n          \"description\": \"Reason for the validation result\"\n        },\n        \"suggestedAction\"\
-        : {\n          \"type\": \"string\",\n          \"enum\": [\n            \"continue\",\n            \"replan\",\n\
-        \            \"abort\"\n          ],\n          \"description\": \"Suggested action based on validation\"\n      \
-        \  },\n        \"invalidatedAtIndex\": {\n          \"type\": \"integer\",\n          \"description\": \"Index where
-        plan became invalid (if applicable)\"\n        },\n        \"message\": {\n          \"type\": \"string\",\n     \
-        \     \"description\": \"Additional details about the validation result\"\n        }\n      }\n    }\n  }\n}"
+        \            \"preconditionInvalidated\",\n            \"actionFailed\",\n            \"betterGoalAvailable\",\n \
+        \           \"planCompleted\",\n            \"goalAlreadySatisfied\",\n            \"suboptimalPlan\"\n          ],\n\
+        \          \"description\": \"Reason for the validation result\"\n        },\n        \"suggestedAction\": {\n   \
+        \       \"type\": \"string\",\n          \"enum\": [\n            \"continue\",\n            \"replan\",\n       \
+        \     \"abort\"\n          ],\n          \"description\": \"Suggested action based on validation\"\n        },\n \
+        \       \"invalidatedAtIndex\": {\n          \"type\": \"integer\",\n          \"description\": \"Index where plan
+        became invalid (if applicable)\"\n        },\n        \"message\": {\n          \"type\": \"string\",\n          \"\
+        description\": \"Additional details about the validation result\"\n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Validate existing GOAP plan\",\n  \"description\": \"Validates an existing
         GOAP plan against the current world state.\\nReturns whether the plan is still valid or needs replanning.\\n\",\n\
         \  \"tags\": [\n    \"GOAP\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"ValidateGoapPlan\"\n}"
@@ -1226,12 +1226,12 @@ components:
           type: string
           enum:
           - none
-          - precondition_invalidated
-          - action_failed
-          - better_goal_available
-          - plan_completed
-          - goal_already_satisfied
-          - suboptimal_plan
+          - preconditionInvalidated
+          - actionFailed
+          - betterGoalAvailable
+          - planCompleted
+          - goalAlreadySatisfied
+          - suboptimalPlan
           description: Reason for the validation result
         suggestedAction:
           type: string

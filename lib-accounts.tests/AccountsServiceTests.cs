@@ -116,12 +116,16 @@ public class AccountsServiceTests
     [Fact]
     public void AccountsPermissionRegistration_CreateRegistrationEvent_ShouldGenerateValidEvent()
     {
+        // Arrange
+        var instanceId = Guid.NewGuid();
+
         // Act
-        var registrationEvent = AccountsPermissionRegistration.CreateRegistrationEvent();
+        var registrationEvent = AccountsPermissionRegistration.CreateRegistrationEvent(instanceId);
 
         // Assert
         Assert.NotNull(registrationEvent);
-        Assert.Equal("accounts", registrationEvent.ServiceId);
+        Assert.Equal("accounts", registrationEvent.ServiceName);
+        Assert.Equal(instanceId, registrationEvent.ServiceId);
         Assert.NotNull(registrationEvent.Endpoints);
         Assert.Equal(13, registrationEvent.Endpoints.Count);
     }

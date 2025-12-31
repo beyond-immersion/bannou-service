@@ -445,7 +445,8 @@ public class ConnectServiceTests
         var service = CreateConnectService();
         var eventData = new ServiceRegistrationEvent
         {
-            ServiceId = "new-service-123",
+            ServiceId = Guid.NewGuid(),
+            ServiceName = "new-service-123",
             Timestamp = DateTimeOffset.UtcNow
         };
 

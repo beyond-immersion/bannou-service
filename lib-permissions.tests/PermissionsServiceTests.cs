@@ -264,10 +264,11 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "test-session-002";
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
 
         // Set up empty session states
-        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionIdStr);
         _mockDictStringStore
             .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>());
@@ -283,7 +284,7 @@ public class PermissionsServiceTests
             .ReturnsAsync(new HashSet<string>());
 
         // Set up empty session permissions
-        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
         _mockDictObjectStore
             .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object>());
@@ -318,9 +319,10 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-hierarchy";
-        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionIdStr);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
 
         // Empty initial state/active sessions/permissions
         _mockDictStringStore
@@ -386,9 +388,10 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-state-role";
-        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionIdStr);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
 
         // Session has role=user and game-session:in_game state
         var sessionStates = new Dictionary<string, string>
@@ -471,9 +474,10 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-state-key-matching";
-        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionIdStr);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
 
         // Session has voice=ringing state (same-service state for voice service)
         var sessionStates = new Dictionary<string, string>
@@ -553,9 +557,10 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-cross-service-state";
-        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionIdStr);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
 
         // Session has voice=ringing state
         var sessionStates = new Dictionary<string, string>
@@ -631,9 +636,10 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-game-in-game";
-        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionIdStr);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
 
         // Session has game-session=in_game state (set when player joins)
         var sessionStates = new Dictionary<string, string>
@@ -721,7 +727,8 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "test-session-003";
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
 
         // Pre-populate registered services with "orchestrator"
         var registeredServices = new HashSet<string> { "orchestrator" };
@@ -737,7 +744,7 @@ public class PermissionsServiceTests
             .ReturnsAsync(adminEndpoints);
 
         // Set up session states with admin role
-        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionIdStr);
         _mockDictStringStore
             .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string> { ["role"] = "admin" });
@@ -748,7 +755,7 @@ public class PermissionsServiceTests
             .ReturnsAsync(new HashSet<string>());
 
         // Set up existing session permissions for version tracking
-        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
         _mockDictObjectStore
             .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object> { ["version"] = 0 });
@@ -782,10 +789,11 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "test-session-004";
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
 
         // Pre-populate compiled permissions in state store
-        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
         var compiledPermissions = new Dictionary<string, object>
         {
             ["version"] = 1,
@@ -823,9 +831,10 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "test-session-005";
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
 
-        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
         _mockDictObjectStore
             .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Dictionary<string, object>?)null);
@@ -848,8 +857,10 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var adminSessionId = "admin-session-006";
-        var userSessionId = "user-session-007";
+        var adminSessionId = Guid.NewGuid();
+        var userSessionId = Guid.NewGuid();
+        var adminSessionIdStr = adminSessionId.ToString();
+        var userSessionIdStr = userSessionId.ToString();
 
         // Set up registered services
         var registeredServices = new HashSet<string> { "orchestrator" };
@@ -871,13 +882,13 @@ public class PermissionsServiceTests
             .ReturnsAsync((HashSet<string>?)null);
 
         // Set up admin session states
-        var adminStatesKey = string.Format(SESSION_STATES_KEY, adminSessionId);
+        var adminStatesKey = string.Format(SESSION_STATES_KEY, adminSessionIdStr);
         _mockDictStringStore
             .Setup(s => s.GetAsync(adminStatesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string> { ["role"] = "admin" });
 
         // Set up user session states
-        var userStatesKey = string.Format(SESSION_STATES_KEY, userSessionId);
+        var userStatesKey = string.Format(SESSION_STATES_KEY, userSessionIdStr);
         _mockDictStringStore
             .Setup(s => s.GetAsync(userStatesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string> { ["role"] = "user" });
@@ -888,8 +899,8 @@ public class PermissionsServiceTests
             .ReturnsAsync(new HashSet<string>());
 
         // Set up empty permissions for version tracking
-        var adminPermissionsKey = string.Format(SESSION_PERMISSIONS_KEY, adminSessionId);
-        var userPermissionsKey = string.Format(SESSION_PERMISSIONS_KEY, userSessionId);
+        var adminPermissionsKey = string.Format(SESSION_PERMISSIONS_KEY, adminSessionIdStr);
+        var userPermissionsKey = string.Format(SESSION_PERMISSIONS_KEY, userSessionIdStr);
         _mockDictObjectStore
             .Setup(s => s.GetAsync(adminPermissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object> { ["version"] = 0 });
@@ -951,10 +962,11 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "test-session-008";
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
 
         // Pre-populate session permissions
-        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
         var compiledPermissions = new Dictionary<string, object>
         {
             ["orchestrator"] = BannouJson.SerializeToElement(new List<string>
@@ -989,10 +1001,11 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "test-session-009";
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
 
         // Pre-populate session permissions with limited access
-        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
         var compiledPermissions = new Dictionary<string, object>
         {
             ["accounts"] = BannouJson.SerializeToElement(new List<string>
@@ -1033,7 +1046,8 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-connect-001";
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
         var accountId = "account-001";
 
         // Setup empty activeConnections
@@ -1052,13 +1066,13 @@ public class PermissionsServiceTests
             .ReturnsAsync(new HashSet<string>());
 
         // Setup session states for recompile
-        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionIdStr);
         _mockDictStringStore
             .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>());
 
         // Setup session permissions for recompile
-        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
         _mockDictObjectStore
             .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object>());
@@ -1077,7 +1091,7 @@ public class PermissionsServiceTests
 
         // Act
         var (statusCode, response) = await service.HandleSessionConnectedAsync(
-            sessionId, accountId, roles: null, authorizations: null);
+            sessionIdStr, accountId, roles: null, authorizations: null);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1088,7 +1102,7 @@ public class PermissionsServiceTests
 
         // Verify session was added to activeConnections
         Assert.NotNull(savedConnections);
-        Assert.Contains(sessionId, savedConnections!);
+        Assert.Contains(sessionIdStr, savedConnections!);
     }
 
     [Fact]
@@ -1096,19 +1110,21 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var newSessionId = "session-connect-002";
+        var newSessionId = Guid.NewGuid();
+        var newSessionIdStr = newSessionId.ToString();
         var accountId = "account-002";
-        var existingSessionId = "session-existing-001";
+        var existingSessionId = Guid.NewGuid();
+        var existingSessionIdStr = existingSessionId.ToString();
 
         // Setup activeConnections with an existing session
         _mockHashSetStore
             .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string> { existingSessionId });
+            .ReturnsAsync(new HashSet<string> { existingSessionIdStr });
 
         // Setup activeSessions
         _mockHashSetStore
             .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string> { existingSessionId });
+            .ReturnsAsync(new HashSet<string> { existingSessionIdStr });
 
         // Setup registered services
         _mockHashSetStore
@@ -1116,13 +1132,13 @@ public class PermissionsServiceTests
             .ReturnsAsync(new HashSet<string>());
 
         // Setup session states
-        var statesKey = string.Format(SESSION_STATES_KEY, newSessionId);
+        var statesKey = string.Format(SESSION_STATES_KEY, newSessionIdStr);
         _mockDictStringStore
             .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, string>());
 
         // Setup session permissions
-        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, newSessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, newSessionIdStr);
         _mockDictObjectStore
             .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, object>());
@@ -1139,7 +1155,7 @@ public class PermissionsServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        var (statusCode, response) = await service.HandleSessionConnectedAsync(newSessionId, accountId, roles: null, authorizations: null);
+        var (statusCode, response) = await service.HandleSessionConnectedAsync(newSessionIdStr, accountId, roles: null, authorizations: null);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1147,8 +1163,8 @@ public class PermissionsServiceTests
 
         // Verify both sessions are in activeConnections
         Assert.NotNull(savedConnections);
-        Assert.Contains(existingSessionId, savedConnections!);
-        Assert.Contains(newSessionId, savedConnections!);
+        Assert.Contains(existingSessionIdStr, savedConnections!);
+        Assert.Contains(newSessionIdStr, savedConnections!);
         Assert.Equal(2, savedConnections!.Count);
     }
 

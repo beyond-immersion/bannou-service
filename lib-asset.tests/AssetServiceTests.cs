@@ -227,7 +227,7 @@ public class AssetServiceTests
         {
             Filename = "",
             Size = 1024,
-            Content_type = "image/png"
+            ContentType = "image/png"
         };
 
         // Act
@@ -247,7 +247,7 @@ public class AssetServiceTests
         {
             Filename = "test.png",
             Size = 0,
-            Content_type = "image/png"
+            ContentType = "image/png"
         };
 
         // Act
@@ -268,7 +268,7 @@ public class AssetServiceTests
         {
             Filename = "test.png",
             Size = (long)_configuration.MaxUploadSizeMb * 1024 * 1024 + 1, // Exceeds max
-            Content_type = "image/png"
+            ContentType = "image/png"
         };
 
         // Act
@@ -288,7 +288,7 @@ public class AssetServiceTests
         {
             Filename = "test.png",
             Size = 1024,
-            Content_type = ""
+            ContentType = ""
         };
 
         // Act
@@ -311,10 +311,10 @@ public class AssetServiceTests
         {
             Filename = "test.png",
             Size = 1024, // Small file
-            Content_type = "image/png",
+            ContentType = "image/png",
             Metadata = new AssetMetadataInput
             {
-                Asset_type = AssetType.Texture,
+                AssetType = AssetType.Texture,
                 Realm = Realm.Arcadia,
                 Tags = new List<string> { "test" }
             }
@@ -342,7 +342,7 @@ public class AssetServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
-        Assert.NotNull(result.Upload_url);
+        Assert.NotNull(result.UploadUrl);
         Assert.False(result.Multipart?.Required ?? false);
     }
 
@@ -358,7 +358,7 @@ public class AssetServiceTests
         {
             Filename = "test.glb",
             Size = 100 * 1024 * 1024, // 100MB - exceeds multipart threshold
-            Content_type = "model/gltf-binary"
+            ContentType = "model/gltf-binary"
         };
 
         var multipartResult = new MultipartUploadResult(
@@ -387,8 +387,8 @@ public class AssetServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
         Assert.True(result.Multipart?.Required ?? false);
-        Assert.NotNull(result.Multipart?.Upload_urls);
-        Assert.True(result.Multipart.Upload_urls.Count > 0);
+        Assert.NotNull(result.Multipart?.UploadUrls);
+        Assert.True(result.Multipart.UploadUrls.Count > 0);
     }
 
     #endregion
@@ -402,7 +402,7 @@ public class AssetServiceTests
         var service = CreateService();
         var request = new GetAssetRequest
         {
-            Asset_id = "non-existent-asset"
+            AssetId = "non-existent-asset"
         };
 
         _mockAssetStore
@@ -427,7 +427,7 @@ public class AssetServiceTests
         _configuration.TokenTtlSeconds = 3600;
         var service = CreateService();
         var assetId = "test-asset-123";
-        var request = new GetAssetRequest { Asset_id = assetId };
+        var request = new GetAssetRequest { AssetId = assetId };
 
         var internalRecord = new InternalAssetRecord
         {
@@ -473,8 +473,8 @@ public class AssetServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
-        Assert.Equal(assetId, result.Asset_id);
-        Assert.NotNull(result.Download_url);
+        Assert.Equal(assetId, result.AssetId);
+        Assert.NotNull(result.DownloadUrl);
     }
 
     #endregion
@@ -488,7 +488,7 @@ public class AssetServiceTests
         var service = CreateService();
         var request = new ListVersionsRequest
         {
-            Asset_id = "non-existent-asset",
+            AssetId = "non-existent-asset",
             Limit = 10,
             Offset = 0
         };
@@ -516,7 +516,7 @@ public class AssetServiceTests
         var assetId = "test-asset-123";
         var request = new ListVersionsRequest
         {
-            Asset_id = assetId,
+            AssetId = assetId,
             Limit = 10,
             Offset = 0
         };
@@ -562,8 +562,8 @@ public class AssetServiceTests
         Assert.Equal(2, result.Total);
         Assert.Equal(2, result.Versions.Count);
         var versionsList = result.Versions.ToList();
-        Assert.False(versionsList[0].Is_archived); // STANDARD storage
-        Assert.True(versionsList[1].Is_archived); // GLACIER storage
+        Assert.False(versionsList[0].IsArchived); // STANDARD storage
+        Assert.True(versionsList[1].IsArchived); // GLACIER storage
     }
 
     #endregion
@@ -577,7 +577,7 @@ public class AssetServiceTests
         var service = CreateService();
         var request = new AssetSearchRequest
         {
-            Asset_type = AssetType.Texture,
+            AssetType = AssetType.Texture,
             Realm = Realm.Arcadia,
             Limit = 10,
             Offset = 0
@@ -608,9 +608,9 @@ public class AssetServiceTests
         var service = CreateService();
         var request = new AssetSearchRequest
         {
-            Asset_type = AssetType.Texture,
+            AssetType = AssetType.Texture,
             Realm = Realm.Arcadia,
-            Content_type = "image/png",
+            ContentType = "image/png",
             Limit = 10,
             Offset = 0
         };
@@ -696,7 +696,7 @@ public class AssetServiceTests
         Assert.NotNull(result);
         Assert.Equal(1, result.Total); // Only asset-1 matches all criteria
         Assert.Single(result.Assets);
-        Assert.Equal("asset-1", result.Assets.First().Asset_id);
+        Assert.Equal("asset-1", result.Assets.First().AssetId);
     }
 
     [Fact]
@@ -706,7 +706,7 @@ public class AssetServiceTests
         var service = CreateService();
         var request = new AssetSearchRequest
         {
-            Asset_type = AssetType.Texture,
+            AssetType = AssetType.Texture,
             Realm = Realm.Arcadia,
             Tags = new List<string> { "character", "sword" },
             Limit = 10,
@@ -775,7 +775,7 @@ public class AssetServiceTests
         Assert.NotNull(result);
         Assert.Equal(1, result.Total); // Only asset-1 has both tags
         Assert.Single(result.Assets);
-        Assert.Equal("asset-1", result.Assets.First().Asset_id);
+        Assert.Equal("asset-1", result.Assets.First().AssetId);
     }
 
     #endregion
@@ -789,8 +789,8 @@ public class AssetServiceTests
         var service = CreateService();
         var request = new CreateBundleRequest
         {
-            Bundle_id = "",
-            Asset_ids = new List<string> { "asset-1" }
+            BundleId = "",
+            AssetIds = new List<string> { "asset-1" }
         };
 
         // Act
@@ -808,8 +808,8 @@ public class AssetServiceTests
         var service = CreateService();
         var request = new CreateBundleRequest
         {
-            Bundle_id = "test-bundle",
-            Asset_ids = new List<string>()
+            BundleId = "test-bundle",
+            AssetIds = new List<string>()
         };
 
         // Act
@@ -829,7 +829,7 @@ public class AssetServiceTests
     {
         // Arrange
         var service = CreateService();
-        var request = new GetBundleRequest { Bundle_id = "non-existent" };
+        var request = new GetBundleRequest { BundleId = "non-existent" };
 
         _mockBundleStore
             .Setup(s => s.GetAsync(

@@ -152,7 +152,6 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Assert
         Assert.Equal(StatusCodes.Created, status);
         Assert.NotNull(response);
-        Assert.NotNull(response.SessionId);
         Assert.Equal("Test Session", response.SessionName);
         Assert.Equal(4, response.MaxPlayers);
         Assert.Equal(0, response.CurrentPlayers);
@@ -264,7 +263,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(sessionId.ToString(), response.SessionId);
+        Assert.Equal(sessionId, response.SessionId);
         Assert.Equal("Existing Session", response.SessionName);
     }
 
@@ -548,12 +547,12 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             permissionsClient: mockPermissionsClient.Object);
 
         var sessionId = Guid.NewGuid();
-        var clientSessionId = "test-client-session-123";
+        var clientSessionId = Guid.NewGuid();
         var request = new JoinGameSessionRequest { SessionId = sessionId };
 
         // Setup HTTP context with session ID header
         var httpContext = new DefaultHttpContext();
-        httpContext.Request.Headers["X-Bannou-Session-Id"] = clientSessionId;
+        httpContext.Request.Headers["X-Bannou-Session-Id"] = clientSessionId.ToString();
         _mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
 
         _mockGameSessionStore
@@ -604,13 +603,13 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             permissionsClient: mockPermissionsClient.Object);
 
         var sessionId = Guid.NewGuid();
-        var clientSessionId = "test-client-session-456";
+        var clientSessionId = Guid.NewGuid();
         var accountId = Guid.NewGuid();
         var request = new LeaveGameSessionRequest { SessionId = sessionId, AccountId = accountId };
 
         // Setup HTTP context with session ID header
         var httpContext = new DefaultHttpContext();
-        httpContext.Request.Headers["X-Bannou-Session-Id"] = clientSessionId;
+        httpContext.Request.Headers["X-Bannou-Session-Id"] = clientSessionId.ToString();
         _mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
 
         _mockGameSessionStore

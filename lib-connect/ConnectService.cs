@@ -349,22 +349,22 @@ public partial class ConnectService : IConnectService
 
                 _logger.LogDebug("Token validation result - Valid: {Valid}, SessionId: {SessionId}, AccountId: {AccountId}, RolesCount: {RolesCount}, AuthorizationsCount: {AuthorizationsCount}",
                     validationResponse.Valid,
-                    validationResponse.SessionId ?? "(null)",
+                    validationResponse.SessionId,
                     validationResponse.AccountId,
                     validationResponse.Roles?.Count ?? 0,
                     validationResponse.Authorizations?.Count ?? 0);
 
-                if (validationResponse.Valid && !string.IsNullOrEmpty(validationResponse.SessionId))
+                if (validationResponse.Valid && validationResponse.SessionId != Guid.Empty)
                 {
                     _logger.LogDebug("JWT validated successfully, SessionId: {SessionId}", validationResponse.SessionId);
                     // Return session ID, account ID, roles, and authorizations for capability initialization
                     // This is a new connection (Bearer token), not a reconnection
-                    return (validationResponse.SessionId, validationResponse.AccountId, validationResponse.Roles, validationResponse.Authorizations, false);
+                    return (validationResponse.SessionId.ToString(), validationResponse.AccountId, validationResponse.Roles, validationResponse.Authorizations, false);
                 }
                 else
                 {
                     _logger.LogWarning("JWT validation failed, Valid: {Valid}, SessionId: {SessionId}",
-                        validationResponse.Valid, validationResponse.SessionId ?? "(null)");
+                        validationResponse.Valid, validationResponse.SessionId);
                 }
             }
             // Handle "Reconnect <token>" format for session reconnection
@@ -540,10 +540,11 @@ public partial class ConnectService : IConnectService
                     // Fixes race condition where services publish to non-existent exchange (crashes RabbitMQ channel)
                     var sessionConnectedEvent = new SessionConnectedEvent
                     {
-                        EventId = Guid.NewGuid().ToString(),
+                        EventName = SessionConnectedEventEventName.Session_connected,
+                        EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
-                        SessionId = sessionId,
-                        AccountId = accountId?.ToString() ?? string.Empty,
+                        SessionId = Guid.Parse(sessionId),
+                        AccountId = accountId ?? Guid.Empty,
                         Roles = userRoles?.ToList(),
                         Authorizations = authorizations?.ToList(),
                         ConnectInstanceId = Guid.TryParse(_instanceId.Split('-').LastOrDefault(), out var instanceGuid)
@@ -558,10 +559,11 @@ public partial class ConnectService : IConnectService
                     {
                         var sessionReconnectedEvent = new SessionReconnectedEvent
                         {
-                            EventId = Guid.NewGuid().ToString(),
+                            EventName = SessionReconnectedEventEventName.Session_reconnected,
+                            EventId = Guid.NewGuid(),
                             Timestamp = DateTimeOffset.UtcNow,
-                            SessionId = sessionId,
-                            AccountId = accountId?.ToString() ?? string.Empty,
+                            SessionId = Guid.Parse(sessionId),
+                            AccountId = accountId ?? Guid.Empty,
                             Roles = userRoles?.ToList(),
                             Authorizations = authorizations?.ToList(),
                             PreviousDisconnectAt = connectionState.DisconnectedAt,
@@ -647,10 +649,11 @@ public partial class ConnectService : IConnectService
             {
                 var sessionDisconnectedEvent = new SessionDisconnectedEvent
                 {
-                    EventId = Guid.NewGuid().ToString(),
+                    EventName = SessionDisconnectedEventEventName.Session_disconnected,
+                    EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    SessionId = sessionId,
-                    AccountId = accountId?.ToString(),
+                    SessionId = Guid.Parse(sessionId),
+                    AccountId = accountId ?? Guid.Empty,
                     Reconnectable = !isForcedDisconnect,
                     Reason = isForcedDisconnect ? "forced_disconnect" : "graceful_disconnect"
                 };
@@ -1404,7 +1407,7 @@ public partial class ConnectService : IConnectService
                     EventId = Guid.NewGuid().ToString(),
                     Timestamp = DateTimeOffset.UtcNow,
                     Reason = PermissionRecompileEventReason.Service_registered,
-                    ServiceId = eventData.ServiceId,
+                    ServiceId = eventData.ServiceName,
                     Metadata = new Dictionary<string, object>
                     {
                         { "triggeredBy", "connect-service" },
@@ -2611,7 +2614,7 @@ public partial class ConnectService : IConnectService
         object? details = null)
     {
         await _messageBus.TryPublishErrorAsync(
-            serviceId: "connect",
+            serviceName: "connect",
             operation: operation,
             errorType: errorType,
             message: message,

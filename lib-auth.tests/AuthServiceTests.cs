@@ -233,12 +233,16 @@ public class AuthServiceTests
     [Fact]
     public void AuthPermissionRegistration_CreateRegistrationEvent_ShouldGenerateValidEvent()
     {
+        // Arrange
+        var instanceId = Guid.NewGuid();
+
         // Act
-        var registrationEvent = AuthPermissionRegistration.CreateRegistrationEvent();
+        var registrationEvent = AuthPermissionRegistration.CreateRegistrationEvent(instanceId);
 
         // Assert
         Assert.NotNull(registrationEvent);
-        Assert.Equal("auth", registrationEvent.ServiceId);
+        Assert.Equal("auth", registrationEvent.ServiceName);
+        Assert.Equal(instanceId, registrationEvent.ServiceId);
         Assert.NotNull(registrationEvent.Endpoints);
         Assert.Equal(12, registrationEvent.Endpoints.Count); // 12 endpoints (removed steam/init)
         Assert.NotEmpty(registrationEvent.Version);

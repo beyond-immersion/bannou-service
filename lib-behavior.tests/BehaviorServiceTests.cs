@@ -90,15 +90,15 @@ public class BehaviorServiceTests
         var service = CreateService();
         var request = new GoapPlanRequest
         {
-            Agent_id = "agent-1",
-            Behavior_id = string.Empty,
+            AgentId = "agent-1",
+            BehaviorId = string.Empty,
             Goal = new ApiGoapGoal
             {
                 Name = "test_goal",
                 Priority = 50,
                 Conditions = new Dictionary<string, string> { { "key", "==value" } }
             },
-            World_state = new Dictionary<string, object>()
+            WorldState = new Dictionary<string, object>()
         };
 
         // Act
@@ -108,7 +108,7 @@ public class BehaviorServiceTests
         Assert.Equal(StatusCodes.BadRequest, status);
         Assert.NotNull(response);
         Assert.False(response.Success);
-        Assert.Contains("behavior_id", response.Failure_reason);
+        Assert.Contains("behavior_id", response.FailureReason);
     }
 
     [Fact]
@@ -122,15 +122,15 @@ public class BehaviorServiceTests
         var service = CreateService();
         var request = new GoapPlanRequest
         {
-            Agent_id = "agent-1",
-            Behavior_id = "nonexistent-behavior",
+            AgentId = "agent-1",
+            BehaviorId = "nonexistent-behavior",
             Goal = new ApiGoapGoal
             {
                 Name = "test_goal",
                 Priority = 50,
                 Conditions = new Dictionary<string, string> { { "key", "==value" } }
             },
-            World_state = new Dictionary<string, object>()
+            WorldState = new Dictionary<string, object>()
         };
 
         // Act
@@ -140,7 +140,7 @@ public class BehaviorServiceTests
         Assert.Equal(StatusCodes.NotFound, status);
         Assert.NotNull(response);
         Assert.False(response.Success);
-        Assert.Contains("not found", response.Failure_reason);
+        Assert.Contains("not found", response.FailureReason);
     }
 
     [Fact]
@@ -161,15 +161,15 @@ public class BehaviorServiceTests
         var service = CreateService();
         var request = new GoapPlanRequest
         {
-            Agent_id = "agent-1",
-            Behavior_id = "behavior-123",
+            AgentId = "agent-1",
+            BehaviorId = "behavior-123",
             Goal = new ApiGoapGoal
             {
                 Name = "test_goal",
                 Priority = 50,
                 Conditions = new Dictionary<string, string> { { "key", "==value" } }
             },
-            World_state = new Dictionary<string, object>()
+            WorldState = new Dictionary<string, object>()
         };
 
         // Act
@@ -179,7 +179,7 @@ public class BehaviorServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.False(response.Success);
-        Assert.Contains("No GOAP actions", response.Failure_reason);
+        Assert.Contains("No GOAP actions", response.FailureReason);
     }
 
     [Fact]
@@ -219,15 +219,15 @@ public class BehaviorServiceTests
         var service = CreateService();
         var request = new GoapPlanRequest
         {
-            Agent_id = "agent-1",
-            Behavior_id = "behavior-123",
+            AgentId = "agent-1",
+            BehaviorId = "behavior-123",
             Goal = new ApiGoapGoal
             {
                 Name = "test_goal",
                 Priority = 50,
                 Conditions = new Dictionary<string, string> { { "goal_met", "==true" } }
             },
-            World_state = new Dictionary<string, object> { { "some_state", "value" } }
+            WorldState = new Dictionary<string, object> { { "some_state", "value" } }
         };
 
         // Act
@@ -237,7 +237,7 @@ public class BehaviorServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.False(response.Success);
-        Assert.Contains("No valid plan found", response.Failure_reason);
+        Assert.Contains("No valid plan found", response.FailureReason);
     }
 
     [Fact]
@@ -288,15 +288,15 @@ public class BehaviorServiceTests
         var service = CreateService();
         var request = new GoapPlanRequest
         {
-            Agent_id = "agent-1",
-            Behavior_id = "behavior-123",
+            AgentId = "agent-1",
+            BehaviorId = "behavior-123",
             Goal = new ApiGoapGoal
             {
                 Name = "test_goal",
                 Priority = 50,
                 Conditions = new Dictionary<string, string> { { "goal_met", "==true" } }
             },
-            World_state = new Dictionary<string, object>()
+            WorldState = new Dictionary<string, object>()
         };
 
         // Act
@@ -308,10 +308,10 @@ public class BehaviorServiceTests
         Assert.True(response.Success);
         Assert.NotNull(response.Plan);
         Assert.Single(response.Plan.Actions);
-        Assert.Equal("action1", response.Plan.Actions.First().Action_id);
-        Assert.Equal(2.0f, response.Plan.Total_cost);
-        Assert.Equal(10, response.Planning_time_ms);
-        Assert.Equal(5, response.Nodes_expanded);
+        Assert.Equal("action1", response.Plan.Actions.First().ActionId);
+        Assert.Equal(2.0f, response.Plan.TotalCost);
+        Assert.Equal(10, response.PlanningTimeMs);
+        Assert.Equal(5, response.NodesExpanded);
     }
 
     [Fact]
@@ -353,20 +353,20 @@ public class BehaviorServiceTests
         var service = CreateService();
         var request = new GoapPlanRequest
         {
-            Agent_id = "agent-1",
-            Behavior_id = "behavior-123",
+            AgentId = "agent-1",
+            BehaviorId = "behavior-123",
             Goal = new ApiGoapGoal
             {
                 Name = "test_goal",
                 Priority = 50,
                 Conditions = new Dictionary<string, string> { { "goal_met", "==true" } }
             },
-            World_state = new Dictionary<string, object>(),
+            WorldState = new Dictionary<string, object>(),
             Options = new GoapPlanningOptions
             {
-                Max_depth = 15,
-                Max_nodes = 500,
-                Timeout_ms = 200
+                MaxDepth = 15,
+                MaxNodes = 500,
+                TimeoutMs = 200
             }
         };
 
