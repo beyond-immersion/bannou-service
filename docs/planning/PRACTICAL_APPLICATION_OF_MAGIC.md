@@ -233,7 +233,7 @@ Line 3 (Manifestation):    "An inferno to cover the area in ash"
 Line 4 (Manipulation):     "Rise, rise oh great flame, oh towering flame"
                            └─► Shapes size, direction, intensity
 
-Line 5 (Oxidation):        "Focus your righteous anger, oh Apollo"
+Line 5 (Concentration):    "Focus your righteous anger, oh Apollo"
                            └─► Concentrates and intensifies
 
 Line 6 (Ignition):         "...and smite my enemies"
@@ -288,7 +288,7 @@ This requires either:
 | Oak heartwood | Earth/stability | Manifestation |
 | Phoenix feather | Fire/transformation | Attunement (fire) |
 | Deep sea pearl | Water/flow | Manipulation |
-| Lightning-struck glass | Energy/force | Oxidation |
+| Lightning-struck glass | Energy/force | Concentration |
 
 ### Foci and Catalysts
 
@@ -324,7 +324,7 @@ Spirit Magic works by having a spirit perform most stages on behalf of the caste
 ```
 STANDARD CASTING:
 ─────────────────
-Caster: [Accumulation] → [Attunement] → [Manifestation] → [Manipulation] → [Oxidation] → [Ignition]
+Caster: [Accumulation] → [Attunement] → [Manifestation] → [Manipulation] → [Concentration] → [Ignition]
 
 
 SPIRIT MAGIC:
@@ -332,7 +332,7 @@ SPIRIT MAGIC:
 Caster: [Accumulation] ────────────────────────────────────────────────────► [Ignition]
                         │                                                        ▲
                         ▼                                                        │
-Spirit:                 [Attunement] → [Manifestation] → [Manipulation] → [Oxidation]
+Spirit:                 [Attunement] → [Manifestation] → [Manipulation] → [Concentration]
 ```
 
 ### Advantages
@@ -377,7 +377,7 @@ NOVICE CASTER (Sequential):
              │Attunement│                                                       │
                         │Manifestation│                                         │
                                       │Manipulation│                            │
-                                                   │Oxidation│                  │
+                                                   │Concentration│               │
                                                              │Ignition│         │
 ────────────────────────────────────────────────────────────────────────────────
 Time: ████████████████████████████████████████████████████████████████ (6 units)
@@ -1996,46 +1996,129 @@ True Names serve two functions simultaneously:
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### True Names and the Six Stages of Casting
+### True Names as Components (Building Blocks)
 
-The True Name is the COMPLETE IDENTIFIER for a spell. The six stages are HOW YOU CONSTRUCT AND INVOKE that identifier:
+True Names are **component-based building blocks**, not complete spell identifiers. Each spell is assembled from multiple True Name components that combine and influence the casting process:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                    TRUE NAMES IN THE CASTING PROCESS                         │
+│                    TRUE NAMES AS COMPONENTS                                  │
 │                                                                             │
-│   ┌─────────────────────────────────────────────────────────────────────┐   │
-│   │                    TRUE NAME: 炎弾 (Fire Bolt)                      │   │
-│   │   The complete identifier for this specific spell phenomenon        │   │
-│   │   Exists in the universal language regardless of who casts it       │   │
-│   └─────────────────────────────────────────────────────────────────────┘   │
-│                                   │                                         │
-│                                   ▼                                         │
-│   HOW YOU "SPEAK" THE TRUE NAME (The Six Stages):                          │
+│   SPELL COMPOSITION (Building from Components):                             │
+│   ──────────────────────────────────────────────                            │
 │                                                                             │
-│   [Accumulation]    Gathering the "ink" to write with                      │
-│                     No True Name involvement yet - just fuel               │
+│   BASIC FIREBALL:                                                           │
+│   'fire' + 'sphere'                                                         │
+│   → A ball of fire that travels forward                                     │
 │                                                                             │
-│   [Attunement]      Tuning to the "frequency" the Name exists on           │
-│                     The True Name has an inherent frequency                │
+│   ERUPTING FIREBALL:                                                        │
+│   'fire' + 'sphere' + 'eruption'                                            │
+│   → A fireball that, on impact, erupts into a fountain of flames            │
 │                                                                             │
-│   [Manifestation]   WRITING the True Name into reality                     │
-│                     This is where True Name knowledge is critical          │
-│                     You are constructing the identifier                    │
+│   SEEKING FIRE ARROW:                                                       │
+│   'fire' + 'arrow' + 'pursuit'                                              │
+│   → A fire projectile that tracks the target                                │
 │                                                                             │
-│   [Manipulation]    Adding modifiers to the base Name                      │
-│                     Target, direction, scale - parameters                  │
+│   DEFENSIVE FIRE WALL:                                                      │
+│   'fire' + 'wall' + 'barrier'                                               │
+│   → A stationary curtain of defensive flames                                │
 │                                                                             │
-│   [Concentration]   Empowering the written Name                            │
-│                     How much energy backs the invocation                   │
-│                                                                             │
-│   [Ignition]        "Speaking" the completed Name - making it real         │
-│                     The moment of invocation                               │
+│   COMPONENT CATEGORIES:                                                     │
+│   ─────────────────────                                                     │
+│   • ELEMENT:    fire, water, lightning, earth, wind, light, shadow...      │
+│   • SHAPE:      sphere, arrow, wall, wave, beam, burst, field...           │
+│   • BEHAVIOR:   eruption, pursuit, barrier, pierce, scatter, bind...       │
+│   • MODIFIER:   enhanced, delayed, chained, area, focused...               │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**The Manifestation stage is where True Names are most critical** - you're literally constructing the identifier that tells reality "make this happen."
+### True Name Components Influence ALL Stages
+
+Unlike the original model where True Names were tied primarily to Manifestation, True Name components influence the entire casting process:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│             HOW TRUE NAME COMPONENTS INFLUENCE EACH STAGE                    │
+│                                                                             │
+│   EXAMPLE: 'fire' + 'sphere' + 'eruption' (Erupting Fireball)               │
+│                                                                             │
+│   [Accumulation]    No component influence - just gathering fuel            │
+│                     Pure mana, no shaping yet                               │
+│                                                                             │
+│   [Attunement]      ELEMENT COMPONENT ('fire') determines frequency         │
+│                     ────────────────────────────────────────────            │
+│                     Must tune mana to fire frequency                        │
+│                     Different element = different attunement target         │
+│                     'fire' + 'water' (steam?) = dual attunement             │
+│                                                                             │
+│   [Manifestation]   SHAPE COMPONENT ('sphere') determines form              │
+│                     ──────────────────────────────────────────              │
+│                     The manifested energy takes spherical form              │
+│                     'arrow' = pointed projectile, 'wall' = flat barrier     │
+│                     Most visible impact of True Name knowledge              │
+│                                                                             │
+│   [Manipulation]    BEHAVIOR COMPONENT ('eruption') determines path         │
+│                     ────────────────────────────────────────────            │
+│                     How the spell moves and what it does on arrival         │
+│                     'pursuit' = tracking, 'barrier' = stationary            │
+│                     'eruption' = explode outward on impact                  │
+│                                                                             │
+│   [Concentration]   MODIFIER COMPONENTS determine intensity                 │
+│                     ────────────────────────────────────────                │
+│                     'enhanced' = more power required, more effect           │
+│                     'focused' = concentrated energy, narrow impact          │
+│                                                                             │
+│   [Ignition]        All components combined = final spell release           │
+│                     The complete "word" is spoken                           │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Personal Variations and Conditional Branches
+
+Advanced casters develop personal variations - the same base components with different conditional branches:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    PERSONAL VARIATIONS (Branched True Names)                 │
+│                                                                             │
+│   MASTER MAGE'S "FIRE SPHERE":                                              │
+│   ────────────────────────────                                              │
+│                                                                             │
+│   Base components: 'fire' + 'sphere'                                        │
+│                        │                                                    │
+│                        ▼                                                    │
+│   ┌─────────────────────────────────────────────────────────┐               │
+│   │   OFFENSIVE BRANCH                                      │               │
+│   │   IF target == enemy:                                   │               │
+│   │   → Add 'eruption' + 'enhanced'                         │               │
+│   │   → Maximize damage, explosion on impact                │               │
+│   └─────────────────────────────────────────────────────────┘               │
+│                        │                                                    │
+│                        ▼                                                    │
+│   ┌─────────────────────────────────────────────────────────┐               │
+│   │   DEFENSIVE BRANCH                                      │               │
+│   │   IF target == self OR ally:                            │               │
+│   │   → Add 'barrier' + 'sustained'                         │               │
+│   │   → Creates protective heat shield, long duration       │               │
+│   └─────────────────────────────────────────────────────────┘               │
+│                        │                                                    │
+│                        ▼                                                    │
+│   ┌─────────────────────────────────────────────────────────┐               │
+│   │   UTILITY BRANCH                                        │               │
+│   │   IF target == environment:                             │               │
+│   │   → Add 'gentle' + 'sustained'                          │               │
+│   │   → Hovering light/heat source, campfire replacement    │               │
+│   └─────────────────────────────────────────────────────────┘               │
+│                                                                             │
+│   These variations are ONE spell in the caster's repertoire,                │
+│   with context-sensitive behavior based on intent and target.               │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Manifestation remains the most visible impact** of True Name knowledge - you're literally constructing the shape that the energy takes. But the other components determine what you're attuning to, how the spell moves and behaves, and how much power it requires.
 
 ### Levels of True Name Knowledge
 
@@ -2706,18 +2789,403 @@ The Arcadian setting creates rich story possibilities:
 
 ---
 
-## Part 15: Open Questions and Research Needed
+## Part 15: Spirit Ecology
 
-### Resolved Questions
+Spirits are fundamental to magic in Fantasia, yet they operate according to their own nature and lifecycle, independent of mortal spellcasting needs.
 
-| Question | Resolution |
-|----------|------------|
-| Stage 5 naming | **Concentration** - the volatile step of concentrating/mixing before trigger |
-| Can stages be skipped? | **Yes** - simple spells can skip or combine stages; higher skill = more overlap |
-| Stage proficiency sources | **All of**: natural talent, training, equipment, bloodline, environmental attunement |
-| NPC spellcasting | **AST architecture** - Cloud Agent builds personalized spell trees with style baked in |
+### Spirit Origins
 
-### Remaining Terminology Questions
+Spirits are born from mana itself - spontaneous generation when ambient mana reaches sufficient density:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    SPIRIT GENERATION                                         │
+│                                                                             │
+│   HIGH MANA DENSITY AREA:                                                   │
+│   ───────────────────────                                                   │
+│   • Ambient mana accumulates naturally in certain locations                 │
+│   • When density reaches threshold, lesser spirits spontaneously form       │
+│   • Type of spirit depends on local conditions:                             │
+│     → Near fire/heat sources → fire spirits                                 │
+│     → Near water → water spirits                                            │
+│     → In forests → wood/nature spirits                                      │
+│     → In caves → earth/stone spirits                                        │
+│                                                                             │
+│   FRAGILE EXISTENCE:                                                        │
+│   ──────────────────                                                        │
+│   • Spirits depend on ambient mana to survive                               │
+│   • If mana dries up, the spirit simply... disappears                       │
+│   • Not "death" exactly - more like evaporation                             │
+│   • This is why spirits are rare in low-mana areas (Arcadia, Omega)         │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Lesser Spirits (Butterfly-Level Intelligence)
+
+The most common spirits are lesser spirits - simple, ephemeral beings with limited cognition:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    LESSER SPIRITS                                            │
+│                                                                             │
+│   INTELLIGENCE:                                                             │
+│   ─────────────                                                             │
+│   • Primitive - comparable to a butterfly or simple insect                  │
+│   • Can follow only the most basic instructions                             │
+│   • No complex reasoning or planning                                        │
+│   • React to stimuli more than "think"                                      │
+│                                                                             │
+│   PERCEPTION:                                                               │
+│   ───────────                                                               │
+│   • Cannot see, hear, smell, or touch in the mortal sense                   │
+│   • Perceive ONLY through mana movements and flows                          │
+│   • "See" the world as currents and eddies of magical energy                │
+│   • This limits what instructions they can understand/follow                │
+│                                                                             │
+│   KNOWLEDGE (CRITICAL):                                                     │
+│   ─────────────────────                                                     │
+│   • FIXED AT BIRTH                                                          │
+│   • A lesser spirit knows all the True Names it will EVER know              │
+│     from the moment it comes into existence                                 │
+│   • Cannot learn, cannot grow, cannot acquire new capabilities              │
+│   • What you see is what you get                                            │
+│                                                                             │
+│   EXAMPLES:                                                                 │
+│   ─────────                                                                 │
+│   • A lesser fire spirit might know: 'fire' + 'warmth'                      │
+│   • A lesser water spirit might know: 'water' + 'flow'                      │
+│   • Simple, single-purpose beings                                           │
+│                                                                             │
+│   LIFESPAN:                                                                 │
+│   ─────────                                                                 │
+│   • Indefinite as long as ambient mana sustains them                        │
+│   • But fragile - mana disruption = disappearance                           │
+│   • No natural "death" - they persist or they don't                         │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Greater Spirit Emergence
+
+Greater Spirits are not "evolved" lesser spirits - they emerge through a collective process:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    GREATER SPIRIT EMERGENCE                                  │
+│                                                                             │
+│   THE TRIGGER:                                                              │
+│   ────────────                                                              │
+│   When a large number of lesser spirits of the SAME TYPE                    │
+│   occupy the same space...                                                  │
+│                                                                             │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │   🔥 🔥 🔥 🔥 🔥 🔥 🔥 🔥 🔥 🔥 🔥 🔥 🔥 🔥 🔥 🔥 🔥 🔥 🔥 🔥          │   │
+│   │                                                                     │   │
+│   │   Many lesser fire spirits gather in one location                   │   │
+│   │   (Perhaps around a volcanic vent, an eternal flame,                │   │
+│   │    or simply a high-mana fire-aspected area)                        │   │
+│   │                                                                     │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│                                   │                                         │
+│                                   ▼                                         │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │   EMERGENCE EVENT                                                   │   │
+│   │                                                                     │   │
+│   │   • All lesser spirits are CONSUMED / MERGED                        │   │
+│   │   • No individual lesser spirit "becomes" the Greater Spirit        │   │
+│   │   • They are all used up in the process                             │   │
+│   │   • Something NEW emerges from the collective                       │   │
+│   │                                                                     │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│                                   │                                         │
+│                                   ▼                                         │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │   🔥🔥🔥                                                            │   │
+│   │   GREATER FIRE SPIRIT                                               │   │
+│   │   • Higher intelligence                                             │   │
+│   │   • More True Names known                                           │   │
+│   │   • Capacity to grow further                                        │   │
+│   │                                                                     │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Greater Spirits (Higher Intelligence)
+
+Greater Spirits are qualitatively different from their lesser counterparts:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    GREATER SPIRITS                                           │
+│                                                                             │
+│   INTELLIGENCE:                                                             │
+│   ─────────────                                                             │
+│   • Significantly higher than lesser spirits                                │
+│   • Capable of complex reasoning and planning                               │
+│   • Can communicate meaningfully with mortals                               │
+│   • Have preferences, goals, and personalities                              │
+│                                                                             │
+│   KNOWLEDGE:                                                                │
+│   ──────────                                                                │
+│   • Start with more True Names (accumulated from merged lessers?)           │
+│   • CAN GROW over time                                                      │
+│   • Growth method: consuming ambient mana from ground/atmosphere            │
+│   • Growth rate: SLOW - measured in years or decades, not days              │
+│   • But unlike lessers, they're not static                                  │
+│                                                                             │
+│   SELF-DEFINED ROLES:                                                       │
+│   ────────────────────                                                      │
+│   Greater Spirits often choose to take on responsibilities:                 │
+│                                                                             │
+│   • Guardian of local fauna (protecting animals in an area)                 │
+│   • Caretaker of a region (maintaining the health of a forest, lake, etc.)  │
+│   • Protector of a sacred site                                              │
+│   • Patron of a particular species or phenomenon                            │
+│                                                                             │
+│   This isn't assigned to them - they CHOOSE it                              │
+│   Perhaps as a way of defining their identity and purpose                   │
+│                                                                             │
+│   RELATIONSHIP WITH MORTALS:                                                │
+│   ───────────────────────────                                               │
+│   • Can form meaningful contracts with mages                                │
+│   • May demand specific terms or offerings                                  │
+│   • Some are helpful, some are indifferent, some are territorial            │
+│   • Their personality affects the relationship                              │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Guardian Spirits (Regional Managers)
+
+Some Greater Spirits achieve a special status as Guardian Spirits - foundational to Fantasia's governance:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    GUARDIAN SPIRITS                                          │
+│                                                                             │
+│   EXAMPLES:                                                                 │
+│   ─────────                                                                 │
+│   • Guardian of the Forest                                                  │
+│   • Guardian of the Mountain                                                │
+│   • Guardian of the Lake                                                    │
+│   • Guardian of the Valley                                                  │
+│   • (One per significant geographic feature/region)                         │
+│                                                                             │
+│   ROLE IN FANTASIA:                                                         │
+│   ──────────────────                                                        │
+│   Guardian Spirits are the FOUNDATIONAL ADMINISTRATORS of the land:        │
+│                                                                             │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │   GUARDIAN SPIRIT (Highest Authority for Region)                    │   │
+│   │   ─────────────────────────────────────────────                     │   │
+│   │   • Decides who can build where                                     │   │
+│   │   • Grants land and resource rights                                 │   │
+│   │   • Sets boundaries and permissions                                 │   │
+│   │   • The land itself has representation through them                 │   │
+│   │                                                                     │   │
+│   │                          │                                          │   │
+│   │                          ▼ (delegates to)                           │   │
+│   │                                                                     │   │
+│   │   MORTAL ADMINISTRATORS (Mayors, Lords, Village Elders)             │   │
+│   │   ─────────────────────────────────────────────────                 │   │
+│   │   • Manage within their PERMITTED areas                             │   │
+│   │   • Authority is GRANTED, not inherent                              │   │
+│   │   • Can be revoked if terms are violated                            │   │
+│   │   • Handle day-to-day governance                                    │   │
+│   │                                                                     │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│   THIS IS NOT "DIVINE RIGHT OF KINGS":                                      │
+│   ─────────────────────────────────────                                     │
+│   • The Guardian is literally present and active                            │
+│   • You don't claim the land - the land (via Guardian) permits you          │
+│   • Violate the terms? The Guardian knows and can respond                   │
+│   • This creates a fundamentally different political structure              │
+│                                                                             │
+│   PRACTICAL IMPLICATIONS:                                                   │
+│   ────────────────────────                                                  │
+│   • Want to build a house in the forest? Ask the Forest Guardian            │
+│   • Want to mine the mountain? Negotiate with the Mountain Guardian         │
+│   • Want to dam the river? The Lake/River Guardian has opinions             │
+│   • Expansion requires negotiation, not just conquest                       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Malicious Spirits (Corruption Path)
+
+Both lesser and Greater Spirits have malicious varieties that arise through corruption:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    MALICIOUS SPIRIT CORRUPTION                               │
+│                                                                             │
+│   CAUSE: MIASMA / MANA CORRUPTION                                           │
+│   ───────────────────────────────                                           │
+│   • NOT caused by excessive mana (that creates monsters in creatures)       │
+│   • Caused by MIASMA - corrupted or tainted mana                            │
+│   • Degrades the spirit's fundamental nature                                │
+│   • Can happen at birth (born malicious) or through mutation                │
+│                                                                             │
+│   NORMAL SPIRIT               →    MALICIOUS SPIRIT                         │
+│   ─────────────                    ────────────────                         │
+│   Ethereal existence          →    Manifests physically                     │
+│   Perceives mana flows        →    Gains physical senses                    │
+│   Benign or neutral           →    Aggressive toward people/animals         │
+│   Fixed/slow knowledge gain   →    Can CONSUME other spirits for power      │
+│                                                                             │
+│   THE CONSUMPTION ABILITY (CRITICAL):                                       │
+│   ────────────────────────────────────                                      │
+│   Normal spirits cannot consume other spirits                               │
+│   Malicious spirits CAN - and this is their primary threat:                 │
+│                                                                             │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │   Malicious spirit appears                                          │   │
+│   │           │                                                         │   │
+│   │           ▼                                                         │   │
+│   │   Consumes nearby spirits                                           │   │
+│   │   (Lesser spirits especially vulnerable)                            │   │
+│   │           │                                                         │   │
+│   │           ▼                                                         │   │
+│   │   GAINS THEIR TRUE NAMES                                            │   │
+│   │   (Unlike normal Greater Spirits, this is FAST)                     │   │
+│   │           │                                                         │   │
+│   │           ▼                                                         │   │
+│   │   Grows stronger, consumes more                                     │   │
+│   │           │                                                         │   │
+│   │           ▼                                                         │   │
+│   │   Becomes regional threat                                           │   │
+│   │           │                                                         │   │
+│   │           ▼                                                         │   │
+│   │   Potentially threatens Guardian Spirits?                           │   │
+│   │                                                                     │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│   PHYSICAL MANIFESTATION (DEGRADATION):                                     │
+│   ──────────────────────────────────────                                    │
+│   Malicious spirits manifest more physically than normal spirits:           │
+│                                                                             │
+│   • Gain physical creature needs (hunger? territory? aggression?)           │
+│   • These impulses they CANNOT CONTROL                                      │
+│   • Becoming physical is a DEGRADATION of spiritual nature                  │
+│   • They're becoming something other than "spirit"                          │
+│   • Almost like proto-monsters                                              │
+│                                                                             │
+│   SIMILARITY TO MONSTERS:                                                   │
+│   ───────────────────────                                                   │
+│   │ Monster Creation          │ Spirit Corruption         │                 │
+│   │ ─────────────────         │ ──────────────────        │                 │
+│   │ Creature + too much mana  │ Spirit + miasma           │                 │
+│   │ Physical mutation         │ Physical manifestation    │                 │
+│   │ Loss of original nature   │ Degradation of nature     │                 │
+│   │ Aggressive behavior       │ Aggressive behavior       │                 │
+│   │                           │                           │                 │
+│   │ Similar outcomes, different causes                    │                 │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Spirit Hierarchy Summary
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    COMPLETE SPIRIT HIERARCHY                                 │
+│                                                                             │
+│   AMBIENT MANA                                                              │
+│        │                                                                    │
+│        ▼ (spontaneous generation)                                           │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │   LESSER SPIRITS                                                    │   │
+│   │   • Butterfly-level intelligence                                    │   │
+│   │   • Fixed True Names (cannot learn)                                 │   │
+│   │   • Perceive only mana movements                                    │   │
+│   │   • Fragile - disappear if mana dries up                            │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│        │                              │                                     │
+│        │ (many gather,                │ (miasma corruption)                 │
+│        │  same type)                  ▼                                     │
+│        ▼                         ┌─────────────────┐                        │
+│   ┌─────────────────┐            │ MALICIOUS       │                        │
+│   │ GREATER SPIRITS │            │ LESSER SPIRITS  │                        │
+│   │ • Higher intel  │            │ • Can consume   │                        │
+│   │ • Can grow slow │            │   other spirits │                        │
+│   │ • Choose roles  │            │ • Physical form │                        │
+│   └─────────────────┘            └─────────────────┘                        │
+│        │                              │                                     │
+│        │ (age, power,                 │ (consume many)                      │
+│        │  regional role)              ▼                                     │
+│        ▼                         ┌─────────────────┐                        │
+│   ┌─────────────────┐            │ MALICIOUS       │                        │
+│   │ GUARDIAN        │            │ GREATER SPIRITS │                        │
+│   │ SPIRITS         │◄───────────│ • Major threat  │                        │
+│   │ • Regional mgmt │  (threat)  │ • Many True     │                        │
+│   │ • Land authority│            │   Names stolen  │                        │
+│   └─────────────────┘            └─────────────────┘                        │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Implications for Spirit Magic
+
+This ecology affects how spirit magic (Part 6) works in practice:
+
+| Spirit Type | Contract Viability | Capabilities | Limitations |
+|-------------|-------------------|--------------|-------------|
+| **Lesser Spirit** | Easy to contract | Simple, single-element spells | Fixed knowledge, basic instructions only |
+| **Greater Spirit** | Negotiation required | Complex, multi-component spells | Has preferences, may demand terms |
+| **Guardian Spirit** | Rare, significant | Regional-scale effects? | Tied to land, may refuse personal service |
+| **Malicious Spirit** | DANGEROUS | Varied (stolen True Names) | Uncontrollable, will betray |
+
+**Progression Path for Spirit Mages:**
+```
+Apprentice    → Contract with lesser spirits    → Limited but reliable
+Journeyman    → Negotiate with Greater Spirits  → More power, more conditions
+Master        → Relationship with Guardians?    → Regional influence, obligations
+```
+
+### Narrative Opportunities
+
+| Scenario | Story Possibility |
+|----------|-------------------|
+| **Spirit extinction event** | Mana dries up in an area - all lesser spirits vanish, Greater Spirits weaken |
+| **Malicious spirit hunting** | Something's consuming forest spirits - escalating threat |
+| **Guardian conflict** | Two Guardians disagree about borders - mortals caught in between |
+| **Guardian corruption** | What if a Guardian Spirit becomes malicious? Regional catastrophe |
+| **Spirit emergence** | Witness or facilitate the birth of a new Greater Spirit |
+| **Land negotiation** | Convince a Guardian to permit settlement/mining/building |
+| **Lost Guardian** | A region's Guardian was destroyed long ago - lawless land |
+
+### Open Questions on Spirit Ecology
+
+Several aspects remain to be developed:
+
+1. **What exactly is miasma?**
+   - Corrupted mana? A separate substance?
+   - Where does it come from?
+   - Can it be cleansed or purified?
+
+2. **Guardian Spirit succession:**
+   - What happens when a Guardian is destroyed?
+   - Does a new one emerge naturally? How long does it take?
+   - What is the region like without a Guardian?
+
+3. **The emergence trigger:**
+   - What causes lesser spirits to gather and merge?
+   - Is it voluntary or automatic?
+   - Do lesser spirits "know" they'll cease to exist as individuals?
+
+4. **Physical manifestation paradox:**
+   - Why is becoming physical a degradation?
+   - Is the spiritual form inherently "higher"?
+   - What does this imply about mortality and physicality?
+
+---
+
+## Part 16: Open Questions and Research Needed
+
+### Terminology Questions
 
 1. **Should stages have in-world names?**
    - Academic mages might use formal terms
@@ -2725,38 +3193,28 @@ The Arcadian setting creates rich story possibilities:
    - Different cultures would have different names
    - Fantasia vs. Arcadia vs. Omega terminology variations?
 
-### Remaining Mechanical Questions
+### Mechanical Questions
 
-2. **How does this interact with the True Names system?**
-   - Manifestation seems to be where True Names are most relevant
-   - Do other stages have True Name components?
-   - Is Attunement related to frequency components in True Names?
-
-3. **Spirit magic details**:
-   - How do spirits "learn" new spells?
-   - Can a spirit's spell repertoire expand over time?
-   - What determines which stages a spirit can handle?
-
-4. **Interruption granularity**:
+2. **Interruption granularity**:
    - Can you interrupt MID-stage or only at boundaries?
    - Do different interruption types affect different stages?
    - Physical interruption vs. magical counter-spell vs. environmental disruption?
 
-### Remaining Design Questions
+### Design Questions
 
-5. **How granular should the game track stages?**
+3. **How granular should the game track stages?**
    - Per-spell stage timings built into AST by Cloud Agent
    - General stage proficiencies as character attributes
    - Environmental modifiers applied at runtime
    - Event Agent only needs coarse timing (short/medium/long)
 
-6. **Player control model**:
+4. **Player control model**:
    - Players trigger spells (not individual stages)
    - AST handles stage execution automatically
    - Advanced players might get "held charge" options (pause before Ignition)
    - Counter-magic timing windows at stage boundaries
 
-7. **Learning new spells**:
+5. **Learning new spells**:
    - How does the Cloud Agent acquire new spell templates?
    - Is it from observing other casters? Reading tomes? Divine revelation?
    - How does this tie into the True Names system?
