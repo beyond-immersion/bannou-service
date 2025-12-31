@@ -397,8 +397,8 @@ public class NativeEventConsumerBackendTests
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, Func<TestEvent, CancellationToken, Task>, CancellationToken>(
-                (t, handler, ct) => capturedHandler = handler)
+            .Callback<string, Func<TestEvent, CancellationToken, Task>, string?, CancellationToken>(
+                (t, handler, exchange, ct) => capturedHandler = handler)
             .ReturnsAsync(mockSubscription.Object);
 
         // Setup service provider to return a scope
@@ -441,8 +441,8 @@ public class NativeEventConsumerBackendTests
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
                 It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, Func<TestEvent, CancellationToken, Task>, CancellationToken>(
-                (t, handler, ct) => capturedHandler = handler)
+            .Callback<string, Func<TestEvent, CancellationToken, Task>, string?, CancellationToken>(
+                (t, handler, exchange, ct) => capturedHandler = handler)
             .ReturnsAsync(mockSubscription.Object);
 
         // Setup service provider to return a scope

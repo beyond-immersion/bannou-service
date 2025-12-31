@@ -225,7 +225,7 @@ public sealed class SipConnectionCredentials
             Password = credentials.Password,
             Domain = credentials.Domain,
             ConferenceUri = conferenceUri,
-            ExpiresAt = credentials.Expires_at
+            ExpiresAt = credentials.ExpiresAt
         };
     }
 }

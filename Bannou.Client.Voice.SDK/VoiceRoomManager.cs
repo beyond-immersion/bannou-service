@@ -377,9 +377,9 @@ public sealed class VoiceRoomManager : IDisposable
             var evt = BannouJson.Deserialize<VoiceRoomStateEvent>(json);
             if (evt == null) return;
 
-            _currentRoomId = evt.Room_id;
+            _currentRoomId = evt.RoomId;
             _currentTier = evt.Tier;
-            _stunServers = evt.Stun_servers?.ToList() ?? new List<string>();
+            _stunServers = evt.StunServers?.ToList() ?? new List<string>();
 
             // If P2P mode, connect to all existing peers
             if (evt.Tier == VoiceRoomStateEventTier.P2p)
@@ -401,14 +401,14 @@ public sealed class VoiceRoomManager : IDisposable
         try
         {
             var evt = BannouJson.Deserialize<VoicePeerJoinedEvent>(json);
-            if (evt == null || evt.Room_id != _currentRoomId) return;
+            if (evt == null || evt.RoomId != _currentRoomId) return;
 
             if (_currentTier == VoiceRoomStateEventTier.P2p)
             {
                 _ = ConnectToPeerAsync(evt.Peer);
             }
 
-            OnPeerJoined?.Invoke(evt.Peer.Peer_session_id, evt.Peer.Display_name);
+            OnPeerJoined?.Invoke(evt.Peer.PeerSessionId, evt.Peer.DisplayName);
         }
         catch
         {
@@ -421,14 +421,14 @@ public sealed class VoiceRoomManager : IDisposable
         try
         {
             var evt = BannouJson.Deserialize<VoicePeerLeftEvent>(json);
-            if (evt == null || evt.Room_id != _currentRoomId) return;
+            if (evt == null || evt.RoomId != _currentRoomId) return;
 
-            if (_peers.TryRemove(evt.Peer_session_id, out var peer))
+            if (_peers.TryRemove(evt.PeerSessionId, out var peer))
             {
                 peer.Dispose();
             }
 
-            OnPeerLeft?.Invoke(evt.Peer_session_id);
+            OnPeerLeft?.Invoke(evt.PeerSessionId);
         }
         catch
         {
@@ -441,12 +441,12 @@ public sealed class VoiceRoomManager : IDisposable
         try
         {
             var evt = BannouJson.Deserialize<VoicePeerUpdatedEvent>(json);
-            if (evt == null || evt.Room_id != _currentRoomId) return;
+            if (evt == null || evt.RoomId != _currentRoomId) return;
 
             // Add any new ICE candidates from the peer
-            if (evt.Peer.Ice_candidates != null && _peers.TryGetValue(evt.Peer.Peer_session_id, out var peer))
+            if (evt.Peer.IceCandidates != null && _peers.TryGetValue(evt.Peer.PeerSessionId, out var peer))
             {
-                foreach (var candidate in evt.Peer.Ice_candidates)
+                foreach (var candidate in evt.Peer.IceCandidates)
                 {
                     peer.AddIceCandidate(candidate);
                 }
@@ -463,7 +463,7 @@ public sealed class VoiceRoomManager : IDisposable
         try
         {
             var evt = BannouJson.Deserialize<VoiceTierUpgradeEvent>(json);
-            if (evt == null || evt.Room_id != _currentRoomId) return;
+            if (evt == null || evt.RoomId != _currentRoomId) return;
 
             _currentTier = VoiceRoomStateEventTier.Scaled;
 
@@ -471,10 +471,10 @@ public sealed class VoiceRoomManager : IDisposable
             _ = CloseAllPeersAsync();
 
             // Fire event before attempting connection
-            OnTierUpgraded?.Invoke(evt.Rtp_server_uri);
+            OnTierUpgraded?.Invoke(evt.RtpServerUri);
 
             // Attempt automatic tier transition if we have credentials
-            if (evt.Sip_credentials != null && _scaledConnectionFactory != null)
+            if (evt.SipCredentials != null && _scaledConnectionFactory != null)
             {
                 _ = TransitionToScaledTierAsync(evt);
             }
@@ -487,7 +487,7 @@ public sealed class VoiceRoomManager : IDisposable
 
     private async Task TransitionToScaledTierAsync(VoiceTierUpgradeEvent evt)
     {
-        if (!_currentRoomId.HasValue || evt.Sip_credentials == null)
+        if (!_currentRoomId.HasValue || evt.SipCredentials == null)
         {
             return;
         }
@@ -528,17 +528,17 @@ public sealed class VoiceRoomManager : IDisposable
             _scaledConnection.IsMuted = IsMuted;
 
             // Construct conference URI from domain and room ID
-            var conferenceUri = $"sip:room-{evt.Room_id}@{evt.Sip_credentials.Domain}";
+            var conferenceUri = $"sip:room-{evt.RoomId}@{evt.SipCredentials.Domain}";
 
             // Build SIP credentials from event
             var sipCredentials = SipConnectionCredentials.FromEvent(
-                evt.Sip_credentials,
+                evt.SipCredentials,
                 conferenceUri);
 
             // Connect to scaled infrastructure
             var connected = await _scaledConnection.ConnectAsync(
                 sipCredentials,
-                evt.Rtp_server_uri);
+                evt.RtpServerUri);
 
             if (!connected)
             {
@@ -560,7 +560,7 @@ public sealed class VoiceRoomManager : IDisposable
         try
         {
             var evt = BannouJson.Deserialize<VoiceRoomClosedEvent>(json);
-            if (evt == null || evt.Room_id != _currentRoomId) return;
+            if (evt == null || evt.RoomId != _currentRoomId) return;
 
             _ = CloseAllPeersAsync();
             _ = CloseScaledConnectionAsync();
@@ -581,14 +581,14 @@ public sealed class VoiceRoomManager : IDisposable
 
     private async Task ConnectToPeerAsync(VoicePeerInfo peerInfo)
     {
-        var peerSessionId = peerInfo.Peer_session_id;
+        var peerSessionId = peerInfo.PeerSessionId;
 
         if (_peers.ContainsKey(peerSessionId))
         {
             return; // Already connected
         }
 
-        var peer = _peerFactory(peerSessionId, peerInfo.Display_name, _stunServers);
+        var peer = _peerFactory(peerSessionId, peerInfo.DisplayName, _stunServers);
         _peers[peerSessionId] = peer;
 
         // Wire up events
@@ -612,12 +612,12 @@ public sealed class VoiceRoomManager : IDisposable
         try
         {
             // Set remote SDP offer from the peer
-            await peer.SetRemoteDescriptionAsync(peerInfo.Sdp_offer, isOffer: true);
+            await peer.SetRemoteDescriptionAsync(peerInfo.SdpOffer, isOffer: true);
 
             // Add any ICE candidates they've already gathered
-            if (peerInfo.Ice_candidates != null)
+            if (peerInfo.IceCandidates != null)
             {
-                foreach (var candidate in peerInfo.Ice_candidates)
+                foreach (var candidate in peerInfo.IceCandidates)
                 {
                     peer.AddIceCandidate(candidate);
                 }
