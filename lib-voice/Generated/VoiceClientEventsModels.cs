@@ -42,8 +42,7 @@ public partial class VoiceRoomStateEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoiceRoomStateEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "voice.room_state";
 
     /// <summary>
     /// Voice room ID
@@ -108,8 +107,7 @@ public partial class VoicePeerJoinedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoicePeerJoinedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "voice.peer_joined";
 
     /// <summary>
     /// Voice room ID
@@ -146,8 +144,7 @@ public partial class VoicePeerLeftEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoicePeerLeftEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "voice.peer_left";
 
     /// <summary>
     /// Voice room ID
@@ -191,8 +188,7 @@ public partial class VoicePeerUpdatedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoicePeerUpdatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "voice.peer_updated";
 
     /// <summary>
     /// Voice room ID
@@ -225,8 +221,7 @@ public partial class VoiceTierUpgradeEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoiceTierUpgradeEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "voice.tier_upgrade";
 
     /// <summary>
     /// Voice room ID
@@ -286,8 +281,7 @@ public partial class VoiceRoomClosedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoiceRoomClosedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "voice.room_closed";
 
     /// <summary>
     /// Voice room ID that was closed
@@ -405,15 +399,6 @@ public partial class SipCredentials
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum VoiceRoomStateEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"voice.room_state")]
-    Voice_room_state = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum VoiceRoomStateEventTier
 {
 
@@ -441,42 +426,6 @@ public enum VoiceRoomStateEventCodec
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum VoicePeerJoinedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"voice.peer_joined")]
-    Voice_peer_joined = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum VoicePeerLeftEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"voice.peer_left")]
-    Voice_peer_left = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum VoicePeerUpdatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"voice.peer_updated")]
-    Voice_peer_updated = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum VoiceTierUpgradeEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"voice.tier_upgrade")]
-    Voice_tier_upgrade = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum VoiceTierUpgradeEventPreviousTier
 {
 
@@ -491,15 +440,6 @@ public enum VoiceTierUpgradeEventNewTier
 
     [System.Runtime.Serialization.EnumMember(Value = @"scaled")]
     Scaled = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum VoiceRoomClosedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"voice.room_closed")]
-    Voice_room_closed = 0,
 
 }
 

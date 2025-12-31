@@ -42,7 +42,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["asset.upload.complete"]
+          default: "asset.upload.complete"
           description: Fixed event type identifier
         uploadId:
           type: string
@@ -92,7 +92,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["asset.processing.complete"]
+          default: "asset.processing.complete"
           description: Fixed event type identifier
         assetId:
           type: string
@@ -131,7 +131,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["asset.processing.failed"]
+          default: "asset.processing.failed"
           description: Fixed event type identifier
         assetId:
           type: string
@@ -172,7 +172,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["asset.bundle.validation.complete"]
+          default: "asset.bundle.validation.complete"
           description: Fixed event type identifier
         uploadId:
           type: string
@@ -215,7 +215,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["asset.bundle.validation.failed"]
+          default: "asset.bundle.validation.failed"
           description: Fixed event type identifier
         uploadId:
           type: string
@@ -242,7 +242,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["asset.bundle.creation.complete"]
+          default: "asset.bundle.creation.complete"
           description: Fixed event type identifier
         bundleId:
           type: string
@@ -293,7 +293,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["asset.ready"]
+          default: "asset.ready"
           description: Fixed event type identifier
         assetId:
           type: string

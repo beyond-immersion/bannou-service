@@ -143,8 +143,7 @@ components:
 
         eventName:
           type: string
-          enum:
-            - session.shortcut_published
+          default: "session.shortcut_published"
           description: Fixed event type identifier.
 
         sessionId:
@@ -180,8 +179,7 @@ components:
 
         eventName:
           type: string
-          enum:
-            - session.shortcut_revoked
+          default: "session.shortcut_revoked"
           description: Fixed event type identifier.
 
         sessionId:

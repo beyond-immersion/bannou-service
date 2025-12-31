@@ -43,7 +43,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["voice.room_state"]
+          default: "voice.room_state"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -97,7 +97,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["voice.peer_joined"]
+          default: "voice.peer_joined"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -126,7 +126,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["voice.peer_left"]
+          default: "voice.peer_left"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -160,7 +160,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["voice.peer_updated"]
+          default: "voice.peer_updated"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -194,7 +194,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["voice.tier_upgrade"]
+          default: "voice.tier_upgrade"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -240,7 +240,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["voice.room_closed"]
+          default: "voice.room_closed"
           description: Fixed event type identifier
         roomId:
           type: string

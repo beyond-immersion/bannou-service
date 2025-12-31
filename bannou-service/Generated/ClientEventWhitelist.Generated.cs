@@ -24,33 +24,6 @@ public static class ClientEventWhitelist
     /// </summary>
     private static readonly HashSet<string> ValidEventNames = new(StringComparer.OrdinalIgnoreCase)
     {
-        "asset.bundle.creation.complete",
-        "asset.bundle.validation.complete",
-        "asset.bundle.validation.failed",
-        "asset.processing.complete",
-        "asset.processing.failed",
-        "asset.ready",
-        "asset.upload.complete",
-        "connect.capability_manifest",
-        "connect.disconnect_notification",
-        "game_session.action_result",
-        "game_session.chat_received",
-        "game_session.player_joined",
-        "game_session.player_kicked",
-        "game_session.player_left",
-        "game_session.state_changed",
-        "game_session.state_updated",
-        "permissions.session_capabilities",
-        "session.shortcut_published",
-        "session.shortcut_revoked",
-        "system.error",
-        "system.notification",
-        "voice.peer_joined",
-        "voice.peer_left",
-        "voice.peer_updated",
-        "voice.room_closed",
-        "voice.room_state",
-        "voice.tier_upgrade",
     };
 
     /// <summary>

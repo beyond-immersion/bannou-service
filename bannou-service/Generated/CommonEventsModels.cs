@@ -40,8 +40,7 @@ public partial class ServiceRegistrationEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ServiceRegistrationEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "service.registration";
 
     /// <summary>
     /// Unique GUID identifying this bannou instance (for log correlation/debugging)
@@ -198,8 +197,7 @@ public partial class ServiceHeartbeatEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ServiceHeartbeatEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "service.heartbeat";
 
     /// <summary>
     /// Unique GUID identifying this bannou instance (for log correlation/debugging)
@@ -355,8 +353,7 @@ public partial class ServiceErrorEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ServiceErrorEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "service.error";
 
     /// <summary>
     /// Unique GUID identifying this plugin instance (for log correlation/debugging)
@@ -467,8 +464,7 @@ public partial class FullServiceMappingsEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public FullServiceMappingsEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "orchestrator.full_service_mappings";
 
     /// <summary>
     /// Complete dictionary of serviceName -&gt; appId mappings
@@ -521,8 +517,7 @@ public partial class SessionConnectedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SessionConnectedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "session.connected";
 
     /// <summary>
     /// Session ID that just connected via WebSocket
@@ -579,8 +574,7 @@ public partial class SessionDisconnectedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SessionDisconnectedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "session.disconnected";
 
     /// <summary>
     /// Session ID that disconnected
@@ -635,8 +629,7 @@ public partial class SessionReconnectedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SessionReconnectedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "session.reconnected";
 
     /// <summary>
     /// Session ID that reconnected
@@ -679,15 +672,6 @@ public partial class SessionReconnectedEvent : BaseServiceEvent
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ServiceRegistrationEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"service.registration")]
-    Service_registration = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ServiceEndpointMethod
 {
 
@@ -705,15 +689,6 @@ public enum ServiceEndpointMethod
 
     [System.Runtime.Serialization.EnumMember(Value = @"PATCH")]
     PATCH = 4,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ServiceHeartbeatEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"service.heartbeat")]
-    Service_heartbeat = 0,
 
 }
 
@@ -754,15 +729,6 @@ public enum ServiceStatusStatus
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ServiceErrorEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"service.error")]
-    Service_error = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ServiceErrorEventSeverity
 {
 
@@ -777,42 +743,6 @@ public enum ServiceErrorEventSeverity
 
     [System.Runtime.Serialization.EnumMember(Value = @"critical")]
     Critical = 3,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum FullServiceMappingsEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"orchestrator.full_service_mappings")]
-    Orchestrator_full_service_mappings = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SessionConnectedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"session.connected")]
-    Session_connected = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SessionDisconnectedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"session.disconnected")]
-    Session_disconnected = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SessionReconnectedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"session.reconnected")]
-    Session_reconnected = 0,
 
 }
 

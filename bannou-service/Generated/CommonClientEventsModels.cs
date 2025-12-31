@@ -40,8 +40,7 @@ public partial class CapabilityManifestEvent : BaseClientEvent
     /// Fixed event type identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CapabilityManifestEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "connect.capability_manifest";
 
     /// <summary>
     /// Session ID this manifest applies to
@@ -138,8 +137,7 @@ public partial class DisconnectNotificationEvent : BaseClientEvent
     /// Fixed event type identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DisconnectNotificationEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "connect.disconnect_notification";
 
     /// <summary>
     /// Token for reconnecting to the same session (valid for 5 minutes)
@@ -186,8 +184,7 @@ public partial class SystemErrorEvent : BaseClientEvent
     /// Fixed event type identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SystemErrorEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "system.error";
 
     /// <summary>
     /// Machine-readable error code (e.g., "SERVICE_UNAVAILABLE", "RATE_LIMITED")
@@ -231,8 +228,7 @@ public partial class SessionCapabilitiesEvent : BaseClientEvent
     /// Fixed event type identifier (internal, not forwarded to client)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SessionCapabilitiesEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "permissions.session_capabilities";
 
     /// <summary>
     /// Session ID these capabilities apply to
@@ -269,8 +265,7 @@ public partial class SystemNotificationEvent : BaseClientEvent
     /// Fixed event type identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SystemNotificationEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "system.notification";
 
     /// <summary>
     /// Type of notification
@@ -321,8 +316,7 @@ public partial class ShortcutPublishedEvent : BaseClientEvent
     /// Fixed event type identifier.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ShortcutPublishedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "session.shortcut_published";
 
     /// <summary>
     /// Target session for this shortcut.
@@ -360,8 +354,7 @@ public partial class ShortcutRevokedEvent : BaseClientEvent
     /// Fixed event type identifier.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ShortcutRevokedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "session.shortcut_revoked";
 
     /// <summary>
     /// Target session for revocation.
@@ -537,15 +530,6 @@ public partial class SessionShortcutMetadata
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum CapabilityManifestEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"connect.capability_manifest")]
-    Connect_capability_manifest = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ClientCapabilityEntryMethod
 {
 
@@ -554,42 +538,6 @@ public enum ClientCapabilityEntryMethod
 
     [System.Runtime.Serialization.EnumMember(Value = @"POST")]
     POST = 1,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum DisconnectNotificationEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"connect.disconnect_notification")]
-    Connect_disconnect_notification = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SystemErrorEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"system.error")]
-    System_error = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SessionCapabilitiesEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"permissions.session_capabilities")]
-    Permissions_session_capabilities = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SystemNotificationEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"system.notification")]
-    System_notification = 0,
 
 }
 
@@ -608,24 +556,6 @@ public enum SystemNotificationEventNotificationType
 
     [System.Runtime.Serialization.EnumMember(Value = @"announcement")]
     Announcement = 3,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ShortcutPublishedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"session.shortcut_published")]
-    Session_shortcut_published = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ShortcutRevokedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"session.shortcut_revoked")]
-    Session_shortcut_revoked = 0,
 
 }
 

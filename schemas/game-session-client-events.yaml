@@ -40,7 +40,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["game_session.state_changed"]
+          default: "game_session.state_changed"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -84,7 +84,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["game_session.player_joined"]
+          default: "game_session.player_joined"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -115,7 +115,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["game_session.player_left"]
+          default: "game_session.player_left"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -156,7 +156,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["game_session.player_kicked"]
+          default: "game_session.player_kicked"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -203,7 +203,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["game_session.chat_received"]
+          default: "game_session.chat_received"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -254,7 +254,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["game_session.state_updated"]
+          default: "game_session.state_updated"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -296,7 +296,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["game_session.action_result"]
+          default: "game_session.action_result"
           description: Fixed event type identifier
         sessionId:
           type: string

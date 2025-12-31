@@ -42,8 +42,7 @@ public partial class AssetUploadCompleteEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AssetUploadCompleteEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "asset.upload.complete";
 
     /// <summary>
     /// Correlates with the upload request
@@ -102,8 +101,7 @@ public partial class AssetProcessingCompleteEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AssetProcessingCompleteEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "asset.processing.complete";
 
     /// <summary>
     /// ID of the asset that was processed
@@ -153,8 +151,7 @@ public partial class AssetProcessingFailedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AssetProcessingFailedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "asset.processing.failed";
 
     /// <summary>
     /// ID of the asset that failed processing
@@ -201,8 +198,7 @@ public partial class BundleValidationCompleteEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BundleValidationCompleteEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "asset.bundle.validation.complete";
 
     /// <summary>
     /// Correlates with the bundle upload request
@@ -253,8 +249,7 @@ public partial class BundleValidationFailedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BundleValidationFailedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "asset.bundle.validation.failed";
 
     /// <summary>
     /// Correlates with the bundle upload request
@@ -282,8 +277,7 @@ public partial class BundleCreationCompleteEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BundleCreationCompleteEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "asset.bundle.creation.complete";
 
     /// <summary>
     /// ID of the created bundle
@@ -344,8 +338,7 @@ public partial class AssetReadyEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AssetReadyEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "asset.ready";
 
     /// <summary>
     /// ID of the asset that is now ready
@@ -599,69 +592,6 @@ public enum ValidationErrorCode
 
     [System.Runtime.Serialization.EnumMember(Value = @"MISSING_DEPENDENCY")]
     MISSING_DEPENDENCY = 7,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AssetUploadCompleteEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"asset.upload.complete")]
-    Asset_upload_complete = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AssetProcessingCompleteEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"asset.processing.complete")]
-    Asset_processing_complete = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AssetProcessingFailedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"asset.processing.failed")]
-    Asset_processing_failed = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum BundleValidationCompleteEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"asset.bundle.validation.complete")]
-    Asset_bundle_validation_complete = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum BundleValidationFailedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"asset.bundle.validation.failed")]
-    Asset_bundle_validation_failed = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum BundleCreationCompleteEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"asset.bundle.creation.complete")]
-    Asset_bundle_creation_complete = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AssetReadyEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"asset.ready")]
-    Asset_ready = 0,
 
 }
 

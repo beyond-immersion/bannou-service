@@ -42,8 +42,7 @@ public partial class SessionStateChangedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SessionStateChangedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "game_session.state_changed";
 
     /// <summary>
     /// ID of the game session
@@ -95,8 +94,7 @@ public partial class PlayerJoinedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PlayerJoinedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "game_session.player_joined";
 
     /// <summary>
     /// ID of the game session
@@ -136,8 +134,7 @@ public partial class PlayerLeftEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PlayerLeftEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "game_session.player_left";
 
     /// <summary>
     /// ID of the game session
@@ -187,8 +184,7 @@ public partial class PlayerKickedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PlayerKickedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "game_session.player_kicked";
 
     /// <summary>
     /// ID of the game session
@@ -239,8 +235,7 @@ public partial class ChatMessageReceivedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ChatMessageReceivedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "game_session.chat_received";
 
     /// <summary>
     /// ID of the game session
@@ -306,8 +301,7 @@ public partial class GameStateUpdatedEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameStateUpdatedEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "game_session.state_updated";
 
     /// <summary>
     /// ID of the game session
@@ -357,8 +351,7 @@ public partial class GameActionResultEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GameActionResultEventEventName EventName { get; set; } = default!;
+    public string EventName { get; set; } = "game_session.action_result";
 
     /// <summary>
     /// ID of the game session
@@ -497,15 +490,6 @@ public partial class VisibleEffect
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SessionStateChangedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"game_session.state_changed")]
-    Game_session_state_changed = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum SessionStateChangedEventPreviousState
 {
 
@@ -542,42 +526,6 @@ public enum SessionStateChangedEventNewState
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PlayerJoinedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"game_session.player_joined")]
-    Game_session_player_joined = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PlayerLeftEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"game_session.player_left")]
-    Game_session_player_left = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PlayerKickedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"game_session.player_kicked")]
-    Game_session_player_kicked = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ChatMessageReceivedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"game_session.chat_received")]
-    Game_session_chat_received = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ChatMessageReceivedEventMessageType
 {
 
@@ -589,24 +537,6 @@ public enum ChatMessageReceivedEventMessageType
 
     [System.Runtime.Serialization.EnumMember(Value = @"system")]
     System = 2,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GameStateUpdatedEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"game_session.state_updated")]
-    Game_session_state_updated = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GameActionResultEventEventName
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"game_session.action_result")]
-    Game_session_action_result = 0,
 
 }
 

@@ -62,7 +62,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["connect.capability_manifest"]
+          default: "connect.capability_manifest"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -123,7 +123,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["connect.disconnect_notification"]
+          default: "connect.disconnect_notification"
           description: Fixed event type identifier
         reconnectionToken:
           type: string
@@ -160,7 +160,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["system.error"]
+          default: "system.error"
           description: Fixed event type identifier
         errorCode:
           type: string
@@ -193,7 +193,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["permissions.session_capabilities"]
+          default: "permissions.session_capabilities"
           description: Fixed event type identifier (internal, not forwarded to client)
         sessionId:
           type: string
@@ -225,7 +225,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["system.notification"]
+          default: "system.notification"
           description: Fixed event type identifier
         notificationType:
           type: string
@@ -271,7 +271,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["session.shortcut_published"]
+          default: "session.shortcut_published"
           description: Fixed event type identifier.
         sessionId:
           type: string
@@ -301,7 +301,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["session.shortcut_revoked"]
+          default: "session.shortcut_revoked"
           description: Fixed event type identifier.
         sessionId:
           type: string

@@ -59,7 +59,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["service.registration"]
+          default: "service.registration"
           description: Fixed event type identifier
         serviceId:
           type: string
@@ -157,7 +157,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["service.heartbeat"]
+          default: "service.heartbeat"
           description: Fixed event type identifier
         serviceId:
           type: string
@@ -258,7 +258,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["service.error"]
+          default: "service.error"
           description: Fixed event type identifier
         serviceId:
           type: string
@@ -332,7 +332,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["orchestrator.full_service_mappings"]
+          default: "orchestrator.full_service_mappings"
           description: Fixed event type identifier
         mappings:
           type: object
@@ -374,7 +374,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["session.connected"]
+          default: "session.connected"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -423,7 +423,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["session.disconnected"]
+          default: "session.disconnected"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -468,7 +468,7 @@ components:
       properties:
         eventName:
           type: string
-          enum: ["session.reconnected"]
+          default: "session.reconnected"
           description: Fixed event type identifier
         sessionId:
           type: string
