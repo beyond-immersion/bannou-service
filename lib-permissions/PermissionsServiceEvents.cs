@@ -58,12 +58,12 @@ public partial class PermissionsService
     {
         try
         {
-            _logger.LogInformation("Processing service registration for {ServiceId} version {Version} with {EndpointCount} endpoints",
-                evt.ServiceId, evt.Version, evt.Endpoints?.Count ?? 0);
+            _logger.LogInformation("Processing service registration for {ServiceName} version {Version} with {EndpointCount} endpoints",
+                evt.ServiceName, evt.Version, evt.Endpoints?.Count ?? 0);
 
             if (evt.Endpoints == null || evt.Endpoints.Count == 0)
             {
-                _logger.LogWarning("Service {ServiceId} has no endpoints to register", evt.ServiceId);
+                _logger.LogWarning("Service {ServiceName} has no endpoints to register", evt.ServiceName);
                 return;
             }
 
@@ -90,7 +90,7 @@ public partial class PermissionsService
                         var requiredState = stateEntry.Value;
 
                         // Create state key: either just the state name, or service:state if from another service
-                        var stateKey = stateServiceId == evt.ServiceId ? requiredState : $"{stateServiceId}:{requiredState}";
+                        var stateKey = stateServiceId == evt.ServiceName ? requiredState : $"{stateServiceId}:{requiredState}";
                         if (!string.IsNullOrEmpty(stateKey))
                         {
                             stateKeys.Add(stateKey);
@@ -130,13 +130,13 @@ public partial class PermissionsService
             // Create the ServicePermissionMatrix
             var servicePermissionMatrix = new ServicePermissionMatrix
             {
-                ServiceId = evt.ServiceId ?? "",
+                ServiceId = evt.ServiceName,
                 Version = evt.Version ?? "",
                 Permissions = permissionMatrix
             };
 
-            _logger.LogInformation("Built permission matrix for {ServiceId}: {StateCount} states, {MethodCount} total methods",
-                evt.ServiceId, permissionMatrix.Count,
+            _logger.LogInformation("Built permission matrix for {ServiceName}: {StateCount} states, {MethodCount} total methods",
+                evt.ServiceName, permissionMatrix.Count,
                 permissionMatrix.Values.SelectMany(sp => sp.Values).SelectMany(methods => methods).Count());
 
             // Register the permissions
@@ -144,19 +144,19 @@ public partial class PermissionsService
 
             if (result.Item1 == StatusCodes.OK)
             {
-                _logger.LogInformation("Successfully registered permissions for service {ServiceId}", evt.ServiceId);
+                _logger.LogInformation("Successfully registered permissions for service {ServiceName}", evt.ServiceName);
             }
             else
             {
-                _logger.LogError("Failed to register permissions for service {ServiceId}: {StatusCode}",
-                    evt.ServiceId, result.Item1);
-                _ = PublishErrorEventAsync("HandleServiceRegistration", "registration_failed", $"Failed to register permissions: {result.Item1}", details: new { evt.ServiceId, StatusCode = result.Item1 });
+                _logger.LogError("Failed to register permissions for service {ServiceName}: {StatusCode}",
+                    evt.ServiceName, result.Item1);
+                _ = PublishErrorEventAsync("HandleServiceRegistration", "registration_failed", $"Failed to register permissions: {result.Item1}", details: new { evt.ServiceName, StatusCode = result.Item1 });
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error handling service registration event for {ServiceId}", evt.ServiceId);
-            _ = PublishErrorEventAsync("HandleServiceRegistration", ex.GetType().Name, ex.Message, details: new { evt.ServiceId });
+            _logger.LogError(ex, "Error handling service registration event for {ServiceName}", evt.ServiceName);
+            _ = PublishErrorEventAsync("HandleServiceRegistration", ex.GetType().Name, ex.Message, details: new { evt.ServiceName });
         }
     }
 
@@ -184,7 +184,7 @@ public partial class PermissionsService
 
             var stateUpdate = new SessionStateUpdate
             {
-                SessionId = evt.SessionId,
+                SessionId = Guid.Parse(evt.SessionId),
                 ServiceId = evt.ServiceId,
                 NewState = evt.NewState,
                 PreviousState = evt.PreviousState
@@ -225,7 +225,7 @@ public partial class PermissionsService
             // Update session role
             var roleUpdate = new SessionRoleUpdate
             {
-                SessionId = evt.SessionId,
+                SessionId = Guid.Parse(evt.SessionId),
                 NewRole = role
             };
 
@@ -253,7 +253,7 @@ public partial class PermissionsService
 
                     var stateUpdate = new SessionStateUpdate
                     {
-                        SessionId = evt.SessionId,
+                        SessionId = Guid.Parse(evt.SessionId),
                         ServiceId = serviceId,
                         NewState = state
                     };
@@ -339,8 +339,8 @@ public partial class PermissionsService
 
             // Delegate to the service method that handles the business logic
             var result = await HandleSessionConnectedAsync(
-                evt.SessionId,
-                evt.AccountId,
+                evt.SessionId.ToString(),
+                evt.AccountId.ToString(),
                 evt.Roles,
                 evt.Authorizations);
 
@@ -378,7 +378,7 @@ public partial class PermissionsService
 
             // Delegate to the service method that handles the business logic
             var result = await HandleSessionDisconnectedAsync(
-                evt.SessionId,
+                evt.SessionId.ToString(),
                 evt.Reconnectable);
 
             if (result.Item1 != StatusCodes.OK)

@@ -638,7 +638,8 @@ public class VoiceServiceTests
             mockPermissionsClient.Object);
 
         var roomId = Guid.NewGuid();
-        var joiningSessionId = "joining-session-123";
+        var joiningSessionGuid = Guid.NewGuid();
+        var joiningSessionId = joiningSessionGuid.ToString();
         var request = new JoinVoiceRoomRequest
         {
             RoomId = roomId,
@@ -707,7 +708,7 @@ public class VoiceServiceTests
         // Verify voice:ringing state was set for the JOINING session (so they can call /voice/peer/answer)
         mockPermissionsClient.Verify(p => p.UpdateSessionStateAsync(
             It.Is<BeyondImmersion.BannouService.Permissions.SessionStateUpdate>(u =>
-                u.SessionId == joiningSessionId &&
+                u.SessionId == joiningSessionGuid &&
                 u.ServiceId == "voice" &&
                 u.NewState == "ringing"),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -756,7 +757,7 @@ public class VoiceServiceTests
         // Verify peer left event was published with sessionId (not accountId for privacy)
         _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
             It.IsAny<IEnumerable<string>>(),
-            It.Is<VoicePeerLeftEvent>(e => e.Peer_session_id == "session-123"),
+            It.Is<VoicePeerLeftEvent>(e => e.PeerSessionId == "session-123"),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -955,9 +956,9 @@ public class VoiceServiceTests
         _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
             It.Is<IEnumerable<string>>(list => list.Contains("target-session")),
             It.Is<VoicePeerUpdatedEvent>(e =>
-                e.Peer.Peer_session_id == "sender-session" &&
-                e.Peer.Display_name == "SenderPlayer" &&
-                e.Peer.Sdp_offer == "sdp-answer-content"),
+                e.Peer.PeerSessionId == "sender-session" &&
+                e.Peer.DisplayName == "SenderPlayer" &&
+                e.Peer.SdpOffer == "sdp-answer-content"),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

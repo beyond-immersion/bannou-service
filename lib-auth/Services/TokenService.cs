@@ -245,7 +245,7 @@ public class TokenService : ITokenService
                 {
                     Valid = true,
                     AccountId = sessionData.AccountId,
-                    SessionId = sessionKey,
+                    SessionId = Guid.Parse(sessionKey),
                     Roles = sessionData.Roles ?? new List<string>(),
                     Authorizations = sessionData.Authorizations ?? new List<string>(),
                     RemainingTime = (int)(sessionData.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds

@@ -1310,7 +1310,7 @@ public partial class AccountsService : IAccountsService
         object? details = null)
     {
         await _messageBus.TryPublishErrorAsync(
-            serviceId: "accounts",
+            serviceName: "accounts",
             operation: operation,
             errorType: errorType,
             message: message,

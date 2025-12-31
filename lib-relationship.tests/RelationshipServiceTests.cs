@@ -584,11 +584,13 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
     public void RelationshipPermissionRegistration_CreateRegistrationEvent_ShouldGenerateValidEvent()
     {
         // Act
-        var registrationEvent = RelationshipPermissionRegistration.CreateRegistrationEvent();
+        var instanceId = Guid.NewGuid();
+        var registrationEvent = RelationshipPermissionRegistration.CreateRegistrationEvent(instanceId);
 
         // Assert
         Assert.NotNull(registrationEvent);
-        Assert.Equal("relationship", registrationEvent.ServiceId);
+        Assert.Equal("relationship", registrationEvent.ServiceName);
+        Assert.Equal(instanceId, registrationEvent.ServiceId);
         Assert.NotNull(registrationEvent.Endpoints);
     }
 

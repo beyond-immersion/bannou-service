@@ -2276,11 +2276,11 @@ public partial class DocumentationService : IDocumentationService
                     using var httpClient = _httpClientFactory.CreateClient();
                     using var content = new ByteArrayContent(bundleData);
                     content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-                    var uploadResult = await httpClient.PutAsync(uploadResponse.Upload_url.ToString(), content, cancellationToken);
+                    var uploadResult = await httpClient.PutAsync(uploadResponse.UploadUrl.ToString(), content, cancellationToken);
 
                     if (uploadResult.IsSuccessStatusCode)
                     {
-                        archive.BundleAssetId = uploadResponse.Upload_id;
+                        archive.BundleAssetId = uploadResponse.UploadId;
                         _logger.LogInformation("Archive bundle uploaded to Asset Service: {BundleId}", archive.BundleAssetId);
                     }
                     else
@@ -2408,13 +2408,13 @@ public partial class DocumentationService : IDocumentationService
                 {
                     var bundleResponse = await _assetClient.GetBundleAsync(new GetBundleRequest
                     {
-                        Bundle_id = archive.BundleAssetId.ToString()
+                        BundleId = archive.BundleAssetId.ToString()
                     }, cancellationToken);
 
-                    if (bundleResponse.Download_url != null)
+                    if (bundleResponse.DownloadUrl != null)
                     {
                         using var httpClient = _httpClientFactory.CreateClient();
-                        var bundleData = await httpClient.GetByteArrayAsync(bundleResponse.Download_url.ToString(), cancellationToken);
+                        var bundleData = await httpClient.GetByteArrayAsync(bundleResponse.DownloadUrl.ToString(), cancellationToken);
                         documentsRestored = await RestoreFromBundleAsync(archive.Namespace, bundleData, cancellationToken);
                     }
                 }

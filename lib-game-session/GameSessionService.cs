@@ -267,7 +267,7 @@ public partial class GameSessionService : IGameSessionService
                 {
                     EventId = Guid.NewGuid().ToString(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    SessionId = session.SessionId,
+                    SessionId = Guid.Parse(session.SessionId),
                     GameType = session.GameType.ToString(),
                     SessionName = session.SessionName ?? string.Empty,
                     Status = session.Status.ToString(),
@@ -364,7 +364,7 @@ public partial class GameSessionService : IGameSessionService
                 return (StatusCodes.Conflict, new JoinGameSessionResponse
                 {
                     Success = false,
-                    SessionId = sessionId,
+                    SessionId = Guid.Parse(sessionId),
                     PlayerRole = JoinGameSessionResponsePlayerRole.Player
                 });
             }
@@ -376,7 +376,7 @@ public partial class GameSessionService : IGameSessionService
                 return (StatusCodes.Conflict, new JoinGameSessionResponse
                 {
                     Success = false,
-                    SessionId = sessionId,
+                    SessionId = Guid.Parse(sessionId),
                     PlayerRole = JoinGameSessionResponsePlayerRole.Player
                 });
             }
@@ -391,7 +391,7 @@ public partial class GameSessionService : IGameSessionService
                 return (StatusCodes.Conflict, new JoinGameSessionResponse
                 {
                     Success = false,
-                    SessionId = sessionId,
+                    SessionId = Guid.Parse(sessionId),
                     PlayerRole = JoinGameSessionResponsePlayerRole.Player
                 });
             }
@@ -427,10 +427,10 @@ public partial class GameSessionService : IGameSessionService
                 PLAYER_JOINED_TOPIC,
                 new GameSessionPlayerJoinedEvent
                 {
-                    EventId = Guid.NewGuid().ToString(),
+                    EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    SessionId = sessionId,
-                    AccountId = accountId.ToString()
+                    SessionId = Guid.Parse(sessionId),
+                    AccountId = accountId
                 });
 
             // Set game-session:in_game state to enable leave/chat/action endpoints (Tenet 10)
@@ -441,7 +441,7 @@ public partial class GameSessionService : IGameSessionService
                 {
                     await _permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
                     {
-                        SessionId = clientSessionId,
+                        SessionId = Guid.Parse(clientSessionId),
                         ServiceId = "game-session",
                         NewState = "in_game"
                     }, cancellationToken);
@@ -462,7 +462,7 @@ public partial class GameSessionService : IGameSessionService
             var response = new JoinGameSessionResponse
             {
                 Success = true,
-                SessionId = sessionId,
+                SessionId = Guid.Parse(sessionId),
                 PlayerRole = JoinGameSessionResponsePlayerRole.Player,
                 GameData = model.GameSettings ?? new object(),
                 NewPermissions = new List<string>
@@ -731,10 +731,10 @@ public partial class GameSessionService : IGameSessionService
                 PLAYER_LEFT_TOPIC,
                 new GameSessionPlayerLeftEvent
                 {
-                    EventId = Guid.NewGuid().ToString(),
+                    EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    SessionId = sessionId,
-                    AccountId = leavingPlayer.AccountId.ToString(),
+                    SessionId = Guid.Parse(sessionId),
+                    AccountId = leavingPlayer.AccountId,
                     Kicked = false
                 });
 
@@ -746,7 +746,7 @@ public partial class GameSessionService : IGameSessionService
                 {
                     await _permissionsClient.ClearSessionStateAsync(new ClearSessionStateRequest
                     {
-                        SessionId = clientSessionId,
+                        SessionId = Guid.Parse(clientSessionId),
                         ServiceId = "game-session"
                     }, cancellationToken);
                     _logger.LogDebug("Cleared game-session:in_game state for session {SessionId}", clientSessionId);
@@ -828,10 +828,10 @@ public partial class GameSessionService : IGameSessionService
                 PLAYER_LEFT_TOPIC,
                 new GameSessionPlayerLeftEvent
                 {
-                    EventId = Guid.NewGuid().ToString(),
+                    EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    SessionId = sessionId,
-                    AccountId = targetAccountId.ToString(),
+                    SessionId = Guid.Parse(sessionId),
+                    AccountId = targetAccountId,
                     Kicked = true,
                     Reason = body.Reason
                 });
@@ -1245,7 +1245,7 @@ public partial class GameSessionService : IGameSessionService
                 EventId = Guid.NewGuid(),
                 EventName = ShortcutPublishedEventEventName.Session_shortcut_published,
                 Timestamp = DateTimeOffset.UtcNow,
-                SessionId = sessionId,
+                SessionId = Guid.Parse(sessionId),
                 Shortcut = new SessionShortcut
                 {
                     RouteGuid = routeGuid,

@@ -175,14 +175,14 @@ public class BehaviorBundleManager
             var response = await _assetClient.CreateBundleAsync(
                 new CreateBundleRequest
                 {
-                    Bundle_id = $"behavior-bundle-{bundleId}",
+                    BundleId = $"behavior-bundle-{bundleId}",
                     Version = "1.0.0",
-                    Asset_ids = assetIds,
+                    AssetIds = assetIds,
                     Compression = CompressionType.Lz4
                 },
                 cancellationToken);
 
-            membership.AssetBundleId = response.Bundle_id;
+            membership.AssetBundleId = response.BundleId;
             await membershipStore.SaveAsync(membershipKey, membership, cancellationToken: cancellationToken);
 
             _logger.LogInformation(

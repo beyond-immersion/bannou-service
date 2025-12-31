@@ -23,7 +23,7 @@ public partial class AuthController
         var authService = (AuthService)_implementation;
         var (statusCode, result) = await authService.InitOAuthAsync(provider, redirectUri, state, cancellationToken);
 
-        if (statusCode != StatusCodes.OK || result?.Authorization_url == null)
+        if (statusCode != StatusCodes.OK || result?.AuthorizationUrl == null)
         {
             return statusCode switch
             {
@@ -34,6 +34,6 @@ public partial class AuthController
         }
 
         // Return 302 redirect to the OAuth provider
-        return Redirect(result.Authorization_url.ToString());
+        return Redirect(result.AuthorizationUrl.ToString());
     }
 }

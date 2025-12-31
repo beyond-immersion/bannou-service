@@ -856,11 +856,13 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
     public void SpeciesPermissionRegistration_CreateRegistrationEvent_ShouldGenerateValidEvent()
     {
         // Act
-        var registrationEvent = SpeciesPermissionRegistration.CreateRegistrationEvent();
+        var instanceId = Guid.NewGuid();
+        var registrationEvent = SpeciesPermissionRegistration.CreateRegistrationEvent(instanceId);
 
         // Assert
         Assert.NotNull(registrationEvent);
-        Assert.Equal("species", registrationEvent.ServiceId);
+        Assert.Equal("species", registrationEvent.ServiceName);
+        Assert.Equal(instanceId, registrationEvent.ServiceId);
         Assert.NotNull(registrationEvent.Endpoints);
     }
 

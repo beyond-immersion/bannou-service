@@ -75,7 +75,7 @@ public class SessionService : ISessionService
                     {
                         sessions.Add(new SessionInfo
                         {
-                            SessionId = result.SessionData.SessionId,
+                            SessionId = Guid.Parse(result.SessionData.SessionId),
                             CreatedAt = result.SessionData.CreatedAt,
                             LastActive = result.SessionData.CreatedAt,
                             DeviceInfo = new DeviceInfo
@@ -337,7 +337,7 @@ public class SessionService : ISessionService
         {
             var eventModel = new SessionInvalidatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
                 SessionIds = sessionIds,
@@ -362,7 +362,7 @@ public class SessionService : ISessionService
         {
             var eventModel = new SessionUpdatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
                 SessionId = sessionId,

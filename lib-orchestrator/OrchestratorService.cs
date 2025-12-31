@@ -188,7 +188,8 @@ public partial class OrchestratorService : IOrchestratorService
             {
                 await _messageBus.PublishAsync("orchestrator-health", new OrchestratorHealthPingEvent
                 {
-                    EventId = Guid.NewGuid().ToString(),
+                    EventName = "orchestrator.health_ping",
+                    EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     Status = OrchestratorHealthPingEventStatus.Ok
                 });
@@ -876,7 +877,7 @@ public partial class OrchestratorService : IOrchestratorService
             // Publish deployment completed/failed event
             await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Action = success ? DeploymentEventAction.Completed : DeploymentEventAction.Failed,
                 DeploymentId = deploymentId,
@@ -896,7 +897,7 @@ public partial class OrchestratorService : IOrchestratorService
             // Publish deployment failed event on exception
             await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Action = DeploymentEventAction.Failed,
                 DeploymentId = deploymentId,
@@ -1051,7 +1052,7 @@ public partial class OrchestratorService : IOrchestratorService
             // Publish teardown started event (topology-changed action indicates infrastructure modification)
             await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Action = DeploymentEventAction.TopologyChanged,
                 DeploymentId = teardownId
@@ -1158,7 +1159,7 @@ public partial class OrchestratorService : IOrchestratorService
             // Publish teardown failed event on exception
             await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
             {
-                EventId = Guid.NewGuid(),
+                EventId = Guid.NewGuid().ToString(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Action = DeploymentEventAction.Failed,
                 DeploymentId = teardownId,

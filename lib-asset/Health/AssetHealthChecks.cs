@@ -136,21 +136,21 @@ public class ProcessingPoolHealthCheck : IHealthCheck
             var status = await _orchestratorClient.GetPoolStatusAsync(
                 new BeyondImmersion.BannouService.Orchestrator.GetPoolStatusRequest
                 {
-                    Pool_type = "asset-processor"
+                    PoolType = "asset-processor"
                 },
                 cancellationToken);
 
             if (status != null)
             {
-                if (status.Available_instances > 0)
+                if (status.AvailableInstances > 0)
                 {
                     return HealthCheckResult.Healthy(
-                        $"Processing pool available: {status.Available_instances} of {status.Total_instances} processors ready.");
+                        $"Processing pool available: {status.AvailableInstances} of {status.TotalInstances} processors ready.");
                 }
-                else if (status.Total_instances > 0)
+                else if (status.TotalInstances > 0)
                 {
                     return HealthCheckResult.Degraded(
-                        $"Processing pool busy: 0 of {status.Total_instances} processors available.");
+                        $"Processing pool busy: 0 of {status.TotalInstances} processors available.");
                 }
                 else
                 {

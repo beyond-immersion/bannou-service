@@ -700,11 +700,13 @@ public class RelationshipTypeServiceTests : ServiceTestBase<RelationshipTypeServ
     public void RelationshipTypePermissionRegistration_CreateRegistrationEvent_ShouldGenerateValidEvent()
     {
         // Act
-        var registrationEvent = RelationshipTypePermissionRegistration.CreateRegistrationEvent();
+        var instanceId = Guid.NewGuid();
+        var registrationEvent = RelationshipTypePermissionRegistration.CreateRegistrationEvent(instanceId);
 
         // Assert
         Assert.NotNull(registrationEvent);
-        Assert.Equal("relationship-type", registrationEvent.ServiceId);
+        Assert.Equal("relationship-type", registrationEvent.ServiceName);
+        Assert.Equal(instanceId, registrationEvent.ServiceId);
         Assert.NotNull(registrationEvent.Endpoints);
     }
 

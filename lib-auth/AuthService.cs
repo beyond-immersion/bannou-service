@@ -541,7 +541,7 @@ public partial class AuthService : IAuthService
             }
 
             _logger.LogDebug("Generated OAuth URL for {Provider}: {Url}", provider, authUrl);
-            return (StatusCodes.OK, new InitOAuthResponse { Authorization_url = new Uri(authUrl) });
+            return (StatusCodes.OK, new InitOAuthResponse { AuthorizationUrl = new Uri(authUrl) });
         }
         catch (Exception ex)
         {
@@ -1005,7 +1005,7 @@ public partial class AuthService : IAuthService
                 {
                     Valid = true,
                     AccountId = sessionData.AccountId,
-                    SessionId = sessionKey,
+                    SessionId = Guid.Parse(sessionKey),
                     Roles = sessionData.Roles ?? new List<string>(),
                     Authorizations = sessionData.Authorizations ?? new List<string>(),
                     RemainingTime = (int)(sessionData.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds
@@ -1507,7 +1507,7 @@ public partial class AuthService : IAuthService
                     {
                         sessions.Add(new SessionInfo
                         {
-                            SessionId = result.SessionData.SessionId,
+                            SessionId = Guid.Parse(result.SessionData.SessionId),
                             CreatedAt = result.SessionData.CreatedAt,
                             LastActive = result.SessionData.CreatedAt, // We don't track last active time yet
                             DeviceInfo = new DeviceInfo
@@ -2312,7 +2312,7 @@ public partial class AuthService : IAuthService
         {
             var eventModel = new SessionInvalidatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
                 SessionIds = sessionIds,
@@ -2480,7 +2480,7 @@ public partial class AuthService : IAuthService
         {
             var eventModel = new SessionUpdatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
                 SessionId = sessionId,
@@ -2530,7 +2530,7 @@ public partial class AuthService : IAuthService
         object? details = null)
     {
         await _messageBus.TryPublishErrorAsync(
-            serviceId: "auth",
+            serviceName: "auth",
             operation: operation,
             errorType: errorType,
             message: message,

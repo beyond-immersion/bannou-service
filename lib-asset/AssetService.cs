@@ -251,25 +251,25 @@ public partial class AssetService : IAssetService
     /// </summary>
     public async Task<(StatusCodes, AssetMetadata?)> CompleteUploadAsync(CompleteUploadRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("CompleteUpload: uploadId={UploadId}", body.Upload_id);
+        _logger.LogInformation("CompleteUpload: uploadId={UploadId}", body.UploadId);
 
         try
         {
             // Retrieve upload session
             var sessionStore = _stateStoreFactory.GetStore<UploadSession>(STATE_STORE);
-            var session = await sessionStore.GetAsync($"{UPLOAD_SESSION_PREFIX}{body.Upload_id:N}", cancellationToken).ConfigureAwait(false);
+            var session = await sessionStore.GetAsync($"{UPLOAD_SESSION_PREFIX}{body.UploadId:N}", cancellationToken).ConfigureAwait(false);
 
             if (session == null)
             {
-                _logger.LogWarning("CompleteUpload: Upload session not found {UploadId}", body.Upload_id);
+                _logger.LogWarning("CompleteUpload: Upload session not found {UploadId}", body.UploadId);
                 return (StatusCodes.NotFound, null);
             }
 
             // Check expiration
             if (DateTimeOffset.UtcNow > session.ExpiresAt)
             {
-                _logger.LogWarning("CompleteUpload: Upload session expired {UploadId}", body.Upload_id);
-                await sessionStore.DeleteAsync($"{UPLOAD_SESSION_PREFIX}{body.Upload_id:N}", cancellationToken).ConfigureAwait(false);
+                _logger.LogWarning("CompleteUpload: Upload session expired {UploadId}", body.UploadId);
+                await sessionStore.DeleteAsync($"{UPLOAD_SESSION_PREFIX}{body.UploadId:N}", cancellationToken).ConfigureAwait(false);
                 return (StatusCodes.BadRequest, null); // Session expired
             }
 
@@ -283,11 +283,11 @@ public partial class AssetService : IAssetService
                     return (StatusCodes.BadRequest, null);
                 }
 
-                var storageParts = body.Parts.Select(p => new StorageModels.StorageCompletedPart(p.Part_number, p.Etag)).ToList();
+                var storageParts = body.Parts.Select(p => new StorageModels.StorageCompletedPart(p.PartNumber, p.Etag)).ToList();
                 await _storageProvider.CompleteMultipartUploadAsync(
                     _configuration.StorageBucket,
                     session.StorageKey,
-                    body.Upload_id.ToString("N"),
+                    body.UploadId.ToString("N"),
                     storageParts).ConfigureAwait(false);
             }
 
@@ -312,7 +312,7 @@ public partial class AssetService : IAssetService
             var assetId = GenerateAssetId(session.ContentType, contentHash);
 
             // Determine final storage key
-            var assetType = session.Metadata?.Asset_type ?? AssetType.Other;
+            var assetType = session.Metadata?.AssetType ?? AssetType.Other;
             var extension = Path.GetExtension(session.Filename);
             var finalKey = $"assets/{assetType.ToString().ToLowerInvariant()}/{assetId}{extension}";
 
@@ -341,7 +341,7 @@ public partial class AssetService : IAssetService
                 Filename = session.Filename,
                 ContentType = session.ContentType,
                 Size = assetRef.Size,
-                AssetType = session.Metadata?.Asset_type ?? AssetType.Other,
+                AssetType = session.Metadata?.AssetType ?? AssetType.Other,
                 Realm = session.Metadata?.Realm ?? Asset.Realm.Shared,
                 Tags = session.Metadata?.Tags ?? new List<string>(),
                 ProcessingStatus = requiresProcessing ? ProcessingStatus.Pending : ProcessingStatus.Complete,
@@ -357,13 +357,13 @@ public partial class AssetService : IAssetService
 
             // Convert to public metadata for return value and events
             var assetMetadata = internalRecord.ToPublicMetadata();
-            assetMetadata.Is_archived = false; // New assets are always in standard storage
+            assetMetadata.IsArchived = false; // New assets are always in standard storage
 
             // Store index entries for search
             await IndexAssetAsync(assetMetadata, cancellationToken).ConfigureAwait(false);
 
             // Delete upload session
-            await sessionStore.DeleteAsync($"{UPLOAD_SESSION_PREFIX}{body.Upload_id:N}", cancellationToken).ConfigureAwait(false);
+            await sessionStore.DeleteAsync($"{UPLOAD_SESSION_PREFIX}{body.UploadId:N}", cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("CompleteUpload: Asset created {AssetId}, finalKey={FinalKey}, requiresProcessing={RequiresProcessing}",
                 assetId, finalKey, requiresProcessing);
@@ -373,10 +373,10 @@ public partial class AssetService : IAssetService
                 "asset.upload.completed",
                 new BeyondImmersion.BannouService.Events.AssetUploadCompletedEvent
                 {
-                    EventId = Guid.NewGuid().ToString(),
+                    EventId = Guid.NewGuid(),
                     Timestamp = now,
                     AssetId = assetId,
-                    UploadId = body.Upload_id,
+                    UploadId = body.UploadId,
                     SessionId = "system", // TODO: Get from context when auth is integrated
                     AccountId = null,
                     Bucket = _configuration.StorageBucket,
@@ -416,17 +416,17 @@ public partial class AssetService : IAssetService
     /// </summary>
     public async Task<(StatusCodes, AssetWithDownloadUrl?)> GetAssetAsync(GetAssetRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("GetAsset: assetId={AssetId}, version={Version}", body.Asset_id, body.Version);
+        _logger.LogInformation("GetAsset: assetId={AssetId}, version={Version}", body.AssetId, body.Version);
 
         try
         {
             // Retrieve internal asset record (includes storage details)
             var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(STATE_STORE);
-            var internalRecord = await assetStore.GetAsync($"{ASSET_PREFIX}{body.Asset_id}", cancellationToken).ConfigureAwait(false);
+            var internalRecord = await assetStore.GetAsync($"{ASSET_PREFIX}{body.AssetId}", cancellationToken).ConfigureAwait(false);
 
             if (internalRecord == null)
             {
-                _logger.LogWarning("GetAsset: Asset not found {AssetId}", body.Asset_id);
+                _logger.LogWarning("GetAsset: Asset not found {AssetId}", body.AssetId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -450,13 +450,13 @@ public partial class AssetService : IAssetService
 
             var response = new AssetWithDownloadUrl
             {
-                Asset_id = internalRecord.AssetId,
-                Version_id = versionId ?? "latest",
-                Download_url = new Uri(downloadResult.DownloadUrl),
-                Expires_at = downloadResult.ExpiresAt,
+                AssetId = internalRecord.AssetId,
+                VersionId = versionId ?? "latest",
+                DownloadUrl = new Uri(downloadResult.DownloadUrl),
+                ExpiresAt = downloadResult.ExpiresAt,
                 Size = internalRecord.Size,
-                Content_hash = internalRecord.ContentHash,
-                Content_type = internalRecord.ContentType,
+                ContentHash = internalRecord.ContentHash,
+                ContentType = internalRecord.ContentType,
                 Metadata = metadata
             };
 
@@ -484,17 +484,17 @@ public partial class AssetService : IAssetService
     /// </summary>
     public async Task<(StatusCodes, AssetVersionList?)> ListAssetVersionsAsync(ListVersionsRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("ListAssetVersions: assetId={AssetId}", body.Asset_id);
+        _logger.LogInformation("ListAssetVersions: assetId={AssetId}", body.AssetId);
 
         try
         {
             // Retrieve internal asset record to verify it exists and get storage details
             var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(STATE_STORE);
-            var internalRecord = await assetStore.GetAsync($"{ASSET_PREFIX}{body.Asset_id}", cancellationToken).ConfigureAwait(false);
+            var internalRecord = await assetStore.GetAsync($"{ASSET_PREFIX}{body.AssetId}", cancellationToken).ConfigureAwait(false);
 
             if (internalRecord == null)
             {
-                _logger.LogWarning("ListAssetVersions: Asset not found {AssetId}", body.Asset_id);
+                _logger.LogWarning("ListAssetVersions: Asset not found {AssetId}", body.AssetId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -510,16 +510,16 @@ public partial class AssetService : IAssetService
                 .Take(body.Limit)
                 .Select(v => new AssetVersion
                 {
-                    Version_id = v.VersionId,
-                    Created_at = v.LastModified,
+                    VersionId = v.VersionId,
+                    CreatedAt = v.LastModified,
                     Size = v.Size,
-                    Is_archived = v.IsArchived // Uses StorageClass to detect archival tier
+                    IsArchived = v.IsArchived // Uses StorageClass to detect archival tier
                 })
                 .ToList();
 
             var response = new AssetVersionList
             {
-                Asset_id = body.Asset_id,
+                AssetId = body.AssetId,
                 Versions = paginatedVersions,
                 Total = total,
                 Limit = body.Limit,
@@ -553,7 +553,7 @@ public partial class AssetService : IAssetService
     {
         _logger.LogInformation("SearchAssets: tags={Tags}, assetType={AssetType}, realm={Realm}",
             body.Tags != null ? string.Join(",", body.Tags) : "none",
-            body.Asset_type,
+            body.AssetType,
             body.Realm);
 
         try
@@ -571,7 +571,7 @@ public partial class AssetService : IAssetService
             // Format: @asset_type:{type} @realm:{realm} [@content_type:{content_type}]
             var queryParts = new List<string>
             {
-                $"@asset_type:{{{body.Asset_type}}}",
+                $"@asset_type:{{{body.AssetType}}}",
                 $"@realm:{{{body.Realm}}}"
             };
 
@@ -660,7 +660,7 @@ public partial class AssetService : IAssetService
         var indexStore = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
         var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(STATE_STORE);
 
-        var indexKey = $"{ASSET_INDEX_PREFIX}type:{body.Asset_type.ToString().ToLowerInvariant()}";
+        var indexKey = $"{ASSET_INDEX_PREFIX}type:{body.AssetType.ToString().ToLowerInvariant()}";
         var assetIds = await indexStore.GetAsync(indexKey, cancellationToken).ConfigureAwait(false);
 
         if (assetIds != null)
@@ -689,7 +689,7 @@ public partial class AssetService : IAssetService
         // Apply pagination
         var total = matchingAssets.Count;
         var paginatedAssets = matchingAssets
-            .OrderByDescending(a => a.Created_at)
+            .OrderByDescending(a => a.CreatedAt)
             .Skip(body.Offset)
             .Take(body.Limit)
             .ToList();
@@ -713,18 +713,18 @@ public partial class AssetService : IAssetService
     public async Task<(StatusCodes, CreateBundleResponse?)> CreateBundleAsync(CreateBundleRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("CreateBundle: bundleId={BundleId}, assetCount={AssetCount}",
-            body.Bundle_id, body.Asset_ids?.Count ?? 0);
+            body.BundleId, body.AssetIds?.Count ?? 0);
 
         try
         {
             // Validate request
-            if (string.IsNullOrWhiteSpace(body.Bundle_id))
+            if (string.IsNullOrWhiteSpace(body.BundleId))
             {
                 _logger.LogWarning("CreateBundle: Empty bundle_id");
                 return (StatusCodes.BadRequest, null);
             }
 
-            if (body.Asset_ids == null || body.Asset_ids.Count == 0)
+            if (body.AssetIds == null || body.AssetIds.Count == 0)
             {
                 _logger.LogWarning("CreateBundle: No asset_ids provided");
                 return (StatusCodes.BadRequest, null);
@@ -734,12 +734,12 @@ public partial class AssetService : IAssetService
             var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(STATE_STORE);
             var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(STATE_STORE);
 
-            var bundleKey = $"{BUNDLE_PREFIX}{body.Bundle_id}";
+            var bundleKey = $"{BUNDLE_PREFIX}{body.BundleId}";
             var existingBundle = await bundleStore.GetAsync(bundleKey, cancellationToken);
 
             if (existingBundle != null)
             {
-                _logger.LogWarning("CreateBundle: Bundle {BundleId} already exists", body.Bundle_id);
+                _logger.LogWarning("CreateBundle: Bundle {BundleId} already exists", body.BundleId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -747,7 +747,7 @@ public partial class AssetService : IAssetService
             var assetRecords = new List<InternalAssetRecord>();
             long totalSize = 0;
 
-            foreach (var assetId in body.Asset_ids)
+            foreach (var assetId in body.AssetIds)
             {
                 var assetKey = $"{ASSET_PREFIX}{assetId}";
                 var assetRecord = await assetStore.GetAsync(assetKey, cancellationToken);
@@ -773,9 +773,9 @@ public partial class AssetService : IAssetService
                 var job = new BundleCreationJob
                 {
                     JobId = jobId,
-                    BundleId = body.Bundle_id,
+                    BundleId = body.BundleId,
                     Version = body.Version ?? "1.0.0",
-                    AssetIds = body.Asset_ids.ToList(),
+                    AssetIds = body.AssetIds.ToList(),
                     Compression = body.Compression,
                     Metadata = ConvertMetadataToDictionary(body.Metadata),
                     Status = BundleCreationStatus.Queued,
@@ -793,18 +793,18 @@ public partial class AssetService : IAssetService
                 _logger.LogInformation(
                     "CreateBundle: Queued bundle creation job {JobId} for bundle {BundleId}",
                     jobId,
-                    body.Bundle_id);
+                    body.BundleId);
 
                 return (StatusCodes.Accepted, new CreateBundleResponse
                 {
-                    Bundle_id = body.Bundle_id,
+                    BundleId = body.BundleId,
                     Status = CreateBundleResponseStatus.Queued,
-                    Estimated_size = totalSize
+                    EstimatedSize = totalSize
                 });
             }
 
             // For smaller bundles, create inline
-            var bundlePath = $"bundles/current/{body.Bundle_id}.bundle";
+            var bundlePath = $"bundles/current/{body.BundleId}.bundle";
             var bucket = _configuration.StorageBucket;
 
             // Create bundle in memory and upload
@@ -828,8 +828,8 @@ public partial class AssetService : IAssetService
             }
 
             writer.Finalize(
-                body.Bundle_id,
-                body.Bundle_id,
+                body.BundleId,
+                body.BundleId,
                 body.Version ?? "1.0.0",
                 "system",
                 null,
@@ -847,9 +847,9 @@ public partial class AssetService : IAssetService
             // Store bundle metadata
             var bundleMetadata = new BundleMetadata
             {
-                BundleId = body.Bundle_id,
+                BundleId = body.BundleId,
                 Version = body.Version ?? "1.0.0",
-                AssetIds = body.Asset_ids.ToList(),
+                AssetIds = body.AssetIds.ToList(),
                 StorageKey = bundlePath,
                 SizeBytes = bundleStream.Length,
                 CreatedAt = DateTimeOffset.UtcNow,
@@ -860,8 +860,8 @@ public partial class AssetService : IAssetService
 
             _logger.LogInformation(
                 "CreateBundle: Created bundle {BundleId} with {AssetCount} assets ({Size} bytes)",
-                body.Bundle_id,
-                body.Asset_ids.Count,
+                body.BundleId,
+                body.AssetIds.Count,
                 bundleStream.Length);
 
             // Publish asset.bundle.created event
@@ -869,23 +869,23 @@ public partial class AssetService : IAssetService
                 "asset.bundle.created",
                 new BeyondImmersion.BannouService.Events.BundleCreatedEvent
                 {
-                    EventId = Guid.NewGuid().ToString(),
+                    EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    BundleId = body.Bundle_id,
+                    BundleId = body.BundleId,
                     Version = body.Version ?? "1.0.0",
                     Bucket = _configuration.StorageBucket,
                     Key = bundlePath,
                     Size = bundleStream.Length,
-                    AssetCount = body.Asset_ids.Count,
+                    AssetCount = body.AssetIds.Count,
                     Compression = null, // TODO: Map compression type when implemented
                     CreatedBy = null // TODO: Get from context when auth is integrated
                 }).ConfigureAwait(false);
 
             return (StatusCodes.OK, new CreateBundleResponse
             {
-                Bundle_id = body.Bundle_id,
+                BundleId = body.BundleId,
                 Status = CreateBundleResponseStatus.Ready,
-                Estimated_size = bundleStream.Length
+                EstimatedSize = bundleStream.Length
             });
         }
         catch (Exception ex)
@@ -910,24 +910,24 @@ public partial class AssetService : IAssetService
     /// </summary>
     public async Task<(StatusCodes, BundleWithDownloadUrl?)> GetBundleAsync(GetBundleRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("GetBundle: bundleId={BundleId}, format={Format}", body.Bundle_id, body.Format);
+        _logger.LogInformation("GetBundle: bundleId={BundleId}, format={Format}", body.BundleId, body.Format);
 
         try
         {
             // Validate input
-            if (string.IsNullOrWhiteSpace(body.Bundle_id))
+            if (string.IsNullOrWhiteSpace(body.BundleId))
             {
                 return (StatusCodes.BadRequest, null);
             }
 
             // Look up bundle metadata
             var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(STATE_STORE);
-            var bundleKey = $"{BUNDLE_PREFIX}{body.Bundle_id}";
+            var bundleKey = $"{BUNDLE_PREFIX}{body.BundleId}";
             var bundleMetadata = await bundleStore.GetAsync(bundleKey, cancellationToken);
 
             if (bundleMetadata == null)
             {
-                _logger.LogWarning("GetBundle: Bundle not found: {BundleId}", body.Bundle_id);
+                _logger.LogWarning("GetBundle: Bundle not found: {BundleId}", body.BundleId);
                 return (StatusCodes.NotFound, null);
             }
 
@@ -935,7 +935,7 @@ public partial class AssetService : IAssetService
             if (bundleMetadata.Status != BundleStatus.Ready)
             {
                 _logger.LogWarning("GetBundle: Bundle not ready: {BundleId}, status={Status}",
-                    body.Bundle_id, bundleMetadata.Status);
+                    body.BundleId, bundleMetadata.Status);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -947,7 +947,7 @@ public partial class AssetService : IAssetService
             if (body.Format == BundleFormat.Zip)
             {
                 // Check ZIP cache
-                var zipCachePath = $"bundles/zip-cache/{body.Bundle_id}.zip";
+                var zipCachePath = $"bundles/zip-cache/{body.BundleId}.zip";
                 var cacheExists = await _storageProvider.ObjectExistsAsync(bucket, zipCachePath);
 
                 if (cacheExists)
@@ -957,12 +957,12 @@ public partial class AssetService : IAssetService
                     fromCache = true;
                     var cachedMeta = await _storageProvider.GetObjectMetadataAsync(bucket, zipCachePath);
                     downloadSize = cachedMeta.ContentLength;
-                    _logger.LogDebug("GetBundle: Using cached ZIP for {BundleId}", body.Bundle_id);
+                    _logger.LogDebug("GetBundle: Using cached ZIP for {BundleId}", body.BundleId);
                 }
                 else
                 {
                     // Download bundle, convert to ZIP, cache, and return
-                    _logger.LogDebug("GetBundle: Converting bundle to ZIP for {BundleId}", body.Bundle_id);
+                    _logger.LogDebug("GetBundle: Converting bundle to ZIP for {BundleId}", body.BundleId);
 
                     using var bundleStream = await _storageProvider.GetObjectAsync(
                         bucket, bundleMetadata.StorageKey);
@@ -971,12 +971,12 @@ public partial class AssetService : IAssetService
                     var converted = await _bundleConverter.ConvertBundleToZipAsync(
                         bundleStream,
                         zipStream,
-                        body.Bundle_id,
+                        body.BundleId,
                         cancellationToken);
 
                     if (!converted)
                     {
-                        _logger.LogError("GetBundle: Failed to convert bundle to ZIP: {BundleId}", body.Bundle_id);
+                        _logger.LogError("GetBundle: Failed to convert bundle to ZIP: {BundleId}", body.BundleId);
                         return (StatusCodes.InternalServerError, null);
                     }
 
@@ -1011,7 +1011,7 @@ public partial class AssetService : IAssetService
                 $"bundle-download:{downloadToken}",
                 new BundleDownloadToken
                 {
-                    BundleId = body.Bundle_id,
+                    BundleId = body.BundleId,
                     Format = body.Format,
                     Path = downloadPath,
                     CreatedAt = DateTimeOffset.UtcNow,
@@ -1028,18 +1028,18 @@ public partial class AssetService : IAssetService
 
             _logger.LogInformation(
                 "GetBundle: Generated download URL for bundle {BundleId}, format={Format}, fromCache={FromCache}",
-                body.Bundle_id, body.Format, fromCache);
+                body.BundleId, body.Format, fromCache);
 
             return (StatusCodes.OK, new BundleWithDownloadUrl
             {
-                Bundle_id = body.Bundle_id,
+                BundleId = body.BundleId,
                 Version = bundleMetadata.Version,
-                Download_url = new Uri(downloadResult.DownloadUrl),
+                DownloadUrl = new Uri(downloadResult.DownloadUrl),
                 Format = body.Format,
-                Expires_at = downloadResult.ExpiresAt,
+                ExpiresAt = downloadResult.ExpiresAt,
                 Size = downloadSize,
-                Asset_count = bundleMetadata.AssetIds.Count,
-                From_cache = fromCache
+                AssetCount = bundleMetadata.AssetIds.Count,
+                FromCache = fromCache
             });
         }
         catch (Exception ex)
@@ -1090,8 +1090,8 @@ public partial class AssetService : IAssetService
             }
 
             // Validate manifest preview
-            if (body.Manifest_preview == null ||
-                string.IsNullOrWhiteSpace(body.Manifest_preview.Bundle_id))
+            if (body.ManifestPreview == null ||
+                string.IsNullOrWhiteSpace(body.ManifestPreview.BundleId))
             {
                 _logger.LogWarning("RequestBundleUpload: Missing manifest preview");
                 return (StatusCodes.BadRequest, null);
@@ -1099,12 +1099,12 @@ public partial class AssetService : IAssetService
 
             // Check if bundle already exists
             var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(STATE_STORE);
-            var existingBundle = await bundleStore.GetAsync($"{BUNDLE_PREFIX}{body.Manifest_preview.Bundle_id}", cancellationToken);
+            var existingBundle = await bundleStore.GetAsync($"{BUNDLE_PREFIX}{body.ManifestPreview.BundleId}", cancellationToken);
 
             if (existingBundle != null)
             {
                 _logger.LogWarning("RequestBundleUpload: Bundle already exists: {BundleId}",
-                    body.Manifest_preview.Bundle_id);
+                    body.ManifestPreview.BundleId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -1130,7 +1130,7 @@ public partial class AssetService : IAssetService
                 tokenTtl,
                 new Dictionary<string, string>
                 {
-                    { "bundle-id", body.Manifest_preview.Bundle_id },
+                    { "bundle-id", body.ManifestPreview.BundleId },
                     { "upload-id", uploadId },
                     { "validation-required", "true" }
                 });
@@ -1139,12 +1139,12 @@ public partial class AssetService : IAssetService
             var uploadSession = new BundleUploadSession
             {
                 UploadId = uploadId,
-                BundleId = body.Manifest_preview.Bundle_id,
+                BundleId = body.ManifestPreview.BundleId,
                 Filename = sanitizedFilename,
                 ContentType = contentType,
                 SizeBytes = body.Size,
                 StorageKey = storageKey,
-                ManifestPreview = body.Manifest_preview,
+                ManifestPreview = body.ManifestPreview,
                 SessionId = "system", // TODO: Get from context when auth is integrated
                 CreatedAt = DateTimeOffset.UtcNow,
                 ExpiresAt = DateTimeOffset.UtcNow.Add(tokenTtl)
@@ -1159,13 +1159,13 @@ public partial class AssetService : IAssetService
 
             _logger.LogInformation(
                 "RequestBundleUpload: Generated upload URL for bundle {BundleId}, uploadId={UploadId}",
-                body.Manifest_preview.Bundle_id, uploadId);
+                body.ManifestPreview.BundleId, uploadId);
 
             var response = new UploadResponse
             {
-                Upload_id = uploadIdGuid,
-                Upload_url = new Uri(uploadResult.UploadUrl),
-                Expires_at = uploadResult.ExpiresAt
+                UploadId = uploadIdGuid,
+                UploadUrl = new Uri(uploadResult.UploadUrl),
+                ExpiresAt = uploadResult.ExpiresAt
             };
 
             // Add required headers to additional properties if any
@@ -1225,12 +1225,12 @@ public partial class AssetService : IAssetService
     private async Task IndexAssetAsync(AssetMetadata asset, CancellationToken cancellationToken)
     {
         // Index by asset type
-        var typeIndexKey = $"{ASSET_INDEX_PREFIX}type:{asset.Asset_type.ToString().ToLowerInvariant()}";
-        await AddToIndexWithOptimisticConcurrencyAsync(typeIndexKey, asset.Asset_id, cancellationToken).ConfigureAwait(false);
+        var typeIndexKey = $"{ASSET_INDEX_PREFIX}type:{asset.AssetType.ToString().ToLowerInvariant()}";
+        await AddToIndexWithOptimisticConcurrencyAsync(typeIndexKey, asset.AssetId, cancellationToken).ConfigureAwait(false);
 
         // Index by realm
         var realmIndexKey = $"{ASSET_INDEX_PREFIX}realm:{asset.Realm.ToString().ToLowerInvariant()}";
-        await AddToIndexWithOptimisticConcurrencyAsync(realmIndexKey, asset.Asset_id, cancellationToken).ConfigureAwait(false);
+        await AddToIndexWithOptimisticConcurrencyAsync(realmIndexKey, asset.AssetId, cancellationToken).ConfigureAwait(false);
 
         // Index by tags
         if (asset.Tags != null)
@@ -1238,7 +1238,7 @@ public partial class AssetService : IAssetService
             foreach (var tag in asset.Tags)
             {
                 var tagIndexKey = $"{ASSET_INDEX_PREFIX}tag:{tag.ToLowerInvariant()}";
-                await AddToIndexWithOptimisticConcurrencyAsync(tagIndexKey, asset.Asset_id, cancellationToken).ConfigureAwait(false);
+                await AddToIndexWithOptimisticConcurrencyAsync(tagIndexKey, asset.AssetId, cancellationToken).ConfigureAwait(false);
             }
         }
     }
@@ -1369,7 +1369,7 @@ public partial class AssetService : IAssetService
         string storageKey,
         CancellationToken cancellationToken)
     {
-        var poolType = GetProcessorPoolType(metadata.Content_type);
+        var poolType = GetProcessorPoolType(metadata.ContentType);
         var assetStore = _stateStoreFactory.GetStore<AssetMetadata>(STATE_STORE);
 
         try
@@ -1382,31 +1382,31 @@ public partial class AssetService : IAssetService
             var processorResponse = await _orchestratorClient.AcquireProcessorAsync(
                 new AcquireProcessorRequest
                 {
-                    Pool_type = poolType,
+                    PoolType = poolType,
                     Priority = 0,
-                    Timeout_seconds = 600, // 10 minutes for processing
+                    TimeoutSeconds = 600, // 10 minutes for processing
                     Metadata = new { AssetId = assetId, StorageKey = storageKey }
                 },
                 cancellationToken).ConfigureAwait(false);
 
             // Update asset metadata to Processing status
-            metadata.Processing_status = ProcessingStatus.Processing;
+            metadata.ProcessingStatus = ProcessingStatus.Processing;
             await assetStore.SaveAsync($"{ASSET_PREFIX}{assetId}", metadata, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation(
                 "DelegateToProcessingPool: Acquired processor {ProcessorId} from pool {PoolType} for asset {AssetId}, lease expires at {ExpiresAt}",
-                processorResponse.Processor_id, poolType, assetId, processorResponse.Expires_at);
+                processorResponse.ProcessorId, poolType, assetId, processorResponse.ExpiresAt);
 
             // Publish processing job event for the processor to pick up
             var processingJob = new AssetProcessingJobEvent
             {
                 AssetId = assetId,
                 StorageKey = storageKey,
-                ContentType = metadata.Content_type,
-                ProcessorId = processorResponse.Processor_id,
-                AppId = processorResponse.App_id,
-                LeaseId = processorResponse.Lease_id,
-                ExpiresAt = processorResponse.Expires_at
+                ContentType = metadata.ContentType,
+                ProcessorId = processorResponse.ProcessorId,
+                AppId = processorResponse.AppId,
+                LeaseId = processorResponse.LeaseId,
+                ExpiresAt = processorResponse.ExpiresAt
             };
 
             await _messageBus.PublishAsync($"asset.processing.job.{poolType}", processingJob).ConfigureAwait(false);
@@ -1423,7 +1423,7 @@ public partial class AssetService : IAssetService
             {
                 AssetId = assetId,
                 StorageKey = storageKey,
-                ContentType = metadata.Content_type,
+                ContentType = metadata.ContentType,
                 PoolType = poolType,
                 RetryCount = 0,
                 MaxRetries = 5,
@@ -1439,7 +1439,7 @@ public partial class AssetService : IAssetService
                 assetId, poolType);
 
             // Mark as failed
-            metadata.Processing_status = ProcessingStatus.Failed;
+            metadata.ProcessingStatus = ProcessingStatus.Failed;
             await assetStore.SaveAsync($"{ASSET_PREFIX}{assetId}", metadata, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
     }

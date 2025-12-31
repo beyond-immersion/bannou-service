@@ -124,14 +124,15 @@ public partial class PermissionsService : IPermissionsService
             _logger.LogInformation("Getting capabilities for session {SessionId}", body.SessionId);
 
             // Check in-memory cache first
-            if (_sessionCapabilityCache.TryGetValue(body.SessionId, out var cachedResponse))
+            var sessionIdStr = body.SessionId.ToString();
+            if (_sessionCapabilityCache.TryGetValue(sessionIdStr, out var cachedResponse))
             {
                 _logger.LogDebug("Returning cached capabilities for session {SessionId}", body.SessionId);
                 return (StatusCodes.OK, cachedResponse);
             }
 
             // Get compiled permissions from state store
-            var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, body.SessionId);
+            var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
             var permissionsData = await _stateStoreFactory.GetStore<Dictionary<string, object>>(STATE_STORE)
                 .GetAsync(permissionsKey, cancellationToken);
 
@@ -179,7 +180,7 @@ public partial class PermissionsService : IPermissionsService
             };
 
             // Cache the response for future requests
-            _sessionCapabilityCache[body.SessionId] = response;
+            _sessionCapabilityCache[sessionIdStr] = response;
 
             _logger.LogInformation("Retrieved capabilities for session {SessionId} with {ServiceCount} services",
                 body.SessionId, permissions.Count);
@@ -561,7 +562,7 @@ public partial class PermissionsService : IPermissionsService
             // Get active sessions
             var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
             var activeSessions = await hashSetStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
-            activeSessions.Add(body.SessionId);
+            activeSessions.Add(body.SessionId.ToString());
 
             // Save session state and active sessions
             await _stateStoreFactory.GetStore<Dictionary<string, string>>(STATE_STORE)
@@ -570,7 +571,7 @@ public partial class PermissionsService : IPermissionsService
 
             // Recompile session permissions using the states we already have
             // (avoids read-after-write consistency issues by not re-reading from state store)
-            await RecompileSessionPermissionsAsync(body.SessionId, sessionStates, "session_state_changed");
+            await RecompileSessionPermissionsAsync(body.SessionId.ToString(), sessionStates, "session_state_changed");
 
             return (StatusCodes.OK, new SessionUpdateResponse
             {
@@ -616,7 +617,7 @@ public partial class PermissionsService : IPermissionsService
             // Get active sessions
             var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
             var activeSessions = await hashSetStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
-            activeSessions.Add(body.SessionId);
+            activeSessions.Add(body.SessionId.ToString());
 
             // Save session states and active sessions
             await _stateStoreFactory.GetStore<Dictionary<string, string>>(STATE_STORE)
@@ -625,7 +626,7 @@ public partial class PermissionsService : IPermissionsService
 
             // Recompile all permissions for this session using the states we already have
             // (avoids read-after-write consistency issues by not re-reading from state store)
-            await RecompileSessionPermissionsAsync(body.SessionId, sessionStates, "role_changed");
+            await RecompileSessionPermissionsAsync(body.SessionId.ToString(), sessionStates, "role_changed");
 
             return (StatusCodes.OK, new SessionUpdateResponse
             {
@@ -709,7 +710,7 @@ public partial class PermissionsService : IPermissionsService
             await statesStore.SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
 
             // Recompile session permissions
-            await RecompileSessionPermissionsAsync(body.SessionId, sessionStates, "session_state_cleared");
+            await RecompileSessionPermissionsAsync(body.SessionId.ToString(), sessionStates, "session_state_cleared");
 
             return (StatusCodes.OK, new SessionUpdateResponse
             {
@@ -1017,10 +1018,10 @@ public partial class PermissionsService : IPermissionsService
             // Create SessionCapabilitiesEvent with actual permissions data
             var capabilitiesEvent = new SessionCapabilitiesEvent
             {
-                Event_name = SessionCapabilitiesEventEvent_name.Permissions_session_capabilities,
-                Event_id = Guid.NewGuid(),
+                EventName = SessionCapabilitiesEventEventName.PermissionsSessionCapabilities,
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                Session_id = sessionId,
+                SessionId = Guid.Parse(sessionId),
                 Permissions = permissionsDict,
                 Reason = reason
             };
@@ -1053,7 +1054,7 @@ public partial class PermissionsService : IPermissionsService
         object? details = null)
     {
         await _messageBus.TryPublishErrorAsync(
-            serviceId: "permissions",
+            serviceName: "permissions",
             operation: operation,
             errorType: errorType,
             message: message,
@@ -1290,7 +1291,7 @@ public partial class PermissionsService : IPermissionsService
             return (StatusCodes.OK, new SessionUpdateResponse
             {
                 Success = true,
-                SessionId = sessionId,
+                SessionId = Guid.Parse(sessionId),
                 Message = "Session connection registered and capabilities published"
             });
         }
@@ -1301,7 +1302,7 @@ public partial class PermissionsService : IPermissionsService
             return (StatusCodes.InternalServerError, new SessionUpdateResponse
             {
                 Success = false,
-                SessionId = sessionId,
+                SessionId = Guid.Parse(sessionId),
                 Message = $"Error: {ex.Message}"
             });
         }
@@ -1349,7 +1350,7 @@ public partial class PermissionsService : IPermissionsService
                 }
 
                 // Clear session state and permissions cache
-                await ClearSessionStateAsync(new ClearSessionStateRequest { SessionId = sessionId }, cancellationToken);
+                await ClearSessionStateAsync(new ClearSessionStateRequest { SessionId = Guid.Parse(sessionId) }, cancellationToken);
                 _sessionCapabilityCache.TryRemove(sessionId, out _);
 
                 _logger.LogDebug("Cleared state for non-reconnectable session {SessionId}", sessionId);
@@ -1358,7 +1359,7 @@ public partial class PermissionsService : IPermissionsService
             return (StatusCodes.OK, new SessionUpdateResponse
             {
                 Success = true,
-                SessionId = sessionId,
+                SessionId = Guid.Parse(sessionId),
                 Message = reconnectable
                     ? "Session connection removed (reconnectable)"
                     : "Session connection removed and state cleared"
@@ -1371,7 +1372,7 @@ public partial class PermissionsService : IPermissionsService
             return (StatusCodes.InternalServerError, new SessionUpdateResponse
             {
                 Success = false,
-                SessionId = sessionId,
+                SessionId = Guid.Parse(sessionId),
                 Message = $"Error: {ex.Message}"
             });
         }

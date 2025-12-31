@@ -177,17 +177,17 @@ public sealed class AssetProcessingWorker : BackgroundService
             }
 
             // Update the metadata with processing results
-            existingMetadata.Processing_status = result.Success
+            existingMetadata.ProcessingStatus = result.Success
                 ? ProcessingStatus.Complete
                 : ProcessingStatus.Failed;
-            existingMetadata.Updated_at = DateTimeOffset.UtcNow;
+            existingMetadata.UpdatedAt = DateTimeOffset.UtcNow;
 
             await _stateStore.SaveAsync(stateKey, existingMetadata, null, cancellationToken);
 
             _logger.LogDebug(
                 "Updated metadata for asset {AssetId}: Status={Status}",
                 assetId,
-                existingMetadata.Processing_status);
+                existingMetadata.ProcessingStatus);
         }
         catch (Exception ex)
         {
@@ -208,7 +208,7 @@ public sealed class AssetProcessingWorker : BackgroundService
             await _orchestratorClient.ReleaseProcessorAsync(
                 new ReleaseProcessorRequest
                 {
-                    Lease_id = leaseId,
+                    LeaseId = leaseId,
                     Success = success
                 },
                 cancellationToken);
@@ -246,17 +246,17 @@ public sealed class AssetProcessingWorker : BackgroundService
             {
                 var completionEvent = new AssetProcessingCompleteEvent
                 {
-                    Event_id = Guid.NewGuid(),
-                    Event_name = AssetProcessingCompleteEventEvent_name.Asset_processing_complete,
-                    Asset_id = job.AssetId,
+                    EventId = Guid.NewGuid(),
+                    EventName = AssetProcessingCompleteEventEventName.Asset_processing_complete,
+                    AssetId = job.AssetId,
                     Success = true,
                     Outputs = result.ProcessedStorageKey != null
                         ? new List<ProcessingOutput>
                         {
                             new ProcessingOutput
                             {
-                                Output_type = "processed",
-                                Asset_id = job.AssetId,
+                                OutputType = "processed",
+                                AssetId = job.AssetId,
                                 Size = result.ProcessedSizeBytes ?? 0
                             }
                         }
@@ -269,12 +269,12 @@ public sealed class AssetProcessingWorker : BackgroundService
             {
                 var failureEvent = new AssetProcessingFailedEvent
                 {
-                    Event_id = Guid.NewGuid(),
-                    Event_name = AssetProcessingFailedEventEvent_name.Asset_processing_failed,
-                    Asset_id = job.AssetId,
-                    Error_message = result.ErrorMessage ?? "Unknown error",
-                    Error_code = MapErrorCode(result.ErrorCode),
-                    Retry_available = true
+                    EventId = Guid.NewGuid(),
+                    EventName = AssetProcessingFailedEventEventName.Asset_processing_failed,
+                    AssetId = job.AssetId,
+                    ErrorMessage = result.ErrorMessage ?? "Unknown error",
+                    ErrorCode = MapErrorCode(result.ErrorCode),
+                    RetryAvailable = true
                 };
 
                 await _clientEventPublisher.PublishToSessionAsync(job.SessionId, failureEvent, cancellationToken);
@@ -319,12 +319,12 @@ public sealed class AssetProcessingWorker : BackgroundService
         {
             var failureEvent = new AssetProcessingFailedEvent
             {
-                Event_id = Guid.NewGuid(),
-                Event_name = AssetProcessingFailedEventEvent_name.Asset_processing_failed,
-                Asset_id = job.AssetId,
-                Error_message = errorMessage,
-                Error_code = ProcessingErrorCode.PROCESSING_FAILED,
-                Retry_available = true
+                EventId = Guid.NewGuid(),
+                EventName = AssetProcessingFailedEventEventName.Asset_processing_failed,
+                AssetId = job.AssetId,
+                ErrorMessage = errorMessage,
+                ErrorCode = ProcessingErrorCode.PROCESSING_FAILED,
+                RetryAvailable = true
             };
 
             await _clientEventPublisher.PublishToSessionAsync(job.SessionId, failureEvent, cancellationToken);
