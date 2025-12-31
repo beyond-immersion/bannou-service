@@ -8,9 +8,12 @@ paths: {}
 components:
   schemas:
     SpeciesCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       description: Published to species.created when a species is created
       required:
+      - eventName
       - eventId
       - timestamp
       - speciesId
@@ -21,56 +24,57 @@ components:
       - createdAt
       - updatedAt
       properties:
-        eventId: &id001
+        eventName:
           type: string
-          description: Unique identifier for this event (UUID string)
-        timestamp: &id002
-          type: string
-          format: date-time
-          description: When this event occurred
-        speciesId: &id003
+          enum:
+          - species.created
+          description: 'Event type identifier: species.created'
+        speciesId: &id001
           type: string
           format: uuid
-        code: &id004
+        code: &id002
           type: string
-        name: &id005
+        name: &id003
           type: string
-        description: &id006
+        description: &id004
           type: string
-        category: &id007
+        category: &id005
           type: string
-        isPlayable: &id008
+        isPlayable: &id006
           type: boolean
-        isDeprecated: &id009
+        isDeprecated: &id007
           type: boolean
-        deprecatedAt: &id010
+        deprecatedAt: &id008
           type: string
           format: date-time
-        deprecationReason: &id011
+        deprecationReason: &id009
           type: string
-        baseLifespan: &id012
+        baseLifespan: &id010
           type: integer
-        maturityAge: &id013
+        maturityAge: &id011
           type: integer
-        traitModifiers: &id014
+        traitModifiers: &id012
           type: object
           additionalProperties: true
-        realmIds: &id015
+        realmIds: &id013
           type: array
           items: {type: string, format: uuid}
-        metadata: &id016
+        metadata: &id014
           type: object
           additionalProperties: true
-        createdAt: &id017
+        createdAt: &id015
           type: string
           format: date-time
-        updatedAt: &id018
+        updatedAt: &id016
           type: string
           format: date-time
     SpeciesUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       description: Published to species.updated when a species is updated
       required:
+      - eventName
       - eventId
       - timestamp
       - speciesId
@@ -82,33 +86,39 @@ components:
       - updatedAt
       - changedFields
       properties:
-        eventId: *id001
-        timestamp: *id002
-        speciesId: *id003
-        code: *id004
-        name: *id005
-        description: *id006
-        category: *id007
-        isPlayable: *id008
-        isDeprecated: *id009
-        deprecatedAt: *id010
-        deprecationReason: *id011
-        baseLifespan: *id012
-        maturityAge: *id013
-        traitModifiers: *id014
-        realmIds: *id015
-        metadata: *id016
-        createdAt: *id017
-        updatedAt: *id018
+        eventName:
+          type: string
+          enum:
+          - species.updated
+          description: 'Event type identifier: species.updated'
+        speciesId: *id001
+        code: *id002
+        name: *id003
+        description: *id004
+        category: *id005
+        isPlayable: *id006
+        isDeprecated: *id007
+        deprecatedAt: *id008
+        deprecationReason: *id009
+        baseLifespan: *id010
+        maturityAge: *id011
+        traitModifiers: *id012
+        realmIds: *id013
+        metadata: *id014
+        createdAt: *id015
+        updatedAt: *id016
         changedFields:
           type: array
           items:
             type: string
           description: List of field names that were modified
     SpeciesDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       description: Published to species.deleted when a species is deleted
       required:
+      - eventName
       - eventId
       - timestamp
       - speciesId
@@ -119,24 +129,27 @@ components:
       - createdAt
       - updatedAt
       properties:
-        eventId: *id001
-        timestamp: *id002
-        speciesId: *id003
-        code: *id004
-        name: *id005
-        description: *id006
-        category: *id007
-        isPlayable: *id008
-        isDeprecated: *id009
-        deprecatedAt: *id010
-        deprecationReason: *id011
-        baseLifespan: *id012
-        maturityAge: *id013
-        traitModifiers: *id014
-        realmIds: *id015
-        metadata: *id016
-        createdAt: *id017
-        updatedAt: *id018
+        eventName:
+          type: string
+          enum:
+          - species.deleted
+          description: 'Event type identifier: species.deleted'
+        speciesId: *id001
+        code: *id002
+        name: *id003
+        description: *id004
+        category: *id005
+        isPlayable: *id006
+        isDeprecated: *id007
+        deprecatedAt: *id008
+        deprecationReason: *id009
+        baseLifespan: *id010
+        maturityAge: *id011
+        traitModifiers: *id012
+        realmIds: *id013
+        metadata: *id014
+        createdAt: *id015
+        updatedAt: *id016
         deletedReason:
           type: string
           nullable: true

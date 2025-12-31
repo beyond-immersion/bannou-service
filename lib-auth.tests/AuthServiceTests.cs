@@ -864,7 +864,7 @@ public class AuthServiceTests
 
         var accountDeletedEvent = new AccountDeletedEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             AccountId = accountId,
             DeletedReason = "user_requested"
@@ -902,7 +902,7 @@ public class AuthServiceTests
 
         var accountDeletedEvent = new AccountDeletedEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             AccountId = accountId,
             DeletedReason = "user_requested"

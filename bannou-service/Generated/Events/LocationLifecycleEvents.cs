@@ -30,22 +30,16 @@ using System = global::System;
 /// Published to location.created when a location is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class LocationCreatedEvent
+public partial class LocationCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event (UUID string)
+    /// Event type identifier: location.created
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public LocationCreatedEventEventName EventName { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("locationId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -96,37 +90,22 @@ public partial class LocationCreatedEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Published to location.updated when a location is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class LocationUpdatedEvent
+public partial class LocationUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event (UUID string)
+    /// Event type identifier: location.updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public LocationUpdatedEventEventName EventName { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("locationId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -184,37 +163,22 @@ public partial class LocationUpdatedEvent
     [System.ComponentModel.DataAnnotations.Required]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Published to location.deleted when a location is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class LocationDeletedEvent
+public partial class LocationDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event (UUID string)
+    /// Event type identifier: location.deleted
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public LocationDeletedEventEventName EventName { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("locationId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -271,14 +235,32 @@ public partial class LocationDeletedEvent
     [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
     public string? DeletedReason { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+}
 
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum LocationCreatedEventEventName
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"location.created")]
+    Location_created = 0,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum LocationUpdatedEventEventName
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"location.updated")]
+    Location_updated = 0,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum LocationDeletedEventEventName
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"location.deleted")]
+    Location_deleted = 0,
 
 }
 

@@ -30,22 +30,16 @@ using System = global::System;
 /// Published to account.created when a account is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AccountCreatedEvent
+public partial class AccountCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event (UUID string)
+    /// Event type identifier: account.created
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AccountCreatedEventEventName EventName { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -74,37 +68,22 @@ public partial class AccountCreatedEvent
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Published to account.updated when a account is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AccountUpdatedEvent
+public partial class AccountUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event (UUID string)
+    /// Event type identifier: account.updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AccountUpdatedEventEventName EventName { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -140,37 +119,22 @@ public partial class AccountUpdatedEvent
     [System.ComponentModel.DataAnnotations.Required]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Published to account.deleted when a account is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AccountDeletedEvent
+public partial class AccountDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event (UUID string)
+    /// Event type identifier: account.deleted
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AccountDeletedEventEventName EventName { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -205,14 +169,32 @@ public partial class AccountDeletedEvent
     [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
     public string? DeletedReason { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+}
 
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AccountCreatedEventEventName
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"account.created")]
+    Account_created = 0,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AccountUpdatedEventEventName
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"account.updated")]
+    Account_updated = 0,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AccountDeletedEventEventName
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"account.deleted")]
+    Account_deleted = 0,
 
 }
 

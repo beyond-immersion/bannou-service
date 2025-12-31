@@ -30,22 +30,16 @@ using System = global::System;
 /// Published to document.created when a document is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class DocumentCreatedEvent
+public partial class DocumentCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event (UUID string)
+    /// Event type identifier: document.created
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DocumentCreatedEventEventName EventName { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -78,37 +72,22 @@ public partial class DocumentCreatedEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Published to document.updated when a document is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class DocumentUpdatedEvent
+public partial class DocumentUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event (UUID string)
+    /// Event type identifier: document.updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DocumentUpdatedEventEventName EventName { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -148,37 +127,22 @@ public partial class DocumentUpdatedEvent
     [System.ComponentModel.DataAnnotations.Required]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Published to document.deleted when a document is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class DocumentDeletedEvent
+public partial class DocumentDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event (UUID string)
+    /// Event type identifier: document.deleted
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DocumentDeletedEventEventName EventName { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -217,14 +181,32 @@ public partial class DocumentDeletedEvent
     [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
     public string? DeletedReason { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+}
 
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum DocumentCreatedEventEventName
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"document.created")]
+    Document_created = 0,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum DocumentUpdatedEventEventName
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"document.updated")]
+    Document_updated = 0,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum DocumentDeletedEventEventName
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"document.deleted")]
+    Document_deleted = 0,
 
 }
 

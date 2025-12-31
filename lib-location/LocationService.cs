@@ -1359,7 +1359,7 @@ public partial class LocationService : ILocationService
     {
         var eventData = new LocationCreatedEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             LocationId = Guid.Parse(model.LocationId),
             RealmId = Guid.Parse(model.RealmId),
@@ -1384,7 +1384,7 @@ public partial class LocationService : ILocationService
     {
         var eventData = new LocationUpdatedEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             LocationId = Guid.Parse(model.LocationId),
             RealmId = Guid.Parse(model.RealmId),
@@ -1410,7 +1410,7 @@ public partial class LocationService : ILocationService
     {
         var eventData = new LocationDeletedEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             LocationId = Guid.Parse(model.LocationId),
             RealmId = Guid.Parse(model.RealmId),

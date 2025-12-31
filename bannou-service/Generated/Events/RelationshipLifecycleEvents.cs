@@ -30,22 +30,16 @@ using System = global::System;
 /// Published to relationship.created when a relationship is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RelationshipCreatedEvent
+public partial class RelationshipCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event (UUID string)
+    /// Event type identifier: relationship.created
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public RelationshipCreatedEventEventName EventName { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -88,37 +82,22 @@ public partial class RelationshipCreatedEvent
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Published to relationship.updated when a relationship is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RelationshipUpdatedEvent
+public partial class RelationshipUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event (UUID string)
+    /// Event type identifier: relationship.updated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public RelationshipUpdatedEventEventName EventName { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -168,37 +147,22 @@ public partial class RelationshipUpdatedEvent
     [System.ComponentModel.DataAnnotations.Required]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Published to relationship.deleted when a relationship is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RelationshipDeletedEvent
+public partial class RelationshipDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event (UUID string)
+    /// Event type identifier: relationship.deleted
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public RelationshipDeletedEventEventName EventName { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -247,14 +211,32 @@ public partial class RelationshipDeletedEvent
     [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
     public string? DeletedReason { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+}
 
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum RelationshipCreatedEventEventName
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"relationship.created")]
+    Relationship_created = 0,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum RelationshipUpdatedEventEventName
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"relationship.updated")]
+    Relationship_updated = 0,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum RelationshipDeletedEventEventName
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"relationship.deleted")]
+    Relationship_deleted = 0,
 
 }
 

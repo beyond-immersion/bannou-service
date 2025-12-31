@@ -8,9 +8,12 @@ paths: {}
 components:
   schemas:
     DocumentCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       description: Published to document.created when a document is created
       required:
+      - eventName
       - eventId
       - timestamp
       - documentId
@@ -21,38 +24,39 @@ components:
       - createdAt
       - updatedAt
       properties:
-        eventId: &id001
+        eventName:
           type: string
-          description: Unique identifier for this event (UUID string)
-        timestamp: &id002
-          type: string
-          format: date-time
-          description: When this event occurred
-        documentId: &id003
+          enum:
+          - document.created
+          description: 'Event type identifier: document.created'
+        documentId: &id001
           type: string
           format: uuid
-        namespace: &id004
+        namespace: &id002
           type: string
-        slug: &id005
+        slug: &id003
           type: string
-        title: &id006
+        title: &id004
           type: string
-        category: &id007
+        category: &id005
           type: string
-        tags: &id008
+        tags: &id006
           type: array
           items:
             type: string
-        createdAt: &id009
+        createdAt: &id007
           type: string
           format: date-time
-        updatedAt: &id010
+        updatedAt: &id008
           type: string
           format: date-time
     DocumentUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       description: Published to document.updated when a document is updated
       required:
+      - eventName
       - eventId
       - timestamp
       - documentId
@@ -64,25 +68,31 @@ components:
       - updatedAt
       - changedFields
       properties:
-        eventId: *id001
-        timestamp: *id002
-        documentId: *id003
-        namespace: *id004
-        slug: *id005
-        title: *id006
-        category: *id007
-        tags: *id008
-        createdAt: *id009
-        updatedAt: *id010
+        eventName:
+          type: string
+          enum:
+          - document.updated
+          description: 'Event type identifier: document.updated'
+        documentId: *id001
+        namespace: *id002
+        slug: *id003
+        title: *id004
+        category: *id005
+        tags: *id006
+        createdAt: *id007
+        updatedAt: *id008
         changedFields:
           type: array
           items:
             type: string
           description: List of field names that were modified
     DocumentDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       description: Published to document.deleted when a document is deleted
       required:
+      - eventName
       - eventId
       - timestamp
       - documentId
@@ -93,16 +103,19 @@ components:
       - createdAt
       - updatedAt
       properties:
-        eventId: *id001
-        timestamp: *id002
-        documentId: *id003
-        namespace: *id004
-        slug: *id005
-        title: *id006
-        category: *id007
-        tags: *id008
-        createdAt: *id009
-        updatedAt: *id010
+        eventName:
+          type: string
+          enum:
+          - document.deleted
+          description: 'Event type identifier: document.deleted'
+        documentId: *id001
+        namespace: *id002
+        slug: *id003
+        title: *id004
+        category: *id005
+        tags: *id006
+        createdAt: *id007
+        updatedAt: *id008
         deletedReason:
           type: string
           nullable: true

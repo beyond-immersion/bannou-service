@@ -1149,7 +1149,7 @@ public partial class SpeciesService : ISpeciesService
         {
             var eventModel = new SpeciesCreatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SpeciesId = Guid.Parse(model.SpeciesId),
                 Code = model.Code,
@@ -1177,7 +1177,7 @@ public partial class SpeciesService : ISpeciesService
         {
             var eventModel = new SpeciesUpdatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SpeciesId = Guid.Parse(model.SpeciesId),
                 Code = model.Code,
@@ -1216,7 +1216,7 @@ public partial class SpeciesService : ISpeciesService
         {
             var eventModel = new SpeciesDeletedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SpeciesId = Guid.Parse(model.SpeciesId),
                 Code = model.Code,

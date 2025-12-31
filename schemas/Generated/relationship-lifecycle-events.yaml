@@ -8,9 +8,12 @@ paths: {}
 components:
   schemas:
     RelationshipCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       description: Published to relationship.created when a relationship is created
       required:
+      - eventName
       - eventId
       - timestamp
       - relationshipId
@@ -22,48 +25,49 @@ components:
       - startedAt
       - createdAt
       properties:
-        eventId: &id001
+        eventName:
           type: string
-          description: Unique identifier for this event (UUID string)
-        timestamp: &id002
+          enum:
+          - relationship.created
+          description: 'Event type identifier: relationship.created'
+        relationshipId: &id001
+          type: string
+          format: uuid
+        entity1Id: &id002
+          type: string
+          format: uuid
+        entity1Type: &id003
+          type: string
+        entity2Id: &id004
+          type: string
+          format: uuid
+        entity2Type: &id005
+          type: string
+        relationshipTypeId: &id006
+          type: string
+          format: uuid
+        startedAt: &id007
           type: string
           format: date-time
-          description: When this event occurred
-        relationshipId: &id003
-          type: string
-          format: uuid
-        entity1Id: &id004
-          type: string
-          format: uuid
-        entity1Type: &id005
-          type: string
-        entity2Id: &id006
-          type: string
-          format: uuid
-        entity2Type: &id007
-          type: string
-        relationshipTypeId: &id008
-          type: string
-          format: uuid
-        startedAt: &id009
+        endedAt: &id008
           type: string
           format: date-time
-        endedAt: &id010
-          type: string
-          format: date-time
-        metadata: &id011
+        metadata: &id009
           type: object
           additionalProperties: true
-        createdAt: &id012
+        createdAt: &id010
           type: string
           format: date-time
-        updatedAt: &id013
+        updatedAt: &id011
           type: string
           format: date-time
     RelationshipUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       description: Published to relationship.updated when a relationship is updated
       required:
+      - eventName
       - eventId
       - timestamp
       - relationshipId
@@ -76,28 +80,34 @@ components:
       - createdAt
       - changedFields
       properties:
-        eventId: *id001
-        timestamp: *id002
-        relationshipId: *id003
-        entity1Id: *id004
-        entity1Type: *id005
-        entity2Id: *id006
-        entity2Type: *id007
-        relationshipTypeId: *id008
-        startedAt: *id009
-        endedAt: *id010
-        metadata: *id011
-        createdAt: *id012
-        updatedAt: *id013
+        eventName:
+          type: string
+          enum:
+          - relationship.updated
+          description: 'Event type identifier: relationship.updated'
+        relationshipId: *id001
+        entity1Id: *id002
+        entity1Type: *id003
+        entity2Id: *id004
+        entity2Type: *id005
+        relationshipTypeId: *id006
+        startedAt: *id007
+        endedAt: *id008
+        metadata: *id009
+        createdAt: *id010
+        updatedAt: *id011
         changedFields:
           type: array
           items:
             type: string
           description: List of field names that were modified
     RelationshipDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       description: Published to relationship.deleted when a relationship is deleted
       required:
+      - eventName
       - eventId
       - timestamp
       - relationshipId
@@ -109,19 +119,22 @@ components:
       - startedAt
       - createdAt
       properties:
-        eventId: *id001
-        timestamp: *id002
-        relationshipId: *id003
-        entity1Id: *id004
-        entity1Type: *id005
-        entity2Id: *id006
-        entity2Type: *id007
-        relationshipTypeId: *id008
-        startedAt: *id009
-        endedAt: *id010
-        metadata: *id011
-        createdAt: *id012
-        updatedAt: *id013
+        eventName:
+          type: string
+          enum:
+          - relationship.deleted
+          description: 'Event type identifier: relationship.deleted'
+        relationshipId: *id001
+        entity1Id: *id002
+        entity1Type: *id003
+        entity2Id: *id004
+        entity2Type: *id005
+        relationshipTypeId: *id006
+        startedAt: *id007
+        endedAt: *id008
+        metadata: *id009
+        createdAt: *id010
+        updatedAt: *id011
         deletedReason:
           type: string
           nullable: true

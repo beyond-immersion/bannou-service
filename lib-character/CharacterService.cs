@@ -707,7 +707,7 @@ public partial class CharacterService : ICharacterService
         {
             var eventModel = new CharacterCreatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = Guid.Parse(character.CharacterId),
                 Name = character.Name,
@@ -733,7 +733,7 @@ public partial class CharacterService : ICharacterService
         {
             var eventModel = new CharacterUpdatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = characterId,
                 ChangedFields = changedFields.ToList()
@@ -754,7 +754,7 @@ public partial class CharacterService : ICharacterService
         {
             var eventModel = new CharacterDeletedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = Guid.Parse(character.CharacterId),
                 RealmId = Guid.Parse(character.RealmId),

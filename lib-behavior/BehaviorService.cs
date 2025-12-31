@@ -239,7 +239,7 @@ public partial class BehaviorService : IBehaviorService
         {
             var updateEvent = new Events.BehaviorUpdatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = now,
                 BehaviorId = behaviorId,
                 Name = name,
@@ -259,7 +259,7 @@ public partial class BehaviorService : IBehaviorService
         {
             var createEvent = new Events.BehaviorCreatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = now,
                 BehaviorId = behaviorId,
                 Name = name,
@@ -750,7 +750,7 @@ public partial class BehaviorService : IBehaviorService
 
         var deleteEvent = new Events.BehaviorDeletedEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventId = Guid.NewGuid(),
             Timestamp = now,
             BehaviorId = metadata.BehaviorId,
             Name = metadata.Name,

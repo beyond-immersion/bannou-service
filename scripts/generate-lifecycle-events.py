@@ -86,6 +86,11 @@ def generate_events(entity: str, config: dict) -> Dict[str, Any]:
     """
     Generate Created, Updated, Deleted event schemas for an entity.
 
+    Events inherit from BaseServiceEvent and include:
+    - eventName: enum with the topic in dot notation (e.g., "account.created")
+    - eventId: UUID string (inherited from BaseServiceEvent)
+    - timestamp: ISO 8601 datetime (inherited from BaseServiceEvent)
+
     Args:
         entity: Entity name in PascalCase (e.g., "Account")
         config: Configuration dict with 'model' and optional 'sensitive' keys
@@ -106,27 +111,12 @@ def generate_events(entity: str, config: dict) -> Dict[str, Any]:
     if not primary_key:
         raise ValueError(f"No primary key defined for {entity}. Mark one field with 'primary: true'")
 
-    # Generate topic name (kebab-case)
+    # Generate topic name (kebab-case for topic, used in eventName enum)
     topic_base = to_kebab_case(entity)
-
-    # Build base event properties (all events have these)
-    # NOTE: eventId is plain string (not uuid format) to match BaseServiceEvent
-    # and ensure consistency with IBannouEvent interface across all events
-    base_props = {
-        'eventId': {
-            'type': 'string',
-            'description': 'Unique identifier for this event (UUID string)'
-        },
-        'timestamp': {
-            'type': 'string',
-            'format': 'date-time',
-            'description': 'When this event occurred'
-        },
-    }
 
     # Build model properties (excluding sensitive fields)
     model_props = {}
-    required_fields = ['eventId', 'timestamp']
+    model_required_fields = []
 
     for field, defn in model.items():
         if field in sensitive:
@@ -137,7 +127,7 @@ def generate_events(entity: str, config: dict) -> Dict[str, Any]:
             # Copy definition without our custom markers
             prop = {k: v for k, v in defn.items() if k not in ('required', 'primary')}
             if defn.get('required'):
-                required_fields.append(field)
+                model_required_fields.append(field)
         else:
             # It's a $ref or simple type
             prop = defn
@@ -145,49 +135,66 @@ def generate_events(entity: str, config: dict) -> Dict[str, Any]:
         model_props[field] = prop
 
     # Ensure primary key is required
-    if primary_key not in required_fields:
-        required_fields.append(primary_key)
+    if primary_key not in model_required_fields:
+        model_required_fields.append(primary_key)
 
-    # Build all properties (base + model)
-    all_props = {**base_props, **model_props}
+    def build_event(event_type: str, extra_props: dict = None, extra_required: list = None) -> dict:
+        """Build an event schema that inherits from BaseServiceEvent."""
+        topic = f'{topic_base}.{event_type}'
+
+        # Properties specific to this event (not inherited)
+        props = {
+            'eventName': {
+                'type': 'string',
+                'enum': [topic],
+                'description': f'Event type identifier: {topic}'
+            },
+            **model_props
+        }
+
+        if extra_props:
+            props.update(extra_props)
+
+        # Required fields: base class fields + eventName + model required + extras
+        required = ['eventName', 'eventId', 'timestamp'] + model_required_fields.copy()
+        if extra_required:
+            required.extend(extra_required)
+
+        return {
+            'allOf': [
+                {'$ref': '../common-events.yaml#/components/schemas/BaseServiceEvent'}
+            ],
+            'type': 'object',
+            'description': f'Published to {topic} when a {entity.lower()} is {event_type}',
+            'required': required,
+            'properties': props
+        }
 
     # CreatedEvent
-    created = {
-        'type': 'object',
-        'description': f'Published to {topic_base}.created when a {entity.lower()} is created',
-        'required': required_fields.copy(),
-        'properties': dict(all_props)
-    }
+    created = build_event('created')
 
     # UpdatedEvent - adds changedFields
-    updated_required = required_fields.copy()
-    updated_required.append('changedFields')
-    updated_props = dict(all_props)
-    updated_props['changedFields'] = {
-        'type': 'array',
-        'items': {'type': 'string'},
-        'description': 'List of field names that were modified'
-    }
-    updated = {
-        'type': 'object',
-        'description': f'Published to {topic_base}.updated when a {entity.lower()} is updated',
-        'required': updated_required,
-        'properties': updated_props
-    }
+    updated = build_event('updated',
+        extra_props={
+            'changedFields': {
+                'type': 'array',
+                'items': {'type': 'string'},
+                'description': 'List of field names that were modified'
+            }
+        },
+        extra_required=['changedFields']
+    )
 
-    # DeletedEvent - adds deletedReason
-    deleted_props = dict(all_props)
-    deleted_props['deletedReason'] = {
-        'type': 'string',
-        'nullable': True,
-        'description': 'Optional reason for deletion (e.g., "Merged into {targetId}")'
-    }
-    deleted = {
-        'type': 'object',
-        'description': f'Published to {topic_base}.deleted when a {entity.lower()} is deleted',
-        'required': required_fields.copy(),
-        'properties': deleted_props
-    }
+    # DeletedEvent - adds deletedReason (optional)
+    deleted = build_event('deleted',
+        extra_props={
+            'deletedReason': {
+                'type': 'string',
+                'nullable': True,
+                'description': 'Optional reason for deletion (e.g., "Merged into {targetId}")'
+            }
+        }
+    )
 
     return {
         f'{entity}CreatedEvent': created,

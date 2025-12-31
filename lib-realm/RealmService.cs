@@ -735,7 +735,7 @@ public partial class RealmService : IRealmService
         {
             var eventModel = new RealmCreatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RealmId = Guid.Parse(model.RealmId),
                 Code = model.Code,
@@ -762,7 +762,7 @@ public partial class RealmService : IRealmService
         {
             var eventModel = new RealmUpdatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RealmId = Guid.Parse(model.RealmId),
                 Code = model.Code,
@@ -797,7 +797,7 @@ public partial class RealmService : IRealmService
         {
             var eventModel = new RealmDeletedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RealmId = Guid.Parse(model.RealmId),
                 Code = model.Code,

@@ -749,7 +749,7 @@ public partial class RelationshipService : IRelationshipService
         {
             var eventModel = new RelationshipCreatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RelationshipId = Guid.Parse(model.RelationshipId),
                 Entity1Id = Guid.Parse(model.Entity1Id),
@@ -784,7 +784,7 @@ public partial class RelationshipService : IRelationshipService
         {
             var eventModel = new RelationshipUpdatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RelationshipId = Guid.Parse(model.RelationshipId),
                 Entity1Id = Guid.Parse(model.Entity1Id),
@@ -819,7 +819,7 @@ public partial class RelationshipService : IRelationshipService
         {
             var eventModel = new RelationshipDeletedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RelationshipId = Guid.Parse(model.RelationshipId),
                 Entity1Id = Guid.Parse(model.Entity1Id),

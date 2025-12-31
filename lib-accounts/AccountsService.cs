@@ -1079,7 +1079,7 @@ public partial class AccountsService : IAccountsService
         {
             var eventModel = new AccountCreatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = Guid.Parse(account.AccountId),
                 Email = account.Email,
@@ -1110,7 +1110,7 @@ public partial class AccountsService : IAccountsService
         {
             var eventModel = new AccountUpdatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = Guid.Parse(account.AccountId),
                 Email = account.Email,
@@ -1143,7 +1143,7 @@ public partial class AccountsService : IAccountsService
         {
             var eventModel = new AccountDeletedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = Guid.Parse(account.AccountId),
                 Email = account.Email,

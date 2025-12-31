@@ -265,7 +265,7 @@ public partial class GameSessionService : IGameSessionService
                 SESSION_CREATED_TOPIC,
                 new GameSessionCreatedEvent
                 {
-                    EventId = Guid.NewGuid().ToString(),
+                    EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     SessionId = Guid.Parse(session.SessionId),
                     GameType = session.GameType.ToString(),

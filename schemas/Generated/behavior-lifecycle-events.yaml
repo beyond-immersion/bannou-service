@@ -8,47 +8,51 @@ paths: {}
 components:
   schemas:
     BehaviorCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       description: Published to behavior.created when a behavior is created
       required:
+      - eventName
       - eventId
       - timestamp
       - behaviorId
       - name
       - createdAt
       properties:
-        eventId: &id001
+        eventName:
           type: string
-          description: Unique identifier for this event (UUID string)
-        timestamp: &id002
+          enum:
+          - behavior.created
+          description: 'Event type identifier: behavior.created'
+        behaviorId: &id001
           type: string
-          format: date-time
-          description: When this event occurred
-        behaviorId: &id003
+        name: &id002
           type: string
-        name: &id004
+        category: &id003
           type: string
-        category: &id005
+        bundleId: &id004
           type: string
-        bundleId: &id006
+        assetId: &id005
           type: string
-        assetId: &id007
-          type: string
-        bytecodeSize: &id008
+        bytecodeSize: &id006
           type: integer
           format: int32
-        schemaVersion: &id009
+        schemaVersion: &id007
           type: string
-        createdAt: &id010
+        createdAt: &id008
           type: string
           format: date-time
-        updatedAt: &id011
+        updatedAt: &id009
           type: string
           format: date-time
     BehaviorUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       description: Published to behavior.updated when a behavior is updated
       required:
+      - eventName
       - eventId
       - timestamp
       - behaviorId
@@ -56,43 +60,52 @@ components:
       - createdAt
       - changedFields
       properties:
-        eventId: *id001
-        timestamp: *id002
-        behaviorId: *id003
-        name: *id004
-        category: *id005
-        bundleId: *id006
-        assetId: *id007
-        bytecodeSize: *id008
-        schemaVersion: *id009
-        createdAt: *id010
-        updatedAt: *id011
+        eventName:
+          type: string
+          enum:
+          - behavior.updated
+          description: 'Event type identifier: behavior.updated'
+        behaviorId: *id001
+        name: *id002
+        category: *id003
+        bundleId: *id004
+        assetId: *id005
+        bytecodeSize: *id006
+        schemaVersion: *id007
+        createdAt: *id008
+        updatedAt: *id009
         changedFields:
           type: array
           items:
             type: string
           description: List of field names that were modified
     BehaviorDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       description: Published to behavior.deleted when a behavior is deleted
       required:
+      - eventName
       - eventId
       - timestamp
       - behaviorId
       - name
       - createdAt
       properties:
-        eventId: *id001
-        timestamp: *id002
-        behaviorId: *id003
-        name: *id004
-        category: *id005
-        bundleId: *id006
-        assetId: *id007
-        bytecodeSize: *id008
-        schemaVersion: *id009
-        createdAt: *id010
-        updatedAt: *id011
+        eventName:
+          type: string
+          enum:
+          - behavior.deleted
+          description: 'Event type identifier: behavior.deleted'
+        behaviorId: *id001
+        name: *id002
+        category: *id003
+        bundleId: *id004
+        assetId: *id005
+        bytecodeSize: *id006
+        schemaVersion: *id007
+        createdAt: *id008
+        updatedAt: *id009
         deletedReason:
           type: string
           nullable: true

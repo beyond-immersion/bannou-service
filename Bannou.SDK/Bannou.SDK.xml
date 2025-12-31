@@ -419,14 +419,9 @@
             Published to behavior.created when a behavior is created
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.BehaviorCreatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorCreatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.BehaviorCreatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: behavior.created
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.BehaviorUpdatedEvent">
@@ -434,14 +429,9 @@
             Published to behavior.updated when a behavior is updated
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.BehaviorUpdatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorUpdatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.BehaviorUpdatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: behavior.updated
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BehaviorUpdatedEvent.ChangedFields">
@@ -454,14 +444,9 @@
             Published to behavior.deleted when a behavior is deleted
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.BehaviorDeletedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorDeletedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.BehaviorDeletedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: behavior.deleted
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BehaviorDeletedEvent.DeletedReason">
@@ -474,14 +459,9 @@
             Published to document.created when a document is created
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.DocumentCreatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentCreatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.DocumentCreatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: document.created
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.DocumentUpdatedEvent">
@@ -489,14 +469,9 @@
             Published to document.updated when a document is updated
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.DocumentUpdatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentUpdatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.DocumentUpdatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: document.updated
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.DocumentUpdatedEvent.ChangedFields">
@@ -509,14 +484,9 @@
             Published to document.deleted when a document is deleted
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.DocumentDeletedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.DocumentDeletedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.DocumentDeletedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: document.deleted
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.DocumentDeletedEvent.DeletedReason">
@@ -529,14 +499,9 @@
             Published to relationship.created when a relationship is created
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RelationshipCreatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipCreatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RelationshipCreatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: relationship.created
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent">
@@ -544,14 +509,9 @@
             Published to relationship.updated when a relationship is updated
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: relationship.updated
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipUpdatedEvent.ChangedFields">
@@ -564,14 +524,9 @@
             Published to relationship.deleted when a relationship is deleted
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: relationship.deleted
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipDeletedEvent.DeletedReason">
@@ -895,14 +850,9 @@
             Published to character.created when a character is created
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.CharacterCreatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterCreatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.CharacterCreatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: character.created
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.CharacterUpdatedEvent">
@@ -910,14 +860,9 @@
             Published to character.updated when a character is updated
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.CharacterUpdatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterUpdatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.CharacterUpdatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: character.updated
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CharacterUpdatedEvent.ChangedFields">
@@ -930,14 +875,9 @@
             Published to character.deleted when a character is deleted
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.CharacterDeletedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterDeletedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.CharacterDeletedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: character.deleted
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CharacterDeletedEvent.DeletedReason">
@@ -1010,14 +950,9 @@
             Published to location.created when a location is created
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.LocationCreatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.LocationCreatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.LocationCreatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: location.created
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.LocationUpdatedEvent">
@@ -1025,14 +960,9 @@
             Published to location.updated when a location is updated
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.LocationUpdatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.LocationUpdatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.LocationUpdatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: location.updated
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationUpdatedEvent.ChangedFields">
@@ -1045,14 +975,9 @@
             Published to location.deleted when a location is deleted
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.LocationDeletedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.LocationDeletedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.LocationDeletedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: location.deleted
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.LocationDeletedEvent.DeletedReason">
@@ -1065,14 +990,9 @@
             Published to relationship-type.created when a relationshiptype is created
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeCreatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeCreatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeCreatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: relationship-type.created
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.RelationshipTypeUpdatedEvent">
@@ -1080,14 +1000,9 @@
             Published to relationship-type.updated when a relationshiptype is updated
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeUpdatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeUpdatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeUpdatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: relationship-type.updated
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeUpdatedEvent.ChangedFields">
@@ -1100,14 +1015,9 @@
             Published to relationship-type.deleted when a relationshiptype is deleted
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeDeletedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeDeletedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeDeletedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: relationship-type.deleted
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeDeletedEvent.DeletedReason">
@@ -1177,14 +1087,9 @@
             Published to game-session.created when a gamesession is created
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.GameSessionCreatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: game-session.created
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent">
@@ -1192,14 +1097,9 @@
             Published to game-session.updated when a gamesession is updated
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: game-session.updated
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionUpdatedEvent.ChangedFields">
@@ -1212,14 +1112,9 @@
             Published to game-session.deleted when a gamesession is deleted
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: game-session.deleted
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.GameSessionDeletedEvent.DeletedReason">
@@ -1232,14 +1127,9 @@
             Published to account.created when a account is created
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AccountCreatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.AccountCreatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AccountCreatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: account.created
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.AccountUpdatedEvent">
@@ -1247,14 +1137,9 @@
             Published to account.updated when a account is updated
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: account.updated
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountUpdatedEvent.ChangedFields">
@@ -1267,14 +1152,9 @@
             Published to account.deleted when a account is deleted
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: account.deleted
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.AccountDeletedEvent.DeletedReason">
@@ -1344,14 +1224,9 @@
             Published to species.created when a species is created
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SpeciesCreatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesCreatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SpeciesCreatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: species.created
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.SpeciesUpdatedEvent">
@@ -1359,14 +1234,9 @@
             Published to species.updated when a species is updated
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SpeciesUpdatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesUpdatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SpeciesUpdatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: species.updated
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SpeciesUpdatedEvent.ChangedFields">
@@ -1379,14 +1249,9 @@
             Published to species.deleted when a species is deleted
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SpeciesDeletedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesDeletedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.SpeciesDeletedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: species.deleted
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SpeciesDeletedEvent.DeletedReason">
@@ -1560,14 +1425,9 @@
             Published to realm.created when a realm is created
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RealmCreatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.RealmCreatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RealmCreatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: realm.created
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.RealmUpdatedEvent">
@@ -1575,14 +1435,9 @@
             Published to realm.updated when a realm is updated
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RealmUpdatedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.RealmUpdatedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RealmUpdatedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: realm.updated
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RealmUpdatedEvent.ChangedFields">
@@ -1595,14 +1450,9 @@
             Published to realm.deleted when a realm is deleted
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RealmDeletedEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.RealmDeletedEvent.EventName">
             <summary>
-            Unique identifier for this event (UUID string)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.RealmDeletedEvent.Timestamp">
-            <summary>
-            When this event occurred
+            Event type identifier: realm.deleted
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.RealmDeletedEvent.DeletedReason">

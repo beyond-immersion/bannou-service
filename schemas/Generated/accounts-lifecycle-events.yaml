@@ -8,9 +8,12 @@ paths: {}
 components:
   schemas:
     AccountCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       description: Published to account.created when a account is created
       required:
+      - eventName
       - eventId
       - timestamp
       - accountId
@@ -18,39 +21,40 @@ components:
       - emailVerified
       - createdAt
       properties:
-        eventId: &id001
+        eventName:
           type: string
-          description: Unique identifier for this event (UUID string)
-        timestamp: &id002
-          type: string
-          format: date-time
-          description: When this event occurred
-        accountId: &id003
+          enum:
+          - account.created
+          description: 'Event type identifier: account.created'
+        accountId: &id001
           type: string
           format: uuid
-        email: &id004
+        email: &id002
           type: string
           format: email
-        displayName: &id005
+        displayName: &id003
           type: string
-        emailVerified: &id006
+        emailVerified: &id004
           type: boolean
-        roles: &id007
+        roles: &id005
           type: array
           items: {type: string}
-        createdAt: &id008
+        createdAt: &id006
           type: string
           format: date-time
-        updatedAt: &id009
+        updatedAt: &id007
           type: string
           format: date-time
-        metadata: &id010
+        metadata: &id008
           type: object
           additionalProperties: true
     AccountUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       description: Published to account.updated when a account is updated
       required:
+      - eventName
       - eventId
       - timestamp
       - accountId
@@ -59,25 +63,31 @@ components:
       - createdAt
       - changedFields
       properties:
-        eventId: *id001
-        timestamp: *id002
-        accountId: *id003
-        email: *id004
-        displayName: *id005
-        emailVerified: *id006
-        roles: *id007
-        createdAt: *id008
-        updatedAt: *id009
-        metadata: *id010
+        eventName:
+          type: string
+          enum:
+          - account.updated
+          description: 'Event type identifier: account.updated'
+        accountId: *id001
+        email: *id002
+        displayName: *id003
+        emailVerified: *id004
+        roles: *id005
+        createdAt: *id006
+        updatedAt: *id007
+        metadata: *id008
         changedFields:
           type: array
           items:
             type: string
           description: List of field names that were modified
     AccountDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       description: Published to account.deleted when a account is deleted
       required:
+      - eventName
       - eventId
       - timestamp
       - accountId
@@ -85,16 +95,19 @@ components:
       - emailVerified
       - createdAt
       properties:
-        eventId: *id001
-        timestamp: *id002
-        accountId: *id003
-        email: *id004
-        displayName: *id005
-        emailVerified: *id006
-        roles: *id007
-        createdAt: *id008
-        updatedAt: *id009
-        metadata: *id010
+        eventName:
+          type: string
+          enum:
+          - account.deleted
+          description: 'Event type identifier: account.deleted'
+        accountId: *id001
+        email: *id002
+        displayName: *id003
+        emailVerified: *id004
+        roles: *id005
+        createdAt: *id006
+        updatedAt: *id007
+        metadata: *id008
         deletedReason:
           type: string
           nullable: true

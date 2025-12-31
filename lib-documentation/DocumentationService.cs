@@ -1743,7 +1743,7 @@ public partial class DocumentationService : IDocumentationService
         {
             var eventModel = new DocumentCreatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 DocumentId = doc.DocumentId,
                 Namespace = doc.Namespace,
@@ -1774,7 +1774,7 @@ public partial class DocumentationService : IDocumentationService
         {
             var eventModel = new DocumentUpdatedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 DocumentId = doc.DocumentId,
                 Namespace = doc.Namespace,
@@ -1806,7 +1806,7 @@ public partial class DocumentationService : IDocumentationService
         {
             var eventModel = new DocumentDeletedEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 DocumentId = doc.DocumentId,
                 Namespace = doc.Namespace,
