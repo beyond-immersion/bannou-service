@@ -21257,7 +21257,7 @@
             <param name="cancellationToken">Cancellation token</param>
             <returns>Task that completes when subscription is established</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IMessageSubscriber.SubscribeDynamicAsync``1(System.String,System.Func{``0,System.Threading.CancellationToken,System.Threading.Tasks.Task},System.String,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IMessageSubscriber.SubscribeDynamicAsync``1(System.String,System.Func{``0,System.Threading.CancellationToken,System.Threading.Tasks.Task},System.String,BeyondImmersion.BannouService.Services.SubscriptionExchangeType,System.Threading.CancellationToken)">
             <summary>
             Create a dynamic subscription (Connect service per-session).
             Returns IAsyncDisposable for cleanup.
@@ -21266,6 +21266,19 @@
             <param name="topic">Topic/routing key to subscribe to</param>
             <param name="handler">Handler function called for each message</param>
             <param name="exchange">Exchange to bind to (defaults to service default exchange)</param>
+            <param name="exchangeType">Exchange type (defaults to Fanout for service events)</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Disposable subscription handle - dispose to unsubscribe</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IMessageSubscriber.SubscribeDynamicRawAsync(System.String,System.Func{System.Byte[],System.Threading.CancellationToken,System.Threading.Tasks.Task},System.String,BeyondImmersion.BannouService.Services.SubscriptionExchangeType,System.Threading.CancellationToken)">
+            <summary>
+            Create a dynamic subscription for raw bytes (no deserialization).
+            Optimized for forwarding scenarios where payload is passed through unchanged.
+            </summary>
+            <param name="topic">Topic/routing key to subscribe to</param>
+            <param name="handler">Handler function called with raw message bytes</param>
+            <param name="exchange">Exchange to bind to (defaults to service default exchange)</param>
+            <param name="exchangeType">Exchange type (defaults to Fanout for service events)</param>
             <param name="cancellationToken">Cancellation token</param>
             <returns>Disposable subscription handle - dispose to unsubscribe</returns>
         </member>
@@ -21275,6 +21288,26 @@
             </summary>
             <param name="topic">Topic/routing key to unsubscribe from</param>
             <returns>Task that completes when unsubscription is complete</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Services.SubscriptionExchangeType">
+            <summary>
+            Exchange types for dynamic subscriptions.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.SubscriptionExchangeType.Fanout">
+            <summary>
+            Fanout exchange - broadcasts to all bound queues (default for service events).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.SubscriptionExchangeType.Direct">
+            <summary>
+            Direct exchange - routes by exact routing key match (used for client events).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.SubscriptionExchangeType.Topic">
+            <summary>
+            Topic exchange - routes by pattern matching on routing key.
+            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.IMessageTap">
             <summary>

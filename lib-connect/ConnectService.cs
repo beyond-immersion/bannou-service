@@ -3,7 +3,6 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
-using BeyondImmersion.BannouService.Connect.ClientEvents;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -51,10 +50,22 @@ public partial class ConnectService : IConnectService
     private readonly WebSocketConnectionManager _connectionManager;
     private readonly ISessionManager? _sessionManager;
 
-    // Client event subscriber for session-specific RabbitMQ subscriptions (TENET exception)
-    private ClientEventRabbitMQSubscriber? _clientEventSubscriber;
+    // Client event subscriptions via lib-messaging (per-session raw byte subscriptions)
+    private readonly IMessageSubscriber _messageSubscriber;
+    private readonly ConcurrentDictionary<string, IAsyncDisposable> _sessionSubscriptions = new();
     private readonly ILoggerFactory _loggerFactory;
-    private readonly string? _rabbitMqConnectionString;
+
+    /// <summary>
+    /// Prefix for session-specific queue routing keys.
+    /// Must match the routing key used by MessageBusClientEventPublisher.
+    /// </summary>
+    private const string SESSION_TOPIC_PREFIX = "CONNECT_SESSION_";
+
+    /// <summary>
+    /// Dedicated direct exchange for client events.
+    /// Defined in provisioning/rabbitmq/definitions.json.
+    /// </summary>
+    private const string CLIENT_EVENTS_EXCHANGE = "bannou-client-events";
 
     // Session to service GUID mappings (in-memory for low-latency lookups, persisted via ISessionManager)
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>> _sessionServiceMappings;
@@ -65,6 +76,7 @@ public partial class ConnectService : IConnectService
         IAuthClient authClient,
         IMeshInvocationClient meshClient,
         IMessageBus messageBus,
+        IMessageSubscriber messageSubscriber,
         IHttpClientFactory httpClientFactory,
         IServiceAppMappingResolver appMappingResolver,
         ConnectServiceConfiguration configuration,
@@ -76,6 +88,7 @@ public partial class ConnectService : IConnectService
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
         _meshClient = meshClient ?? throw new ArgumentNullException(nameof(meshClient));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+        _messageSubscriber = messageSubscriber ?? throw new ArgumentNullException(nameof(messageSubscriber));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _appMappingResolver = appMappingResolver ?? throw new ArgumentNullException(nameof(appMappingResolver));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -84,9 +97,6 @@ public partial class ConnectService : IConnectService
 
         _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
         _connectionManager = new WebSocketConnectionManager();
-
-        // Store configuration values for later use
-        _rabbitMqConnectionString = configuration.RabbitMqConnectionString;
 
         // Server salt from configuration - REQUIRED (fail-fast for production safety)
         // All service instances must share the same salt for session shortcuts to work correctly
@@ -525,61 +535,66 @@ public partial class ConnectService : IConnectService
                 _logger.LogDebug("Created connection state in Redis for session {SessionId}, AccountId {AccountId}", sessionId, accountId);
             }
 
-            // Subscribe to session-specific client events via RabbitMQ
+            // Subscribe to session-specific client events via lib-messaging
             // IMPORTANT: Must subscribe BEFORE sending capability manifest to avoid race condition
             // where events published during capability compilation are lost
-            if (_clientEventSubscriber != null)
+            try
             {
-                var subscribed = await _clientEventSubscriber.SubscribeToSessionAsync(sessionId, cancellationToken);
-                if (subscribed)
-                {
-                    _logger.LogDebug("Subscribed to client events for session {SessionId}", sessionId);
+                var topic = $"{SESSION_TOPIC_PREFIX}{sessionId}";
+                var subscription = await _messageSubscriber.SubscribeDynamicRawAsync(
+                    topic: topic,
+                    handler: (bytes, ct) => HandleClientEventAsync(sessionId, bytes),
+                    exchange: CLIENT_EVENTS_EXCHANGE,
+                    exchangeType: SubscriptionExchangeType.Direct,
+                    cancellationToken: cancellationToken);
 
-                    // CRITICAL: Publish session.connected event AFTER RabbitMQ subscription
-                    // This ensures the exchange exists before any service tries to publish to it
-                    // Fixes race condition where services publish to non-existent exchange (crashes RabbitMQ channel)
-                    var sessionConnectedEvent = new SessionConnectedEvent
+                _sessionSubscriptions[sessionId] = subscription;
+                _logger.LogDebug("Subscribed to client events for session {SessionId} on topic {Topic}", sessionId, topic);
+
+                // CRITICAL: Publish session.connected event AFTER RabbitMQ subscription
+                // This ensures the exchange exists before any service tries to publish to it
+                // Fixes race condition where services publish to non-existent exchange (crashes RabbitMQ channel)
+                var sessionConnectedEvent = new SessionConnectedEvent
+                {
+                    EventName = SessionConnectedEventEventName.Session_connected,
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    SessionId = Guid.Parse(sessionId),
+                    AccountId = accountId ?? Guid.Empty,
+                    Roles = userRoles?.ToList(),
+                    Authorizations = authorizations?.ToList(),
+                    ConnectInstanceId = Guid.TryParse(_instanceId.Split('-').LastOrDefault(), out var instanceGuid)
+                        ? instanceGuid : (Guid?)null
+                };
+                await _messageBus.PublishAsync("session.connected", sessionConnectedEvent, cancellationToken: cancellationToken);
+                _logger.LogInformation("Published session.connected event for session {SessionId}", sessionId);
+
+                // If this is a reconnection, publish session.reconnected event so services can re-publish shortcuts
+                // Shortcuts don't survive reconnection - services must re-evaluate and re-publish them
+                if (isReconnection)
+                {
+                    var sessionReconnectedEvent = new SessionReconnectedEvent
                     {
-                        EventName = SessionConnectedEventEventName.Session_connected,
+                        EventName = SessionReconnectedEventEventName.Session_reconnected,
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
                         SessionId = Guid.Parse(sessionId),
                         AccountId = accountId ?? Guid.Empty,
                         Roles = userRoles?.ToList(),
                         Authorizations = authorizations?.ToList(),
-                        ConnectInstanceId = Guid.TryParse(_instanceId.Split('-').LastOrDefault(), out var instanceGuid)
-                            ? instanceGuid : (Guid?)null
-                    };
-                    await _messageBus.PublishAsync("session.connected", sessionConnectedEvent, cancellationToken: cancellationToken);
-                    _logger.LogInformation("Published session.connected event for session {SessionId}", sessionId);
-
-                    // If this is a reconnection, publish session.reconnected event so services can re-publish shortcuts
-                    // Shortcuts don't survive reconnection - services must re-evaluate and re-publish them
-                    if (isReconnection)
-                    {
-                        var sessionReconnectedEvent = new SessionReconnectedEvent
+                        PreviousDisconnectAt = connectionState.DisconnectedAt,
+                        ReconnectionContext = new Dictionary<string, object>
                         {
-                            EventName = SessionReconnectedEventEventName.Session_reconnected,
-                            EventId = Guid.NewGuid(),
-                            Timestamp = DateTimeOffset.UtcNow,
-                            SessionId = Guid.Parse(sessionId),
-                            AccountId = accountId ?? Guid.Empty,
-                            Roles = userRoles?.ToList(),
-                            Authorizations = authorizations?.ToList(),
-                            PreviousDisconnectAt = connectionState.DisconnectedAt,
-                            ReconnectionContext = new Dictionary<string, object>
-                            {
-                                ["connect_instance_id"] = _instanceId
-                            }
-                        };
-                        await _messageBus.PublishAsync("session.reconnected", sessionReconnectedEvent, cancellationToken: cancellationToken);
-                        _logger.LogInformation("Published session.reconnected event for session {SessionId} - services should re-publish shortcuts", sessionId);
-                    }
+                            ["connect_instance_id"] = _instanceId
+                        }
+                    };
+                    await _messageBus.PublishAsync("session.reconnected", sessionReconnectedEvent, cancellationToken: cancellationToken);
+                    _logger.LogInformation("Published session.reconnected event for session {SessionId} - services should re-publish shortcuts", sessionId);
                 }
-                else
-                {
-                    _logger.LogWarning("Failed to subscribe to client events for session {SessionId}", sessionId);
-                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to subscribe to client events for session {SessionId}", sessionId);
             }
 
             // Capability manifest is delivered via event-driven flow:
@@ -689,9 +704,9 @@ public partial class ConnectService : IConnectService
                 if (isForcedDisconnect)
                 {
                     // Forced disconnect - unsubscribe from RabbitMQ and clean up immediately
-                    if (_clientEventSubscriber != null)
+                    if (_sessionSubscriptions.TryRemove(sessionId, out var subscription))
                     {
-                        await _clientEventSubscriber.UnsubscribeFromSessionAsync(sessionId);
+                        await subscription.DisposeAsync();
                         _logger.LogDebug("Unsubscribed from client events for forced disconnect session {SessionId}", sessionId);
                     }
 
@@ -705,9 +720,9 @@ public partial class ConnectService : IConnectService
                     // Cancel RabbitMQ consumer - queue will buffer messages automatically
                     // RabbitMQ handles buffering natively: queue persists, messages accumulate
                     // On reconnect, we re-subscribe and get all pending messages from queue
-                    if (_clientEventSubscriber != null)
+                    if (_sessionSubscriptions.TryRemove(sessionId, out var subscription))
                     {
-                        await _clientEventSubscriber.UnsubscribeFromSessionAsync(sessionId);
+                        await subscription.DisposeAsync();
                         _logger.LogDebug("Cancelled RabbitMQ consumer for session {SessionId} - queue will buffer messages",
                             sessionId);
                     }
@@ -1295,33 +1310,9 @@ public partial class ConnectService : IConnectService
 
         _logger.LogInformation("Connect service RabbitMQ event handlers registered successfully");
 
-        // Initialize direct RabbitMQ subscriber for session-specific client events
-        // TENET exception: mesh doesn't support dynamic runtime subscriptions
-        if (string.IsNullOrEmpty(_rabbitMqConnectionString))
-        {
-            _logger.LogWarning("CONNECT_RABBITMQ_CONNECTION_STRING not configured - client events will not be delivered");
-        }
-        else
-        {
-            _logger.LogInformation("Initializing client event RabbitMQ subscriber");
-            var subscriberLogger = _loggerFactory.CreateLogger<ClientEventRabbitMQSubscriber>();
-            _clientEventSubscriber = new ClientEventRabbitMQSubscriber(
-                _rabbitMqConnectionString,
-                subscriberLogger,
-                HandleClientEventAsync,
-                _instanceId);
-
-            var subscriberInitialized = await _clientEventSubscriber.InitializeAsync(cancellationToken);
-            if (subscriberInitialized)
-            {
-                _logger.LogInformation("Client event RabbitMQ subscriber initialized successfully");
-            }
-            else
-            {
-                _logger.LogWarning("Failed to initialize RabbitMQ subscriber - client events will not be delivered");
-                _clientEventSubscriber = null;
-            }
-        }
+        // Client event subscriptions are created dynamically per-session via lib-messaging
+        // using SubscribeDynamicRawAsync when sessions connect
+        _logger.LogInformation("Client event subscriptions will be created per-session via lib-messaging");
     }
 
     #endregion
@@ -1541,14 +1532,14 @@ public partial class ConnectService : IConnectService
 
     /// <summary>
     /// Handles client events received from RabbitMQ and routes them to WebSocket connections.
-    /// This is the callback invoked by ClientEventRabbitMQSubscriber when events arrive.
+    /// This is the callback invoked by lib-messaging's SubscribeDynamicRawAsync when events arrive.
     /// Internal events (like CapabilitiesRefreshEvent) are handled locally without forwarding to client.
     /// </summary>
     /// <remarks>
     /// <para>
     /// IMPORTANT: This method throws exceptions on delivery failure to trigger RabbitMQ message requeue.
-    /// The subscriber NACKs with requeue=true when this method throws, causing RabbitMQ to buffer
-    /// the message until the client reconnects.
+    /// The lib-messaging subscriber NACKs with requeue=false when this method throws.
+    /// Message buffering relies on RabbitMQ queue persistence during disconnect windows.
     /// </para>
     /// <para>
     /// Delivery failure cases:

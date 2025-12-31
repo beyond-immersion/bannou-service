@@ -41,6 +41,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
         new ServiceTest(TestMultipleTapsToSameDestination, "MultipleTaps", "Messaging", "Test multiple taps to same destination"),
         new ServiceTest(TestDisposeTapStopsForwarding, "DisposeTap", "Messaging", "Test disposing tap stops forwarding"),
         new ServiceTest(TestTappedEnvelopeMetadata, "TapMetadata", "Messaging", "Test tapped envelope contains correct metadata"),
+        new ServiceTest(TestTapWithDirectExchange, "TapDirect", "Messaging", "Test tap with direct exchange type"),
     ];
 
     private static Task<TestResult> TestListTopics(ITestClient client, string[] args) =>
@@ -492,7 +493,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
             {
                 Exchange = $"session-events-meta-{testId}",
                 RoutingKey = $"session.{testId}",
-                ExchangeType = TapExchangeType.Direct,
+                ExchangeType = TapExchangeType.Fanout,
                 CreateExchangeIfNotExists = true
             };
 
@@ -544,8 +545,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
             if (receivedEnvelope.DestinationRoutingKey != destination.RoutingKey)
                 errors.Add($"DestinationRoutingKey: expected {destination.RoutingKey}, got {receivedEnvelope.DestinationRoutingKey}");
 
-            if (receivedEnvelope.DestinationExchangeType != "direct")
-                errors.Add($"DestinationExchangeType: expected 'direct', got {receivedEnvelope.DestinationExchangeType}");
+            if (receivedEnvelope.DestinationExchangeType != "fanout")
+                errors.Add($"DestinationExchangeType: expected 'fanout', got {receivedEnvelope.DestinationExchangeType}");
 
             if (receivedEnvelope.TapCreatedAt < beforeCreate)
                 errors.Add($"TapCreatedAt too early: {receivedEnvelope.TapCreatedAt}");
@@ -558,4 +559,71 @@ public class MessagingTestHandler : BaseHttpTestHandler
 
             return TestResult.Successful($"TappedMessageEnvelope metadata verified: TapId={receivedEnvelope.TapId}, SourceExchange={sourceExchange}");
         }, "Tapped envelope metadata");
+
+    private static Task<TestResult> TestTapWithDirectExchange(ITestClient client, string[] args) =>
+        ExecuteTestAsync(async () =>
+        {
+            var messageTap = GetServiceClient<IMessageTap>();
+            var messageBus = GetServiceClient<IMessageBus>();
+            var messageSubscriber = GetServiceClient<IMessageSubscriber>();
+            var testId = Guid.NewGuid().ToString("N")[..8];
+
+            TappedMessageEnvelope? receivedEnvelope = null;
+            var messageReceived = new TaskCompletionSource<bool>();
+
+            // Source exchange (character's event stream)
+            var sourceExchange = $"character-events-direct-{testId}";
+            var sourceTopic = "events";
+
+            // Direct exchange destination - routing key matters here
+            var destination = new TapDestination
+            {
+                Exchange = $"session-events-direct-{testId}",
+                RoutingKey = $"session.{testId}",
+                ExchangeType = TapExchangeType.Direct,
+                CreateExchangeIfNotExists = true
+            };
+
+            // Subscribe using Direct exchange type
+            var destinationTopic = destination.RoutingKey;
+            await using var subscription = await messageSubscriber.SubscribeDynamicAsync<TappedMessageEnvelope>(
+                destinationTopic,
+                async (envelope, ct) =>
+                {
+                    receivedEnvelope = envelope;
+                    messageReceived.TrySetResult(true);
+                    await Task.CompletedTask;
+                },
+                exchange: destination.Exchange,
+                exchangeType: SubscriptionExchangeType.Direct);
+
+            await using var tapHandle = await messageTap.CreateTapAsync(sourceTopic, destination, sourceExchange);
+
+            // Publish message to source exchange
+            var publishOptions = new PublishOptions { Exchange = sourceExchange, ExchangeType = PublishOptionsExchangeType.Fanout };
+            var testEvent = new TapTestMessage("Direct exchange test", "direct-test", DateTimeOffset.UtcNow);
+            await messageBus.PublishAsync(sourceTopic, testEvent, publishOptions);
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            try
+            {
+                await messageReceived.Task.WaitAsync(cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                return TestResult.Failed("Timeout waiting for tapped message on direct exchange");
+            }
+
+            if (receivedEnvelope == null)
+                return TestResult.Failed("Received envelope is null");
+
+            // Verify it came through correctly
+            if (receivedEnvelope.DestinationExchangeType != "direct")
+                return TestResult.Failed($"Expected 'direct' exchange type, got {receivedEnvelope.DestinationExchangeType}");
+
+            if (receivedEnvelope.DestinationRoutingKey != destination.RoutingKey)
+                return TestResult.Failed($"Expected routing key {destination.RoutingKey}, got {receivedEnvelope.DestinationRoutingKey}");
+
+            return TestResult.Successful($"Direct exchange tap verified: TapId={receivedEnvelope.TapId}, RoutingKey={receivedEnvelope.DestinationRoutingKey}");
+        }, "Tap with direct exchange");
 }

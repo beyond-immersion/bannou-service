@@ -137,14 +137,33 @@ public interface IMessageSubscriber
     /// <param name="topic">Topic/routing key to subscribe to</param>
     /// <param name="handler">Handler function called for each message</param>
     /// <param name="exchange">Exchange to bind to (defaults to service default exchange)</param>
+    /// <param name="exchangeType">Exchange type (defaults to Fanout for service events)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Disposable subscription handle - dispose to unsubscribe</returns>
     Task<IAsyncDisposable> SubscribeDynamicAsync<TEvent>(
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
         string? exchange = null,
+        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Fanout,
         CancellationToken cancellationToken = default)
         where TEvent : class;
+
+    /// <summary>
+    /// Create a dynamic subscription for raw bytes (no deserialization).
+    /// Optimized for forwarding scenarios where payload is passed through unchanged.
+    /// </summary>
+    /// <param name="topic">Topic/routing key to subscribe to</param>
+    /// <param name="handler">Handler function called with raw message bytes</param>
+    /// <param name="exchange">Exchange to bind to (defaults to service default exchange)</param>
+    /// <param name="exchangeType">Exchange type (defaults to Fanout for service events)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Disposable subscription handle - dispose to unsubscribe</returns>
+    Task<IAsyncDisposable> SubscribeDynamicRawAsync(
+        string topic,
+        Func<byte[], CancellationToken, Task> handler,
+        string? exchange = null,
+        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Fanout,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Unsubscribe from a topic (for static subscriptions).
@@ -152,4 +171,25 @@ public interface IMessageSubscriber
     /// <param name="topic">Topic/routing key to unsubscribe from</param>
     /// <returns>Task that completes when unsubscription is complete</returns>
     Task UnsubscribeAsync(string topic);
+}
+
+/// <summary>
+/// Exchange types for dynamic subscriptions.
+/// </summary>
+public enum SubscriptionExchangeType
+{
+    /// <summary>
+    /// Fanout exchange - broadcasts to all bound queues (default for service events).
+    /// </summary>
+    Fanout,
+
+    /// <summary>
+    /// Direct exchange - routes by exact routing key match (used for client events).
+    /// </summary>
+    Direct,
+
+    /// <summary>
+    /// Topic exchange - routes by pattern matching on routing key.
+    /// </summary>
+    Topic
 }

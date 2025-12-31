@@ -166,6 +166,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
         string? exchange = null,
+        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Fanout,
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
@@ -176,15 +177,23 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         var queueName = $"{topic}.dynamic.{subscriptionId:N}";
         var effectiveExchange = exchange ?? _connectionManager.DefaultExchange;
 
+        // Map enum to RabbitMQ exchange type
+        var rabbitExchangeType = exchangeType switch
+        {
+            SubscriptionExchangeType.Direct => ExchangeType.Direct,
+            SubscriptionExchangeType.Topic => ExchangeType.Topic,
+            _ => ExchangeType.Fanout
+        };
+
         try
         {
             // Create a dedicated channel for this subscription
             var channel = await _connectionManager.CreateConsumerChannelAsync(cancellationToken);
 
-            // Declare the exchange (fanout for service events)
+            // Declare the exchange with the specified type
             await channel.ExchangeDeclareAsync(
                 exchange: effectiveExchange,
-                type: ExchangeType.Fanout,
+                type: rabbitExchangeType,
                 durable: true,
                 autoDelete: false,
                 arguments: null,
@@ -266,6 +275,112 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
             _logger.LogError(
                 ex,
                 "Failed to create dynamic subscription for topic '{Topic}'",
+                topic);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<IAsyncDisposable> SubscribeDynamicRawAsync(
+        string topic,
+        Func<byte[], CancellationToken, Task> handler,
+        string? exchange = null,
+        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Fanout,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(topic);
+        ArgumentNullException.ThrowIfNull(handler);
+
+        var subscriptionId = Guid.NewGuid();
+        var queueName = $"{topic}.dynamic.{subscriptionId:N}";
+        var effectiveExchange = exchange ?? _connectionManager.DefaultExchange;
+
+        // Map enum to RabbitMQ exchange type
+        var rabbitExchangeType = exchangeType switch
+        {
+            SubscriptionExchangeType.Direct => ExchangeType.Direct,
+            SubscriptionExchangeType.Topic => ExchangeType.Topic,
+            _ => ExchangeType.Fanout
+        };
+
+        try
+        {
+            // Create a dedicated channel for this subscription
+            var channel = await _connectionManager.CreateConsumerChannelAsync(cancellationToken);
+
+            // Declare the exchange with the specified type
+            await channel.ExchangeDeclareAsync(
+                exchange: effectiveExchange,
+                type: rabbitExchangeType,
+                durable: true,
+                autoDelete: false,
+                arguments: null,
+                cancellationToken: cancellationToken);
+
+            // Declare a temporary queue for this dynamic subscription
+            await channel.QueueDeclareAsync(
+                queue: queueName,
+                durable: false,
+                exclusive: false,
+                autoDelete: true,
+                arguments: null,
+                cancellationToken: cancellationToken);
+
+            // Bind queue to exchange
+            await channel.QueueBindAsync(
+                queue: queueName,
+                exchange: effectiveExchange,
+                routingKey: topic,
+                arguments: null,
+                cancellationToken: cancellationToken);
+
+            // Create consumer that passes raw bytes directly
+            var consumer = new AsyncEventingBasicConsumer(channel);
+            consumer.ReceivedAsync += async (sender, ea) =>
+            {
+                try
+                {
+                    // Pass raw bytes directly to handler - no deserialization
+                    await handler(ea.Body.ToArray(), cancellationToken);
+
+                    // Acknowledge
+                    await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        ex,
+                        "Handler failed for raw dynamic subscription {SubscriptionId} on topic '{Topic}'",
+                        subscriptionId,
+                        topic);
+                    await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                }
+            };
+
+            // Start consuming
+            var consumerTag = await channel.BasicConsumeAsync(
+                queue: queueName,
+                autoAck: false,
+                consumer: consumer,
+                cancellationToken: cancellationToken);
+
+            var subscription = new DynamicSubscription(subscriptionId, topic, queueName, channel, consumerTag, this);
+            _dynamicSubscriptions[subscriptionId] = subscription;
+
+            _logger.LogDebug(
+                "Created raw dynamic subscription {SubscriptionId} to topic '{Topic}' on exchange '{Exchange}' ({ExchangeType})",
+                subscriptionId,
+                topic,
+                effectiveExchange,
+                exchangeType);
+
+            return subscription;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to create raw dynamic subscription for topic '{Topic}'",
                 topic);
             throw;
         }

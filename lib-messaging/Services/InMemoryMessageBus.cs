@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
@@ -122,6 +123,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
         string? exchange = null,
+        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Fanout,
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
@@ -142,8 +144,40 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
             handlers.Add(wrappedHandler);
         }
 
-        _logger.LogDebug("Dynamic subscription to topic '{Topic}' for {EventType} (in-memory mode, exchange: {Exchange})",
-            topic, typeof(TEvent).Name, exchange ?? "default");
+        _logger.LogDebug("Dynamic subscription to topic '{Topic}' for {EventType} (in-memory mode, exchange: {Exchange}, type: {ExchangeType})",
+            topic, typeof(TEvent).Name, exchange ?? "default", exchangeType);
+
+        return Task.FromResult<IAsyncDisposable>(new DynamicSubscription(this, topic, wrappedHandler));
+    }
+
+    /// <inheritdoc/>
+    public Task<IAsyncDisposable> SubscribeDynamicRawAsync(
+        string topic,
+        Func<byte[], CancellationToken, Task> handler,
+        string? exchange = null,
+        SubscriptionExchangeType exchangeType = SubscriptionExchangeType.Fanout,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(topic);
+        ArgumentNullException.ThrowIfNull(handler);
+
+        // For in-memory, we wrap the raw handler to receive serialized bytes
+        Func<object, CancellationToken, Task> wrappedHandler = async (obj, ct) =>
+        {
+            // Serialize the object to JSON bytes for raw handler
+            var json = BannouJson.Serialize(obj);
+            var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+            await handler(bytes, ct);
+        };
+
+        lock (_subscriptionLock)
+        {
+            var handlers = _subscriptions.GetOrAdd(topic, _ => new List<Func<object, CancellationToken, Task>>());
+            handlers.Add(wrappedHandler);
+        }
+
+        _logger.LogDebug("Raw dynamic subscription to topic '{Topic}' (in-memory mode, exchange: {Exchange}, type: {ExchangeType})",
+            topic, exchange ?? "default", exchangeType);
 
         return Task.FromResult<IAsyncDisposable>(new DynamicSubscription(this, topic, wrappedHandler));
     }
