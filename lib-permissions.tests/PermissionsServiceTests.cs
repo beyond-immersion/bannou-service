@@ -1173,7 +1173,7 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-connect-003";
+        var sessionId = Guid.NewGuid().ToString();
         var accountId = "account-003";
 
         // Setup activeConnections with the same session already present
@@ -1223,7 +1223,7 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-connect-004";
+        var sessionId = Guid.NewGuid().ToString();
         var accountId = "account-004";
 
         // Setup empty activeConnections
@@ -1272,7 +1272,7 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-connect-005";
+        var sessionId = Guid.NewGuid().ToString();
         var accountId = "account-005";
 
         // Setup empty activeConnections
@@ -1330,7 +1330,7 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-connect-roles-001";
+        var sessionId = Guid.NewGuid().ToString();
         var accountId = "account-roles-001";
         var roles = new List<string> { "user", "admin" };
 
@@ -1394,7 +1394,7 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-connect-roles-002";
+        var sessionId = Guid.NewGuid().ToString();
         var accountId = "account-roles-002";
         var roles = new List<string> { "user" };
 
@@ -1452,7 +1452,7 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-connect-roles-003";
+        var sessionId = Guid.NewGuid().ToString();
         var accountId = "account-roles-003";
 
         // Setup empty activeConnections
@@ -1509,7 +1509,7 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-connect-auth-001";
+        var sessionId = Guid.NewGuid().ToString();
         var accountId = "account-auth-001";
         var authorizations = new List<string> { "arcadia:authorized", "omega:registered" };
 
@@ -1574,7 +1574,7 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-connect-both-001";
+        var sessionId = Guid.NewGuid().ToString();
         var accountId = "account-both-001";
         var roles = new List<string> { "admin" };
         var authorizations = new List<string> { "arcadia:authorized" };
@@ -1640,7 +1640,7 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-disconnect-001";
+        var sessionId = Guid.NewGuid().ToString();
 
         // Setup activeConnections with the session
         _mockHashSetStore
@@ -1678,7 +1678,7 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-disconnect-002";
+        var sessionId = Guid.NewGuid().ToString();
 
         // Setup activeConnections with the session
         _mockHashSetStore
@@ -1702,7 +1702,7 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-disconnect-003";
+        var sessionId = Guid.NewGuid().ToString();
 
         // Setup activeConnections with the session
         _mockHashSetStore
@@ -1751,7 +1751,7 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-disconnect-004";
+        var sessionId = Guid.NewGuid().ToString();
 
         // Setup activeConnections without the session
         _mockHashSetStore
@@ -1778,7 +1778,7 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "session-disconnect-005";
+        var sessionId = Guid.NewGuid().ToString();
 
         // Setup empty activeConnections
         _mockHashSetStore
@@ -1802,6 +1802,9 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
+        var session1 = Guid.NewGuid().ToString();
+        var session2 = Guid.NewGuid().ToString();
+        var session3 = Guid.NewGuid().ToString();
 
         // Set up a successful lock
         var lockResponse = new TestLockResponse { Success = true };
@@ -1827,15 +1830,15 @@ public class PermissionsServiceTests
         // Setup activeSessions with 3 sessions
         _mockHashSetStore
             .Setup(s => s.GetAsync(ACTIVE_SESSIONS_KEY, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string> { "session-1", "session-2", "session-3" });
+            .ReturnsAsync(new HashSet<string> { session1, session2, session3 });
 
         // Setup activeConnections with only 1 session (the connected one)
         _mockHashSetStore
             .Setup(s => s.GetAsync(ACTIVE_CONNECTIONS_KEY, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<string> { "session-1" });
+            .ReturnsAsync(new HashSet<string> { session1 });
 
         // Setup session states/permissions for recompile
-        foreach (var sessionId in new[] { "session-1", "session-2", "session-3" })
+        foreach (var sessionId in new[] { session1, session2, session3 })
         {
             var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
             _mockDictStringStore
@@ -1868,9 +1871,9 @@ public class PermissionsServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.True(response?.Success);
 
-        // Verify capability refresh was published to connected session (session-1)
+        // Verify capability refresh was published to connected session (session1)
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
-            "session-1",
+            session1,
             It.Is<BaseClientEvent>(e => e is SessionCapabilitiesEvent),
             It.IsAny<CancellationToken>()), Times.AtLeastOnce);
 
@@ -1878,12 +1881,12 @@ public class PermissionsServiceTests
         // Publishing to sessions without WebSocket connections causes RabbitMQ exchange not_found errors
         // which crash the entire pub/sub channel. This is the core bug Phase 6 was designed to fix.
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
-            "session-2",
+            session2,
             It.IsAny<SessionCapabilitiesEvent>(),
             It.IsAny<CancellationToken>()), Times.Never);
 
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
-            "session-3",
+            session3,
             It.IsAny<SessionCapabilitiesEvent>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }

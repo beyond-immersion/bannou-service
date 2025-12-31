@@ -443,9 +443,10 @@ public class ConnectServiceTests
     {
         // Arrange
         var service = CreateConnectService();
+        var serviceId = Guid.NewGuid();
         var eventData = new ServiceRegistrationEvent
         {
-            ServiceId = Guid.NewGuid(),
+            ServiceId = serviceId,
             ServiceName = "new-service-123",
             Timestamp = DateTimeOffset.UtcNow
         };
@@ -459,7 +460,7 @@ public class ConnectServiceTests
         var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
         Assert.NotNull(resultDict);
         Assert.Equal("processed", resultDict["status"].ToString());
-        Assert.Equal("new-service-123", resultDict["serviceId"].ToString());
+        Assert.Equal(serviceId.ToString(), resultDict["serviceId"].ToString());
 
         // Verify that PublishAsync was called for permission recompilation via IMessageBus
         _mockMessageBus.Verify(x => x.PublishAsync(

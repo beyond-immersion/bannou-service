@@ -337,7 +337,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Arrange
         var service = CreateService();
         var request = new ListGameSessionsRequest();
-        var sessionId = "test-session-1";
+        var sessionId = Guid.NewGuid().ToString();
 
         _mockListStore
             .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
@@ -373,16 +373,18 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Arrange
         var service = CreateService();
         var request = new ListGameSessionsRequest();
+        var activeSessionId = Guid.NewGuid().ToString();
+        var finishedSessionId = Guid.NewGuid().ToString();
 
         _mockListStore
             .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { "active", "finished" });
+            .ReturnsAsync(new List<string> { activeSessionId, finishedSessionId });
 
         _mockGameSessionStore
-            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + "active", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + activeSessionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameSessionModel
             {
-                SessionId = "active",
+                SessionId = activeSessionId,
                 SessionName = "Active",
                 Status = GameSessionResponseStatus.Active,
                 Players = new List<GamePlayer>(),
@@ -390,10 +392,10 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             });
 
         _mockGameSessionStore
-            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + "finished", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + finishedSessionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GameSessionModel
             {
-                SessionId = "finished",
+                SessionId = finishedSessionId,
                 SessionName = "Finished",
                 Status = GameSessionResponseStatus.Finished,
                 Players = new List<GamePlayer>(),
