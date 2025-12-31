@@ -150,7 +150,8 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
                         _logger.LogWarning(ex, "Failed to deliver event to callback {CallbackUrl}", callbackUrl);
                     }
                 },
-                cancellationToken);
+                exchange: null, // Use default exchange
+                cancellationToken: cancellationToken);
 
             // Track for later removal - includes HttpClient for proper disposal
             var entry = new SubscriptionEntry(body.Topic, handle, httpClient);

@@ -170,7 +170,8 @@ public sealed class NativeEventConsumerBackend : IHostedService
                     throw; // Re-throw to trigger retry/dead-letter handling
                 }
             },
-            cancellationToken);
+            exchange: null, // Use default exchange for service events
+            cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>

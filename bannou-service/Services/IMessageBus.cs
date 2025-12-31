@@ -117,12 +117,14 @@ public interface IMessageSubscriber
     /// <typeparam name="TEvent">Event type to receive</typeparam>
     /// <param name="topic">Topic/routing key to subscribe to</param>
     /// <param name="handler">Handler function called for each message</param>
-    /// <param name="options">Optional subscription settings</param>
+    /// <param name="exchange">Exchange to bind to (defaults to service default exchange)</param>
+    /// <param name="options">Optional subscription settings (queue durability, ack mode, etc.)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Task that completes when subscription is established</returns>
     Task SubscribeAsync<TEvent>(
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
+        string? exchange = null,
         SubscriptionOptions? options = null,
         CancellationToken cancellationToken = default)
         where TEvent : class;
@@ -134,11 +136,13 @@ public interface IMessageSubscriber
     /// <typeparam name="TEvent">Event type to receive</typeparam>
     /// <param name="topic">Topic/routing key to subscribe to</param>
     /// <param name="handler">Handler function called for each message</param>
+    /// <param name="exchange">Exchange to bind to (defaults to service default exchange)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Disposable subscription handle - dispose to unsubscribe</returns>
     Task<IAsyncDisposable> SubscribeDynamicAsync<TEvent>(
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
+        string? exchange = null,
         CancellationToken cancellationToken = default)
         where TEvent : class;
 

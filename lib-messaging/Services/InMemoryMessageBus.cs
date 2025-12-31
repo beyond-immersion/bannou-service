@@ -92,6 +92,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
     public Task SubscribeAsync<TEvent>(
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
+        string? exchange = null,
         SubscriptionOptions? options = null,
         CancellationToken cancellationToken = default)
         where TEvent : class
@@ -111,7 +112,8 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
             });
         }
 
-        _logger.LogDebug("Subscribed to topic '{Topic}' for {EventType} (in-memory mode)", topic, typeof(TEvent).Name);
+        _logger.LogDebug("Subscribed to topic '{Topic}' for {EventType} (in-memory mode, exchange: {Exchange})",
+            topic, typeof(TEvent).Name, exchange ?? "default");
         return Task.CompletedTask;
     }
 
@@ -119,6 +121,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
     public Task<IAsyncDisposable> SubscribeDynamicAsync<TEvent>(
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
+        string? exchange = null,
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
@@ -139,7 +142,8 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
             handlers.Add(wrappedHandler);
         }
 
-        _logger.LogDebug("Dynamic subscription to topic '{Topic}' for {EventType} (in-memory mode)", topic, typeof(TEvent).Name);
+        _logger.LogDebug("Dynamic subscription to topic '{Topic}' for {EventType} (in-memory mode, exchange: {Exchange})",
+            topic, typeof(TEvent).Name, exchange ?? "default");
 
         return Task.FromResult<IAsyncDisposable>(new DynamicSubscription(this, topic, wrappedHandler));
     }

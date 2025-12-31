@@ -54,6 +54,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
     public async Task SubscribeAsync<TEvent>(
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
+        string? exchange = null,
         SubscriptionOptions? options = null,
         CancellationToken cancellationToken = default)
         where TEvent : class
@@ -70,7 +71,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
         var effectiveOptions = options ?? new SubscriptionOptions();
         var queueName = BuildQueueName(topic, effectiveOptions);
-        var exchange = _connectionManager.DefaultExchange;
+        var effectiveExchange = exchange ?? _connectionManager.DefaultExchange;
 
         try
         {
@@ -79,7 +80,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
             // Declare the exchange (fanout for service events)
             await channel.ExchangeDeclareAsync(
-                exchange: exchange,
+                exchange: effectiveExchange,
                 type: ExchangeType.Fanout,
                 durable: true,
                 autoDelete: false,
@@ -98,7 +99,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
             // Bind queue to exchange - for fanout, routing key is ignored
             await channel.QueueBindAsync(
                 queue: queueName,
-                exchange: exchange,
+                exchange: effectiveExchange,
                 routingKey: topic,
                 arguments: null,
                 cancellationToken: cancellationToken);
@@ -164,6 +165,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
     public async Task<IAsyncDisposable> SubscribeDynamicAsync<TEvent>(
         string topic,
         Func<TEvent, CancellationToken, Task> handler,
+        string? exchange = null,
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
@@ -172,7 +174,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
         var subscriptionId = Guid.NewGuid();
         var queueName = $"{topic}.dynamic.{subscriptionId:N}";
-        var exchange = _connectionManager.DefaultExchange;
+        var effectiveExchange = exchange ?? _connectionManager.DefaultExchange;
 
         try
         {
@@ -181,7 +183,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
             // Declare the exchange (fanout for service events)
             await channel.ExchangeDeclareAsync(
-                exchange: exchange,
+                exchange: effectiveExchange,
                 type: ExchangeType.Fanout,
                 durable: true,
                 autoDelete: false,
@@ -200,7 +202,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
             // Bind queue to exchange
             await channel.QueueBindAsync(
                 queue: queueName,
-                exchange: exchange,
+                exchange: effectiveExchange,
                 routingKey: topic,
                 arguments: null,
                 cancellationToken: cancellationToken);

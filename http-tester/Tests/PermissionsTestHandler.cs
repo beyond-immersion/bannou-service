@@ -1746,7 +1746,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"session-connected-{Guid.NewGuid():N}";
             var testSessionId = Guid.NewGuid();
-            var testAccountId = $"{testPrefix}-account";
+            var testAccountId = Guid.NewGuid();
             var testServiceId = Guid.NewGuid().ToString();
 
             // Step 1: Register a service with permissions so there are capabilities to compile
@@ -1832,7 +1832,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"session-roles-{Guid.NewGuid():N}";
             var testSessionId = Guid.NewGuid();
-            var testAccountId = $"{testPrefix}-account";
+            var testAccountId = Guid.NewGuid();
             var testServiceId = Guid.NewGuid().ToString();
 
             // Step 1: Register service with admin-only permissions
@@ -1921,7 +1921,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"session-disconnect-{Guid.NewGuid():N}";
             var testSessionId = Guid.NewGuid();
-            var testAccountId = $"{testPrefix}-account";
+            var testAccountId = Guid.NewGuid();
 
             // Step 1: First connect the session using strongly-typed model
             var connectEvent = new SessionConnectedEvent
@@ -2001,7 +2001,7 @@ public class PermissionsTestHandler : BaseHttpTestHandler
             var permissionsClient = GetServiceClient<IPermissionsClient>();
             var testPrefix = $"session-reconn-{Guid.NewGuid():N}";
             var testSessionId = Guid.NewGuid();
-            var testAccountId = $"{testPrefix}-account";
+            var testAccountId = Guid.NewGuid();
             var testServiceId = Guid.NewGuid().ToString();
 
             // Step 1: Register service with permissions

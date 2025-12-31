@@ -121,6 +121,7 @@ public class NativeEventConsumerBackendTests
             x => x.SubscribeDynamicAsync<It.IsAnyType>(
                 It.IsAny<string>(),
                 It.IsAny<Func<It.IsAnyType, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
@@ -139,6 +140,7 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent>(
                 topic,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSubscription.Object);
 
@@ -152,6 +154,7 @@ public class NativeEventConsumerBackendTests
             x => x.SubscribeDynamicAsync<TestEvent>(
                 topic,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -172,11 +175,13 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent>(
                 topic1,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSubscription.Object);
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent2>(
                 topic2,
                 It.IsAny<Func<TestEvent2, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSubscription.Object);
 
@@ -190,12 +195,14 @@ public class NativeEventConsumerBackendTests
             x => x.SubscribeDynamicAsync<TestEvent>(
                 topic1,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
         _mockSubscriber.Verify(
             x => x.SubscribeDynamicAsync<TestEvent2>(
                 topic2,
                 It.IsAny<Func<TestEvent2, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -216,6 +223,7 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent>(
                 registeredTopic,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSubscription.Object);
 
@@ -229,6 +237,7 @@ public class NativeEventConsumerBackendTests
             x => x.SubscribeDynamicAsync<TestEvent>(
                 registeredTopic,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -248,6 +257,7 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent>(
                 failingTopic,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Subscription failed"));
 
@@ -255,6 +265,7 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent2>(
                 successTopic,
                 It.IsAny<Func<TestEvent2, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSubscription.Object);
 
@@ -268,6 +279,7 @@ public class NativeEventConsumerBackendTests
             x => x.SubscribeDynamicAsync<TestEvent2>(
                 successTopic,
                 It.IsAny<Func<TestEvent2, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -307,6 +319,7 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent>(
                 topic,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSubscription.Object);
 
@@ -341,11 +354,13 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent>(
                 topic1,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSubscription1.Object);
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent2>(
                 topic2,
                 It.IsAny<Func<TestEvent2, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSubscription2.Object);
 
@@ -380,6 +395,7 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent>(
                 topic,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
             .Callback<string, Func<TestEvent, CancellationToken, Task>, CancellationToken>(
                 (t, handler, ct) => capturedHandler = handler)
@@ -423,6 +439,7 @@ public class NativeEventConsumerBackendTests
         _mockSubscriber.Setup(x => x.SubscribeDynamicAsync<TestEvent>(
                 topic,
                 It.IsAny<Func<TestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
             .Callback<string, Func<TestEvent, CancellationToken, Task>, CancellationToken>(
                 (t, handler, ct) => capturedHandler = handler)

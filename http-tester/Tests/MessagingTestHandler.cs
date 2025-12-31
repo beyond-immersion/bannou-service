@@ -273,7 +273,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
             };
 
             // Subscribe to destination to receive forwarded messages
-            var destinationTopic = $"{destination.Exchange}.{destination.RoutingKey}";
+            var destinationTopic = destination.RoutingKey;
             await using var subscription = await messageSubscriber.SubscribeDynamicAsync<TappedMessageEnvelope>(
                 destinationTopic,
                 async (envelope, ct) =>
@@ -281,7 +281,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
                     receivedMessages.Add(envelope);
                     messageReceived.TrySetResult(true);
                     await Task.CompletedTask;
-                });
+                },
+                exchange: destination.Exchange);
 
             // Create tap from character's event exchange to session's destination
             await using var tapHandle = await messageTap.CreateTapAsync(
@@ -345,7 +346,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
             };
 
             // Subscribe to destination
-            var destinationTopic = $"{destination.Exchange}.{destination.RoutingKey}";
+            var destinationTopic = destination.RoutingKey;
             await using var subscription = await messageSubscriber.SubscribeDynamicAsync<TappedMessageEnvelope>(
                 destinationTopic,
                 async (envelope, ct) =>
@@ -354,7 +355,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
                     if (receivedMessages.Count >= expectedCount)
                         messagesReceived.TrySetResult(true);
                     await Task.CompletedTask;
-                });
+                },
+                exchange: destination.Exchange);
 
             // Create taps from both character exchanges to session destination
             await using var tap1 = await messageTap.CreateTapAsync("events", destination, sourceExchange1);
@@ -412,7 +414,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
                 CreateExchangeIfNotExists = true
             };
 
-            var destinationTopic = $"{destination.Exchange}.{destination.RoutingKey}";
+            var destinationTopic = destination.RoutingKey;
             await using var subscription = await messageSubscriber.SubscribeDynamicAsync<TappedMessageEnvelope>(
                 destinationTopic,
                 async (envelope, ct) =>
@@ -420,7 +422,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
                     receivedMessages.Add(envelope);
                     firstMessageReceived.TrySetResult(true);
                     await Task.CompletedTask;
-                });
+                },
+                exchange: destination.Exchange);
 
             // Create tap with explicit source exchange
             var tapHandle = await messageTap.CreateTapAsync("events", destination, sourceExchange);
@@ -493,7 +496,7 @@ public class MessagingTestHandler : BaseHttpTestHandler
                 CreateExchangeIfNotExists = true
             };
 
-            var destinationTopic = $"{destination.Exchange}.{destination.RoutingKey}";
+            var destinationTopic = destination.RoutingKey;
             await using var subscription = await messageSubscriber.SubscribeDynamicAsync<TappedMessageEnvelope>(
                 destinationTopic,
                 async (envelope, ct) =>
@@ -501,7 +504,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
                     receivedEnvelope = envelope;
                     messageReceived.TrySetResult(true);
                     await Task.CompletedTask;
-                });
+                },
+                exchange: destination.Exchange);
 
             var beforeCreate = DateTimeOffset.UtcNow;
 

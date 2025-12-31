@@ -338,7 +338,7 @@ public class InMemoryMessageBusTests
         var options = new SubscriptionOptions();
 
         // Act
-        await _messageBus.SubscribeAsync(topic, handler, options);
+        await _messageBus.SubscribeAsync(topic, handler, exchange: null, options: options);
 
         // Assert - No exception means success
         Assert.True(true);

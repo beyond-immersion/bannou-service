@@ -21245,18 +21245,19 @@
             </para>
             </remarks>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IMessageSubscriber.SubscribeAsync``1(System.String,System.Func{``0,System.Threading.CancellationToken,System.Threading.Tasks.Task},BeyondImmersion.BannouService.Messaging.SubscriptionOptions,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IMessageSubscriber.SubscribeAsync``1(System.String,System.Func{``0,System.Threading.CancellationToken,System.Threading.Tasks.Task},System.String,BeyondImmersion.BannouService.Messaging.SubscriptionOptions,System.Threading.CancellationToken)">
             <summary>
             Create a static subscription (survives restarts).
             </summary>
             <typeparam name="TEvent">Event type to receive</typeparam>
             <param name="topic">Topic/routing key to subscribe to</param>
             <param name="handler">Handler function called for each message</param>
-            <param name="options">Optional subscription settings</param>
+            <param name="exchange">Exchange to bind to (defaults to service default exchange)</param>
+            <param name="options">Optional subscription settings (queue durability, ack mode, etc.)</param>
             <param name="cancellationToken">Cancellation token</param>
             <returns>Task that completes when subscription is established</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IMessageSubscriber.SubscribeDynamicAsync``1(System.String,System.Func{``0,System.Threading.CancellationToken,System.Threading.Tasks.Task},System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IMessageSubscriber.SubscribeDynamicAsync``1(System.String,System.Func{``0,System.Threading.CancellationToken,System.Threading.Tasks.Task},System.String,System.Threading.CancellationToken)">
             <summary>
             Create a dynamic subscription (Connect service per-session).
             Returns IAsyncDisposable for cleanup.
@@ -21264,6 +21265,7 @@
             <typeparam name="TEvent">Event type to receive</typeparam>
             <param name="topic">Topic/routing key to subscribe to</param>
             <param name="handler">Handler function called for each message</param>
+            <param name="exchange">Exchange to bind to (defaults to service default exchange)</param>
             <param name="cancellationToken">Cancellation token</param>
             <returns>Disposable subscription handle - dispose to unsubscribe</returns>
         </member>

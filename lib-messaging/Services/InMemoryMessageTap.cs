@@ -78,7 +78,8 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
                     createdAt,
                     ct);
             },
-            cancellationToken);
+            exchange: effectiveSourceExchange,
+            cancellationToken: cancellationToken);
 
         var tapHandle = new TapHandleImpl(
             tapId,
