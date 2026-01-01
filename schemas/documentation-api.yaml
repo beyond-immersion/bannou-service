@@ -359,31 +359,31 @@ paths:
         ,\n          \"maxLength\": 50,\n          \"description\": \"Documentation namespace to list documents from\"\n \
         \       },\n        \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\",\n          \"description\"\
         : \"Filter to a specific category\"\n        },\n        \"tags\": {\n          \"type\": \"array\",\n          \"\
-        items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"Filter by tags\"\n      \
-        \  },\n        \"tagsMatch\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"all\",\n  \
-        \          \"any\"\n          ],\n          \"default\": \"all\",\n          \"description\": \"Whether documents
-        must match all tags or any tag\"\n        },\n        \"createdAfter\": {\n          \"type\": \"string\",\n     \
-        \     \"format\": \"date-time\",\n          \"description\": \"Filter to documents created after this timestamp\"\n\
-        \        },\n        \"createdBefore\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n\
-        \          \"description\": \"Filter to documents created before this timestamp\"\n        },\n        \"updatedAfter\"\
+        items\": {\n            \"type\": \"string\"\n          },\n          \"nullable\": true,\n          \"description\"\
+        : \"Filter by tags (null to skip tag filtering)\"\n        },\n        \"tagsMatch\": {\n          \"type\": \"string\"\
+        ,\n          \"enum\": [\n            \"all\",\n            \"any\"\n          ],\n          \"default\": \"all\"\
+        ,\n          \"description\": \"Whether documents must match all tags or any tag\"\n        },\n        \"createdAfter\"\
         : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Filter to
-        documents updated after this timestamp\"\n        },\n        \"updatedBefore\": {\n          \"type\": \"string\"\
-        ,\n          \"format\": \"date-time\",\n          \"description\": \"Filter to documents updated before this timestamp\"\
-        \n        },\n        \"titlesOnly\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n       \
-        \   \"description\": \"Return only document titles without summaries\"\n        },\n        \"page\": {\n        \
-        \  \"type\": \"integer\",\n          \"default\": 1,\n          \"minimum\": 1,\n          \"description\": \"Page
-        number for pagination\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"default\"\
-        : 20,\n          \"minimum\": 1,\n          \"maximum\": 100,\n          \"description\": \"Number of documents per
-        page\"\n        },\n        \"sortBy\": {\n          \"$ref\": \"#/$defs/ListSortField\",\n          \"description\"\
-        : \"Field to sort results by\"\n        },\n        \"sortOrder\": {\n          \"type\": \"string\",\n          \"\
-        enum\": [\n            \"asc\",\n            \"desc\"\n          ],\n          \"default\": \"desc\",\n          \"\
-        description\": \"Sort order direction\"\n        }\n      }\n    },\n    \"DocumentCategory\": {\n      \"type\":
-        \"string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n        \"architecture\"\
-        ,\n        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n    \
-        \    \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\": \"Fixed categories
-        for type-safe filtering\"\n    },\n    \"ListSortField\": {\n      \"type\": \"string\",\n      \"enum\": [\n    \
-        \    \"created_at\",\n        \"updated_at\",\n        \"title\"\n      ],\n      \"default\": \"updated_at\",\n \
-        \     \"description\": \"Fields available for sorting document lists\"\n    }\n  }\n}"
+        documents created after this timestamp\"\n        },\n        \"createdBefore\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"date-time\",\n          \"description\": \"Filter to documents created before this timestamp\"\
+        \n        },\n        \"updatedAfter\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n\
+        \          \"description\": \"Filter to documents updated after this timestamp\"\n        },\n        \"updatedBefore\"\
+        : {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Filter to
+        documents updated before this timestamp\"\n        },\n        \"titlesOnly\": {\n          \"type\": \"boolean\"\
+        ,\n          \"default\": false,\n          \"description\": \"Return only document titles without summaries\"\n \
+        \       },\n        \"page\": {\n          \"type\": \"integer\",\n          \"default\": 1,\n          \"minimum\"\
+        : 1,\n          \"description\": \"Page number for pagination\"\n        },\n        \"pageSize\": {\n          \"\
+        type\": \"integer\",\n          \"default\": 20,\n          \"minimum\": 1,\n          \"maximum\": 100,\n       \
+        \   \"description\": \"Number of documents per page\"\n        },\n        \"sortBy\": {\n          \"$ref\": \"#/$defs/ListSortField\"\
+        ,\n          \"description\": \"Field to sort results by\"\n        },\n        \"sortOrder\": {\n          \"type\"\
+        : \"string\",\n          \"enum\": [\n            \"asc\",\n            \"desc\"\n          ],\n          \"default\"\
+        : \"desc\",\n          \"description\": \"Sort order direction\"\n        }\n      }\n    },\n    \"DocumentCategory\"\
+        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n  \
+        \      \"architecture\",\n        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n        \"\
+        game-systems\",\n        \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\"\
+        : \"Fixed categories for type-safe filtering\"\n    },\n    \"ListSortField\": {\n      \"type\": \"string\",\n  \
+        \    \"enum\": [\n        \"created_at\",\n        \"updated_at\",\n        \"title\"\n      ],\n      \"default\"\
+        : \"updated_at\",\n      \"description\": \"Fields available for sorting document lists\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListDocumentsResponse\"\
         ,\n  \"$defs\": {\n    \"ListDocumentsResponse\": {\n      \"description\": \"Response containing a paginated list
         of documents\",\n      \"type\": \"object\",\n      \"required\": [\n        \"namespace\",\n        \"documents\"\
@@ -521,18 +521,20 @@ paths:
         \   \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\",\n          \"description\": \"Category for
         organizing the document\"\n        },\n        \"content\": {\n          \"type\": \"string\",\n          \"description\"\
         : \"Markdown content (max 500KB)\"\n        },\n        \"summary\": {\n          \"type\": \"string\",\n        \
-        \  \"maxLength\": 500,\n          \"description\": \"Brief text summary of the document\"\n        },\n        \"\
-        voiceSummary\": {\n          \"type\": \"string\",\n          \"maxLength\": 200,\n          \"description\": \"Concise
-        summary optimized for voice AI\"\n        },\n        \"tags\": {\n          \"type\": \"array\",\n          \"items\"\
-        : {\n            \"type\": \"string\"\n          },\n          \"description\": \"Tags for filtering and search\"\n\
-        \        },\n        \"relatedDocuments\": {\n          \"type\": \"array\",\n          \"items\": {\n           \
-        \ \"type\": \"string\",\n            \"format\": \"uuid\"\n          },\n          \"description\": \"IDs of related
-        documents to link\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"description\": \"Custom metadata key-value pairs\"\n        }\n      }\n    },\n    \"DocumentCategory\"\
-        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n  \
-        \      \"architecture\",\n        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n        \"\
-        game-systems\",\n        \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\"\
-        : \"Fixed categories for type-safe filtering\"\n    }\n  }\n}"
+        \  \"maxLength\": 500,\n          \"nullable\": true,\n          \"description\": \"Brief text summary of the document
+        (null if not provided)\"\n        },\n        \"voiceSummary\": {\n          \"type\": \"string\",\n          \"maxLength\"\
+        : 200,\n          \"nullable\": true,\n          \"description\": \"Concise summary optimized for voice AI (null if
+        not provided)\"\n        },\n        \"tags\": {\n          \"type\": \"array\",\n          \"items\": {\n       \
+        \     \"type\": \"string\"\n          },\n          \"nullable\": true,\n          \"description\": \"Tags for filtering
+        and search (null to skip tagging)\"\n        },\n        \"relatedDocuments\": {\n          \"type\": \"array\",\n\
+        \          \"items\": {\n            \"type\": \"string\",\n            \"format\": \"uuid\"\n          },\n     \
+        \     \"nullable\": true,\n          \"description\": \"IDs of related documents to link (null to skip linking)\"\n\
+        \        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
+        \          \"nullable\": true,\n          \"description\": \"Custom metadata key-value pairs (null if not needed)\"\
+        \n        }\n      }\n    },\n    \"DocumentCategory\": {\n      \"type\": \"string\",\n      \"enum\": [\n      \
+        \  \"getting-started\",\n        \"api-reference\",\n        \"architecture\",\n        \"deployment\",\n        \"\
+        troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n        \"world-lore\",\n        \"npc-ai\"\
+        ,\n        \"other\"\n      ],\n      \"description\": \"Fixed categories for type-safe filtering\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CreateDocumentResponse\"\
         ,\n  \"$defs\": {\n    \"CreateDocumentResponse\": {\n      \"description\": \"Response confirming document creation
         with assigned identifiers\",\n      \"type\": \"object\",\n      \"required\": [\n        \"documentId\",\n      \
@@ -580,18 +582,20 @@ paths:
         \   \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\",\n          \"description\": \"New category
         for the document\"\n        },\n        \"content\": {\n          \"type\": \"string\",\n          \"description\"\
         : \"New markdown content for the document\"\n        },\n        \"summary\": {\n          \"type\": \"string\",\n\
-        \          \"description\": \"New text summary for the document\"\n        },\n        \"voiceSummary\": {\n     \
-        \     \"type\": \"string\",\n          \"description\": \"New voice-optimized summary for the document\"\n       \
-        \ },\n        \"tags\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\
-        \n          },\n          \"description\": \"New set of tags for the document\"\n        },\n        \"relatedDocuments\"\
-        : {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"format\"\
-        : \"uuid\"\n          },\n          \"description\": \"New set of related document IDs\"\n        },\n        \"metadata\"\
-        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"New
-        custom metadata key-value pairs\"\n        }\n      }\n    },\n    \"DocumentCategory\": {\n      \"type\": \"string\"\
-        ,\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n        \"architecture\",\n      \
-        \  \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n        \"world-lore\"\
-        ,\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\": \"Fixed categories for type-safe filtering\"\
-        \n    }\n  }\n}"
+        \          \"nullable\": true,\n          \"description\": \"New text summary for the document (null to keep unchanged)\"\
+        \n        },\n        \"voiceSummary\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n      \
+        \    \"description\": \"New voice-optimized summary for the document (null to keep unchanged)\"\n        },\n    \
+        \    \"tags\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n     \
+        \     },\n          \"nullable\": true,\n          \"description\": \"New set of tags for the document (null to keep
+        unchanged)\"\n        },\n        \"relatedDocuments\": {\n          \"type\": \"array\",\n          \"items\": {\n\
+        \            \"type\": \"string\",\n            \"format\": \"uuid\"\n          },\n          \"nullable\": true,\n\
+        \          \"description\": \"New set of related document IDs (null to keep unchanged)\"\n        },\n        \"metadata\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n \
+        \         \"description\": \"New custom metadata key-value pairs (null to keep unchanged)\"\n        }\n      }\n\
+        \    },\n    \"DocumentCategory\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\"\
+        ,\n        \"api-reference\",\n        \"architecture\",\n        \"deployment\",\n        \"troubleshooting\",\n\
+        \        \"tutorials\",\n        \"game-systems\",\n        \"world-lore\",\n        \"npc-ai\",\n        \"other\"\
+        \n      ],\n      \"description\": \"Fixed categories for type-safe filtering\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UpdateDocumentResponse\"\
         ,\n  \"$defs\": {\n    \"UpdateDocumentResponse\": {\n      \"description\": \"Response confirming document update
         with timestamp\",\n      \"type\": \"object\",\n      \"required\": [\n        \"documentId\",\n        \"updatedAt\"\
@@ -732,10 +736,11 @@ paths:
         List of document IDs to update\"\n        },\n        \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\"\
         ,\n          \"description\": \"New category to apply to all documents\"\n        },\n        \"addTags\": {\n   \
         \       \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"\
-        description\": \"Tags to add to all documents\"\n        },\n        \"removeTags\": {\n          \"type\": \"array\"\
-        ,\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"Tags to remove
-        from all documents\"\n        }\n      }\n    },\n    \"DocumentCategory\": {\n      \"type\": \"string\",\n     \
-        \ \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n        \"architecture\",\n        \"deployment\"\
+        nullable\": true,\n          \"description\": \"Tags to add to all documents (null to skip adding)\"\n        },\n\
+        \        \"removeTags\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\
+        \n          },\n          \"nullable\": true,\n          \"description\": \"Tags to remove from all documents (null
+        to skip removing)\"\n        }\n      }\n    },\n    \"DocumentCategory\": {\n      \"type\": \"string\",\n      \"\
+        enum\": [\n        \"getting-started\",\n        \"api-reference\",\n        \"architecture\",\n        \"deployment\"\
         ,\n        \"troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n        \"world-lore\",\n    \
         \    \"npc-ai\",\n        \"other\"\n      ],\n      \"description\": \"Fixed categories for type-safe filtering\"\
         \n    }\n  }\n}"
@@ -849,16 +854,18 @@ paths:
         \"Display title of the document\"\n        },\n        \"category\": {\n          \"$ref\": \"#/$defs/DocumentCategory\"\
         ,\n          \"description\": \"Category for organizing the document\"\n        },\n        \"content\": {\n     \
         \     \"type\": \"string\",\n          \"description\": \"Markdown content of the document\"\n        },\n       \
-        \ \"summary\": {\n          \"type\": \"string\",\n          \"description\": \"Brief text summary of the document\"\
-        \n        },\n        \"voiceSummary\": {\n          \"type\": \"string\",\n          \"description\": \"Concise summary
-        optimized for voice AI\"\n        },\n        \"tags\": {\n          \"type\": \"array\",\n          \"items\": {\n\
-        \            \"type\": \"string\"\n          },\n          \"description\": \"Tags for filtering and search\"\n  \
-        \      },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n \
-        \         \"description\": \"Custom metadata key-value pairs\"\n        }\n      }\n    },\n    \"DocumentCategory\"\
-        : {\n      \"type\": \"string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n  \
-        \      \"architecture\",\n        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n        \"\
-        game-systems\",\n        \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\"\
-        : \"Fixed categories for type-safe filtering\"\n    }\n  }\n}"
+        \ \"summary\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Brief
+        text summary of the document (null if not provided)\"\n        },\n        \"voiceSummary\": {\n          \"type\"\
+        : \"string\",\n          \"nullable\": true,\n          \"description\": \"Concise summary optimized for voice AI
+        (null if not provided)\"\n        },\n        \"tags\": {\n          \"type\": \"array\",\n          \"items\": {\n\
+        \            \"type\": \"string\"\n          },\n          \"nullable\": true,\n          \"description\": \"Tags
+        for filtering and search (null to skip tagging)\"\n        },\n        \"metadata\": {\n          \"type\": \"object\"\
+        ,\n          \"additionalProperties\": true,\n          \"nullable\": true,\n          \"description\": \"Custom metadata
+        key-value pairs (null if not needed)\"\n        }\n      }\n    },\n    \"DocumentCategory\": {\n      \"type\": \"\
+        string\",\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n        \"architecture\",\n\
+        \        \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n      \
+        \  \"world-lore\",\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\": \"Fixed categories for
+        type-safe filtering\"\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ImportDocumentationResponse\"\
         ,\n  \"$defs\": {\n    \"ImportDocumentationResponse\": {\n      \"description\": \"Response reporting import results
         with counts and failure details\",\n      \"type\": \"object\",\n      \"required\": [\n        \"namespace\",\n \
@@ -1386,19 +1393,21 @@ paths:
         disable automatic syncing\"\n        },\n        \"syncIntervalMinutes\": {\n          \"type\": \"integer\",\n  \
         \        \"minimum\": 5,\n          \"maximum\": 1440,\n          \"description\": \"New sync interval in minutes\"\
         \n        },\n        \"filePatterns\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"\
-        type\": \"string\"\n          },\n          \"description\": \"New glob patterns for files to include\"\n        },\n\
-        \        \"excludePatterns\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"\
-        string\"\n          },\n          \"description\": \"New glob patterns for files to exclude\"\n        },\n      \
-        \  \"categoryMapping\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"\
-        type\": \"string\"\n          },\n          \"description\": \"New directory-to-category mapping\"\n        },\n \
-        \       \"defaultCategory\": {\n          \"$ref\": \"#/$defs/DocumentCategory\",\n          \"description\": \"New
-        default category for unmapped documents\"\n        },\n        \"archiveEnabled\": {\n          \"type\": \"boolean\"\
-        ,\n          \"description\": \"Enable or disable archive functionality\"\n        },\n        \"archiveOnSync\":
-        {\n          \"type\": \"boolean\",\n          \"description\": \"Enable or disable archiving after each sync\"\n\
-        \        }\n      }\n    },\n    \"DocumentCategory\": {\n      \"type\": \"string\",\n      \"enum\": [\n       \
-        \ \"getting-started\",\n        \"api-reference\",\n        \"architecture\",\n        \"deployment\",\n        \"\
-        troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n        \"world-lore\",\n        \"npc-ai\"\
-        ,\n        \"other\"\n      ],\n      \"description\": \"Fixed categories for type-safe filtering\"\n    }\n  }\n}"
+        type\": \"string\"\n          },\n          \"nullable\": true,\n          \"description\": \"New glob patterns for
+        files to include (null to keep unchanged)\"\n        },\n        \"excludePatterns\": {\n          \"type\": \"array\"\
+        ,\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"nullable\": true,\n       \
+        \   \"description\": \"New glob patterns for files to exclude (null to keep unchanged)\"\n        },\n        \"categoryMapping\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n  \
+        \        },\n          \"nullable\": true,\n          \"description\": \"New directory-to-category mapping (null to
+        keep unchanged)\"\n        },\n        \"defaultCategory\": {\n          \"$ref\": \"#/$defs/DocumentCategory\",\n\
+        \          \"description\": \"New default category for unmapped documents\"\n        },\n        \"archiveEnabled\"\
+        : {\n          \"type\": \"boolean\",\n          \"description\": \"Enable or disable archive functionality\"\n  \
+        \      },\n        \"archiveOnSync\": {\n          \"type\": \"boolean\",\n          \"description\": \"Enable or
+        disable archiving after each sync\"\n        }\n      }\n    },\n    \"DocumentCategory\": {\n      \"type\": \"string\"\
+        ,\n      \"enum\": [\n        \"getting-started\",\n        \"api-reference\",\n        \"architecture\",\n      \
+        \  \"deployment\",\n        \"troubleshooting\",\n        \"tutorials\",\n        \"game-systems\",\n        \"world-lore\"\
+        ,\n        \"npc-ai\",\n        \"other\"\n      ],\n      \"description\": \"Fixed categories for type-safe filtering\"\
+        \n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/UpdateRepositoryBindingResponse\"\
         ,\n  \"$defs\": {\n    \"UpdateRepositoryBindingResponse\": {\n      \"description\": \"Response containing the updated
         binding configuration\",\n      \"type\": \"object\",\n      \"required\": [\n        \"binding\"\n      ],\n    \
@@ -1911,7 +1920,8 @@ components:
           type: array
           items:
             type: string
-          description: Filter by tags
+          nullable: true
+          description: Filter by tags (null to skip tag filtering)
         tagsMatch:
           type: string
           enum:
@@ -2103,26 +2113,31 @@ components:
         summary:
           type: string
           maxLength: 500
-          description: Brief text summary of the document
+          nullable: true
+          description: Brief text summary of the document (null if not provided)
         voiceSummary:
           type: string
           maxLength: 200
-          description: Concise summary optimized for voice AI
+          nullable: true
+          description: Concise summary optimized for voice AI (null if not provided)
         tags:
           type: array
           items:
             type: string
-          description: Tags for filtering and search
+          nullable: true
+          description: Tags for filtering and search (null to skip tagging)
         relatedDocuments:
           type: array
           items:
             type: string
             format: uuid
-          description: IDs of related documents to link
+          nullable: true
+          description: IDs of related documents to link (null to skip linking)
         metadata:
           type: object
           additionalProperties: true
-          description: Custom metadata key-value pairs
+          nullable: true
+          description: Custom metadata key-value pairs (null if not needed)
 
     CreateDocumentResponse:
       description: Response confirming document creation with assigned identifiers
@@ -2172,25 +2187,30 @@ components:
           description: New markdown content for the document
         summary:
           type: string
-          description: New text summary for the document
+          nullable: true
+          description: New text summary for the document (null to keep unchanged)
         voiceSummary:
           type: string
-          description: New voice-optimized summary for the document
+          nullable: true
+          description: New voice-optimized summary for the document (null to keep unchanged)
         tags:
           type: array
           items:
             type: string
-          description: New set of tags for the document
+          nullable: true
+          description: New set of tags for the document (null to keep unchanged)
         relatedDocuments:
           type: array
           items:
             type: string
             format: uuid
-          description: New set of related document IDs
+          nullable: true
+          description: New set of related document IDs (null to keep unchanged)
         metadata:
           type: object
           additionalProperties: true
-          description: New custom metadata key-value pairs
+          nullable: true
+          description: New custom metadata key-value pairs (null to keep unchanged)
 
     UpdateDocumentResponse:
       description: Response confirming document update with timestamp
@@ -2308,12 +2328,14 @@ components:
           type: array
           items:
             type: string
-          description: Tags to add to all documents
+          nullable: true
+          description: Tags to add to all documents (null to skip adding)
         removeTags:
           type: array
           items:
             type: string
-          description: Tags to remove from all documents
+          nullable: true
+          description: Tags to remove from all documents (null to skip removing)
 
     BulkUpdateResponse:
       description: Response reporting bulk update results with success and failure details
@@ -2437,19 +2459,23 @@ components:
           description: Markdown content of the document
         summary:
           type: string
-          description: Brief text summary of the document
+          nullable: true
+          description: Brief text summary of the document (null if not provided)
         voiceSummary:
           type: string
-          description: Concise summary optimized for voice AI
+          nullable: true
+          description: Concise summary optimized for voice AI (null if not provided)
         tags:
           type: array
           items:
             type: string
-          description: Tags for filtering and search
+          nullable: true
+          description: Tags for filtering and search (null to skip tagging)
         metadata:
           type: object
           additionalProperties: true
-          description: Custom metadata key-value pairs
+          nullable: true
+          description: Custom metadata key-value pairs (null if not needed)
 
     ImportDocumentationResponse:
       description: Response reporting import results with counts and failure details
@@ -3117,17 +3143,20 @@ components:
           type: array
           items:
             type: string
-          description: New glob patterns for files to include
+          nullable: true
+          description: New glob patterns for files to include (null to keep unchanged)
         excludePatterns:
           type: array
           items:
             type: string
-          description: New glob patterns for files to exclude
+          nullable: true
+          description: New glob patterns for files to exclude (null to keep unchanged)
         categoryMapping:
           type: object
           additionalProperties:
             type: string
-          description: New directory-to-category mapping
+          nullable: true
+          description: New directory-to-category mapping (null to keep unchanged)
         defaultCategory:
           $ref: '#/components/schemas/DocumentCategory'
           description: New default category for unmapped documents

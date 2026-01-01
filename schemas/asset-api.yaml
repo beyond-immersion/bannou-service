@@ -149,13 +149,13 @@ paths:
         asset processing\",\n      \"type\": \"object\",\n      \"required\": [\n        \"uploadId\"\n      ],\n      \"\
         properties\": {\n        \"uploadId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n     \
         \     \"description\": \"Upload session ID from requestUpload\"\n        },\n        \"parts\": {\n          \"type\"\
-        : \"array\",\n          \"description\": \"For multipart uploads - ETags of completed parts\",\n          \"items\"\
-        : {\n            \"$ref\": \"#/$defs/CompletedPart\"\n          }\n        }\n      }\n    },\n    \"CompletedPart\"\
-        : {\n      \"description\": \"Information about a completed part in a multipart upload\",\n      \"type\": \"object\"\
-        ,\n      \"required\": [\n        \"partNumber\",\n        \"etag\"\n      ],\n      \"properties\": {\n        \"\
-        partNumber\": {\n          \"type\": \"integer\",\n          \"description\": \"Part number (1-based)\"\n        },\n\
-        \        \"etag\": {\n          \"type\": \"string\",\n          \"description\": \"ETag returned from part upload\"\
-        \n        }\n      }\n    }\n  }\n}"
+        : \"array\",\n          \"nullable\": true,\n          \"description\": \"For multipart uploads - ETags of completed
+        parts (null for single-file uploads)\",\n          \"items\": {\n            \"$ref\": \"#/$defs/CompletedPart\"\n\
+        \          }\n        }\n      }\n    },\n    \"CompletedPart\": {\n      \"description\": \"Information about a completed
+        part in a multipart upload\",\n      \"type\": \"object\",\n      \"required\": [\n        \"partNumber\",\n     \
+        \   \"etag\"\n      ],\n      \"properties\": {\n        \"partNumber\": {\n          \"type\": \"integer\",\n   \
+        \       \"description\": \"Part number (1-based)\"\n        },\n        \"etag\": {\n          \"type\": \"string\"\
+        ,\n          \"description\": \"ETag returned from part upload\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AssetMetadata\"\
         ,\n  \"$defs\": {\n    \"AssetMetadata\": {\n      \"type\": \"object\",\n      \"description\": \"Complete asset
         metadata including system-generated fields\",\n      \"properties\": {\n        \"assetId\": {\n          \"type\"\
@@ -691,7 +691,8 @@ components:
           description: Upload session ID from requestUpload
         parts:
           type: array
-          description: For multipart uploads - ETags of completed parts
+          nullable: true
+          description: For multipart uploads - ETags of completed parts (null for single-file uploads)
           items:
             $ref: '#/components/schemas/CompletedPart'
 

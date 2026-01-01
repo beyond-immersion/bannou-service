@@ -274,9 +274,10 @@ paths:
         : \"ID of the account to update\"\n        },\n        \"displayName\": {\n          \"type\": \"string\",\n     \
         \     \"nullable\": true,\n          \"maxLength\": 100,\n          \"description\": \"New display name for the account\"\
         \n        },\n        \"roles\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\":
-        \"string\"\n          },\n          \"description\": \"Updated list of roles for the account\"\n        },\n     \
-        \   \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\"\
-        : true,\n          \"description\": \"Updated custom metadata for the account\"\n        }\n      }\n    }\n  }\n}"
+        \"string\"\n          },\n          \"nullable\": true,\n          \"description\": \"Updated list of roles for the
+        account (null to keep unchanged)\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n       \
+        \   \"additionalProperties\": true,\n          \"nullable\": true,\n          \"description\": \"Updated custom metadata
+        for the account\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AccountResponse\"\
         ,\n  \"$defs\": {\n    \"AccountResponse\": {\n      \"type\": \"object\",\n      \"description\": \"Account information
         response\",\n      \"required\": [\n        \"accountId\",\n        \"email\",\n        \"createdAt\",\n        \"\
@@ -923,7 +924,8 @@ components:
           type: array
           items:
             type: string
-          description: Updated list of roles for the account
+          nullable: true
+          description: Updated list of roles for the account (null to keep unchanged)
         metadata:
           type: object
           additionalProperties: true

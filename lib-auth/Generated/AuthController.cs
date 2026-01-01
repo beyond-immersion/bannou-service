@@ -433,7 +433,8 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "deviceInfo": {
           "$ref": "#/$defs/DeviceInfo",
-          "description": "Information about the client device"
+          "nullable": true,
+          "description": "Information about the client device (optional)"
         }
       }
     },
@@ -801,7 +802,8 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "deviceInfo": {
           "$ref": "#/$defs/DeviceInfo",
-          "description": "Information about the client device"
+          "nullable": true,
+          "description": "Information about the client device (optional)"
         }
       }
     },
@@ -970,7 +972,8 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "deviceInfo": {
           "$ref": "#/$defs/DeviceInfo",
-          "description": "Information about the client device"
+          "nullable": true,
+          "description": "Information about the client device (optional)"
         }
       }
     },
@@ -1487,6 +1490,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "deviceInfo": {
           "$ref": "#/$defs/DeviceInfo",
+          "nullable": true,
           "description": "Information about the device used for this session"
         },
         "createdAt": {

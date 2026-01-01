@@ -54,16 +54,17 @@ paths:
         \          \"type\": \"string\",\n          \"format\": \"password\",\n          \"description\": \"User password
         for authentication\"\n        },\n        \"rememberMe\": {\n          \"type\": \"boolean\",\n          \"default\"\
         : false,\n          \"description\": \"Whether to extend the session duration for persistent login\"\n        },\n\
-        \        \"deviceInfo\": {\n          \"$ref\": \"#/$defs/DeviceInfo\",\n          \"description\": \"Information
-        about the client device\"\n        }\n      }\n    },\n    \"DeviceInfo\": {\n      \"description\": \"Information
-        about the client device used for authentication or session tracking\",\n      \"type\": \"object\",\n      \"properties\"\
-        : {\n        \"deviceType\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"desktop\",\n\
-        \            \"mobile\",\n            \"tablet\",\n            \"console\"\n          ],\n          \"description\"\
-        : \"Category of the device\"\n        },\n        \"platform\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Operating system or platform name\"\n        },\n        \"browser\": {\n          \"type\": \"string\",\n   \
-        \       \"nullable\": true,\n          \"description\": \"Browser name and version if applicable\"\n        },\n \
-        \       \"appVersion\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
-        : \"Version of the client application\"\n        }\n      }\n    }\n  }\n}"
+        \        \"deviceInfo\": {\n          \"$ref\": \"#/$defs/DeviceInfo\",\n          \"nullable\": true,\n         \
+        \ \"description\": \"Information about the client device (optional)\"\n        }\n      }\n    },\n    \"DeviceInfo\"\
+        : {\n      \"description\": \"Information about the client device used for authentication or session tracking\",\n\
+        \      \"type\": \"object\",\n      \"properties\": {\n        \"deviceType\": {\n          \"type\": \"string\",\n\
+        \          \"enum\": [\n            \"desktop\",\n            \"mobile\",\n            \"tablet\",\n            \"\
+        console\"\n          ],\n          \"description\": \"Category of the device\"\n        },\n        \"platform\":
+        {\n          \"type\": \"string\",\n          \"description\": \"Operating system or platform name\"\n        },\n\
+        \        \"browser\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Browser name and version if applicable\"\n        },\n        \"appVersion\": {\n          \"type\": \"string\"\
+        ,\n          \"nullable\": true,\n          \"description\": \"Version of the client application\"\n        }\n  \
+        \    }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AuthResponse\"\
         ,\n  \"$defs\": {\n    \"AuthResponse\": {\n      \"description\": \"Successful authentication response containing
         tokens and session information\",\n      \"type\": \"object\",\n      \"required\": [\n        \"accountId\",\n  \
@@ -217,16 +218,16 @@ paths:
         code returned by the OAuth provider\"\n        },\n        \"state\": {\n          \"type\": \"string\",\n       \
         \   \"nullable\": true,\n          \"description\": \"State parameter for CSRF protection, must match the value sent
         in the init request\"\n        },\n        \"deviceInfo\": {\n          \"$ref\": \"#/$defs/DeviceInfo\",\n      \
-        \    \"description\": \"Information about the client device\"\n        }\n      }\n    },\n    \"DeviceInfo\": {\n\
-        \      \"description\": \"Information about the client device used for authentication or session tracking\",\n   \
-        \   \"type\": \"object\",\n      \"properties\": {\n        \"deviceType\": {\n          \"type\": \"string\",\n \
-        \         \"enum\": [\n            \"desktop\",\n            \"mobile\",\n            \"tablet\",\n            \"\
-        console\"\n          ],\n          \"description\": \"Category of the device\"\n        },\n        \"platform\":
-        {\n          \"type\": \"string\",\n          \"description\": \"Operating system or platform name\"\n        },\n\
-        \        \"browser\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
-        : \"Browser name and version if applicable\"\n        },\n        \"appVersion\": {\n          \"type\": \"string\"\
-        ,\n          \"nullable\": true,\n          \"description\": \"Version of the client application\"\n        }\n  \
-        \    }\n    }\n  }\n}"
+        \    \"nullable\": true,\n          \"description\": \"Information about the client device (optional)\"\n        }\n\
+        \      }\n    },\n    \"DeviceInfo\": {\n      \"description\": \"Information about the client device used for authentication
+        or session tracking\",\n      \"type\": \"object\",\n      \"properties\": {\n        \"deviceType\": {\n        \
+        \  \"type\": \"string\",\n          \"enum\": [\n            \"desktop\",\n            \"mobile\",\n            \"\
+        tablet\",\n            \"console\"\n          ],\n          \"description\": \"Category of the device\"\n        },\n\
+        \        \"platform\": {\n          \"type\": \"string\",\n          \"description\": \"Operating system or platform
+        name\"\n        },\n        \"browser\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n     \
+        \     \"description\": \"Browser name and version if applicable\"\n        },\n        \"appVersion\": {\n       \
+        \   \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Version of the client application\"\
+        \n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AuthResponse\"\
         ,\n  \"$defs\": {\n    \"AuthResponse\": {\n      \"description\": \"Successful authentication response containing
         tokens and session information\",\n      \"type\": \"object\",\n      \"required\": [\n        \"accountId\",\n  \
@@ -287,16 +288,16 @@ paths:
         : {\n          \"type\": \"string\",\n          \"description\": \"Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\\
         nClient converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\\\"-\\\", \\\"\\\")\\n\",\n\
         \          \"example\": \"140000006A7B3C8E...\"\n        },\n        \"deviceInfo\": {\n          \"$ref\": \"#/$defs/DeviceInfo\"\
-        ,\n          \"description\": \"Information about the client device\"\n        }\n      }\n    },\n    \"DeviceInfo\"\
-        : {\n      \"description\": \"Information about the client device used for authentication or session tracking\",\n\
-        \      \"type\": \"object\",\n      \"properties\": {\n        \"deviceType\": {\n          \"type\": \"string\",\n\
-        \          \"enum\": [\n            \"desktop\",\n            \"mobile\",\n            \"tablet\",\n            \"\
-        console\"\n          ],\n          \"description\": \"Category of the device\"\n        },\n        \"platform\":
-        {\n          \"type\": \"string\",\n          \"description\": \"Operating system or platform name\"\n        },\n\
-        \        \"browser\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
-        : \"Browser name and version if applicable\"\n        },\n        \"appVersion\": {\n          \"type\": \"string\"\
-        ,\n          \"nullable\": true,\n          \"description\": \"Version of the client application\"\n        }\n  \
-        \    }\n    }\n  }\n}"
+        ,\n          \"nullable\": true,\n          \"description\": \"Information about the client device (optional)\"\n\
+        \        }\n      }\n    },\n    \"DeviceInfo\": {\n      \"description\": \"Information about the client device used
+        for authentication or session tracking\",\n      \"type\": \"object\",\n      \"properties\": {\n        \"deviceType\"\
+        : {\n          \"type\": \"string\",\n          \"enum\": [\n            \"desktop\",\n            \"mobile\",\n \
+        \           \"tablet\",\n            \"console\"\n          ],\n          \"description\": \"Category of the device\"\
+        \n        },\n        \"platform\": {\n          \"type\": \"string\",\n          \"description\": \"Operating system
+        or platform name\"\n        },\n        \"browser\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n\
+        \          \"description\": \"Browser name and version if applicable\"\n        },\n        \"appVersion\": {\n  \
+        \        \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Version of the client
+        application\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/AuthResponse\"\
         ,\n  \"$defs\": {\n    \"AuthResponse\": {\n      \"description\": \"Successful authentication response containing
         tokens and session information\",\n      \"type\": \"object\",\n      \"required\": [\n        \"accountId\",\n  \
@@ -489,22 +490,22 @@ paths:
         \  \"sessionId\",\n        \"createdAt\",\n        \"lastActive\"\n      ],\n      \"properties\": {\n        \"sessionId\"\
         : {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\": \"Unique identifier
         for the session\"\n        },\n        \"deviceInfo\": {\n          \"$ref\": \"#/$defs/DeviceInfo\",\n          \"\
-        description\": \"Information about the device used for this session\"\n        },\n        \"createdAt\": {\n    \
-        \      \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp when the
-        session was created\"\n        },\n        \"lastActive\": {\n          \"type\": \"string\",\n          \"format\"\
-        : \"date-time\",\n          \"description\": \"Timestamp of the last activity in this session\"\n        },\n    \
-        \    \"ipAddress\": {\n          \"type\": \"string\",\n          \"description\": \"IP address from which the session
-        was initiated\"\n        },\n        \"location\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n\
-        \          \"description\": \"Geographic location derived from the IP address\"\n        }\n      }\n    },\n    \"\
-        DeviceInfo\": {\n      \"description\": \"Information about the client device used for authentication or session tracking\"\
-        ,\n      \"type\": \"object\",\n      \"properties\": {\n        \"deviceType\": {\n          \"type\": \"string\"\
-        ,\n          \"enum\": [\n            \"desktop\",\n            \"mobile\",\n            \"tablet\",\n           \
-        \ \"console\"\n          ],\n          \"description\": \"Category of the device\"\n        },\n        \"platform\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Operating system or platform name\"\n        },\n\
-        \        \"browser\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
-        : \"Browser name and version if applicable\"\n        },\n        \"appVersion\": {\n          \"type\": \"string\"\
-        ,\n          \"nullable\": true,\n          \"description\": \"Version of the client application\"\n        }\n  \
-        \    }\n    }\n  }\n}"
+        nullable\": true,\n          \"description\": \"Information about the device used for this session\"\n        },\n\
+        \        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\"\
+        : \"Timestamp when the session was created\"\n        },\n        \"lastActive\": {\n          \"type\": \"string\"\
+        ,\n          \"format\": \"date-time\",\n          \"description\": \"Timestamp of the last activity in this session\"\
+        \n        },\n        \"ipAddress\": {\n          \"type\": \"string\",\n          \"description\": \"IP address from
+        which the session was initiated\"\n        },\n        \"location\": {\n          \"type\": \"string\",\n        \
+        \  \"nullable\": true,\n          \"description\": \"Geographic location derived from the IP address\"\n        }\n\
+        \      }\n    },\n    \"DeviceInfo\": {\n      \"description\": \"Information about the client device used for authentication
+        or session tracking\",\n      \"type\": \"object\",\n      \"properties\": {\n        \"deviceType\": {\n        \
+        \  \"type\": \"string\",\n          \"enum\": [\n            \"desktop\",\n            \"mobile\",\n            \"\
+        tablet\",\n            \"console\"\n          ],\n          \"description\": \"Category of the device\"\n        },\n\
+        \        \"platform\": {\n          \"type\": \"string\",\n          \"description\": \"Operating system or platform
+        name\"\n        },\n        \"browser\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n     \
+        \     \"description\": \"Browser name and version if applicable\"\n        },\n        \"appVersion\": {\n       \
+        \   \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Version of the client application\"\
+        \n        }\n      }\n    }\n  }\n}"
       x-endpoint-info-json: "{\n  \"summary\": \"Get active sessions for account\",\n  \"description\": \"\",\n  \"tags\"\
         : [\n    \"Sessions\"\n  ],\n  \"deprecated\": false,\n  \"operationId\": \"getSessions\"\n}"
   /auth/sessions/terminate:
@@ -658,7 +659,8 @@ components:
           description: Whether to extend the session duration for persistent login
         deviceInfo:
           $ref: '#/components/schemas/DeviceInfo'
-          description: Information about the client device
+          nullable: true
+          description: Information about the client device (optional)
 
     RegisterRequest:
       type: object
@@ -775,7 +777,8 @@ components:
           description: State parameter for CSRF protection, must match the value sent in the init request
         deviceInfo:
           $ref: '#/components/schemas/DeviceInfo'
-          description: Information about the client device
+          nullable: true
+          description: Information about the client device (optional)
 
     SteamVerifyRequest:
       type: object
@@ -794,7 +797,8 @@ components:
           example: "140000006A7B3C8E..."
         deviceInfo:
           $ref: '#/components/schemas/DeviceInfo'
-          description: Information about the client device
+          nullable: true
+          description: Information about the client device (optional)
 
     RefreshRequest:
       description: Request to obtain a new access token using a valid refresh token
@@ -876,6 +880,7 @@ components:
           description: Unique identifier for the session
         deviceInfo:
           $ref: '#/components/schemas/DeviceInfo'
+          nullable: true
           description: Information about the device used for this session
         createdAt:
           type: string

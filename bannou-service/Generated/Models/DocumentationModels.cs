@@ -570,10 +570,10 @@ public partial class ListDocumentsRequest
     public DocumentCategory Category { get; set; } = default!;
 
     /// <summary>
-    /// Filter by tags
+    /// Filter by tags (null to skip tag filtering)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
     /// <summary>
     /// Whether documents must match all tags or any tag
@@ -939,36 +939,36 @@ public partial class CreateDocumentRequest
     public string Content { get; set; } = default!;
 
     /// <summary>
-    /// Brief text summary of the document
+    /// Brief text summary of the document (null if not provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string Summary { get; set; } = default!;
+    public string? Summary { get; set; } = default!;
 
     /// <summary>
-    /// Concise summary optimized for voice AI
+    /// Concise summary optimized for voice AI (null if not provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("voiceSummary")]
     [System.ComponentModel.DataAnnotations.StringLength(200)]
-    public string VoiceSummary { get; set; } = default!;
+    public string? VoiceSummary { get; set; } = default!;
 
     /// <summary>
-    /// Tags for filtering and search
+    /// Tags for filtering and search (null to skip tagging)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
     /// <summary>
-    /// IDs of related documents to link
+    /// IDs of related documents to link (null to skip linking)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relatedDocuments")]
-    public System.Collections.Generic.ICollection<System.Guid> RelatedDocuments { get; set; } = default!;
+    public System.Collections.Generic.ICollection<System.Guid>? RelatedDocuments { get; set; } = default!;
 
     /// <summary>
-    /// Custom metadata key-value pairs
+    /// Custom metadata key-value pairs (null if not needed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -1076,34 +1076,34 @@ public partial class UpdateDocumentRequest
     public string Content { get; set; } = default!;
 
     /// <summary>
-    /// New text summary for the document
+    /// New text summary for the document (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
-    public string Summary { get; set; } = default!;
+    public string? Summary { get; set; } = default!;
 
     /// <summary>
-    /// New voice-optimized summary for the document
+    /// New voice-optimized summary for the document (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("voiceSummary")]
-    public string VoiceSummary { get; set; } = default!;
+    public string? VoiceSummary { get; set; } = default!;
 
     /// <summary>
-    /// New set of tags for the document
+    /// New set of tags for the document (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
     /// <summary>
-    /// New set of related document IDs
+    /// New set of related document IDs (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relatedDocuments")]
-    public System.Collections.Generic.ICollection<System.Guid> RelatedDocuments { get; set; } = default!;
+    public System.Collections.Generic.ICollection<System.Guid>? RelatedDocuments { get; set; } = default!;
 
     /// <summary>
-    /// New custom metadata key-value pairs
+    /// New custom metadata key-value pairs (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -1353,16 +1353,16 @@ public partial class BulkUpdateRequest
     public DocumentCategory Category { get; set; } = default!;
 
     /// <summary>
-    /// Tags to add to all documents
+    /// Tags to add to all documents (null to skip adding)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("addTags")]
-    public System.Collections.Generic.ICollection<string> AddTags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? AddTags { get; set; } = default!;
 
     /// <summary>
-    /// Tags to remove from all documents
+    /// Tags to remove from all documents (null to skip removing)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removeTags")]
-    public System.Collections.Generic.ICollection<string> RemoveTags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? RemoveTags { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -1615,28 +1615,28 @@ public partial class ImportDocument
     public string Content { get; set; } = default!;
 
     /// <summary>
-    /// Brief text summary of the document
+    /// Brief text summary of the document (null if not provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
-    public string Summary { get; set; } = default!;
+    public string? Summary { get; set; } = default!;
 
     /// <summary>
-    /// Concise summary optimized for voice AI
+    /// Concise summary optimized for voice AI (null if not provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("voiceSummary")]
-    public string VoiceSummary { get; set; } = default!;
+    public string? VoiceSummary { get; set; } = default!;
 
     /// <summary>
-    /// Tags for filtering and search
+    /// Tags for filtering and search (null to skip tagging)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
     /// <summary>
-    /// Custom metadata key-value pairs
+    /// Custom metadata key-value pairs (null if not needed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -3050,22 +3050,22 @@ public partial class UpdateRepositoryBindingRequest
     public int SyncIntervalMinutes { get; set; } = default!;
 
     /// <summary>
-    /// New glob patterns for files to include
+    /// New glob patterns for files to include (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("filePatterns")]
-    public System.Collections.Generic.ICollection<string> FilePatterns { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? FilePatterns { get; set; } = default!;
 
     /// <summary>
-    /// New glob patterns for files to exclude
+    /// New glob patterns for files to exclude (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("excludePatterns")]
-    public System.Collections.Generic.ICollection<string> ExcludePatterns { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? ExcludePatterns { get; set; } = default!;
 
     /// <summary>
-    /// New directory-to-category mapping
+    /// New directory-to-category mapping (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("categoryMapping")]
-    public System.Collections.Generic.IDictionary<string, string> CategoryMapping { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? CategoryMapping { get; set; } = default!;
 
     /// <summary>
     /// New default category for unmapped documents

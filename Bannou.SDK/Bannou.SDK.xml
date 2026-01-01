@@ -5508,22 +5508,22 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.InternalProxyRequest.Headers">
             <summary>
-            Additional headers to forward to the service
+            Additional headers to forward to the service (null if none)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.InternalProxyRequest.Body">
             <summary>
-            Request body to forward to target service
+            Request body to forward to target service (null for no body)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.InternalProxyRequest.PathParameters">
             <summary>
-            Path parameters for the endpoint
+            Path parameters for the endpoint (null if none)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.InternalProxyRequest.QueryParameters">
             <summary>
-            Query string parameters for the endpoint
+            Query string parameters for the endpoint (null if none)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.InternalProxyRequest.AdditionalProperties">
@@ -6372,7 +6372,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest.GameSettings">
             <summary>
-            Game-specific configuration settings
+            Game-specific configuration settings (null to use defaults)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest.AdditionalProperties">
@@ -7250,7 +7250,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.ListRelationshipTypesRequest.Category">
             <summary>
-            Filter by category (e.g., "FAMILY", "SOCIAL", "ECONOMIC")
+            Filter by category (e.g., "FAMILY", "SOCIAL", "ECONOMIC") (null to include all)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.ListRelationshipTypesRequest.IncludeChildren">
@@ -7345,12 +7345,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.CreateRelationshipTypeRequest.Description">
             <summary>
-            Description of the relationship type
+            Description of the relationship type (null if not provided)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.CreateRelationshipTypeRequest.Category">
             <summary>
-            Category for grouping (e.g., "FAMILY", "SOCIAL", "ECONOMIC")
+            Category for grouping (e.g., "FAMILY", "SOCIAL", "ECONOMIC") (null if not categorized)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.CreateRelationshipTypeRequest.ParentTypeId">
@@ -7540,22 +7540,22 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.SeedRelationshipType.Description">
             <summary>
-            Human-readable description of the relationship type
+            Human-readable description of the relationship type (null if not provided)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.SeedRelationshipType.Category">
             <summary>
-            Category for grouping relationship types
+            Category for grouping relationship types (null if not categorized)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.SeedRelationshipType.ParentTypeCode">
             <summary>
-            Code of the parent type (resolved during seeding)
+            Code of the parent type (resolved during seeding) (null for root types)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.SeedRelationshipType.InverseTypeCode">
             <summary>
-            Code of the inverse relationship
+            Code of the inverse relationship (null if not applicable)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.SeedRelationshipType.IsBidirectional">
@@ -7565,7 +7565,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.SeedRelationshipType.Metadata">
             <summary>
-            Additional custom metadata for the relationship type
+            Additional custom metadata for the relationship type (null if none)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.RelationshipType.SeedRelationshipType.AdditionalProperties">
@@ -8833,7 +8833,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ListDocumentsRequest.Tags">
             <summary>
-            Filter by tags
+            Filter by tags (null to skip tag filtering)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ListDocumentsRequest.TagsMatch">
@@ -9068,27 +9068,27 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.CreateDocumentRequest.Summary">
             <summary>
-            Brief text summary of the document
+            Brief text summary of the document (null if not provided)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.CreateDocumentRequest.VoiceSummary">
             <summary>
-            Concise summary optimized for voice AI
+            Concise summary optimized for voice AI (null if not provided)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.CreateDocumentRequest.Tags">
             <summary>
-            Tags for filtering and search
+            Tags for filtering and search (null to skip tagging)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.CreateDocumentRequest.RelatedDocuments">
             <summary>
-            IDs of related documents to link
+            IDs of related documents to link (null to skip linking)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.CreateDocumentRequest.Metadata">
             <summary>
-            Custom metadata key-value pairs
+            Custom metadata key-value pairs (null if not needed)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.CreateDocumentRequest.AdditionalProperties">
@@ -9158,27 +9158,27 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UpdateDocumentRequest.Summary">
             <summary>
-            New text summary for the document
+            New text summary for the document (null to keep unchanged)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UpdateDocumentRequest.VoiceSummary">
             <summary>
-            New voice-optimized summary for the document
+            New voice-optimized summary for the document (null to keep unchanged)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UpdateDocumentRequest.Tags">
             <summary>
-            New set of tags for the document
+            New set of tags for the document (null to keep unchanged)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UpdateDocumentRequest.RelatedDocuments">
             <summary>
-            New set of related document IDs
+            New set of related document IDs (null to keep unchanged)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UpdateDocumentRequest.Metadata">
             <summary>
-            New custom metadata key-value pairs
+            New custom metadata key-value pairs (null to keep unchanged)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UpdateDocumentRequest.AdditionalProperties">
@@ -9318,12 +9318,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.BulkUpdateRequest.AddTags">
             <summary>
-            Tags to add to all documents
+            Tags to add to all documents (null to skip adding)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.BulkUpdateRequest.RemoveTags">
             <summary>
-            Tags to remove from all documents
+            Tags to remove from all documents (null to skip removing)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.BulkUpdateRequest.AdditionalProperties">
@@ -9463,22 +9463,22 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ImportDocument.Summary">
             <summary>
-            Brief text summary of the document
+            Brief text summary of the document (null if not provided)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ImportDocument.VoiceSummary">
             <summary>
-            Concise summary optimized for voice AI
+            Concise summary optimized for voice AI (null if not provided)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ImportDocument.Tags">
             <summary>
-            Tags for filtering and search
+            Tags for filtering and search (null to skip tagging)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ImportDocument.Metadata">
             <summary>
-            Custom metadata key-value pairs
+            Custom metadata key-value pairs (null if not needed)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.ImportDocument.AdditionalProperties">
@@ -10333,17 +10333,17 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UpdateRepositoryBindingRequest.FilePatterns">
             <summary>
-            New glob patterns for files to include
+            New glob patterns for files to include (null to keep unchanged)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UpdateRepositoryBindingRequest.ExcludePatterns">
             <summary>
-            New glob patterns for files to exclude
+            New glob patterns for files to exclude (null to keep unchanged)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UpdateRepositoryBindingRequest.CategoryMapping">
             <summary>
-            New directory-to-category mapping
+            New directory-to-category mapping (null to keep unchanged)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Documentation.UpdateRepositoryBindingRequest.DefaultCategory">
@@ -14321,7 +14321,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.Sort">
             <summary>
-            Sort order (first field only is used)
+            Sort order (first field only is used) (null for default ordering)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.Page">
@@ -15103,7 +15103,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Accounts.UpdateAccountRequest.Roles">
             <summary>
-            Updated list of roles for the account
+            Updated list of roles for the account (null to keep unchanged)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Accounts.UpdateAccountRequest.Metadata">
@@ -16308,7 +16308,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.CapabilityRequest.ServiceIds">
             <summary>
-            Optional filter for specific services
+            Optional filter for specific services (null for all services)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.CapabilityRequest.AdditionalProperties">
@@ -16403,7 +16403,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.ServicePermissionMatrix.ServiceName">
             <summary>
-            Human-readable service name
+            Human-readable service name (null to use serviceId)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.ServicePermissionMatrix.Permissions">
@@ -16493,7 +16493,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.SessionStateUpdate.Metadata">
             <summary>
-            Optional context data
+            Optional context data (null if none)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.SessionStateUpdate.AdditionalProperties">
@@ -20876,7 +20876,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.PublishEventRequest.Options">
             <summary>
-            Optional publishing configuration for message delivery
+            Optional publishing configuration for message delivery (null for defaults)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.PublishEventRequest.AdditionalProperties">
@@ -20971,7 +20971,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.CreateSubscriptionRequest.Options">
             <summary>
-            Optional subscription configuration for queue behavior
+            Optional subscription configuration for queue behavior (null for defaults)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.CreateSubscriptionRequest.AdditionalProperties">
@@ -21558,7 +21558,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Auth.LoginRequest.DeviceInfo">
             <summary>
-            Information about the client device
+            Information about the client device (optional)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Auth.LoginRequest.AdditionalProperties">
@@ -21698,7 +21698,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Auth.OAuthCallbackRequest.DeviceInfo">
             <summary>
-            Information about the client device
+            Information about the client device (optional)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Auth.OAuthCallbackRequest.AdditionalProperties">
@@ -21723,7 +21723,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Auth.SteamVerifyRequest.DeviceInfo">
             <summary>
-            Information about the client device
+            Information about the client device (optional)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Auth.SteamVerifyRequest.AdditionalProperties">
@@ -23389,7 +23389,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CompleteUploadRequest.Parts">
             <summary>
-            For multipart uploads - ETags of completed parts
+            For multipart uploads - ETags of completed parts (null for single-file uploads)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CompleteUploadRequest.AdditionalProperties">
@@ -26487,7 +26487,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Species.CreateSpeciesRequest.RealmIds">
             <summary>
-            Initial realms where this species is available
+            Initial realms where this species is available (null to skip realm assignment)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Species.CreateSpeciesRequest.Metadata">

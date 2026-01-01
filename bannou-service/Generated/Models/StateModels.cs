@@ -384,10 +384,10 @@ public partial class QueryStateRequest
     public string? Query { get; set; } = default!;
 
     /// <summary>
-    /// Sort order (first field only is used)
+    /// Sort order (first field only is used) (null for default ordering)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sort")]
-    public System.Collections.Generic.ICollection<SortField> Sort { get; set; } = default!;
+    public System.Collections.Generic.ICollection<SortField>? Sort { get; set; } = default!;
 
     /// <summary>
     /// Page number (0-indexed)

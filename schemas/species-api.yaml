@@ -365,10 +365,10 @@ paths:
         maturity\"\n        },\n        \"traitModifiers\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
         : true,\n          \"nullable\": true,\n          \"description\": \"Base trait modifiers for this species (JSON)\"\
         \n        },\n        \"realmIds\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\"\
-        : \"string\",\n            \"format\": \"uuid\"\n          },\n          \"description\": \"Initial realms where this
-        species is available\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
-        : true,\n          \"nullable\": true,\n          \"description\": \"Additional metadata for the species\"\n     \
-        \   }\n      }\n    }\n  }\n}"
+        : \"string\",\n            \"format\": \"uuid\"\n          },\n          \"nullable\": true,\n          \"description\"\
+        : \"Initial realms where this species is available (null to skip realm assignment)\"\n        },\n        \"metadata\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n \
+        \         \"description\": \"Additional metadata for the species\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SpeciesResponse\"\
         ,\n  \"$defs\": {\n    \"SpeciesResponse\": {\n      \"description\": \"Complete species data including all attributes
         and realm associations\",\n      \"type\": \"object\",\n      \"required\": [\n        \"speciesId\",\n        \"\
@@ -1070,7 +1070,8 @@ components:
           items:
             type: string
             format: uuid
-          description: Initial realms where this species is available
+          nullable: true
+          description: Initial realms where this species is available (null to skip realm assignment)
         metadata:
           type: object
           additionalProperties: true

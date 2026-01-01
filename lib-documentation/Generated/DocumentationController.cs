@@ -1736,7 +1736,8 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
           "items": {
             "type": "string"
           },
-          "description": "Filter by tags"
+          "nullable": true,
+          "description": "Filter by tags (null to skip tag filtering)"
         },
         "tagsMatch": {
           "type": "string",
@@ -2237,19 +2238,22 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         "summary": {
           "type": "string",
           "maxLength": 500,
-          "description": "Brief text summary of the document"
+          "nullable": true,
+          "description": "Brief text summary of the document (null if not provided)"
         },
         "voiceSummary": {
           "type": "string",
           "maxLength": 200,
-          "description": "Concise summary optimized for voice AI"
+          "nullable": true,
+          "description": "Concise summary optimized for voice AI (null if not provided)"
         },
         "tags": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "Tags for filtering and search"
+          "nullable": true,
+          "description": "Tags for filtering and search (null to skip tagging)"
         },
         "relatedDocuments": {
           "type": "array",
@@ -2257,12 +2261,14 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             "type": "string",
             "format": "uuid"
           },
-          "description": "IDs of related documents to link"
+          "nullable": true,
+          "description": "IDs of related documents to link (null to skip linking)"
         },
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Custom metadata key-value pairs"
+          "nullable": true,
+          "description": "Custom metadata key-value pairs (null if not needed)"
         }
       }
     },
@@ -2416,18 +2422,21 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         },
         "summary": {
           "type": "string",
-          "description": "New text summary for the document"
+          "nullable": true,
+          "description": "New text summary for the document (null to keep unchanged)"
         },
         "voiceSummary": {
           "type": "string",
-          "description": "New voice-optimized summary for the document"
+          "nullable": true,
+          "description": "New voice-optimized summary for the document (null to keep unchanged)"
         },
         "tags": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "New set of tags for the document"
+          "nullable": true,
+          "description": "New set of tags for the document (null to keep unchanged)"
         },
         "relatedDocuments": {
           "type": "array",
@@ -2435,12 +2444,14 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
             "type": "string",
             "format": "uuid"
           },
-          "description": "New set of related document IDs"
+          "nullable": true,
+          "description": "New set of related document IDs (null to keep unchanged)"
         },
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "description": "New custom metadata key-value pairs"
+          "nullable": true,
+          "description": "New custom metadata key-value pairs (null to keep unchanged)"
         }
       }
     },
@@ -2824,14 +2835,16 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
           "items": {
             "type": "string"
           },
-          "description": "Tags to add to all documents"
+          "nullable": true,
+          "description": "Tags to add to all documents (null to skip adding)"
         },
         "removeTags": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "Tags to remove from all documents"
+          "nullable": true,
+          "description": "Tags to remove from all documents (null to skip removing)"
         }
       }
     },
@@ -3172,23 +3185,27 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
         },
         "summary": {
           "type": "string",
-          "description": "Brief text summary of the document"
+          "nullable": true,
+          "description": "Brief text summary of the document (null if not provided)"
         },
         "voiceSummary": {
           "type": "string",
-          "description": "Concise summary optimized for voice AI"
+          "nullable": true,
+          "description": "Concise summary optimized for voice AI (null if not provided)"
         },
         "tags": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "Tags for filtering and search"
+          "nullable": true,
+          "description": "Tags for filtering and search (null to skip tagging)"
         },
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Custom metadata key-value pairs"
+          "nullable": true,
+          "description": "Custom metadata key-value pairs (null if not needed)"
         }
       }
     },
@@ -4674,21 +4691,24 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
           "items": {
             "type": "string"
           },
-          "description": "New glob patterns for files to include"
+          "nullable": true,
+          "description": "New glob patterns for files to include (null to keep unchanged)"
         },
         "excludePatterns": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "New glob patterns for files to exclude"
+          "nullable": true,
+          "description": "New glob patterns for files to exclude (null to keep unchanged)"
         },
         "categoryMapping": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           },
-          "description": "New directory-to-category mapping"
+          "nullable": true,
+          "description": "New directory-to-category mapping (null to keep unchanged)"
         },
         "defaultCategory": {
           "$ref": "#/$defs/DocumentCategory",

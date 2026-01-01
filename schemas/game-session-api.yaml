@@ -131,7 +131,8 @@ paths:
         requires a password to join\"\n        },\n        \"ownerId\": {\n          \"type\": \"string\",\n          \"format\"\
         : \"uuid\",\n          \"description\": \"Account ID of the session owner. If not provided, defaults to caller's account.\"\
         \n        },\n        \"gameSettings\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
-        \          \"description\": \"Game-specific configuration settings\"\n        }\n      }\n    }\n  }\n}"
+        \          \"nullable\": true,\n          \"description\": \"Game-specific configuration settings (null to use defaults)\"\
+        \n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/GameSessionResponse\"\
         ,\n  \"$defs\": {\n    \"GameSessionResponse\": {\n      \"description\": \"Complete details of a game session including
         players and settings\",\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\",\n        \"gameType\"\
@@ -557,7 +558,8 @@ components:
         gameSettings:
           type: object
           additionalProperties: true
-          description: Game-specific configuration settings
+          nullable: true
+          description: Game-specific configuration settings (null to use defaults)
 
     GameSessionResponse:
       description: Complete details of a game session including players and settings

@@ -572,7 +572,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
         "gameSettings": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Game-specific configuration settings"
+          "nullable": true,
+          "description": "Game-specific configuration settings (null to use defaults)"
         }
       }
     }

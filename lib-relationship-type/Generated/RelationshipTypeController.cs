@@ -864,7 +864,8 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
       "properties": {
         "category": {
           "type": "string",
-          "description": "Filter by category (e.g., \"FAMILY\", \"SOCIAL\", \"ECONOMIC\")"
+          "nullable": true,
+          "description": "Filter by category (e.g., \"FAMILY\", \"SOCIAL\", \"ECONOMIC\") (null to include all)"
         },
         "includeChildren": {
           "type": "boolean",
@@ -1636,12 +1637,14 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "description": {
           "type": "string",
           "maxLength": 500,
-          "description": "Description of the relationship type"
+          "nullable": true,
+          "description": "Description of the relationship type (null if not provided)"
         },
         "category": {
           "type": "string",
           "maxLength": 50,
-          "description": "Category for grouping (e.g., \"FAMILY\", \"SOCIAL\", \"ECONOMIC\")"
+          "nullable": true,
+          "description": "Category for grouping (e.g., \"FAMILY\", \"SOCIAL\", \"ECONOMIC\") (null if not categorized)"
         },
         "parentTypeId": {
           "type": "string",
@@ -2705,19 +2708,23 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         },
         "description": {
           "type": "string",
-          "description": "Human-readable description of the relationship type"
+          "nullable": true,
+          "description": "Human-readable description of the relationship type (null if not provided)"
         },
         "category": {
           "type": "string",
-          "description": "Category for grouping relationship types"
+          "nullable": true,
+          "description": "Category for grouping relationship types (null if not categorized)"
         },
         "parentTypeCode": {
           "type": "string",
-          "description": "Code of the parent type (resolved during seeding)"
+          "nullable": true,
+          "description": "Code of the parent type (resolved during seeding) (null for root types)"
         },
         "inverseTypeCode": {
           "type": "string",
-          "description": "Code of the inverse relationship"
+          "nullable": true,
+          "description": "Code of the inverse relationship (null if not applicable)"
         },
         "isBidirectional": {
           "type": "boolean",
@@ -2727,7 +2734,8 @@ public partial class RelationshipTypeController : Microsoft.AspNetCore.Mvc.Contr
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Additional custom metadata for the relationship type"
+          "nullable": true,
+          "description": "Additional custom metadata for the relationship type (null if none)"
         }
       }
     }

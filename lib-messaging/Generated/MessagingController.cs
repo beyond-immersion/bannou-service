@@ -194,7 +194,8 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
         },
         "options": {
           "$ref": "#/$defs/PublishOptions",
-          "description": "Optional publishing configuration for message delivery"
+          "nullable": true,
+          "description": "Optional publishing configuration for message delivery (null for defaults)"
         }
       }
     },
@@ -363,7 +364,8 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
         },
         "options": {
           "$ref": "#/$defs/SubscriptionOptions",
-          "description": "Optional subscription configuration for queue behavior"
+          "nullable": true,
+          "description": "Optional subscription configuration for queue behavior (null for defaults)"
         }
       }
     },

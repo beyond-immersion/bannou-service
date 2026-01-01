@@ -292,26 +292,30 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional headers to forward to the service"
+          "nullable": true,
+          "description": "Additional headers to forward to the service (null if none)"
         },
         "body": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Request body to forward to target service"
+          "nullable": true,
+          "description": "Request body to forward to target service (null for no body)"
         },
         "pathParameters": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Path parameters for the endpoint"
+          "nullable": true,
+          "description": "Path parameters for the endpoint (null if none)"
         },
         "queryParameters": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Query string parameters for the endpoint"
+          "nullable": true,
+          "description": "Query string parameters for the endpoint (null if none)"
         }
       }
     }

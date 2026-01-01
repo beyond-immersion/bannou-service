@@ -49,10 +49,10 @@ public partial class PublishEventRequest
     public object Payload { get; set; } = new object();
 
     /// <summary>
-    /// Optional publishing configuration for message delivery
+    /// Optional publishing configuration for message delivery (null for defaults)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("options")]
-    public PublishOptions Options { get; set; } = default!;
+    public PublishOptions? Options { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -196,10 +196,10 @@ public partial class CreateSubscriptionRequest
     public System.Uri CallbackUrl { get; set; } = default!;
 
     /// <summary>
-    /// Optional subscription configuration for queue behavior
+    /// Optional subscription configuration for queue behavior (null for defaults)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("options")]
-    public SubscriptionOptions Options { get; set; } = default!;
+    public SubscriptionOptions? Options { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

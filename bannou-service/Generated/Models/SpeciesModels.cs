@@ -254,10 +254,10 @@ public partial class CreateSpeciesRequest
     public object? TraitModifiers { get; set; } = default!;
 
     /// <summary>
-    /// Initial realms where this species is available
+    /// Initial realms where this species is available (null to skip realm assignment)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmIds")]
-    public System.Collections.Generic.ICollection<System.Guid> RealmIds { get; set; } = default!;
+    public System.Collections.Generic.ICollection<System.Guid>? RealmIds { get; set; } = default!;
 
     /// <summary>
     /// Additional metadata for the species

@@ -93,10 +93,10 @@ public partial class ListRelationshipTypesRequest
 {
 
     /// <summary>
-    /// Filter by category (e.g., "FAMILY", "SOCIAL", "ECONOMIC")
+    /// Filter by category (e.g., "FAMILY", "SOCIAL", "ECONOMIC") (null to include all)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string Category { get; set; } = default!;
+    public string? Category { get; set; } = default!;
 
     /// <summary>
     /// Whether to include child types in the response
@@ -258,18 +258,18 @@ public partial class CreateRelationshipTypeRequest
     public string Name { get; set; } = default!;
 
     /// <summary>
-    /// Description of the relationship type
+    /// Description of the relationship type (null if not provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Category for grouping (e.g., "FAMILY", "SOCIAL", "ECONOMIC")
+    /// Category for grouping (e.g., "FAMILY", "SOCIAL", "ECONOMIC") (null if not categorized)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
-    public string Category { get; set; } = default!;
+    public string? Category { get; set; } = default!;
 
     /// <summary>
     /// Parent type ID for hierarchy (null for root types)
@@ -581,28 +581,28 @@ public partial class SeedRelationshipType
     public string Name { get; set; } = default!;
 
     /// <summary>
-    /// Human-readable description of the relationship type
+    /// Human-readable description of the relationship type (null if not provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Category for grouping relationship types
+    /// Category for grouping relationship types (null if not categorized)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string Category { get; set; } = default!;
+    public string? Category { get; set; } = default!;
 
     /// <summary>
-    /// Code of the parent type (resolved during seeding)
+    /// Code of the parent type (resolved during seeding) (null for root types)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentTypeCode")]
-    public string ParentTypeCode { get; set; } = default!;
+    public string? ParentTypeCode { get; set; } = default!;
 
     /// <summary>
-    /// Code of the inverse relationship
+    /// Code of the inverse relationship (null if not applicable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("inverseTypeCode")]
-    public string InverseTypeCode { get; set; } = default!;
+    public string? InverseTypeCode { get; set; } = default!;
 
     /// <summary>
     /// Whether the relationship is the same in both directions
@@ -611,10 +611,10 @@ public partial class SeedRelationshipType
     public bool IsBidirectional { get; set; } = false;
 
     /// <summary>
-    /// Additional custom metadata for the relationship type
+    /// Additional custom metadata for the relationship type (null if none)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

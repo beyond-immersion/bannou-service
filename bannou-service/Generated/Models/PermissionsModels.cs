@@ -68,10 +68,10 @@ public partial class CapabilityRequest
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
-    /// Optional filter for specific services
+    /// Optional filter for specific services (null for all services)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceIds")]
-    public System.Collections.Generic.ICollection<string> ServiceIds { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? ServiceIds { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -232,10 +232,10 @@ public partial class ServicePermissionMatrix
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Human-readable service name
+    /// Human-readable service name (null to use serviceId)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
-    public string ServiceName { get; set; } = default!;
+    public string? ServiceName { get; set; } = default!;
 
     /// <summary>
     /// Map of State -&gt; Role -&gt; Methods structure
@@ -371,10 +371,10 @@ public partial class SessionStateUpdate
     public string? PreviousState { get; set; } = default!;
 
     /// <summary>
-    /// Optional context data
+    /// Optional context data (null if none)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

@@ -178,15 +178,15 @@ paths:
         : \"RedisSearch query string (e.g., \\\"@name:John\\\", \\\"@age:[18 +inf]\\\", \\\"*\\\").\\nDefaults to \\\"*\\\"\
         \ (match all). Only used for Redis stores with search enabled.\\n\"\n        },\n        \"sort\": {\n          \"\
         type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/$defs/SortField\"\n          },\n          \"\
-        description\": \"Sort order (first field only is used)\"\n        },\n        \"page\": {\n          \"type\": \"\
-        integer\",\n          \"default\": 0,\n          \"description\": \"Page number (0-indexed)\"\n        },\n      \
-        \  \"pageSize\": {\n          \"type\": \"integer\",\n          \"default\": 100,\n          \"description\": \"Items
-        per page (max 1000)\"\n        }\n      }\n    },\n    \"SortField\": {\n      \"description\": \"Specifies a field
-        and direction for sorting query results\",\n      \"type\": \"object\",\n      \"properties\": {\n        \"field\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Field name to sort by (JSON path for MySQL, field
-        name for Redis)\"\n        },\n        \"order\": {\n          \"type\": \"string\",\n          \"enum\": [\n    \
-        \        \"asc\",\n            \"desc\"\n          ],\n          \"default\": \"asc\",\n          \"description\"\
-        : \"Sort direction\"\n        }\n      }\n    }\n  }\n}"
+        nullable\": true,\n          \"description\": \"Sort order (first field only is used) (null for default ordering)\"\
+        \n        },\n        \"page\": {\n          \"type\": \"integer\",\n          \"default\": 0,\n          \"description\"\
+        : \"Page number (0-indexed)\"\n        },\n        \"pageSize\": {\n          \"type\": \"integer\",\n          \"\
+        default\": 100,\n          \"description\": \"Items per page (max 1000)\"\n        }\n      }\n    },\n    \"SortField\"\
+        : {\n      \"description\": \"Specifies a field and direction for sorting query results\",\n      \"type\": \"object\"\
+        ,\n      \"properties\": {\n        \"field\": {\n          \"type\": \"string\",\n          \"description\": \"Field
+        name to sort by (JSON path for MySQL, field name for Redis)\"\n        },\n        \"order\": {\n          \"type\"\
+        : \"string\",\n          \"enum\": [\n            \"asc\",\n            \"desc\"\n          ],\n          \"default\"\
+        : \"asc\",\n          \"description\": \"Sort direction\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/QueryStateResponse\"\
         ,\n  \"$defs\": {\n    \"QueryStateResponse\": {\n      \"description\": \"Response containing paginated query results
         with total count information\",\n      \"type\": \"object\",\n      \"properties\": {\n        \"results\": {\n  \
@@ -451,7 +451,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SortField'
-          description: Sort order (first field only is used)
+          nullable: true
+          description: Sort order (first field only is used) (null for default ordering)
         page:
           type: integer
           default: 0

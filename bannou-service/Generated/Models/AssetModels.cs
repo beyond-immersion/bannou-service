@@ -256,10 +256,10 @@ public partial class CompleteUploadRequest
     public System.Guid UploadId { get; set; } = default!;
 
     /// <summary>
-    /// For multipart uploads - ETags of completed parts
+    /// For multipart uploads - ETags of completed parts (null for single-file uploads)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parts")]
-    public System.Collections.Generic.ICollection<CompletedPart> Parts { get; set; } = default!;
+    public System.Collections.Generic.ICollection<CompletedPart>? Parts { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

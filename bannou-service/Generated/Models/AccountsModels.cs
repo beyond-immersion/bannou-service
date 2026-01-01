@@ -408,10 +408,10 @@ public partial class UpdateAccountRequest
     public string? DisplayName { get; set; } = default!;
 
     /// <summary>
-    /// Updated list of roles for the account
+    /// Updated list of roles for the account (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
-    public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
 
     /// <summary>
     /// Updated custom metadata for the account

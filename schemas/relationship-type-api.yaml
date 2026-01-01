@@ -200,13 +200,14 @@ paths:
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListRelationshipTypesRequest\"\
         ,\n  \"$defs\": {\n    \"ListRelationshipTypesRequest\": {\n      \"description\": \"Request to list relationship
         types with optional filtering by category, hierarchy, and deprecation status\",\n      \"type\": \"object\",\n   \
-        \   \"properties\": {\n        \"category\": {\n          \"type\": \"string\",\n          \"description\": \"Filter
-        by category (e.g., \\\"FAMILY\\\", \\\"SOCIAL\\\", \\\"ECONOMIC\\\")\"\n        },\n        \"includeChildren\": {\n\
-        \          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\": \"Whether to include child
-        types in the response\"\n        },\n        \"rootsOnly\": {\n          \"type\": \"boolean\",\n          \"default\"\
-        : false,\n          \"description\": \"Only return types with no parent (root types)\"\n        },\n        \"includeDeprecated\"\
-        : {\n          \"type\": \"boolean\",\n          \"default\": false,\n          \"description\": \"Whether to include
-        deprecated types in the response\"\n        }\n      }\n    }\n  }\n}"
+        \   \"properties\": {\n        \"category\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n \
+        \         \"description\": \"Filter by category (e.g., \\\"FAMILY\\\", \\\"SOCIAL\\\", \\\"ECONOMIC\\\") (null to
+        include all)\"\n        },\n        \"includeChildren\": {\n          \"type\": \"boolean\",\n          \"default\"\
+        : true,\n          \"description\": \"Whether to include child types in the response\"\n        },\n        \"rootsOnly\"\
+        : {\n          \"type\": \"boolean\",\n          \"default\": false,\n          \"description\": \"Only return types
+        with no parent (root types)\"\n        },\n        \"includeDeprecated\": {\n          \"type\": \"boolean\",\n  \
+        \        \"default\": false,\n          \"description\": \"Whether to include deprecated types in the response\"\n\
+        \        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RelationshipTypeListResponse\"\
         ,\n  \"$defs\": {\n    \"RelationshipTypeListResponse\": {\n      \"description\": \"Response containing a list of
         relationship types with total count\",\n      \"type\": \"object\",\n      \"required\": [\n        \"types\",\n \
@@ -487,18 +488,19 @@ paths:
         ,\n          \"description\": \"Unique code for the relationship type (e.g., \\\"SON\\\", \\\"MOTHER\\\")\"\n    \
         \    },\n        \"name\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"maxLength\"\
         : 100,\n          \"description\": \"Display name for the relationship type\"\n        },\n        \"description\"\
-        : {\n          \"type\": \"string\",\n          \"maxLength\": 500,\n          \"description\": \"Description of the
-        relationship type\"\n        },\n        \"category\": {\n          \"type\": \"string\",\n          \"maxLength\"\
-        : 50,\n          \"description\": \"Category for grouping (e.g., \\\"FAMILY\\\", \\\"SOCIAL\\\", \\\"ECONOMIC\\\"\
-        )\"\n        },\n        \"parentTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n \
-        \         \"nullable\": true,\n          \"description\": \"Parent type ID for hierarchy (null for root types)\"\n\
-        \        },\n        \"inverseTypeCode\": {\n          \"type\": \"string\",\n          \"maxLength\": 50,\n     \
-        \     \"nullable\": true,\n          \"description\": \"Code of the inverse relationship (e.g., \\\"PARENT\\\" for
-        \\\"CHILD\\\")\"\n        },\n        \"isBidirectional\": {\n          \"type\": \"boolean\",\n          \"default\"\
-        : false,\n          \"description\": \"Whether the relationship is the same in both directions (e.g., \\\"SIBLING\\\
-        \")\"\n        },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
-        \          \"nullable\": true,\n          \"description\": \"Additional metadata for the relationship type\"\n   \
-        \     }\n      }\n    }\n  }\n}"
+        : {\n          \"type\": \"string\",\n          \"maxLength\": 500,\n          \"nullable\": true,\n          \"description\"\
+        : \"Description of the relationship type (null if not provided)\"\n        },\n        \"category\": {\n         \
+        \ \"type\": \"string\",\n          \"maxLength\": 50,\n          \"nullable\": true,\n          \"description\": \"\
+        Category for grouping (e.g., \\\"FAMILY\\\", \\\"SOCIAL\\\", \\\"ECONOMIC\\\") (null if not categorized)\"\n     \
+        \   },\n        \"parentTypeId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"\
+        nullable\": true,\n          \"description\": \"Parent type ID for hierarchy (null for root types)\"\n        },\n\
+        \        \"inverseTypeCode\": {\n          \"type\": \"string\",\n          \"maxLength\": 50,\n          \"nullable\"\
+        : true,\n          \"description\": \"Code of the inverse relationship (e.g., \\\"PARENT\\\" for \\\"CHILD\\\")\"\n\
+        \        },\n        \"isBidirectional\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n   \
+        \       \"description\": \"Whether the relationship is the same in both directions (e.g., \\\"SIBLING\\\")\"\n   \
+        \     },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n  \
+        \        \"nullable\": true,\n          \"description\": \"Additional metadata for the relationship type\"\n     \
+        \   }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RelationshipTypeResponse\"\
         ,\n  \"$defs\": {\n    \"RelationshipTypeResponse\": {\n      \"description\": \"Complete representation of a relationship
         type including hierarchy, inverse, and deprecation information\",\n      \"type\": \"object\",\n      \"required\"\
@@ -920,15 +922,18 @@ paths:
         \        \"code\",\n        \"name\"\n      ],\n      \"properties\": {\n        \"code\": {\n          \"type\":
         \"string\",\n          \"description\": \"Unique code for the relationship type\"\n        },\n        \"name\": {\n\
         \          \"type\": \"string\",\n          \"description\": \"Display name for the relationship type\"\n        },\n\
-        \        \"description\": {\n          \"type\": \"string\",\n          \"description\": \"Human-readable description
-        of the relationship type\"\n        },\n        \"category\": {\n          \"type\": \"string\",\n          \"description\"\
-        : \"Category for grouping relationship types\"\n        },\n        \"parentTypeCode\": {\n          \"type\": \"\
-        string\",\n          \"description\": \"Code of the parent type (resolved during seeding)\"\n        },\n        \"\
-        inverseTypeCode\": {\n          \"type\": \"string\",\n          \"description\": \"Code of the inverse relationship\"\
-        \n        },\n        \"isBidirectional\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n  \
-        \        \"description\": \"Whether the relationship is the same in both directions\"\n        },\n        \"metadata\"\
-        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Additional
-        custom metadata for the relationship type\"\n        }\n      }\n    }\n  }\n}"
+        \        \"description\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
+        : \"Human-readable description of the relationship type (null if not provided)\"\n        },\n        \"category\"\
+        : {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Category for grouping
+        relationship types (null if not categorized)\"\n        },\n        \"parentTypeCode\": {\n          \"type\": \"\
+        string\",\n          \"nullable\": true,\n          \"description\": \"Code of the parent type (resolved during seeding)
+        (null for root types)\"\n        },\n        \"inverseTypeCode\": {\n          \"type\": \"string\",\n          \"\
+        nullable\": true,\n          \"description\": \"Code of the inverse relationship (null if not applicable)\"\n    \
+        \    },\n        \"isBidirectional\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n       \
+        \   \"description\": \"Whether the relationship is the same in both directions\"\n        },\n        \"metadata\"\
+        : {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"nullable\": true,\n \
+        \         \"description\": \"Additional custom metadata for the relationship type (null if none)\"\n        }\n  \
+        \    }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SeedRelationshipTypesResponse\"\
         ,\n  \"$defs\": {\n    \"SeedRelationshipTypesResponse\": {\n      \"description\": \"Response summarizing the results
         of a bulk seed operation with counts of created, updated, and skipped types\",\n      \"type\": \"object\",\n    \
@@ -978,7 +983,8 @@ components:
       properties:
         category:
           type: string
-          description: Filter by category (e.g., "FAMILY", "SOCIAL", "ECONOMIC")
+          nullable: true
+          description: Filter by category (e.g., "FAMILY", "SOCIAL", "ECONOMIC") (null to include all)
         includeChildren:
           type: boolean
           default: true
@@ -1056,11 +1062,13 @@ components:
         description:
           type: string
           maxLength: 500
-          description: Description of the relationship type
+          nullable: true
+          description: Description of the relationship type (null if not provided)
         category:
           type: string
           maxLength: 50
-          description: Category for grouping (e.g., "FAMILY", "SOCIAL", "ECONOMIC")
+          nullable: true
+          description: Category for grouping (e.g., "FAMILY", "SOCIAL", "ECONOMIC") (null if not categorized)
         parentTypeId:
           type: string
           format: uuid
@@ -1218,16 +1226,20 @@ components:
           description: Display name for the relationship type
         description:
           type: string
-          description: Human-readable description of the relationship type
+          nullable: true
+          description: Human-readable description of the relationship type (null if not provided)
         category:
           type: string
-          description: Category for grouping relationship types
+          nullable: true
+          description: Category for grouping relationship types (null if not categorized)
         parentTypeCode:
           type: string
-          description: Code of the parent type (resolved during seeding)
+          nullable: true
+          description: Code of the parent type (resolved during seeding) (null for root types)
         inverseTypeCode:
           type: string
-          description: Code of the inverse relationship
+          nullable: true
+          description: Code of the inverse relationship (null if not applicable)
         isBidirectional:
           type: boolean
           default: false
@@ -1235,7 +1247,8 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: Additional custom metadata for the relationship type
+          nullable: true
+          description: Additional custom metadata for the relationship type (null if none)
 
     # Response schemas
     RelationshipTypeResponse:

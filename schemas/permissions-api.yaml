@@ -41,8 +41,8 @@ paths:
         for a session\",\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\"\n      ],\n      \"properties\"\
         : {\n        \"sessionId\": {\n          \"type\": \"string\",\n          \"format\": \"uuid\",\n          \"description\"\
         : \"Session ID for lookup in Redis\"\n        },\n        \"serviceIds\": {\n          \"type\": \"array\",\n    \
-        \      \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"Optional filter
-        for specific services\"\n        }\n      }\n    }\n  }\n}"
+        \      \"items\": {\n            \"type\": \"string\"\n          },\n          \"nullable\": true,\n          \"description\"\
+        : \"Optional filter for specific services (null for all services)\"\n        }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/CapabilityResponse\"\
         ,\n  \"$defs\": {\n    \"CapabilityResponse\": {\n      \"description\": \"Response containing the compiled permissions
         for a session\",\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\",\n        \"permissions\"\
@@ -124,15 +124,16 @@ paths:
         defining state-role-method access rules\",\n      \"type\": \"object\",\n      \"required\": [\n        \"serviceId\"\
         ,\n        \"permissions\"\n      ],\n      \"properties\": {\n        \"serviceId\": {\n          \"type\": \"string\"\
         ,\n          \"description\": \"Unique service identifier\"\n        },\n        \"serviceName\": {\n          \"\
-        type\": \"string\",\n          \"description\": \"Human-readable service name\"\n        },\n        \"permissions\"\
-        : {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"$ref\": \"#/$defs/StatePermissions\"\
-        \n          },\n          \"description\": \"Map of State -> Role -> Methods structure\"\n        },\n        \"version\"\
-        : {\n          \"type\": \"string\",\n          \"description\": \"Service API version for change tracking\"\n   \
-        \     }\n      }\n    },\n    \"StatePermissions\": {\n      \"type\": \"object\",\n      \"additionalProperties\"\
-        : {\n        \"type\": \"array\",\n        \"items\": {\n          \"type\": \"string\"\n        }\n      },\n   \
-        \   \"description\": \"Map of Role -> List of Methods for this state\",\n      \"example\": {\n        \"user\": [\n\
-        \          \"ListGameSessions\",\n          \"GetGameSession\"\n        ],\n        \"admin\": [\n          \"ListGameSessions\"\
-        ,\n          \"GetGameSession\",\n          \"CreateGameSession\"\n        ]\n      }\n    }\n  }\n}"
+        type\": \"string\",\n          \"nullable\": true,\n          \"description\": \"Human-readable service name (null
+        to use serviceId)\"\n        },\n        \"permissions\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : {\n            \"$ref\": \"#/$defs/StatePermissions\"\n          },\n          \"description\": \"Map of State ->
+        Role -> Methods structure\"\n        },\n        \"version\": {\n          \"type\": \"string\",\n          \"description\"\
+        : \"Service API version for change tracking\"\n        }\n      }\n    },\n    \"StatePermissions\": {\n      \"type\"\
+        : \"object\",\n      \"additionalProperties\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"\
+        type\": \"string\"\n        }\n      },\n      \"description\": \"Map of Role -> List of Methods for this state\"\
+        ,\n      \"example\": {\n        \"user\": [\n          \"ListGameSessions\",\n          \"GetGameSession\"\n    \
+        \    ],\n        \"admin\": [\n          \"ListGameSessions\",\n          \"GetGameSession\",\n          \"CreateGameSession\"\
+        \n        ]\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/RegistrationResponse\"\
         ,\n  \"$defs\": {\n    \"RegistrationResponse\": {\n      \"description\": \"Response from registering or updating
         a service permission matrix\",\n      \"type\": \"object\",\n      \"required\": [\n        \"serviceId\",\n     \
@@ -182,7 +183,8 @@ paths:
         : \"New state value (lobby, in_game, etc.)\"\n        },\n        \"previousState\": {\n          \"type\": \"string\"\
         ,\n          \"description\": \"Previous state value (null for initial state)\",\n          \"nullable\": true\n \
         \       },\n        \"metadata\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n\
-        \          \"description\": \"Optional context data\"\n        }\n      }\n    }\n  }\n}"
+        \          \"nullable\": true,\n          \"description\": \"Optional context data (null if none)\"\n        }\n \
+        \     }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/SessionUpdateResponse\"\
         ,\n  \"$defs\": {\n    \"SessionUpdateResponse\": {\n      \"description\": \"Response from updating a session's state
         or role with recompiled permissions\",\n      \"type\": \"object\",\n      \"required\": [\n        \"sessionId\"\
@@ -434,7 +436,8 @@ components:
           type: array
           items:
             type: string
-          description: Optional filter for specific services
+          nullable: true
+          description: Optional filter for specific services (null for all services)
 
     CapabilityResponse:
       description: Response containing the compiled permissions for a session
@@ -509,7 +512,8 @@ components:
           description: Unique service identifier
         serviceName:
           type: string
-          description: Human-readable service name
+          nullable: true
+          description: Human-readable service name (null to use serviceId)
         permissions:
           type: object
           additionalProperties:
@@ -584,7 +588,8 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: Optional context data
+          nullable: true
+          description: Optional context data (null if none)
 
     SessionRoleUpdate:
       description: Request to update a session's role affecting permissions across all services

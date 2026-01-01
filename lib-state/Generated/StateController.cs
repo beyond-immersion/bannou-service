@@ -627,7 +627,8 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
           "items": {
             "$ref": "#/$defs/SortField"
           },
-          "description": "Sort order (first field only is used)"
+          "nullable": true,
+          "description": "Sort order (first field only is used) (null for default ordering)"
         },
         "page": {
           "type": "integer",

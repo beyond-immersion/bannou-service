@@ -345,7 +345,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
           "items": {
             "type": "string"
           },
-          "description": "Optional filter for specific services"
+          "nullable": true,
+          "description": "Optional filter for specific services (null for all services)"
         }
       }
     }
@@ -588,7 +589,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
         },
         "serviceName": {
           "type": "string",
-          "description": "Human-readable service name"
+          "nullable": true,
+          "description": "Human-readable service name (null to use serviceId)"
         },
         "permissions": {
           "type": "object",
@@ -764,7 +766,8 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
         "metadata": {
           "type": "object",
           "additionalProperties": true,
-          "description": "Optional context data"
+          "nullable": true,
+          "description": "Optional context data (null if none)"
         }
       }
     }

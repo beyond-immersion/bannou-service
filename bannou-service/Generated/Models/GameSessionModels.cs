@@ -169,10 +169,10 @@ public partial class CreateGameSessionRequest
     public System.Guid OwnerId { get; set; } = default!;
 
     /// <summary>
-    /// Game-specific configuration settings
+    /// Game-specific configuration settings (null to use defaults)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameSettings")]
-    public object GameSettings { get; set; } = default!;
+    public object? GameSettings { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

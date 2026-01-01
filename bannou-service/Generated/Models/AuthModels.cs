@@ -133,10 +133,10 @@ public partial class LoginRequest
     public bool RememberMe { get; set; } = false;
 
     /// <summary>
-    /// Information about the client device
+    /// Information about the client device (optional)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deviceInfo")]
-    public DeviceInfo DeviceInfo { get; set; } = default!;
+    public DeviceInfo? DeviceInfo { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -369,10 +369,10 @@ public partial class OAuthCallbackRequest
     public string? State { get; set; } = default!;
 
     /// <summary>
-    /// Information about the client device
+    /// Information about the client device (optional)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deviceInfo")]
-    public DeviceInfo DeviceInfo { get; set; } = default!;
+    public DeviceInfo? DeviceInfo { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -409,10 +409,10 @@ public partial class SteamVerifyRequest
     public string Ticket { get; set; } = default!;
 
     /// <summary>
-    /// Information about the client device
+    /// Information about the client device (optional)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deviceInfo")]
-    public DeviceInfo DeviceInfo { get; set; } = default!;
+    public DeviceInfo? DeviceInfo { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -595,7 +595,7 @@ public partial class SessionInfo
     /// Information about the device used for this session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deviceInfo")]
-    public DeviceInfo DeviceInfo { get; set; } = default!;
+    public DeviceInfo? DeviceInfo { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the session was created

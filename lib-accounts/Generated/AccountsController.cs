@@ -1110,7 +1110,8 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
           "items": {
             "type": "string"
           },
-          "description": "Updated list of roles for the account"
+          "nullable": true,
+          "description": "Updated list of roles for the account (null to keep unchanged)"
         },
         "metadata": {
           "type": "object",

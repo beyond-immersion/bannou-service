@@ -80,13 +80,15 @@ paths:
         ,\n            \"POST\",\n            \"PUT\",\n            \"DELETE\",\n            \"PATCH\"\n          ],\n   \
         \       \"description\": \"HTTP method for the target endpoint\"\n        },\n        \"headers\": {\n          \"\
         type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n          },\n     \
-        \     \"description\": \"Additional headers to forward to the service\"\n        },\n        \"body\": {\n       \
-        \   \"type\": \"object\",\n          \"additionalProperties\": true,\n          \"description\": \"Request body to
-        forward to target service\"\n        },\n        \"pathParameters\": {\n          \"type\": \"object\",\n        \
-        \  \"additionalProperties\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"Path
-        parameters for the endpoint\"\n        },\n        \"queryParameters\": {\n          \"type\": \"object\",\n     \
-        \     \"additionalProperties\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"Query
-        string parameters for the endpoint\"\n        }\n      }\n    }\n  }\n}"
+        \     \"nullable\": true,\n          \"description\": \"Additional headers to forward to the service (null if none)\"\
+        \n        },\n        \"body\": {\n          \"type\": \"object\",\n          \"additionalProperties\": true,\n  \
+        \        \"nullable\": true,\n          \"description\": \"Request body to forward to target service (null for no
+        body)\"\n        },\n        \"pathParameters\": {\n          \"type\": \"object\",\n          \"additionalProperties\"\
+        : {\n            \"type\": \"string\"\n          },\n          \"nullable\": true,\n          \"description\": \"\
+        Path parameters for the endpoint (null if none)\"\n        },\n        \"queryParameters\": {\n          \"type\"\
+        : \"object\",\n          \"additionalProperties\": {\n            \"type\": \"string\"\n          },\n          \"\
+        nullable\": true,\n          \"description\": \"Query string parameters for the endpoint (null if none)\"\n      \
+        \  }\n      }\n    }\n  }\n}"
       x-response-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/InternalProxyResponse\"\
         ,\n  \"$defs\": {\n    \"InternalProxyResponse\": {\n      \"description\": \"Response from a proxied API call containing
         the target service's response data\",\n      \"type\": \"object\",\n      \"required\": [\n        \"success\",\n\
@@ -571,21 +573,25 @@ components:
           type: object
           additionalProperties:
             type: string
-          description: Additional headers to forward to the service
+          nullable: true
+          description: Additional headers to forward to the service (null if none)
         body:
           type: object
           additionalProperties: true
-          description: Request body to forward to target service
+          nullable: true
+          description: Request body to forward to target service (null for no body)
         pathParameters:
           type: object
           additionalProperties:
             type: string
-          description: Path parameters for the endpoint
+          nullable: true
+          description: Path parameters for the endpoint (null if none)
         queryParameters:
           type: object
           additionalProperties:
             type: string
-          description: Query string parameters for the endpoint
+          nullable: true
+          description: Query string parameters for the endpoint (null if none)
 
     InternalProxyResponse:
       description: Response from a proxied API call containing the target service's response data

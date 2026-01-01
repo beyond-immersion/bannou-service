@@ -1374,7 +1374,8 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "string",
             "format": "uuid"
           },
-          "description": "Initial realms where this species is available"
+          "nullable": true,
+          "description": "Initial realms where this species is available (null to skip realm assignment)"
         },
         "metadata": {
           "type": "object",

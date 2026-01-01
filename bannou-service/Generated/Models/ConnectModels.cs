@@ -319,28 +319,28 @@ public partial class InternalProxyRequest
     public InternalProxyRequestMethod Method { get; set; } = default!;
 
     /// <summary>
-    /// Additional headers to forward to the service
+    /// Additional headers to forward to the service (null if none)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("headers")]
-    public System.Collections.Generic.IDictionary<string, string> Headers { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? Headers { get; set; } = default!;
 
     /// <summary>
-    /// Request body to forward to target service
+    /// Request body to forward to target service (null for no body)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("body")]
-    public object Body { get; set; } = default!;
+    public object? Body { get; set; } = default!;
 
     /// <summary>
-    /// Path parameters for the endpoint
+    /// Path parameters for the endpoint (null if none)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pathParameters")]
-    public System.Collections.Generic.IDictionary<string, string> PathParameters { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? PathParameters { get; set; } = default!;
 
     /// <summary>
-    /// Query string parameters for the endpoint
+    /// Query string parameters for the endpoint (null if none)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("queryParameters")]
-    public System.Collections.Generic.IDictionary<string, string> QueryParameters { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? QueryParameters { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

@@ -576,7 +576,8 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "parts": {
           "type": "array",
-          "description": "For multipart uploads - ETags of completed parts",
+          "nullable": true,
+          "description": "For multipart uploads - ETags of completed parts (null for single-file uploads)",
           "items": {
             "$ref": "#/$defs/CompletedPart"
           }
