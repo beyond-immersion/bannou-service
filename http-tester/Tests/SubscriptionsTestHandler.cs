@@ -52,7 +52,8 @@ public class SubscriptionsTestHandler : BaseHttpTestHandler
         var createRequest = new CreateAccountRequest
         {
             DisplayName = username,
-            Email = $"{username}@example.com"
+            Email = $"{username}@example.com",
+            Roles = new List<string>()
         };
 
         return await accountsClient.CreateAccountAsync(createRequest);

@@ -51,7 +51,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             var createRequest = new CreateAccountRequest
             {
                 DisplayName = testUsername,
-                Email = GenerateTestEmail(testUsername)
+                Email = GenerateTestEmail(testUsername),
+                Roles = new List<string>()
             };
 
             var response = await accountsClient.CreateAccountAsync(createRequest);
@@ -71,7 +72,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             var createRequest = new CreateAccountRequest
             {
                 DisplayName = testUsername,
-                Email = GenerateTestEmail(testUsername)
+                Email = GenerateTestEmail(testUsername),
+                Roles = new List<string>()
             };
 
             var createResponse = await accountsClient.CreateAccountAsync(createRequest);
@@ -104,7 +106,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             var createRequest = new CreateAccountRequest
             {
                 DisplayName = testUsername,
-                Email = GenerateTestEmail(testUsername)
+                Email = GenerateTestEmail(testUsername),
+                Roles = new List<string>()
             };
 
             var createResponse = await accountsClient.CreateAccountAsync(createRequest);
@@ -135,7 +138,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             var createRequest = new CreateAccountRequest
             {
                 DisplayName = testUsername,
-                Email = GenerateTestEmail(testUsername)
+                Email = GenerateTestEmail(testUsername),
+                Roles = new List<string>()
             };
 
             var createResponse = await accountsClient.CreateAccountAsync(createRequest);
@@ -166,7 +170,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             var createRequest = new CreateAccountRequest
             {
                 DisplayName = testUsername,
-                Email = testEmail
+                Email = testEmail,
+                Roles = new List<string>()
             };
 
             var createResponse = await accountsClient.CreateAccountAsync(createRequest);
@@ -204,7 +209,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             var createRequest = new CreateAccountRequest
             {
                 DisplayName = testUsername,
-                Email = GenerateTestEmail(testUsername)
+                Email = GenerateTestEmail(testUsername),
+                Roles = new List<string>()
             };
 
             var createResponse = await accountsClient.CreateAccountAsync(createRequest);
@@ -224,7 +230,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             var createRequest = new CreateAccountRequest
             {
                 DisplayName = testUsername,
-                Email = GenerateTestEmail(testUsername)
+                Email = GenerateTestEmail(testUsername),
+                Roles = new List<string>()
             };
 
             var createResponse = await accountsClient.CreateAccountAsync(createRequest);
@@ -252,7 +259,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             var createRequest = new CreateAccountRequest
             {
                 DisplayName = testUsername,
-                Email = GenerateTestEmail(testUsername)
+                Email = GenerateTestEmail(testUsername),
+                Roles = new List<string>()
             };
 
             var createResponse = await accountsClient.CreateAccountAsync(createRequest);
@@ -282,7 +290,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             var createRequest = new CreateAccountRequest
             {
                 DisplayName = testUsername,
-                Email = GenerateTestEmail(testUsername)
+                Email = GenerateTestEmail(testUsername),
+                Roles = new List<string>()
             };
 
             var createResponse = await accountsClient.CreateAccountAsync(createRequest);
@@ -313,7 +322,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             {
                 DisplayName = testUsername,
                 Email = GenerateTestEmail(testUsername),
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("OldPassword123!")
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("OldPassword123!"),
+                Roles = new List<string>()
             };
 
             var createResponse = await accountsClient.CreateAccountAsync(createRequest);
@@ -341,7 +351,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             {
                 DisplayName = testUsername,
                 Email = GenerateTestEmail(testUsername),
-                EmailVerified = false
+                EmailVerified = false,
+                Roles = new List<string>()
             };
 
             var createResponse = await accountsClient.CreateAccountAsync(createRequest);
@@ -376,7 +387,8 @@ public class AccountTestHandler : BaseHttpTestHandler
                 var createRequest = new CreateAccountRequest
                 {
                     DisplayName = $"{testPrefix}_user{i}",
-                    Email = $"{testPrefix}_user{i}@example.com"
+                    Email = $"{testPrefix}_user{i}@example.com",
+                    Roles = new List<string>()
                 };
                 var response = await accountsClient.CreateAccountAsync(createRequest);
                 if (response.AccountId == Guid.Empty)
@@ -431,17 +443,20 @@ public class AccountTestHandler : BaseHttpTestHandler
             var account1 = await accountsClient.CreateAccountAsync(new CreateAccountRequest
             {
                 DisplayName = $"{testPrefix}_alice",
-                Email = $"{testPrefix}_alice@example.com"
+                Email = $"{testPrefix}_alice@example.com",
+                Roles = new List<string>()
             });
             var account2 = await accountsClient.CreateAccountAsync(new CreateAccountRequest
             {
                 DisplayName = $"{testPrefix}_bob",
-                Email = $"{testPrefix}_bob@test.com"
+                Email = $"{testPrefix}_bob@test.com",
+                Roles = new List<string>()
             });
             var account3 = await accountsClient.CreateAccountAsync(new CreateAccountRequest
             {
                 DisplayName = $"{testPrefix}_charlie",
-                Email = $"{testPrefix}_charlie@example.com"
+                Email = $"{testPrefix}_charlie@example.com",
+                Roles = new List<string>()
             });
 
             // Mark account3 as verified
@@ -521,7 +536,8 @@ public class AccountTestHandler : BaseHttpTestHandler
             {
                 DisplayName = testUsername,
                 Email = GenerateTestEmail(testUsername),
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(testPassword)
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(testPassword),
+                Roles = new List<string>()
             };
 
             var createResponse = await accountsClient.CreateAccountAsync(createRequest);

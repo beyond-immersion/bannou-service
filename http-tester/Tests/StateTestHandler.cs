@@ -154,7 +154,8 @@ public class StateTestHandler : BaseHttpTestHandler
             {
                 StoreName = storeName,
                 Key = testKey,
-                Value = testValue
+                Value = testValue,
+                Options = new StateOptions()
             };
 
             var saveResponse = await stateClient.SaveStateAsync(saveRequest);
@@ -243,7 +244,8 @@ public class StateTestHandler : BaseHttpTestHandler
             {
                 StoreName = storeName,
                 Key = testKey,
-                Value = new { name = "To Be Deleted" }
+                Value = new { name = "To Be Deleted" },
+                Options = new StateOptions()
             };
             await stateClient.SaveStateAsync(saveRequest);
 
@@ -314,7 +316,8 @@ public class StateTestHandler : BaseHttpTestHandler
                 {
                     StoreName = storeName,
                     Key = key,
-                    Value = new { name = key }
+                    Value = new { name = key },
+                    Options = new StateOptions()
                 });
             }
 
@@ -364,7 +367,8 @@ public class StateTestHandler : BaseHttpTestHandler
             {
                 StoreName = storeName,
                 Key = testKey,
-                Value = new { version = 1 }
+                Value = new { version = 1 },
+                Options = new StateOptions()
             };
 
             var saveResponse = await stateClient.SaveStateAsync(saveRequest);
@@ -465,7 +469,8 @@ public class StateTestHandler : BaseHttpTestHandler
                 {
                     StoreName = storeName,
                     Key = $"{testPrefix}-{i}",
-                    Value = new { name = $"Item {i}", index = i }
+                    Value = new { name = $"Item {i}", index = i },
+                    Options = new StateOptions()
                 });
             }
 
@@ -587,7 +592,8 @@ public class StateTestHandler : BaseHttpTestHandler
                 {
                     StoreName = storeName,
                     Key = $"{testPrefix}-{i}",
-                    Value = new { name = $"Page Item {i}", index = i }
+                    Value = new { name = $"Page Item {i}", index = i },
+                    Options = new StateOptions()
                 });
             }
 
