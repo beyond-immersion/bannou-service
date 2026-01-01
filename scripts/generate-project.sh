@@ -62,10 +62,6 @@ if [ ! -f "$PROJECT_FILE" ]; then
   </PropertyGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="lib-${SERVICE_NAME}.tests" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />
   </ItemGroup>
 
@@ -81,6 +77,22 @@ if [ ! -f "$PROJECT_FILE" ]; then
 EOF
 
     echo -e "${GREEN}✅ Created project file: $PROJECT_FILE${NC}"
+
+    # Create AssemblyInfo.cs for assembly-level attributes
+    ASSEMBLY_INFO_FILE="$SERVICE_DIR/AssemblyInfo.cs"
+    if [ ! -f "$ASSEMBLY_INFO_FILE" ]; then
+        echo -e "${YELLOW}📝 Creating AssemblyInfo.cs...${NC}"
+        cat > "$ASSEMBLY_INFO_FILE" << 'ASSEMBLYEOF'
+using Microsoft.AspNetCore.Mvc;
+using System.Runtime.CompilerServices;
+
+[assembly: ApiController]
+ASSEMBLYEOF
+        # Add InternalsVisibleTo for tests and Moq
+        echo "[assembly: InternalsVisibleTo(\"lib-${SERVICE_NAME}.tests\")]" >> "$ASSEMBLY_INFO_FILE"
+        echo "[assembly: InternalsVisibleTo(\"DynamicProxyGenAssembly2\")]" >> "$ASSEMBLY_INFO_FILE"
+        echo -e "${GREEN}✅ Created AssemblyInfo.cs${NC}"
+    fi
 
     # Add project to solution
     # Note: Path must be relative from repo root, not from scripts directory

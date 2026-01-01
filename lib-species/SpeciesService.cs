@@ -9,10 +9,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
-
-[assembly: InternalsVisibleTo("lib-species.tests")]
 
 namespace BeyondImmersion.BannouService.Species;
 

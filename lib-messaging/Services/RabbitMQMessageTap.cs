@@ -223,20 +223,11 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
             {
                 eventId = parsedId;
             }
-            else if (root.TryGetProperty("event_id", out var eventIdProp2) &&
-                eventIdProp2.TryGetGuid(out var parsedId2))
-            {
-                eventId = parsedId2;
-            }
 
             // Extract eventName from the message
             if (root.TryGetProperty("eventName", out var eventNameProp))
             {
                 eventName = eventNameProp.GetString();
-            }
-            else if (root.TryGetProperty("event_name", out var eventNameProp2))
-            {
-                eventName = eventNameProp2.GetString();
             }
 
             // Extract timestamp from the message

@@ -407,7 +407,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
                 // Parse and validate the capability manifest
                 var responseObj = JsonNode.Parse(responsePayload)?.AsObject();
-                var messageType = responseObj?["event_name"]?.GetValue<string>();
+                var messageType = responseObj?["eventName"]?.GetValue<string>();
 
                 if (messageType == "connect.capability_manifest")
                 {
@@ -1536,7 +1536,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 try { manifest = JsonNode.Parse(payloadJson)?.AsObject(); }
                 catch { continue; }
 
-                var type = manifest?["event_name"]?.GetValue<string>();
+                var type = manifest?["eventName"]?.GetValue<string>();
                 if (type != "connect.capability_manifest") continue;
 
                 var availableApis = manifest?["availableAPIs"]?.AsArray();
@@ -1643,7 +1643,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 }
 
                 // Verify this is a capability manifest
-                var type = manifest?["event_name"]?.GetValue<string>();
+                var type = manifest?["eventName"]?.GetValue<string>();
                 if (type != "connect.capability_manifest")
                 {
                     Console.WriteLine($"⚠️ Received event type '{type}', waiting for connect.capability_manifest...");
@@ -1776,12 +1776,12 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                     {
                         var payloadJson = Encoding.UTF8.GetString(message.Payload.Span);
                         var eventObj = JsonNode.Parse(payloadJson)?.AsObject();
-                        var eventType = eventObj?["event_name"]?.GetValue<string>();
-                        Console.WriteLine($"   ⏭️ Skipping Event message (event_name: {eventType ?? "unknown"})");
+                        var eventType = eventObj?["eventName"]?.GetValue<string>();
+                        Console.WriteLine($"   ⏭️ Skipping Event message (eventName: {eventType ?? "unknown"})");
                     }
                     catch
                     {
-                        Console.WriteLine($"   ⏭️ Skipping Event message (could not parse event_name)");
+                        Console.WriteLine($"   ⏭️ Skipping Event message (could not parse eventName)");
                     }
                     continue;
                 }
@@ -2217,7 +2217,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 }
 
                 // Verify this is a capability manifest
-                var type = manifest?["event_name"]?.GetValue<string>();
+                var type = manifest?["eventName"]?.GetValue<string>();
                 if (type != "connect.capability_manifest")
                 {
                     continue;

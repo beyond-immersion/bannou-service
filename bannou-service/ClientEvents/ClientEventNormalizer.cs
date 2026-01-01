@@ -103,19 +103,14 @@ public static class ClientEventNormalizer
                 effectivePayload = System.Text.Encoding.UTF8.GetBytes(messageElement.GetRawText());
             }
 
-            // Try to find the event_name property (could be "event_name" or "Event_name")
+            // Try to find the eventName property
             string? receivedEventName = null;
             string? propertyName = null;
 
-            if (root.TryGetProperty("event_name", out var eventNameElement))
+            if (root.TryGetProperty("eventName", out var eventNameElement))
             {
                 receivedEventName = eventNameElement.GetString();
-                propertyName = "event_name";
-            }
-            else if (root.TryGetProperty("Event_name", out eventNameElement))
-            {
-                receivedEventName = eventNameElement.GetString();
-                propertyName = "Event_name";
+                propertyName = "eventName";
             }
 
             if (string.IsNullOrEmpty(receivedEventName) || string.IsNullOrEmpty(propertyName))

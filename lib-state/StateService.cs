@@ -6,10 +6,7 @@ using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
-
-[assembly: InternalsVisibleTo("lib-state.tests")]
 
 namespace BeyondImmersion.BannouService.State;
 

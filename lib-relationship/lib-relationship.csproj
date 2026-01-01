@@ -7,13 +7,6 @@
     <RootNamespace>BeyondImmersion.BannouService.Relationship</RootNamespace>
     <ServiceLib>relationship</ServiceLib>
   </PropertyGroup>
-
-  <ItemGroup>
-    <InternalsVisibleTo Include="lib-relationship.tests" />
-    <!-- Required for Moq/Castle.Core to mock IStateStore<internal types> -->
-    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
-  </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />

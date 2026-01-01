@@ -12,13 +12,10 @@ using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using StorageModels = BeyondImmersion.BannouService.Storage;
-
-[assembly: InternalsVisibleTo("lib-asset.tests")]
 
 namespace BeyondImmersion.BannouService.Asset;
 

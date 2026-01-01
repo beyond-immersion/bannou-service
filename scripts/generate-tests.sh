@@ -84,6 +84,18 @@ EOF
 
     echo -e "${GREEN}✅ Created test project file: $TEST_PROJECT_FILE${NC}"
 
+    # Create AssemblyInfo.cs for assembly-level test attributes
+    ASSEMBLY_INFO_FILE="$TEST_PROJECT_DIR/AssemblyInfo.cs"
+    if [ ! -f "$ASSEMBLY_INFO_FILE" ]; then
+        echo -e "${YELLOW}📝 Creating AssemblyInfo.cs...${NC}"
+        cat > "$ASSEMBLY_INFO_FILE" << 'ASSEMBLYEOF'
+using Xunit;
+
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
+ASSEMBLYEOF
+        echo -e "${GREEN}✅ Created AssemblyInfo.cs${NC}"
+    fi
+
     # Add project to solution
     # Note: Path must be relative from repo root, not from scripts directory
     TEST_PROJECT_FILE_FROM_ROOT="lib-${SERVICE_NAME}.tests/lib-${SERVICE_NAME}.tests.csproj"

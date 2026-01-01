@@ -9,9 +9,6 @@ using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("lib-character.tests")]
 
 namespace BeyondImmersion.BannouService.Character;
 

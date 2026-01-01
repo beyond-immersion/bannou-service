@@ -211,7 +211,7 @@ public class Program
             {
                 // Make a login request with a non-existent account - exercises mesh without publishing events
                 var warmupContent = new StringContent(
-                    "{\"username\":\"mesh-warmup-nonexistent@test.local\",\"password\":\"warmup-password-123\"}",
+                    "{\"email\":\"mesh-warmup-nonexistent@test.local\",\"password\":\"warmup-password-123\"}",
                     Encoding.UTF8,
                     "application/json");
                 var warmupResponse = await HttpClient.PostAsync(loginUrl, warmupContent);

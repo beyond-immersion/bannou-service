@@ -58,9 +58,18 @@ public enum HttpMethodTypes
 }
 
 /// <summary>
-/// An enumeration of possible API response codes
-/// returned by this service.
+/// An enumeration of possible API response codes returned by this service.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <b>IMPORTANT:</b> Use this enum (<c>BeyondImmersion.BannouService.StatusCodes</c>),
+/// NOT <c>Microsoft.AspNetCore.Http.StatusCodes</c> which is a static class with int constants.
+/// </para>
+/// <para>
+/// All service methods return <c>(StatusCodes, TResponse?)</c> tuples.
+/// See TENETS.md T8: Return Pattern for usage requirements.
+/// </para>
+/// </remarks>
 public enum StatusCodes
 {
     /// <summary>

@@ -9,9 +9,6 @@ using LibOrchestrator;
 using LibOrchestrator.Backends;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("lib-orchestrator.tests")]
 
 namespace BeyondImmersion.BannouService.Orchestrator;
 

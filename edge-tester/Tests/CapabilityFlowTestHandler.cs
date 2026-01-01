@@ -214,8 +214,8 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     // Check if this is a capability manifest
                     var responseObj = JsonNode.Parse(responseText)?.AsObject();
 
-                    // Capability manifest should have event_name="connect.capability_manifest" and availableAPIs
-                    var messageType = responseObj?["event_name"]?.GetValue<string>();
+                    // Capability manifest should have eventName="connect.capability_manifest" and availableAPIs
+                    var messageType = responseObj?["eventName"]?.GetValue<string>();
                     if (messageType == "connect.capability_manifest")
                     {
                         var availableApis = responseObj?["availableAPIs"]?.AsArray();
@@ -589,7 +589,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             var responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
             var initialManifest = JsonNode.Parse(responseText)?.AsObject();
 
-            var messageType = initialManifest?["event_name"]?.GetValue<string>();
+            var messageType = initialManifest?["eventName"]?.GetValue<string>();
             if (messageType != "connect.capability_manifest")
             {
                 Console.WriteLine($"❌ Expected connect.capability_manifest but received '{messageType}'");
@@ -651,7 +651,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
                 var updatedManifest = JsonNode.Parse(responseText)?.AsObject();
 
-                var updatedType = updatedManifest?["event_name"]?.GetValue<string>();
+                var updatedType = updatedManifest?["eventName"]?.GetValue<string>();
                 if (updatedType == "connect.capability_manifest")
                 {
                     var updatedApis = updatedManifest?["availableAPIs"]?.AsArray();

@@ -589,7 +589,7 @@ public class TapDestinationTests
         // Assert
         Assert.Equal("test-exchange", dest.Exchange);
         Assert.Equal("test-key", dest.RoutingKey);
-        Assert.Equal(TapExchangeType.Fanout, dest.ExchangeType); // Default
+        Assert.Equal(TapExchangeType.Topic, dest.ExchangeType); // Default
         Assert.True(dest.CreateExchangeIfNotExists); // Default
     }
 

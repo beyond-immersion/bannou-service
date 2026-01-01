@@ -6,10 +6,22 @@ using BeyondImmersion.BannouService.Messaging;
 namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
-/// Native RabbitMQ message publishing via MassTransit.
-/// Provides direct RabbitMQ access for event-driven communication.
+/// Native RabbitMQ message publishing via MassTransit for SERVICE-TO-SERVICE events.
+/// Provides direct RabbitMQ access for event-driven communication between Bannou services.
 /// </summary>
 /// <remarks>
+/// <para>
+/// <b>WARNING - CLIENT EVENTS:</b> This interface is for service-to-service events ONLY.
+/// To push events to WebSocket clients, use <see cref="ClientEvents.IClientEventPublisher"/> instead.
+/// Using IMessageBus for client events will silently fail - events go to the wrong exchange.
+/// See TENETS.md T17: Client Event Schema Pattern.
+/// </para>
+/// <para>
+/// <b>WARNING - TYPED EVENTS ONLY:</b> The TEvent type parameter must be a typed event class
+/// defined in a schema. Anonymous objects (<c>new { ... }</c>) are FORBIDDEN and will throw
+/// <c>System.ArgumentException: Message types must not be anonymous types</c> at runtime.
+/// See TENETS.md T5: Event-Driven Architecture.
+/// </para>
 /// <para>
 /// This interface provides the abstraction layer over the messaging backend (MassTransit/RabbitMQ).
 /// Services should depend on this interface rather than concrete implementations.

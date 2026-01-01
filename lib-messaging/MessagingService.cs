@@ -6,9 +6,6 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("lib-messaging.tests")]
 
 namespace BeyondImmersion.BannouService.Messaging;
 

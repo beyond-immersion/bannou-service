@@ -7,13 +7,6 @@
     <RootNamespace>BeyondImmersion.BannouService.Voice</RootNamespace>
     <ServiceLib>voice</ServiceLib>
   </PropertyGroup>
-
-  <ItemGroup>
-    <InternalsVisibleTo Include="lib-voice.tests" />
-    <!-- Required for Moq/Castle.Core to mock IStateStore<internal types> -->
-    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
-  </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />

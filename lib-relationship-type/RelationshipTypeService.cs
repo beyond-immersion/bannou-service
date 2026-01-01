@@ -8,9 +8,6 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("lib-relationship-type.tests")]
 
 namespace BeyondImmersion.BannouService.RelationshipType;
 

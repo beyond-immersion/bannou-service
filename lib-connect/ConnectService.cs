@@ -16,12 +16,9 @@ using System.Collections.Concurrent;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.WebSockets;
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-
-[assembly: InternalsVisibleTo("lib-connect.tests")]
 
 namespace BeyondImmersion.BannouService.Connect;
 
@@ -759,7 +756,7 @@ public partial class ConnectService : IConnectService
                     {
                         var disconnectNotification = new
                         {
-                            event_name = "connect.disconnect_notification",
+                            eventName = "connect.disconnect_notification",
                             reconnectionToken = connectionState.ReconnectionToken,
                             expiresAt = connectionState.ReconnectionExpiresAt?.ToString("O"),
                             reconnectable = true,
@@ -1636,13 +1633,9 @@ public partial class ConnectService : IConnectService
                 root = messageElement;
             }
 
-            if (!root.TryGetProperty("event_name", out var eventNameElement))
+            if (!root.TryGetProperty("eventName", out var eventNameElement))
             {
-                // Also try Event_name (NSwag naming without JsonPropertyName)
-                if (!root.TryGetProperty("Event_name", out eventNameElement))
-                {
-                    return false; // Not a valid event, let normal handling proceed
-                }
+                return false; // Not a valid event, let normal handling proceed
             }
 
             var eventName = eventNameElement.GetString();
@@ -1931,7 +1924,7 @@ public partial class ConnectService : IConnectService
 
             var capabilityManifest = new
             {
-                event_name = "connect.capability_manifest",
+                eventName = "connect.capability_manifest",
                 sessionId = sessionId,
                 availableAPIs = availableApis,
                 version = 1,
@@ -2075,7 +2068,7 @@ public partial class ConnectService : IConnectService
 
             var capabilityManifest = new
             {
-                event_name = "connect.capability_manifest",
+                eventName = "connect.capability_manifest",
                 sessionId = sessionId,
                 availableAPIs = availableApis,
                 version = 1,
@@ -2224,38 +2217,35 @@ public partial class ConnectService : IConnectService
                 return;
             }
 
-            // Extract route_guid
-            if (!shortcutElement.TryGetProperty("route_guid", out var routeGuidElement) &&
-                !shortcutElement.TryGetProperty("Route_guid", out routeGuidElement))
+            // Extract routeGuid
+            if (!shortcutElement.TryGetProperty("routeGuid", out var routeGuidElement))
             {
-                _logger.LogWarning("Shortcut missing route_guid for session {SessionId}", sessionId);
+                _logger.LogWarning("Shortcut missing routeGuid for session {SessionId}", sessionId);
                 return;
             }
 
             if (!Guid.TryParse(routeGuidElement.GetString(), out var routeGuid))
             {
-                _logger.LogWarning("Invalid route_guid format for session {SessionId}", sessionId);
+                _logger.LogWarning("Invalid routeGuid format for session {SessionId}", sessionId);
                 return;
             }
 
-            // Extract target_guid
-            if (!shortcutElement.TryGetProperty("target_guid", out var targetGuidElement) &&
-                !shortcutElement.TryGetProperty("Target_guid", out targetGuidElement))
+            // Extract targetGuid
+            if (!shortcutElement.TryGetProperty("targetGuid", out var targetGuidElement))
             {
-                _logger.LogWarning("Shortcut missing target_guid for session {SessionId}", sessionId);
+                _logger.LogWarning("Shortcut missing targetGuid for session {SessionId}", sessionId);
                 return;
             }
 
             if (!Guid.TryParse(targetGuidElement.GetString(), out var targetGuid))
             {
-                _logger.LogWarning("Invalid target_guid format for session {SessionId}", sessionId);
+                _logger.LogWarning("Invalid targetGuid format for session {SessionId}", sessionId);
                 return;
             }
 
-            // Extract bound_payload (can be base64 encoded or raw JSON string)
+            // Extract boundPayload (can be base64 encoded or raw JSON string)
             byte[] boundPayload = Array.Empty<byte>();
-            if (shortcutElement.TryGetProperty("bound_payload", out var payloadElement) ||
-                shortcutElement.TryGetProperty("Bound_payload", out payloadElement))
+            if (shortcutElement.TryGetProperty("boundPayload", out var payloadElement))
             {
                 var payloadStr = payloadElement.GetString();
                 if (!string.IsNullOrEmpty(payloadStr))
@@ -2294,30 +2284,26 @@ public partial class ConnectService : IConnectService
                     shortcutData.Name = nameElement.GetString() ?? string.Empty;
                 }
 
-                // Parse source_service
-                if (metadataElement.TryGetProperty("source_service", out var sourceElement) ||
-                    metadataElement.TryGetProperty("Source_service", out sourceElement))
+                // Parse sourceService
+                if (metadataElement.TryGetProperty("sourceService", out var sourceElement))
                 {
                     shortcutData.SourceService = sourceElement.GetString() ?? string.Empty;
                 }
 
-                // Parse target_service (required for shortcut-only endpoints)
-                if (metadataElement.TryGetProperty("target_service", out var targetServiceElement) ||
-                    metadataElement.TryGetProperty("Target_service", out targetServiceElement))
+                // Parse targetService (required for shortcut-only endpoints)
+                if (metadataElement.TryGetProperty("targetService", out var targetServiceElement))
                 {
                     shortcutData.TargetService = targetServiceElement.GetString() ?? string.Empty;
                 }
 
-                // Parse target_method (required for routing, e.g., "POST")
-                if (metadataElement.TryGetProperty("target_method", out var targetMethodElement) ||
-                    metadataElement.TryGetProperty("Target_method", out targetMethodElement))
+                // Parse targetMethod (required for routing, e.g., "POST")
+                if (metadataElement.TryGetProperty("targetMethod", out var targetMethodElement))
                 {
                     shortcutData.TargetMethod = targetMethodElement.GetString() ?? string.Empty;
                 }
 
-                // Parse target_endpoint (required for routing, e.g., "/sessions/join")
-                if (metadataElement.TryGetProperty("target_endpoint", out var targetEndpointElement) ||
-                    metadataElement.TryGetProperty("Target_endpoint", out targetEndpointElement))
+                // Parse targetEndpoint (required for routing, e.g., "/sessions/join")
+                if (metadataElement.TryGetProperty("targetEndpoint", out var targetEndpointElement))
                 {
                     shortcutData.TargetEndpoint = targetEndpointElement.GetString() ?? string.Empty;
                 }
@@ -2329,8 +2315,7 @@ public partial class ConnectService : IConnectService
                     shortcutData.Description = descElement.GetString();
                 }
 
-                if (metadataElement.TryGetProperty("display_name", out var displayElement) ||
-                    metadataElement.TryGetProperty("Display_name", out displayElement))
+                if (metadataElement.TryGetProperty("displayName", out var displayElement))
                 {
                     shortcutData.DisplayName = displayElement.GetString();
                 }
@@ -2430,9 +2415,8 @@ public partial class ConnectService : IConnectService
                 reason = reasonElement.GetString();
             }
 
-            // Check for single shortcut revocation by route_guid
-            if (root.TryGetProperty("route_guid", out var routeGuidElement) ||
-                root.TryGetProperty("Route_guid", out routeGuidElement))
+            // Check for single shortcut revocation by routeGuid
+            if (root.TryGetProperty("routeGuid", out var routeGuidElement))
             {
                 var routeGuidStr = routeGuidElement.GetString();
                 if (!string.IsNullOrEmpty(routeGuidStr) && Guid.TryParse(routeGuidStr, out var routeGuid))
@@ -2450,8 +2434,7 @@ public partial class ConnectService : IConnectService
                 }
             }
             // Check for bulk revocation by source service
-            else if (root.TryGetProperty("revoke_by_service", out var serviceElement) ||
-                    root.TryGetProperty("Revoke_by_service", out serviceElement))
+            else if (root.TryGetProperty("revokeByService", out var serviceElement))
             {
                 var sourceService = serviceElement.GetString();
                 if (!string.IsNullOrEmpty(sourceService))
@@ -2463,7 +2446,7 @@ public partial class ConnectService : IConnectService
             }
             else
             {
-                _logger.LogWarning("ShortcutRevokedEvent missing both route_guid and revoke_by_service for session {SessionId}", sessionId);
+                _logger.LogWarning("ShortcutRevokedEvent missing both routeGuid and revokeByService for session {SessionId}", sessionId);
                 return;
             }
 
@@ -2549,7 +2532,7 @@ public partial class ConnectService : IConnectService
 
             var capabilityManifest = new
             {
-                event_name = "connect.capability_manifest",
+                eventName = "connect.capability_manifest",
                 sessionId = sessionId,
                 availableAPIs = availableApis,
                 version = 1,

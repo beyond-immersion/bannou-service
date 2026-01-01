@@ -810,8 +810,8 @@ public class BannouClient : IAsyncDisposable
             using var document = JsonDocument.Parse(payloadJson);
             var root = document.RootElement;
 
-            // All events use event_name property for consistency
-            if (root.TryGetProperty("event_name", out var eventNameElement))
+            // All events use eventName property for consistency
+            if (root.TryGetProperty("eventName", out var eventNameElement))
             {
                 var eventName = eventNameElement.GetString();
 

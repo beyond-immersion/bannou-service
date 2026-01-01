@@ -5,15 +5,10 @@ using BeyondImmersion.BannouService.Logging;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebSockets;
 using Serilog;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 
-[assembly: ApiController]
-[assembly: InternalsVisibleTo("unit-tests")]
-[assembly: InternalsVisibleTo("lib-testing")]
 namespace BeyondImmersion.BannouService;
 
 /// <summary>
