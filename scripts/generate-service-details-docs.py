@@ -13,7 +13,6 @@ Usage:
 
 import sys
 from pathlib import Path
-from datetime import datetime
 from collections import defaultdict
 
 # Use ruamel.yaml to parse YAML files
@@ -134,7 +133,6 @@ def generate_markdown(services: dict) -> str:
     lines = [
         "# Generated Service Details Reference",
         "",
-        f"> **Auto-generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
         "> **Source**: `schemas/*-api.yaml`",
         "> **Do not edit manually** - regenerate with `make generate-docs`",
         "",

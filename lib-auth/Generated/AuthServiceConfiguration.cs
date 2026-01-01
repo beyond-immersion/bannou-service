@@ -24,6 +24,8 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 
+#nullable enable
+
 namespace BeyondImmersion.BannouService.Auth;
 
 /// <summary>

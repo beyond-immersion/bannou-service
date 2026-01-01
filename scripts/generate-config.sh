@@ -146,6 +146,8 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 
+#nullable enable
+
 namespace BeyondImmersion.BannouService.{service_pascal};
 
 /// <summary>

@@ -13,7 +13,6 @@ Usage:
 
 import sys
 from pathlib import Path
-from datetime import datetime
 
 # Use ruamel.yaml to parse YAML files
 try:
@@ -135,7 +134,6 @@ def generate_markdown(stores: list) -> str:
     lines = [
         "# Generated State Store Reference",
         "",
-        f"> **Auto-generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
         "> **Source**: `provisioning/state-stores/*.yaml`",
         "> **Do not edit manually** - regenerate with `make generate-docs`",
         "",

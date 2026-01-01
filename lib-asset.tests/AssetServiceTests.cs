@@ -1,11 +1,16 @@
+using BeyondImmersion.Bannou.Asset.ClientEvents;
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Asset.Bundles;
 using BeyondImmersion.BannouService.Asset.Events;
 using BeyondImmersion.BannouService.Asset.Models;
+using BeyondImmersion.BannouService.Asset.Webhooks;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Storage;
 using StorageModels = BeyondImmersion.BannouService.Storage;
 
@@ -511,7 +516,7 @@ public class AssetServiceTests
             .ReturnsAsync(session);
 
         _mockStorageProvider
-            .Setup(s => s.ObjectExistsAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Setup(s => s.ObjectExistsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
             .ReturnsAsync(false);
 
         // Act
@@ -555,21 +560,21 @@ public class AssetServiceTests
             .ReturnsAsync(session);
 
         _mockStorageProvider
-            .Setup(s => s.ObjectExistsAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Setup(s => s.ObjectExistsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
             .ReturnsAsync(true);
 
         _mockStorageProvider
-            .Setup(s => s.GetObjectMetadataAsync(It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(new StorageModels.ObjectMetadata("abc123etag", 1024, "image/png", DateTime.UtcNow, new Dictionary<string, string>()));
+            .Setup(s => s.GetObjectMetadataAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
+            .ReturnsAsync(new StorageModels.ObjectMetadata("temp/test.png", null, "image/png", 1024, "abc123etag", DateTime.UtcNow, new Dictionary<string, string>()));
 
         _mockStorageProvider
             .Setup(s => s.CopyObjectAsync(
                 It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(new StorageModels.AssetReference("test-bucket", "assets/texture/image-abc123etag.png", null, 1024));
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
+            .ReturnsAsync(new StorageModels.AssetReference("test-bucket", "assets/texture/image-abc123etag.png", null, "abc123etag", 1024, DateTime.UtcNow));
 
         _mockStorageProvider
-            .Setup(s => s.DeleteObjectAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Setup(s => s.DeleteObjectAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
             .Returns(Task.CompletedTask);
 
         _mockMessageBus
@@ -637,24 +642,24 @@ public class AssetServiceTests
             .Setup(s => s.CompleteMultipartUploadAsync(
                 It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<List<StorageModels.StorageCompletedPart>>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(new StorageModels.AssetReference("test-bucket", "temp/model.glb", null, "multipart-etag", 50 * 1024 * 1024, DateTime.UtcNow));
 
         _mockStorageProvider
-            .Setup(s => s.ObjectExistsAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Setup(s => s.ObjectExistsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
             .ReturnsAsync(true);
 
         _mockStorageProvider
-            .Setup(s => s.GetObjectMetadataAsync(It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(new StorageModels.ObjectMetadata("multipart-etag", 50 * 1024 * 1024, "model/gltf-binary", DateTime.UtcNow, new Dictionary<string, string>()));
+            .Setup(s => s.GetObjectMetadataAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
+            .ReturnsAsync(new StorageModels.ObjectMetadata("temp/model.glb", null, "model/gltf-binary", 50 * 1024 * 1024, "multipart-etag", DateTime.UtcNow, new Dictionary<string, string>()));
 
         _mockStorageProvider
             .Setup(s => s.CopyObjectAsync(
                 It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(new StorageModels.AssetReference("test-bucket", "assets/model/model-multipartetag.glb", null, 50 * 1024 * 1024));
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
+            .ReturnsAsync(new StorageModels.AssetReference("test-bucket", "assets/model/model-multipartetag.glb", null, "multipart-etag", 50 * 1024 * 1024, DateTime.UtcNow));
 
         _mockStorageProvider
-            .Setup(s => s.DeleteObjectAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Setup(s => s.DeleteObjectAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
             .Returns(Task.CompletedTask);
 
         _mockMessageBus
@@ -1114,6 +1119,140 @@ public class AssetServiceTests
         Assert.Null(result);
     }
 
+    [Fact]
+    public async Task CreateBundleAsync_WhenBundleAlreadyExists_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CreateBundleRequest
+        {
+            BundleId = "existing-bundle",
+            AssetIds = new List<string> { "asset-1" }
+        };
+
+        var existingBundle = new BundleMetadata
+        {
+            BundleId = "existing-bundle",
+            Version = "1.0.0",
+            AssetIds = new List<string> { "asset-1" },
+            StorageKey = "bundles/current/existing-bundle.bundle",
+            SizeBytes = 1024,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Status = BundleStatus.Ready
+        };
+
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingBundle);
+
+        // Act
+        var (status, result) = await service.CreateBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CreateBundleAsync_WhenAssetNotFound_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CreateBundleRequest
+        {
+            BundleId = "new-bundle",
+            AssetIds = new List<string> { "nonexistent-asset" }
+        };
+
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BundleMetadata?)null);
+
+        _mockAssetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((InternalAssetRecord?)null);
+
+        // Act
+        var (status, result) = await service.CreateBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    // NOTE: Large bundle async job queuing test requires complex mock setup including
+    // bundle converter and orchestrator interactions. Better tested in HTTP integration tests.
+
+    [Fact]
+    public async Task CreateBundleAsync_WithSmallBundle_ShouldReturnReadyWithDownloadUrl()
+    {
+        // Arrange
+        _configuration.StorageBucket = "test-bucket";
+        _configuration.LargeFileThresholdMb = 100; // High threshold
+        var service = CreateService();
+        var request = new CreateBundleRequest
+        {
+            BundleId = "small-bundle",
+            AssetIds = new List<string> { "small-asset" }
+        };
+
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BundleMetadata?)null);
+
+        var smallAsset = new InternalAssetRecord
+        {
+            AssetId = "small-asset",
+            Filename = "icon.png",
+            ContentType = "image/png",
+            ContentHash = "iconhash",
+            Size = 1024,
+            AssetType = AssetType.Texture,
+            Realm = Realm.Arcadia,
+            StorageKey = "assets/texture/small-asset.png",
+            Bucket = "test-bucket",
+            ProcessingStatus = ProcessingStatus.Complete,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAssetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(smallAsset);
+
+        // Mock getting the asset data
+        var assetData = new MemoryStream(new byte[1024]);
+        _mockStorageProvider
+            .Setup(s => s.GetObjectAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
+            .ReturnsAsync(assetData);
+
+        // Mock putting the bundle
+        _mockStorageProvider
+            .Setup(s => s.PutObjectAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<Stream>(), It.IsAny<long>(),
+                It.IsAny<string>(), It.IsAny<IDictionary<string, string>?>()))
+            .ReturnsAsync(new StorageModels.AssetReference("test-bucket", "bundles/current/small-bundle.bundle", null, "bundleetag", 2048, DateTime.UtcNow));
+
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                "asset.bundle.created",
+                It.IsAny<BeyondImmersion.BannouService.Events.BundleCreatedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, result) = await service.CreateBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal("small-bundle", result.BundleId);
+        Assert.Equal(CreateBundleResponseStatus.Ready, result.Status);
+    }
+
     #endregion
 
     #region GetBundleAsync Tests
@@ -1138,6 +1277,179 @@ public class AssetServiceTests
         Assert.Equal(StatusCodes.NotFound, status);
         Assert.Null(result);
     }
+
+    [Fact]
+    public async Task GetBundleAsync_WithEmptyBundleId_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new GetBundleRequest { BundleId = "" };
+
+        // Act
+        var (status, result) = await service.GetBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetBundleAsync_WhenBundleNotReady_ShouldReturnConflict()
+    {
+        // Arrange
+        _configuration.StorageBucket = "test-bucket";
+        var service = CreateService();
+        var request = new GetBundleRequest { BundleId = "pending-bundle" };
+
+        var pendingBundle = new BundleMetadata
+        {
+            BundleId = "pending-bundle",
+            Version = "1.0.0",
+            AssetIds = new List<string> { "asset-1" },
+            StorageKey = "bundles/current/pending-bundle.bundle",
+            SizeBytes = 1024,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Status = BundleStatus.Processing // Not ready
+        };
+
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(pendingBundle);
+
+        // Act
+        var (status, result) = await service.GetBundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(result);
+    }
+
+    // NOTE: Complex GetBundleAsync tests with download URL generation require extensive mock
+    // setup due to the service's internal state management. These scenarios are better tested
+    // via HTTP integration tests where the full service stack is available.
+
+    #endregion
+
+    #region RequestBundleUploadAsync Tests
+
+    [Fact]
+    public async Task RequestBundleUploadAsync_WithEmptyFilename_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new BundleUploadRequest
+        {
+            Filename = "",
+            Size = 1024
+        };
+
+        // Act
+        var (status, result) = await service.RequestBundleUploadAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task RequestBundleUploadAsync_WithInvalidExtension_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new BundleUploadRequest
+        {
+            Filename = "bundle.txt",
+            Size = 1024,
+            ManifestPreview = new BundleManifestPreview { BundleId = "test-bundle" }
+        };
+
+        // Act
+        var (status, result) = await service.RequestBundleUploadAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task RequestBundleUploadAsync_WithSizeExceedingMax_ShouldReturnBadRequest()
+    {
+        // Arrange
+        _configuration.MaxUploadSizeMb = 100;
+        var service = CreateService();
+        var request = new BundleUploadRequest
+        {
+            Filename = "bundle.bannou",
+            Size = 200L * 1024 * 1024, // 200MB exceeds 100MB limit
+            ManifestPreview = new BundleManifestPreview { BundleId = "test-bundle" }
+        };
+
+        // Act
+        var (status, result) = await service.RequestBundleUploadAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task RequestBundleUploadAsync_WithMissingBundleId_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new BundleUploadRequest
+        {
+            Filename = "bundle.bannou",
+            Size = 1024,
+            ManifestPreview = new BundleManifestPreview { BundleId = "" } // Empty bundle ID
+        };
+
+        // Act
+        var (status, result) = await service.RequestBundleUploadAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task RequestBundleUploadAsync_WhenBundleAlreadyExists_ShouldReturnConflict()
+    {
+        // Arrange
+        _configuration.MaxUploadSizeMb = 500;
+        var service = CreateService();
+        var request = new BundleUploadRequest
+        {
+            Filename = "bundle.bannou",
+            Size = 1024,
+            ManifestPreview = new BundleManifestPreview { BundleId = "existing-bundle" }
+        };
+
+        var existingBundle = new BundleMetadata
+        {
+            BundleId = "existing-bundle",
+            Version = "1.0.0",
+            AssetIds = new List<string> { "asset-1" },
+            StorageKey = "bundles/current/existing-bundle.bundle",
+            SizeBytes = 1024,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Status = BundleStatus.Ready
+        };
+
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingBundle);
+
+        // Act
+        var (status, result) = await service.RequestBundleUploadAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(result);
+    }
+
+    // NOTE: Valid bundle upload request test requires additional mock setup for
+    // upload session storage and state management. Better tested in HTTP integration tests.
 
     #endregion
 
@@ -1185,5 +1497,419 @@ public class AssetConfigurationTests
         Assert.Equal(3600, config.TokenTtlSeconds);
         Assert.Equal(500, config.MaxUploadSizeMb);
         Assert.Equal(50, config.MultipartThresholdMb);
+    }
+}
+
+public class MinioWebhookHandlerTests
+{
+    private Mock<IStateStoreFactory> _mockStateStoreFactory = null!;
+    private Mock<IStateStore<UploadSession>> _mockUploadSessionStore = null!;
+    private Mock<IMessageBus> _mockMessageBus = null!;
+    private Mock<ILogger<MinioWebhookHandler>> _mockLogger = null!;
+    private AssetServiceConfiguration _configuration = null!;
+
+    public MinioWebhookHandlerTests()
+    {
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockUploadSessionStore = new Mock<IStateStore<UploadSession>>();
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockLogger = new Mock<ILogger<MinioWebhookHandler>>();
+        _configuration = new AssetServiceConfiguration();
+
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<UploadSession>("asset-statestore"))
+            .Returns(_mockUploadSessionStore.Object);
+    }
+
+    private MinioWebhookHandler CreateHandler()
+    {
+        return new MinioWebhookHandler(
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            _configuration);
+    }
+
+    [Fact]
+    public async Task HandleWebhookAsync_WithEmptyPayload_ShouldReturnFalse()
+    {
+        // Arrange
+        var handler = CreateHandler();
+
+        // Act
+        var result = await handler.HandleWebhookAsync("{}");
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task HandleWebhookAsync_WithInvalidJson_ShouldReturnFalse()
+    {
+        // Arrange
+        var handler = CreateHandler();
+
+        // Act
+        var result = await handler.HandleWebhookAsync("not valid json");
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task HandleWebhookAsync_WithNonCreationEvent_ShouldReturnTrueButNotProcess()
+    {
+        // Arrange
+        var handler = CreateHandler();
+        var payload = System.Text.Json.JsonSerializer.Serialize(new MinioNotification
+        {
+            Records = new List<MinioEventRecord>
+            {
+                new MinioEventRecord
+                {
+                    EventName = "s3:ObjectRemoved:Delete",
+                    S3 = new MinioS3Info
+                    {
+                        Bucket = new MinioBucketInfo { Name = "test-bucket" },
+                        Object = new MinioObjectInfo { Key = "temp/abc123/test.png" }
+                    }
+                }
+            }
+        });
+
+        // Act
+        var result = await handler.HandleWebhookAsync(payload);
+
+        // Assert
+        Assert.True(result);
+        // Verify no state store or message bus calls were made
+        _mockUploadSessionStore.Verify(
+            s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleWebhookAsync_WithNonTempPath_ShouldReturnTrueButNotProcess()
+    {
+        // Arrange
+        var handler = CreateHandler();
+        var payload = System.Text.Json.JsonSerializer.Serialize(new MinioNotification
+        {
+            Records = new List<MinioEventRecord>
+            {
+                new MinioEventRecord
+                {
+                    EventName = "s3:ObjectCreated:Put",
+                    S3 = new MinioS3Info
+                    {
+                        Bucket = new MinioBucketInfo { Name = "test-bucket" },
+                        Object = new MinioObjectInfo { Key = "assets/texture/final.png" } // Not temp path
+                    }
+                }
+            }
+        });
+
+        // Act
+        var result = await handler.HandleWebhookAsync(payload);
+
+        // Assert
+        Assert.True(result);
+        _mockUploadSessionStore.Verify(
+            s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleWebhookAsync_WithMissingUploadSession_ShouldReturnTrueButLogWarning()
+    {
+        // Arrange
+        var handler = CreateHandler();
+        var uploadId = Guid.NewGuid();
+        var payload = System.Text.Json.JsonSerializer.Serialize(new MinioNotification
+        {
+            Records = new List<MinioEventRecord>
+            {
+                new MinioEventRecord
+                {
+                    EventName = "s3:ObjectCreated:Put",
+                    S3 = new MinioS3Info
+                    {
+                        Bucket = new MinioBucketInfo { Name = "test-bucket" },
+                        Object = new MinioObjectInfo
+                        {
+                            Key = $"temp/{uploadId:N}/test.png",
+                            Size = 1024,
+                            ETag = "\"abc123\""
+                        }
+                    }
+                }
+            }
+        });
+
+        _mockUploadSessionStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((UploadSession?)null);
+
+        // Act
+        var result = await handler.HandleWebhookAsync(payload);
+
+        // Assert
+        Assert.True(result);
+        // Verify session lookup was attempted
+        _mockUploadSessionStore.Verify(
+            s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+        // Verify no message was published
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(
+                It.IsAny<string>(),
+                It.IsAny<AssetUploadNotification>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleWebhookAsync_WithValidUpload_ShouldUpdateSessionAndPublishEvent()
+    {
+        // Arrange
+        var handler = CreateHandler();
+        var uploadId = Guid.NewGuid();
+
+        var session = new UploadSession
+        {
+            UploadId = uploadId,
+            Filename = "test.png",
+            Size = 1024,
+            ContentType = "image/png",
+            StorageKey = $"temp/{uploadId:N}/test.png",
+            IsMultipart = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1)
+        };
+
+        var payload = System.Text.Json.JsonSerializer.Serialize(new MinioNotification
+        {
+            Records = new List<MinioEventRecord>
+            {
+                new MinioEventRecord
+                {
+                    EventName = "s3:ObjectCreated:Put",
+                    S3 = new MinioS3Info
+                    {
+                        Bucket = new MinioBucketInfo { Name = "test-bucket" },
+                        Object = new MinioObjectInfo
+                        {
+                            Key = $"temp/{uploadId:N}/test.png",
+                            Size = 1024,
+                            ETag = "\"abc123\""
+                        }
+                    }
+                }
+            }
+        });
+
+        _mockUploadSessionStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(session);
+
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                "asset.upload.completed",
+                It.IsAny<AssetUploadNotification>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await handler.HandleWebhookAsync(payload);
+
+        // Assert
+        Assert.True(result);
+
+        // Verify session was updated and saved
+        _mockUploadSessionStore.Verify(
+            s => s.SaveAsync(
+                It.IsAny<string>(),
+                It.Is<UploadSession>(sess =>
+                    sess.IsComplete == true &&
+                    sess.UploadedEtag == "abc123" &&
+                    sess.UploadedSize == 1024),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify event was published
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(
+                "asset.upload.completed",
+                It.Is<AssetUploadNotification>(n =>
+                    n.UploadId == uploadId &&
+                    n.ETag == "abc123" &&
+                    n.Size == 1024),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+}
+
+public class AssetEventEmitterTests
+{
+    private Mock<IClientEventPublisher> _mockClientEventPublisher = null!;
+    private Mock<ILogger<AssetEventEmitter>> _mockLogger = null!;
+
+    public AssetEventEmitterTests()
+    {
+        _mockClientEventPublisher = new Mock<IClientEventPublisher>();
+        _mockLogger = new Mock<ILogger<AssetEventEmitter>>();
+    }
+
+    private AssetEventEmitter CreateEmitter()
+    {
+        return new AssetEventEmitter(
+            _mockClientEventPublisher.Object,
+            _mockLogger.Object);
+    }
+
+    [Fact]
+    public async Task EmitUploadCompleteAsync_WithSuccess_ShouldPublishCorrectEvent()
+    {
+        // Arrange
+        var emitter = CreateEmitter();
+        var sessionId = "session-123";
+        var uploadId = Guid.NewGuid();
+        var assetId = "asset-456";
+        var contentHash = "hash789";
+        var size = 1024L;
+
+        _mockClientEventPublisher
+            .Setup(p => p.PublishToSessionAsync(
+                It.IsAny<string>(),
+                It.IsAny<BaseClientEvent>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await emitter.EmitUploadCompleteAsync(
+            sessionId,
+            uploadId,
+            success: true,
+            assetId: assetId,
+            contentHash: contentHash,
+            size: size);
+
+        // Assert
+        Assert.True(result);
+        _mockClientEventPublisher.Verify(
+            p => p.PublishToSessionAsync(
+                sessionId,
+                It.IsAny<BaseClientEvent>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task EmitUploadCompleteAsync_WithFailure_ShouldPublishErrorEvent()
+    {
+        // Arrange
+        var emitter = CreateEmitter();
+        var sessionId = "session-123";
+        var uploadId = Guid.NewGuid();
+
+        _mockClientEventPublisher
+            .Setup(p => p.PublishToSessionAsync(
+                It.IsAny<string>(),
+                It.IsAny<BaseClientEvent>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await emitter.EmitUploadCompleteAsync(
+            sessionId,
+            uploadId,
+            success: false,
+            errorCode: UploadErrorCode.SIZE_EXCEEDED,
+            errorMessage: "File exceeds maximum size");
+
+        // Assert
+        Assert.True(result);
+        _mockClientEventPublisher.Verify(
+            p => p.PublishToSessionAsync(
+                sessionId,
+                It.IsAny<BaseClientEvent>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task EmitAssetReadyAsync_ShouldPublishCorrectEvent()
+    {
+        // Arrange
+        var emitter = CreateEmitter();
+        var sessionId = "session-123";
+        var assetId = "asset-456";
+
+        _mockClientEventPublisher
+            .Setup(p => p.PublishToSessionAsync(
+                It.IsAny<string>(),
+                It.IsAny<BaseClientEvent>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await emitter.EmitAssetReadyAsync(
+            sessionId,
+            assetId,
+            versionId: "v1",
+            contentHash: "hash123",
+            size: 2048,
+            contentType: "image/png");
+
+        // Assert
+        Assert.True(result);
+        _mockClientEventPublisher.Verify(
+            p => p.PublishToSessionAsync(
+                sessionId,
+                It.IsAny<BaseClientEvent>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task EmitBundleCreationCompleteAsync_ShouldPublishCorrectEvent()
+    {
+        // Arrange
+        var emitter = CreateEmitter();
+        var sessionId = "session-123";
+        var bundleId = "bundle-456";
+        var downloadUrl = new Uri("https://storage.example.com/bundle.bannou");
+
+        _mockClientEventPublisher
+            .Setup(p => p.PublishToSessionAsync(
+                It.IsAny<string>(),
+                It.IsAny<BaseClientEvent>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await emitter.EmitBundleCreationCompleteAsync(
+            sessionId,
+            bundleId,
+            success: true,
+            downloadUrl: downloadUrl,
+            size: 4096,
+            assetCount: 5);
+
+        // Assert
+        Assert.True(result);
+        _mockClientEventPublisher.Verify(
+            p => p.PublishToSessionAsync(
+                sessionId,
+                It.IsAny<BaseClientEvent>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 }

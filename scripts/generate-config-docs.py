@@ -13,7 +13,6 @@ Usage:
 
 import sys
 from pathlib import Path
-from datetime import datetime
 from collections import defaultdict
 
 # Use ruamel.yaml to parse YAML files
@@ -124,7 +123,6 @@ def generate_markdown(config_by_service: dict) -> str:
     lines = [
         "# Generated Configuration Reference",
         "",
-        f"> **Auto-generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
         "> **Source**: `schemas/*-configuration.yaml`",
         "> **Do not edit manually** - regenerate with `make generate-docs`",
         "",

@@ -14,7 +14,6 @@ Usage:
 import sys
 import re
 from pathlib import Path
-from datetime import datetime
 from collections import defaultdict
 
 # Use ruamel.yaml to parse YAML files
@@ -180,7 +179,6 @@ def generate_markdown(events_by_service: dict) -> str:
     lines = [
         "# Generated Events Reference",
         "",
-        f"> **Auto-generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
         "> **Source**: `schemas/*-events.yaml`",
         "> **Do not edit manually** - regenerate with `make generate-docs`",
         "",
