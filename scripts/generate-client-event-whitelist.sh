@@ -31,19 +31,19 @@ for schema_file in ../schemas/*-client-events.yaml; do
 
     echo -e "  📋 Processing $(basename "$schema_file")..."
 
-    # Extract event_name enum values using grep and sed
-    # Look for patterns like: enum: ["connect.capability_manifest"]
-    # or multi-line enum arrays
+    # Extract event_name default values using grep and sed
+    # Look for patterns like: default: "connect.capability_manifest"
+    # These appear after eventName: property definitions
     while IFS= read -r line; do
-        # Clean up the event name (remove quotes, brackets, whitespace)
-        event_name=$(echo "$line" | sed -E 's/.*enum:\s*\[?"?([^"'\'']+)"?\]?.*/\1/' | tr -d '[]"' | tr -d "'" | xargs)
+        # Clean up the event name (remove quotes, whitespace)
+        event_name=$(echo "$line" | sed -E 's/.*default:\s*"([^"]+)".*/\1/' | xargs)
 
         # Skip empty lines or lines that don't look like event names
         if [[ -n "$event_name" && "$event_name" == *"."* ]]; then
             EVENT_NAMES+=("$event_name")
             echo -e "    ✅ Found: $event_name"
         fi
-    done < <(grep -E 'enum:\s*\["[a-z_]+(\.[a-z_]+)+"\]' "$schema_file" 2>/dev/null || true)
+    done < <(grep -E 'default:\s*"[a-z_]+(\.[a-z_]+)+"' "$schema_file" 2>/dev/null || true)
 done
 
 # Check if we found any events
