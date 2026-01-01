@@ -33559,7 +33559,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Services.TapDestination.ExchangeType">
             <summary>
-            The type of exchange to use for forwarding.
+            The type of exchange to use for forwarding (defaults to Topic for service events).
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Services.TapDestination.CreateExchangeIfNotExists">
@@ -33577,7 +33577,7 @@
         <member name="F:BeyondImmersion.BannouService.Services.TapExchangeType.Fanout">
             <summary>
             Fanout exchange - broadcasts to all bound queues.
-            Use for service events where all listeners should receive copies.
+            Use for broadcast scenarios where all listeners should receive copies.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.TapExchangeType.Direct">
@@ -33588,8 +33588,8 @@
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.TapExchangeType.Topic">
             <summary>
-            Topic exchange - routes by routing key pattern.
-            Use for hierarchical routing patterns (e.g., "character.*.combat").
+            Topic exchange - routes by routing key pattern (default for service events).
+            Use for service events and hierarchical routing patterns (e.g., "character.*.combat").
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.SearchResult`1">

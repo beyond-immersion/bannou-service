@@ -115,9 +115,9 @@ public sealed class TapDestination
     public required string RoutingKey { get; init; }
 
     /// <summary>
-    /// The type of exchange to use for forwarding.
+    /// The type of exchange to use for forwarding (defaults to Topic for service events).
     /// </summary>
-    public TapExchangeType ExchangeType { get; init; } = TapExchangeType.Fanout;
+    public TapExchangeType ExchangeType { get; init; } = TapExchangeType.Topic;
 
     /// <summary>
     /// Whether to create the destination exchange if it doesn't exist.
@@ -134,7 +134,7 @@ public enum TapExchangeType
 {
     /// <summary>
     /// Fanout exchange - broadcasts to all bound queues.
-    /// Use for service events where all listeners should receive copies.
+    /// Use for broadcast scenarios where all listeners should receive copies.
     /// </summary>
     Fanout,
 
@@ -145,8 +145,8 @@ public enum TapExchangeType
     Direct,
 
     /// <summary>
-    /// Topic exchange - routes by routing key pattern.
-    /// Use for hierarchical routing patterns (e.g., "character.*.combat").
+    /// Topic exchange - routes by routing key pattern (default for service events).
+    /// Use for service events and hierarchical routing patterns (e.g., "character.*.combat").
     /// </summary>
     Topic
 }

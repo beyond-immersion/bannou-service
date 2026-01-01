@@ -81,15 +81,15 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
             // Create a dedicated channel for this tap
             var channel = await _connectionManager.CreateConsumerChannelAsync(cancellationToken);
 
-            // Ensure source exchange exists (fanout for service events)
-            await EnsureExchangeAsync(channel, effectiveSourceExchange, ExchangeType.Fanout, cancellationToken);
+            // Ensure source exchange exists (topic for service events - routes by routing key)
+            await EnsureExchangeAsync(channel, effectiveSourceExchange, ExchangeType.Topic, cancellationToken);
 
             // Ensure destination exchange exists
             var destExchangeType = destination.ExchangeType switch
             {
                 TapExchangeType.Direct => ExchangeType.Direct,
-                TapExchangeType.Topic => ExchangeType.Topic,
-                _ => ExchangeType.Fanout
+                TapExchangeType.Fanout => ExchangeType.Fanout,
+                _ => ExchangeType.Topic
             };
 
             if (destination.CreateExchangeIfNotExists)
@@ -107,7 +107,7 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
                 cancellationToken: cancellationToken);
 
             // Bind tap queue to source exchange
-            // For fanout exchanges, routing key is ignored but we set it for logging
+            // For topic exchanges, routing key determines which messages are received
             await channel.QueueBindAsync(
                 queue: tapQueueName,
                 exchange: effectiveSourceExchange,
