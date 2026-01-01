@@ -79,6 +79,8 @@ for EVENTS_SCHEMA in ../schemas/*-events.yaml; do
         sed -i 's/public string EventName { get; set; }/public override string EventName { get; set; }/g' "$OUTPUT_FILE"
         # Post-process: Wrap enums with CS1591 pragma suppressions (enum members cannot have XML docs)
         postprocess_enum_suppressions "$OUTPUT_FILE"
+        # Post-process: Add XML docs to AdditionalProperties
+        postprocess_additional_properties_docs "$OUTPUT_FILE"
         echo -e "${GREEN}  Generated: $OUTPUT_FILE${NC}"
         GENERATED_COUNT=$((GENERATED_COUNT + 1))
     else

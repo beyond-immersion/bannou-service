@@ -52,6 +52,8 @@ if [ -f "$COMMON_CLIENT_EVENTS_SCHEMA" ]; then
         sed -i 's/public string EventName { get; set; }/public override string EventName { get; set; }/g' "$TARGET_DIR/CommonClientEventsModels.cs"
         # Post-process: Wrap enums with CS1591 pragma suppressions (enum members cannot have XML docs)
         postprocess_enum_suppressions "$TARGET_DIR/CommonClientEventsModels.cs"
+        # Post-process: Add XML docs to AdditionalProperties
+        postprocess_additional_properties_docs "$TARGET_DIR/CommonClientEventsModels.cs"
         echo -e "${GREEN}✅ Common client events generated${NC}"
         echo -e "   📁 Output: $TARGET_DIR/CommonClientEventsModels.cs"
         GENERATED_EVENTS+=("BaseClientEvent")
@@ -132,6 +134,8 @@ for schema_file in "${CLIENT_EVENT_SCHEMAS[@]}"; do
         sed -i 's/public string EventName { get; set; }/public override string EventName { get; set; }/g' "$output_file"
         # Post-process: Wrap enums with CS1591 pragma suppressions (enum members cannot have XML docs)
         postprocess_enum_suppressions "$output_file"
+        # Post-process: Add XML docs to AdditionalProperties
+        postprocess_additional_properties_docs "$output_file"
 
         echo -e "${GREEN}  ✅ $pascal_case client events generated${NC}"
         echo -e "     📁 Output: $TARGET_DIR/${pascal_case}ClientEventsModels.cs"

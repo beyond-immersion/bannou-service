@@ -166,6 +166,9 @@ public partial class UploadRequest
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -214,6 +217,9 @@ public partial class UploadResponse
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -246,6 +252,9 @@ public partial class CompleteUploadRequest
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -278,6 +287,9 @@ public partial class CompletedPart
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -320,6 +332,9 @@ public partial class MultipartConfig
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -364,6 +379,9 @@ public partial class PartUploadInfo
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -402,6 +420,9 @@ public partial class AssetMetadataInput
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -495,6 +516,9 @@ public partial class AssetMetadata
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -527,6 +551,9 @@ public partial class GetAssetRequest
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -593,6 +620,9 @@ public partial class AssetWithDownloadUrl
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -631,6 +661,9 @@ public partial class ListVersionsRequest
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -679,6 +712,9 @@ public partial class AssetVersionList
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -721,6 +757,9 @@ public partial class AssetVersion
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -781,6 +820,9 @@ public partial class AssetSearchRequest
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -823,6 +865,9 @@ public partial class AssetSearchResult
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -876,6 +921,9 @@ public partial class CreateBundleRequest
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -913,6 +961,9 @@ public partial class CreateBundleResponse
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -946,6 +997,9 @@ public partial class GetBundleRequest
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -1013,6 +1067,9 @@ public partial class BundleWithDownloadUrl
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -1051,6 +1108,9 @@ public partial class BundleUploadRequest
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -1087,6 +1147,9 @@ public partial class BundleManifestPreview
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {

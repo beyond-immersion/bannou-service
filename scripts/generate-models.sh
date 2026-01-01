@@ -70,6 +70,10 @@ if [ $? -eq 0 ] && [ -f "$OUTPUT_FILE" ]; then
     echo -e "${YELLOW}🔄 Post-processing: Adding enum CS1591 suppressions...${NC}"
     postprocess_enum_suppressions "$OUTPUT_FILE"
 
+    # Post-process: Add XML docs to AdditionalProperties
+    echo -e "${YELLOW}🔄 Post-processing: Adding AdditionalProperties XML docs...${NC}"
+    postprocess_additional_properties_docs "$OUTPUT_FILE"
+
     FILE_SIZE=$(wc -l < "$OUTPUT_FILE" 2>/dev/null || echo "0")
     echo -e "${GREEN}✅ Generated models ($FILE_SIZE lines)${NC}"
 else
@@ -117,6 +121,10 @@ if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
         # Post-process: Wrap enums with CS1591 pragma suppressions (enum members cannot have XML docs)
         echo -e "${YELLOW}🔄 Post-processing lifecycle events: Adding enum CS1591 suppressions...${NC}"
         postprocess_enum_suppressions "$LIFECYCLE_OUTPUT_FILE"
+
+        # Post-process: Add XML docs to AdditionalProperties
+        echo -e "${YELLOW}🔄 Post-processing lifecycle events: Adding AdditionalProperties XML docs...${NC}"
+        postprocess_additional_properties_docs "$LIFECYCLE_OUTPUT_FILE"
 
         LIFECYCLE_FILE_SIZE=$(wc -l < "$LIFECYCLE_OUTPUT_FILE" 2>/dev/null || echo "0")
         echo -e "${GREEN}✅ Generated lifecycle event models ($LIFECYCLE_FILE_SIZE lines)${NC}"

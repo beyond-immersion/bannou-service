@@ -45,6 +45,9 @@ public partial class PublishEventRequest
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -113,6 +116,9 @@ public partial class PublishOptions
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -143,6 +149,9 @@ public partial class PublishEventResponse
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -183,6 +192,9 @@ public partial class CreateSubscriptionRequest
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -237,6 +249,9 @@ public partial class SubscriptionOptions
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -267,6 +282,9 @@ public partial class CreateSubscriptionResponse
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -293,6 +311,9 @@ public partial class RemoveSubscriptionRequest
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -317,6 +338,9 @@ public partial class RemoveSubscriptionResponse
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -347,6 +371,9 @@ public partial class ListTopicsRequest
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -371,6 +398,9 @@ public partial class ListTopicsResponse
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -407,6 +437,9 @@ public partial class TopicInfo
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {

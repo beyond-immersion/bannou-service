@@ -124,6 +124,9 @@ public partial class ServiceEndpoint
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -169,6 +172,9 @@ public partial class PermissionRequirement
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -295,6 +301,9 @@ public partial class ServiceStatus
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
@@ -337,6 +346,9 @@ public partial class InstanceCapacity
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
     {
