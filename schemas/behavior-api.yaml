@@ -54,7 +54,7 @@ paths:
                   energy_level: "${npc.stats.energy}"
                   skill_level: "${npc.skills.blacksmithing}"
                   shop_reputation: "${npc.reputation.local}"
-                
+
                 services:
                   - name: "crafting_service"
                     required: true
@@ -793,8 +793,10 @@ components:
           example: "blacksmith-behaviors-v1"
         characterContext:
           $ref: '#/components/schemas/CharacterContext'
+          description: Character context for context variable resolution during compilation
         compilationOptions:
           $ref: '#/components/schemas/CompilationOptions'
+          description: Options controlling the compilation process
 
     BehaviorStackRequest:
       type: object
@@ -808,8 +810,10 @@ components:
           description: Array of behavior sets to compile together
         characterContext:
           $ref: '#/components/schemas/CharacterContext'
+          description: Character context for context variable resolution during compilation
         compilationOptions:
           $ref: '#/components/schemas/CompilationOptions'
+          description: Options controlling the compilation process
 
     ValidateAbmlRequest:
       type: object
@@ -836,6 +840,7 @@ components:
           example: "${npc.stats.energy > 0.5 && world.time.hour < 18}"
         characterContext:
           $ref: '#/components/schemas/CharacterContext'
+          description: Character context providing values for variable resolution
 
     # Response Models
     CompileBehaviorResponse:
@@ -857,9 +862,10 @@ components:
           example: "blacksmith_daily_routine"
         compiledBehavior:
           $ref: '#/components/schemas/CompiledBehavior'
+          description: The compiled behavior data including behavior tree and metadata
         compilationTimeMs:
           type: integer
-          description: Time taken to compile the behavior
+          description: Time taken to compile the behavior in milliseconds
         assetId:
           type: string
           description: Asset service ID where the compiled bytecode is stored
@@ -908,6 +914,7 @@ components:
           description: Unique identifier for the cached behavior
         compiledBehavior:
           $ref: '#/components/schemas/CompiledBehavior'
+          description: The compiled behavior data retrieved from cache
         cacheTimestamp:
           type: string
           format: date-time
@@ -965,6 +972,7 @@ components:
 
     CharacterContext:
       type: object
+      description: Context information about a character for behavior resolution
       properties:
         npcId:
           type: string
@@ -997,17 +1005,27 @@ components:
             trading: 42
         location:
           type: object
+          description: Character location information
           properties:
             current:
               type: string
+              description: Current location name or identifier
             region:
               type: string
+              description: Region or zone the character is in
             coordinates:
               type: object
+              description: 3D coordinates of the character position
               properties:
-                x: {type: number}
-                y: {type: number}
-                z: {type: number}
+                x:
+                  type: number
+                  description: X coordinate position
+                y:
+                  type: number
+                  description: Y coordinate position
+                z:
+                  type: number
+                  description: Z coordinate position
         relationships:
           type: object
           additionalProperties:
@@ -1045,8 +1063,10 @@ components:
       properties:
         behaviorTree:
           $ref: '#/components/schemas/BehaviorTreeData'
+          description: Compiled behavior tree data with bytecode or download reference
         contextSchema:
           $ref: '#/components/schemas/ContextSchemaData'
+          description: Schema defining required context variables for execution
         serviceDependencies:
           type: array
           items:
@@ -1059,6 +1079,7 @@ components:
           description: GOAP goals extracted from the behavior
         executionMetadata:
           type: object
+          description: Metadata about behavior execution requirements
           properties:
             estimatedDuration:
               type: integer
@@ -1067,10 +1088,12 @@ components:
               type: object
               additionalProperties:
                 type: number
+              description: Resource requirements for behavior execution
             interruptConditions:
               type: array
               items:
                 type: string
+              description: Conditions that can interrupt behavior execution
 
     GoapGoal:
       type: object
@@ -1117,6 +1140,7 @@ components:
           description: Unique identifier for the agent requesting the plan
         goal:
           $ref: '#/components/schemas/GoapGoal'
+          description: The goal to achieve through planning
         worldState:
           type: object
           additionalProperties: true
@@ -1130,6 +1154,7 @@ components:
           description: ID of compiled behavior containing GOAP actions
         options:
           $ref: '#/components/schemas/GoapPlanningOptions'
+          description: Options controlling the planning process
 
     GoapPlanResponse:
       type: object
@@ -1141,6 +1166,7 @@ components:
           description: Whether planning was successful
         plan:
           $ref: '#/components/schemas/GoapPlanResult'
+          description: The generated plan if successful
         planningTimeMs:
           type: integer
           description: Time spent planning in milliseconds
@@ -1199,6 +1225,7 @@ components:
       properties:
         plan:
           $ref: '#/components/schemas/GoapPlanResult'
+          description: The plan to validate
         currentActionIndex:
           type: integer
           description: Index of the action currently being executed
@@ -1363,4 +1390,3 @@ tags:
   description: Context variable resolution and management
 - name: GOAP
   description: Goal-Oriented Action Planning for NPC behavior
-

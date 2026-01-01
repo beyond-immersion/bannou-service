@@ -1773,6 +1773,7 @@ components:
           example: "configuration_change"
         priority:
           $ref: '#/components/schemas/RestartPriority'
+          description: Urgency level for the restart
         shutdownGracePeriod:
           type: integer
           default: 30
@@ -1903,14 +1904,18 @@ components:
           properties:
             maxConnections:
               type: integer
+              description: Maximum number of connections this service can handle
             currentConnections:
               type: integer
+              description: Current number of active connections
             cpuUsage:
               type: number
               format: float
+              description: CPU usage as a percentage (0.0 to 1.0)
             memoryUsage:
               type: number
               format: float
+              description: Memory usage as a percentage (0.0 to 1.0)
         metadata:
           type: object
           additionalProperties: true
@@ -1918,6 +1923,7 @@ components:
 
     TestExecutionRequest:
       type: object
+      description: Request to execute a specific type of test
       required:
       - testType
       properties:
@@ -2089,6 +2095,7 @@ components:
       properties:
         type:
           $ref: '#/components/schemas/BackendType'
+          description: Backend type identifier
         available:
           type: boolean
           description: Whether this backend is currently available
@@ -2135,6 +2142,7 @@ components:
           description: All detected backends with status
         recommended:
           $ref: '#/components/schemas/BackendType'
+          description: Highest priority available backend
         activeBackend:
           $ref: '#/components/schemas/BackendType'
           description: Currently active backend (if environment deployed)
@@ -2158,6 +2166,7 @@ components:
           description: Preset category
         topology:
           $ref: '#/components/schemas/ServiceTopology'
+          description: Service topology defined by this preset
         environment:
           type: object
           additionalProperties:
@@ -2226,6 +2235,7 @@ components:
           description: Number of replicas for this node
         resources:
           $ref: '#/components/schemas/ResourceLimits'
+          description: Resource limits and requests for this node
         environment:
           type: object
           additionalProperties:
@@ -2241,31 +2251,40 @@ components:
 
     InfrastructureConfig:
       type: object
+      description: Configuration for infrastructure services
       properties:
         redis:
           $ref: '#/components/schemas/InfraServiceConfig'
+          description: Redis configuration
         rabbitmq:
           $ref: '#/components/schemas/InfraServiceConfig'
+          description: RabbitMQ configuration
         mysql:
           $ref: '#/components/schemas/InfraServiceConfig'
+          description: MySQL configuration
         ingress:
           $ref: '#/components/schemas/IngressConfig'
+          description: Ingress/reverse proxy configuration
 
     InfraServiceConfig:
       type: object
+      description: Configuration for an infrastructure service
       properties:
         enabled:
           type: boolean
           default: true
+          description: Whether this infrastructure service is enabled
         image:
           type: string
           description: Docker image override
         resources:
           $ref: '#/components/schemas/ResourceLimits'
+          description: Resource limits and requests
         environment:
           type: object
           additionalProperties:
             type: string
+          description: Environment variables for this service
         volumes:
           type: array
           items:
@@ -2274,29 +2293,37 @@ components:
 
     IngressConfig:
       type: object
+      description: Ingress/reverse proxy configuration
       properties:
         enabled:
           type: boolean
           default: true
+          description: Whether ingress is enabled
         type:
           type: string
           enum: [openresty, nginx, traefik, none]
           default: openresty
+          description: Type of ingress/reverse proxy to use
         ports:
           type: object
+          description: Port configuration for ingress
           properties:
             http:
               type: integer
               default: 80
+              description: HTTP port number
             https:
               type: integer
               default: 443
+              description: HTTPS port number
         ssl:
           type: boolean
           default: false
+          description: Whether SSL/TLS is enabled
 
     ResourceLimits:
       type: object
+      description: Resource limits and requests for container scheduling
       properties:
         cpuLimit:
           type: string
@@ -2335,6 +2362,7 @@ components:
         mode:
           $ref: '#/components/schemas/DeploymentMode'
           default: graceful
+          description: How the deployment should be performed
         environment:
           type: object
           additionalProperties:
@@ -2365,6 +2393,7 @@ components:
           description: Unique deployment identifier for tracking
         backend:
           $ref: '#/components/schemas/BackendType'
+          description: Container orchestration backend used for deployment
         preset:
           type: string
           description: Preset used (if applicable)
@@ -2401,6 +2430,7 @@ components:
         status:
           type: string
           enum: [starting, running, healthy, unhealthy, stopped]
+          description: Current status of the deployed service
         node:
           type: string
           description: Node/container hosting this service
@@ -2428,11 +2458,13 @@ components:
         timestamp:
           type: string
           format: date-time
+          description: When this status was generated
         deploymentId:
           type: string
           description: Current deployment identifier
         backend:
           $ref: '#/components/schemas/BackendType'
+          description: Container orchestration backend in use
         preset:
           type: string
           description: Active preset name
@@ -2501,6 +2533,7 @@ components:
         mode:
           $ref: '#/components/schemas/TeardownMode'
           default: graceful
+          description: How the teardown should be performed
         timeout:
           type: integer
           default: 60
@@ -2530,8 +2563,10 @@ components:
       properties:
         success:
           type: boolean
+          description: Whether teardown completed successfully
         duration:
           type: string
+          description: Time taken to complete teardown
         stoppedContainers:
           type: array
           items:
@@ -2559,6 +2594,7 @@ components:
           description: Non-fatal errors during teardown
         message:
           type: string
+          description: Human-readable teardown summary
 
     CleanTarget:
       type: string
@@ -2595,23 +2631,30 @@ components:
       properties:
         success:
           type: boolean
+          description: Whether cleanup completed successfully
         reclaimedSpaceMb:
           type: integer
           description: Disk space reclaimed (MB)
         removedContainers:
           type: integer
+          description: Number of containers removed
         removedNetworks:
           type: integer
+          description: Number of networks removed
         removedVolumes:
           type: integer
+          description: Number of volumes removed
         removedImages:
           type: integer
+          description: Number of images removed
         errors:
           type: array
           items:
             type: string
+          description: Non-fatal errors during cleanup
         message:
           type: string
+          description: Human-readable cleanup summary
 
     LogsResponse:
       type: object
@@ -2628,6 +2671,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LogEntry'
+          description: Log entries matching the query
         truncated:
           type: boolean
           description: Whether output was truncated
@@ -2641,11 +2685,14 @@ components:
         timestamp:
           type: string
           format: date-time
+          description: When this log entry was recorded
         stream:
           type: string
           enum: [stdout, stderr]
+          description: Output stream type (stdout or stderr)
         message:
           type: string
+          description: Log message content
 
     TopologyUpdateRequest:
       type: object
@@ -2660,6 +2707,7 @@ components:
         mode:
           $ref: '#/components/schemas/DeploymentMode'
           default: graceful
+          description: How the topology update should be performed
         timeout:
           type: integer
           default: 120
@@ -2702,21 +2750,26 @@ components:
       properties:
         success:
           type: boolean
+          description: Whether all topology changes were applied successfully
         appliedChanges:
           type: array
           items:
             $ref: '#/components/schemas/AppliedChange'
+          description: Details of each applied change
         topology:
           $ref: '#/components/schemas/ServiceTopology'
           description: New topology after changes
         duration:
           type: string
+          description: Time taken to apply topology changes
         warnings:
           type: array
           items:
             type: string
+          description: Non-fatal warnings during topology update
         message:
           type: string
+          description: Human-readable update summary
 
     AppliedChange:
       type: object
@@ -2726,11 +2779,13 @@ components:
       properties:
         action:
           type: string
+          description: Type of topology change that was applied
         target:
           type: string
           description: Node or service affected
         success:
           type: boolean
+          description: Whether this specific change was applied successfully
         error:
           type: string
           description: Error message if failed
@@ -2769,18 +2824,24 @@ components:
       properties:
         eventId:
           type: string
+          description: Unique identifier for this event
         timestamp:
           type: string
           format: date-time
+          description: When this event occurred
         action:
           type: string
           enum: [started, completed, failed, topology-changed]
+          description: Type of deployment action that triggered this event
         deploymentId:
           type: string
+          description: Unique identifier for the deployment
         preset:
           type: string
+          description: Preset name used for deployment (if applicable)
         backend:
           $ref: '#/components/schemas/BackendType'
+          description: Container orchestration backend used
         changes:
           type: array
           items:
@@ -2803,16 +2864,21 @@ components:
       properties:
         eventId:
           type: string
+          description: Unique identifier for this event
         serviceName:
           type: string
+          description: Name of the service that was restarted
         reason:
           type: string
+          description: Reason for the restart
         forced:
           type: boolean
+          description: Whether restart was forced without waiting for graceful shutdown
         newEnvironment:
           type: object
           additionalProperties:
             type: string
+          description: Environment variables updated during restart
 
     ConfigurationChangedEvent:
       type: object
@@ -2833,6 +2899,7 @@ components:
         timestamp:
           type: string
           format: date-time
+          description: When this configuration change occurred
         configVersion:
           type: integer
           description: Monotonically increasing version number
@@ -2863,6 +2930,7 @@ components:
 
     ContainerRestartRequest:
       type: object
+      description: Request to restart a container
       required:
       - reason
       properties:
@@ -2873,6 +2941,7 @@ components:
         priority:
           $ref: '#/components/schemas/RestartPriority'
           default: graceful
+          description: Urgency level for the restart
         shutdownGracePeriod:
           type: integer
           default: 30
@@ -2918,9 +2987,11 @@ components:
         status:
           type: string
           enum: [running, starting, stopping, stopped, unhealthy]
+          description: Current container status
         timestamp:
           type: string
           format: date-time
+          description: When this status was captured
         instances:
           type: integer
           description: Number of running instances
@@ -2943,14 +3014,18 @@ components:
           description: Recent restart history
         healthChecks:
           type: object
+          description: Health check information for the container
           properties:
             lastCheck:
               type: string
               format: date-time
+              description: When the last health check was performed
             status:
               type: string
+              description: Result of the last health check
             consecutiveFailures:
               type: integer
+              description: Number of consecutive health check failures
         labels:
           type: object
           additionalProperties:
@@ -2966,15 +3041,19 @@ components:
         timestamp:
           type: string
           format: date-time
+          description: When the restart occurred
         reason:
           type: string
+          description: Why the restart was triggered
         priority:
           $ref: '#/components/schemas/RestartPriority'
+          description: Priority level used for the restart
         duration:
           type: string
           description: Time taken to restart
         success:
           type: boolean
+          description: Whether the restart completed successfully
         error:
           type: string
           description: Error message if restart failed
@@ -3002,6 +3081,7 @@ components:
       properties:
         success:
           type: boolean
+          description: Whether rollback completed successfully
         previousVersion:
           type: integer
           description: Config version before rollback
@@ -3015,6 +3095,7 @@ components:
           description: Keys that were reverted
         message:
           type: string
+          description: Human-readable rollback summary
 
     ConfigVersionResponse:
       type: object
@@ -3192,9 +3273,11 @@ components:
           description: Utilization threshold for auto-scale-up
         recentMetrics:
           $ref: '#/components/schemas/PoolMetrics'
+          description: Recent processing statistics
 
     PoolMetrics:
       type: object
+      description: Processing pool performance metrics
       properties:
         jobsCompleted1h:
           type: integer

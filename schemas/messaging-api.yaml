@@ -96,12 +96,12 @@ paths:
         $ref\": \"#/$defs/SubscriptionOptions\"\n        }\n      }\n    },\n    \"SubscriptionOptions\": {\n      \"type\"\
         : \"object\",\n      \"description\": \"Options for subscribing to RabbitMQ topics\",\n      \"properties\": {\n \
         \       \"durable\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\"\
-        : \"Whether the queue should survive broker restarts\"\n        },\n        \"exclusive\": {\n          \"type\":
-        \"boolean\",\n          \"default\": false,\n          \"description\": \"Whether only this connection can consume
+        : \"Whether the queue should survive broker restarts\"\n        },\n        \"exclusive\": {\n          \"type\":\
+        \"boolean\",\n          \"default\": false,\n          \"description\": \"Whether only this connection can consume\
         from the queue\"\n        },\n        \"autoAck\": {\n          \"type\": \"boolean\",\n          \"default\": false,\n\
         \          \"description\": \"Whether messages should be auto-acknowledged\"\n        },\n        \"prefetchCount\"\
-        : {\n          \"type\": \"integer\",\n          \"default\": 10,\n          \"description\": \"Number of messages
-        to prefetch\"\n        },\n        \"useDeadLetter\": {\n          \"type\": \"boolean\",\n          \"default\":
+        : {\n          \"type\": \"integer\",\n          \"default\": 10,\n          \"description\": \"Number of messages\
+        to prefetch\"\n        },\n        \"useDeadLetter\": {\n          \"type\": \"boolean\",\n          \"default\":\
         true,\n          \"description\": \"Whether to use dead letter exchange for failed messages\"\n        },\n      \
         \  \"consumerGroup\": {\n          \"type\": \"string\",\n          \"nullable\": true,\n          \"description\"\
         : \"Name of the consumer group for load balancing\"\n        }\n      }\n    }\n  }\n}"
@@ -164,7 +164,7 @@ paths:
                 $ref: '#/components/schemas/ListTopicsResponse'
 
       x-request-schema-json: "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"$ref\": \"#/$defs/ListTopicsRequest\"\
-        ,\n  \"$defs\": {\n    \"ListTopicsRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Optional filters
+        ,\n  \"$defs\": {\n    \"ListTopicsRequest\": {\n      \"type\": \"object\",\n      \"description\": \"Optional filters\
         for topic listing (empty object returns all)\",\n      \"properties\": {\n        \"exchangeFilter\": {\n        \
         \  \"type\": \"string\",\n          \"description\": \"Filter topics by exchange name prefix\"\n        },\n     \
         \   \"includeEmpty\": {\n          \"type\": \"boolean\",\n          \"default\": true,\n          \"description\"\
@@ -244,9 +244,11 @@ components:
       properties:
         success:
           type: boolean
+          description: Indicates whether the event was published successfully
         messageId:
           type: string
           format: uuid
+          description: Unique identifier assigned to the published message
 
     CreateSubscriptionRequest:
       type: object
@@ -256,6 +258,7 @@ components:
       properties:
         topic:
           type: string
+          description: Topic pattern to subscribe to for receiving events
         callbackUrl:
           type: string
           format: uri
@@ -298,8 +301,10 @@ components:
         subscriptionId:
           type: string
           format: uuid
+          description: Unique identifier for the created subscription
         queueName:
           type: string
+          description: Name of the RabbitMQ queue created for this subscription
 
     RemoveSubscriptionRequest:
       type: object
@@ -309,12 +314,14 @@ components:
         subscriptionId:
           type: string
           format: uuid
+          description: Unique identifier of the subscription to remove
 
     RemoveSubscriptionResponse:
       type: object
       properties:
         success:
           type: boolean
+          description: Indicates whether the subscription was removed successfully
 
     ListTopicsRequest:
       type: object
@@ -333,6 +340,7 @@ components:
       properties:
         topics:
           type: array
+          description: List of topics matching the filter criteria
           items:
             $ref: '#/components/schemas/TopicInfo'
 
@@ -341,7 +349,10 @@ components:
       properties:
         name:
           type: string
+          description: Name of the topic/exchange
         messageCount:
           type: integer
+          description: Number of messages currently in the topic queue
         consumerCount:
           type: integer
+          description: Number of active consumers subscribed to this topic

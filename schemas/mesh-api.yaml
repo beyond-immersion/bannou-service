@@ -609,10 +609,12 @@ components:
       properties:
         appId:
           type: string
+          description: The app-id that was queried
         endpoints:
           type: array
           items:
             $ref: '#/components/schemas/MeshEndpoint'
+          description: List of endpoints for the requested app-id
         healthyCount:
           type: integer
           description: Number of healthy endpoints
@@ -626,6 +628,7 @@ components:
       properties:
         statusFilter:
           $ref: '#/components/schemas/EndpointStatus'
+          description: Filter endpoints by health status
         appIdFilter:
           type: string
           description: Optional filter by app-id prefix
@@ -641,8 +644,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MeshEndpoint'
+          description: List of all registered endpoints
         summary:
           $ref: '#/components/schemas/EndpointSummary'
+          description: Summary statistics for the endpoints
 
     EndpointSummary:
       type: object
@@ -650,14 +655,19 @@ components:
       properties:
         totalEndpoints:
           type: integer
+          description: Total number of registered endpoints
         healthyCount:
           type: integer
+          description: Number of endpoints with Healthy status
         degradedCount:
           type: integer
+          description: Number of endpoints with Degraded status
         unavailableCount:
           type: integer
+          description: Number of endpoints with Unavailable status
         uniqueAppIds:
           type: integer
+          description: Number of unique app-ids across all endpoints
 
     # =========================================================================
     # Registration
@@ -709,8 +719,10 @@ components:
       properties:
         success:
           type: boolean
+          description: Whether the registration was successful
         endpoint:
           $ref: '#/components/schemas/MeshEndpoint'
+          description: The registered endpoint details
         ttlSeconds:
           type: integer
           description: TTL for the registration (requires heartbeat refresh)
@@ -735,8 +747,10 @@ components:
         instanceId:
           type: string
           format: uuid
+          description: Unique identifier for the instance sending the heartbeat
         status:
           $ref: '#/components/schemas/EndpointStatus'
+          description: Current health status of the endpoint
         loadPercent:
           type: number
           format: float
@@ -758,6 +772,7 @@ components:
       properties:
         success:
           type: boolean
+          description: Whether the heartbeat was processed successfully
         nextHeartbeatSeconds:
           type: integer
           description: Recommended seconds until next heartbeat
@@ -782,6 +797,7 @@ components:
           description: Optional service name for affinity routing
         algorithm:
           $ref: '#/components/schemas/LoadBalancerAlgorithm'
+          description: Load balancing algorithm to use for endpoint selection
 
     GetRouteResponse:
       type: object
@@ -791,6 +807,7 @@ components:
       properties:
         endpoint:
           $ref: '#/components/schemas/MeshEndpoint'
+          description: The selected optimal endpoint for routing
         alternates:
           type: array
           items:
@@ -847,14 +864,17 @@ components:
       properties:
         status:
           $ref: '#/components/schemas/EndpointStatus'
+          description: Overall health status of the mesh
         summary:
           $ref: '#/components/schemas/EndpointSummary'
+          description: Summary statistics for all endpoints
         redisConnected:
           type: boolean
           description: Whether Redis connection is healthy
         lastUpdateTime:
           type: string
           format: date-time
+          description: Timestamp of the last health status update
         uptime:
           type: string
           description: Mesh service uptime (e.g., "2d 5h 30m")

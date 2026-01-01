@@ -1203,11 +1203,13 @@ components:
           type: integer
           minimum: 1
           default: 1
+          description: Page number for pagination (1-indexed)
         pageSize:
           type: integer
           minimum: 1
           maximum: 100
           default: 20
+          description: Number of results per page
 
     ListLocationsByRealmRequest:
       type: object
@@ -1226,15 +1228,18 @@ components:
         includeDeprecated:
           type: boolean
           default: false
+          description: Whether to include deprecated locations in the response
         page:
           type: integer
           minimum: 1
           default: 1
+          description: Page number for pagination (1-indexed)
         pageSize:
           type: integer
           minimum: 1
           maximum: 100
           default: 20
+          description: Number of results per page
 
     ListLocationsByParentRequest:
       type: object
@@ -1253,15 +1258,18 @@ components:
         includeDeprecated:
           type: boolean
           default: false
+          description: Whether to include deprecated locations in the response
         page:
           type: integer
           minimum: 1
           default: 1
+          description: Page number for pagination (1-indexed)
         pageSize:
           type: integer
           minimum: 1
           maximum: 100
           default: 20
+          description: Number of results per page
 
     ListRootLocationsRequest:
       type: object
@@ -1280,15 +1288,18 @@ components:
         includeDeprecated:
           type: boolean
           default: false
+          description: Whether to include deprecated locations in the response
         page:
           type: integer
           minimum: 1
           default: 1
+          description: Page number for pagination (1-indexed)
         pageSize:
           type: integer
           minimum: 1
           maximum: 100
           default: 20
+          description: Number of results per page
 
     GetLocationAncestorsRequest:
       type: object
@@ -1323,15 +1334,18 @@ components:
         includeDeprecated:
           type: boolean
           default: false
+          description: Whether to include deprecated locations in the response
         page:
           type: integer
           minimum: 1
           default: 1
+          description: Page number for pagination (1-indexed)
         pageSize:
           type: integer
           minimum: 1
           maximum: 100
           default: 20
+          description: Number of results per page
 
     CreateLocationRequest:
       type: object
@@ -1363,6 +1377,7 @@ components:
           description: Realm this location belongs to
         locationType:
           $ref: '#/components/schemas/LocationType'
+          description: Type classification for this location
         parentLocationId:
           type: string
           format: uuid
@@ -1536,6 +1551,7 @@ components:
           description: Code of the realm (resolved during seeding)
         locationType:
           $ref: '#/components/schemas/LocationType'
+          description: Type classification for this location
         parentLocationCode:
           type: string
           nullable: true
@@ -1544,6 +1560,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
+          description: Additional metadata for the location (JSON)
 
     LocationResponse:
       type: object
@@ -1561,19 +1578,24 @@ components:
         locationId:
           type: string
           format: uuid
+          description: Unique identifier for the location
         realmId:
           type: string
           format: uuid
           description: Realm this location belongs to
         code:
           type: string
+          description: Unique code for the location within its realm
         name:
           type: string
+          description: Display name of the location
         description:
           type: string
           nullable: true
+          description: Optional description of the location
         locationType:
           $ref: '#/components/schemas/LocationType'
+          description: Type classification of the location
         parentLocationId:
           type: string
           format: uuid
@@ -1598,12 +1620,15 @@ components:
           type: object
           additionalProperties: true
           nullable: true
+          description: Additional metadata for the location (JSON)
         createdAt:
           type: string
           format: date-time
+          description: Timestamp when the location was created
         updatedAt:
           type: string
           format: date-time
+          description: Timestamp when the location was last updated
 
     LocationListResponse:
       type: object
@@ -1617,16 +1642,22 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LocationResponse'
+          description: List of locations matching the query
         totalCount:
           type: integer
+          description: Total number of locations matching the query (across all pages)
         page:
           type: integer
+          description: Current page number (1-indexed)
         pageSize:
           type: integer
+          description: Number of results per page
         hasNextPage:
           type: boolean
+          description: Whether there are more pages after the current page
         hasPreviousPage:
           type: boolean
+          description: Whether there are pages before the current page
 
     SeedLocationsResponse:
       type: object

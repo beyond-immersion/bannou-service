@@ -383,6 +383,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/CharacterStatus'
           default: alive
+          description: Initial lifecycle status for the character
 
     GetCharacterRequest:
       type: object
@@ -408,6 +409,7 @@ components:
           minLength: 1
           maxLength: 100
           nullable: true
+          description: New name for the character
         speciesId:
           type: string
           format: uuid
@@ -417,6 +419,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/CharacterStatus'
           nullable: true
+          description: New lifecycle status for the character
         deathDate:
           type: string
           format: date-time
@@ -455,11 +458,13 @@ components:
           type: integer
           minimum: 1
           default: 1
+          description: Page number for pagination (1-based)
         pageSize:
           type: integer
           minimum: 1
           maximum: 100
           default: 20
+          description: Number of results per page
 
     GetCharactersByRealmRequest:
       type: object
@@ -484,11 +489,13 @@ components:
           type: integer
           minimum: 1
           default: 1
+          description: Page number for pagination (1-based)
         pageSize:
           type: integer
           minimum: 1
           maximum: 100
           default: 20
+          description: Number of results per page
 
     # Response Models
     CharacterResponse:
@@ -505,8 +512,10 @@ components:
         characterId:
           type: string
           format: uuid
+          description: Unique identifier for the character
         name:
           type: string
+          description: Display name of the character
         realmId:
           type: string
           format: uuid
@@ -514,6 +523,7 @@ components:
         speciesId:
           type: string
           format: uuid
+          description: Species ID (foreign key to Species service)
         birthDate:
           type: string
           format: date-time
@@ -525,6 +535,7 @@ components:
           description: In-game death timestamp
         status:
           $ref: '#/components/schemas/CharacterStatus'
+          description: Current lifecycle status of the character
         createdAt:
           type: string
           format: date-time
@@ -547,16 +558,22 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CharacterResponse'
+          description: List of characters matching the query
         totalCount:
           type: integer
+          description: Total number of characters matching the filter criteria
         page:
           type: integer
+          description: Current page number (1-based)
         pageSize:
           type: integer
+          description: Number of results per page
         hasNextPage:
           type: boolean
+          description: Whether there are more results after this page
         hasPreviousPage:
           type: boolean
+          description: Whether there are results before this page
 
     # Realm Transition Events (custom, not lifecycle)
     CharacterRealmJoinedEvent:
@@ -574,6 +591,7 @@ components:
         timestamp:
           type: string
           format: date-time
+          description: When the event occurred
         characterId:
           type: string
           format: uuid
@@ -603,6 +621,7 @@ components:
         timestamp:
           type: string
           format: date-time
+          description: When the event occurred
         characterId:
           type: string
           format: uuid
@@ -614,4 +633,3 @@ components:
         reason:
           type: string
           description: Reason for leaving (death, transfer, deletion)
-

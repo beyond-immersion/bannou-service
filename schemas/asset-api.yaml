@@ -598,6 +598,7 @@ components:
           description: MIME content type (e.g., image/png, model/gltf-binary)
         metadata:
           $ref: '#/components/schemas/AssetMetadataInput'
+          description: Optional metadata for asset categorization
 
     UploadResponse:
       type: object
@@ -620,6 +621,7 @@ components:
           description: When the upload URL expires
         multipart:
           $ref: '#/components/schemas/MultipartConfig'
+          description: Configuration for multipart uploads if file size requires it
 
     CompleteUploadRequest:
       type: object
@@ -663,6 +665,7 @@ components:
           description: Maximum number of parts
         uploadUrls:
           type: array
+          description: Pre-signed URLs for each part of the multipart upload
           items:
             $ref: '#/components/schemas/PartUploadInfo'
 
@@ -698,8 +701,10 @@ components:
       properties:
         assetType:
           $ref: '#/components/schemas/AssetType'
+          description: Type classification for the asset
         realm:
           $ref: '#/components/schemas/Realm'
+          description: Game realm the asset belongs to
         tags:
           type: array
           items:
@@ -728,14 +733,18 @@ components:
           description: File size in bytes
         assetType:
           $ref: '#/components/schemas/AssetType'
+          description: Type classification for the asset
         realm:
           $ref: '#/components/schemas/Realm'
+          description: Game realm the asset belongs to
         tags:
           type: array
           items:
             type: string
+          description: Searchable tags for the asset
         processingStatus:
           $ref: '#/components/schemas/ProcessingStatus'
+          description: Current status of asset processing pipeline
         isArchived:
           type: boolean
           description: Whether the asset is in cold/archival storage
@@ -743,9 +752,11 @@ components:
         createdAt:
           type: string
           format: date-time
+          description: Timestamp when the asset was created
         updatedAt:
           type: string
           format: date-time
+          description: Timestamp when the asset was last updated
 
     # ==========================================================================
     # Asset Retrieval
@@ -769,8 +780,10 @@ components:
       properties:
         assetId:
           type: string
+          description: Unique asset identifier
         versionId:
           type: string
+          description: Version identifier for this specific asset version
         downloadUrl:
           type: string
           format: uri
@@ -782,12 +795,16 @@ components:
         size:
           type: integer
           format: int64
+          description: File size in bytes
         contentHash:
           type: string
+          description: SHA256 hash of file contents
         contentType:
           type: string
+          description: MIME content type
         metadata:
           $ref: '#/components/schemas/AssetMetadata'
+          description: Complete asset metadata
 
     # ==========================================================================
     # Version Listing
@@ -800,40 +817,51 @@ components:
       properties:
         assetId:
           type: string
+          description: Asset identifier to list versions for
         limit:
           type: integer
           default: 50
+          description: Maximum number of versions to return
         offset:
           type: integer
           default: 0
+          description: Number of versions to skip for pagination
 
     AssetVersionList:
       type: object
       properties:
         assetId:
           type: string
+          description: Asset identifier
         versions:
           type: array
           items:
             $ref: '#/components/schemas/AssetVersion'
+          description: List of asset versions
         total:
           type: integer
+          description: Total number of versions available
         limit:
           type: integer
+          description: Maximum number of versions returned per page
         offset:
           type: integer
+          description: Number of versions skipped
 
     AssetVersion:
       type: object
       properties:
         versionId:
           type: string
+          description: Unique version identifier
         createdAt:
           type: string
           format: date-time
+          description: Timestamp when this version was created
         size:
           type: integer
           format: int64
+          description: File size in bytes for this version
         isArchived:
           type: boolean
           description: Whether this version is in cold storage
@@ -852,19 +880,24 @@ components:
           type: array
           items:
             type: string
+          description: Filter by tags (assets must have all specified tags)
         assetType:
           $ref: '#/components/schemas/AssetType'
+          description: Filter by asset type
         realm:
           $ref: '#/components/schemas/Realm'
+          description: Filter by game realm
         contentType:
           type: string
           description: MIME content type filter
         limit:
           type: integer
           default: 50
+          description: Maximum number of results to return
         offset:
           type: integer
           default: 0
+          description: Number of results to skip for pagination
 
     AssetSearchResult:
       type: object
@@ -873,12 +906,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AssetMetadata'
+          description: List of matching assets
         total:
           type: integer
+          description: Total number of matching assets
         limit:
           type: integer
+          description: Maximum number of results returned per page
         offset:
           type: integer
+          description: Number of results skipped
 
     # ==========================================================================
     # Bundle Operations
@@ -904,6 +941,7 @@ components:
           description: List of asset IDs to include in the bundle
         compression:
           $ref: '#/components/schemas/CompressionType'
+          description: Compression algorithm to use for the bundle
         metadata:
           type: object
           additionalProperties: true
@@ -914,6 +952,7 @@ components:
       properties:
         bundleId:
           type: string
+          description: Unique bundle identifier
         status:
           type: string
           enum:
@@ -934,29 +973,38 @@ components:
       properties:
         bundleId:
           type: string
+          description: Bundle identifier to retrieve
         format:
           $ref: '#/components/schemas/BundleFormat'
+          description: Desired download format (bannou or zip)
 
     BundleWithDownloadUrl:
       type: object
       properties:
         bundleId:
           type: string
+          description: Unique bundle identifier
         version:
           type: string
+          description: Bundle version string
         downloadUrl:
           type: string
           format: uri
+          description: Pre-signed URL for downloading the bundle
         format:
           $ref: '#/components/schemas/BundleFormat'
+          description: Format of the downloadable bundle
         expiresAt:
           type: string
           format: date-time
+          description: When the download URL expires
         size:
           type: integer
           format: int64
+          description: Bundle file size in bytes
         assetCount:
           type: integer
+          description: Number of assets contained in the bundle
         fromCache:
           type: boolean
           description: True if ZIP format was served from conversion cache
@@ -973,8 +1021,10 @@ components:
         size:
           type: integer
           format: int64
+          description: Bundle file size in bytes
         manifestPreview:
           $ref: '#/components/schemas/BundleManifestPreview'
+          description: Optional preview of bundle manifest for validation
 
     BundleManifestPreview:
       type: object
@@ -982,7 +1032,10 @@ components:
       properties:
         bundleId:
           type: string
+          description: Bundle identifier from the manifest
         version:
           type: string
+          description: Bundle version from the manifest
         assetCount:
           type: integer
+          description: Number of assets declared in the manifest

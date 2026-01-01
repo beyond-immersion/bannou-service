@@ -422,6 +422,7 @@ components:
         sessionId:
           type: string
           format: uuid
+          description: Session ID that was queried
         permissions:
           type: object
           additionalProperties:
@@ -444,6 +445,7 @@ components:
         sessionId:
           type: string
           format: uuid
+          description: Session ID to validate access for
         serviceId:
           type: string
           description: Target service ID
@@ -463,6 +465,7 @@ components:
         sessionId:
           type: string
           format: uuid
+          description: Session ID that was validated
         reason:
           type: string
           description: Reason for denial (if applicable)
@@ -509,6 +512,7 @@ components:
       properties:
         serviceId:
           type: string
+          description: Service ID that was registered
         success:
           type: boolean
           description: Whether registration was successful
@@ -524,6 +528,7 @@ components:
         recompiledAt:
           type: string
           format: date-time
+          description: Timestamp when permissions were recompiled
 
     # Session Management Models
     SessionStateUpdate:
@@ -536,6 +541,7 @@ components:
         sessionId:
           type: string
           format: uuid
+          description: Session ID to update state for
         serviceId:
           type: string
           description: Service whose state is changing for this session
@@ -560,6 +566,7 @@ components:
         sessionId:
           type: string
           format: uuid
+          description: Session ID to update role for
         newRole:
           type: string
           description: New role (user, admin, etc.)
@@ -601,6 +608,7 @@ components:
         sessionId:
           type: string
           format: uuid
+          description: Session ID that was updated
         success:
           type: boolean
           description: Whether update was successful
@@ -620,6 +628,7 @@ components:
         updatedAt:
           type: string
           format: date-time
+          description: Timestamp when the session was updated
 
     # Session Information Models
     SessionInfoRequest:
@@ -630,6 +639,7 @@ components:
         sessionId:
           type: string
           format: uuid
+          description: Session ID to retrieve information for
 
     SessionInfo:
       type: object
@@ -642,6 +652,7 @@ components:
         sessionId:
           type: string
           format: uuid
+          description: Session ID being queried
         role:
           type: string
           description: Current session role

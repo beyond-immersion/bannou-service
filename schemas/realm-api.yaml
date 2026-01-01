@@ -600,11 +600,13 @@ components:
           type: integer
           minimum: 1
           default: 1
+          description: Page number for pagination (1-indexed)
         pageSize:
           type: integer
           minimum: 1
           maximum: 100
           default: 20
+          description: Number of realms to return per page
 
     CreateRealmRequest:
       type: object
@@ -767,22 +769,24 @@ components:
           description: Unique code for the realm
         name:
           type: string
-          description: Display name
+          description: Display name for the realm
         description:
           type: string
           nullable: true
-          description: Description
+          description: Detailed description of the realm and its characteristics
         category:
           type: string
           nullable: true
-          description: Category for grouping
+          description: Category for grouping realms (e.g., "MAIN", "SPECIAL", "TEST")
         isActive:
           type: boolean
           default: true
+          description: Whether the realm is currently active for gameplay
         metadata:
           type: object
           additionalProperties: true
           nullable: true
+          description: Additional custom metadata for the realm (JSON)
 
     RealmResponse:
       type: object
@@ -798,18 +802,24 @@ components:
         realmId:
           type: string
           format: uuid
+          description: Unique identifier of the realm
         code:
           type: string
+          description: Unique code for the realm (e.g., "OMEGA", "ARCADIA")
         name:
           type: string
+          description: Display name for the realm
         description:
           type: string
           nullable: true
+          description: Detailed description of the realm
         category:
           type: string
           nullable: true
+          description: Category for grouping realms
         isActive:
           type: boolean
+          description: Whether the realm is currently active for gameplay
         isDeprecated:
           type: boolean
           description: Whether this realm is deprecated and cannot be used for new entities
@@ -826,12 +836,15 @@ components:
           type: object
           additionalProperties: true
           nullable: true
+          description: Additional custom metadata for the realm
         createdAt:
           type: string
           format: date-time
+          description: Timestamp when the realm was created
         updatedAt:
           type: string
           format: date-time
+          description: Timestamp when the realm was last updated
 
     RealmListResponse:
       type: object
@@ -845,16 +858,22 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RealmResponse'
+          description: List of realms matching the query criteria
         totalCount:
           type: integer
+          description: Total number of realms matching the query (before pagination)
         page:
           type: integer
+          description: Current page number (1-indexed)
         pageSize:
           type: integer
+          description: Number of realms per page
         hasNextPage:
           type: boolean
+          description: Whether there are more realms available on the next page
         hasPreviousPage:
           type: boolean
+          description: Whether there are realms available on the previous page
 
     SeedRealmsResponse:
       type: object
@@ -878,4 +897,3 @@ components:
           items:
             type: string
           description: List of error messages for realms that failed to seed
-

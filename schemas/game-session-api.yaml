@@ -483,16 +483,20 @@ components:
         gameType:
           type: string
           enum: [arcadia, generic]
+          description: Type of game for this session (arcadia or generic)
         maxPlayers:
           type: integer
           minimum: 1
           maximum: 100
+          description: Maximum number of players allowed in the session
         sessionName:
           type: string
           maxLength: 100
+          description: Optional display name for the session
         isPrivate:
           type: boolean
           default: false
+          description: Whether the session requires a password to join
         ownerId:
           type: string
           format: uuid
@@ -500,6 +504,7 @@ components:
         gameSettings:
           type: object
           additionalProperties: true
+          description: Game-specific configuration settings
 
     GameSessionResponse:
       type: object
@@ -512,33 +517,44 @@ components:
         sessionId:
           type: string
           format: uuid
+          description: Unique identifier for the game session
         gameType:
           type: string
           enum: [arcadia, generic]
+          description: Type of game for this session
         sessionName:
           type: string
+          description: Display name for the session
         status:
           type: string
           enum: [waiting, active, full, finished]
+          description: Current status of the game session
         maxPlayers:
           type: integer
+          description: Maximum number of players allowed in the session
         currentPlayers:
           type: integer
+          description: Current number of players in the session
         isPrivate:
           type: boolean
+          description: Whether the session requires a password to join
         owner:
           type: string
           format: uuid
+          description: Account ID of the session owner
         players:
           type: array
           items:
             $ref: '#/components/schemas/GamePlayer'
+          description: List of players currently in the session
         createdAt:
           type: string
           format: date-time
+          description: Timestamp when the session was created
         gameSettings:
           type: object
           additionalProperties: true
+          description: Game-specific configuration settings
 
     GameSessionListResponse:
       type: object
@@ -549,8 +565,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/GameSessionResponse'
+          description: List of game sessions matching the filter criteria
         totalCount:
           type: integer
+          description: Total number of sessions matching the filter (for pagination)
 
     JoinGameSessionRequest:
       type: object
@@ -586,12 +604,15 @@ components:
       properties:
         success:
           type: boolean
+          description: Whether the join operation was successful
         sessionId:
           type: string
           format: uuid
+          description: ID of the joined game session
         playerRole:
           type: string
           enum: [player, spectator, moderator]
+          description: Role assigned to the player in this session
         gameData:
           type: object
           additionalProperties: true
@@ -615,17 +636,22 @@ components:
         accountId:
           type: string
           format: uuid
+          description: Unique identifier for the player's account
         displayName:
           type: string
+          description: Display name shown to other players
         role:
           type: string
           enum: [player, spectator, moderator]
+          description: Role of the player in the game session
         joinedAt:
           type: string
           format: date-time
+          description: Timestamp when the player joined the session
         characterData:
           type: object
           additionalProperties: true
+          description: Game-specific character data for this player
         voiceSessionId:
           type: string
           nullable: true
@@ -663,10 +689,12 @@ components:
         message:
           type: string
           maxLength: 500
+          description: Content of the chat message
         messageType:
           type: string
           enum: [public, whisper, system]
           default: public
+          description: Type of message (public to all, whisper to one player, or system announcement)
         targetPlayerId:
           type: string
           format: uuid
@@ -685,6 +713,7 @@ components:
         actionType:
           type: string
           enum: [move, interact, attack, cast_spell, use_item]
+          description: Type of game action to perform
         actionData:
           type: object
           additionalProperties: true
@@ -702,9 +731,11 @@ components:
       properties:
         success:
           type: boolean
+          description: Whether the action was executed successfully
         actionId:
           type: string
           format: uuid
+          description: Unique identifier for this action instance
         result:
           type: object
           additionalProperties: true
